@@ -1,4 +1,8 @@
-﻿using Volo.Abp.Account;
+﻿using AElfScan.AElf;
+using AElfScan.Orleans;
+using JetBrains.Annotations;
+using Microsoft.Extensions.DependencyInjection;
+using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
@@ -17,7 +21,8 @@ namespace AElfScan;
     typeof(AbpPermissionManagementApplicationModule),
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
-    typeof(AbpSettingManagementApplicationModule)
+    typeof(AbpSettingManagementApplicationModule),
+    typeof(AElfScanOrleansEventSourcingModule)
     )]
 public class AElfScanApplicationModule : AbpModule
 {
@@ -27,5 +32,8 @@ public class AElfScanApplicationModule : AbpModule
         {
             options.AddMaps<AElfScanApplicationModule>();
         });
+        
+        context.Services.AddSingleton<IAElfAppService, AElfTestAppService>();
+        context.Services.AddSingleton<IOrleansClusterClientFactory, OrleansClientFactory>();
     }
 }
