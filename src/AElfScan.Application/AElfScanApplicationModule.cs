@@ -1,4 +1,4 @@
-﻿using AElfScan.AElf;
+using AElfScan.AElf;
 using AElfScan.Orleans;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,3 +37,4 @@ public class AElfScanApplicationModule : AbpModule
         context.Services.AddSingleton<IOrleansClusterClientFactory, OrleansClientFactory>();
     }
 }
+

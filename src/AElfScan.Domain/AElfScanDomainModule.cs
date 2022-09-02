@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using AElf.Indexing.Elasticsearch;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using AElfScan.MultiTenancy;
 using Volo.Abp.AuditLogging;
@@ -19,7 +20,7 @@ namespace AElfScan;
 [DependsOn(
     typeof(AElfScanDomainSharedModule),
     typeof(AbpAuditLoggingDomainModule),
-    typeof(AbpBackgroundJobsDomainModule),
+    //typeof(AbpBackgroundJobsDomainModule),
     typeof(AbpFeatureManagementDomainModule),
     typeof(AbpIdentityDomainModule),
     typeof(AbpPermissionManagementDomainIdentityModule),
@@ -27,7 +28,8 @@ namespace AElfScan;
     typeof(AbpPermissionManagementDomainIdentityServerModule),
     typeof(AbpSettingManagementDomainModule),
     typeof(AbpTenantManagementDomainModule),
-    typeof(AbpEmailingModule)
+    typeof(AbpEmailingModule),
+    typeof(AElfIndexingElasticsearchModule)
 )]
 public class AElfScanDomainModule : AbpModule
 {

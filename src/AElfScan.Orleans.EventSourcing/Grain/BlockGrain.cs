@@ -16,10 +16,18 @@ public class BlockGrain:JournaledGrain<BlockState,BlockEventData>,IBlockGrain
         return Task.FromResult(this.State.BlockCount);
     }
     
-    public async Task NewEvent(BlockEventData @event)
+    public async Task<bool> NewEvent(BlockEventData @event)
     {
+        if (this.State.MaxBlockNumber >= @event.BlockNumber)
+        {
+            Console.WriteLine("Event can't be raised,because its block number("
+                              +@event.BlockNumber +") smaller than database's MaxBlockNumber"
+                              +this.State.MaxBlockNumber);
+            return false;
+        }
         RaiseEvent(@event);
         await ConfirmEvents();
         Console.WriteLine("Event has been comfirmed! eventtime:" + @event.BlockTime);
+        return true;
     }
 }

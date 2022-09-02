@@ -1,9 +1,6 @@
-using AElfScan.Options;
-using Microsoft.Extensions.Configuration;
+using AElfScan;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Orleans;
-using Orleans.Configuration;
+using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
@@ -11,14 +8,13 @@ using Volo.Abp.Modularity;
 namespace AElfScan;
 
 [DependsOn(typeof(AbpAutofacModule),
-    typeof(AElfScanBlockChainEventHandlerCoreModule),
-    typeof(AElfScanApplicationModule),
+    typeof(AbpAspNetCoreSerilogModule),
+    typeof(AElfScanEntityEventHandlerCoreModule),
     typeof(AbpEventBusRabbitMqModule))]
-public class AElfScanBlockChainEventHandlerModule:AbpModule
+public class AElfScanEntityEventHandlerModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        var configuration = context.Services.GetConfiguration();
         context.Services.AddHostedService<AElfScanHostedService>();
     }
 }

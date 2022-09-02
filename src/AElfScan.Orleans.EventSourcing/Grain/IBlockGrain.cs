@@ -6,6 +6,6 @@ namespace AElfScan.Grain;
 public interface IBlockGrain : Orleans.IGrainWithIntegerKey
 {
     Task<int> GetBlockCount();
-    Task NewEvent(BlockEventData @event);
+    Task<bool> NewEvent(BlockEventData @event);
 }
 

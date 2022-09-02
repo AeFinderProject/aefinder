@@ -1,9 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using AElfScan.AElf;
-using AElfScan.AElf.Dtos;
-using AElfScan.AElf.Etos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Volo.Abp;
@@ -26,15 +23,6 @@ public class AElfScanHostedService:IHostedService
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _application.Initialize(_serviceProvider);
-
-        BlockEventDataDto eventData = new BlockEventDataDto()
-        {
-            BlockNumber = 3007,
-            IsConfirmed = false
-        };
-        var appService = _serviceProvider.GetRequiredService<AElfTestAppService>();
-        appService.SaveBlock(eventData);
-        
         return Task.CompletedTask;
     }
 
