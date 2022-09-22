@@ -5,5 +5,5 @@ namespace AElfScan.AElf;
 
 public interface IAElfAppService
 {
-    Task SaveBlock(BlockEventDataDto eventData);
+    // Task SaveBlock(BlockEventDataDto eventData);
 }

@@ -30,4 +30,12 @@ public class BlockGrain:JournaledGrain<BlockState,BlockEventData>,IBlockGrain
         Console.WriteLine("Event has been comfirmed! eventtime:" + @event.BlockTime);
         return true;
     }
+
+    public async Task<bool> SaveBlock(BlockEventData blockEvent)
+    {
+        RaiseEvent(blockEvent);
+        await ConfirmEvents();
+        Console.WriteLine("Event has been comfirmed! eventtime:" + blockEvent.BlockTime);
+        return true;
+    }
 }

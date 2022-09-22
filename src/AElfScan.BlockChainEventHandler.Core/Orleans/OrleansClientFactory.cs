@@ -29,7 +29,7 @@ public class OrleansClientFactory:IOrleansClusterClientFactory
                 options.ClusterId = _orleansClientOption.ClusterId;
                 options.ServiceId = _orleansClientOption.ServiceId;
             })
-            .ConfigureLogging(logging => logging.AddConsole())
+            // .ConfigureLogging(logging => logging.AddConsole())
             .Build();
 
         _logger.LogInformation("before connect:"+client.IsInitialized);

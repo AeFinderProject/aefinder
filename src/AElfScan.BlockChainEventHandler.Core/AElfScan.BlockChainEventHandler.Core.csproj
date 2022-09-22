@@ -7,11 +7,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Volo.Abp.Autofac" Version="5.3.4" />
+      <ProjectReference Include="..\AElfScan.Orleans.EventSourcing\AElfScan.Orleans.EventSourcing.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\AElfScan.Application\AElfScan.Application.csproj" />
+      <PackageReference Include="AElf.CSharp.Core" Version="1.2.1" />
     </ItemGroup>
 
 </Project>

@@ -10,21 +10,21 @@
   <ItemGroup>
     <ProjectReference Include="..\AElfScan.Domain\AElfScan.Domain.csproj" />
     <ProjectReference Include="..\AElfScan.Application.Contracts\AElfScan.Application.Contracts.csproj" />
-    <ProjectReference Include="..\AElfScan.Orleans.EventSourcing\AElfScan.Orleans.EventSourcing.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Orleans.Client" Version="3.6.5" />
-    <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Volo.Abp.Account.Application" Version="5.3.4" />
     <PackageReference Include="Volo.Abp.Identity.Application" Version="5.3.4" />
     <PackageReference Include="Volo.Abp.PermissionManagement.Application" Version="5.3.4" />
     <PackageReference Include="Volo.Abp.TenantManagement.Application" Version="5.3.4" />
     <PackageReference Include="Volo.Abp.FeatureManagement.Application" Version="5.3.4" />
     <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="5.3.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Orleans_CodeGenInputs Remove="Orleans\IOrleansClusterClientFactory.cs" />
+    <Orleans_CodeGenInputs Remove="Orleans\Options\OrleansClientOption.cs" />
+    <Orleans_CodeGenInputs Remove="Orleans\OrleansClientFactory.cs" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 using AElfScan.Options;
+using AElfScan.Orleans;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,8 +12,8 @@ using Volo.Abp.Modularity;
 namespace AElfScan;
 
 [DependsOn(typeof(AbpAutofacModule),
+    typeof(AElfScanOrleansEventSourcingModule),
     typeof(AElfScanBlockChainEventHandlerCoreModule),
-    typeof(AElfScanApplicationModule),
     typeof(AbpEventBusRabbitMqModule))]
 public class AElfScanBlockChainEventHandlerModule:AbpModule
 {
@@ -20,5 +21,8 @@ public class AElfScanBlockChainEventHandlerModule:AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         context.Services.AddHostedService<AElfScanHostedService>();
+        
+        Configure<OrleansClientOption>(configuration.GetSection("OrleansClient"));
+        context.Services.AddSingleton<IOrleansClusterClientFactory, OrleansClientFactory>();
     }
 }
