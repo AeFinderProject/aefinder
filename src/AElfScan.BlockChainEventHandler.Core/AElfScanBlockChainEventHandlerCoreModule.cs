@@ -4,8 +4,7 @@ using Volo.Abp.Modularity;
 
 namespace AElfScan;
 
-[DependsOn(typeof(AElfScanOrleansEventSourcingModule),
-    typeof(AElfScanOrleansEventSourcingModule))]
+[DependsOn(typeof(AElfScanOrleansEventSourcingModule))]
 public class AElfScanBlockChainEventHandlerCoreModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

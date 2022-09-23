@@ -3,6 +3,7 @@ using AElfScan.AElf.ETOs;
 using AElfScan.EventData;
 using AElfScan.Grain;
 using AElfScan.Orleans;
+using AElfScan.State;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -15,12 +16,16 @@ public class BlockProcessor:IDistributedEventHandler<BlockChainDataEto>,ITransie
 {
     private readonly IOrleansClusterClientFactory _clusterClientFactory;
     private readonly ILogger<BlockProcessor> _logger;
-
-    public BlockProcessor(IOrleansClusterClientFactory clusterClientFactory,
-        ILogger<BlockProcessor> logger)
+    private readonly IDistributedEventBus _distributedEventBus;
+    
+    public BlockProcessor(
+        IOrleansClusterClientFactory clusterClientFactory,
+        ILogger<BlockProcessor> logger,
+        IDistributedEventBus distributedEventBus)
     {
         _clusterClientFactory = clusterClientFactory;
         _logger = logger;
+        _distributedEventBus = distributedEventBus;
     }
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
@@ -29,7 +34,7 @@ public class BlockProcessor:IDistributedEventHandler<BlockChainDataEto>,ITransie
         using (var client = await _clusterClientFactory.GetClient())
         {
             _logger.LogInformation("Prepare Grain Class，While the client IsInitialized:" + client.IsInitialized);
-            var blockGrain = client.GetGrain<IBlockGrain>(4);
+            var blockGrain = client.GetGrain<IBlockGrain>(8);
             foreach (var blockItem in eventData.Blocks)
             {
                 BlockEventData blockEvent = new BlockEventData();
@@ -55,26 +60,59 @@ public class BlockProcessor:IDistributedEventHandler<BlockChainDataEto>,ITransie
                                     _logger.LogInformation($"LogEvent-Indexed: {IndexedList[0]}");
                                     var libFound = new IrreversibleBlockFound();
                                     libFound.MergeFrom(ByteString.FromBase64(IndexedList[0]));
-                                    _logger.LogInformation($"IrreversibleBlockFound: {libFound.IrreversibleBlockHeight}");
+                                    _logger.LogInformation(
+                                        $"IrreversibleBlockFound: {libFound}");
+                                    blockEvent.LibBlockNumber = libFound.IrreversibleBlockHeight;
                                 }
                             }
                         }
                     }
                 }
-                // blockEvent.LibBlockHash = "";
-                // blockEvent.LibBlockNumber = 0;
+                
+                _logger.LogInformation("Save Block Number:" + blockEvent.BlockNumber);
+                List<Block> libBlockList = await blockGrain.SaveBlock(blockEvent);
+                _logger.LogInformation($"libBlockList:{libBlockList}");
+                if (libBlockList==null)
+                {
+                    //means block has been ignored
+                }
+                else
+                {
+                    //Todo: new block event
+                    //     _logger.LogInformation("Start publish Event to Rabbitmq");
+                    //     await _distributedEventBus.PublishAsync(
+                    //         new BlockTestEto
+                    //         {
+                    //             Id = Guid.NewGuid(),
+                    //             BlockNumber = eventDataDto.BlockNumber,
+                    //             BlockTime = DateTime.Now,
+                    //             IsConfirmed = eventDataDto.IsConfirmed
+                    //         }
+                    //         );
+                    //     _logger.LogInformation("Test Block Event is already published");
 
-
-                // var eventData = ObjectMapper.Map<BlockEventDataDto, BlockEventData>(eventDataDto);
-                _logger.LogInformation("Start Raise Event of Block Number:" + blockEvent.BlockNumber);
-                // await blockGrain.NewEvent(eventData);
-                await blockGrain.SaveBlock(blockEvent);
+                    //Todo: confirm blocks event
+                    foreach (var libBlock in libBlockList)
+                    {
+                        //     _logger.LogInformation("Start publish Event to Rabbitmq");
+                        //     await _distributedEventBus.PublishAsync(
+                        //         new BlockTestEto
+                        //         {
+                        //             Id = Guid.NewGuid(),
+                        //             BlockNumber = eventDataDto.BlockNumber,
+                        //             BlockTime = DateTime.Now,
+                        //             IsConfirmed = eventDataDto.IsConfirmed
+                        //         }
+                        //         );
+                        //     _logger.LogInformation("Test Block Event is already published");
+                    }
+                }
+                
             }
         }
 
         _logger.LogInformation("Stop connect to Silo Server");
-        
-        
+
         await Task.CompletedTask;
     }
 }

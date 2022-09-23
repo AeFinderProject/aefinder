@@ -1,12 +1,12 @@
 using AElfScan.EventData;
+using AElfScan.State;
+using Orleans;
 using Volo.Abp.DependencyInjection;
 
 namespace AElfScan.Grain;
 
-public interface IBlockGrain : Orleans.IGrainWithIntegerKey
+public interface IBlockGrain : IGrainWithIntegerKey
 {
-    Task<int> GetBlockCount();
-    Task<bool> NewEvent(BlockEventData @event);
-    Task<bool> SaveBlock(BlockEventData blockEvent);
+    Task<List<Block>> SaveBlock(BlockEventData blockEvent);
 }
 

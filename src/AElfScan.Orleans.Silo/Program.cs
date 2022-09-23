@@ -39,6 +39,7 @@ public class Program
             Log.Information("Starting AElfScan.Orleans.Silo.");
 
             await CreateHostBuilder(args).RunConsoleAsync();
+
             return 0;
         }
         catch (Exception ex)
@@ -58,7 +59,9 @@ public class Program
             {
                 services.AddApplication<AElfScanOrleansSiloModule>();
             })
-            .UseOrleans<BlockGrain>()
+            // .UseOrleans<BlockGrain>()
+            .UseOrleansSnapshot<BlockGrain>()
             .UseAutofac()
             .UseSerilog();
+    
 }

@@ -1,4 +1,6 @@
+using System.Net;
 using System.Threading.Tasks;
+using AElfScan.Grain;
 using AElfScan.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,13 +24,27 @@ public class OrleansClientFactory:IOrleansClusterClientFactory
 
     public async Task<IClusterClient> GetClient()
     {
+        var endPoints = new List<IPEndPoint>();
+
+        var ipAddress = IPAddress.Loopback;
+        var port = 30000;
+
+        endPoints.Add(new IPEndPoint(ipAddress, port));
+        
         IClusterClient client = new ClientBuilder()
             .UseLocalhostClustering()
+            .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(IBlockGrain).Assembly).WithReferences())
             .Configure<ClusterOptions>(options =>
             {
                 options.ClusterId = _orleansClientOption.ClusterId;
                 options.ServiceId = _orleansClientOption.ServiceId;
             })
+            // .Configure<ClusterOptions>(options =>
+            // {
+            //     options.ClusterId = "dev";
+            //     options.ServiceId = "dev";
+            // })
+            // .UseStaticClustering(endPoints.ToArray())
             // .ConfigureLogging(logging => logging.AddConsole())
             .Build();
 
