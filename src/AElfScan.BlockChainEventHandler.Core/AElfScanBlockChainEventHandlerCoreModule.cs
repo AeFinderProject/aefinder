@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Orleans;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 
@@ -11,13 +12,12 @@ public class AElfScanBlockChainEventHandlerCoreModule:AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         
-        
-        
         Configure<AbpAutoMapperOptions>(options =>
         {
             //Add all mappings defined in the assembly of the MyModule class
             options.AddMaps<AElfScanBlockChainEventHandlerCoreModule>();
         });
+        
         
         
     }

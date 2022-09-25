@@ -3,38 +3,58 @@ using System.Threading;
 using System.Threading.Tasks;
 using AElfScan.AElf;
 using AElfScan.AElf.ETOs;
-// using AElfScan.AElf.Dtos;
-// using AElfScan.AElf.Etos;
-using Microsoft.Extensions.DependencyInjection;
+using AElfScan.Grain;
+using AElfScan.Options;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Orleans;
+using Orleans.Configuration;
 using Volo.Abp;
 using Volo.Abp.EventBus.Distributed;
 
 namespace AElfScan;
 
-public class AElfScanHostedService:IHostedService
+public class AElfScanClusterClientHostedService:IHostedService
 {
     private readonly IAbpApplicationWithExternalServiceProvider _application;
     private readonly IServiceProvider _serviceProvider;
     private readonly IDistributedEventBus _distributedEventBus;
-    private readonly ILogger<AElfScanHostedService> _logger;
+    private readonly ILogger<AElfScanClusterClientHostedService> _logger;
+    private readonly OrleansClientOption _orleansClientOption;
+    public IClusterClient OrleansClient { get;}
 
-    public AElfScanHostedService(
+    public AElfScanClusterClientHostedService(
         IAbpApplicationWithExternalServiceProvider application,
         IDistributedEventBus distributedEventBus,
-        ILogger<AElfScanHostedService> logger,
+        ILogger<AElfScanClusterClientHostedService> logger,
+        IOptionsSnapshot<OrleansClientOption> orleansClientOption,
         IServiceProvider serviceProvider)
     {
         _application = application;
         _serviceProvider = serviceProvider;
         _distributedEventBus = distributedEventBus;
         _logger = logger;
+        _orleansClientOption = orleansClientOption.Value;
+        OrleansClient = new ClientBuilder()
+            .UseLocalhostClustering()
+            .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(IBlockGrain).Assembly).WithReferences())
+            .Configure<ClusterOptions>(options =>
+            {
+                options.ClusterId = _orleansClientOption.ClusterId;
+                options.ServiceId = _orleansClientOption.ServiceId;
+            })
+            .Build();
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         _application.Initialize(_serviceProvider);
+
+        _logger.LogInformation("before connect:"+OrleansClient.IsInitialized);
+        await OrleansClient.Connect();
+        _logger.LogInformation("after connect:"+OrleansClient.IsInitialized);
+        _logger.LogInformation("Client successfully connected to silo host \n");
 
         // BlockEventDataDto eventData = new BlockEventDataDto()
         // {
@@ -56,7 +76,7 @@ public class AElfScanHostedService:IHostedService
                     {
                         BlockHash = "fc4192b920415cae740c808e064696890b031944bc2756e18b99619aae50740e",
                         BlockNumber = 336,
-                        BlockTime = new DateTime(2022,9,23,15,24,36),
+                        BlockTime = new DateTime(2022,9,25,15,24,36),
                         PreviousBlockHash = "156ff3721154b30e08bdbd3aab85071c2bc8744dc3249471100c21268bb4641a",
                         Signature = "a41ce21264d62e141537fcdd0597c496969c8ce73ec51dcf4b48411fb66a6134759d2b7cf12c19aa916c72deb8aeba4f20cfbf9deb1a915a52c3ed168c5aa83900",
                         SignerPubkey = "04bcd1c887cd0edbd4ccf8d9d2b3f72e72511aa6183199600313687ba6c583f13c3d6d716fa40df8604aaed0fcab31135fe3c2d45c009800c075254a3782b4c4db",
@@ -140,13 +160,15 @@ public class AElfScanHostedService:IHostedService
             }
             );
         _logger.LogInformation("Test Block Event is already published");
-        
-        return Task.CompletedTask;
+        return;
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
+        await OrleansClient.Close();
+        OrleansClient.Dispose();
+        
         _application.Shutdown();
-        return Task.CompletedTask;
+        return;
     }
 }

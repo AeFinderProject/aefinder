@@ -14,13 +14,13 @@ namespace AElfScan.Grain;
 // [LogConsistencyProvider(ProviderName = "LogStorage")]
 public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
 {
-    // private readonly ILogger<BlockGrain> _logger;
-    //
-    // public BlockGrain(
-    //     ILogger<BlockGrain> logger)
-    // {
-    //     _logger = logger;
-    // }
+    private readonly ILogger<BlockGrain> _logger;
+    
+    public BlockGrain(
+        ILogger<BlockGrain> logger)
+    {
+        _logger = logger;
+    }
 
     public async Task<List<Block>> SaveBlock(BlockEventData blockEvent)
     {
@@ -33,9 +33,8 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
             }
         }
 
-        // _logger.LogInformation("Start Raise Event of Block Number:" + blockEvent.BlockNumber);
-        RaiseEvent(blockEvent);
-        // RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0 ? true : false);
+        _logger.LogInformation("Start Raise Event of Block Number:" + blockEvent.BlockNumber);
+        RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0 ? true : false);
         await ConfirmEvents();
         Console.WriteLine("Event has been comfirmed! eventtime:" + blockEvent.BlockTime);
 
