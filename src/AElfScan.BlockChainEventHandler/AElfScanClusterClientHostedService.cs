@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AElfScan.AElf;
-using AElfScan.AElf.ETOs;
+using AElfScan.AElf.DTOs;
 using AElfScan.Grain;
 using AElfScan.Options;
 using Microsoft.Extensions.Hosting;

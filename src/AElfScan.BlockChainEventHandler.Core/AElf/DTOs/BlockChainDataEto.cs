@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace AElfScan.AElf.ETOs;
+namespace AElfScan.AElf.DTOs;
 
 public class BlockChainDataEto
 {

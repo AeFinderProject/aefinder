@@ -3,8 +3,8 @@ using Volo.Abp.EventBus;
 
 namespace AElfScan.AElf.Etos;
 
-[EventName("AElf.BlockChanged")]
-public class BlockEto:Block
+[EventName("AElf.NewBlock")]
+public class NewBlockEto:Block
 {
     
 }
