@@ -19,7 +19,6 @@ public class BlockProcessor : IDistributedEventHandler<BlockChainDataEto>, ITran
 {
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<BlockProcessor> _logger;
-    // private readonly IObjectMapper<AElfScanBlockChainEventHandlerCoreModule> _objectMapper;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IAbpLazyServiceProvider _lazyServiceProvider;
     private IObjectMapper ObjectMapper => _lazyServiceProvider.LazyGetService<IObjectMapper>();
@@ -42,7 +41,7 @@ public class BlockProcessor : IDistributedEventHandler<BlockChainDataEto>, ITran
         _logger.LogInformation("Start connect to Silo Server....");
         _logger.LogInformation("Prepare Grain Class，While the client IsInitialized:" + _clusterClient.IsInitialized);
 
-        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(12);
+        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(17);
         foreach (var blockItem in eventData.Blocks)
         {
             BlockEventData blockEvent = new BlockEventData();
@@ -89,26 +88,38 @@ public class BlockProcessor : IDistributedEventHandler<BlockChainDataEto>, ITran
                 //Todo: new block event
                 _logger.LogInformation("Start publish Event to Rabbitmq");
                 NewBlockEto newBlock = ObjectMapper.Map<BlockEto, NewBlockEto>(blockItem);
-                newBlock.Id = Guid.NewGuid();
+                // newBlock.Id = Guid.NewGuid();
+                newBlock.Id = newBlock.BlockHash;
                 newBlock.ChainId = eventData.ChainId;
                 newBlock.IsConfirmed = false;
+                foreach (var transaction in newBlock.Transactions)
+                {
+                    transaction.ChainId = eventData.ChainId;
+                    transaction.BlockHash = newBlock.BlockHash;
+                    transaction.BlockNumber = newBlock.BlockNumber;
+                    transaction.BlockTime = newBlock.BlockTime;
+                    transaction.IsConfirmed = false;
+
+                    foreach (var logEvent in transaction.LogEvents)
+                    {
+                        logEvent.ChainId = eventData.ChainId;
+                        logEvent.BlockHash = newBlock.BlockHash;
+                        logEvent.BlockNumber = newBlock.BlockNumber;
+                        logEvent.BlockTime = newBlock.BlockTime;
+                        logEvent.IsConfirmed = false;
+                        logEvent.TransactionId = transaction.TransactionId;
+                    }
+                }
                 await _distributedEventBus.PublishAsync(newBlock);
-                _logger.LogInformation($"New Block Event is already published:{newBlock.Id}");
+                _logger.LogInformation($"NewBlock Event is already published:{newBlock.Id}");
 
                 //Todo: confirm blocks event
                 foreach (var libBlock in libBlockList)
                 {
-                    //     _logger.LogInformation("Start publish Event to Rabbitmq");
-                    //     await _distributedEventBus.PublishAsync(
-                    //         new BlockTestEto
-                    //         {
-                    //             Id = Guid.NewGuid(),
-                    //             BlockNumber = eventDataDto.BlockNumber,
-                    //             BlockTime = DateTime.Now,
-                    //             IsConfirmed = eventDataDto.IsConfirmed
-                    //         }
-                    //         );
-                    //     _logger.LogInformation("Test Block Event is already published");
+                    _logger.LogInformation("Start publish confirm Event to Rabbitmq");
+                    var confirmBlock = ObjectMapper.Map<AElfScan.State.Block, ConfirmBlockEto>(libBlock);
+                    await _distributedEventBus.PublishAsync(confirmBlock);
+                    _logger.LogInformation($"Confirm Block Event is already published,block hash:{confirmBlock.BlockHash}");
                 }
             }
         }

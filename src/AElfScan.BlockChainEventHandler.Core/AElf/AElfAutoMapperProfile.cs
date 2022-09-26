@@ -15,5 +15,7 @@ public class AElfAutoMapperProfile:Profile
         CreateMap<BlockEto,NewBlockEto>();
         CreateMap<TransactionEto, Transaction>();
         CreateMap<LogEventEto, LogEvent>();
+
+        CreateMap<AElfScan.State.Block, ConfirmBlockEto>();
     }
 }

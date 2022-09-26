@@ -77,10 +77,8 @@ public class BlockState
         }
         else
         {
-            FindLibBlock(Blocks[previousBlockHash].PreviousBlockHash, libBlockNumber);
+            return FindLibBlock(Blocks[previousBlockHash].PreviousBlockHash, libBlockNumber);
         }
-
-        return null;
     }
 
     private void GetLibBlockList(Block currentLibBlock)

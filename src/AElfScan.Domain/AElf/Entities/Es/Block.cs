@@ -6,19 +6,9 @@ using Nest;
 
 namespace AElfScan.AElf.Entities.Es;
 
-public class Block:AElfScanEntity<Guid>,IIndexBuild,IBlockchainData
+public class Block:AElfScanEntity<string>,IIndexBuild,IBlockchainData
 {
-    public Block()
-    {
-        
-    }
-
-    public Block(Guid id)
-    {
-        
-    }
-    
-    [Keyword] public override Guid Id { get; set; }
+    [Keyword]public override string Id { get; set; }
     public string ChainId { get; set; }
     public string BlockHash { get; set; }
     public long BlockNumber { get; set; }
