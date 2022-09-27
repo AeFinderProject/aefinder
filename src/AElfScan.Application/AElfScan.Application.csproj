@@ -21,10 +21,4 @@
     <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="5.3.4" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Orleans_CodeGenInputs Remove="Orleans\IOrleansClusterClientFactory.cs" />
-    <Orleans_CodeGenInputs Remove="Orleans\Options\OrleansClientOption.cs" />
-    <Orleans_CodeGenInputs Remove="Orleans\OrleansClientFactory.cs" />
-  </ItemGroup>
-
 </Project>

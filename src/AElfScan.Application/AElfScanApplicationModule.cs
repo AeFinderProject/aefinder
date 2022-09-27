@@ -30,8 +30,6 @@ public class AElfScanApplicationModule : AbpModule
         {
             options.AddMaps<AElfScanApplicationModule>();
         });
-        
-        context.Services.AddSingleton<IAElfAppService, AElfTestAppService>();
     }
 }
 

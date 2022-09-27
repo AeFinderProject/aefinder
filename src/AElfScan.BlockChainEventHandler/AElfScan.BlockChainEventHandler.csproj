@@ -30,10 +30,4 @@
       </Content>
     </ItemGroup>
 
-    <ItemGroup>
-      <Orleans_CodeGenInputs Remove="Orleans\IOrleansClusterClientFactory.cs" />
-      <Orleans_CodeGenInputs Remove="Orleans\Options\OrleansClientOption.cs" />
-      <Orleans_CodeGenInputs Remove="Orleans\OrleansClientFactory.cs" />
-    </ItemGroup>
-
 </Project>

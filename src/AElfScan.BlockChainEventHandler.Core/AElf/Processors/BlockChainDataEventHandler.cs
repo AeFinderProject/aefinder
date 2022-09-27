@@ -15,18 +15,18 @@ using Volo.Abp.ObjectMapping;
 
 namespace AElfScan.AElf.Processors;
 
-public class BlockProcessor : IDistributedEventHandler<BlockChainDataEto>, ITransientDependency
+public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDataEto>, ITransientDependency
 {
     private readonly IClusterClient _clusterClient;
-    private readonly ILogger<BlockProcessor> _logger;
+    private readonly ILogger<BlockChainDataEventHandler> _logger;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IAbpLazyServiceProvider _lazyServiceProvider;
     private IObjectMapper ObjectMapper => _lazyServiceProvider.LazyGetService<IObjectMapper>();
     
 
-    public BlockProcessor(
+    public BlockChainDataEventHandler(
         IClusterClient clusterClient,
-        ILogger<BlockProcessor> logger,
+        ILogger<BlockChainDataEventHandler> logger,
         IAbpLazyServiceProvider lazyServiceProvider,
         IDistributedEventBus distributedEventBus)
     {
@@ -41,7 +41,7 @@ public class BlockProcessor : IDistributedEventHandler<BlockChainDataEto>, ITran
         _logger.LogInformation("Start connect to Silo Server....");
         _logger.LogInformation("Prepare Grain Class，While the client IsInitialized:" + _clusterClient.IsInitialized);
 
-        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(17);
+        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(25);
         foreach (var blockItem in eventData.Blocks)
         {
             BlockEventData blockEvent = new BlockEventData();
@@ -50,6 +50,25 @@ public class BlockProcessor : IDistributedEventHandler<BlockChainDataEto>, ITran
             blockEvent.BlockNumber = blockItem.BlockNumber;
             blockEvent.PreviousBlockHash = blockItem.PreviousBlockHash;
             blockEvent.BlockTime = blockItem.BlockTime;
+
+            // if (blockItem.Transactions.Count > 0)
+            // {
+            //     var libLogEvent = blockItem.Transactions.SelectMany(t => t.LogEvents)
+            //         .FirstOrDefault(e => e.EventName == "IrreversibleBlockFound");
+            //     if (libLogEvent != null)
+            //     {
+            //         string logEventIndexed = libLogEvent.ExtraProperties["Indexed"];
+            //         List<string> IndexedList =
+            //             JsonConvert.DeserializeObject<List<string>>(logEventIndexed);
+            //         _logger.LogInformation($"LogEvent-Indexed: {IndexedList[0]}");
+            //         var libFound = new IrreversibleBlockFound();
+            //         libFound.MergeFrom(ByteString.FromBase64(IndexedList[0]));
+            //         _logger.LogInformation(
+            //             $"IrreversibleBlockFound: {libFound}");
+            //         blockEvent.LibBlockNumber = libFound.IrreversibleBlockHeight;
+            //     }
+            // }
+            
 
             if (blockItem.Transactions != null && blockItem.Transactions.Count > 0)
             {
@@ -79,11 +98,7 @@ public class BlockProcessor : IDistributedEventHandler<BlockChainDataEto>, ITran
             _logger.LogInformation("Save Block Number:" + blockEvent.BlockNumber);
             List<Block> libBlockList = await blockGrain.SaveBlock(blockEvent);
             _logger.LogInformation($"libBlockList:{libBlockList}");
-            if (libBlockList == null)
-            {
-                //means block has been ignored
-            }
-            else
+            if (libBlockList != null)
             {
                 //Todo: new block event
                 _logger.LogInformation("Start publish Event to Rabbitmq");
@@ -114,12 +129,13 @@ public class BlockProcessor : IDistributedEventHandler<BlockChainDataEto>, ITran
                 _logger.LogInformation($"NewBlock Event is already published:{newBlock.Id}");
 
                 //Todo: confirm blocks event
-                foreach (var libBlock in libBlockList)
+                _logger.LogInformation("libBlockList length:" + libBlockList.Count);
+
+                if (libBlockList.Count > 0)
                 {
-                    _logger.LogInformation("Start publish confirm Event to Rabbitmq");
-                    var confirmBlock = ObjectMapper.Map<AElfScan.State.Block, ConfirmBlockEto>(libBlock);
-                    await _distributedEventBus.PublishAsync(confirmBlock);
-                    _logger.LogInformation($"Confirm Block Event is already published,block hash:{confirmBlock.BlockHash}");
+                    var confirmBlockList = ObjectMapper.Map<List<AElfScan.State.Block>, List<ConfirmBlockEto>>(libBlockList);
+                    await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
+                        { ConfirmBlocks = confirmBlockList });
                 }
             }
         }

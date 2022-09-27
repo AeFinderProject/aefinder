@@ -5,13 +5,15 @@ using AElf.Indexing.Elasticsearch;
 using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
 using Microsoft.Extensions.Logging;
+using Nest;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
+using Index = System.Index;
 
 namespace AElfScan.AElf;
 
 public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
-    IDistributedEventHandler<ConfirmBlockEto>,ITransientDependency
+    IDistributedEventHandler<ConfirmBlocksEto>,ITransientDependency
 {
     private readonly INESTRepository<BlockTest, Guid> _testRepository;
     private readonly INESTRepository<Block, string> _blockIndexRepository;
@@ -26,13 +28,6 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         _blockIndexRepository = blockIndexRepository;
         _logger = logger;
     }
-    
-    // public async Task HandleEventAsync(BlockTestEto eventData)
-    // {
-    //     var block = eventData;
-    //     _logger.LogInformation($"test block is adding, id: {block.Id}  , BlockNumber: {block.BlockNumber} , IsConfirmed: {block.IsConfirmed}");
-    //     await _testRepository.AddAsync(eventData);
-    // }
 
     public async Task HandleEventAsync(NewBlockEto eventData)
     {
@@ -50,27 +45,51 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         
     }
 
-    public async Task HandleEventAsync(ConfirmBlockEto eventData)
+    public async Task HandleEventAsync(ConfirmBlocksEto eventData)
     {
-        _logger.LogInformation($"block:{eventData.BlockNumber} is confirming");
-        var blockIndex = await _blockIndexRepository.GetAsync(eventData.BlockHash);
-        if (blockIndex != null)
+        foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
-            blockIndex.IsConfirmed = true;
-            foreach (var transaction in blockIndex.Transactions)
+            _logger.LogInformation($"block:{confirmBlock.BlockNumber} is confirming");
+            var blockIndex = await _blockIndexRepository.GetAsync(confirmBlock.BlockHash);
+            if (blockIndex != null)
             {
-                transaction.IsConfirmed = true;
-                foreach (var logEvent in transaction.LogEvents)
+                blockIndex.IsConfirmed = true;
+                foreach (var transaction in blockIndex.Transactions)
                 {
-                    logEvent.IsConfirmed = true;
+                    transaction.IsConfirmed = true;
+                    foreach (var logEvent in transaction.LogEvents)
+                    {
+                        logEvent.IsConfirmed = true;
+                    }
                 }
+
+                await _blockIndexRepository.UpdateAsync(blockIndex);
+            }
+            else
+            {
+                _logger.LogInformation($"Confirm failure,block{confirmBlock.BlockHash} is not exist!");
+            }
+        
+            //find the same height blocks
+            var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockNumber).Value(confirmBlock.BlockNumber)));
+            QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Bool(b => b.Must(mustQuery));
+
+            var forkBlockList=await _blockIndexRepository.GetListAsync(Filter);
+            if (forkBlockList.Item1 == 0)
+            {
+                return;
             }
 
-            await _blockIndexRepository.UpdateAsync(blockIndex);
+            //delete the same height fork block
+            var blockHashs = forkBlockList.Item2.Select(b => b.BlockHash).ToList();
+            blockHashs.Remove(confirmBlock.BlockHash);
+            foreach (var blockHash in blockHashs)
+            {
+                _blockIndexRepository.DeleteAsync(blockHash);
+                _logger.LogInformation($"block {blockHash} has been deleted.");
+            }
         }
-        else
-        {
-            _logger.LogInformation($"Confirm failure,block{eventData.BlockHash} is not exist!");
-        }
+        
     }
 }

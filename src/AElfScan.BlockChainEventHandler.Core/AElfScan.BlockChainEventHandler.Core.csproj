@@ -20,4 +20,8 @@
       </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+      <Orleans_CodeGenInputs Remove="AElf\Mappers\BlockMapper.cs" />
+    </ItemGroup>
+
 </Project>
