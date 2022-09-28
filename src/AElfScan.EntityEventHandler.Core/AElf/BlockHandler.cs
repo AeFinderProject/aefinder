@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
@@ -15,16 +16,13 @@ namespace AElfScan.AElf;
 public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,ITransientDependency
 {
-    private readonly INESTRepository<BlockTest, Guid> _testRepository;
-    private readonly INESTRepository<Block, string> _blockIndexRepository;
+    private readonly INESTRepository<Block, Guid> _blockIndexRepository;
     private readonly ILogger<BlockHandler> _logger;
 
     public BlockHandler(
-        INESTRepository<BlockTest, Guid> testRepository,
-        INESTRepository<Block,string> blockIndexRepository,
+        INESTRepository<Block,Guid> blockIndexRepository,
         ILogger<BlockHandler> logger)
     {
-        _testRepository = testRepository;
         _blockIndexRepository = blockIndexRepository;
         _logger = logger;
     }
@@ -32,8 +30,9 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     public async Task HandleEventAsync(NewBlockEto eventData)
     {
         var block = eventData;
-        _logger.LogInformation($"test block is adding, id: {block.Id}  , BlockNumber: {block.BlockNumber} , IsConfirmed: {block.IsConfirmed}");
-        var blockIndex = await _blockIndexRepository.GetAsync(eventData.BlockHash);
+        _logger.LogInformation($"test block is adding, id: {block.BlockHash}  , BlockNumber: {block.BlockNumber} , IsConfirmed: {block.IsConfirmed}");
+        var blockIndex = await _blockIndexRepository.GetAsync(q=>
+            q.Term(i=>i.Field(f=>f.BlockHash).Value(eventData.BlockHash)));
         if (blockIndex != null)
         {
             _logger.LogInformation($"block already exist-{blockIndex}, Add failure!");
@@ -50,7 +49,8 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
             _logger.LogInformation($"block:{confirmBlock.BlockNumber} is confirming");
-            var blockIndex = await _blockIndexRepository.GetAsync(confirmBlock.BlockHash);
+            var blockIndex = await _blockIndexRepository.GetAsync(q=>
+                q.Term(i=>i.Field(f=>f.BlockHash).Value(confirmBlock.BlockHash)));
             if (blockIndex != null)
             {
                 blockIndex.IsConfirmed = true;
@@ -68,6 +68,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             else
             {
                 _logger.LogInformation($"Confirm failure,block{confirmBlock.BlockHash} is not exist!");
+                throw new DataException($"Block {confirmBlock.BlockHash} is not exist,confirm block failure!");
             }
         
             //find the same height blocks
@@ -78,16 +79,18 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             var forkBlockList=await _blockIndexRepository.GetListAsync(Filter);
             if (forkBlockList.Item1 == 0)
             {
-                return;
+                continue;
             }
 
             //delete the same height fork block
-            var blockHashs = forkBlockList.Item2.Select(b => b.BlockHash).ToList();
-            blockHashs.Remove(confirmBlock.BlockHash);
-            foreach (var blockHash in blockHashs)
+            foreach (var forkBlock in forkBlockList.Item2)
             {
-                _blockIndexRepository.DeleteAsync(blockHash);
-                _logger.LogInformation($"block {blockHash} has been deleted.");
+                if (forkBlock.BlockHash == confirmBlock.BlockHash)
+                {
+                    continue;
+                }
+                _blockIndexRepository.DeleteAsync(forkBlock.Id);
+                _logger.LogInformation($"block {forkBlock.BlockHash} has been deleted.");
             }
         }
         

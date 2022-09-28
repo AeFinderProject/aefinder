@@ -3,7 +3,6 @@ using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Etos;
 using AElfScan.EventData;
 using AElfScan.Grain;
-using AElfScan.Orleans;
 using AElfScan.State;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
@@ -20,28 +19,25 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<BlockChainDataEventHandler> _logger;
     private readonly IDistributedEventBus _distributedEventBus;
-    private readonly IAbpLazyServiceProvider _lazyServiceProvider;
-    private IObjectMapper ObjectMapper => _lazyServiceProvider.LazyGetService<IObjectMapper>();
+    private readonly IObjectMapper _objectMapper;
     
 
     public BlockChainDataEventHandler(
         IClusterClient clusterClient,
         ILogger<BlockChainDataEventHandler> logger,
-        IAbpLazyServiceProvider lazyServiceProvider,
+        IObjectMapper objectMapper,
         IDistributedEventBus distributedEventBus)
     {
         _clusterClient = clusterClient;
         _logger = logger;
-        _lazyServiceProvider = lazyServiceProvider;
         _distributedEventBus = distributedEventBus;
+        _objectMapper = objectMapper;
     }
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
-        _logger.LogInformation("Start connect to Silo Server....");
-        _logger.LogInformation("Prepare Grain Class，While the client IsInitialized:" + _clusterClient.IsInitialized);
-
-        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(25);
+        _logger.LogInformation("Start connect to a Silo Server to get a grain");
+        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(38);
         foreach (var blockItem in eventData.Blocks)
         {
             BlockEventData blockEvent = new BlockEventData();
@@ -51,89 +47,37 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             blockEvent.PreviousBlockHash = blockItem.PreviousBlockHash;
             blockEvent.BlockTime = blockItem.BlockTime;
 
-            // if (blockItem.Transactions.Count > 0)
-            // {
-            //     var libLogEvent = blockItem.Transactions.SelectMany(t => t.LogEvents)
-            //         .FirstOrDefault(e => e.EventName == "IrreversibleBlockFound");
-            //     if (libLogEvent != null)
-            //     {
-            //         string logEventIndexed = libLogEvent.ExtraProperties["Indexed"];
-            //         List<string> IndexedList =
-            //             JsonConvert.DeserializeObject<List<string>>(logEventIndexed);
-            //         _logger.LogInformation($"LogEvent-Indexed: {IndexedList[0]}");
-            //         var libFound = new IrreversibleBlockFound();
-            //         libFound.MergeFrom(ByteString.FromBase64(IndexedList[0]));
-            //         _logger.LogInformation(
-            //             $"IrreversibleBlockFound: {libFound}");
-            //         blockEvent.LibBlockNumber = libFound.IrreversibleBlockHeight;
-            //     }
-            // }
-            
-
-            if (blockItem.Transactions != null && blockItem.Transactions.Count > 0)
+            //analysis lib found event content
+            var libLogEvent = blockItem.Transactions?.SelectMany(t => t.LogEvents)
+                .FirstOrDefault(e => e.EventName == "IrreversibleBlockFound");
+            if (libLogEvent != null)
             {
-                foreach (var transactionItem in blockItem.Transactions)
-                {
-                    if (transactionItem.LogEvents != null && transactionItem.LogEvents.Count > 0)
-                    {
-                        foreach (var logEventItem in transactionItem.LogEvents)
-                        {
-                            if (logEventItem.EventName == "IrreversibleBlockFound")
-                            {
-                                string logEventIndexed = logEventItem.ExtraProperties["Indexed"];
-                                List<string> IndexedList =
-                                    JsonConvert.DeserializeObject<List<string>>(logEventIndexed);
-                                _logger.LogInformation($"LogEvent-Indexed: {IndexedList[0]}");
-                                var libFound = new IrreversibleBlockFound();
-                                libFound.MergeFrom(ByteString.FromBase64(IndexedList[0]));
-                                _logger.LogInformation(
-                                    $"IrreversibleBlockFound: {libFound}");
-                                blockEvent.LibBlockNumber = libFound.IrreversibleBlockHeight;
-                            }
-                        }
-                    }
-                }
+                string logEventIndexed = libLogEvent.ExtraProperties["Indexed"];
+                List<string> IndexedList =
+                    JsonConvert.DeserializeObject<List<string>>(logEventIndexed);
+                var libFound = new IrreversibleBlockFound();
+                libFound.MergeFrom(ByteString.FromBase64(IndexedList[0]));
+                _logger.LogInformation(
+                    $"IrreversibleBlockFound: {libFound}");
+                blockEvent.LibBlockNumber = libFound.IrreversibleBlockHeight;
             }
+
 
             _logger.LogInformation("Save Block Number:" + blockEvent.BlockNumber);
             List<Block> libBlockList = await blockGrain.SaveBlock(blockEvent);
             _logger.LogInformation($"libBlockList:{libBlockList}");
             if (libBlockList != null)
             {
-                //Todo: new block event
-                _logger.LogInformation("Start publish Event to Rabbitmq");
-                NewBlockEto newBlock = ObjectMapper.Map<BlockEto, NewBlockEto>(blockItem);
-                // newBlock.Id = Guid.NewGuid();
-                newBlock.Id = newBlock.BlockHash;
-                newBlock.ChainId = eventData.ChainId;
-                newBlock.IsConfirmed = false;
-                foreach (var transaction in newBlock.Transactions)
-                {
-                    transaction.ChainId = eventData.ChainId;
-                    transaction.BlockHash = newBlock.BlockHash;
-                    transaction.BlockNumber = newBlock.BlockNumber;
-                    transaction.BlockTime = newBlock.BlockTime;
-                    transaction.IsConfirmed = false;
+                //publish new block event
+                await _distributedEventBus.PublishAsync(ConvertToNewBlockEto(blockItem,eventData.ChainId));
+                _logger.LogInformation($"NewBlock Event is already published:{blockItem.BlockHash}");
 
-                    foreach (var logEvent in transaction.LogEvents)
-                    {
-                        logEvent.ChainId = eventData.ChainId;
-                        logEvent.BlockHash = newBlock.BlockHash;
-                        logEvent.BlockNumber = newBlock.BlockNumber;
-                        logEvent.BlockTime = newBlock.BlockTime;
-                        logEvent.IsConfirmed = false;
-                        logEvent.TransactionId = transaction.TransactionId;
-                    }
-                }
-                await _distributedEventBus.PublishAsync(newBlock);
-                _logger.LogInformation($"NewBlock Event is already published:{newBlock.Id}");
-
-                //Todo: confirm blocks event
+                //publish confirm blocks event
                 _logger.LogInformation("libBlockList length:" + libBlockList.Count);
-
                 if (libBlockList.Count > 0)
                 {
-                    var confirmBlockList = ObjectMapper.Map<List<AElfScan.State.Block>, List<ConfirmBlockEto>>(libBlockList);
+                    var confirmBlockList =
+                        _objectMapper.Map<List<AElfScan.State.Block>, List<ConfirmBlockEto>>(libBlockList);
                     await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                         { ConfirmBlocks = confirmBlockList });
                 }
@@ -143,5 +87,34 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         _logger.LogInformation("Stop connect to Silo Server");
 
         await Task.CompletedTask;
+    }
+
+    private NewBlockEto ConvertToNewBlockEto(BlockEto blockItem,string chainId)
+    {
+        NewBlockEto newBlock = _objectMapper.Map<BlockEto, NewBlockEto>(blockItem);
+        newBlock.Id = Guid.NewGuid();
+        // newBlock.Id = newBlock.BlockHash;
+        newBlock.ChainId = chainId;
+        newBlock.IsConfirmed = false;
+        foreach (var transaction in newBlock.Transactions)
+        {
+            transaction.ChainId = chainId;
+            transaction.BlockHash = newBlock.BlockHash;
+            transaction.BlockNumber = newBlock.BlockNumber;
+            transaction.BlockTime = newBlock.BlockTime;
+            transaction.IsConfirmed = false;
+
+            foreach (var logEvent in transaction.LogEvents)
+            {
+                logEvent.ChainId = chainId;
+                logEvent.BlockHash = newBlock.BlockHash;
+                logEvent.BlockNumber = newBlock.BlockNumber;
+                logEvent.BlockTime = newBlock.BlockTime;
+                logEvent.IsConfirmed = false;
+                logEvent.TransactionId = transaction.TransactionId;
+            }
+        }
+
+        return newBlock;
     }
 }

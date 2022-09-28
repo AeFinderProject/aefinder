@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
+using Nest;
 
 namespace AElfScan.AElf.Entities.Es;
 
 public class LogEvent:IBlockchainData
 {
-    public string ChainId { get; set; }
+    [Keyword]public string ChainId { get; set; }
     /// <summary>
     /// 区块Hash
     /// </summary>
-    public string BlockHash { get; set; }
+    [Keyword]public string BlockHash { get; set; }
     
     /// <summary>
     /// 区块高度
@@ -19,13 +20,13 @@ public class LogEvent:IBlockchainData
     /// <summary>
     /// 交易Id
     /// </summary>
-    public string TransactionId { get; set; }
+    [Keyword]public string TransactionId { get; set; }
     
     public DateTime BlockTime { get; set; }
     
-    public string ContractAddress { get; set; }
+    [Keyword]public string ContractAddress { get; set; }
     
-    public string EventName { get; set; }
+    [Keyword]public string EventName { get; set; }
     
     /// <summary>
     /// 事件在交易内的排序位置 or Block内的排序位置？

@@ -2,7 +2,6 @@ using Volo.Abp.EventBus;
 
 namespace AElfScan.AElf.Etos;
 
-[EventName("AElf.ConfirmBlock")]
 public class ConfirmBlockEto
 {
     public string ChainId { get; set; }

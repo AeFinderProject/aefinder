@@ -33,19 +33,17 @@ public class BlockState
 
     private Block FindLibBlock(string previousBlockHash, long libBlockNumber)
     {
-        if (!Blocks.ContainsKey(previousBlockHash))
+        while (Blocks.ContainsKey(previousBlockHash))
         {
-            return null;
+            if (Blocks[previousBlockHash].BlockNumber == libBlockNumber)
+            {
+                return Blocks[previousBlockHash];
+            }
+
+            previousBlockHash = Blocks[previousBlockHash].PreviousBlockHash;
         }
 
-        if (Blocks[previousBlockHash].BlockNumber == libBlockNumber)
-        {
-            return Blocks[previousBlockHash];
-        }
-        else
-        {
-            return FindLibBlock(Blocks[previousBlockHash].PreviousBlockHash, libBlockNumber);
-        }
+        return null;
     }
     
 }

@@ -38,30 +38,26 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         {
             GetLibBlockList(currentLibBlock, libBlockList);
         }
-
-        _logger.LogInformation("Start Raise Event of Block Number:" + blockEvent.BlockNumber);
+        
         RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0);
         await ConfirmEvents();
-        Console.WriteLine("Event has been comfirmed! eventtime:" + blockEvent.BlockTime);
-        
+
         return libBlockList;
     }
     
     private Block FindLibBlock(string previousBlockHash, long libBlockNumber)
     {
-        if (!this.State.Blocks.ContainsKey(previousBlockHash))
+        while (this.State.Blocks.ContainsKey(previousBlockHash))
         {
-            return null;
+            if (this.State.Blocks[previousBlockHash].BlockNumber == libBlockNumber)
+            {
+                return this.State.Blocks[previousBlockHash];
+            }
+
+            previousBlockHash = this.State.Blocks[previousBlockHash].PreviousBlockHash;
         }
 
-        if (this.State.Blocks[previousBlockHash].BlockNumber == libBlockNumber)
-        {
-            return this.State.Blocks[previousBlockHash];
-        }
-        else
-        {
-            return FindLibBlock(this.State.Blocks[previousBlockHash].PreviousBlockHash, libBlockNumber);
-        }
+        return null;
     }
     
     private void GetLibBlockList(Block currentLibBlock,List<Block> libBlockList)
@@ -69,18 +65,17 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         currentLibBlock.IsConfirmed = true;
         libBlockList.Add(currentLibBlock);
 
-        if (!this.State.Blocks.ContainsKey(currentLibBlock.PreviousBlockHash))
+        while (this.State.Blocks.ContainsKey(currentLibBlock.PreviousBlockHash))
         {
-            return;
-        }
-
-        if (this.State.Blocks[currentLibBlock.PreviousBlockHash].IsConfirmed)
-        {
+            if (this.State.Blocks[currentLibBlock.PreviousBlockHash].IsConfirmed)
+            {
+                libBlockList.Add(this.State.Blocks[currentLibBlock.PreviousBlockHash]);
+                return;
+            }
+            
+            this.State.Blocks[currentLibBlock.PreviousBlockHash].IsConfirmed = true;
             libBlockList.Add(this.State.Blocks[currentLibBlock.PreviousBlockHash]);
-        }
-        else
-        {
-            GetLibBlockList(this.State.Blocks[currentLibBlock.PreviousBlockHash],libBlockList);
+            currentLibBlock = this.State.Blocks[currentLibBlock.PreviousBlockHash];
         }
     }
     

@@ -9,5 +9,5 @@ public class BlockEto
     public string SignerPubkey { get; set; }
     public string Signature { get; set; }
     public Dictionary<string, string> ExtraProperties {get;set;}
-    public List<TransactionEto> Transactions{get;set;}
+    public List<TransactionEto> Transactions { get; set; } = new List<TransactionEto>();
 }
