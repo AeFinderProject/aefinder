@@ -13,6 +13,7 @@
       <PackageReference Include="Microsoft.Orleans.EventSourcing" Version="3.6.5" />
       <PackageReference Include="Microsoft.Orleans.Server" Version="3.6.5" />
       <PackageReference Include="Orleans.EventSourcing.Snapshot" Version="1.0.2" />
+      <PackageReference Include="Orleans.Persistence.Redis" Version="3.2.2" />
       <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />
       <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
       <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />

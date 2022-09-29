@@ -37,7 +37,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
         _logger.LogInformation("Start connect to a Silo Server to get a grain");
-        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(38);
+        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(41);
         foreach (var blockItem in eventData.Blocks)
         {
             BlockEventData blockEvent = new BlockEventData();
