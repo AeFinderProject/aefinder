@@ -37,7 +37,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
         _logger.LogInformation("Start connect to a Silo Server to get a grain");
-        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(41);
+        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(45);
         foreach (var blockItem in eventData.Blocks)
         {
             BlockEventData blockEvent = new BlockEventData();
@@ -52,14 +52,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                 .FirstOrDefault(e => e.EventName == "IrreversibleBlockFound");
             if (libLogEvent != null)
             {
-                string logEventIndexed = libLogEvent.ExtraProperties["Indexed"];
-                List<string> IndexedList =
-                    JsonConvert.DeserializeObject<List<string>>(logEventIndexed);
-                var libFound = new IrreversibleBlockFound();
-                libFound.MergeFrom(ByteString.FromBase64(IndexedList[0]));
-                _logger.LogInformation(
-                    $"IrreversibleBlockFound: {libFound}");
-                blockEvent.LibBlockNumber = libFound.IrreversibleBlockHeight;
+                blockEvent.LibBlockNumber = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
             }
 
 
@@ -87,6 +80,17 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         _logger.LogInformation("Stop connect to Silo Server");
 
         await Task.CompletedTask;
+    }
+
+    private long AnalysisBlockLibFoundEvent(string logEventIndexed)
+    {
+        List<string> IndexedList =
+            JsonConvert.DeserializeObject<List<string>>(logEventIndexed);
+        var libFound = new IrreversibleBlockFound();
+        libFound.MergeFrom(ByteString.FromBase64(IndexedList[0]));
+        _logger.LogInformation(
+            $"IrreversibleBlockFound: {libFound}");
+        return libFound.IrreversibleBlockHeight;
     }
 
     private NewBlockEto ConvertToNewBlockEto(BlockEto blockItem,string chainId)

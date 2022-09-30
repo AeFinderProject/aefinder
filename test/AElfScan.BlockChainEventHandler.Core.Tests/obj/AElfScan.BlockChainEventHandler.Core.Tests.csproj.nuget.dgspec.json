@@ -1,0 +1,671 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.BlockChainEventHandler.Core.Tests/AElfScan.BlockChainEventHandler.Core.Tests.csproj": {}
+  },
+  "projects": {
+    "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler.Core/AElfScan.BlockChainEventHandler.Core.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler.Core/AElfScan.BlockChainEventHandler.Core.csproj",
+        "projectName": "AElfScan.BlockChainEventHandler.Core",
+        "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler.Core/AElfScan.BlockChainEventHandler.Core.csproj",
+        "packagesPath": "/Users/shiyibo/.nuget/packages/",
+        "outputPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler.Core/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/NuGet.Config",
+          "/Users/shiyibo/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.myget.org/F/aelf-project-dev/api/v3/index.json": {},
+          "https://www.myget.org/F/blazorise/api/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain/AElfScan.Domain.csproj": {
+                "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain/AElfScan.Domain.csproj"
+              },
+              "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Orleans.EventSourcing/AElfScan.Orleans.EventSourcing.csproj": {
+                "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Orleans.EventSourcing/AElfScan.Orleans.EventSourcing.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "AElf.CSharp.Core": {
+              "target": "Package",
+              "version": "[1.2.1, )"
+            },
+            "Microsoft.Orleans.Client": {
+              "target": "Package",
+              "version": "[3.6.5, )"
+            },
+            "Microsoft.Orleans.CodeGenerator.MSBuild": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[3.6.5, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/6.0.302/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler/AElfScan.BlockChainEventHandler.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler/AElfScan.BlockChainEventHandler.csproj",
+        "projectName": "AElfScan.BlockChainEventHandler",
+        "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler/AElfScan.BlockChainEventHandler.csproj",
+        "packagesPath": "/Users/shiyibo/.nuget/packages/",
+        "outputPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/NuGet.Config",
+          "/Users/shiyibo/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.myget.org/F/aelf-project-dev/api/v3/index.json": {},
+          "https://www.myget.org/F/blazorise/api/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler.Core/AElfScan.BlockChainEventHandler.Core.csproj": {
+                "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler.Core/AElfScan.BlockChainEventHandler.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.DataProtection.StackExchangeRedis": {
+              "target": "Package",
+              "version": "[6.0.8, )"
+            },
+            "Serilog.AspNetCore": {
+              "target": "Package",
+              "version": "[6.0.1, )"
+            },
+            "Serilog.Sinks.Async": {
+              "target": "Package",
+              "version": "[1.5.0, )"
+            },
+            "Serilog.Sinks.RollingFile": {
+              "target": "Package",
+              "version": "[3.3.0, )"
+            },
+            "Volo.Abp.AspNetCore.Serilog": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.Autofac": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.Caching.StackExchangeRedis": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.EventBus.RabbitMQ": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.Swashbuckle": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/6.0.302/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain.Shared/AElfScan.Domain.Shared.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain.Shared/AElfScan.Domain.Shared.csproj",
+        "projectName": "AElfScan.Domain.Shared",
+        "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain.Shared/AElfScan.Domain.Shared.csproj",
+        "packagesPath": "/Users/shiyibo/.nuget/packages/",
+        "outputPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain.Shared/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/NuGet.Config",
+          "/Users/shiyibo/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netstandard2.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.myget.org/F/aelf-project-dev/api/v3/index.json": {},
+          "https://www.myget.org/F/blazorise/api/v3/index.json": {}
+        },
+        "frameworks": {
+          "netstandard2.0": {
+            "targetAlias": "netstandard2.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
+          "dependencies": {
+            "Microsoft.Extensions.FileProviders.Embedded": {
+              "target": "Package",
+              "version": "[6.0.5, )"
+            },
+            "NETStandard.Library": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.0.3, )",
+              "autoReferenced": true
+            },
+            "Volo.Abp.AuditLogging.Domain.Shared": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.BackgroundJobs.Domain.Shared": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.FeatureManagement.Domain.Shared": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.Identity.Domain.Shared": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.IdentityServer.Domain.Shared": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.PermissionManagement.Domain.Shared": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.SettingManagement.Domain.Shared": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.TenantManagement.Domain.Shared": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/6.0.302/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain/AElfScan.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain/AElfScan.Domain.csproj",
+        "projectName": "AElfScan.Domain",
+        "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain/AElfScan.Domain.csproj",
+        "packagesPath": "/Users/shiyibo/.nuget/packages/",
+        "outputPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/NuGet.Config",
+          "/Users/shiyibo/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.myget.org/F/aelf-project-dev/api/v3/index.json": {},
+          "https://www.myget.org/F/blazorise/api/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain.Shared/AElfScan.Domain.Shared.csproj": {
+                "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain.Shared/AElfScan.Domain.Shared.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "AElf.Indexing.Elasticsearch": {
+              "target": "Package",
+              "version": "[0.0.2, )"
+            },
+            "Volo.Abp.AuditLogging.Domain": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.BackgroundJobs.Domain": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.Emailing": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.FeatureManagement.Domain": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.Identity.Domain": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.IdentityServer.Domain": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.PermissionManagement.Domain.Identity": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.PermissionManagement.Domain.IdentityServer": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.SettingManagement.Domain": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.TenantManagement.Domain": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/6.0.302/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Orleans.EventSourcing/AElfScan.Orleans.EventSourcing.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Orleans.EventSourcing/AElfScan.Orleans.EventSourcing.csproj",
+        "projectName": "AElfScan.Orleans.EventSourcing",
+        "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Orleans.EventSourcing/AElfScan.Orleans.EventSourcing.csproj",
+        "packagesPath": "/Users/shiyibo/.nuget/packages/",
+        "outputPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Orleans.EventSourcing/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/NuGet.Config",
+          "/Users/shiyibo/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.myget.org/F/aelf-project-dev/api/v3/index.json": {},
+          "https://www.myget.org/F/blazorise/api/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "Microsoft.Orleans.CodeGenerator.MSBuild": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[3.6.5, )"
+            },
+            "Microsoft.Orleans.Core.Abstractions": {
+              "target": "Package",
+              "version": "[3.6.5, )"
+            },
+            "Microsoft.Orleans.EventSourcing": {
+              "target": "Package",
+              "version": "[3.6.5, )"
+            },
+            "Orleans.EventSourcing.Snapshot": {
+              "target": "Package",
+              "version": "[1.0.2, )"
+            },
+            "Volo.Abp.Autofac": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.BackgroundJobs.Domain": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/6.0.302/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.BlockChainEventHandler.Core.Tests/AElfScan.BlockChainEventHandler.Core.Tests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.BlockChainEventHandler.Core.Tests/AElfScan.BlockChainEventHandler.Core.Tests.csproj",
+        "projectName": "AElfScan.BlockChainEventHandler.Core.Tests",
+        "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.BlockChainEventHandler.Core.Tests/AElfScan.BlockChainEventHandler.Core.Tests.csproj",
+        "packagesPath": "/Users/shiyibo/.nuget/packages/",
+        "outputPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.BlockChainEventHandler.Core.Tests/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/NuGet.Config",
+          "/Users/shiyibo/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.myget.org/F/aelf-project-dev/api/v3/index.json": {},
+          "https://www.myget.org/F/blazorise/api/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler.Core/AElfScan.BlockChainEventHandler.Core.csproj": {
+                "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler.Core/AElfScan.BlockChainEventHandler.Core.csproj"
+              },
+              "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler/AElfScan.BlockChainEventHandler.csproj": {
+                "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.BlockChainEventHandler/AElfScan.BlockChainEventHandler.csproj"
+              },
+              "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.TestBase/AElfScan.TestBase.csproj": {
+                "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.TestBase/AElfScan.TestBase.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[17.3.2, )"
+            },
+            "Microsoft.Orleans.CodeGenerator.MSBuild": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[3.6.5, )"
+            },
+            "Microsoft.Orleans.Server": {
+              "target": "Package",
+              "version": "[3.6.5, )"
+            },
+            "Microsoft.Orleans.TestingHost": {
+              "target": "Package",
+              "version": "[3.6.5, )"
+            },
+            "Orleans.Persistence.Redis": {
+              "target": "Package",
+              "version": "[3.2.2, )"
+            },
+            "Volo.Abp.EventBus.RabbitMQ": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.4.2, )"
+            },
+            "xunit.runner.console": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.4.2, )"
+            },
+            "xunit.runner.visualstudio": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.4.5, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/6.0.302/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.TestBase/AElfScan.TestBase.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.TestBase/AElfScan.TestBase.csproj",
+        "projectName": "AElfScan.TestBase",
+        "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.TestBase/AElfScan.TestBase.csproj",
+        "packagesPath": "/Users/shiyibo/.nuget/packages/",
+        "outputPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.TestBase/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/NuGet.Config",
+          "/Users/shiyibo/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.myget.org/F/aelf-project-dev/api/v3/index.json": {},
+          "https://www.myget.org/F/blazorise/api/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {
+              "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain/AElfScan.Domain.csproj": {
+                "projectPath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/src/AElfScan.Domain/AElfScan.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[17.2.0, )"
+            },
+            "NSubstitute": {
+              "target": "Package",
+              "version": "[4.3.0, )"
+            },
+            "Shouldly": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
+            "Volo.Abp.Authorization": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.Autofac": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "Volo.Abp.TestBase": {
+              "target": "Package",
+              "version": "[5.3.4, )"
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.4.1, )"
+            },
+            "xunit.extensibility.execution": {
+              "target": "Package",
+              "version": "[2.4.1, )"
+            },
+            "xunit.runner.visualstudio": {
+              "target": "Package",
+              "version": "[2.4.5, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/6.0.302/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

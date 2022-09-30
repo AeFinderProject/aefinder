@@ -31,8 +31,13 @@ public class BlockState
         Blocks.Add(blockEvent.BlockHash, newBlock);
     }
 
-    private Block FindLibBlock(string previousBlockHash, long libBlockNumber)
+    public Block FindLibBlock(string previousBlockHash, long libBlockNumber)
     {
+        if (libBlockNumber <= 0)
+        {
+            return null;
+        }
+        
         while (Blocks.ContainsKey(previousBlockHash))
         {
             if (Blocks[previousBlockHash].BlockNumber == libBlockNumber)

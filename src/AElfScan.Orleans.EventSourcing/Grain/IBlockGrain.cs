@@ -8,5 +8,7 @@ namespace AElfScan.Grain;
 public interface IBlockGrain : IGrainWithIntegerKey
 {
     Task<List<Block>> SaveBlock(BlockEventData blockEvent);
+
+    Task<Dictionary<string, Block>> GetBlockDictionary();
 }
 

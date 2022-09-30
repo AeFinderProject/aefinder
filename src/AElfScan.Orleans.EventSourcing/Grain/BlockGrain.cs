@@ -6,6 +6,7 @@ using Orleans.EventSourcing;
 using Volo.Abp.DependencyInjection;
 using Orleans.EventSourcing.Snapshot;
 using Orleans.Providers;
+using Volo.Abp.Auditing;
 using Volo.Abp.EventBus.Distributed;
 
 namespace AElfScan.Grain;
@@ -20,23 +21,29 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         _logger = logger;
     }
 
+    public async Task<Dictionary<string, Block>> GetBlockDictionary()
+    {
+        return this.State.Blocks;
+    }
+
     public async Task<List<Block>> SaveBlock(BlockEventData blockEvent)
     {
         //Ignore blocks with height less than LIB block in Dictionary
-        foreach (var block in this.State.Blocks)
+        var dicLibBlock = this.State.Blocks.Where(b => b.Value.IsConfirmed)
+            .Select(x => x.Value)
+            .FirstOrDefault();
+        if (dicLibBlock != null && dicLibBlock.BlockNumber >= blockEvent.BlockNumber)
         {
-            if (block.Value.IsConfirmed && blockEvent.BlockNumber <= block.Value.BlockNumber)
-            {
-                return null;
-            }
+            return null;
         }
+        
 
-        Block currentLibBlock = FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
+        Block currentLibBlock = this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
         
         List<Block> libBlockList = new List<Block>();
         if (currentLibBlock != null)
         {
-            GetLibBlockList(currentLibBlock, libBlockList);
+            GetLibBlockList(currentLibBlock.BlockHash, libBlockList);
         }
         
         RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0);
@@ -45,37 +52,19 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         return libBlockList;
     }
     
-    private Block FindLibBlock(string previousBlockHash, long libBlockNumber)
+    private void GetLibBlockList(string currentLibBlockHash, List<Block> libBlockList)
     {
-        while (this.State.Blocks.ContainsKey(previousBlockHash))
+        while (this.State.Blocks.ContainsKey(currentLibBlockHash))
         {
-            if (this.State.Blocks[previousBlockHash].BlockNumber == libBlockNumber)
+            if (this.State.Blocks[currentLibBlockHash].IsConfirmed)
             {
-                return this.State.Blocks[previousBlockHash];
-            }
-
-            previousBlockHash = this.State.Blocks[previousBlockHash].PreviousBlockHash;
-        }
-
-        return null;
-    }
-    
-    private void GetLibBlockList(Block currentLibBlock,List<Block> libBlockList)
-    {
-        currentLibBlock.IsConfirmed = true;
-        libBlockList.Add(currentLibBlock);
-
-        while (this.State.Blocks.ContainsKey(currentLibBlock.PreviousBlockHash))
-        {
-            if (this.State.Blocks[currentLibBlock.PreviousBlockHash].IsConfirmed)
-            {
-                libBlockList.Add(this.State.Blocks[currentLibBlock.PreviousBlockHash]);
+                libBlockList.Add(this.State.Blocks[currentLibBlockHash]);
                 return;
             }
             
-            this.State.Blocks[currentLibBlock.PreviousBlockHash].IsConfirmed = true;
-            libBlockList.Add(this.State.Blocks[currentLibBlock.PreviousBlockHash]);
-            currentLibBlock = this.State.Blocks[currentLibBlock.PreviousBlockHash];
+            this.State.Blocks[currentLibBlockHash].IsConfirmed = true;
+            libBlockList.Add(this.State.Blocks[currentLibBlockHash]);
+            currentLibBlockHash = this.State.Blocks[currentLibBlockHash].PreviousBlockHash;
         }
     }
     

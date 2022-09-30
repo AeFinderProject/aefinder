@@ -31,7 +31,7 @@ public static class OrleansHostExtensions
         {
             //Configure OrleansSnapshot
             siloBuilder.UseLocalhostClustering()
-                .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
+                // .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
                 // .AddMongoDBGrainStorage("Default",(MongoDBGrainStorageOptions op) =>
                 // {
                 //     op.CollectionPrefix = "GrainStorage";
