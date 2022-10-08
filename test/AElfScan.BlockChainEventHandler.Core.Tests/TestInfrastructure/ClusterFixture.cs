@@ -5,10 +5,11 @@ using Orleans.Configuration;
 using Orleans.EventSourcing.Snapshot.Hosting;
 using Orleans.Hosting;
 using Orleans.TestingHost;
+using Volo.Abp.DependencyInjection;
 
 namespace AElfScan.TestInfrastructure;
 
-public class ClusterFixture:IDisposable
+public class ClusterFixture:IDisposable,ISingletonDependency
 {
     public ClusterFixture()
     {

@@ -16,9 +16,6 @@ public class AElfScanBlockChainEventHandlerCoreTestModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        // context.Services.AddSingleton<IClusterClient>(sp => sp.GetService<ClusterFixture>().Cluster.Client);
-        // context.Services.AddSingleton<IGrainFactory>(sp =>
-        //     sp.GetService<ClusterFixture>().Cluster.Client);
-        context.Services.AddSingleton(new ClusterFixture().Cluster.Client);
+        context.Services.AddSingleton<IClusterClient>(sp => sp.GetService<ClusterFixture>().Cluster.Client);
     }
 }

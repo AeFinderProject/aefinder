@@ -21,8 +21,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         _cluster = fixture.Cluster;
     }
 
-    [Fact]
-    public async Task test()
+    public BlockChainDataEto MockBasicEtoData(long blockNumber)
     {
         var blockChainDataEto = new BlockChainDataEto
         {
@@ -32,7 +31,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
                     new BlockEto()
                     {
                         BlockHash = "3de406161fb47785641612e953973de8a018003065633ce52973378f31240456",
-                        BlockNumber = 10,
+                        BlockNumber = blockNumber,
                         BlockTime = DateTime.Now,
                         PreviousBlockHash = "19456c0236cac35c097bd46c44ae3492a4f4842d6cc19ff594785ec7ccea6460",
                         Signature = "0b1eec144cdf8575f3004352811123a408c505d8f20084bad27bb2aa16cf797a68078fb06a4706207874b0328096d0e03cde427bdcc1605519b2ec277853cb2f01",
@@ -50,16 +49,19 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
                 }
         };
 
+        return blockChainDataEto;
+    }
+
+    [Fact]
+    public async Task test()
+    {
+        var blockChainDataEto = MockBasicEtoData(10);
+
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto);
         
-        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(45);
+        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(48);
 
         var blockDictionary = await grain.GetBlockDictionary();
-        // blockDictionary.Count.ShouldBe(1);
         blockDictionary.ShouldContainKey("3de406161fb47785641612e953973de8a018003065633ce52973378f31240456");
-        // foreach (var dicItem in blockDictionary)
-        // {
-        //     Console.WriteLine(dicItem.Key + " " + dicItem.Value.BlockNumber);
-        // }
     }
 }

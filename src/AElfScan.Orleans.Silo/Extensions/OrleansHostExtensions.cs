@@ -57,7 +57,7 @@ public static class OrleansHostExtensions
                         var eventStoreConnectionString = configSection.GetValue<string>("EventStoreConnection");
                         var eventStoreConnection = EventStoreConnection.Create(eventStoreConnectionString);
                         eventStoreConnection.ConnectAsync().Wait();
-
+                
                         services.AddSingleton(eventStoreConnection);
                         services.AddSingleton<IGrainEventStorage, EventStoreGrainEventStorage>();
                     };
