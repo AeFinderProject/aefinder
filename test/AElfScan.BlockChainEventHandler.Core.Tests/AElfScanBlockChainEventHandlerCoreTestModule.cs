@@ -8,8 +8,7 @@ using Volo.Abp.Modularity;
 
 namespace AElfScan;
 
-[DependsOn(typeof(AElfScanBlockChainEventHandlerModule),
-    typeof(AElfScanBlockChainEventHandlerCoreModule),
+[DependsOn(typeof(AElfScanBlockChainEventHandlerCoreModule),
     typeof(AbpEventBusModule),
     typeof(AElfScanDomainModule))]
 public class AElfScanBlockChainEventHandlerCoreTestModule:AbpModule

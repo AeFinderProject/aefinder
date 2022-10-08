@@ -1,4 +1,3 @@
-using AElfScan.AElf.DTOs;
 using AElfScan.Grain;
 using AElfScan.Options;
 using Microsoft.Extensions.Hosting;
@@ -48,7 +47,7 @@ public class AElfScanClusterClientHostedService:IHostedService
         await OrleansClient.Connect();
         _logger.LogInformation("after connect:"+OrleansClient.IsInitialized);
         _logger.LogInformation("Client successfully connected to silo host \n");
-
+        
         return;
     }
 

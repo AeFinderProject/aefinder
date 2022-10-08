@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "ohT+w/LZaePYKjVdZsrV3sayAYosElWNwU2qPhYtDIY85Cv4wF22+NX7wQFrwz8IMvo+S89bJT5rU+p3ehN/QQ==",
+  "dgSpecHash": "nyNvrYQITY/NAqPppR9U/NCyPnQwHDL1KYGVABfFxVaBb7tfV8XjX0ztD5HunPehv87DzC3FvFaf6q18trstMw==",
   "success": true,
   "projectFilePath": "/Users/shiyibo/Desktop/Projects/Branches/Feature/aelf-scan/test/AElfScan.BlockChainEventHandler.Core.Tests/AElfScan.BlockChainEventHandler.Core.Tests.csproj",
   "expectedPackageFiles": [

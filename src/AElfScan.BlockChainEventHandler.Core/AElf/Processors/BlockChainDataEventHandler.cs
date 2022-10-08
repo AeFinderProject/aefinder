@@ -1,4 +1,5 @@
 using AElf.Contracts.Consensus.AEDPoS;
+using AElf.CSharp.Core.Extension;
 using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Etos;
 using AElfScan.EventData;
@@ -20,7 +21,6 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private readonly ILogger<BlockChainDataEventHandler> _logger;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
-    
 
     public BlockChainDataEventHandler(
         IClusterClient clusterClient,
@@ -37,7 +37,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
         _logger.LogInformation("Start connect to a Silo Server to get a grain");
-        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(48);
+        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(49);
         foreach (var blockItem in eventData.Blocks)
         {
             BlockEventData blockEvent = new BlockEventData();

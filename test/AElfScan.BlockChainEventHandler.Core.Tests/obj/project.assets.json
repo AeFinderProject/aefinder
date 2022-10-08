@@ -16232,7 +16232,6 @@
       "Microsoft.Orleans.Server >= 3.6.5",
       "Microsoft.Orleans.TestingHost >= 3.6.5",
       "Orleans.Persistence.Redis >= 3.2.2",
-      "Volo.Abp.EventBus.RabbitMQ >= 5.3.4",
       "xunit >= 2.4.2",
       "xunit.runner.console >= 2.4.2",
       "xunit.runner.visualstudio >= 2.4.5"
@@ -16309,10 +16308,6 @@
           "Orleans.Persistence.Redis": {
             "target": "Package",
             "version": "[3.2.2, )"
-          },
-          "Volo.Abp.EventBus.RabbitMQ": {
-            "target": "Package",
-            "version": "[5.3.4, )"
           },
           "xunit": {
             "target": "Package",

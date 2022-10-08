@@ -530,10 +530,6 @@
               "target": "Package",
               "version": "[3.2.2, )"
             },
-            "Volo.Abp.EventBus.RabbitMQ": {
-              "target": "Package",
-              "version": "[5.3.4, )"
-            },
             "xunit": {
               "target": "Package",
               "version": "[2.4.2, )"
