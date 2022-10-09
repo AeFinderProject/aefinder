@@ -2,7 +2,7 @@ using AElfScan.Grain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
-using Orleans.EventSourcing.Snapshot.Hosting;
+using AElf.Orleans.EventSourcing.Snapshot.Hosting;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;

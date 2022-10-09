@@ -9,8 +9,8 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Orleans;
 using Orleans.Configuration;
-using Orleans.EventSourcing.Snapshot;
-using Orleans.EventSourcing.Snapshot.Hosting;
+using AElf.Orleans.EventSourcing.Snapshot;
+using AElf.Orleans.EventSourcing.Snapshot.Hosting;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
 

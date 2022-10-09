@@ -1,7 +1,7 @@
 using EventStore.ClientAPI;
 using JsonNet.PrivateSettersContractResolvers;
 using Newtonsoft.Json;
-using Orleans.EventSourcing.Snapshot;
+using AElf.Orleans.EventSourcing.Snapshot;
 using Orleans.Runtime;
 using System;
 using System.Collections.Generic;

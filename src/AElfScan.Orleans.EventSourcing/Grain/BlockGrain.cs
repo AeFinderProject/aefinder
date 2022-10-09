@@ -4,7 +4,7 @@ using AElfScan.EventData;
 using AElfScan.State;
 using Orleans.EventSourcing;
 using Volo.Abp.DependencyInjection;
-using Orleans.EventSourcing.Snapshot;
+using AElf.Orleans.EventSourcing.Snapshot;
 using Orleans.Providers;
 using Volo.Abp.Auditing;
 using Volo.Abp.EventBus.Distributed;
