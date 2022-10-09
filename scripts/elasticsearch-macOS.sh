@@ -4,4 +4,3 @@ tar xzvf elasticsearch-7.15.1-darwin-x86_64.tar.gz
 cd elasticsearch-7.15.1/
 bin/elasticsearch -d
 sleep 30
-curl http://127.0.0.1:9200
