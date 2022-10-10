@@ -2,9 +2,11 @@ using AElf.Indexing.Elasticsearch;
 using AElfScan.AElf;
 using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
+using Nest;
 using Shouldly;
 using Volo.Abp.EventBus.Distributed;
 using Xunit;
+using Index = System.Index;
 
 namespace AElfScan.EntityEventHandler.Core.Tests.AElf;
 
@@ -163,7 +165,7 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
         };
         await _confirmBlockEventHandler.HandleEventAsync(confirmBlocksEto);
         
-        Thread.Sleep(1500);
+        Thread.Sleep(2000);
         
         var blockIndex_h27_fork = await _blockIndexRepository.GetAsync(q =>
             q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h27_fork.BlockHash)));
@@ -174,6 +176,24 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
         var blockIndex_h29_fork = await _blockIndexRepository.GetAsync(q =>
             q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h29_fork.BlockHash)));
         blockIndex_h29_fork.ShouldNotBeNull();
+        
+        var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(21)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(28)));
+        QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Bool(b => b.Must(mustQuery));
+        var blockIndex_h21_28=await _blockIndexRepository.GetListAsync(Filter);
+        foreach (var blockItem in blockIndex_h21_28.Item2)
+        {
+            blockItem.IsConfirmed.ShouldBeTrue();
+        }
+        var blockIndex_h29 = await _blockIndexRepository.GetAsync(q =>
+            q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h29.BlockHash)));
+        blockIndex_h29.IsConfirmed.ShouldBeFalse();
+        blockIndex_h29_fork.IsConfirmed.ShouldBeFalse();
+        var blockIndex_h30 = await _blockIndexRepository.GetAsync(q =>
+            q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h30.BlockHash)));
+        blockIndex_h30.IsConfirmed.ShouldBeFalse();
+        
         
         //Unit test 14
         var confirmBlockEto_h31 = MockDataHelper.MockConfirmBlockEtoData(MockDataHelper.CreateBlockHash(), 31);
@@ -192,9 +212,13 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
         }
         
         Thread.Sleep(1000);
-        var blockIndex_h30 = await _blockIndexRepository.GetAsync(q =>
+        blockIndex_h30 = await _blockIndexRepository.GetAsync(q =>
             q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h30.BlockHash)));
         blockIndex_h30.IsConfirmed.ShouldBeFalse();
+        
+        var blockIndex_h31 = await _blockIndexRepository.GetAsync(q =>
+            q.Term(i => i.Field(f => f.BlockHash).Value(confirmBlockEto_h31.BlockHash)));
+        blockIndex_h31.ShouldBeNull();
     }
     
 }

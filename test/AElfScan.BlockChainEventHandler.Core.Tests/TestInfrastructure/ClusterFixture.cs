@@ -1,8 +1,10 @@
+using AElf.Orleans.EventSourcing.Snapshot;
 using AElfScan.Grain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
 using AElf.Orleans.EventSourcing.Snapshot.Hosting;
+using EventStore.ClientAPI;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;
@@ -40,7 +42,18 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                 // .AddMemoryGrainStorageAsDefault()
                 .AddSnapshotStorageBasedLogConsistencyProviderAsDefault((op, name) => 
                 {
-                    op.UseIndependentEventStorage = false;
+                    // op.UseIndependentEventStorage = false;
+                    op.UseIndependentEventStorage = true;
+                    // Should configure event storage when set UseIndependentEventStorage true
+                    op.ConfigureIndependentEventStorage = (services, name) =>
+                    {
+                        var eventStoreConnectionString = "ConnectTo=tcp://admin:changeit@localhost:1113; HeartBeatTimeout=500";
+                        var eventStoreConnection = EventStoreConnection.Create(eventStoreConnectionString);
+                        eventStoreConnection.ConnectAsync().Wait();
+                
+                        services.AddSingleton(eventStoreConnection);
+                        services.AddSingleton<IGrainEventStorage, EventStoreGrainEventStorage>();
+                    };
                 });
         }
     }
