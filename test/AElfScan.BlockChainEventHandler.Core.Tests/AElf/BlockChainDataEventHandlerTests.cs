@@ -68,6 +68,34 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         blockDictionary.ShouldNotContainKey(blockChainDataEto_h64_fork.Blocks[0].BlockHash);//Unit test 3
         blockDictionary.ShouldNotContainKey(blockChainDataEto_h65_fork.Blocks[0].BlockHash);//Unit test 3
         blockDictionary.ShouldContainKey(blockChainDataEto_h84.Blocks[0].BlockHash);//Unit test 4
+
+        blockDictionary.Values.ShouldContain(x => x.BlockNumber == 81);
+        blockDictionary.Values.ShouldContain(x => x.BlockNumber == 82);
+        blockDictionary.Values.ShouldContain(x => x.BlockNumber == 84);
+        foreach (var blockItem in blockDictionary)
+        {
+            if (blockItem.Value.BlockNumber == 81)
+            {
+                blockItem.Value.ChainId.ShouldBe("AELF");
+                blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
+                blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h80.Blocks[0].BlockHash);
+                blockItem.Value.IsConfirmed.ShouldBeFalse();
+            }
+            if (blockItem.Value.BlockNumber == 82)
+            {
+                blockItem.Value.ChainId.ShouldBe("AELF");
+                blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
+                blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h81.Blocks[0].BlockHash);
+                blockItem.Value.IsConfirmed.ShouldBeFalse();
+            }
+            if (blockItem.Value.BlockNumber == 84)
+            {
+                blockItem.Value.ChainId.ShouldBe("AELF");
+                blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
+                blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h83.Blocks[0].BlockHash);
+                blockItem.Value.IsConfirmed.ShouldBeFalse();
+            }
+        }
     }
 
     [Fact]
@@ -115,6 +143,15 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         foreach (var blockItem in blockDictionary)
         {
             blockItem.Value.BlockNumber.ShouldBeGreaterThanOrEqualTo(90);
+
+            if (blockItem.Value.BlockNumber == 90)
+            {
+                blockItem.Value.IsConfirmed.ShouldBeTrue();
+            }
+            else
+            {
+                blockItem.Value.IsConfirmed.ShouldBeFalse();
+            }
         }
         
         blockDictionary.Count(item=>item.Value.BlockNumber==90).ShouldBe(1);
@@ -124,45 +161,54 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
     public async Task HandleEvent_StorageLogic_Test6()
     {
         var blockChainDataEto_h90 = MockDataHelper.MockBasicEtoData(90, MockDataHelper.CreateBlockHash());
-        var blockChainDataEto_h95 = MockDataHelper.MockBasicEtoData(95, blockChainDataEto_h90.Blocks[0].BlockHash);
-        var blockChainDataEto_h99 = MockDataHelper.MockBasicEtoData(99, blockChainDataEto_h95.Blocks[0].BlockHash);
-        var blockChainDataEto_h100 = MockDataHelper.MockEtoDataWithLibFoundEvent(100, blockChainDataEto_h99.Blocks[0].BlockHash,80);
-        var blockChainDataEto_h105 = MockDataHelper.MockBasicEtoData(105, blockChainDataEto_h100.Blocks[0].BlockHash);
-        var blockChainDataEto_h110 = MockDataHelper.MockEtoDataWithLibFoundEvent(110, blockChainDataEto_h105.Blocks[0].BlockHash,90);
+        var blockEto_h95 = MockDataHelper.MockBlockEto(95, blockChainDataEto_h90.Blocks[0].BlockHash);
+        var blockEto_h99 = MockDataHelper.MockBlockEto(99, blockEto_h95.BlockHash);
+        var blockEto_h100 = MockDataHelper.MockBlockEtoWithLibFoundEvent(100, blockEto_h99.BlockHash, 80);
+        var blockEto_h105 = MockDataHelper.MockBlockEto(105, blockEto_h100.BlockHash);
+        var blockEto_h110 = MockDataHelper.MockBlockEtoWithLibFoundEvent(110, blockEto_h105.BlockHash, 90);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h95);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h99);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h100);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h105);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h110);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h90);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h95);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h99);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h100);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h105);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h110);
-        
-        var blockChainDataEto_h111 = MockDataHelper.MockBasicEtoData(111, blockChainDataEto_h110.Blocks[0].BlockHash);
-        var blockChainDataEto_h112 = MockDataHelper.MockBasicEtoData(112, blockChainDataEto_h111.Blocks[0].BlockHash);
-        var blockChainDataEto_h113 = MockDataHelper.MockBasicEtoData(113, blockChainDataEto_h112.Blocks[0].BlockHash);
-        var blockChainDataEto_h114 = MockDataHelper.MockBasicEtoData(114, blockChainDataEto_h113.Blocks[0].BlockHash);
-        var blockChainDataEto_h115 = MockDataHelper.MockEtoDataWithLibFoundEvent(115, blockChainDataEto_h114.Blocks[0].BlockHash,95);
-        var blockChainDataEto_h116 = MockDataHelper.MockBasicEtoData(116, blockChainDataEto_h115.Blocks[0].BlockHash);
-        var blockChainDataEto_h117 = MockDataHelper.MockBasicEtoData(117, blockChainDataEto_h116.Blocks[0].BlockHash);
-        var blockChainDataEto_h118 = MockDataHelper.MockBasicEtoData(118, blockChainDataEto_h117.Blocks[0].BlockHash);
-        var blockChainDataEto_h119 = MockDataHelper.MockBasicEtoData(119, blockChainDataEto_h118.Blocks[0].BlockHash);
-        var blockChainDataEto_h120 = MockDataHelper.MockBasicEtoData(120, blockChainDataEto_h119.Blocks[0].BlockHash);
+
+        var blockChainDataEto_h111 = MockDataHelper.MockBasicEtoData(111, blockEto_h110.BlockHash);
+        var blockEto_h112 = MockDataHelper.MockBlockEto(112, blockChainDataEto_h111.Blocks[0].BlockHash);
+        var blockEto_h113 = MockDataHelper.MockBlockEto(113, blockEto_h112.BlockHash);
+        var blockEto_h114 = MockDataHelper.MockBlockEto(114, blockEto_h113.BlockHash);
+        var blockEto_h115 = MockDataHelper.MockBlockEtoWithLibFoundEvent(115, blockEto_h114.BlockHash, 95);
+        var blockEto_h116 = MockDataHelper.MockBlockEto(116, blockEto_h115.BlockHash);
+        var blockEto_h117 = MockDataHelper.MockBlockEto(117, blockEto_h116.BlockHash);
+        var blockEto_h118 = MockDataHelper.MockBlockEto(118, blockEto_h117.BlockHash);
+        var blockEto_h119 = MockDataHelper.MockBlockEto(119, blockEto_h118.BlockHash);
+        var blockEto_h120 = MockDataHelper.MockBlockEto(120, blockEto_h119.BlockHash);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h112);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h113);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h114);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h115);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h116);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h117);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h118);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h119);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h120);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h111);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h112);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h113);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h114);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h115);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h116);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h117);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h118);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h119);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h120);
-        
+
         var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(49);
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)
         {
             blockItem.Value.BlockNumber.ShouldBeGreaterThanOrEqualTo(95);
+            
+            if (blockItem.Value.BlockNumber == 95)
+            {
+                blockItem.Value.IsConfirmed.ShouldBeTrue();
+            }
+            else
+            {
+                blockItem.Value.IsConfirmed.ShouldBeFalse();
+            }
         }
     }
 
@@ -170,49 +216,106 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
     public async Task HandleEvent_StorageLogic_Test7()
     {
         var blockChainDataEto_h90 = MockDataHelper.MockBasicEtoData(90, MockDataHelper.CreateBlockHash());
-        var blockChainDataEto_h95 = MockDataHelper.MockBasicEtoData(95, blockChainDataEto_h90.Blocks[0].BlockHash);
-        var blockChainDataEto_h99 = MockDataHelper.MockBasicEtoData(99, blockChainDataEto_h95.Blocks[0].BlockHash);
-        var blockChainDataEto_h100 = MockDataHelper.MockEtoDataWithLibFoundEvent(100, blockChainDataEto_h99.Blocks[0].BlockHash,80);
-        var blockChainDataEto_h105 = MockDataHelper.MockBasicEtoData(105, blockChainDataEto_h100.Blocks[0].BlockHash);
-        var blockChainDataEto_h110 = MockDataHelper.MockEtoDataWithLibFoundEvent(110, blockChainDataEto_h105.Blocks[0].BlockHash,90);
+        var blockEto_h95 = MockDataHelper.MockBlockEto(95, blockChainDataEto_h90.Blocks[0].BlockHash);
+        var blockEto_h99 = MockDataHelper.MockBlockEto(99, blockEto_h95.BlockHash);
+        var blockEto_h100 = MockDataHelper.MockBlockEtoWithLibFoundEvent(100, blockEto_h99.BlockHash, 80);
+        var blockEto_h105 = MockDataHelper.MockBlockEto(105, blockEto_h100.BlockHash);
+        var blockEto_h110 = MockDataHelper.MockBlockEtoWithLibFoundEvent(110, blockEto_h105.BlockHash, 90);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h95);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h99);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h100);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h105);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h110);
+        // var blockChainDataEto_h95 = MockDataHelper.MockBasicEtoData(95, blockChainDataEto_h90.Blocks[0].BlockHash);
+        // var blockChainDataEto_h99 = MockDataHelper.MockBasicEtoData(99, blockChainDataEto_h95.Blocks[0].BlockHash);
+        // var blockChainDataEto_h100 = MockDataHelper.MockEtoDataWithLibFoundEvent(100, blockChainDataEto_h99.Blocks[0].BlockHash,80);
+        // var blockChainDataEto_h105 = MockDataHelper.MockBasicEtoData(105, blockChainDataEto_h100.Blocks[0].BlockHash);
+        // var blockChainDataEto_h110 = MockDataHelper.MockEtoDataWithLibFoundEvent(110, blockChainDataEto_h105.Blocks[0].BlockHash,90);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h90);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h95);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h99);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h100);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h105);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h110);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h95);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h99);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h100);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h105);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h110);
         
-        var blockChainDataEto_h111 = MockDataHelper.MockBasicEtoData(111, blockChainDataEto_h110.Blocks[0].BlockHash);
-        var blockChainDataEto_h112 = MockDataHelper.MockBasicEtoData(112, blockChainDataEto_h111.Blocks[0].BlockHash);
-        var blockChainDataEto_h113 = MockDataHelper.MockBasicEtoData(113, blockChainDataEto_h112.Blocks[0].BlockHash);
-        var blockChainDataEto_h114 = MockDataHelper.MockBasicEtoData(114, blockChainDataEto_h113.Blocks[0].BlockHash);
-        var blockChainDataEto_h115 = MockDataHelper.MockEtoDataWithLibFoundEvent(115, blockChainDataEto_h114.Blocks[0].BlockHash,95);
-        var blockChainDataEto_h116 = MockDataHelper.MockBasicEtoData(116, blockChainDataEto_h115.Blocks[0].BlockHash);
-        var blockChainDataEto_h117 = MockDataHelper.MockBasicEtoData(117, blockChainDataEto_h116.Blocks[0].BlockHash);
-        var blockChainDataEto_h118 = MockDataHelper.MockBasicEtoData(118, blockChainDataEto_h117.Blocks[0].BlockHash);
-        var blockChainDataEto_h119 = MockDataHelper.MockBasicEtoData(119, blockChainDataEto_h118.Blocks[0].BlockHash);
-        var blockChainDataEto_h120 = MockDataHelper.MockBasicEtoData(120, blockChainDataEto_h119.Blocks[0].BlockHash);
+        var blockChainDataEto_h111 = MockDataHelper.MockBasicEtoData(111, blockEto_h110.BlockHash);
+        var blockEto_h112 = MockDataHelper.MockBlockEto(112, blockChainDataEto_h111.Blocks[0].BlockHash);
+        var blockEto_h113 = MockDataHelper.MockBlockEto(113, blockEto_h112.BlockHash);
+        var blockEto_h114 = MockDataHelper.MockBlockEto(113, blockEto_h113.BlockHash);
+        var blockEto_h115 = MockDataHelper.MockBlockEtoWithLibFoundEvent(115, blockEto_h114.BlockHash, 95);
+        var blockEto_h116 = MockDataHelper.MockBlockEto(116, blockEto_h115.BlockHash);
+        var blockEto_h117 = MockDataHelper.MockBlockEto(117, blockEto_h116.BlockHash);
+        var blockEto_h118 = MockDataHelper.MockBlockEto(118, blockEto_h117.BlockHash);
+        var blockEto_h119 = MockDataHelper.MockBlockEto(119, blockEto_h118.BlockHash);
+        var blockEto_h120 = MockDataHelper.MockBlockEto(120, blockEto_h119.BlockHash);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h112);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h113);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h114);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h115);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h116);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h117);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h118);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h119);
+        blockChainDataEto_h111.Blocks.Add(blockEto_h120);
+        // var blockChainDataEto_h112 = MockDataHelper.MockBasicEtoData(112, blockChainDataEto_h111.Blocks[0].BlockHash);
+        // var blockChainDataEto_h113 = MockDataHelper.MockBasicEtoData(113, blockChainDataEto_h112.Blocks[0].BlockHash);
+        // var blockChainDataEto_h114 = MockDataHelper.MockBasicEtoData(114, blockChainDataEto_h113.Blocks[0].BlockHash);
+        // var blockChainDataEto_h115 = MockDataHelper.MockEtoDataWithLibFoundEvent(115, blockChainDataEto_h114.Blocks[0].BlockHash,95);
+        // var blockChainDataEto_h116 = MockDataHelper.MockBasicEtoData(116, blockChainDataEto_h115.Blocks[0].BlockHash);
+        // var blockChainDataEto_h117 = MockDataHelper.MockBasicEtoData(117, blockChainDataEto_h116.Blocks[0].BlockHash);
+        // var blockChainDataEto_h118 = MockDataHelper.MockBasicEtoData(118, blockChainDataEto_h117.Blocks[0].BlockHash);
+        // var blockChainDataEto_h119 = MockDataHelper.MockBasicEtoData(119, blockChainDataEto_h118.Blocks[0].BlockHash);
+        // var blockChainDataEto_h120 = MockDataHelper.MockBasicEtoData(120, blockChainDataEto_h119.Blocks[0].BlockHash);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h111);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h112);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h113);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h114);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h115);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h116);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h117);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h118);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h119);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h120);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h112);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h113);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h114);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h115);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h116);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h117);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h118);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h119);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h120);
         
-        var blockChainDataEto_h121 = MockDataHelper.MockBasicEtoData(121, blockChainDataEto_h120.Blocks[0].BlockHash);
-        var blockChainDataEto_h122 = MockDataHelper.MockBasicEtoData(122, blockChainDataEto_h121.Blocks[0].BlockHash);
-        var blockChainDataEto_h123 = MockDataHelper.MockBasicEtoData(123, blockChainDataEto_h122.Blocks[0].BlockHash);
-        var blockChainDataEto_h124 = MockDataHelper.MockBasicEtoData(124, blockChainDataEto_h123.Blocks[0].BlockHash);
-        var blockChainDataEto_h125 = MockDataHelper.MockEtoDataWithLibFoundEvent(125, blockChainDataEto_h124.Blocks[0].BlockHash,100);
-        var blockChainDataEto_h126 = MockDataHelper.MockBasicEtoData(126, blockChainDataEto_h125.Blocks[0].BlockHash);
-        var blockChainDataEto_h127 = MockDataHelper.MockBasicEtoData(127, blockChainDataEto_h126.Blocks[0].BlockHash);
-        var blockChainDataEto_h128 = MockDataHelper.MockBasicEtoData(128, blockChainDataEto_h127.Blocks[0].BlockHash);
-        var blockChainDataEto_h129 = MockDataHelper.MockEtoDataWithLibFoundEvent(129, blockChainDataEto_h128.Blocks[0].BlockHash,105);
-        var blockChainDataEto_h130 = MockDataHelper.MockBasicEtoData(130, blockChainDataEto_h129.Blocks[0].BlockHash);
+        var blockChainDataEto_h121 = MockDataHelper.MockBasicEtoData(121, blockEto_h120.BlockHash);
+        var blockEto_h122 = MockDataHelper.MockBlockEto(122, blockChainDataEto_h121.Blocks[0].BlockHash);
+        var blockEto_h123 = MockDataHelper.MockBlockEto(123, blockEto_h122.BlockHash);
+        var blockEto_h124 = MockDataHelper.MockBlockEto(124, blockEto_h123.BlockHash);
+        var blockEto_h125 = MockDataHelper.MockBlockEtoWithLibFoundEvent(125, blockEto_h124.BlockHash, 100);
+        var blockEto_h126 = MockDataHelper.MockBlockEto(126, blockEto_h125.BlockHash);
+        var blockEto_h127 = MockDataHelper.MockBlockEto(127, blockEto_h126.BlockHash);
+        var blockEto_h128 = MockDataHelper.MockBlockEto(128, blockEto_h127.BlockHash);
+        var blockEto_h129 = MockDataHelper.MockBlockEtoWithLibFoundEvent(129, blockEto_h128.BlockHash, 105);
+        var blockEto_h130 = MockDataHelper.MockBlockEto(130, blockEto_h129.BlockHash);
+        blockChainDataEto_h121.Blocks.Add(blockEto_h122);
+        blockChainDataEto_h121.Blocks.Add(blockEto_h123);
+        blockChainDataEto_h121.Blocks.Add(blockEto_h124);
+        blockChainDataEto_h121.Blocks.Add(blockEto_h125);
+        blockChainDataEto_h121.Blocks.Add(blockEto_h126);
+        blockChainDataEto_h121.Blocks.Add(blockEto_h127);
+        blockChainDataEto_h121.Blocks.Add(blockEto_h128);
+        blockChainDataEto_h121.Blocks.Add(blockEto_h129);
+        blockChainDataEto_h121.Blocks.Add(blockEto_h130);
+        // var blockChainDataEto_h122 = MockDataHelper.MockBasicEtoData(122, blockChainDataEto_h121.Blocks[0].BlockHash);
+        // var blockChainDataEto_h123 = MockDataHelper.MockBasicEtoData(123, blockChainDataEto_h122.Blocks[0].BlockHash);
+        // var blockChainDataEto_h124 = MockDataHelper.MockBasicEtoData(124, blockChainDataEto_h123.Blocks[0].BlockHash);
+        // var blockChainDataEto_h125 = MockDataHelper.MockEtoDataWithLibFoundEvent(125, blockChainDataEto_h124.Blocks[0].BlockHash,100);
+        // var blockChainDataEto_h126 = MockDataHelper.MockBasicEtoData(126, blockChainDataEto_h125.Blocks[0].BlockHash);
+        // var blockChainDataEto_h127 = MockDataHelper.MockBasicEtoData(127, blockChainDataEto_h126.Blocks[0].BlockHash);
+        // var blockChainDataEto_h128 = MockDataHelper.MockBasicEtoData(128, blockChainDataEto_h127.Blocks[0].BlockHash);
+        // var blockChainDataEto_h129 = MockDataHelper.MockEtoDataWithLibFoundEvent(129, blockChainDataEto_h128.Blocks[0].BlockHash,105);
+        // var blockChainDataEto_h130 = MockDataHelper.MockBasicEtoData(130, blockChainDataEto_h129.Blocks[0].BlockHash);
+        
+        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h121);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h122);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h123);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h124);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h125);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h126);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h127);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h128);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h129);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h130);
         
         var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(49);
         var blockDictionary = await grain.GetBlockDictionary();

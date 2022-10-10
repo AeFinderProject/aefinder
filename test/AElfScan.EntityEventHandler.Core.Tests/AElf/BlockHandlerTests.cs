@@ -64,7 +64,7 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h6);
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h7);
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h8);
-        Thread.Sleep(1000);
+        Thread.Sleep(1500);
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h9);
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h10);
         
