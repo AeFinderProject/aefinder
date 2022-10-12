@@ -21,7 +21,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         _cluster = fixture.Cluster;
     }
 
-    
+    private readonly int grainPrimaryKey = 50;
 
     [Fact]
     public async Task HandleEvent_StorageLogic_Test1_2_3_4()
@@ -60,7 +60,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h83);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h84);
 
-        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(49);
+        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(grainPrimaryKey);
         var blockDictionary = await grain.GetBlockDictionary();
         
         blockDictionary.ShouldContainKey(blockChainDataEto_h81.Blocks[0].BlockHash);//Unit test 1
@@ -137,7 +137,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h110);
         
         
-        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(50);
+        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(grainPrimaryKey);
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)
@@ -194,7 +194,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         blockChainDataEto_h111.Blocks.Add(blockEto_h120);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h111);
 
-        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(49);
+        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(grainPrimaryKey);
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)
@@ -273,7 +273,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
 
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h121);
 
-        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(49);
+        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(grainPrimaryKey);
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)
