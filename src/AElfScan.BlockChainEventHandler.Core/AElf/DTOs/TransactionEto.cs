@@ -15,7 +15,7 @@ public class TransactionEto
     public string Signature { get; set; }
     
     /// <summary>
-    /// 交易在区块内的排序位置
+    /// The ranking position of transactions within a block
     /// </summary>
     public int Index{get;set;}
     

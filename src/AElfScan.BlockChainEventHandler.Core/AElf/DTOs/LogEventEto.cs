@@ -7,7 +7,7 @@ public class LogEventEto
     public string EventName { get; set; }
     
     /// <summary>
-    /// 事件在交易内的排序位置
+    /// The ranking position of the event within the transaction
     /// </summary>
     public int Index { get; set; }
     
