@@ -28,7 +28,7 @@ public class BlockState
         newBlock.BlockNumber = blockEvent.BlockNumber;
         newBlock.PreviousBlockHash = blockEvent.PreviousBlockHash;
         newBlock.IsConfirmed = false;
-        Blocks.Add(blockEvent.BlockHash, newBlock);
+        Blocks.TryAdd(blockEvent.BlockHash, newBlock);
     }
 
     public Block FindLibBlock(string previousBlockHash, long libBlockNumber)

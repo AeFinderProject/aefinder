@@ -88,6 +88,7 @@ public class MockDataHelper
                                 "CiIKINnB4HhmTpMScNl9T4hNoR1w8dOpx0O684p+pwfm6uOkEiIKINZUk1v+szUqMZZ3w0phLn7qqOX+h+uD1fdP59LYm9CsIiIKIPGQ8ga2zO3CXXtZkjlMma6CI7VSQFA7ZMYrIU6zGT/uKgYInMjcmAYwAVDPAlqpAQqCATA0YmNkMWM4ODdjZDBlZGJkNGNjZjhkOWQyYjNmNzJlNzI1MTFhYTYxODMxOTk2MDAzMTM2ODdiYTZjNTgzZjEzYzNkNmQ3MTZmYTQwZGY4NjA0YWFlZDBmY2FiMzExMzVmZTNjMmQ0NWMwMDk4MDBjMDc1MjU0YTM3ODJiNGM0ZGISIgog8ZDyBrbM7cJde1mSOUyZroIjtVJAUDtkxishTrMZP+5g0AI=",
                             Signature =
                                 "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
+                            Index = 0,
                             Status = 3,
                             ExtraProperties = new Dictionary<string, string>()
                             {
@@ -110,6 +111,7 @@ public class MockDataHelper
                             Params = "EiIKIBVv83IRVLMOCL29OquFBxwryHRNwySUcRAMISaLtGQaGM8C",
                             Signature =
                                 "3USrQq3C0VJ28pg1SEA4DJ3vH3suBiW5oFIp53kW7989vdrbgWhCW82qD4ovb6Q9gZOJsqgu388++MMk/3cHDgE=",
+                            Index = 1,
                             Status = 3,
                             ExtraProperties = new Dictionary<string, string>()
                             {
@@ -170,6 +172,7 @@ public class MockDataHelper
                             Params = "CMTapZkGEgsIxNqlmQYQ4M74LRivIg==",
                             Signature =
                                 "CR4hFZmuquZY8YF8fnlTOFa8CmyzzleQBe+ALXgfBt4AYz0/Ez21E00WXx3knvHVzWolQr0IXfHb5CJZ0OQtEgE=",
+                            Index = 0,
                             Status = 3,
                             ExtraProperties = new Dictionary<string, string>()
                             {
@@ -206,6 +209,7 @@ public class MockDataHelper
                             Params = "EiIKID3kBhYftHeFZBYS6VOXPeigGAAwZWM85SlzN48xJARWGK8i",
                             Signature =
                                 "fde53OUTiv1D+NzYOxgjEV9aal3bFfrJmZwUG0kDcu93HVNf9npKSnowvBH9n9B8u4erVJExUlzx75AGvBWfxgE=",
+                            Index = 1,
                             Status = 3,
                             ExtraProperties = new Dictionary<string, string>()
                             {
@@ -271,6 +275,7 @@ public class MockDataHelper
                                 "CiIKINnB4HhmTpMScNl9T4hNoR1w8dOpx0O684p+pwfm6uOkEiIKINZUk1v+szUqMZZ3w0phLn7qqOX+h+uD1fdP59LYm9CsIiIKIPGQ8ga2zO3CXXtZkjlMma6CI7VSQFA7ZMYrIU6zGT/uKgYInMjcmAYwAVDPAlqpAQqCATA0YmNkMWM4ODdjZDBlZGJkNGNjZjhkOWQyYjNmNzJlNzI1MTFhYTYxODMxOTk2MDAzMTM2ODdiYTZjNTgzZjEzYzNkNmQ3MTZmYTQwZGY4NjA0YWFlZDBmY2FiMzExMzVmZTNjMmQ0NWMwMDk4MDBjMDc1MjU0YTM3ODJiNGM0ZGISIgog8ZDyBrbM7cJde1mSOUyZroIjtVJAUDtkxishTrMZP+5g0AI=",
                             Signature =
                                 "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
+                            Index = 0,
                             Status = 3,
                             ExtraProperties = new Dictionary<string, string>()
                             {
@@ -318,6 +323,7 @@ public class MockDataHelper
                             Params = "EiIKIBVv83IRVLMOCL29OquFBxwryHRNwySUcRAMISaLtGQaGM8C",
                             Signature =
                                 "3USrQq3C0VJ28pg1SEA4DJ3vH3suBiW5oFIp53kW7989vdrbgWhCW82qD4ovb6Q9gZOJsqgu388++MMk/3cHDgE=",
+                            Index = 1,
                             Status = 3,
                             ExtraProperties = new Dictionary<string, string>()
                             {
@@ -409,6 +415,7 @@ public class MockDataHelper
                         "CiIKINnB4HhmTpMScNl9T4hNoR1w8dOpx0O684p+pwfm6uOkEiIKINZUk1v+szUqMZZ3w0phLn7qqOX+h+uD1fdP59LYm9CsIiIKIPGQ8ga2zO3CXXtZkjlMma6CI7VSQFA7ZMYrIU6zGT/uKgYInMjcmAYwAVDPAlqpAQqCATA0YmNkMWM4ODdjZDBlZGJkNGNjZjhkOWQyYjNmNzJlNzI1MTFhYTYxODMxOTk2MDAzMTM2ODdiYTZjNTgzZjEzYzNkNmQ3MTZmYTQwZGY4NjA0YWFlZDBmY2FiMzExMzVmZTNjMmQ0NWMwMDk4MDBjMDc1MjU0YTM3ODJiNGM0ZGISIgog8ZDyBrbM7cJde1mSOUyZroIjtVJAUDtkxishTrMZP+5g0AI=",
                     Signature =
                         "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
+                    Index = 0,
                     Status = 3,
                     ExtraProperties = new Dictionary<string, string>()
                     {
@@ -456,6 +463,7 @@ public class MockDataHelper
                     Params = "EiIKIBVv83IRVLMOCL29OquFBxwryHRNwySUcRAMISaLtGQaGM8C",
                     Signature =
                         "3USrQq3C0VJ28pg1SEA4DJ3vH3suBiW5oFIp53kW7989vdrbgWhCW82qD4ovb6Q9gZOJsqgu388++MMk/3cHDgE=",
+                    Index = 1,
                     Status = 3,
                     ExtraProperties = new Dictionary<string, string>()
                     {

@@ -137,7 +137,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h110);
         
         
-        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(49);
+        var grain = _cluster.GrainFactory.GetGrain<IBlockGrain>(50);
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)
