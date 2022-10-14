@@ -1,3 +1,4 @@
+using System.Net;
 using AElfScan.Grain;
 using AElfScan.Options;
 using Microsoft.Extensions.Hosting;
@@ -28,8 +29,14 @@ public class AElfScanClusterClientHostedService:IHostedService
         _serviceProvider = serviceProvider;
         _logger = logger;
         _orleansClientOption = orleansClientOption.Value;
+        List<IPEndPoint> nodes = new List<IPEndPoint>();
+        foreach (var node in _orleansClientOption.NodeIpAddresses)
+        {
+            nodes.Add(new IPEndPoint(IPAddress.Parse(node), _orleansClientOption.GatewayPort));
+        }
         OrleansClient = new ClientBuilder()
-            .UseLocalhostClustering()
+            .UseStaticClustering(nodes.ToArray())
+            // .UseLocalhostClustering()
             .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(IBlockGrain).Assembly).WithReferences())
             .Configure<ClusterOptions>(options =>
             {

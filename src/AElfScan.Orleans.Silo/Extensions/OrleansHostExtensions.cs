@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using EventStore.ClientAPI;
 using JsonNet.PrivateSettersContractResolvers;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +12,7 @@ using Orleans;
 using Orleans.Configuration;
 using AElf.Orleans.EventSourcing.Snapshot;
 using AElf.Orleans.EventSourcing.Snapshot.Hosting;
+using Orleans.Configuration.Overrides;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
 
@@ -30,7 +32,15 @@ public static class OrleansHostExtensions
         return hostBuilder.UseOrleans(siloBuilder =>
         {
             //Configure OrleansSnapshot
-            siloBuilder.UseLocalhostClustering()
+            siloBuilder
+                .UseDevelopmentClustering(
+                    new IPEndPoint(
+                        IPAddress.Parse(configSection.GetValue<string>("NodeIpAddresses")),
+                        configSection.GetValue<int>("SiloPort")
+                    )
+                )
+                .ConfigureEndpoints(siloPort: configSection.GetValue<int>("SiloPort"), gatewayPort: configSection.GetValue<int>("GatewayPort"))
+                // .UseLocalhostClustering()
                 // .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
                 // .AddMongoDBGrainStorage("Default",(MongoDBGrainStorageOptions op) =>
                 // {
