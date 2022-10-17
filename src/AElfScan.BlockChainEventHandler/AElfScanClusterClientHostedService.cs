@@ -50,11 +50,10 @@ public class AElfScanClusterClientHostedService:IHostedService
     {
         _application.Initialize(_serviceProvider);
 
-        _logger.LogInformation("before connect:"+OrleansClient.IsInitialized);
+        Console.WriteLine("before connect OrleansClient.IsInitialized:"+OrleansClient.IsInitialized);
         await OrleansClient.Connect();
-        _logger.LogInformation("after connect:"+OrleansClient.IsInitialized);
-        _logger.LogInformation("Client successfully connected to silo host \n");
-        
+        Console.WriteLine("after connect OrleansClient.IsInitialized:"+OrleansClient.IsInitialized);
+
         return;
     }
 
@@ -62,7 +61,7 @@ public class AElfScanClusterClientHostedService:IHostedService
     {
         await OrleansClient.Close();
         OrleansClient.Dispose();
-        
+        Console.WriteLine("OrleansClient Closed");
         _application.Shutdown();
         return;
     }

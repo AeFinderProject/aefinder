@@ -28,12 +28,14 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
 
     public async Task<List<Block>> SaveBlock(BlockEventData blockEvent)
     {
+        Console.WriteLine($"[BlockGrain]Begin Save Block height:{blockEvent.BlockNumber} {blockEvent.BlockHash}");
         //Ignore blocks with height less than LIB block in Dictionary
         var dicLibBlock = this.State.Blocks.Where(b => b.Value.IsConfirmed)
             .Select(x => x.Value)
             .FirstOrDefault();
         if (dicLibBlock != null && dicLibBlock.BlockNumber >= blockEvent.BlockNumber)
         {
+            Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
             return null;
         }
         
@@ -43,12 +45,14 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         List<Block> libBlockList = new List<Block>();
         if (currentLibBlock != null)
         {
+            Console.WriteLine($"[BlockGrain]currentLibBlock {currentLibBlock.BlockNumber}");
             GetLibBlockList(currentLibBlock.BlockHash, libBlockList);
         }
         
         RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0);
         await ConfirmEvents();
 
+        Console.WriteLine($"[BlockGrain]return libBlockList length:{libBlockList.Count}");
         return libBlockList;
     }
     

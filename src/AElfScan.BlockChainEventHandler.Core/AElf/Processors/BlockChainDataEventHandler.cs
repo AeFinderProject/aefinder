@@ -36,7 +36,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
-        _logger.LogInformation("Start connect to a Silo Server to get a grain");
+        Console.WriteLine("Start to get a grain");
         var blockGrain = _clusterClient.GetGrain<IBlockGrain>(50);
         foreach (var blockItem in eventData.Blocks)
         {
@@ -56,17 +56,17 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             }
 
 
-            _logger.LogInformation("Save Block Number:" + blockEvent.BlockNumber);
+            Console.WriteLine("Prepare Save Block Number:" + blockEvent.BlockNumber);
             List<Block> libBlockList = await blockGrain.SaveBlock(blockEvent);
-            _logger.LogInformation($"libBlockList:{libBlockList}");
+            Console.WriteLine($"libBlockList:{libBlockList}");
             if (libBlockList != null)
             {
                 //publish new block event
                 await _distributedEventBus.PublishAsync(ConvertToNewBlockEto(blockItem,eventData.ChainId));
-                _logger.LogInformation($"NewBlock Event is already published:{blockItem.BlockHash}");
+                Console.WriteLine($"NewBlock Event is already published:{blockItem.BlockHash}");
 
                 //publish confirm blocks event
-                _logger.LogInformation("libBlockList length:" + libBlockList.Count);
+                Console.WriteLine("libBlockList length:" + libBlockList.Count);
                 if (libBlockList.Count > 0)
                 {
                     var confirmBlockList =
@@ -77,7 +77,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             }
         }
 
-        _logger.LogInformation("Stop connect to Silo Server");
+        Console.WriteLine("HandleEventAsync End");
 
         await Task.CompletedTask;
     }
@@ -88,7 +88,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             JsonConvert.DeserializeObject<List<string>>(logEventIndexed);
         var libFound = new IrreversibleBlockFound();
         libFound.MergeFrom(ByteString.FromBase64(IndexedList[0]));
-        _logger.LogInformation(
+        Console.WriteLine(
             $"IrreversibleBlockFound: {libFound}");
         return libFound.IrreversibleBlockHeight;
     }

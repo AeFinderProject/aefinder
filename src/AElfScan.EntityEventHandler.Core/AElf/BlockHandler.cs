@@ -30,12 +30,12 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     public async Task HandleEventAsync(NewBlockEto eventData)
     {
         var block = eventData;
-        _logger.LogInformation($"test block is adding, id: {block.BlockHash}  , BlockNumber: {block.BlockNumber} , IsConfirmed: {block.IsConfirmed}");
+        Console.WriteLine($"block is adding, id: {block.BlockHash}  , BlockNumber: {block.BlockNumber} , IsConfirmed: {block.IsConfirmed}");
         var blockIndex = await _blockIndexRepository.GetAsync(q=>
             q.Term(i=>i.Field(f=>f.BlockHash).Value(eventData.BlockHash)));
         if (blockIndex != null)
         {
-            _logger.LogInformation($"block already exist-{blockIndex}, Add failure!");
+            Console.WriteLine($"block already exist-{blockIndex}, Add failure!");
         }
         else
         {
@@ -48,7 +48,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     {
         foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
-            _logger.LogInformation($"block:{confirmBlock.BlockNumber} is confirming");
+            Console.WriteLine($"block:{confirmBlock.BlockNumber} is confirming");
             var blockIndex = await _blockIndexRepository.GetAsync(q=>
                 q.Term(i=>i.Field(f=>f.BlockHash).Value(confirmBlock.BlockHash)));
             if (blockIndex != null)
@@ -67,7 +67,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             }
             else
             {
-                _logger.LogInformation($"Confirm failure,block{confirmBlock.BlockHash} is not exist!");
+                Console.WriteLine($"Confirm failure,block {confirmBlock.BlockNumber} {confirmBlock.BlockHash} is not exist!");
                 throw new DataException($"Block {confirmBlock.BlockHash} is not exist,confirm block failure!");
             }
         

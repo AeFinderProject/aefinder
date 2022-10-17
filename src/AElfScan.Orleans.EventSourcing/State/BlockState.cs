@@ -21,14 +21,15 @@ public class BlockState
                     b.Value.BlockNumber == blockEvent.LibBlockNumber && b.Value.BlockHash != currentLibBlock.BlockHash);
             }
         }
-        
+
         Block newBlock = new Block();
         newBlock.ChainId = blockEvent.ChainId;
         newBlock.BlockHash = blockEvent.BlockHash;
         newBlock.BlockNumber = blockEvent.BlockNumber;
         newBlock.PreviousBlockHash = blockEvent.PreviousBlockHash;
         newBlock.IsConfirmed = false;
-        Blocks.TryAdd(blockEvent.BlockHash, newBlock);
+        bool addResult = Blocks.TryAdd(blockEvent.BlockHash, newBlock);
+        Console.WriteLine($"[Block State Apply]Add new block{newBlock.BlockNumber} to dictionary {addResult}");
     }
 
     public Block FindLibBlock(string previousBlockHash, long libBlockNumber)
