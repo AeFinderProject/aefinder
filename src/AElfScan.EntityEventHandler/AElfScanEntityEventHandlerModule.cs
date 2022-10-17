@@ -10,6 +10,7 @@ namespace AElfScan;
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AElfScanEntityEventHandlerCoreModule),
+    typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpEventBusRabbitMqModule))]
 public class AElfScanEntityEventHandlerModule:AbpModule
 {

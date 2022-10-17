@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp;
+using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.EventBus.RabbitMq;
@@ -15,6 +16,7 @@ namespace AElfScan;
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AElfScanOrleansEventSourcingModule),
     typeof(AElfScanBlockChainEventHandlerCoreModule),
+    typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpEventBusRabbitMqModule))]
 public class AElfScanBlockChainEventHandlerModule:AbpModule
 {

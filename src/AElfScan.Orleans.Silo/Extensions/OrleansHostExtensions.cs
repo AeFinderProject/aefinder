@@ -15,6 +15,7 @@ using AElf.Orleans.EventSourcing.Snapshot.Hosting;
 using Orleans.Configuration.Overrides;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
+using Serilog;
 
 namespace AElfScan.Extensions;
 
@@ -78,7 +79,7 @@ public static class OrleansHostExtensions
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
                 })
                 .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TGrain).Assembly).WithReferences())
-                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); });
+                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddSerilog(); });
         });
     }
 }

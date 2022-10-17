@@ -61,9 +61,9 @@ public class EventStoreGrainEventStorage : IGrainEventStorage
         }
 
         var events = new List<TEvent>();
-        int maxReadSize = 4096;
+        int maxReadSize = 4096; //Event Store Client API limit pageSize can not more than 4096
 
-        long nextPageStart;
+        long nextPageStart = start;
         int lastIndex = 0;
         int runningCount = 0;
         string streamName = GetStreamName(grainTypeName, grainReference);
@@ -74,8 +74,9 @@ public class EventStoreGrainEventStorage : IGrainEventStorage
             var pageSize = eventsLeft < maxReadSize ? eventsLeft : maxReadSize;
 
             var slice = await _eventStoreConnection
-                .ReadStreamEventsForwardAsync(streamName, start, pageSize, false);
+                .ReadStreamEventsForwardAsync(streamName, nextPageStart, pageSize, false);
 
+            
             if (slice.Status == SliceReadStatus.StreamDeleted || slice.Status == SliceReadStatus.StreamNotFound)
             {
                 return new List<TEvent>();
@@ -87,6 +88,7 @@ public class EventStoreGrainEventStorage : IGrainEventStorage
             var sliceEvents = slice.Events.Select(x => DeserializeEvent(x)).ToList();
             events.AddRange(sliceEvents.Select(x => x.Event).Cast<TEvent>());
             lastIndex = sliceEvents.Any() ? sliceEvents.Last().EventNumber : lastIndex;
+            
         } while (nextPageStart != -1 && runningCount < count);
 
         return events;

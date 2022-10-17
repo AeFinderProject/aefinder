@@ -36,10 +36,11 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
-        Console.WriteLine("Start to get a grain");
+        _logger.LogInformation($"Received BlockChainDataEto form {eventData.ChainId}");
         var blockGrain = _clusterClient.GetGrain<IBlockGrain>(50);
         foreach (var blockItem in eventData.Blocks)
         {
+            _logger.LogInformation($"Start to deal with block {blockItem.BlockNumber}");
             BlockEventData blockEvent = new BlockEventData();
             blockEvent.ChainId = eventData.ChainId;
             blockEvent.BlockHash = blockItem.BlockHash;
@@ -54,30 +55,30 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             {
                 blockEvent.LibBlockNumber = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
             }
-
-
-            Console.WriteLine("Prepare Save Block Number:" + blockEvent.BlockNumber);
+            
+            _logger.LogInformation("Prepare Save Block Number:" + blockEvent.BlockNumber);
             List<Block> libBlockList = await blockGrain.SaveBlock(blockEvent);
-            Console.WriteLine($"libBlockList:{libBlockList}");
+
             if (libBlockList != null)
             {
+                _logger.LogInformation("libBlockList length:" + libBlockList.Count);
                 //publish new block event
                 await _distributedEventBus.PublishAsync(ConvertToNewBlockEto(blockItem,eventData.ChainId));
-                Console.WriteLine($"NewBlock Event is already published:{blockItem.BlockHash}");
+                _logger.LogInformation($"NewBlock Event is already published:{blockItem.BlockHash}");
 
                 //publish confirm blocks event
-                Console.WriteLine("libBlockList length:" + libBlockList.Count);
                 if (libBlockList.Count > 0)
                 {
                     var confirmBlockList =
                         _objectMapper.Map<List<AElfScan.State.Block>, List<ConfirmBlockEto>>(libBlockList);
                     await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                         { ConfirmBlocks = confirmBlockList });
+                    _logger.LogInformation($"ConfirmBlock Event is already published:{blockItem.BlockHash}");
                 }
             }
         }
 
-        Console.WriteLine("HandleEventAsync End");
+        _logger.LogInformation("HandleEventAsync End");
 
         await Task.CompletedTask;
     }
@@ -88,7 +89,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             JsonConvert.DeserializeObject<List<string>>(logEventIndexed);
         var libFound = new IrreversibleBlockFound();
         libFound.MergeFrom(ByteString.FromBase64(IndexedList[0]));
-        Console.WriteLine(
+        _logger.LogInformation(
             $"IrreversibleBlockFound: {libFound}");
         return libFound.IrreversibleBlockHeight;
     }
