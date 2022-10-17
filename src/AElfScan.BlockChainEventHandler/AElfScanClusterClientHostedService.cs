@@ -29,13 +29,12 @@ public class AElfScanClusterClientHostedService:IHostedService
         _serviceProvider = serviceProvider;
         _logger = logger;
         _orleansClientOption = orleansClientOption.Value;
-        List<IPEndPoint> nodes = new List<IPEndPoint>();
-        foreach (var node in _orleansClientOption.NodeIpAddresses)
-        {
-            nodes.Add(new IPEndPoint(IPAddress.Parse(node), _orleansClientOption.GatewayPort));
-        }
         OrleansClient = new ClientBuilder()
-            .UseStaticClustering(nodes.ToArray())
+            .UseRedisClustering(opt =>
+            {
+                opt.ConnectionString = _orleansClientOption.KVrocksConnection;
+                opt.Database = 0;
+            })
             // .UseLocalhostClustering()
             .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(IBlockGrain).Assembly).WithReferences())
             .Configure<ClusterOptions>(options =>

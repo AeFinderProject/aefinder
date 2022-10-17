@@ -34,13 +34,12 @@ public static class OrleansHostExtensions
         {
             //Configure OrleansSnapshot
             siloBuilder
-                .UseDevelopmentClustering(
-                    new IPEndPoint(
-                        IPAddress.Parse(configSection.GetValue<string>("NodeIpAddresses")),
-                        configSection.GetValue<int>("SiloPort")
-                    )
-                )
-                .ConfigureEndpoints(siloPort: configSection.GetValue<int>("SiloPort"), gatewayPort: configSection.GetValue<int>("GatewayPort"))
+                .UseRedisClustering(opt =>
+                {
+                    opt.ConnectionString = configSection.GetValue<string>("KVrocksConnection");
+                    opt.Database = 0;
+                })
+                .ConfigureEndpoints(siloPort: configSection.GetValue<int>("SiloPort"), gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
                 // .UseLocalhostClustering()
                 // .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
                 // .AddMongoDBGrainStorage("Default",(MongoDBGrainStorageOptions op) =>
@@ -79,7 +78,7 @@ public static class OrleansHostExtensions
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
                 })
                 .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TGrain).Assembly).WithReferences())
-                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddSerilog(); });
+                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); });
         });
     }
 }
