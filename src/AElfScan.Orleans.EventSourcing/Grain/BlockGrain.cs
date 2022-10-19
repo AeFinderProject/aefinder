@@ -33,10 +33,19 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         var dicLibBlock = this.State.Blocks.Where(b => b.Value.IsConfirmed)
             .Select(x => x.Value)
             .FirstOrDefault();
-        if (dicLibBlock != null && dicLibBlock.BlockNumber >= blockEvent.BlockNumber)
+        if (dicLibBlock != null)
         {
-            //Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
-            return null;
+            if (dicLibBlock.BlockNumber >= blockEvent.BlockNumber)
+            {
+                //Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
+                return null;
+            }
+
+            if (!this.State.Blocks.ContainsKey(blockEvent.PreviousBlockHash))
+            {
+                Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+                throw new Exception($"Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+            }
         }
         
 
