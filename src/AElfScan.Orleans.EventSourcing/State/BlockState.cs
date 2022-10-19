@@ -31,9 +31,13 @@ public class BlockState
         bool addResult = Blocks.TryAdd(blockEvent.BlockHash, newBlock);
         if (!addResult)
         {
+            // TODO: Use Logger
             Console.WriteLine($"[Block State Apply]Add new block{newBlock.BlockNumber} to dictionary {addResult}");
             Console.WriteLine($"Block hash: {blockEvent.BlockHash} exist: {Blocks.ContainsKey(blockEvent.BlockHash)}");
         }
+
+        Console.WriteLine(
+            $"Blocks count: {Blocks.Count}. Lib: {blockEvent.LibBlockNumber}. Block height: {blockEvent.BlockNumber}");
     }
 
     public Block FindLibBlock(string previousBlockHash, long libBlockNumber)
