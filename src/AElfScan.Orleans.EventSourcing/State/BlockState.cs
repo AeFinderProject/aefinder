@@ -29,7 +29,7 @@ public class BlockState
         newBlock.PreviousBlockHash = blockEvent.PreviousBlockHash;
         newBlock.IsConfirmed = false;
         bool addResult = Blocks.TryAdd(blockEvent.BlockHash, newBlock);
-        Console.WriteLine($"[Block State Apply]Add new block{newBlock.BlockNumber} to dictionary {addResult}");
+        //Console.WriteLine($"[Block State Apply]Add new block{newBlock.BlockNumber} to dictionary {addResult}");
     }
 
     public Block FindLibBlock(string previousBlockHash, long libBlockNumber)
