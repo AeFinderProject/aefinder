@@ -204,7 +204,7 @@ namespace AElfScan.Orleans.Redis;
             catch (RedisServerException rse) when (rse.Message is not null && rse.Message.Contains(" WRONGTYPE ")) // ordinal comparison
             {
                 // EVALSHA returned error like 'ERR Error running script (call to f_4ebd809f882ff80026566f2d7dc8674009a3d14d): @user_script:1: WRONGTYPE Operation against a key holding the wrong kind of value'
-                _logger.LogInformation("Encountered old format grain state for grain of type {GrainType} with id {GrainReference} when writing hash state for key {Key}. Attempting to migrate.error msg is {rse.Message}",
+                _logger.LogInformation("Encountered old format grain state for grain of type {GrainType} with id {GrainReference} when writing hash state for key {Key}. Attempting to migrate.error msg is {ErrorMessage}",
                     grainType,
                     grainReference,
                     key,
@@ -213,7 +213,7 @@ namespace AElfScan.Orleans.Redis;
                 if (!await MigrateAsync(key, newEtag, payload).ConfigureAwait(false))
                 {
                     _logger.LogError(
-                        "Failed to write grain state for {GrainType} grain with id {GrainReference} with storage key {Key} while migrating to new structure error msg is {rse.Message}",
+                        "Failed to write grain state for {GrainType} grain with id {GrainReference} with storage key {Key} while migrating to new structure error msg is {ErrorMessage}",
                         grainType,
                         grainReference,
                         key,
@@ -223,9 +223,10 @@ namespace AElfScan.Orleans.Redis;
             }
             catch (Exception e)
             {
+                string errorMessage = e.Message + e.StackTrace;
                 _logger.LogError(
-                    "Failed to write grain state for {grainType} grain with ID: {grainReference} with redis key {key}.error msg is {e.Message}",
-                    grainType, grainReference, key,e.Message);
+                    "Failed to write grain state for {grainType} grain with ID: {grainReference} with redis key {key}.error msg is {ErrorMessage}",
+                    grainType, grainReference, key, errorMessage);
                 throw new RedisStorageException(
                     Invariant(
                         $"Failed to write grain state for {grainType} grain with ID: {grainReference} with redis key {key}. and error msg is {e.Message}"),
