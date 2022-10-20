@@ -227,10 +227,11 @@ namespace AElfScan.Orleans.Redis;
                 _logger.LogError(
                     "Failed to write grain state for {grainType} grain with ID: {grainReference} with redis key {key}.error msg is {ErrorMessage}",
                     grainType, grainReference, key, errorMessage);
-                throw new RedisStorageException(
-                    Invariant(
-                        $"Failed to write grain state for {grainType} grain with ID: {grainReference} with redis key {key}. and error msg is {e.Message}"),
-                    e);
+                // throw new RedisStorageException(
+                //     Invariant(
+                //         $"Failed to write grain state for {grainType} grain with ID: {grainReference} with redis key {key}. and error msg is {e.Message}"),
+                //     e);
+                throw;
             }
 
             if (writeWithScriptResponse is not null && writeWithScriptResponse.IsNull)
