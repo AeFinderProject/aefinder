@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Nest;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
+using Volo.Abp.ObjectMapping;
 using Index = System.Index;
 
 namespace AElfScan.AElf;
@@ -16,15 +17,18 @@ namespace AElfScan.AElf;
 public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,ITransientDependency
 {
-    private readonly INESTRepository<Block, Guid> _blockIndexRepository;
+    private readonly INESTRepository<Block, string> _blockIndexRepository;
     private readonly ILogger<BlockHandler> _logger;
+    private readonly IObjectMapper _objectMapper;
 
     public BlockHandler(
-        INESTRepository<Block,Guid> blockIndexRepository,
-        ILogger<BlockHandler> logger)
+        INESTRepository<Block,string> blockIndexRepository,
+        ILogger<BlockHandler> logger,
+        IObjectMapper objectMapper)
     {
         _blockIndexRepository = blockIndexRepository;
         _logger = logger;
+        _objectMapper = objectMapper;
     }
 
     public async Task HandleEventAsync(NewBlockEto eventData)
@@ -49,10 +53,11 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
             _logger.LogInformation($"block:{confirmBlock.BlockNumber} is confirming");
-            var blockIndex = await _blockIndexRepository.GetAsync(q=>
-                q.Term(i=>i.Field(f=>f.BlockHash).Value(confirmBlock.BlockHash)));
-            if (blockIndex != null)
-            {
+            var blockIndex = _objectMapper.Map<ConfirmBlockEto, Block>(confirmBlock);
+            // var blockIndex = await _blockIndexRepository.GetAsync(q=>
+            //     q.Term(i=>i.Field(f=>f.BlockHash).Value(confirmBlock.BlockHash)));
+            // if (blockIndex != null)
+            // {
                 blockIndex.IsConfirmed = true;
                 foreach (var transaction in blockIndex.Transactions)
                 {
@@ -62,15 +67,15 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
                         logEvent.IsConfirmed = true;
                     }
                 }
-
+            
                 await _blockIndexRepository.UpdateAsync(blockIndex);
-            }
-            else
-            {
-                _logger.LogInformation($"Confirm failure,block {confirmBlock.BlockNumber} {confirmBlock.BlockHash} is not exist!");
-                throw new DataException($"Block {confirmBlock.BlockHash} is not exist,confirm block failure!");
-            }
-        
+            // }
+            // else
+            // {
+            //     _logger.LogInformation($"Confirm failure,block {confirmBlock.BlockNumber} {confirmBlock.BlockHash} is not exist!");
+            //     throw new DataException($"Block {confirmBlock.BlockHash} is not exist,confirm block failure!");
+            // }
+
             //find the same height blocks
             var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
             mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockNumber).Value(confirmBlock.BlockNumber)));
@@ -89,7 +94,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
                 {
                     continue;
                 }
-                _blockIndexRepository.DeleteAsync(forkBlock.Id);
+                await _blockIndexRepository.DeleteAsync(forkBlock);
                 _logger.LogInformation($"block {forkBlock.BlockHash} has been deleted.");
             }
         }

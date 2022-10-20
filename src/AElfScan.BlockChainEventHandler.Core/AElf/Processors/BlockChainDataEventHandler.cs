@@ -40,13 +40,15 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         var blockGrain = _clusterClient.GetGrain<IBlockGrain>(50);
         foreach (var blockItem in eventData.Blocks)
         {
+            var newBlockEto = ConvertToNewBlockEto(blockItem, eventData.ChainId);
             //_logger.LogInformation($"Start to deal with block {blockItem.BlockNumber}");
             BlockEventData blockEvent = new BlockEventData();
-            blockEvent.ChainId = eventData.ChainId;
-            blockEvent.BlockHash = blockItem.BlockHash;
-            blockEvent.BlockNumber = blockItem.BlockNumber;
-            blockEvent.PreviousBlockHash = blockItem.PreviousBlockHash;
-            blockEvent.BlockTime = blockItem.BlockTime;
+            blockEvent = _objectMapper.Map<NewBlockEto, BlockEventData>(newBlockEto);
+            // blockEvent.ChainId = eventData.ChainId;
+            // blockEvent.BlockHash = blockItem.BlockHash;
+            // blockEvent.BlockNumber = blockItem.BlockNumber;
+            // blockEvent.PreviousBlockHash = blockItem.PreviousBlockHash;
+            // blockEvent.BlockTime = blockItem.BlockTime;
 
             //analysis lib found event content
             var libLogEvent = blockItem.Transactions?.SelectMany(t => t.LogEvents)
@@ -57,20 +59,20 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             }
             
             //_logger.LogInformation("Prepare Save Block Number:" + blockEvent.BlockNumber);
-            List<Block> libBlockList = await blockGrain.SaveBlock(blockEvent);
+            List<BlockEventData> libBlockList = await blockGrain.SaveBlock(blockEvent);
 
             if (libBlockList != null)
             {
                 //_logger.LogInformation("libBlockList length:" + libBlockList.Count);
                 //publish new block event
-                await _distributedEventBus.PublishAsync(ConvertToNewBlockEto(blockItem,eventData.ChainId));
+                await _distributedEventBus.PublishAsync(newBlockEto);
                 //_logger.LogInformation($"NewBlock Event is already published:{blockItem.BlockHash}");
 
                 //publish confirm blocks event
                 if (libBlockList.Count > 0)
                 {
                     var confirmBlockList =
-                        _objectMapper.Map<List<AElfScan.State.Block>, List<ConfirmBlockEto>>(libBlockList);
+                        _objectMapper.Map<List<BlockEventData>, List<ConfirmBlockEto>>(libBlockList);
                     await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                         { ConfirmBlocks = confirmBlockList });
                     //_logger.LogInformation($"ConfirmBlock Event is already published:{blockItem.BlockHash}");
@@ -97,8 +99,8 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private NewBlockEto ConvertToNewBlockEto(BlockEto blockItem,string chainId)
     {
         NewBlockEto newBlock = _objectMapper.Map<BlockEto, NewBlockEto>(blockItem);
-        newBlock.Id = Guid.NewGuid();
-        // newBlock.Id = newBlock.BlockHash;
+        // newBlock.Id = Guid.NewGuid();
+        newBlock.Id = newBlock.BlockHash;
         newBlock.ChainId = chainId;
         newBlock.IsConfirmed = false;
         foreach (var transaction in newBlock.Transactions)

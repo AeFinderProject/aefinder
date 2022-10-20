@@ -21,12 +21,12 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         _logger = logger;
     }
 
-    public async Task<Dictionary<string, Block>> GetBlockDictionary()
+    public async Task<Dictionary<string, BlockEventData>> GetBlockDictionary()
     {
         return this.State.Blocks;
     }
 
-    public async Task<List<Block>> SaveBlock(BlockEventData blockEvent)
+    public async Task<List<BlockEventData>> SaveBlock(BlockEventData blockEvent)
     {
         //Console.WriteLine($"[BlockGrain]Begin Save Block height:{blockEvent.BlockNumber} {blockEvent.BlockHash}");
         //Ignore blocks with height less than LIB block in Dictionary
@@ -49,9 +49,9 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         }
         
 
-        Block currentLibBlock = this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
+        BlockEventData currentLibBlock = this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
         
-        List<Block> libBlockList = new List<Block>();
+        List<BlockEventData> libBlockList = new List<BlockEventData>();
         if (currentLibBlock != null)
         {
             //Console.WriteLine($"[BlockGrain]currentLibBlock {currentLibBlock.BlockNumber}");
@@ -65,7 +65,7 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         return libBlockList;
     }
     
-    private void GetLibBlockList(string currentLibBlockHash, List<Block> libBlockList)
+    private void GetLibBlockList(string currentLibBlockHash, List<BlockEventData> libBlockList)
     {
         while (this.State.Blocks.ContainsKey(currentLibBlockHash))
         {

@@ -1,12 +1,13 @@
+using AElfScan.AElf.Entities.Es;
 using Volo.Abp.EventBus;
 
 namespace AElfScan.AElf.Etos;
 
-public class ConfirmBlockEto
+public class ConfirmBlockEto:Block
 {
-    public string ChainId { get; set; }
-    public string BlockHash { get; set; }
-    public long BlockNumber { get; set; }
-    public string PreviousBlockHash { get; set; }
-    public bool IsConfirmed{get;set;}
+    // public string ChainId { get; set; }
+    // public string BlockHash { get; set; }
+    // public long BlockNumber { get; set; }
+    // public string PreviousBlockHash { get; set; }
+    // public bool IsConfirmed{get;set;}
 }
