@@ -1,7 +1,3 @@
-using System;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
 using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
@@ -54,34 +50,24 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         {
             _logger.LogInformation($"block:{confirmBlock.BlockNumber} is confirming");
             var blockIndex = _objectMapper.Map<ConfirmBlockEto, Block>(confirmBlock);
-            // var blockIndex = await _blockIndexRepository.GetAsync(q=>
-            //     q.Term(i=>i.Field(f=>f.BlockHash).Value(confirmBlock.BlockHash)));
-            // if (blockIndex != null)
-            // {
-                blockIndex.IsConfirmed = true;
-                foreach (var transaction in blockIndex.Transactions)
+            blockIndex.IsConfirmed = true;
+            foreach (var transaction in blockIndex.Transactions)
+            {
+                transaction.IsConfirmed = true;
+                foreach (var logEvent in transaction.LogEvents)
                 {
-                    transaction.IsConfirmed = true;
-                    foreach (var logEvent in transaction.LogEvents)
-                    {
-                        logEvent.IsConfirmed = true;
-                    }
+                    logEvent.IsConfirmed = true;
                 }
-            
-                await _blockIndexRepository.UpdateAsync(blockIndex);
-            // }
-            // else
-            // {
-            //     _logger.LogInformation($"Confirm failure,block {confirmBlock.BlockNumber} {confirmBlock.BlockHash} is not exist!");
-            //     throw new DataException($"Block {confirmBlock.BlockHash} is not exist,confirm block failure!");
-            // }
+            }
+
+            await _blockIndexRepository.UpdateAsync(blockIndex);
 
             //find the same height blocks
             var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
             mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockNumber).Value(confirmBlock.BlockNumber)));
             QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Bool(b => b.Must(mustQuery));
 
-            var forkBlockList=await _blockIndexRepository.GetListAsync(Filter);
+            var forkBlockList = await _blockIndexRepository.GetListAsync(Filter);
             if (forkBlockList.Item1 == 0)
             {
                 continue;
@@ -94,10 +80,11 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
                 {
                     continue;
                 }
+
                 await _blockIndexRepository.DeleteAsync(forkBlock);
                 _logger.LogInformation($"block {forkBlock.BlockHash} has been deleted.");
             }
         }
-        
+
     }
 }
