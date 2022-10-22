@@ -36,7 +36,7 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         {
             if (dicLibBlock.BlockNumber >= blockEvent.BlockNumber)
             {
-                //Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
+                // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
                 return null;
             }
 

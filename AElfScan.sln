@@ -53,8 +53,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.BlockChainEventHan
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.EntityEventHandler.Core.Tests", "test\AElfScan.EntityEventHandler.Core.Tests\AElfScan.EntityEventHandler.Core.Tests.csproj", "{AA53A52B-33FD-47AC-BB6B-3AEE225BE819}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.Orleans.Redis", "src\AElfScan.Orleans.Redis\AElfScan.Orleans.Redis.csproj", "{F39F800E-0227-4CE3-9F42-E42A6DC63EB8}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,10 +151,6 @@ Global
 		{AA53A52B-33FD-47AC-BB6B-3AEE225BE819}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA53A52B-33FD-47AC-BB6B-3AEE225BE819}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA53A52B-33FD-47AC-BB6B-3AEE225BE819}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F39F800E-0227-4CE3-9F42-E42A6DC63EB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F39F800E-0227-4CE3-9F42-E42A6DC63EB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F39F800E-0227-4CE3-9F42-E42A6DC63EB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F39F800E-0227-4CE3-9F42-E42A6DC63EB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -185,7 +179,6 @@ Global
 		{CC9EECCF-14DF-43A8-BD54-0D7E246DBBE0} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{8FD267D5-E652-4D88-93CB-70A9B644F745} = {04DBDB01-70F4-4E06-B468-8F87850B22BE}
 		{AA53A52B-33FD-47AC-BB6B-3AEE225BE819} = {04DBDB01-70F4-4E06-B468-8F87850B22BE}
-		{F39F800E-0227-4CE3-9F42-E42A6DC63EB8} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {28315BFD-90E7-4E14-A2EA-F3D23AF4126F}

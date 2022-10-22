@@ -1,5 +1,6 @@
 using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
+using TransactionStatus = AElfScan.AElf.TransactionStatus;
 
 namespace AElfScan.EntityEventHandler.Core.Tests.AElf;
 

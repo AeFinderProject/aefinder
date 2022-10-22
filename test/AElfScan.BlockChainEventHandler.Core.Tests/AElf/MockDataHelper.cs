@@ -3,7 +3,7 @@ using AElf.CSharp.Core.Extension;
 using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
-using TransactionStatus = AElfScan.AElf.Entities.Es.TransactionStatus;
+using TransactionStatus = AElfScan.AElf.TransactionStatus;
 
 namespace AElfScan.BlockChainEventHandler.Core.Tests.AElf;
 

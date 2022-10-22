@@ -57,7 +57,7 @@ public static class OrleansHostExtensions
                 {
                     options.DataConnectionString = configSection.GetValue<string>("KVrocksConnection"); // This is the deafult
                     options.UseJson = true;
-                    options.DatabaseNumber = 1;
+                    options.DatabaseNumber = 0;
                 }))
                 .AddSnapshotStorageBasedConsistencyProviderAsDefault((op, name) =>
                 {
@@ -78,7 +78,8 @@ public static class OrleansHostExtensions
                     options.ClusterId = configSection.GetValue<string>("ClusterId");
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
                 })
-                .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TGrain).Assembly).WithReferences())
+                // .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TGrain).Assembly).WithReferences())
+                .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
                 .UseDashboard(options => {
                     options.Username = "syb";
                     options.Password = "123456";

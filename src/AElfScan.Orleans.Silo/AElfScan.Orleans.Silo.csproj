@@ -15,6 +15,7 @@
       <PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Linux" Version="3.6.5" />
       <PackageReference Include="Microsoft.Orleans.Server" Version="3.6.5" />
       <PackageReference Include="Orleans.Clustering.Redis" Version="3.2.2" />
+      <PackageReference Include="Orleans.Persistence.Redis" Version="3.2.2" />
       <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />
       <PackageReference Include="OrleansDashboard" Version="3.6.2" />
       <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
@@ -25,7 +26,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AElfScan.Orleans.EventSourcing\AElfScan.Orleans.EventSourcing.csproj" />
-      <ProjectReference Include="..\AElfScan.Orleans.Redis\AElfScan.Orleans.Redis.csproj" />
     </ItemGroup>
 
     <ItemGroup>

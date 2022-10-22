@@ -4,9 +4,11 @@ using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Etos;
 using AElfScan.EventData;
 using AElfScan.Grain;
+using AElfScan.Options;
 using AElfScan.State;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Orleans;
 using Volo.Abp.DependencyInjection;
@@ -21,23 +23,26 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private readonly ILogger<BlockChainDataEventHandler> _logger;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
+    private readonly OrleansClientOption _orleansClientOption;
 
     public BlockChainDataEventHandler(
         IClusterClient clusterClient,
         ILogger<BlockChainDataEventHandler> logger,
         IObjectMapper objectMapper,
+        IOptionsSnapshot<OrleansClientOption> orleansClientOption,
         IDistributedEventBus distributedEventBus)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _distributedEventBus = distributedEventBus;
         _objectMapper = objectMapper;
+        _orleansClientOption = orleansClientOption.Value;
     }
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
         _logger.LogInformation($"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockNumber}, end block: {eventData.Blocks.Last().BlockNumber},");
-        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(50);
+        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(_orleansClientOption.AElfBlockGrainPrimaryKey);
         foreach (var blockItem in eventData.Blocks)
         {
             var newBlockEto = ConvertToNewBlockEto(blockItem, eventData.ChainId);

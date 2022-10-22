@@ -1,4 +1,4 @@
-namespace AElfScan.AElf.Entities.Es;
+namespace AElfScan.AElf;
 
 public enum TransactionStatus
 {
