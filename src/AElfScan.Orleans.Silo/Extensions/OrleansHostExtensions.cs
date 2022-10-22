@@ -81,12 +81,12 @@ public static class OrleansHostExtensions
                 // .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TGrain).Assembly).WithReferences())
                 .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
                 .UseDashboard(options => {
-                    options.Username = "syb";
-                    options.Password = "123456";
+                    options.Username = configSection.GetValue<string>("DashboardUserName");
+                    options.Password = configSection.GetValue<string>("DashboardPassword");
                     options.Host = "*";
-                    options.Port = 8080;
+                    options.Port = configSection.GetValue<int>("DashboardPort");
                     options.HostSelf = true;
-                    options.CounterUpdateIntervalMs = 1000;
+                    options.CounterUpdateIntervalMs = configSection.GetValue<int>("DashboardCounterUpdateIntervalMs");
                 })
                 .UseLinuxEnvironmentStatistics()
                 .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); });
