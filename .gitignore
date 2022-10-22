@@ -255,4 +255,11 @@ paket-files/
 #Codecov
 CodeCoverage
 
+src/AElfScan.HttpApi.Host/Logs/*
+src/AElfScan.AuthServer/Logs/*
+src/AElfScan.DbMigrator/Logs/*
+src/AElfScan.EntityHandler/Logs/*
+src/AElfScan.BlockChainEventHandler/Logs/*
+src/AElfScan.Orleans.Silo/Logs/*
+
 
