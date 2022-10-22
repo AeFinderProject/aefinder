@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -12,8 +13,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using AElfScan.EntityFrameworkCore;
 using AElfScan.MultiTenancy;
+using AElfScan.Orleans;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
+using Orleans;
+using Orleans.Runtime;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy;
@@ -25,6 +29,7 @@ using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
+using Volo.Abp.Threading;
 using Volo.Abp.VirtualFileSystem;
 
 namespace AElfScan;
@@ -220,5 +225,45 @@ public class AElfScanHttpApiHostModule : AbpModule
         app.UseAbpSerilogEnrichers();
         app.UseUnitOfWork();
         app.UseConfiguredEndpoints();
+        
+        var clientService = context.ServiceProvider.GetService<IClusterClientAppService>();
+        AsyncHelper.RunSync(() => clientService.StartAsync());
+        
+        /////
+        AsyncHelper.RunSync(async () => await DoClientWork(clientService.Client));
+    }
+
+    public override void OnApplicationShutdown(ApplicationShutdownContext context)
+    {
+        var clientService = context.ServiceProvider.GetService<IClusterClientAppService>();
+        AsyncHelper.RunSync(() => clientService.StopAsync());
+    }
+    
+    
+    private static async Task DoClientWork(IClusterClient client)
+    {
+        // example of calling grains from the initialized client
+        var friend = client.GetGrain<IHello>(0);
+        var response = await friend.SayHello("Good morning, HelloGrain!");
+        Console.WriteLine("\n\n{0}\n\n", response);
+
+        var tasks = new List<Task>();
+        
+        var task = Task.Run(() => friend.AddCount());
+        tasks.Add(task);
+        
+        var task2 = Task.Run(() => friend.GetCount());
+        tasks.Add(task2);
+        
+        // for(int i=0;i<100;i++)
+        // {
+        //     var task = Task.Run(() => friend.AddCount());
+        //     tasks.Add(task);
+        // }
+        //Task.WaitAny(tasks.ToArray());
+
+        //Console.WriteLine(await friend.GetCount());
+        
+        Console.WriteLine("Done");
     }
 }

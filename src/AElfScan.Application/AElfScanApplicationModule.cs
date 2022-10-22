@@ -1,6 +1,9 @@
 using AElfScan.AElf;
+using AElfScan.Orleans;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
+using Orleans;
+using Orleans.Configuration;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
@@ -30,6 +33,10 @@ public class AElfScanApplicationModule : AbpModule
         {
             options.AddMaps<AElfScanApplicationModule>();
         });
+        
+        var configuration = context.Services.GetConfiguration();
+        Configure<ClusterOptions>(configuration.GetSection("Orleans:Cluster"));
+        context.Services.AddSingleton<IClusterClient>(_ => _.GetService<IClusterClientAppService>()?.Client);
     }
 }
 
