@@ -77,6 +77,29 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
         };
 
         var configurationSection = _configuration.GetSection("OpenIddict:Applications");
+        
+        var dappClients = _configuration.GetSection("OpenIddict:Applications:AElfScan_DApps");
+        foreach (var section in dappClients.GetChildren())
+        {
+            var clientId = section.GetValue<string>("ClientId");
+            var clientSecret = section.GetValue<string>("ClientSecret");
+                
+            await CreateApplicationAsync(
+                name: clientId,
+                type: OpenIddictConstants.ClientTypes.Confidential,
+                consentType: OpenIddictConstants.ConsentTypes.Implicit,
+                displayName: "AElfScan DApps",
+                secret: clientSecret,
+                grantTypes: new List<string>
+                {
+                    OpenIddictConstants.GrantTypes.AuthorizationCode,
+                    OpenIddictConstants.GrantTypes.Password,
+                    OpenIddictConstants.GrantTypes.ClientCredentials,
+                    OpenIddictConstants.GrantTypes.RefreshToken
+                },
+                scopes: commonScopes
+            );
+        }
 
         //Web Client
         var webClientId = configurationSection["AElfScan_Web:ClientId"];
