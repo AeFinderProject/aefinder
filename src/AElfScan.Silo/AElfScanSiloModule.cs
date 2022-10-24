@@ -1,5 +1,6 @@
 using AElfScan.EntityFrameworkCore;
 using AElfScan.Orleans;
+using AElfScan.ScanClients;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -28,28 +29,29 @@ public class AElfScanSiloModule : AbpModule
         context.Services.AddHostedService<AElfScanHostedService>();
         var configuration = context.Services.GetConfiguration();
 
-        var builder = new SiloHostBuilder()
-            .UseLocalhostClustering()
-            .AddAdoNetGrainStorageAsDefault(options =>
-            {
-                options.Invariant = "MySql.Data.MySqlConnector";
-                options.ConnectionString = configuration["ConnectionStrings:Default"];
-                //options.UseJsonFormat = true;
-            })
-            .Configure<ClusterOptions>(options =>
-            {
-                options.ClusterId = "dev";
-                options.ServiceId = "dev";
-            })
-            .ConfigureApplicationParts(parts =>
-                parts.AddApplicationPart(typeof(HelloGrain).Assembly).WithReferences());
-
-        SiloHost = builder.Build();
-        AsyncHelper.RunSync(async () => await SiloHost.StartAsync());
+        // var builder = new SiloHostBuilder()
+        //     .UseLocalhostClustering()
+        //     .AddAdoNetGrainStorageAsDefault(options =>
+        //     {
+        //         options.Invariant = "MySql.Data.MySqlConnector";
+        //         options.ConnectionString = configuration["ConnectionStrings:Default"];
+        //         //options.UseJsonFormat = true;
+        //     })
+        //     //.ConfigureServices((hostContext, services) => { services.AddApplication<AElfScanSiloModule>(); })
+        //     .ConfigureServices(service =>
+        //     {
+        //         service.AddApplication<AElfScanSiloModule>();
+        //         //service.AddTransient<IBlockProvider, BlockProvider>();
+        //     })
+        //     .ConfigureApplicationParts(parts =>
+        //         parts.AddApplicationPart(typeof(AElfScanApplicationModule).Assembly).WithReferences());
+        //
+        // SiloHost = builder.Build();
+        // AsyncHelper.RunSync(async () => await SiloHost.StartAsync());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        AsyncHelper.RunSync(async () => await SiloHost.StopAsync());
+        //AsyncHelper.RunSync(async () => await SiloHost.StopAsync());
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using AElfScan.Chains;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using AElfScan.EntityFrameworkCore;
 using AElfScan.MultiTenancy;
 using AElfScan.Orleans;
+using AElfScan.ScanClients;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
 using Orleans;
@@ -227,7 +229,7 @@ public class AElfScanHttpApiHostModule : AbpModule
         app.UseConfiguredEndpoints();
         
         var clientService = context.ServiceProvider.GetService<IClusterClientAppService>();
-        AsyncHelper.RunSync(() => clientService.StartAsync());
+        AsyncHelper.RunSync(async () => await clientService.StartAsync().ConfigureAwait(false));
         
         /////
         AsyncHelper.RunSync(async () => await DoClientWork(clientService.Client));
@@ -243,26 +245,37 @@ public class AElfScanHttpApiHostModule : AbpModule
     private static async Task DoClientWork(IClusterClient client)
     {
         // example of calling grains from the initialized client
-        var friend = client.GetGrain<IHello>(0);
-        var response = await friend.SayHello("Good morning, HelloGrain!");
-        Console.WriteLine("\n\n{0}\n\n", response);
+        // var friend = client.GetGrain<IHello>(0);
+        // var response = await friend.SayHello("Good morning, HelloGrain!");
+        // Console.WriteLine("\n\n{0}\n\n", response);
 
-        var tasks = new List<Task>();
-        
-        var task = Task.Run(() => friend.AddCount());
-        tasks.Add(task);
-        
-        var task2 = Task.Run(() => friend.GetCount());
-        tasks.Add(task2);
-        
-        // for(int i=0;i<100;i++)
-        // {
-        //     var task = Task.Run(() => friend.AddCount());
-        //     tasks.Add(task);
-        // }
-        //Task.WaitAny(tasks.ToArray());
+        // var tasks = new List<Task>();
+        //
+        //  for(int i=0;i<100;i++)
+        //  {
+        //      var task = Task.Run(() => friend.AddCount());
+        //      tasks.Add(task);
+        //  }
+        // Task.WaitAny(tasks.ToArray());
+        //
+        // Console.WriteLine(await friend.GetCount());
 
-        //Console.WriteLine(await friend.GetCount());
+        var clientId = "DApp1";
+        var chainId = "AELF";
+        var id = chainId + clientId;
+        
+        var chainGrain = client.GetGrain<IChainGrain>(chainId);
+        await chainGrain.SetLatestBlockAsync("Hash100",100);
+
+        var clientGrain = client.GetGrain<IClientGrain>(id);
+        var version = await clientGrain.InitializeAsync(chainId, clientId, new SubscribeInfo
+        {
+            StartBlockNumber = 20
+        });
+
+        var scanGrain = client.GetGrain<IBlockScanGrain>(id);
+        await scanGrain.InitializeAsync(chainId, clientId, version);
+        await scanGrain.HandleHistoricalBlockAsync();
         
         Console.WriteLine("Done");
     }

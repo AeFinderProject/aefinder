@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Orleans;
 
@@ -5,7 +6,6 @@ namespace AElfScan.ScanClients;
 
 public class ClientGrain : Grain<ClientState>, IClientGrain
 {
-
     public override Task OnActivateAsync()
     {
         this.ReadStateAsync();
@@ -20,21 +20,40 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
 
     public Task<ClientInfo> GetClientInfoAsync()
     {
-        throw new System.NotImplementedException();
+        return Task.FromResult(State.ClientInfo);
     }
 
     public Task<SubscribeInfo> GetSubscribeInfoAsync()
     {
-        throw new System.NotImplementedException();
+        return Task.FromResult(State.SubscribeInfo);
     }
 
-    public Task SetScanNewBlockStartHeightAsync(long height)
+    public async Task SetScanNewBlockStartHeightAsync(long height)
     {
-        throw new System.NotImplementedException();
+        State.ClientInfo.ScanModeInfo.ScanMode = ScanMode.NewBlock;
+        State.ClientInfo.ScanModeInfo.ScanNewBlockStartHeight = height;
+        await WriteStateAsync();
     }
 
-    public Task<string> InitAsync(string chainId, string clientId, SubscribeInfo info)
+    public async Task<string> InitializeAsync(string chainId, string clientId, SubscribeInfo info)
     {
-        throw new System.NotImplementedException();
+        var clientGrain = GrainFactory.GetGrain<IClientManagerGrain>(0);
+        await clientGrain.AddClientAsync(chainId, clientId);
+
+        State.ClientInfo = new ClientInfo
+        {
+            ChainId = chainId,
+            ClientId = clientId,
+            Version = Guid.NewGuid().ToString(),
+            ScanModeInfo = new ScanModeInfo
+            {
+                ScanMode = ScanMode.HistoricalBlock,
+                ScanNewBlockStartHeight = 0
+            }
+        };
+        State.SubscribeInfo = info;
+        await WriteStateAsync();
+        
+        return State.ClientInfo.Version;
     }
 }

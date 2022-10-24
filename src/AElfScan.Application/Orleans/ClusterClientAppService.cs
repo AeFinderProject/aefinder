@@ -20,39 +20,45 @@ public class ClusterClientAppService : AElfScanAppService, IClusterClientAppServ
         Client = new ClientBuilder()
             .ConfigureDefaults()
             .UseLocalhostClustering()
-            .Configure<ClusterOptions>(o =>
-            {
-                o.ClusterId = "dev";
-                o.ServiceId = "dev";
-            })
             .ConfigureLogging(builder => builder.AddProvider(loggerProvider))
             .Build();
     }
 
-    public Task StartAsync()
+    public async Task StartAsync()
     {
-        var attempt = 0;
-        var maxAttempts = 20;
-        var delay = TimeSpan.FromSeconds(1);
-        return Client.Connect(async error =>
+        try
         {
-            if (++attempt < maxAttempts)
+            var attempt = 0;
+            var maxAttempts = 20;
+            var delay = TimeSpan.FromSeconds(1);
+            await Client.Connect(async error =>
             {
-                Logger.LogWarning(error,
-                    "Failed to connect to Orleans cluster on attempt {@Attempt} of {@MaxAttempts}.",
-                    attempt, maxAttempts);
-                await Task.Delay(delay);
-                return true;
-            }
-            else
-            {
-                Logger.LogError(error,
-                    "Failed to connect to Orleans cluster on attempt {@Attempt} of {@MaxAttempts}.",
-                    attempt, maxAttempts);
+                if (++attempt < maxAttempts)
+                {
+                    Logger.LogWarning(error,
+                        "Failed to connect to Orleans cluster on attempt {@Attempt} of {@MaxAttempts}.",
+                        attempt, maxAttempts);
+                    await Task.Delay(delay);
+                    return true;
+                }
+                else
+                {
+                    Logger.LogError(error,
+                        "Failed to connect to Orleans cluster on attempt {@Attempt} of {@MaxAttempts}.",
+                        attempt, maxAttempts);
 
-                return false;
-            }
-        });
+                    return false;
+                }
+            });
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        
+
+        ;
     }
 
     public async Task StopAsync()

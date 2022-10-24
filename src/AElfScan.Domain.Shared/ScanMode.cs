@@ -2,6 +2,6 @@ namespace AElfScan;
 
 public enum ScanMode
 {
-    HistoryBlock,
+    HistoricalBlock,
     NewBlock
 }

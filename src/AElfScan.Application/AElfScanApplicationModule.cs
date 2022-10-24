@@ -1,5 +1,6 @@
 using AElfScan.AElf;
 using AElfScan.Orleans;
+using AElfScan.ScanClients;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
@@ -37,6 +38,8 @@ public class AElfScanApplicationModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<ClusterOptions>(configuration.GetSection("Orleans:Cluster"));
         context.Services.AddSingleton<IClusterClient>(_ => _.GetService<IClusterClientAppService>()?.Client);
+
+        context.Services.AddTransient<IBlockProvider, BlockProvider>();
     }
 }
 

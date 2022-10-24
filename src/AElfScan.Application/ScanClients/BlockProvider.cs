@@ -26,9 +26,3 @@ public class BlockProvider:IBlockProvider,ITransientDependency
         return result;
     }
 }
-
-public class Block
-{
-    public long BlockHeight { get; set; }
-    public string BlockHash { get; set; }
-}
