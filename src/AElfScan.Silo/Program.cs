@@ -1,13 +1,15 @@
-﻿using AElfScan;
-using AElfScan.Silo;
+﻿using AElfScan.Grain;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Serilog;
 using Serilog.Events;
-using Orleans;
+
+namespace AElfScan.Silo;
 
 public class Program
 {
@@ -34,7 +36,7 @@ public class Program
         try
         {
             Log.Information("Starting AElfScan.Silo.");
-            await CreateHostBuilder(args).Build().RunAsync();
+            await CreateHostBuilder(args).RunConsoleAsync();
             return 0;
         }
         catch (Exception ex)
@@ -54,7 +56,12 @@ public class Program
             .UseOrleans((context, builder) =>
             {
                 builder
-                    //.ConfigureDefaults()
+                    .ConfigureDefaults()
+                    .Configure<ClusterOptions>(o =>
+                    {
+                        o.ClusterId = "dev";
+                        o.ServiceId = "dev";
+                    })
                     .UseLocalhostClustering()
                     .AddAdoNetGrainStorageAsDefault(options =>
                     {
@@ -63,7 +70,7 @@ public class Program
                         //options.UseJsonFormat = true;
                     })
                     .ConfigureApplicationParts(parts =>
-                        parts.AddApplicationPart(typeof(AElfScanApplicationModule).Assembly).WithReferences());
+                        parts.AddApplicationPart(typeof(AElfScanGrainModule).Assembly).WithReferences());
             })
             .UseAutofac()
             .UseSerilog();

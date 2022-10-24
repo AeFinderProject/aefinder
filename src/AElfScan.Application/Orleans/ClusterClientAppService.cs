@@ -19,7 +19,13 @@ public class ClusterClientAppService : AElfScanAppService, IClusterClientAppServ
     {
         Client = new ClientBuilder()
             .ConfigureDefaults()
+            .Configure<ClusterOptions>(o =>
+            {
+                o.ClusterId = "dev";
+                o.ServiceId = "dev";
+            })
             .UseLocalhostClustering()
+            //.ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(ClusterClientAppService).Assembly).WithReferences())
             .ConfigureLogging(builder => builder.AddProvider(loggerProvider))
             .Build();
     }

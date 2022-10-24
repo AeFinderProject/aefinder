@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using AElfScan.EntityFrameworkCore;
+using AElfScan.Grain;
 using AElfScan.MultiTenancy;
 using AElfScan.Orleans;
 using AElfScan.ScanClients;
@@ -44,7 +45,8 @@ namespace AElfScan;
     typeof(AElfScanApplicationModule),
     typeof(AElfScanEntityFrameworkCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AbpSwashbuckleModule)
+    typeof(AbpSwashbuckleModule),
+    typeof(AElfScanGrainModule)
 )]
 public class AElfScanHttpApiHostModule : AbpModule
 {
@@ -264,16 +266,16 @@ public class AElfScanHttpApiHostModule : AbpModule
         var chainId = "AELF";
         var id = chainId + clientId;
         
-        var chainGrain = client.GetGrain<IChainGrain>(chainId);
+        var chainGrain = client.GetGrain<AElfScan.Grain.Contracts.Chains.IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync("Hash100",100);
 
-        var clientGrain = client.GetGrain<IClientGrain>(id);
-        var version = await clientGrain.InitializeAsync(chainId, clientId, new SubscribeInfo
+        var clientGrain = client.GetGrain<AElfScan.Grain.Contracts.ScanClients.IClientGrain>(id);
+        var version = await clientGrain.InitializeAsync(chainId, clientId, new AElfScan.Grain.Contracts.ScanClients.SubscribeInfo
         {
             StartBlockNumber = 20
         });
 
-        var scanGrain = client.GetGrain<IBlockScanGrain>(id);
+        var scanGrain = client.GetGrain<AElfScan.Grain.Contracts.ScanClients.IBlockScanGrain>(id);
         await scanGrain.InitializeAsync(chainId, clientId, version);
         await scanGrain.HandleHistoricalBlockAsync();
         

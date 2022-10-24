@@ -1,6 +1,4 @@
-using AElfScan.EntityFrameworkCore;
-using AElfScan.Orleans;
-using AElfScan.ScanClients;
+using AElfScan.Grain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -16,9 +14,10 @@ using Volo.Abp.Threading;
 namespace AElfScan.Silo;
 
 [DependsOn(typeof(AbpAutofacModule),
-    typeof(AbpCachingStackExchangeRedisModule),
-    typeof(AElfScanApplicationModule),
-    typeof(AElfScanEntityFrameworkCoreModule),
+    //typeof(AbpCachingStackExchangeRedisModule),
+    //typeof(AElfScanApplicationModule),
+    //typeof(AElfScanEntityFrameworkCoreModule),
+    typeof(AElfScanGrainModule),
     typeof(AbpAspNetCoreSerilogModule))]
 public class AElfScanSiloModule : AbpModule
 {
@@ -28,6 +27,7 @@ public class AElfScanSiloModule : AbpModule
     {
         context.Services.AddHostedService<AElfScanHostedService>();
         var configuration = context.Services.GetConfiguration();
+        
 
         // var builder = new SiloHostBuilder()
         //     .UseLocalhostClustering()
@@ -48,6 +48,11 @@ public class AElfScanSiloModule : AbpModule
         //
         // SiloHost = builder.Build();
         // AsyncHelper.RunSync(async () => await SiloHost.StartAsync());
+    }
+
+    public override void OnApplicationInitialization(ApplicationInitializationContext context)
+    {
+        
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
