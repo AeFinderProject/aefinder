@@ -1,7 +1,3 @@
-using System;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
 using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
@@ -9,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Nest;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
+using Volo.Abp.ObjectMapping;
 using Index = System.Index;
 
 namespace AElfScan.AElf;
@@ -16,21 +13,24 @@ namespace AElfScan.AElf;
 public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,ITransientDependency
 {
-    private readonly INESTRepository<Block, Guid> _blockIndexRepository;
+    private readonly INESTRepository<Block, string> _blockIndexRepository;
     private readonly ILogger<BlockHandler> _logger;
+    private readonly IObjectMapper _objectMapper;
 
     public BlockHandler(
-        INESTRepository<Block,Guid> blockIndexRepository,
-        ILogger<BlockHandler> logger)
+        INESTRepository<Block,string> blockIndexRepository,
+        ILogger<BlockHandler> logger,
+        IObjectMapper objectMapper)
     {
         _blockIndexRepository = blockIndexRepository;
         _logger = logger;
+        _objectMapper = objectMapper;
     }
 
     public async Task HandleEventAsync(NewBlockEto eventData)
     {
         var block = eventData;
-        _logger.LogInformation($"test block is adding, id: {block.BlockHash}  , BlockNumber: {block.BlockNumber} , IsConfirmed: {block.IsConfirmed}");
+        _logger.LogInformation($"block is adding, id: {block.BlockHash}  , BlockNumber: {block.BlockNumber} , IsConfirmed: {block.IsConfirmed}");
         var blockIndex = await _blockIndexRepository.GetAsync(q=>
             q.Term(i=>i.Field(f=>f.BlockHash).Value(eventData.BlockHash)));
         if (blockIndex != null)
@@ -49,34 +49,25 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
             _logger.LogInformation($"block:{confirmBlock.BlockNumber} is confirming");
-            var blockIndex = await _blockIndexRepository.GetAsync(q=>
-                q.Term(i=>i.Field(f=>f.BlockHash).Value(confirmBlock.BlockHash)));
-            if (blockIndex != null)
+            var blockIndex = _objectMapper.Map<ConfirmBlockEto, Block>(confirmBlock);
+            blockIndex.IsConfirmed = true;
+            foreach (var transaction in blockIndex.Transactions)
             {
-                blockIndex.IsConfirmed = true;
-                foreach (var transaction in blockIndex.Transactions)
+                transaction.IsConfirmed = true;
+                foreach (var logEvent in transaction.LogEvents)
                 {
-                    transaction.IsConfirmed = true;
-                    foreach (var logEvent in transaction.LogEvents)
-                    {
-                        logEvent.IsConfirmed = true;
-                    }
+                    logEvent.IsConfirmed = true;
                 }
+            }
 
-                await _blockIndexRepository.UpdateAsync(blockIndex);
-            }
-            else
-            {
-                _logger.LogInformation($"Confirm failure,block{confirmBlock.BlockHash} is not exist!");
-                throw new DataException($"Block {confirmBlock.BlockHash} is not exist,confirm block failure!");
-            }
-        
+            await _blockIndexRepository.UpdateAsync(blockIndex);
+
             //find the same height blocks
             var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
             mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockNumber).Value(confirmBlock.BlockNumber)));
             QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Bool(b => b.Must(mustQuery));
 
-            var forkBlockList=await _blockIndexRepository.GetListAsync(Filter);
+            var forkBlockList = await _blockIndexRepository.GetListAsync(Filter);
             if (forkBlockList.Item1 == 0)
             {
                 continue;
@@ -89,10 +80,11 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
                 {
                     continue;
                 }
-                _blockIndexRepository.DeleteAsync(forkBlock.Id);
+
+                await _blockIndexRepository.DeleteAsync(forkBlock);
                 _logger.LogInformation($"block {forkBlock.BlockHash} has been deleted.");
             }
         }
-        
+
     }
 }

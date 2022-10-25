@@ -4,7 +4,7 @@ namespace AElfScan.State;
 
 public class BlockState
 {
-    public Dictionary<string, Block> Blocks = new Dictionary<string, Block>();
+    public Dictionary<string, BlockEventData> Blocks = new Dictionary<string, BlockEventData>();
 
     public void Apply(BlockEventData blockEvent)
     {
@@ -12,7 +12,7 @@ public class BlockState
         if (blockEvent.LibBlockNumber > 0)
         {
             //Contains LibFound event
-            Block currentLibBlock = FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
+            BlockEventData currentLibBlock = FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
 
             if (currentLibBlock != null)
             {
@@ -21,17 +21,26 @@ public class BlockState
                     b.Value.BlockNumber == blockEvent.LibBlockNumber && b.Value.BlockHash != currentLibBlock.BlockHash);
             }
         }
-        
-        Block newBlock = new Block();
-        newBlock.ChainId = blockEvent.ChainId;
-        newBlock.BlockHash = blockEvent.BlockHash;
-        newBlock.BlockNumber = blockEvent.BlockNumber;
-        newBlock.PreviousBlockHash = blockEvent.PreviousBlockHash;
-        newBlock.IsConfirmed = false;
-        Blocks.Add(blockEvent.BlockHash, newBlock);
+
+        // Block newBlock = new Block();
+        // newBlock.ChainId = blockEvent.ChainId;
+        // newBlock.BlockHash = blockEvent.BlockHash;
+        // newBlock.BlockNumber = blockEvent.BlockNumber;
+        // newBlock.PreviousBlockHash = blockEvent.PreviousBlockHash;
+        // newBlock.IsConfirmed = false;
+        bool addResult = Blocks.TryAdd(blockEvent.BlockHash, blockEvent);
+        if (!addResult)
+        {
+            // TODO: Use Logger
+            Console.WriteLine($"[Block State Apply]Add new block{blockEvent.BlockNumber} to dictionary {addResult}");
+            Console.WriteLine($"Block hash: {blockEvent.BlockHash} exist: {Blocks.ContainsKey(blockEvent.BlockHash)}");
+        }
+
+        Console.WriteLine(
+            $"Blocks count: {Blocks.Count}. Lib: {blockEvent.LibBlockNumber}. Block height: {blockEvent.BlockNumber}");
     }
 
-    public Block FindLibBlock(string previousBlockHash, long libBlockNumber)
+    public BlockEventData FindLibBlock(string previousBlockHash, long libBlockNumber)
     {
         if (libBlockNumber <= 0)
         {

@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using EventStore.ClientAPI;
 using JsonNet.PrivateSettersContractResolvers;
 using Microsoft.Extensions.Configuration;
@@ -11,8 +12,11 @@ using Orleans;
 using Orleans.Configuration;
 using AElf.Orleans.EventSourcing.Snapshot;
 using AElf.Orleans.EventSourcing.Snapshot.Hosting;
+using Orleans.Configuration.Overrides;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
+using Orleans.Statistics;
+using Serilog;
 
 namespace AElfScan.Extensions;
 
@@ -30,7 +34,14 @@ public static class OrleansHostExtensions
         return hostBuilder.UseOrleans(siloBuilder =>
         {
             //Configure OrleansSnapshot
-            siloBuilder.UseLocalhostClustering()
+            siloBuilder
+                .UseRedisClustering(opt =>
+                {
+                    opt.ConnectionString = configSection.GetValue<string>("KVrocksConnection");
+                    opt.Database = 0;
+                })
+                .ConfigureEndpoints(siloPort: configSection.GetValue<int>("SiloPort"), gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
+                // .UseLocalhostClustering()
                 // .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
                 // .AddMongoDBGrainStorage("Default",(MongoDBGrainStorageOptions op) =>
                 // {
@@ -46,7 +57,7 @@ public static class OrleansHostExtensions
                 {
                     options.DataConnectionString = configSection.GetValue<string>("KVrocksConnection"); // This is the deafult
                     options.UseJson = true;
-                    options.DatabaseNumber = 1;
+                    options.DatabaseNumber = 0;
                 }))
                 .AddSnapshotStorageBasedConsistencyProviderAsDefault((op, name) =>
                 {
@@ -67,7 +78,17 @@ public static class OrleansHostExtensions
                     options.ClusterId = configSection.GetValue<string>("ClusterId");
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
                 })
-                .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TGrain).Assembly).WithReferences())
+                // .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TGrain).Assembly).WithReferences())
+                .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
+                .UseDashboard(options => {
+                    options.Username = configSection.GetValue<string>("DashboardUserName");
+                    options.Password = configSection.GetValue<string>("DashboardPassword");
+                    options.Host = "*";
+                    options.Port = configSection.GetValue<int>("DashboardPort");
+                    options.HostSelf = true;
+                    options.CounterUpdateIntervalMs = configSection.GetValue<int>("DashboardCounterUpdateIntervalMs");
+                })
+                .UseLinuxEnvironmentStatistics()
                 .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); });
         });
     }

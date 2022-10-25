@@ -21,26 +21,36 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         _logger = logger;
     }
 
-    public async Task<Dictionary<string, Block>> GetBlockDictionary()
+    public async Task<Dictionary<string, BlockEventData>> GetBlockDictionary()
     {
         return this.State.Blocks;
     }
 
-    public async Task<List<Block>> SaveBlock(BlockEventData blockEvent)
+    public async Task<List<BlockEventData>> SaveBlock(BlockEventData blockEvent)
     {
         //Ignore blocks with height less than LIB block in Dictionary
         var dicLibBlock = this.State.Blocks.Where(b => b.Value.IsConfirmed)
             .Select(x => x.Value)
             .FirstOrDefault();
-        if (dicLibBlock != null && dicLibBlock.BlockNumber >= blockEvent.BlockNumber)
+        if (dicLibBlock != null)
         {
-            return null;
+            if (dicLibBlock.BlockNumber >= blockEvent.BlockNumber)
+            {
+                // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
+                return null;
+            }
+
+            if (!this.State.Blocks.ContainsKey(blockEvent.PreviousBlockHash))
+            {
+                Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+                throw new Exception($"Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+            }
         }
         
 
-        Block currentLibBlock = this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
+        BlockEventData currentLibBlock = this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
         
-        List<Block> libBlockList = new List<Block>();
+        List<BlockEventData> libBlockList = new List<BlockEventData>();
         if (currentLibBlock != null)
         {
             GetLibBlockList(currentLibBlock.BlockHash, libBlockList);
@@ -52,7 +62,7 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         return libBlockList;
     }
     
-    private void GetLibBlockList(string currentLibBlockHash, List<Block> libBlockList)
+    private void GetLibBlockList(string currentLibBlockHash, List<BlockEventData> libBlockList)
     {
         while (this.State.Blocks.ContainsKey(currentLibBlockHash))
         {

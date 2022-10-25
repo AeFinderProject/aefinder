@@ -1,5 +1,6 @@
 using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
+using TransactionStatus = AElfScan.AElf.TransactionStatus;
 
 namespace AElfScan.EntityEventHandler.Core.Tests.AElf;
 
@@ -15,7 +16,8 @@ public class MockDataHelper
         string currentBlockHash = CreateBlockHash();
         var newBlockEto = new NewBlockEto
         {
-            Id = Guid.NewGuid(),
+            // Id = Guid.NewGuid(),
+            Id = currentBlockHash,
             ChainId = "AELF",
             BlockHash = currentBlockHash,
             BlockNumber = blockNumber,
@@ -128,7 +130,8 @@ public class MockDataHelper
         string currentBlockHash = blockHash;
         var newBlockEto = new NewBlockEto
         {
-            Id = Guid.NewGuid(),
+            // Id = Guid.NewGuid(),
+            Id = currentBlockHash,
             ChainId = "AELF",
             BlockHash = currentBlockHash,
             BlockNumber = blockNumber,

@@ -14,13 +14,13 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
 {
     private readonly IDistributedEventHandler<NewBlockEto> _newBlockEventHandler;
     private readonly IDistributedEventHandler<ConfirmBlocksEto> _confirmBlockEventHandler;
-    private readonly INESTRepository<Block, Guid> _blockIndexRepository;
+    private readonly INESTRepository<Block, string> _blockIndexRepository;
 
     public BlockHandlerTests()
     {
         _newBlockEventHandler = GetRequiredService<BlockHandler>();
         _confirmBlockEventHandler = GetRequiredService<BlockHandler>();
-        _blockIndexRepository = GetRequiredService<INESTRepository<Block, Guid>>();
+        _blockIndexRepository = GetRequiredService<INESTRepository<Block, string>>();
     }
 
     [Fact]

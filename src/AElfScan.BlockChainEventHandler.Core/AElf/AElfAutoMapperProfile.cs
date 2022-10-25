@@ -1,6 +1,7 @@
 using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
+using AElfScan.EventData;
 using AutoMapper;
 
 namespace AElfScan.AElf;
@@ -16,6 +17,7 @@ public class AElfAutoMapperProfile:Profile
         CreateMap<TransactionEto, Transaction>();
         CreateMap<LogEventEto, LogEvent>();
 
-        CreateMap<AElfScan.State.Block, ConfirmBlockEto>();
+        CreateMap<NewBlockEto, BlockEventData>();
+        CreateMap<BlockEventData, ConfirmBlockEto>();
     }
 }

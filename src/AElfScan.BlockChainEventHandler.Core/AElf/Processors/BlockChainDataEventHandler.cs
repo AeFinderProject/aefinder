@@ -4,9 +4,11 @@ using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Etos;
 using AElfScan.EventData;
 using AElfScan.Grain;
+using AElfScan.Options;
 using AElfScan.State;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Orleans;
 using Volo.Abp.DependencyInjection;
@@ -21,31 +23,31 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private readonly ILogger<BlockChainDataEventHandler> _logger;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
+    private readonly OrleansClientOption _orleansClientOption;
 
     public BlockChainDataEventHandler(
         IClusterClient clusterClient,
         ILogger<BlockChainDataEventHandler> logger,
         IObjectMapper objectMapper,
+        IOptionsSnapshot<OrleansClientOption> orleansClientOption,
         IDistributedEventBus distributedEventBus)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _distributedEventBus = distributedEventBus;
         _objectMapper = objectMapper;
+        _orleansClientOption = orleansClientOption.Value;
     }
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
-        _logger.LogInformation("Start connect to a Silo Server to get a grain");
-        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(49);
+        _logger.LogInformation($"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockNumber}, end block: {eventData.Blocks.Last().BlockNumber},");
+        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(_orleansClientOption.AElfBlockGrainPrimaryKey);
         foreach (var blockItem in eventData.Blocks)
         {
+            var newBlockEto = ConvertToNewBlockEto(blockItem, eventData.ChainId);
             BlockEventData blockEvent = new BlockEventData();
-            blockEvent.ChainId = eventData.ChainId;
-            blockEvent.BlockHash = blockItem.BlockHash;
-            blockEvent.BlockNumber = blockItem.BlockNumber;
-            blockEvent.PreviousBlockHash = blockItem.PreviousBlockHash;
-            blockEvent.BlockTime = blockItem.BlockTime;
+            blockEvent = _objectMapper.Map<NewBlockEto, BlockEventData>(newBlockEto);
 
             //analysis lib found event content
             var libLogEvent = blockItem.Transactions?.SelectMany(t => t.LogEvents)
@@ -54,31 +56,24 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             {
                 blockEvent.LibBlockNumber = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
             }
+            
+            List<BlockEventData> libBlockList = await blockGrain.SaveBlock(blockEvent);
 
-
-            _logger.LogInformation("Save Block Number:" + blockEvent.BlockNumber);
-            List<Block> libBlockList = await blockGrain.SaveBlock(blockEvent);
-            _logger.LogInformation($"libBlockList:{libBlockList}");
             if (libBlockList != null)
             {
                 //publish new block event
-                await _distributedEventBus.PublishAsync(ConvertToNewBlockEto(blockItem,eventData.ChainId));
-                _logger.LogInformation($"NewBlock Event is already published:{blockItem.BlockHash}");
+                await _distributedEventBus.PublishAsync(newBlockEto);
 
                 //publish confirm blocks event
-                _logger.LogInformation("libBlockList length:" + libBlockList.Count);
                 if (libBlockList.Count > 0)
                 {
                     var confirmBlockList =
-                        _objectMapper.Map<List<AElfScan.State.Block>, List<ConfirmBlockEto>>(libBlockList);
+                        _objectMapper.Map<List<BlockEventData>, List<ConfirmBlockEto>>(libBlockList);
                     await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                         { ConfirmBlocks = confirmBlockList });
                 }
             }
         }
-
-        _logger.LogInformation("Stop connect to Silo Server");
-
         await Task.CompletedTask;
     }
 
@@ -96,8 +91,8 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private NewBlockEto ConvertToNewBlockEto(BlockEto blockItem,string chainId)
     {
         NewBlockEto newBlock = _objectMapper.Map<BlockEto, NewBlockEto>(blockItem);
-        newBlock.Id = Guid.NewGuid();
-        // newBlock.Id = newBlock.BlockHash;
+        // newBlock.Id = Guid.NewGuid();
+        newBlock.Id = newBlock.BlockHash;
         newBlock.ChainId = chainId;
         newBlock.IsConfirmed = false;
         foreach (var transaction in newBlock.Transactions)

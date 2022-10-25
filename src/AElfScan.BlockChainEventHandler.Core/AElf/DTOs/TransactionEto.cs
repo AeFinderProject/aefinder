@@ -14,6 +14,11 @@ public class TransactionEto
     
     public string Signature { get; set; }
     
+    /// <summary>
+    /// The ranking position of transactions within a block
+    /// </summary>
+    public int Index{get;set;}
+    
     public int Status { get; set; }
     
     public Dictionary<string, string> ExtraProperties {get;set;}
