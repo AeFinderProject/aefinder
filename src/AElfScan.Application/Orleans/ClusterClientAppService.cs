@@ -1,17 +1,19 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Configuration;
+using Orleans.Hosting;
 using Orleans.Runtime;
 using Volo.Abp.DependencyInjection;
 
 namespace AElfScan.Orleans;
 
-public class ClusterClientAppService : AElfScanAppService, IClusterClientAppService, ISingletonDependency
+public class ClusterClientAppService : IClusterClientAppService, ISingletonDependency
 {
-    public IClusterClient Client { get; }
+    public IClusterClient Client { get;}
 
     public ILogger<ClusterClientAppService> Logger { get; set; }
 
@@ -19,13 +21,18 @@ public class ClusterClientAppService : AElfScanAppService, IClusterClientAppServ
     {
         Client = new ClientBuilder()
             .ConfigureDefaults()
-            .Configure<ClusterOptions>(o =>
+            .UseRedisClustering(opt =>
             {
-                o.ClusterId = "dev";
-                o.ServiceId = "dev";
+                opt.ConnectionString = "localhost:6379";
+                opt.Database = 0;
             })
-            .UseLocalhostClustering()
-            //.ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(ClusterClientAppService).Assembly).WithReferences())
+            .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(AElfScanOrleansEventSourcingModule).Assembly).WithReferences())
+            .Configure<ClusterOptions>(options =>
+            {
+                options.ClusterId = "dev";
+                options.ServiceId = "OrleansBasics";
+            })
+            .AddSimpleMessageStreamProvider("AElfScan")
             .ConfigureLogging(builder => builder.AddProvider(loggerProvider))
             .Build();
     }
@@ -35,7 +42,7 @@ public class ClusterClientAppService : AElfScanAppService, IClusterClientAppServ
         try
         {
             var attempt = 0;
-            var maxAttempts = 20;
+            var maxAttempts = 10;
             var delay = TimeSpan.FromSeconds(1);
             await Client.Connect(async error =>
             {
@@ -62,8 +69,6 @@ public class ClusterClientAppService : AElfScanAppService, IClusterClientAppServ
             Console.WriteLine(e);
             throw;
         }
-        
-
         ;
     }
 

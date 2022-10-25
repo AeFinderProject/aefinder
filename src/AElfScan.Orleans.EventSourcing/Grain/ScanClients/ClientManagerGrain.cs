@@ -1,8 +1,9 @@
-using AElfScan.Grain.Contracts.ScanClients;
+using AElfScan.Orleans.EventSourcing.State.ScanClients;
+using Orleans;
 
-namespace AElfScan.Grain.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.Grain.ScanClients;
 
-public class ClientManagerGrain : Orleans.Grain<ClientManagerState>, IClientManagerGrain
+public class ClientManagerGrain : Grain<ClientManagerState>, IClientManagerGrain
 {
     public Task<List<string>> GetClientIdsAsync(string chainId)
     {

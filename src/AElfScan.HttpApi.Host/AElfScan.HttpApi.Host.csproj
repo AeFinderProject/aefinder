@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Orleans.Persistence.Redis" Version="3.2.2" />
     <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
     <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.5" />
@@ -24,7 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\AElfScan.Application\AElfScan.Application.csproj" />
     <ProjectReference Include="..\AElfScan.EntityFrameworkCore\AElfScan.EntityFrameworkCore.csproj" />
-    <ProjectReference Include="..\AElfScan.Grain\AElfScan.Grain.csproj" />
     <ProjectReference Include="..\AElfScan.HttpApi\AElfScan.HttpApi.csproj" />
   </ItemGroup>
 

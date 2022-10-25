@@ -1,8 +1,10 @@
-namespace AElfScan.Grain.Contracts.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.Grain.ScanClients;
 
 public class SubscribeInfo
 {
+    public string ChainId { get; set; }
     public long StartBlockNumber{get;set;}
+    public bool OnlyConfirmedBlock { get; set; }
     public List<SubscribeEvent> SubscribeEvents {get;set;}= new();
 }
 

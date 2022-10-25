@@ -1,10 +1,11 @@
+using AElfScan.Orleans.EventSourcing.State.Chains;
 using Orleans;
 
-namespace AElfScan.Grain.Contracts.Chains;
+namespace AElfScan.Orleans.EventSourcing.Grain.Chains;
 
 public interface IChainGrain : IGrainWithStringKey
 {
     Task SetLatestBlockAsync(string blockHash, long blockHeight);
     Task SetLatestConfirmBlockAsync(string blockHash, long blockHeight);
-    Task<ChainStatusDto> GetChainStatusAsync();
+    Task<ChainState> GetChainStatusAsync();
 }

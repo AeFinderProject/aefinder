@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using AElfScan.Chains;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -13,18 +12,17 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using AElfScan.EntityFrameworkCore;
-using AElfScan.Grain;
 using AElfScan.MultiTenancy;
 using AElfScan.Orleans;
-using AElfScan.ScanClients;
+using AElfScan.Orleans.EventSourcing.Grain.Chains;
+using AElfScan.Orleans.EventSourcing.Grain.ScanClients;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
 using Orleans;
-using Orleans.Runtime;
+using Orleans.Streams;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy;
-using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
@@ -45,8 +43,7 @@ namespace AElfScan;
     typeof(AElfScanApplicationModule),
     typeof(AElfScanEntityFrameworkCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AbpSwashbuckleModule),
-    typeof(AElfScanGrainModule)
+    typeof(AbpSwashbuckleModule)
 )]
 public class AElfScanHttpApiHostModule : AbpModule
 {
@@ -234,7 +231,8 @@ public class AElfScanHttpApiHostModule : AbpModule
         AsyncHelper.RunSync(async () => await clientService.StartAsync().ConfigureAwait(false));
         
         /////
-        AsyncHelper.RunSync(async () => await DoClientWork(clientService.Client));
+        var client = clientService.Client;
+        AsyncHelper.RunSync(async () => await DoClientWork(client));
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
@@ -266,19 +264,35 @@ public class AElfScanHttpApiHostModule : AbpModule
         var chainId = "AELF";
         var id = chainId + clientId;
         
-        var chainGrain = client.GetGrain<AElfScan.Grain.Contracts.Chains.IChainGrain>(chainId);
+        var chainGrain = client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync("Hash100",100);
+        await chainGrain.SetLatestConfirmBlockAsync("Hash100",100);
 
-        var clientGrain = client.GetGrain<AElfScan.Grain.Contracts.ScanClients.IClientGrain>(id);
-        var version = await clientGrain.InitializeAsync(chainId, clientId, new AElfScan.Grain.Contracts.ScanClients.SubscribeInfo
-        {
-            StartBlockNumber = 20
-        });
-
-        var scanGrain = client.GetGrain<AElfScan.Grain.Contracts.ScanClients.IBlockScanGrain>(id);
-        await scanGrain.InitializeAsync(chainId, clientId, version);
-        await scanGrain.HandleHistoricalBlockAsync();
+        
+        // var clientGrain = client.GetGrain<IClientGrain>(id);
+        // var version = await clientGrain.InitializeAsync(chainId, clientId, new SubscribeInfo
+        // {
+        //     StartBlockNumber = 20
+        // });
+        //
+        // var scanGrain = client.GetGrain<IBlockScanGrain>(id);
+        // var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
+        // var stream =
+        //     client
+        //         .GetStreamProvider("AElfScan")
+        //         .GetStream<List<Block>>(streamId, "default");
+        //
+        // //subscribe to the stream to receive furthur messages sent to the chatroom
+        // await stream.SubscribeAsync(Handle);
+        //
+        // await scanGrain.HandleHistoricalBlockAsync();
         
         Console.WriteLine("Done");
+    }
+
+    private static Task Handle(List<Block> blocks, StreamSequenceToken? token = null)
+    {
+        Console.WriteLine($"Receive Block From {blocks.First().BlockHeight} To {blocks.Last().BlockHeight}");
+        return Task.CompletedTask;
     }
 }

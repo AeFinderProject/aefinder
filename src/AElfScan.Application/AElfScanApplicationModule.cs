@@ -1,7 +1,4 @@
-using AElfScan.AElf;
 using AElfScan.Orleans;
-using AElfScan.ScanClients;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Orleans.Configuration;
@@ -24,7 +21,8 @@ namespace AElfScan;
     typeof(AbpPermissionManagementApplicationModule),
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
-    typeof(AbpSettingManagementApplicationModule)
+    typeof(AbpSettingManagementApplicationModule),
+    typeof(AElfScanOrleansEventSourcingModule)
     )]
 public class AElfScanApplicationModule : AbpModule
 {
@@ -37,7 +35,9 @@ public class AElfScanApplicationModule : AbpModule
         
         var configuration = context.Services.GetConfiguration();
         Configure<ClusterOptions>(configuration.GetSection("Orleans:Cluster"));
-        context.Services.AddSingleton<IClusterClient>(_ => _.GetService<IClusterClientAppService>()?.Client);
+        // context.Services.AddSingleton<IClusterClient>(_ => _.GetService<IClusterClientAppService>().Client);
+        // context.Services.AddSingleton<IGrainFactory>(sp =>
+        //     sp.GetService<IClusterClientAppService>().Client);
     }
 }
 

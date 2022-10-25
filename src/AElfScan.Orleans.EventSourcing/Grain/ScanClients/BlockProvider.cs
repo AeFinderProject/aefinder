@@ -1,7 +1,6 @@
-using AElfScan.Grain.Contracts.ScanClients;
 using Volo.Abp.DependencyInjection;
 
-namespace AElfScan.Grain.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.Grain.ScanClients;
 
 public interface IBlockProvider
 {

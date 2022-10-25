@@ -5,7 +5,7 @@ namespace AElfScan.Orleans;
 
 public interface IClusterClientAppService
 {
-    IClusterClient Client { get; }
+    IClusterClient Client { get;}
     Task StartAsync();
     Task StopAsync();
 }

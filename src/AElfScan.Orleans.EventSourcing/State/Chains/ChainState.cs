@@ -1,6 +1,6 @@
-namespace AElfScan.Grain.Contracts.Chains;
+namespace AElfScan.Orleans.EventSourcing.State.Chains;
 
-public class ChainStatusDto
+public class ChainState
 {
     public long BlockHeight { get; set; }
     public string BlockHash { get; set; }

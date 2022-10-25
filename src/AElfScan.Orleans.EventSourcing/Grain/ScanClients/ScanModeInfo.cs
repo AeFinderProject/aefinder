@@ -1,4 +1,4 @@
-namespace AElfScan.Grain.Contracts.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.Grain.ScanClients;
 
 public class ScanModeInfo
 {

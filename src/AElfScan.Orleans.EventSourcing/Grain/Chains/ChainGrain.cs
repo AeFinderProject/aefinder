@@ -1,9 +1,10 @@
-using AElfScan.Grain.Contracts.Chains;
+using AElfScan.Orleans.EventSourcing.State.Chains;
 using Microsoft.Extensions.Logging;
+using Orleans;
 
-namespace AElfScan.Grain.Chains;
+namespace AElfScan.Orleans.EventSourcing.Grain.Chains;
 
-public class ChainGrain : Orleans.Grain<ChainState>, IChainGrain
+public class ChainGrain : Grain<ChainState>, IChainGrain
 {
     private readonly ILogger logger;
 
@@ -39,14 +40,8 @@ public class ChainGrain : Orleans.Grain<ChainState>, IChainGrain
         await WriteStateAsync();
     }
 
-    public Task<ChainStatusDto> GetChainStatusAsync()
+    public Task<ChainState> GetChainStatusAsync()
     {
-        return Task.FromResult(new ChainStatusDto
-        {
-            BlockHash = State.BlockHash,
-            BlockHeight = State.BlockHeight,
-            ConfirmBlockHash = State.ConfirmBlockHash,
-            ConfirmBlockHeight = State.ConfirmBlockHeight,
-        });
+        return Task.FromResult(State);
     }
 }

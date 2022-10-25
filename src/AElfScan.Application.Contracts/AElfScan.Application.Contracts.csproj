@@ -32,4 +32,8 @@
     <Orleans_CodeGenInputs Remove="Chains\IChainGrain.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="BlockSubscription" />
+  </ItemGroup>
+
 </Project>

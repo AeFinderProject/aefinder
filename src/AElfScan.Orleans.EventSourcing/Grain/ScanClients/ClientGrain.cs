@@ -1,8 +1,9 @@
-using AElfScan.Grain.Contracts.ScanClients;
+using AElfScan.Orleans.EventSourcing.State.ScanClients;
+using Orleans;
 
-namespace AElfScan.Grain.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.Grain.ScanClients;
 
-public class ClientGrain : Orleans.Grain<ClientState>, IClientGrain
+public class ClientGrain : Grain<ClientState>, IClientGrain
 {
     public override Task OnActivateAsync()
     {

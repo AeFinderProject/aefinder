@@ -1,6 +1,6 @@
-using AElfScan.Grain.Contracts.ScanClients;
+using AElfScan.Orleans.EventSourcing.Grain.ScanClients;
 
-namespace AElfScan.Grain.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.State.ScanClients;
 
 public class ClientState
 {

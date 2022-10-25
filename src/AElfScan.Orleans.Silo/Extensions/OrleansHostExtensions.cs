@@ -14,6 +14,7 @@ using AElf.Orleans.EventSourcing.Snapshot;
 using AElf.Orleans.EventSourcing.Snapshot.Hosting;
 using Orleans.Configuration.Overrides;
 using Orleans.Hosting;
+using Orleans.Providers;
 using Orleans.Providers.MongoDB.Configuration;
 using Orleans.Statistics;
 using Serilog;
@@ -78,6 +79,8 @@ public static class OrleansHostExtensions
                     options.ClusterId = configSection.GetValue<string>("ClusterId");
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
                 })
+                .AddSimpleMessageStreamProvider("AElfScan")
+                .AddMemoryGrainStorage("PubSubStore")
                 // .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TGrain).Assembly).WithReferences())
                 .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
                 .UseDashboard(options => {

@@ -1,6 +1,7 @@
 ﻿using Localization.Resources.AbpUi;
 using AElfScan.Localization;
 using Volo.Abp.Account;
+using Volo.Abp.AspNetCore.SignalR;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
 using Volo.Abp.Localization;
@@ -18,7 +19,8 @@ namespace AElfScan;
     typeof(AbpPermissionManagementHttpApiModule),
     typeof(AbpTenantManagementHttpApiModule),
     typeof(AbpFeatureManagementHttpApiModule),
-    typeof(AbpSettingManagementHttpApiModule)
+    typeof(AbpSettingManagementHttpApiModule),
+    typeof(AbpAspNetCoreSignalRModule)
     )]
 public class AElfScanHttpApiModule : AbpModule
 {
