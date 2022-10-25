@@ -38,8 +38,6 @@ public class AElfScanApplicationModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<ClusterOptions>(configuration.GetSection("Orleans:Cluster"));
         context.Services.AddSingleton<IClusterClient>(_ => _.GetService<IClusterClientAppService>()?.Client);
-
-        context.Services.AddTransient<IBlockProvider, BlockProvider>();
     }
 }
 
