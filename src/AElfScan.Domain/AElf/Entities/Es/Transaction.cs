@@ -4,6 +4,7 @@ using Nest;
 
 namespace AElfScan.AElf.Entities.Es;
 
+[ElasticsearchType]
 public class Transaction:IBlockchainData
 {
     [Keyword]public string TransactionId { get; set; }
@@ -37,5 +38,6 @@ public class Transaction:IBlockchainData
     
     public Dictionary<string,string> ExtraProperties {get;set;}
     
-    public List<LogEvent> LogEvents{get;set;}
+    [Nested(Name = "LogEvents",Enabled = true,IncludeInParent = true)]
+    public IEnumerable<LogEvent> LogEvents{get;set;}
 }
