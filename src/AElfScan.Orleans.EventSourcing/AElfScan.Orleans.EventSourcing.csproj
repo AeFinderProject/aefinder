@@ -19,6 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\AElfScan.Application.Contracts\AElfScan.Application.Contracts.csproj" />
       <ProjectReference Include="..\AElfScan.Domain\AElfScan.Domain.csproj" />
     </ItemGroup>
 

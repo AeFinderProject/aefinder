@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <RootNamespace>AElfScan</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\AElfScan.Application\AElfScan.Application.csproj" />
+        <ProjectReference Include="..\AElfScan.Domain.Tests\AElfScan.Domain.Tests.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+        <PackageReference Include="Microsoft.Orleans.TestingHost" Version="3.6.5" />
+    </ItemGroup>
+
+</Project>

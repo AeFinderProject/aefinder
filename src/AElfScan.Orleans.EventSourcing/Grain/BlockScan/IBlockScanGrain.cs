@@ -1,10 +1,12 @@
+using AElfScan.AElf.Dtos;
 using Orleans;
 
-namespace AElfScan.Orleans.EventSourcing.Grain.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 
 public interface IBlockScanGrain : IGrainWithStringKey
 {
     Task HandleHistoricalBlockAsync();
-    Task HandleNewBlockAsync(Block block);
+    Task HandleNewBlockAsync(BlockDto block);
+    Task HandleConfirmedBlockAsync(List<BlockDto> blocks);
     Task<Guid> InitializeAsync(string chainId, string clientId, string version);
 }

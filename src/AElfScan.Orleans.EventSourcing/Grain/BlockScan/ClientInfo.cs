@@ -1,4 +1,4 @@
-namespace AElfScan.Orleans.EventSourcing.Grain.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 
 public class ClientInfo
 {

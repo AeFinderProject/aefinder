@@ -28,6 +28,11 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
 
     public async Task SetLatestBlockAsync(string blockHash, long blockHeight)
     {
+        if (blockHeight <= State.BlockHeight)
+        {
+            return;
+        }
+
         State.BlockHash = blockHash;
         State.BlockHeight = blockHeight;
         await WriteStateAsync();
@@ -35,6 +40,11 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
 
     public async Task SetLatestConfirmBlockAsync(string blockHash, long blockHeight)
     {
+        if (blockHeight <= State.ConfirmBlockHeight)
+        {
+            return;
+        }
+        
         State.ConfirmBlockHash = blockHash;
         State.ConfirmBlockHeight = blockHeight;
         await WriteStateAsync();

@@ -1,7 +1,7 @@
 using AElfScan.Orleans.EventSourcing.State.ScanClients;
 using Orleans;
 
-namespace AElfScan.Orleans.EventSourcing.Grain.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 
 public class ClientGrain : Grain<ClientState>, IClientGrain
 {
@@ -34,7 +34,7 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         await WriteStateAsync();
     }
 
-    public async Task<string> InitializeAsync(string chainId, string clientId, SubscribeInfo info)
+    public async Task InitializeAsync(string chainId, string clientId, string version, SubscribeInfo info)
     {
         var clientGrain = GrainFactory.GetGrain<IClientManagerGrain>(0);
         await clientGrain.AddClientAsync(chainId, clientId);
@@ -43,7 +43,7 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         {
             ChainId = chainId,
             ClientId = clientId,
-            Version = Guid.NewGuid().ToString(),
+            Version = version,
             ScanModeInfo = new ScanModeInfo
             {
                 ScanMode = ScanMode.HistoricalBlock,
@@ -52,7 +52,5 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         };
         State.SubscribeInfo = info;
         await WriteStateAsync();
-        
-        return State.ClientInfo.Version;
     }
 }

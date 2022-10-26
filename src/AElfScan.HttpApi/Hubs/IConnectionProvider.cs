@@ -5,18 +5,22 @@ namespace AElfScan.Hubs;
 
 public interface IConnectionProvider
 {
-    void Add(string clientId, string connectionId);
+    void Add(string clientId, string connectionId, string version);
     void Remove(string clientId);
-    string GetConnectionId(string clientId);
+    ConnectionInfo GetConnection(string clientId);
 }
 
 public class ConnectionProvider : IConnectionProvider, ISingletonDependency
 {
-    private readonly ConcurrentDictionary<string, string> _connectionIds = new();
+    private readonly ConcurrentDictionary<string, ConnectionInfo> _connectionIds = new();
 
-    public void Add(string clientId, string connectionId)
+    public void Add(string clientId, string connectionId, string version)
     {
-        _connectionIds[clientId] = connectionId;
+        _connectionIds[clientId] = new ConnectionInfo
+        {
+            Version = version,
+            ConnectionId = connectionId
+        };
     }
     
     public void Remove(string clientId)
@@ -24,13 +28,19 @@ public class ConnectionProvider : IConnectionProvider, ISingletonDependency
         _connectionIds.TryRemove(clientId, out _);
     }
 
-    public string GetConnectionId(string clientId)
+    public ConnectionInfo GetConnection(string clientId)
     {
-        if (_connectionIds.TryGetValue(clientId, out var connectionId))
+        if (_connectionIds.TryGetValue(clientId, out var connection))
         {
-            return connectionId;
+            return connection;
         }
 
         return null;
     }
+}
+
+public class ConnectionInfo
+{
+    public string ConnectionId { get; set; }
+    public string Version { get; set; }
 }

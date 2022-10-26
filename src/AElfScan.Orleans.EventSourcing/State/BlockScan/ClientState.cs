@@ -1,4 +1,4 @@
-using AElfScan.Orleans.EventSourcing.Grain.ScanClients;
+using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 
 namespace AElfScan.Orleans.EventSourcing.State.ScanClients;
 

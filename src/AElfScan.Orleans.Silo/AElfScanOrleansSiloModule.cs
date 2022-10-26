@@ -7,7 +7,8 @@ namespace AElfScan;
 
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AElfScanOrleansEventSourcingModule))]
+    typeof(AElfScanOrleansEventSourcingModule),
+    typeof(AElfScanApplicationModule))]
 public class AElfScanOrleansSiloModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

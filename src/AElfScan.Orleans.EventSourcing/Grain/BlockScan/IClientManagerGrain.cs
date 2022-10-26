@@ -1,6 +1,6 @@
 using Orleans;
 
-namespace AElfScan.Orleans.EventSourcing.Grain.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 
 public interface IClientManagerGrain : IGrainWithIntegerKey
 {

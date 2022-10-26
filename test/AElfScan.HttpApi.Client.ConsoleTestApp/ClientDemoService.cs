@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AElfScan.Orleans.EventSourcing.Grain.ScanClients;
+using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Volo.Abp.Account;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.IdentityModel;
@@ -39,11 +39,11 @@ public class ClientDemoService : ITransientDependency
                     options => { options.AccessTokenProvider = () => Task.FromResult(accessToken); })
                 .Build();
 
-            connection.On<SubscribedBlockDto>("ReceiveBlock",
+            connection.On<List<Block>>("ReceiveBlock",
                 s =>
                 {
                     Console.WriteLine(
-                        $"Receive Block From {s.Blocks.First().BlockHeight} To {s.Blocks.Last().BlockHeight}");
+                        $"Receive Block From {s.First().BlockHeight} To {s.Last().BlockHeight}");
                 });
             
             await connection.StartAsync().ConfigureAwait(false);

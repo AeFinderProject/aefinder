@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AElfScan.Orleans.EventSourcing.Grain.ScanClients;
+using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Orleans.Streams;
@@ -28,13 +28,13 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
 
     public async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken? token = null)
     {
-        var connectionId = _connectionProvider.GetConnectionId(subscribedBlock.ClientId);
-        if (connectionId != null)
+        var connection = _connectionProvider.GetConnection(subscribedBlock.ClientId);
+        if (connection != null && connection.Version == subscribedBlock.Version)
         {
             // TODO: check version
             Logger.LogDebug(
-                $"Receive Block {subscribedBlock.ClientId} From {subscribedBlock.Blocks.First().BlockHeight} To {subscribedBlock.Blocks.Last().BlockHeight}");
-            await _hubContext.Clients.Client(connectionId).SendAsync("ReceiveBlock", subscribedBlock.Blocks);
+                $"Receive Block {subscribedBlock.ClientId} From {subscribedBlock.Blocks.First().BlockNumber} To {subscribedBlock.Blocks.Last().BlockNumber}");
+            await _hubContext.Clients.Client(connection.ConnectionId).SendAsync("ReceiveBlock", subscribedBlock.Blocks);
         }
     }
 }

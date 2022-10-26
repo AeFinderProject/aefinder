@@ -79,7 +79,7 @@ public static class OrleansHostExtensions
                     options.ClusterId = configSection.GetValue<string>("ClusterId");
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
                 })
-                .AddSimpleMessageStreamProvider("AElfScan")
+                .AddSimpleMessageStreamProvider(AElfScanApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
                 // .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TGrain).Assembly).WithReferences())
                 .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())

@@ -1,7 +1,7 @@
 using AElfScan.Orleans.EventSourcing.State.ScanClients;
 using Orleans;
 
-namespace AElfScan.Orleans.EventSourcing.Grain.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 
 public class ClientManagerGrain : Grain<ClientManagerState>, IClientManagerGrain
 {
