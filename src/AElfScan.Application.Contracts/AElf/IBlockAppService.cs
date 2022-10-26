@@ -7,5 +7,6 @@ namespace AElfScan.AElf;
 
 public interface IBlockAppService:IApplicationService
 {
+    Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input);
     Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input);
 }
