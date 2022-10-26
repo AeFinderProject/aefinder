@@ -30,6 +30,9 @@ public class AElfScanApplicationModule : AbpModule
         {
             options.AddMaps<AElfScanApplicationModule>();
         });
+        
+        var configuration = context.Services.GetConfiguration();
+        Configure<ApiOptions>(configuration.GetSection("Api"));
     }
 }
 

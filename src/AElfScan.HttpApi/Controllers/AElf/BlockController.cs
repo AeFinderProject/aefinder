@@ -34,4 +34,11 @@ public class BlockController : AbpController
     {
         return _blockAppService.GetTransactionsAsync(input);
     }
+    
+    [HttpPost]
+    [Route("logevents")]
+    public virtual Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
+    {
+        return _blockAppService.GetLogEventsAsync(input);
+    }
 }
