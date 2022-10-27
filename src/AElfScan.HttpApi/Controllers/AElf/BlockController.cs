@@ -21,7 +21,7 @@ public class BlockController : AbpController
         _blockAppService = blockAppService;
     }
     
-    [HttpGet]
+    [HttpPost]
     [Route("blocks")]
     public virtual Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
