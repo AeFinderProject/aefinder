@@ -65,12 +65,13 @@ public class BlockAppService:ApplicationService,IBlockAppService
         {
             input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
         }
-        
+
         var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
-        mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
+        mustQuery.Add(
+            q => q.Range(i => i.Field("Transactions.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
         mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").LessThanOrEquals(input.EndBlockNumber)));
-        
-        if (input.Contracts!=null)
+
+        if (input.Contracts != null)
         {
             var shouldQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
             foreach (ContractInput contractInput in input.Contracts)
@@ -79,7 +80,8 @@ public class BlockAppService:ApplicationService,IBlockAppService
                 if (!string.IsNullOrEmpty(contractInput.ContractAddress))
                 {
                     shouldMustQuery.Add(s =>
-                        s.Match(i=>i.Field("Transactions.LogEvents.contractAddress").Query(contractInput.ContractAddress)));
+                        s.Match(i =>
+                            i.Field("Transactions.LogEvents.contractAddress").Query(contractInput.ContractAddress)));
                 }
 
                 var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
@@ -94,102 +96,97 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
                 if (shouldMushShouldQuery.Count > 0)
                 {
-                    shouldMustQuery.Add(q=>q.Bool(b=>b.Should(shouldMushShouldQuery)));
+                    shouldMustQuery.Add(q => q.Bool(b => b.Should(shouldMushShouldQuery)));
                 }
 
-                shouldQuery.Add(q=>q.Bool(b=>b.Must(shouldMustQuery)));
+                shouldQuery.Add(q => q.Bool(b => b.Must(shouldMustQuery)));
             }
-            mustQuery.Add(q=>q.Bool(b=>b.Should(shouldQuery)));
+
+            mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
         }
-        
-        
+
+
         QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Nested(q => q.Path("Transactions")
             .Query(qq => qq.Bool(b => b.Must(mustQuery))));
+
         // QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Nested(q => q.Path("Transactions")
         //     .Query(qq => qq.Bool(b => b.Must(s =>
         //         s.Match(i=>i.Field("Transactions.LogEvents.eventName").Query("IrreversibleBlockFound"))))));
         List<TransactionDto> resultList = new List<TransactionDto>();
 
-        try
+        var list = await _blockIndexRepository.GetListAsync(Filter);
+
+        var items = ObjectMapper.Map<List<Block>, List<BlockDto>>(list.Item2);
+
+        var contractAddressList = input.Contracts.Select(i => i.ContractAddress);
+        foreach (var blockItem in items)
         {
-            var list = await _blockIndexRepository.GetListAsync(Filter);
-
-            var items = ObjectMapper.Map<List<Block>, List<BlockDto>>(list.Item2);
-
-            var contractAddressList = input.Contracts.Select(i => i.ContractAddress);
-            foreach (var blockItem in items)
+            foreach (var transactionItem in blockItem.Transactions)
             {
-                foreach (var transactionItem in blockItem.Transactions)
+                bool isWantedTransaction = false;
+                foreach (var logEventItem in transactionItem.LogEvents)
                 {
-                    bool isWantedTransaction = false;
-                    foreach (var logEventItem in transactionItem.LogEvents)
+                    foreach (var contractInputItem in input.Contracts)
                     {
-                        foreach (var contractInputItem in input.Contracts)
+                        if (!string.IsNullOrEmpty(contractInputItem.ContractAddress) &&
+                            contractInputItem.EventNames.Count > 0)
                         {
-                            if (!string.IsNullOrEmpty(contractInputItem.ContractAddress) && 
-                                contractInputItem.EventNames.Count>0)
+                            if (contractInputItem.ContractAddress == logEventItem.ContractAddress
+                                && contractInputItem.EventNames.Contains(logEventItem.EventName))
                             {
-                                if (contractInputItem.ContractAddress==logEventItem.ContractAddress
-                                    && contractInputItem.EventNames.Contains(logEventItem.EventName))
-                                {
-                                    isWantedTransaction = true;
-                                }
+                                isWantedTransaction = true;
                             }
-                            else if (!string.IsNullOrEmpty(contractInputItem.ContractAddress) &&
-                                     contractInputItem.EventNames.Count <= 0)
+                        }
+                        else if (!string.IsNullOrEmpty(contractInputItem.ContractAddress) &&
+                                 contractInputItem.EventNames.Count <= 0)
+                        {
+                            if (contractInputItem.ContractAddress == logEventItem.ContractAddress)
                             {
-                                if (contractInputItem.ContractAddress==logEventItem.ContractAddress)
-                                {
-                                    isWantedTransaction = true;
-                                }
+                                isWantedTransaction = true;
                             }
-                            else
+                        }
+                        else
+                        {
+                            if (contractInputItem.EventNames.Contains(logEventItem.EventName))
                             {
-                                if (contractInputItem.EventNames.Contains(logEventItem.EventName))
-                                {
-                                    isWantedTransaction = true;
-                                }
+                                isWantedTransaction = true;
                             }
                         }
                     }
-
-                    if (isWantedTransaction)
-                    {
-                        resultList.Add(transactionItem);
-                    }
                 }
-            }
-            
-            if (!input.HasLogEvent)
-            {
-                foreach (var blockItem in resultList)
+
+                if (isWantedTransaction)
                 {
-                    blockItem.LogEvents = null;
+                    resultList.Add(transactionItem);
                 }
             }
+        }
 
-        }
-        catch (Exception e)
+        if (!input.HasLogEvent)
         {
-            Console.WriteLine(e);
-            throw e;
+            foreach (var blockItem in resultList)
+            {
+                blockItem.LogEvents = null;
+            }
         }
+
 
         return resultList;
     }
-    
+
     public async Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
     {
         if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.BlockQueryAmountInterval)
         {
             input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
         }
-        
+
         var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
-        mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
+        mustQuery.Add(
+            q => q.Range(i => i.Field("Transactions.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
         mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").LessThanOrEquals(input.EndBlockNumber)));
-        
-        if (input.Contracts!=null)
+
+        if (input.Contracts != null)
         {
             var shouldQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
             foreach (ContractInput contractInput in input.Contracts)
@@ -198,7 +195,8 @@ public class BlockAppService:ApplicationService,IBlockAppService
                 if (!string.IsNullOrEmpty(contractInput.ContractAddress))
                 {
                     shouldMustQuery.Add(s =>
-                        s.Match(i=>i.Field("Transactions.LogEvents.contractAddress").Query(contractInput.ContractAddress)));
+                        s.Match(i =>
+                            i.Field("Transactions.LogEvents.contractAddress").Query(contractInput.ContractAddress)));
                 }
 
                 var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
@@ -213,82 +211,75 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
                 if (shouldMushShouldQuery.Count > 0)
                 {
-                    shouldMustQuery.Add(q=>q.Bool(b=>b.Should(shouldMushShouldQuery)));
+                    shouldMustQuery.Add(q => q.Bool(b => b.Should(shouldMushShouldQuery)));
                 }
 
-                shouldQuery.Add(q=>q.Bool(b=>b.Must(shouldMustQuery)));
+                shouldQuery.Add(q => q.Bool(b => b.Must(shouldMustQuery)));
             }
-            mustQuery.Add(q=>q.Bool(b=>b.Should(shouldQuery)));
+
+            mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
         }
-        
-        
+
+
         QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Nested(q => q.Path("Transactions")
             .Query(qq => qq.Bool(b => b.Must(mustQuery))));
+
         // QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Nested(q => q.Path("Transactions")
         //     .Query(qq => qq.Bool(b => b.Must(s =>
         //         s.Match(i=>i.Field("Transactions.LogEvents.eventName").Query("IrreversibleBlockFound"))))));
         List<LogEventDto> resultList = new List<LogEventDto>();
 
-        try
+
+        var list = await _blockIndexRepository.GetListAsync(Filter);
+
+        var items = ObjectMapper.Map<List<Block>, List<BlockDto>>(list.Item2);
+
+        var contractAddressList = input.Contracts.Select(i => i.ContractAddress);
+        foreach (var blockItem in items)
         {
-            var list = await _blockIndexRepository.GetListAsync(Filter);
-
-            var items = ObjectMapper.Map<List<Block>, List<BlockDto>>(list.Item2);
-
-            var contractAddressList = input.Contracts.Select(i => i.ContractAddress);
-            foreach (var blockItem in items)
+            foreach (var transactionItem in blockItem.Transactions)
             {
-                foreach (var transactionItem in blockItem.Transactions)
+                foreach (var logEventItem in transactionItem.LogEvents)
                 {
-                    foreach (var logEventItem in transactionItem.LogEvents)
+                    bool isWantedLogEvent = false;
+                    foreach (var contractInputItem in input.Contracts)
                     {
-                        bool isWantedLogEvent = false;
-                        foreach (var contractInputItem in input.Contracts)
+                        if (!string.IsNullOrEmpty(contractInputItem.ContractAddress) &&
+                            contractInputItem.EventNames.Count > 0)
                         {
-                            if (!string.IsNullOrEmpty(contractInputItem.ContractAddress) && 
-                                contractInputItem.EventNames.Count>0)
+                            if (contractInputItem.ContractAddress == logEventItem.ContractAddress
+                                && contractInputItem.EventNames.Contains(logEventItem.EventName))
                             {
-                                if (contractInputItem.ContractAddress==logEventItem.ContractAddress
-                                    && contractInputItem.EventNames.Contains(logEventItem.EventName))
-                                {
-                                    isWantedLogEvent = true;
-                                }
-                            }
-                            else if (!string.IsNullOrEmpty(contractInputItem.ContractAddress) &&
-                                     contractInputItem.EventNames.Count <= 0)
-                            {
-                                if (contractInputItem.ContractAddress==logEventItem.ContractAddress)
-                                {
-                                    isWantedLogEvent = true;
-                                }
-                            }
-                            else
-                            {
-                                if (contractInputItem.EventNames.Contains(logEventItem.EventName))
-                                {
-                                    isWantedLogEvent = true;
-                                }
+                                isWantedLogEvent = true;
                             }
                         }
-                        
-                        if (isWantedLogEvent)
+                        else if (!string.IsNullOrEmpty(contractInputItem.ContractAddress) &&
+                                 contractInputItem.EventNames.Count <= 0)
                         {
-                            resultList.Add(logEventItem);
+                            if (contractInputItem.ContractAddress == logEventItem.ContractAddress)
+                            {
+                                isWantedLogEvent = true;
+                            }
+                        }
+                        else
+                        {
+                            if (contractInputItem.EventNames.Contains(logEventItem.EventName))
+                            {
+                                isWantedLogEvent = true;
+                            }
                         }
                     }
 
-                    
+                    if (isWantedLogEvent)
+                    {
+                        resultList.Add(logEventItem);
+                    }
                 }
+
+
             }
-            
-
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw e;
-        }
-
+        
         return resultList;
     }
 
