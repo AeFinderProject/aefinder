@@ -16,15 +16,17 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     private readonly INESTRepository<Block, string> _blockIndexRepository;
     private readonly ILogger<BlockHandler> _logger;
     private readonly IObjectMapper _objectMapper;
+    private readonly IBlockIndexHandler _blockIndexHandler;
 
     public BlockHandler(
         INESTRepository<Block,string> blockIndexRepository,
         ILogger<BlockHandler> logger,
-        IObjectMapper objectMapper)
+        IObjectMapper objectMapper, IBlockIndexHandler blockIndexHandler)
     {
         _blockIndexRepository = blockIndexRepository;
         _logger = logger;
         _objectMapper = objectMapper;
+        _blockIndexHandler = blockIndexHandler;
     }
 
     public async Task HandleEventAsync(NewBlockEto eventData)
@@ -40,12 +42,14 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         else
         {
             await _blockIndexRepository.AddAsync(eventData);
+            await _blockIndexHandler.ProcessNewBlockAsync(eventData);
         }
         
     }
 
     public async Task HandleEventAsync(ConfirmBlocksEto eventData)
     {
+        var indexes = new List<Block>();
         foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
             _logger.LogInformation($"block:{confirmBlock.BlockNumber} is confirming");
@@ -61,6 +65,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             }
 
             await _blockIndexRepository.UpdateAsync(blockIndex);
+            indexes.Add(blockIndex);
 
             //find the same height blocks
             var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
@@ -86,5 +91,6 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             }
         }
 
+        await _blockIndexHandler.ProcessConfirmBlocksAsync(indexes);
     }
 }

@@ -1,5 +1,8 @@
 ﻿using Localization.Resources.AbpUi;
 using AElfScan.Localization;
+using AElfScan.Orleans;
+using Microsoft.Extensions.DependencyInjection;
+using Volo.Abp;
 using Volo.Abp.Account;
 using Volo.Abp.AspNetCore.SignalR;
 using Volo.Abp.FeatureManagement;
@@ -9,6 +12,7 @@ using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement.HttpApi;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.TenantManagement;
+using Volo.Abp.Threading;
 
 namespace AElfScan;
 
@@ -27,6 +31,16 @@ public class AElfScanHttpApiModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         ConfigureLocalization();
+        
+                
+        var clientService = context.Services.GetRequiredService<IClusterClientAppService>();
+        AsyncHelper.RunSync(async () => await clientService.StartAsync());
+    }
+    
+    public override void OnApplicationShutdown(ApplicationShutdownContext context)
+    {
+        var clientService = context.ServiceProvider.GetService<IClusterClientAppService>();
+        AsyncHelper.RunSync(() => clientService.StopAsync());
     }
 
     private void ConfigureLocalization()
