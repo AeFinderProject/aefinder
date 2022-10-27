@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace AElfScan.TestInfrastructure;
+namespace AElfScan.Orleans.TestBase;
 
 [CollectionDefinition(ClusterCollection.Name)]
 public class ClusterCollection:ICollectionFixture<ClusterFixture>

@@ -5,7 +5,7 @@ using AElf.Orleans.EventSourcing.Snapshot;
 using Orleans.Runtime;
 using System.Text;
 
-namespace AElfScan.TestInfrastructure;
+namespace AElfScan.Orleans.TestBase;
 
 public class EventStoreGrainEventStorage : IGrainEventStorage
 {

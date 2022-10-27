@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Volo.Abp.Application.Dtos;
 
 namespace AElfScan.AElf.Dtos;
 
-public class BlockDto
+public class BlockDto:EntityDto<string>
 {
-    public string Id { get; set; }
     public string ChainId { get; set; }
     public string BlockHash { get; set; }
     public long BlockNumber { get; set; }

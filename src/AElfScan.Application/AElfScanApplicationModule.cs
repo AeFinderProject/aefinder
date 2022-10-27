@@ -35,6 +35,7 @@ public class AElfScanApplicationModule : AbpModule
         
         var configuration = context.Services.GetConfiguration();
         Configure<ClusterOptions>(configuration.GetSection("Orleans:Cluster"));
+        Configure<ApiOptions>(configuration.GetSection("Api"));
     }
 }
 

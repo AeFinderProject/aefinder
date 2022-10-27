@@ -9,7 +9,7 @@ using Orleans.Hosting;
 using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;
 
-namespace AElfScan.TestInfrastructure;
+namespace AElfScan.Orleans.TestBase;
 
 public class ClusterFixture:IDisposable,ISingletonDependency
 {

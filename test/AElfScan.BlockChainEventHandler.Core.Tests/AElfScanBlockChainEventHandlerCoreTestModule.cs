@@ -1,4 +1,4 @@
-using AElfScan.TestInfrastructure;
+using AElfScan.Orleans.TestBase;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Volo.Abp;

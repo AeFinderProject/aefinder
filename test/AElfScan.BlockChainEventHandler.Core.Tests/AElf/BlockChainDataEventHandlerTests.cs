@@ -1,7 +1,7 @@
 using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Processors;
 using AElfScan.Grain;
-using AElfScan.TestInfrastructure;
+using AElfScan.Orleans.TestBase;
 using Orleans.TestingHost;
 using Shouldly;
 using Volo.Abp.EventBus.Distributed;

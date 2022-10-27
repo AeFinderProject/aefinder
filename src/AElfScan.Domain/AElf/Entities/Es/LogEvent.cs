@@ -4,6 +4,7 @@ using Nest;
 
 namespace AElfScan.AElf.Entities.Es;
 
+[ElasticsearchType]
 public class LogEvent:IBlockchainData
 {
     [Keyword]public string ChainId { get; set; }

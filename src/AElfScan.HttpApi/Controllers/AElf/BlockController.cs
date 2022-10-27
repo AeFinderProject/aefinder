@@ -22,9 +22,23 @@ public class BlockController : AbpController
     }
     
     [HttpGet]
+    [Route("blocks")]
+    public virtual Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
+    {
+        return _blockAppService.GetBlocksAsync(input);
+    }
+    
+    [HttpPost]
     [Route("transactions")]
     public virtual Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
     {
         return _blockAppService.GetTransactionsAsync(input);
+    }
+    
+    [HttpPost]
+    [Route("logevents")]
+    public virtual Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
+    {
+        return _blockAppService.GetLogEventsAsync(input);
     }
 }
