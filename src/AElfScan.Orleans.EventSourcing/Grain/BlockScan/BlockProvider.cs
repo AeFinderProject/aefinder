@@ -12,13 +12,19 @@ public class BlockProvider:IBlockProvider,ITransientDependency
     public async Task<List<BlockDto>> GetBlockAsync(long start, long end)
     {
         var result = new List<BlockDto>();
+
+        var previousHash = Guid.NewGuid().ToString();
         for (long i = start; i <= end; i++)
         {
+            var blockHash = Guid.NewGuid().ToString();
             result.Add(new BlockDto
             {
                 BlockNumber = i,
-                BlockHash = Guid.NewGuid().ToString()
+                BlockHash = blockHash,
+                PreviousBlockHash = previousHash
             });
+
+            previousHash = blockHash;
         }
 
         return result;

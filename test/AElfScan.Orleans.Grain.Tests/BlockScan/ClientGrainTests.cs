@@ -36,7 +36,7 @@ public class ClientGrainTests : AElfScanGrainTestBase
         clientInfo.Version.ShouldBe(version);
         clientInfo.ChainId.ShouldBe(chainId);
         clientInfo.ClientId.ShouldBe(clientId);
-        clientInfo.ScanModeInfo.ScanMode.ShouldBe(Orleans.EventSourcing.Grain.BlockScan.ScanMode.HistoricalBlock);
+        clientInfo.ScanModeInfo.ScanMode.ShouldBe(ScanMode.HistoricalBlock);
         clientInfo.ScanModeInfo.ScanNewBlockStartHeight.ShouldBe(0);
 
         var subscribe = await clientGrain.GetSubscribeInfoAsync();
@@ -55,7 +55,7 @@ public class ClientGrainTests : AElfScanGrainTestBase
 
         await clientGrain.SetScanNewBlockStartHeightAsync(80);
         clientInfo = await clientGrain.GetClientInfoAsync();
-        clientInfo.ScanModeInfo.ScanMode.ShouldBe(Orleans.EventSourcing.Grain.BlockScan.ScanMode.NewBlock);
+        clientInfo.ScanModeInfo.ScanMode.ShouldBe(ScanMode.NewBlock);
         clientInfo.ScanModeInfo.ScanNewBlockStartHeight.ShouldBe(80);
     }
 }

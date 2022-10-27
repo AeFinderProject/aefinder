@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Volo.Abp.Modularity;
 
@@ -6,7 +7,8 @@ namespace AElfScan;
 
 [DependsOn(
     typeof(AElfScanOrleansEventSourcingModule),
-    typeof(AElfScanDomainTestModule)
+    typeof(AElfScanDomainTestModule),
+    typeof(AElfScanOrleansEventSourcingModule)
     )]
 public class AElfScanGrainTestModule : AbpModule
 {
