@@ -8,5 +8,5 @@ public class GetTransactionsInput
     public long StartBlockNumber { get; set; }
     public long EndBlockNumber { get; set; }
     public bool HasLogEvent { get; set; } = false;
-    public List<ContractInput> Contracts { get; set; }
+    public List<EventInput> Events { get; set; }
 }
