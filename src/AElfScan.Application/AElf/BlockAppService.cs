@@ -42,9 +42,9 @@ public class BlockAppService:ApplicationService,IBlockAppService
             mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
             mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").LessThanOrEquals(input.EndBlockNumber)));
 
-            if (input.IsConfirmed)
+            if (input.IsOnlyConfirmed)
             {
-                mustQuery.Add(q=>q.Term(i=>i.Field("Transactions.isConfirmed").Value(input.IsConfirmed)));
+                mustQuery.Add(q=>q.Term(i=>i.Field("Transactions.isConfirmed").Value(input.IsOnlyConfirmed)));
             }
             
             var shouldQuery = GetContractsShouldQueryDescriptor(input.Contracts);
@@ -64,9 +64,9 @@ public class BlockAppService:ApplicationService,IBlockAppService
             mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(input.StartBlockNumber)));
             mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(input.EndBlockNumber)));
 
-            if (input.IsConfirmed)
+            if (input.IsOnlyConfirmed)
             {
-                mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.IsConfirmed).Value(input.IsConfirmed)));
+                mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.IsConfirmed).Value(input.IsOnlyConfirmed)));
             }
             
             QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Bool(b => b.Must(mustQuery));
