@@ -21,13 +21,7 @@ public class BlockState
                     b.Value.BlockNumber == blockEvent.LibBlockNumber && b.Value.BlockHash != currentLibBlock.BlockHash);
             }
         }
-
-        // Block newBlock = new Block();
-        // newBlock.ChainId = blockEvent.ChainId;
-        // newBlock.BlockHash = blockEvent.BlockHash;
-        // newBlock.BlockNumber = blockEvent.BlockNumber;
-        // newBlock.PreviousBlockHash = blockEvent.PreviousBlockHash;
-        // newBlock.IsConfirmed = false;
+        
         bool addResult = Blocks.TryAdd(blockEvent.BlockHash, blockEvent);
         if (!addResult)
         {

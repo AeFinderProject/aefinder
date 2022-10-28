@@ -1,3 +1,4 @@
+using AElf.Indexing.Elasticsearch.Options;
 using AElfScan;
 using AElfScan.Orleans;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,10 +16,11 @@ namespace AElfScan;
     typeof(AElfScanEntityEventHandlerCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpEventBusRabbitMqModule))]
-public class AElfScanEntityEventHandlerModule:AbpModule
+public class AElfScanEntityEventHandlerModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        ConfigureEsIndexCreation();
         context.Services.AddHostedService<AElfScanHostedService>();
         
         var clientService = context.Services.GetRequiredService<IClusterClientAppService>();
@@ -29,5 +31,11 @@ public class AElfScanEntityEventHandlerModule:AbpModule
     {
         var clientService = context.ServiceProvider.GetService<IClusterClientAppService>();
         AsyncHelper.RunSync(() => clientService.StopAsync());
+    }
+
+    //Create the ElasticSearch Index based on Domain Entity
+    private void ConfigureEsIndexCreation()
+    {
+        Configure<IndexCreateOption>(x => { x.AddModule(typeof(AElfScanDomainModule)); });
     }
 }
