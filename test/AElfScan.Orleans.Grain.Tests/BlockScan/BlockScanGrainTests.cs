@@ -200,9 +200,9 @@ public class BlockScanGrainTests : AElfScanGrainTestBase
             ChainId = chainId,
             OnlyConfirmedBlock = true,
             StartBlockNumber = 101,
-            SubscribeEvents = new List<SubscribeEvent>
+            SubscribeEvents = new List<FilterContractEventInput>
             {
-                new SubscribeEvent
+                new FilterContractEventInput
                 {
                     ContractAddress = "ContractAddress",
                     EventNames = new List<string>{"EventName"}

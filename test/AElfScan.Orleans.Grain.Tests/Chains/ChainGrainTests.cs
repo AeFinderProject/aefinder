@@ -41,13 +41,13 @@ public class ChainGrainTests : AElfScanGrainTestBase
         await grain.SetLatestConfirmBlockAsync(confirmedBlockHash, confirmedBlockHeight);
         
         var chainStatus = await grain.GetChainStatusAsync();
-        chainStatus.ConfirmBlockHeight.ShouldBe(confirmedBlockHeight);
-        chainStatus.ConfirmBlockHash.ShouldBe(confirmedBlockHash);
+        chainStatus.ConfirmedBlockHeight.ShouldBe(confirmedBlockHeight);
+        chainStatus.ConfirmedBlockHash.ShouldBe(confirmedBlockHash);
         
         await grain.SetLatestBlockAsync("NewBlockHash", 70);
         
         chainStatus = await grain.GetChainStatusAsync();
-        chainStatus.ConfirmBlockHeight.ShouldBe(confirmedBlockHeight);
-        chainStatus.ConfirmBlockHash.ShouldBe(confirmedBlockHash);
+        chainStatus.ConfirmedBlockHeight.ShouldBe(confirmedBlockHeight);
+        chainStatus.ConfirmedBlockHash.ShouldBe(confirmedBlockHash);
     }
 }

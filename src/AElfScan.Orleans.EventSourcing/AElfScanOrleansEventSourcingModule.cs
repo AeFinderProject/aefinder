@@ -1,6 +1,8 @@
-﻿using AElfScan.Grain;
+﻿using AElfScan.AElf;
+using AElfScan.Grain;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 

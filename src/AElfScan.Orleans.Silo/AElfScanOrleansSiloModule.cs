@@ -1,3 +1,4 @@
+using AElfScan.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
@@ -7,8 +8,9 @@ namespace AElfScan;
 
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AElfScanOrleansEventSourcingModule),
-    typeof(AElfScanApplicationModule))]
+    typeof(AElfScanApplicationModule),
+    typeof(AElfScanEntityFrameworkCoreModule),
+    typeof(AElfScanOrleansEventSourcingModule))]
 public class AElfScanOrleansSiloModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

@@ -27,6 +27,24 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
+        // TODO: Delete it after debug
+        var result = new List<BlockDto>();
+        var previousHash = Guid.NewGuid().ToString();
+        for (long i = input.StartBlockNumber; i <= input.EndBlockNumber; i++)
+        {
+            var blockHash = Guid.NewGuid().ToString();
+            result.Add(new BlockDto
+            {
+                BlockNumber = i,
+                BlockHash = blockHash,
+                PreviousBlockHash = previousHash
+            });
+
+            previousHash = blockHash;
+        }
+
+        return result;
+        
         if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.BlockQueryAmountInterval)
         {
             input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
@@ -264,10 +282,10 @@ public class BlockAppService:ApplicationService,IBlockAppService
         return resultList;
     }
 
-    private List<Func<QueryContainerDescriptor<Block>, QueryContainer>> GetContractsShouldQueryDescriptor(List<ContractInput> contracts)
+    private List<Func<QueryContainerDescriptor<Block>, QueryContainer>> GetContractsShouldQueryDescriptor(List<FilterContractEventInput> contracts)
     {
         var shouldQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
-        foreach (ContractInput contractInput in contracts)
+        foreach (FilterContractEventInput contractInput in contracts)
         {
             var shouldMustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
             if (!string.IsNullOrEmpty(contractInput.ContractAddress))

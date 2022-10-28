@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AElfScan.AElf.Dtos;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Shouldly;
 using Xunit;
@@ -20,9 +21,9 @@ public class ClientGrainTests : AElfScanGrainTestBase
             ChainId = chainId,
             OnlyConfirmedBlock = true,
             StartBlockNumber = 100,
-            SubscribeEvents = new List<SubscribeEvent>
+            SubscribeEvents = new List<FilterContractEventInput>
             {
-                new SubscribeEvent
+                new FilterContractEventInput
                 {
                     ContractAddress = "ContractAddress",
                     EventNames = new List<string>{"EventName"}

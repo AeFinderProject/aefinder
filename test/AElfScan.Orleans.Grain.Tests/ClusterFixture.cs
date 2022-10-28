@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
 using AElf.Orleans.EventSourcing.Snapshot.Hosting;
+using AElfScan.AElf;
+using AElfScan.BlockScan;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.Extensions.Configuration;
 using Orleans;
@@ -37,7 +39,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
         public void Configure(ISiloHostBuilder hostBuilder) {
             hostBuilder.ConfigureServices(services => {
                     //services.AddApplication<AElfScanGrainTestModule>();
-                    services.AddTransient<IBlockProvider, BlockProvider>();
+                    services.AddTransient<IBlockAppService, MockBlockAppService>();
                     services.Configure<BlockScanOptions>(o =>
                     {
                         o.BatchPushBlockCount = 10;

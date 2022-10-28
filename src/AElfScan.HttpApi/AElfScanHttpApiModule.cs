@@ -42,7 +42,7 @@ public class AElfScanHttpApiModule : AbpModule
         var clientService = context.ServiceProvider.GetRequiredService<IClusterClientAppService>();
         AsyncHelper.RunSync(async () => await clientService.StartAsync());
         
-                
+        // TODO: Delete it after debug     
         var client = clientService.Client;
         AsyncHelper.RunSync(async () => await DoClientWork(client));
     }

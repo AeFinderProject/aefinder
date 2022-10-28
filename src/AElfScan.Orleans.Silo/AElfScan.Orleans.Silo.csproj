@@ -26,6 +26,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AElfScan.Application\AElfScan.Application.csproj" />
+      <ProjectReference Include="..\AElfScan.EntityFrameworkCore\AElfScan.EntityFrameworkCore.csproj" />
       <ProjectReference Include="..\AElfScan.Orleans.EventSourcing\AElfScan.Orleans.EventSourcing.csproj" />
     </ItemGroup>
 

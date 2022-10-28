@@ -40,13 +40,13 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
 
     public async Task SetLatestConfirmBlockAsync(string blockHash, long blockHeight)
     {
-        if (blockHeight <= State.ConfirmBlockHeight)
+        if (blockHeight <= State.ConfirmedBlockHeight)
         {
             return;
         }
         
-        State.ConfirmBlockHash = blockHash;
-        State.ConfirmBlockHeight = blockHeight;
+        State.ConfirmedBlockHash = blockHash;
+        State.ConfirmedBlockHeight = blockHeight;
         await WriteStateAsync();
     }
 
