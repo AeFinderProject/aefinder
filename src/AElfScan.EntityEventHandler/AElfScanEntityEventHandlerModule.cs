@@ -21,6 +21,7 @@ public class AElfScanEntityEventHandlerModule : AbpModule
         context.Services.AddHostedService<AElfScanHostedService>();
     }
 
+    //Create the ElasticSearch Index based on Domain Entity
     private void ConfigureEsIndexCreation()
     {
         Configure<IndexCreateOption>(x => { x.AddModule(typeof(AElfScanDomainModule)); });

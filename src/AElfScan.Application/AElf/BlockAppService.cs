@@ -100,7 +100,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         }
 
         var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
-        mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId).Value(input.ChainId)));
+        mustQuery.Add(q=>q.Term(i=>i.Field("Transactions.chainId").Value(input.ChainId)));
         mustQuery.Add(
             q => q.Range(i => i.Field("Transactions.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
         mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").LessThanOrEquals(input.EndBlockNumber)));
@@ -189,7 +189,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         }
 
         var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
-        mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId).Value(input.ChainId)));
+        mustQuery.Add(q=>q.Term(i=>i.Field("Transactions.chainId").Value(input.ChainId)));
         mustQuery.Add(
             q => q.Range(i => i.Field("Transactions.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
         mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").LessThanOrEquals(input.EndBlockNumber)));
