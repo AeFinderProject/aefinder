@@ -26,6 +26,11 @@ public class ClusterClientAppService : IClusterClientAppService, ISingletonDepen
             {
                 opt.ConnectionString = configuration["Redis:Configuration"];
             })
+            .Configure<ClusterOptions>(options =>
+            {
+                options.ClusterId = configuration["Orleans:Cluster:ClusterId"];
+                options.ServiceId = configuration["Orleans:Cluster:ServiceId"];
+            })
             .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(AElfScanOrleansEventSourcingModule).Assembly).WithReferences())
             .AddSimpleMessageStreamProvider(AElfScanApplicationConsts.MessageStreamName)
             .ConfigureLogging(builder => builder.AddProvider(loggerProvider))

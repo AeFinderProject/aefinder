@@ -42,7 +42,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         else
         {
             await _blockIndexRepository.AddAsync(eventData);
-            await _blockIndexHandler.ProcessNewBlockAsync(eventData);
+            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(eventData); });
         }
         
     }
@@ -91,6 +91,6 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             }
         }
 
-        await _blockIndexHandler.ProcessConfirmBlocksAsync(indexes);
+        _ = Task.Run(async () => { await _blockIndexHandler.ProcessConfirmBlocksAsync(indexes); });
     }
 }

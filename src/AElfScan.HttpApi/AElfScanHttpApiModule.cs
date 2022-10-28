@@ -1,7 +1,11 @@
-﻿using Localization.Resources.AbpUi;
+﻿using System;
+using System.Threading.Tasks;
+using Localization.Resources.AbpUi;
 using AElfScan.Localization;
 using AElfScan.Orleans;
+using AElfScan.Orleans.EventSourcing.Grain.Chains;
 using Microsoft.Extensions.DependencyInjection;
+using Orleans;
 using Volo.Abp;
 using Volo.Abp.Account;
 using Volo.Abp.AspNetCore.SignalR;
@@ -31,16 +35,30 @@ public class AElfScanHttpApiModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         ConfigureLocalization();
+    }
+
+    public override void OnApplicationInitialization(ApplicationInitializationContext context)
+    {
+        var clientService = context.ServiceProvider.GetRequiredService<IClusterClientAppService>();
+        AsyncHelper.RunSync(async () => await clientService.StartAsync());
         
                 
-        var clientService = context.Services.GetRequiredService<IClusterClientAppService>();
-        AsyncHelper.RunSync(async () => await clientService.StartAsync());
+        var client = clientService.Client;
+        AsyncHelper.RunSync(async () => await DoClientWork(client));
     }
-    
+
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
         var clientService = context.ServiceProvider.GetService<IClusterClientAppService>();
         AsyncHelper.RunSync(() => clientService.StopAsync());
+    }
+    
+    private static async Task DoClientWork(IClusterClient client)
+    {
+        var chainId = "AELF";
+        var chainGrain = client.GetGrain<IChainGrain>(chainId);
+        await chainGrain.SetLatestBlockAsync("Hash100",500);
+        await chainGrain.SetLatestConfirmBlockAsync("Hash100",500);
     }
 
     private void ConfigureLocalization()
