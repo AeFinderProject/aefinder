@@ -12,7 +12,8 @@ public class LogEventDto
     /// block height
     /// </summary>
     public long BlockNumber { get; set; }
-    
+    public string PreviousBlockHash { get; set; }
+
     public string TransactionId { get; set; }
     
     public DateTime BlockTime { get; set; }

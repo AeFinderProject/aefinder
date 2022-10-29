@@ -16,6 +16,13 @@ namespace AElfScan.BlockScan;
 [Collection(ClusterCollection.Name)]
 public class BlockScanGrainTests : AElfScanGrainTestBase
 {
+    private readonly IBlockDataProvider _blockDataProvider;
+
+    public BlockScanGrainTests()
+    {
+        _blockDataProvider = GetRequiredService<IBlockDataProvider>();
+    }
+
     [Fact]
     public async Task BlockTest()
     {
@@ -25,15 +32,15 @@ public class BlockScanGrainTests : AElfScanGrainTestBase
         var id = chainId + clientId;
         
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
-        await chainGrain.SetLatestBlockAsync("hash150", 150);
-        await chainGrain.SetLatestConfirmBlockAsync("hash120", 130);
+        await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockNumber);
+        await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockNumber);
 
         var clientGrain = Cluster.Client.GetGrain<IClientGrain>(id);
         await clientGrain.InitializeAsync(chainId, clientId, version, new SubscribeInfo
         {
             ChainId = chainId,
             OnlyConfirmedBlock = false,
-            StartBlockNumber = 101
+            StartBlockNumber = 21
         });
 
         var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
@@ -63,74 +70,38 @@ public class BlockScanGrainTests : AElfScanGrainTestBase
 
         var clientInfo = await clientGrain.GetClientInfoAsync();
         clientInfo.ScanModeInfo.ScanMode.ShouldBe(ScanMode.NewBlock);
-        clientInfo.ScanModeInfo.ScanNewBlockStartHeight.ShouldBe(126);
+        clientInfo.ScanModeInfo.ScanNewBlockStartHeight.ShouldBe(46);
         
         await scanGrain.HandleHistoricalBlockAsync();
         subscribedBlock.Count.ShouldBe(50);
         
-        var block127 = new BlockDto
-        {
-            BlockHash = Guid.NewGuid().ToString(),
-            BlockNumber = 127,
-        };
-        await scanGrain.HandleNewBlockAsync(block127);
-
-        subscribedBlock.Count.ShouldBe(52);
-        subscribedBlock.Last().BlockNumber.ShouldBe(127);
-
-        var block126Hash = subscribedBlock.Last().PreviousBlockHash;
-        var block127Hash = subscribedBlock.Last().BlockHash;
+        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
+        subscribedBlock.Count.ShouldBe(55);
+        subscribedBlock.Last().BlockNumber.ShouldBe(50);
         
-        var block128 = new BlockDto
-        {
-            BlockHash = Guid.NewGuid().ToString(),
-            BlockNumber = 128,
-            PreviousBlockHash = block127Hash
-        };
-        await scanGrain.HandleNewBlockAsync(block128);
-        
-        subscribedBlock.Count.ShouldBe(53);
-        subscribedBlock.Last().BlockNumber.ShouldBe(128);
-        
-        var block128New = new BlockDto
-        {
-            BlockHash = Guid.NewGuid().ToString(),
-            BlockNumber = 128,
-            PreviousBlockHash = block127Hash
-        };
-        await scanGrain.HandleNewBlockAsync(block128New);
-        
-        subscribedBlock.Count.ShouldBe(54);
-        subscribedBlock.Last().BlockNumber.ShouldBe(128);
-        
-        var block127New = new BlockDto
-        {
-            BlockHash = Guid.NewGuid().ToString(),
-            BlockNumber = 127,
-            PreviousBlockHash = Guid.NewGuid().ToString()
-        };
-        await scanGrain.HandleNewBlockAsync(block127New);
-        
+        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[51].First());
         subscribedBlock.Count.ShouldBe(56);
-        subscribedBlock.Last().BlockNumber.ShouldBe(127);
+        subscribedBlock.Last().BlockNumber.ShouldBe(51);
         
-        await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto>
-        {
-            new BlockDto
-            {
-                BlockHash = block126Hash,
-                BlockNumber = 126,
-            }
-        });
-        subscribedBlock.Count.ShouldBe(57);
-        subscribedBlock.Last().BlockNumber.ShouldBe(126);
+        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[53].First());
+        subscribedBlock.Count.ShouldBe(61);
+        subscribedBlock.Last().BlockNumber.ShouldBe(53);
         
-        await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto>
-        {
-            block128
-        });
-        subscribedBlock.Count.ShouldBe(57);
-        subscribedBlock.Last().BlockNumber.ShouldBe(126);
+        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[54].First());
+        subscribedBlock.Count.ShouldBe(62);
+        subscribedBlock.Last().BlockNumber.ShouldBe(54);
+        
+        await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto>{_blockDataProvider.Blocks[46].First()});
+        subscribedBlock.Count.ShouldBe(63);
+        subscribedBlock.Last().BlockNumber.ShouldBe(46);
+        
+        await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto>{_blockDataProvider.Blocks[48].First()});
+        subscribedBlock.Count.ShouldBe(65);
+        subscribedBlock.Last().BlockNumber.ShouldBe(48);
+        
+        await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto>{_blockDataProvider.Blocks[56].First()});
+        subscribedBlock.Count.ShouldBe(65);
+        subscribedBlock.Last().BlockNumber.ShouldBe(48);
     }
     
     [Fact]
@@ -142,15 +113,15 @@ public class BlockScanGrainTests : AElfScanGrainTestBase
         var id = chainId + clientId;
         
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
-        await chainGrain.SetLatestBlockAsync("hash150", 150);
-        await chainGrain.SetLatestConfirmBlockAsync("hash120", 130);
+        await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockNumber);
+        await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockNumber);
 
         var clientGrain = Cluster.Client.GetGrain<IClientGrain>(id);
         await clientGrain.InitializeAsync(chainId, clientId, version, new SubscribeInfo
         {
             ChainId = chainId,
             OnlyConfirmedBlock = true,
-            StartBlockNumber = 101
+            StartBlockNumber = 21
         });
 
         var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
@@ -173,7 +144,7 @@ public class BlockScanGrainTests : AElfScanGrainTestBase
         await scanGrain.HandleHistoricalBlockAsync();
         
         subscribedBlock.Count.ShouldBe(25);
-        var number = 101;
+        var number = 21;
         foreach (var block in subscribedBlock)
         {
             block.BlockNumber.ShouldBe(number);
@@ -182,8 +153,11 @@ public class BlockScanGrainTests : AElfScanGrainTestBase
         }
     }
     
-    [Fact]
-    public async Task EventTest()
+    [Theory]
+    [InlineData(BlockFilterType.Block)]
+    [InlineData(BlockFilterType.Transaction)]
+    [InlineData(BlockFilterType.LogEvent)]
+    public async Task Block_WithFilter_Test(BlockFilterType filterType)
     {
         var chainId = "AELF";
         var clientId = "DApp";
@@ -191,21 +165,22 @@ public class BlockScanGrainTests : AElfScanGrainTestBase
         var id = chainId + clientId;
         
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
-        await chainGrain.SetLatestBlockAsync("hash150", 150);
-        await chainGrain.SetLatestConfirmBlockAsync("hash120", 130);
+        await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockNumber);
+        await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockNumber);
 
         var clientGrain = Cluster.Client.GetGrain<IClientGrain>(id);
         await clientGrain.InitializeAsync(chainId, clientId, version, new SubscribeInfo
         {
             ChainId = chainId,
-            OnlyConfirmedBlock = true,
-            StartBlockNumber = 101,
+            OnlyConfirmedBlock = false,
+            StartBlockNumber = 21,
+            FilterType = filterType,
             SubscribeEvents = new List<FilterContractEventInput>
             {
                 new FilterContractEventInput
                 {
-                    ContractAddress = "ContractAddress",
-                    EventNames = new List<string>{"EventName"}
+                    ContractAddress = "ContractAddress0",
+                    EventNames = new List<string>{"EventName30","EventName50"}
                 }
             }
         });
@@ -213,91 +188,30 @@ public class BlockScanGrainTests : AElfScanGrainTestBase
         var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
         var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
         var stream =
-            Cluster.Client 
+            Cluster.Client
                 .GetStreamProvider(AElfScanApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AElfScanApplicationConsts.MessageStreamNamespace);
 
         var subscribedBlock = new List<BlockDto>();
         await stream.SubscribeAsync((v, t) =>
-        {
-            v.ChainId.ShouldBe(chainId);
-            v.ClientId.ShouldBe(clientId);
-            v.Version.ShouldBe(version);
-            subscribedBlock.AddRange(v.Blocks);
-            return Task.CompletedTask;
+            {
+                v.ChainId.ShouldBe(chainId);
+                v.ClientId.ShouldBe(clientId);
+                v.Version.ShouldBe(version);
+                subscribedBlock.AddRange(v.Blocks);
+           return Task.CompletedTask;
         });
-
+        
         await scanGrain.HandleHistoricalBlockAsync();
+        subscribedBlock.Count.ShouldBe(2);
+        subscribedBlock.Last().BlockNumber.ShouldBe(30);
         
-        subscribedBlock.Count.ShouldBe(25);
-
-        var block126 = new BlockDto
-        {
-            BlockHash = Guid.NewGuid().ToString(),
-            BlockNumber = 126,
-            PreviousBlockHash = subscribedBlock.Last().BlockHash,
-            Transactions = new List<TransactionDto>
-            {
-                new TransactionDto
-                {
-                    LogEvents = new List<LogEventDto>
-                    {
-                        new LogEventDto
-                        {
-                            ContractAddress = "ContractAddress",
-                            EventName = "EventName"
-                        }
-                    }
-                }
-            }
-        };
-        await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto> { block126 });
-        subscribedBlock.Count.ShouldBe(26);
+        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
+        subscribedBlock.Count.ShouldBe(3);
+        subscribedBlock.Last().BlockNumber.ShouldBe(50);
         
-        var block127 = new BlockDto
-        {
-            BlockHash = Guid.NewGuid().ToString(),
-            BlockNumber = 127,
-            PreviousBlockHash = block126.BlockHash,
-            Transactions = new List<TransactionDto>
-            {
-                new TransactionDto
-                {
-                    LogEvents = new List<LogEventDto>
-                    {
-                        new LogEventDto
-                        {
-                            ContractAddress = "ContractAddress",
-                            EventName = "EventName2"
-                        }
-                    }
-                }
-            }
-        };
-        await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto> { block127 });
-        subscribedBlock.Count.ShouldBe(26);
-        
-        var block128 = new BlockDto
-        {
-            BlockHash = Guid.NewGuid().ToString(),
-            BlockNumber = 128,
-            PreviousBlockHash = block127.BlockHash,
-            Transactions = new List<TransactionDto>
-            {
-                new TransactionDto
-                {
-                    LogEvents = new List<LogEventDto>
-                    {
-                        new LogEventDto
-                        {
-                            ContractAddress = "ContractAddress2",
-                            EventName = "EventName"
-                        }
-                    }
-                }
-            }
-        };
-        await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto> { block128 });
-        subscribedBlock.Count.ShouldBe(26);
+        await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto>{_blockDataProvider.Blocks[50].First()});
+        subscribedBlock.Count.ShouldBe(4);
+        subscribedBlock.Last().BlockNumber.ShouldBe(50);
     }
 }
