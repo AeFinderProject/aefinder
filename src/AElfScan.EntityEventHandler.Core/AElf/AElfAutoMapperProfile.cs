@@ -8,6 +8,6 @@ public class AElfAutoMapperProfile:Profile
 {
     public AElfAutoMapperProfile()
     {
-        CreateMap<ConfirmBlockEto,Block>();
+        CreateMap<ConfirmBlockEto,BlockIndex>();
     }
 }

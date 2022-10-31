@@ -9,9 +9,12 @@ public class AElfScanApplicationAutoMapperProfile:Profile
 {
     public AElfScanApplicationAutoMapperProfile()
     {
-        CreateMap<Block,BlockDto>();
+        CreateMap<BlockIndex,BlockDto>();
         CreateMap<Transaction, TransactionDto>();
         CreateMap<LogEvent, LogEventDto>();
+
+        CreateMap<TransactionIndex, TransactionDto>();
+        CreateMap<LogEventIndex, LogEventDto>();
     }
     
 }

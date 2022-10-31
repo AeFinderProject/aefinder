@@ -7,4 +7,5 @@ namespace AElfScan.AElf.Etos;
 public class ConfirmBlocksEto
 {
     public List<ConfirmBlockEto> ConfirmBlocks { get; set; }
+    
 }

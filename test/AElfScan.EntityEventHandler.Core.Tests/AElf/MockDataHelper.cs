@@ -73,12 +73,7 @@ public class MockDataHelper
                     {
                         new LogEvent()
                         {
-                            ChainId = "AELF",
                             TransactionId = "1ce2f46ebfe64f59bef89af5b3f44efb37e4b2ef9e28b28803e960c4a4a400b6",
-                            BlockHash = currentBlockHash,
-                            BlockNumber = blockNumber,
-                            BlockTime = DateTime.Now,
-                            IsConfirmed = false,
                             ContractAddress = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
                             EventName = "MiningInformationUpdated",
                             Index = 0,
@@ -187,12 +182,7 @@ public class MockDataHelper
                     {
                         new LogEvent()
                         {
-                            ChainId = "AELF",
                             TransactionId = "1ce2f46ebfe64f59bef89af5b3f44efb37e4b2ef9e28b28803e960c4a4a400b6",
-                            BlockHash = currentBlockHash,
-                            BlockNumber = blockNumber,
-                            BlockTime = DateTime.Now,
-                            IsConfirmed = false,
                             ContractAddress = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
                             EventName = "MiningInformationUpdated",
                             Index = 0,

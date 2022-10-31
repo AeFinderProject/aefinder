@@ -14,13 +14,13 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
 {
     private readonly IDistributedEventHandler<NewBlockEto> _newBlockEventHandler;
     private readonly IDistributedEventHandler<ConfirmBlocksEto> _confirmBlockEventHandler;
-    private readonly INESTRepository<Block, string> _blockIndexRepository;
+    private readonly INESTRepository<BlockIndex, string> _blockIndexRepository;
 
     public BlockHandlerTests()
     {
         _newBlockEventHandler = GetRequiredService<BlockHandler>();
         _confirmBlockEventHandler = GetRequiredService<BlockHandler>();
-        _blockIndexRepository = GetRequiredService<INESTRepository<Block, string>>();
+        _blockIndexRepository = GetRequiredService<INESTRepository<BlockIndex, string>>();
     }
 
     [Fact]
@@ -177,10 +177,10 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
             q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h29_fork.BlockHash)));
         blockIndex_h29_fork.ShouldNotBeNull();
         
-        var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
+        var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
         mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(21)));
         mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(28)));
-        QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Bool(b => b.Must(mustQuery));
+        QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
         var blockIndex_h21_28=await _blockIndexRepository.GetListAsync(Filter);
         foreach (var blockItem in blockIndex_h21_28.Item2)
         {

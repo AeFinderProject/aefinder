@@ -1,7 +1,7 @@
 namespace AElfScan.EventData;
 
 [Serializable]
-public class BlockEventData:AElfScan.AElf.Entities.Es.Block
+public class BlockEventData:AElfScan.AElf.Entities.Es.BlockIndex
 {
     // public string ChainId { get; set; }
     // public string BlockHash { get; set; }

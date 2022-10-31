@@ -15,13 +15,19 @@ namespace AElfScan.AElf;
 [RemoteService(IsEnabled = false)]
 public class BlockAppService:ApplicationService,IBlockAppService
 {
-    private readonly INESTRepository<Block, string> _blockIndexRepository;
+    private readonly INESTRepository<BlockIndex, string> _blockIndexRepository;
+    private readonly INESTRepository<TransactionIndex, string> _transactionIndexRepository;
+    private readonly INESTRepository<LogEventIndex, string> _logEventIndexRepository;
     private readonly ApiOptions _apiOptions;
     
-    public BlockAppService(INESTRepository<Block, string> blockIndexRepository,
+    public BlockAppService(INESTRepository<BlockIndex, string> blockIndexRepository,
+        INESTRepository<TransactionIndex,string> transactionIndexRepository,
+        INESTRepository<LogEventIndex,string> logEventIndexRepository,
         IOptionsSnapshot<ApiOptions> apiOptions)
     {
         _blockIndexRepository = blockIndexRepository;
+        _transactionIndexRepository = transactionIndexRepository;
+        _logEventIndexRepository = logEventIndexRepository;
         _apiOptions = apiOptions.Value;
     }
 
@@ -32,7 +38,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
             input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
         }
         
-        var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
+        var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
 
         List<BlockDto> items = new List<BlockDto>();
         if (input.Events != null && input.Events.Count>0)
@@ -47,15 +53,42 @@ public class BlockAppService:ApplicationService,IBlockAppService
                 mustQuery.Add(q=>q.Term(i=>i.Field("Transactions.isConfirmed").Value(input.IsOnlyConfirmed)));
             }
             
-            var shouldQuery = GetContractsShouldQueryDescriptor(input.Events);
+            var shouldQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
+            foreach (EventInput eventInput in input.Events)
+            {
+                var shouldMustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
+                if (!string.IsNullOrEmpty(eventInput.ContractAddress))
+                {
+                    shouldMustQuery.Add(s =>
+                        s.Match(i =>
+                            i.Field("Transactions.LogEvents.contractAddress").Query(eventInput.ContractAddress)));
+                }
+
+                var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
+                foreach (var eventName in eventInput.EventNames)
+                {
+                    if (!string.IsNullOrEmpty(eventName))
+                    {
+                        shouldMushShouldQuery.Add(s =>
+                            s.Match(i => i.Field("Transactions.LogEvents.eventName").Query(eventName)));
+                    }
+                }
+
+                if (shouldMushShouldQuery.Count > 0)
+                {
+                    shouldMustQuery.Add(q => q.Bool(b => b.Should(shouldMushShouldQuery)));
+                }
+
+                shouldQuery.Add(q => q.Bool(b => b.Must(shouldMustQuery)));
+            }
 
             mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
             
-            QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Nested(q => q.Path("Transactions")
+            QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Nested(q => q.Path("Transactions")
                         .Query(qq => qq.Bool(b => b.Must(mustQuery))));
             
             var list = await _blockIndexRepository.GetListAsync(Filter);
-            items = ObjectMapper.Map<List<Block>, List<BlockDto>>(list.Item2);
+            items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
         }
         else
         {
@@ -69,10 +102,10 @@ public class BlockAppService:ApplicationService,IBlockAppService
                 mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.IsConfirmed).Value(input.IsOnlyConfirmed)));
             }
             
-            QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Bool(b => b.Must(mustQuery));
+            QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
             
             var list = await _blockIndexRepository.GetListAsync(Filter);
-            items = ObjectMapper.Map<List<Block>, List<BlockDto>>(list.Item2);
+            items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
         }
 
         List<BlockDto> resultList = new List<BlockDto>();
@@ -99,84 +132,74 @@ public class BlockAppService:ApplicationService,IBlockAppService
             input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
         }
 
-        var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
-        mustQuery.Add(q=>q.Term(i=>i.Field("Transactions.chainId").Value(input.ChainId)));
-        mustQuery.Add(
-            q => q.Range(i => i.Field("Transactions.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
-        mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").LessThanOrEquals(input.EndBlockNumber)));
-
+        var mustQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
+        
+        List<TransactionDto> resultList = new List<TransactionDto>();
         if (input.Events != null && input.Events.Count>0)
         {
-            var shouldQuery = GetContractsShouldQueryDescriptor(input.Events);
+            mustQuery.Add(q=>q.Term(i=>i.Field("LogEvents.chainId").Value(input.ChainId)));
+            mustQuery.Add(q => q.Range(i => i.Field("LogEvents.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
+            mustQuery.Add(q => q.Range(i => i.Field("LogEvents.blockNumber").LessThanOrEquals(input.EndBlockNumber)));
 
-            mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
-        }
-
-
-        QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Nested(q => q.Path("Transactions")
-            .Query(qq => qq.Bool(b => b.Must(mustQuery))));
-
-        // QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Nested(q => q.Path("Transactions")
-        //     .Query(qq => qq.Bool(b => b.Must(s =>
-        //         s.Match(i=>i.Field("Transactions.LogEvents.eventName").Query("IrreversibleBlockFound"))))));
-        List<TransactionDto> resultList = new List<TransactionDto>();
-
-        var list = await _blockIndexRepository.GetListAsync(Filter);
-
-        var items = ObjectMapper.Map<List<Block>, List<BlockDto>>(list.Item2);
-
-        var contractAddressList = input.Events.Select(i => i.ContractAddress);
-        foreach (var blockItem in items)
-        {
-            foreach (var transactionItem in blockItem.Transactions)
+            if (input.IsOnlyConfirmed)
             {
-                bool isWantedTransaction = false;
-                foreach (var logEventItem in transactionItem.LogEvents)
+                mustQuery.Add(q=>q.Term(i=>i.Field("LogEvents.isConfirmed").Value(input.IsOnlyConfirmed)));
+            }
+            
+            var shouldQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
+            foreach (EventInput eventInput in input.Events)
+            {
+                var shouldMustQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
+                if (!string.IsNullOrEmpty(eventInput.ContractAddress))
                 {
-                    foreach (var eventInputItem in input.Events)
+                    shouldMustQuery.Add(s =>
+                        s.Match(i =>
+                            i.Field("LogEvents.contractAddress").Query(eventInput.ContractAddress)));
+                }
+
+                var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
+                foreach (var eventName in eventInput.EventNames)
+                {
+                    if (!string.IsNullOrEmpty(eventName))
                     {
-                        if (!string.IsNullOrEmpty(eventInputItem.ContractAddress) &&
-                            eventInputItem.EventNames.Count > 0)
-                        {
-                            if (eventInputItem.ContractAddress == logEventItem.ContractAddress
-                                && eventInputItem.EventNames.Contains(logEventItem.EventName))
-                            {
-                                isWantedTransaction = true;
-                            }
-                        }
-                        else if (!string.IsNullOrEmpty(eventInputItem.ContractAddress) &&
-                                 eventInputItem.EventNames.Count <= 0)
-                        {
-                            if (eventInputItem.ContractAddress == logEventItem.ContractAddress)
-                            {
-                                isWantedTransaction = true;
-                            }
-                        }
-                        else
-                        {
-                            if (eventInputItem.EventNames.Contains(logEventItem.EventName))
-                            {
-                                isWantedTransaction = true;
-                            }
-                        }
+                        shouldMushShouldQuery.Add(s =>
+                            s.Match(i => i.Field("LogEvents.eventName").Query(eventName)));
                     }
                 }
 
-                if (isWantedTransaction)
+                if (shouldMushShouldQuery.Count > 0)
                 {
-                    resultList.Add(transactionItem);
+                    shouldMustQuery.Add(q => q.Bool(b => b.Should(shouldMushShouldQuery)));
                 }
-            }
-        }
 
-        if (!input.HasLogEvent)
+                shouldQuery.Add(q => q.Bool(b => b.Must(shouldMustQuery)));
+            }
+
+            mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
+            
+            QueryContainer Filter(QueryContainerDescriptor<TransactionIndex> f) => f.Nested(q => q.Path("LogEvents")
+                .Query(qq => qq.Bool(b => b.Must(mustQuery))));
+            var list = await _transactionIndexRepository.GetListAsync(Filter);
+            resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list.Item2);
+        }
+        else
         {
-            foreach (var blockItem in resultList)
+            mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId).Value(input.ChainId)));
+            mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(input.StartBlockNumber)));
+            mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(input.EndBlockNumber)));
+            
+            if (input.IsOnlyConfirmed)
             {
-                blockItem.LogEvents = null;
+                mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.IsConfirmed).Value(input.IsOnlyConfirmed)));
             }
-        }
+            
+            QueryContainer Filter(QueryContainerDescriptor<TransactionIndex> f) => f.Bool(b => b.Must(mustQuery));
+            
+            var list = await _transactionIndexRepository.GetListAsync(Filter);
 
+            resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list.Item2);
+        }
+        
 
         return resultList;
     }
@@ -188,88 +211,64 @@ public class BlockAppService:ApplicationService,IBlockAppService
             input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
         }
 
-        var mustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
-        mustQuery.Add(q=>q.Term(i=>i.Field("Transactions.chainId").Value(input.ChainId)));
-        mustQuery.Add(
-            q => q.Range(i => i.Field("Transactions.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
-        mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").LessThanOrEquals(input.EndBlockNumber)));
+        var mustQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();
+        mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId).Value(input.ChainId)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(input.StartBlockNumber)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(input.EndBlockNumber)));
 
         if (input.Events != null && input.Events.Count>0)
         {
-            var shouldQuery = GetContractsShouldQueryDescriptor(input.Events);
+            var shouldQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();
+            foreach (EventInput eventInput in input.Events)
+            {
+                var shouldMustQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();
+                if (!string.IsNullOrEmpty(eventInput.ContractAddress))
+                {
+                    shouldMustQuery.Add(s =>
+                        s.Match(i =>
+                            i.Field(f=>f.ContractAddress).Query(eventInput.ContractAddress)));
+                }
+
+                var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();
+                foreach (var eventName in eventInput.EventNames)
+                {
+                    if (!string.IsNullOrEmpty(eventName))
+                    {
+                        shouldMushShouldQuery.Add(s =>
+                            s.Match(i => i.Field(f=>f.EventName).Query(eventName)));
+                    }
+                }
+
+                if (shouldMushShouldQuery.Count > 0)
+                {
+                    shouldMustQuery.Add(q => q.Bool(b => b.Should(shouldMushShouldQuery)));
+                }
+
+                shouldQuery.Add(q => q.Bool(b => b.Must(shouldMustQuery)));
+            }
 
             mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
         }
 
 
-        QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Nested(q => q.Path("Transactions")
-            .Query(qq => qq.Bool(b => b.Must(mustQuery))));
-
-        // QueryContainer Filter(QueryContainerDescriptor<Block> f) => f.Nested(q => q.Path("Transactions")
-        //     .Query(qq => qq.Bool(b => b.Must(s =>
-        //         s.Match(i=>i.Field("Transactions.LogEvents.eventName").Query("IrreversibleBlockFound"))))));
+        QueryContainer Filter(QueryContainerDescriptor<LogEventIndex> f) => f.Bool(b => b.Must(mustQuery));
         List<LogEventDto> resultList = new List<LogEventDto>();
 
 
-        var list = await _blockIndexRepository.GetListAsync(Filter);
+        var list = await _logEventIndexRepository.GetListAsync(Filter);
 
-        var items = ObjectMapper.Map<List<Block>, List<BlockDto>>(list.Item2);
-
-        var contractAddressList = input.Events.Select(i => i.ContractAddress);
-        foreach (var blockItem in items)
-        {
-            foreach (var transactionItem in blockItem.Transactions)
-            {
-                foreach (var logEventItem in transactionItem.LogEvents)
-                {
-                    bool isWantedLogEvent = false;
-                    foreach (var eventInputItem in input.Events)
-                    {
-                        if (!string.IsNullOrEmpty(eventInputItem.ContractAddress) &&
-                            eventInputItem.EventNames.Count > 0)
-                        {
-                            if (eventInputItem.ContractAddress == logEventItem.ContractAddress
-                                && eventInputItem.EventNames.Contains(logEventItem.EventName))
-                            {
-                                isWantedLogEvent = true;
-                            }
-                        }
-                        else if (!string.IsNullOrEmpty(eventInputItem.ContractAddress) &&
-                                 eventInputItem.EventNames.Count <= 0)
-                        {
-                            if (eventInputItem.ContractAddress == logEventItem.ContractAddress)
-                            {
-                                isWantedLogEvent = true;
-                            }
-                        }
-                        else
-                        {
-                            if (eventInputItem.EventNames.Contains(logEventItem.EventName))
-                            {
-                                isWantedLogEvent = true;
-                            }
-                        }
-                    }
-
-                    if (isWantedLogEvent)
-                    {
-                        resultList.Add(logEventItem);
-                    }
-                }
-
-
-            }
-        }
+        resultList = ObjectMapper.Map<List<LogEventIndex>, List<LogEventDto>>(list.Item2);
+        
         
         return resultList;
     }
 
-    private List<Func<QueryContainerDescriptor<Block>, QueryContainer>> GetContractsShouldQueryDescriptor(List<EventInput> events)
+    private List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>> GetEventsShouldQueryDescriptor(List<EventInput> events)
     {
-        var shouldQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
+        var shouldQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
         foreach (EventInput eventInput in events)
         {
-            var shouldMustQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
+            var shouldMustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
             if (!string.IsNullOrEmpty(eventInput.ContractAddress))
             {
                 shouldMustQuery.Add(s =>
@@ -277,7 +276,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
                         i.Field("Transactions.LogEvents.contractAddress").Query(eventInput.ContractAddress)));
             }
 
-            var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<Block>, QueryContainer>>();
+            var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
             foreach (var eventName in eventInput.EventNames)
             {
                 if (!string.IsNullOrEmpty(eventName))

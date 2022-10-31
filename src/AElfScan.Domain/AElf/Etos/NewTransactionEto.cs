@@ -3,8 +3,8 @@ using Volo.Abp.EventBus;
 
 namespace AElfScan.AElf.Etos;
 
-[EventName("AElf.NewBlock")]
-public class NewBlockEto:BlockIndex
+[EventName("AElf.NewTransaction")]
+public class NewTransactionEto:TransactionIndex
 {
     
 }
