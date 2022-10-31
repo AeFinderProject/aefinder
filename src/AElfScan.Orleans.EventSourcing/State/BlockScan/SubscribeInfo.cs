@@ -1,6 +1,6 @@
 using AElfScan.AElf.Dtos;
 
-namespace AElfScan.Orleans.EventSourcing.Grain.BlockScan;
+namespace AElfScan.Orleans.EventSourcing.State.BlockScan;
 
 public class SubscribeInfo
 {

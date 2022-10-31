@@ -37,7 +37,22 @@ public class BlockAppService:ApplicationService,IBlockAppService
             {
                 BlockNumber = i,
                 BlockHash = blockHash,
-                PreviousBlockHash = previousHash
+                PreviousBlockHash = previousHash,
+                Transactions = new List<TransactionDto>
+                {
+                    new TransactionDto
+                    {
+                        TransactionId = Guid.NewGuid().ToString(),
+                        LogEvents = new List<LogEventDto>
+                        {
+                            new LogEventDto
+                            {
+                                ContractAddress = "ContractAddress",
+                                EventName = "EventName"
+                            }
+                        }
+                    }
+                }
             });
 
             previousHash = blockHash;

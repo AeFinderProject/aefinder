@@ -28,7 +28,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
 
     public async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken? token = null)
     {
-        var connection = _connectionProvider.GetConnection(subscribedBlock.ClientId);
+        var connection = _connectionProvider.GetConnectionByClientId(subscribedBlock.ClientId);
         if (connection != null && connection.Version == subscribedBlock.Version)
         {
             // TODO: check version

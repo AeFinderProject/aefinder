@@ -1,13 +1,18 @@
-using AElfScan.Orleans.EventSourcing.State.ScanClients;
+using AElfScan.Orleans.EventSourcing.State.BlockScan;
 using Orleans;
 
 namespace AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 
 public class ClientManagerGrain : Grain<ClientManagerState>, IClientManagerGrain
 {
-    public Task<List<string>> GetClientIdsAsync(string chainId)
+    public Task<List<string>> GetClientIdsByChainAsync(string chainId)
     {
         return Task.FromResult(State.ClientIds[chainId].ToList());
+    }
+    
+    public Task<Dictionary<string, HashSet<string>>> GetAllClientIdsAsync()
+    {
+        return Task.FromResult(State.ClientIds);
     }
 
     public async Task AddClientAsync(string chainId, string clientId)
@@ -20,6 +25,18 @@ public class ClientManagerGrain : Grain<ClientManagerState>, IClientManagerGrain
         clientIds.Add(clientId);
         State.ClientIds[chainId] = clientIds;
         await WriteStateAsync();
+    }
+
+    public async Task RemoveClientAsync(string chainId, string clientId)
+    {
+        if (State.ClientIds.TryGetValue(chainId, out var clientIds))
+        {
+            if (clientIds.Remove(clientId))
+            {
+                State.ClientIds[chainId] = clientIds;
+                await WriteStateAsync();
+            }
+        }
     }
 
     public override Task OnActivateAsync()

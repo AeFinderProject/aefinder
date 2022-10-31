@@ -1,6 +1,7 @@
 using AElf.Indexing.Elasticsearch.Options;
 using AElfScan;
 using AElfScan.Orleans;
+using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
@@ -22,15 +23,24 @@ public class AElfScanEntityEventHandlerModule : AbpModule
     {
         ConfigureEsIndexCreation();
         context.Services.AddHostedService<AElfScanHostedService>();
-        
-        var clientService = context.Services.GetRequiredService<IClusterClientAppService>();
-        AsyncHelper.RunSync(async () => await clientService.StartAsync());
     }
-    
+
+    public override void OnApplicationInitialization(ApplicationInitializationContext context)
+    {
+        var clientService = context.ServiceProvider.GetRequiredService<IClusterClientAppService>();
+        AsyncHelper.RunSync(clientService.StartAsync);
+        
+        AsyncHelper.RunSync(async () =>
+        {
+            var grain = clientService.Client.GetGrain<IBlockScanCheckGrain>(AElfScanApplicationConsts.BlockScanCheckGrainId);
+            await grain.Start();
+        });
+    }
+
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
         var clientService = context.ServiceProvider.GetService<IClusterClientAppService>();
-        AsyncHelper.RunSync(() => clientService.StopAsync());
+        AsyncHelper.RunSync(clientService.StopAsync);
     }
 
     //Create the ElasticSearch Index based on Domain Entity

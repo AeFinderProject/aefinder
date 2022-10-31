@@ -36,16 +36,15 @@ public class BlockIndexHandler : IBlockIndexHandler, ITransientDependency
         await chainGrain.SetLatestBlockAsync(block.BlockHash, block.BlockNumber);
 
         var clientManagerGrain = client.GetGrain<IClientManagerGrain>(0);
-        var clientIds = await clientManagerGrain.GetClientIdsAsync(block.ChainId);
+        var clientIds = await clientManagerGrain.GetClientIdsByChainAsync(block.ChainId);
         var tasks = clientIds.Select(async clientId =>
         {
-            var id = block.ChainId + clientId;
-            var clientGrain = client.GetGrain<IClientGrain>(id);
+            var clientGrain = client.GetGrain<IClientGrain>(clientId);
             var clientInfo = await clientGrain.GetClientInfoAsync();
             if (clientInfo.ScanModeInfo.ScanMode == ScanMode.NewBlock &&
                 clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= block.BlockNumber)
             {
-                var blockScanGrain = client.GetGrain<IBlockScanGrain>(id);
+                var blockScanGrain = client.GetGrain<IBlockScanGrain>(clientId);
                 var dto = _objectMapper.Map<Block, BlockDto>(block);
                 await blockScanGrain.HandleNewBlockAsync(dto);
             }
@@ -64,16 +63,15 @@ public class BlockIndexHandler : IBlockIndexHandler, ITransientDependency
             confirmBlocks.Last().BlockNumber);
 
         var clientManagerGrain = client.GetGrain<IClientManagerGrain>(0);
-        var clientIds = await clientManagerGrain.GetClientIdsAsync(chainId);
+        var clientIds = await clientManagerGrain.GetClientIdsByChainAsync(chainId);
         var tasks = clientIds.Select(async clientId =>
         {
-            var id = chainId + clientId;
-            var clientGrain = client.GetGrain<IClientGrain>(id);
+            var clientGrain = client.GetGrain<IClientGrain>(clientId);
             var clientInfo = await clientGrain.GetClientInfoAsync();
             if (clientInfo.ScanModeInfo.ScanMode == ScanMode.NewBlock &&
                 clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= confirmBlocks.First().BlockNumber)
             {
-                var blockScanGrain = client.GetGrain<IBlockScanGrain>(id);
+                var blockScanGrain = client.GetGrain<IBlockScanGrain>(clientId);
                 var dtos = _objectMapper.Map<List<Block>, List<BlockDto>>(confirmBlocks);
                 await blockScanGrain.HandleConfirmedBlockAsync(dtos);
             }

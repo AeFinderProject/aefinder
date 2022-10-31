@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AElfScan.AElf.Dtos;
 using AElfScan.AElf.Entities.Es;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
+using AElfScan.Orleans.EventSourcing.State.BlockScan;
 using Volo.Abp.Account;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.IdentityModel;

@@ -1,40 +1,60 @@
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Volo.Abp.DependencyInjection;
 
 namespace AElfScan.Hubs;
 
 public interface IConnectionProvider
 {
-    void Add(string clientId, string connectionId, string version);
-    void Remove(string clientId);
-    ConnectionInfo GetConnection(string clientId);
+    void Add(string clientId, string connectionId, string version, List<string> chainIds);
+    void Remove(string connectionId);
+    ConnectionInfo GetConnectionByClientId(string clientId);
+    ConnectionInfo GetConnectionByConnectionId(string connectionId);
 }
 
 public class ConnectionProvider : IConnectionProvider, ISingletonDependency
 {
-    private readonly ConcurrentDictionary<string, ConnectionInfo> _connectionIds = new();
+    private readonly ConcurrentDictionary<string, ConnectionInfo> _connections = new();
+    private readonly ConcurrentDictionary<string, string> _connectionIds = new();
 
-    public void Add(string clientId, string connectionId, string version)
+    public void Add(string clientId, string connectionId, string version, List<string> chainIds)
     {
-        _connectionIds[clientId] = new ConnectionInfo
+        _connections[clientId] = new ConnectionInfo
         {
             Version = version,
-            ConnectionId = connectionId
+            ConnectionId = connectionId,
+            ClientId = clientId,
+            ChainIds = chainIds
         };
+        _connectionIds[connectionId] = clientId;
     }
     
-    public void Remove(string clientId)
+    public void Remove(string connectionId)
     {
-        _connectionIds.TryRemove(clientId, out _);
+        if (_connectionIds.TryGetValue(connectionId, out var clientId))
+        {
+            _connections.TryRemove(clientId, out _);
+            _connectionIds.TryRemove(connectionId, out _);
+        }
     }
 
-    public ConnectionInfo GetConnection(string clientId)
+    public ConnectionInfo GetConnectionByClientId(string clientId)
     {
-        if (_connectionIds.TryGetValue(clientId, out var connection))
+        if (_connections.TryGetValue(clientId, out var connection))
         {
             return connection;
         }
 
+        return null;
+    }
+    
+    public ConnectionInfo GetConnectionByConnectionId(string connectionId)
+    {
+        if (_connectionIds.TryGetValue(connectionId, out var clientId))
+        {
+            return GetConnectionByClientId(clientId);
+        }
+        
         return null;
     }
 }
@@ -42,5 +62,7 @@ public class ConnectionProvider : IConnectionProvider, ISingletonDependency
 public class ConnectionInfo
 {
     public string ConnectionId { get; set; }
+    public string ClientId { get; set; }
     public string Version { get; set; }
+    public List<string> ChainIds { get; set; } = new();
 }

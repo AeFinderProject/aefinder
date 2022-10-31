@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AElfScan.AElf.Dtos;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using AElfScan.Orleans.EventSourcing.Grain.Chains;
+using AElfScan.Orleans.EventSourcing.State.BlockScan;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Runtime;
 using Orleans.Streams;

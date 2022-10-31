@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AElfScan.Orleans;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using AElfScan.Orleans.EventSourcing.Grain.Chains;
+using AElfScan.Orleans.EventSourcing.State.BlockScan;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using NUglify.Helpers;
@@ -35,15 +36,15 @@ public class BlockHub : AbpHub
     {
         var client = _clusterClientAppService.Client;
         var clientId = Context.User.FindFirst(o=>o.ToString().StartsWith("client_id")).Value;
-        var version = Guid.NewGuid().ToString();
-        _connectionProvider.Add(clientId,Context.ConnectionId,version);
-
+        var version = Guid.NewGuid().ToString("N");
+        _connectionProvider.Add(clientId,Context.ConnectionId,version, subscribeInfos.Select(o=>o.ChainId).ToList());
+        
         foreach (var subscribeInfo in subscribeInfos)
         {
             var id = subscribeInfo.ChainId + clientId;
             var clientGrain = client.GetGrain<IClientGrain>(id);
             await clientGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version, subscribeInfo);
-
+            
             var scanGrain = client.GetGrain<IBlockScanGrain>(id);
             var streamId = await scanGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version);
             var stream =
@@ -63,6 +64,22 @@ public class BlockHub : AbpHub
             }
             
             Task.Run(scanGrain.HandleHistoricalBlockAsync);
+        }
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var connection = _connectionProvider.GetConnectionByConnectionId(Context.ConnectionId);
+        if (connection != null)
+        {
+            var client = _clusterClientAppService.Client;
+            foreach (var chainId in connection.ChainIds)
+            {
+                var id = chainId + connection.ClientId;
+                var clientGrain = client.GetGrain<IClientGrain>(id);
+                await clientGrain.StopAsync(connection.Version);
+            }
+            _connectionProvider.Remove(Context.ConnectionId);
         }
     }
 }

@@ -60,6 +60,11 @@ public static class OrleansHostExtensions
                     options.UseJson = true;
                     options.DatabaseNumber = 0;
                 }))
+                .UseRedisReminderService(options =>
+                {
+                    // TODO: Rename options
+                    options.ConnectionString = configSection.GetValue<string>("KVrocksConnection"); 
+                })
                 .AddSnapshotStorageBasedConsistencyProviderAsDefault((op, name) =>
                 {
                     op.UseIndependentEventStorage = true;

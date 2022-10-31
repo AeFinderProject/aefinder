@@ -1,6 +1,4 @@
-using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
-
-namespace AElfScan.Orleans.EventSourcing.State.ScanClients;
+namespace AElfScan.Orleans.EventSourcing.State.BlockScan;
 
 public class ClientState
 {

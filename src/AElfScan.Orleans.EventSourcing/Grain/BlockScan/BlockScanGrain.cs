@@ -1,7 +1,7 @@
 using AElfScan.AElf;
 using AElfScan.AElf.Dtos;
 using AElfScan.Orleans.EventSourcing.Grain.Chains;
-using AElfScan.Orleans.EventSourcing.State.ScanClients;
+using AElfScan.Orleans.EventSourcing.State.BlockScan;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Streams;
@@ -56,6 +56,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 break;
             }
 
+            await clientGrain.SetHandleHistoricalBlockTimeAsync(DateTime.UtcNow);
+
             if (State.ScannedConfirmedBlockHeight >=
                 chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold)
             {
@@ -73,11 +75,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             {
                 if (!subscribeInfo.OnlyConfirmedBlock)
                 {
-                    foreach (var block in blocks)
-                    {
-                        block.IsConfirmed = false;
-                    }
-
+                    SetIsConfirmed(blocks, false);
                     await _stream.OnNextAsync(new SubscribedBlockDto
                     {
                         ClientId = State.ClientId,
@@ -86,12 +84,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                         Blocks = blocks
                     });
                 }
-
-                foreach (var block in blocks)
-                {
-                    block.IsConfirmed = true;
-                }
-
+                
+                SetIsConfirmed(blocks, true);
                 await _stream.OnNextAsync(new SubscribedBlockDto
                 {
                     ClientId = State.ClientId,
@@ -164,11 +158,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         State.ScannedBlockHash = unPushedBlock.Last().BlockHash;
 
         var subscribedBlocks = await blockFilterProvider.FilterBlocksAsync(unPushedBlock, subscribeInfo.SubscribeEvents);
-        foreach (var subscribedBlock in subscribedBlocks)
-        {
-            subscribedBlock.IsConfirmed = false;
-        }
-
+        
+        SetIsConfirmed(subscribedBlocks, false);
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
             ClientId = State.ClientId,
@@ -235,11 +226,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
         var subscribedBlocks =
             await blockFilterProvider.FilterBlocksAsync(scannedBlocks, subscribeInfo.SubscribeEvents);
-        foreach (var block in subscribedBlocks)
-        {
-            block.IsConfirmed = true;
-        }
 
+        SetIsConfirmed(subscribedBlocks, true);
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
             ClientId = State.ClientId,
@@ -249,6 +237,22 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         });
 
         await WriteStateAsync();
+    }
+
+    private void SetIsConfirmed(List<BlockDto> blocks, bool isConfirmed)
+    {
+        foreach (var block in blocks)
+        {
+            block.IsConfirmed = isConfirmed;
+            foreach (var transaction in block.Transactions)
+            {
+                transaction.IsConfirmed = isConfirmed;
+                foreach (var logEvent in transaction.LogEvents)
+                {
+                    logEvent.IsConfirmed = isConfirmed;
+                }
+            }
+        }
     }
 
     public override async Task OnActivateAsync()

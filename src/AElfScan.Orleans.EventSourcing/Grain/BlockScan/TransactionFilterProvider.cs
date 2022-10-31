@@ -91,6 +91,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
                 BlockNumber = block.BlockNumber,
                 BlockTime = block.BlockTime,
                 PreviousBlockHash = block.PreviousBlockHash,
+                IsConfirmed = block.IsConfirmed,
                 Transactions = new List<TransactionDto>()
             };
 
