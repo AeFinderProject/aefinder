@@ -21,7 +21,7 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
         var result = new List<BlockDto>();
-        var filter = GetFilter(input.Contracts);
+        var filter = GetFilter(input.Events);
         for (var i = input.StartBlockNumber; i <= input.EndBlockNumber; i++)
         {
             result.AddRange((from block in _blockDataProvider.Blocks[i]
@@ -39,7 +39,7 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
     public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
     {
         var result = new List<TransactionDto>();
-        var filter = GetFilter(input.Contracts);
+        var filter = GetFilter(input.Events);
         for (var i = input.StartBlockNumber; i <= input.EndBlockNumber; i++)
         {
             foreach (var block in _blockDataProvider.Blocks[i])
@@ -59,7 +59,7 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
     public async Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
     {
         var result = new List<LogEventDto>();
-        var filter = GetFilter(input.Contracts);
+        var filter = GetFilter(input.Events);
         for (var i = input.StartBlockNumber; i <= input.EndBlockNumber; i++)
         {
             foreach (var transaction in _blockDataProvider.Blocks[i].SelectMany(block => block.Transactions))

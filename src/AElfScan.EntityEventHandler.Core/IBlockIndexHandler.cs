@@ -1,5 +1,6 @@
 using System.Runtime.Serialization;
 using AElfScan.AElf.Dtos;
+using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
 using AElfScan.Orleans;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
@@ -7,14 +8,13 @@ using AElfScan.Orleans.EventSourcing.Grain.Chains;
 using Nito.AsyncEx;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
-using Block = AElfScan.AElf.Entities.Es.Block;
 
 namespace AElfScan;
 
 public interface IBlockIndexHandler
 {
-    Task ProcessNewBlockAsync(Block block);
-    Task ProcessConfirmBlocksAsync(List<Block> confirmBlocks);
+    Task ProcessNewBlockAsync(BlockIndex block);
+    Task ProcessConfirmBlocksAsync(List<BlockIndex> confirmBlocks);
 }
 
 public class BlockIndexHandler : IBlockIndexHandler, ITransientDependency
@@ -28,7 +28,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ITransientDependency
         _objectMapper = objectMapper;
     }
 
-    public async Task ProcessNewBlockAsync(Block block)
+    public async Task ProcessNewBlockAsync(BlockIndex block)
     {
         var client = _clusterClientAppService.Client;
 
@@ -45,7 +45,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ITransientDependency
                 clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= block.BlockNumber)
             {
                 var blockScanGrain = client.GetGrain<IBlockScanGrain>(clientId);
-                var dto = _objectMapper.Map<Block, BlockDto>(block);
+                var dto = _objectMapper.Map<BlockIndex, BlockDto>(block);
                 await blockScanGrain.HandleNewBlockAsync(dto);
             }
         });
@@ -53,7 +53,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ITransientDependency
         await tasks.WhenAll();
     }
 
-    public async Task ProcessConfirmBlocksAsync(List<Block> confirmBlocks)
+    public async Task ProcessConfirmBlocksAsync(List<BlockIndex> confirmBlocks)
     {
         var client = _clusterClientAppService.Client;
         var chainId = confirmBlocks.First().ChainId;
@@ -72,7 +72,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ITransientDependency
                 clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= confirmBlocks.First().BlockNumber)
             {
                 var blockScanGrain = client.GetGrain<IBlockScanGrain>(clientId);
-                var dtos = _objectMapper.Map<List<Block>, List<BlockDto>>(confirmBlocks);
+                var dtos = _objectMapper.Map<List<BlockIndex>, List<BlockDto>>(confirmBlocks);
                 await blockScanGrain.HandleConfirmedBlockAsync(dtos);
             }
         });

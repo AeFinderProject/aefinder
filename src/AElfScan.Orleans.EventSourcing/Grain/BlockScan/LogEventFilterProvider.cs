@@ -23,8 +23,8 @@ public class LogEventFilterProvider : IBlockFilterProvider
             ChainId = chainId,
             StartBlockNumber = startBlockNumber,
             EndBlockNumber = endBlockNumber,
-            //IsOnlyConfirmed = onlyConfirmed, // TODO: need add this parameter
-            Contracts = filters
+            IsOnlyConfirmed = onlyConfirmed,
+            Events = filters
         });
 
         var transactions = new Dictionary<string, TransactionDto>();

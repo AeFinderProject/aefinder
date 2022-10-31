@@ -9,5 +9,5 @@ public class GetBlocksInput
     public long EndBlockNumber { get; set; }
     public bool IsOnlyConfirmed { get; set; } = false;
     public bool HasTransaction { get; set; } = false;
-    public List<FilterContractEventInput> Contracts { get; set; }
+    public List<FilterContractEventInput> Events { get; set; }
 }

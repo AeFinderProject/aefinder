@@ -11,11 +11,17 @@ public class MockDataHelper
     {
         return Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
     }
+
+    public static string ContractAddress_Consensus = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ";
+    public static string ContractAddress_Token = "J6zgLjGwd1bxTBpULLXrGVeV74tnS2n74FFJJz7KNdjTYkDF6";
+
+    public static string Event_LIB = "IrreversibleBlockFound";
     
-    public static Block MockNewBlockEtoData(string blockHash,long blockNumber, string previousBlockHash)
+    
+    public static BlockIndex MockNewBlockEtoData(long blockNumber,string blockHash, string previousBlockHash)
     {
         string currentBlockHash = blockHash;
-        var newBlockEto = new Block
+        var newBlockEto = new BlockIndex
         {
             // Id = Guid.NewGuid(),
             Id = currentBlockHash,
@@ -74,12 +80,7 @@ public class MockDataHelper
                     {
                         new LogEvent()
                         {
-                            ChainId = "AELF",
                             TransactionId = "1ce2f46ebfe64f59bef89af5b3f44efb37e4b2ef9e28b28803e960c4a4a400b6",
-                            BlockHash = currentBlockHash,
-                            BlockNumber = blockNumber,
-                            BlockTime = DateTime.Now,
-                            IsConfirmed = false,
                             ContractAddress = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
                             EventName = "MiningInformationUpdated",
                             Index = 0,
@@ -124,5 +125,57 @@ public class MockDataHelper
         };
 
         return newBlockEto;
+    }
+
+
+    public static Transaction MockTransactionWithLogEventData(long blockNumber,string blockHash, string transactionId,bool isConfirmed,string contractAddress,string eventName)
+    {
+        string currentBlockHash = blockHash;
+        transactionId = CreateBlockHash();
+        var newTransaction = new Transaction()
+        {
+            TransactionId = transactionId,
+            ChainId = "AELF",
+            From = "2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e",
+            To = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
+            BlockHash = currentBlockHash,
+            BlockNumber = blockNumber,
+            BlockTime = DateTime.Now,
+            MethodName = "UpdateValue",
+            Params =
+                "CiIKINnB4HhmTpMScNl9T4hNoR1w8dOpx0O684p+pwfm6uOkEiIKINZUk1v+szUqMZZ3w0phLn7qqOX+h+uD1fdP59LYm9CsIiIKIPGQ8ga2zO3CXXtZkjlMma6CI7VSQFA7ZMYrIU6zGT/uKgYInMjcmAYwAVDPAlqpAQqCATA0YmNkMWM4ODdjZDBlZGJkNGNjZjhkOWQyYjNmNzJlNzI1MTFhYTYxODMxOTk2MDAzMTM2ODdiYTZjNTgzZjEzYzNkNmQ3MTZmYTQwZGY4NjA0YWFlZDBmY2FiMzExMzVmZTNjMmQ0NWMwMDk4MDBjMDc1MjU0YTM3ODJiNGM0ZGISIgog8ZDyBrbM7cJde1mSOUyZroIjtVJAUDtkxishTrMZP+5g0AI=",
+            Signature =
+                "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
+            Index = 0,
+            Status = TransactionStatus.Mined,
+            IsConfirmed = isConfirmed,
+            ExtraProperties = new Dictionary<string, string>()
+            {
+                ["Version"] = "0",
+                ["RefBlockNumber"] = "335",
+                ["RefBlockPrefix"] = "156ff372",
+                ["Bloom"] =
+                    "AAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAEAAAAAAAAgAAABAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgAAAAAAAAAABAAAAAAAAAAAAAAIQAAAAABAAAAAgAAAAAAAAAAAAAAAAABACAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIgAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAAAAAAAAAAAAAAAAAgAAAAgAAAAABAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAgAAAAAAAAAAAAAA==",
+                ["ReturnValue"] = "",
+                ["Error"] = ""
+            },
+            LogEvents = new List<LogEvent>()
+            {
+                new LogEvent()
+                {
+                    TransactionId = transactionId,
+                    ContractAddress = contractAddress,
+                    EventName = eventName,
+                    Index = 0,
+                    ExtraProperties = new Dictionary<string, string>()
+                    {
+                        ["Indexed"] =
+                            "[ \"CoIBMDRiY2QxYzg4N2NkMGVkYmQ0Y2NmOGQ5ZDJiM2Y3MmU3MjUxMWFhNjE4MzE5OTYwMDMxMzY4N2JhNmM1ODNmMTNjM2Q2ZDcxNmZhNDBkZjg2MDRhYWVkMGZjYWIzMTEzNWZlM2MyZDQ1YzAwOTgwMGMwNzUyNTRhMzc4MmI0YzRkYg==\", \"EgsIxNqlmQYQ4M74LQ==\", \"GhpVcGRhdGVUaW55QmxvY2tJbmZvcm1hdGlvbg==\", \"ILAi\", \"KiIKID3kBhYftHeFZBYS6VOXPeigGAAwZWM85SlzN48xJARW\" ]",
+                        ["NonIndexed"] = ""
+                    }
+                }
+            }
+        };
+        return newTransaction;
     }
 }

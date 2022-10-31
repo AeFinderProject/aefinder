@@ -9,8 +9,9 @@ public class AElfAutoMapperProfile:Profile
 {
     public AElfAutoMapperProfile()
     {
-        CreateMap<ConfirmBlockEto,Block>();
-        CreateMap<Block,ConfirmBlocksEto>();
+        CreateMap<ConfirmBlockEto,BlockIndex>();
+        CreateMap<BlockIndex,ConfirmBlocksEto>();
         CreateMap<ConfirmBlocksEto,BlockDto>();
+        CreateMap<ConfirmBlockEto,BlockIndex>();
     }
 }

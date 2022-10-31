@@ -3,7 +3,7 @@ using Volo.Abp.EventBus;
 
 namespace AElfScan.AElf.Etos;
 
-public class ConfirmBlockEto:Block
+public class ConfirmBlockEto:BlockIndex
 {
     // public string ChainId { get; set; }
     // public string BlockHash { get; set; }

@@ -21,11 +21,10 @@ public class TransactionFilterProvider : IBlockFilterProvider
         var transactions = await _blockAppService.GetTransactionsAsync(new GetTransactionsInput()
         {
             ChainId = chainId,
-            HasLogEvent = true,
             StartBlockNumber = startBlockNumber,
             EndBlockNumber = endBlockNumber,
-            //IsOnlyConfirmed = onlyConfirmed, // TODO: need add this parameter
-            Contracts = filters
+            IsOnlyConfirmed = onlyConfirmed, 
+            Events = filters
         });
 
         var blocks = new Dictionary<string, BlockDto>();

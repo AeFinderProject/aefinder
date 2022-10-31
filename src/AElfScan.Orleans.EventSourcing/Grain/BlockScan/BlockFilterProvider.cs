@@ -25,7 +25,7 @@ public class BlockFilterProvider : IBlockFilterProvider
             StartBlockNumber = startBlockNumber,
             EndBlockNumber = endBlockNumber,
             IsOnlyConfirmed = onlyConfirmed,
-            Contracts = filters
+            Events = filters
         });
 
         return blocks;
