@@ -18,7 +18,7 @@ public class MockDataHelper
     public static string Event_LIB = "IrreversibleBlockFound";
     
     
-    public static BlockIndex MockNewBlockEtoData(long blockNumber,string blockHash, string previousBlockHash)
+    public static BlockIndex MockNewBlockEtoData(long blockNumber,string blockHash,bool isConfirmed)
     {
         string currentBlockHash = blockHash;
         var newBlockEto = new BlockIndex
@@ -28,13 +28,13 @@ public class MockDataHelper
             ChainId = "AELF",
             BlockHash = currentBlockHash,
             BlockNumber = blockNumber,
-            PreviousBlockHash = previousBlockHash,
+            PreviousBlockHash = CreateBlockHash(),
             BlockTime = DateTime.Now,
             SignerPubkey =
                 "04bcd1c887cd0edbd4ccf8d9d2b3f72e72511aa6183199600313687ba6c583f13c3d6d716fa40df8604aaed0fcab31135fe3c2d45c009800c075254a3782b4c4db",
             Signature =
                 "2c4117170f79e4f4c01976265b9782ebe840735b7ec25fb82fbce6756b34218e5996a5c6650be7b4594397f999e222beb45c0ed11412b67871857968871ce03f01",
-            IsConfirmed = false,
+            IsConfirmed = isConfirmed,
             ExtraProperties = new Dictionary<string, string>()
             {
                 ["Version"] = "0",
@@ -65,7 +65,7 @@ public class MockDataHelper
                         "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
                     Index = 0,
                     Status = TransactionStatus.Mined,
-                    IsConfirmed = false,
+                    IsConfirmed = isConfirmed,
                     ExtraProperties = new Dictionary<string, string>()
                     {
                         ["Version"] = "0",
@@ -80,6 +80,11 @@ public class MockDataHelper
                     {
                         new LogEvent()
                         {
+                            ChainId = "AELF",
+                            BlockHash = currentBlockHash,
+                            BlockNumber = blockNumber,
+                            BlockTime = DateTime.Now,
+                            IsConfirmed = isConfirmed,
                             TransactionId = "1ce2f46ebfe64f59bef89af5b3f44efb37e4b2ef9e28b28803e960c4a4a400b6",
                             ContractAddress = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
                             EventName = "MiningInformationUpdated",
@@ -108,7 +113,7 @@ public class MockDataHelper
                         "3USrQq3C0VJ28pg1SEA4DJ3vH3suBiW5oFIp53kW7989vdrbgWhCW82qD4ovb6Q9gZOJsqgu388++MMk/3cHDgE=",
                     Index = 1,
                     Status = TransactionStatus.Mined,
-                    IsConfirmed = false,
+                    IsConfirmed = isConfirmed,
                     ExtraProperties = new Dictionary<string, string>()
                     {
                         ["Version"] = "0",
@@ -131,7 +136,6 @@ public class MockDataHelper
     public static Transaction MockTransactionWithLogEventData(long blockNumber,string blockHash, string transactionId,bool isConfirmed,string contractAddress,string eventName)
     {
         string currentBlockHash = blockHash;
-        transactionId = CreateBlockHash();
         var newTransaction = new Transaction()
         {
             TransactionId = transactionId,
@@ -163,6 +167,68 @@ public class MockDataHelper
             {
                 new LogEvent()
                 {
+                    ChainId = "AELF",
+                    BlockHash = currentBlockHash,
+                    BlockNumber = blockNumber,
+                    BlockTime = DateTime.Now,
+                    IsConfirmed = isConfirmed,
+                    TransactionId = transactionId,
+                    ContractAddress = contractAddress,
+                    EventName = eventName,
+                    Index = 0,
+                    ExtraProperties = new Dictionary<string, string>()
+                    {
+                        ["Indexed"] =
+                            "[ \"CoIBMDRiY2QxYzg4N2NkMGVkYmQ0Y2NmOGQ5ZDJiM2Y3MmU3MjUxMWFhNjE4MzE5OTYwMDMxMzY4N2JhNmM1ODNmMTNjM2Q2ZDcxNmZhNDBkZjg2MDRhYWVkMGZjYWIzMTEzNWZlM2MyZDQ1YzAwOTgwMGMwNzUyNTRhMzc4MmI0YzRkYg==\", \"EgsIxNqlmQYQ4M74LQ==\", \"GhpVcGRhdGVUaW55QmxvY2tJbmZvcm1hdGlvbg==\", \"ILAi\", \"KiIKID3kBhYftHeFZBYS6VOXPeigGAAwZWM85SlzN48xJARW\" ]",
+                        ["NonIndexed"] = ""
+                    }
+                }
+            }
+        };
+        return newTransaction;
+    }
+
+    public static TransactionIndex MockNewTransactionEtoData(long blockNumber,bool isConfirmed,string contractAddress,string eventName)
+    {
+        string currentBlockHash = CreateBlockHash();
+        string transactionId = CreateBlockHash();
+        var newTransaction = new TransactionIndex()
+        {
+            Id = transactionId,
+            TransactionId = transactionId,
+            ChainId = "AELF",
+            From = "2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e",
+            To = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
+            BlockHash = currentBlockHash,
+            BlockNumber = blockNumber,
+            BlockTime = DateTime.Now,
+            MethodName = "UpdateValue",
+            Params =
+                "CiIKINnB4HhmTpMScNl9T4hNoR1w8dOpx0O684p+pwfm6uOkEiIKINZUk1v+szUqMZZ3w0phLn7qqOX+h+uD1fdP59LYm9CsIiIKIPGQ8ga2zO3CXXtZkjlMma6CI7VSQFA7ZMYrIU6zGT/uKgYInMjcmAYwAVDPAlqpAQqCATA0YmNkMWM4ODdjZDBlZGJkNGNjZjhkOWQyYjNmNzJlNzI1MTFhYTYxODMxOTk2MDAzMTM2ODdiYTZjNTgzZjEzYzNkNmQ3MTZmYTQwZGY4NjA0YWFlZDBmY2FiMzExMzVmZTNjMmQ0NWMwMDk4MDBjMDc1MjU0YTM3ODJiNGM0ZGISIgog8ZDyBrbM7cJde1mSOUyZroIjtVJAUDtkxishTrMZP+5g0AI=",
+            Signature =
+                "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
+            Index = 0,
+            Status = TransactionStatus.Mined,
+            IsConfirmed = isConfirmed,
+            ExtraProperties = new Dictionary<string, string>()
+            {
+                ["Version"] = "0",
+                ["RefBlockNumber"] = "335",
+                ["RefBlockPrefix"] = "156ff372",
+                ["Bloom"] =
+                    "AAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAEAAAAAAAAgAAABAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgAAAAAAAAAABAAAAAAAAAAAAAAIQAAAAABAAAAAgAAAAAAAAAAAAAAAAABACAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIgAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAAAAAAAAAAAAAAAAAgAAAAgAAAAABAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAgAAAAAAAAAAAAAA==",
+                ["ReturnValue"] = "",
+                ["Error"] = ""
+            },
+            LogEvents = new List<LogEvent>()
+            {
+                new LogEvent()
+                {
+                    ChainId = "AELF",
+                    BlockHash = currentBlockHash,
+                    BlockNumber = blockNumber,
+                    BlockTime = DateTime.Now,
+                    IsConfirmed = isConfirmed,
                     TransactionId = transactionId,
                     ContractAddress = contractAddress,
                     EventName = eventName,

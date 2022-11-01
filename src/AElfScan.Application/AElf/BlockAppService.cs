@@ -33,39 +33,6 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
-        // TODO: Delete it after debug
-        var result = new List<BlockDto>();
-        var previousHash = Guid.NewGuid().ToString();
-        for (long i = input.StartBlockNumber; i <= input.EndBlockNumber; i++)
-        {
-            var blockHash = Guid.NewGuid().ToString();
-            result.Add(new BlockDto
-            {
-                BlockNumber = i,
-                BlockHash = blockHash,
-                PreviousBlockHash = previousHash,
-                Transactions = new List<TransactionDto>
-                {
-                    new TransactionDto
-                    {
-                        TransactionId = Guid.NewGuid().ToString(),
-                        LogEvents = new List<LogEventDto>
-                        {
-                            new LogEventDto
-                            {
-                                ContractAddress = "ContractAddress",
-                                EventName = "EventName"
-                            }
-                        }
-                    }
-                }
-            });
-
-            previousHash = blockHash;
-        }
-
-        return result;
-        
         if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.BlockQueryAmountInterval)
         {
             input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
@@ -295,39 +262,6 @@ public class BlockAppService:ApplicationService,IBlockAppService
         
         return resultList;
     }
-
-    private List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>> GetEventsShouldQueryDescriptor(List<FilterContractEventInput> events)
-    {
-        var shouldQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
-        foreach (var eventInput in events)
-        {
-            var shouldMustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
-            if (!string.IsNullOrEmpty(eventInput.ContractAddress))
-            {
-                shouldMustQuery.Add(s =>
-                    s.Match(i =>
-                        i.Field("Transactions.LogEvents.contractAddress").Query(eventInput.ContractAddress)));
-            }
-
-            var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
-            foreach (var eventName in eventInput.EventNames)
-            {
-                if (!string.IsNullOrEmpty(eventName))
-                {
-                    shouldMushShouldQuery.Add(s =>
-                        s.Match(i => i.Field("Transactions.LogEvents.eventName").Query(eventName)));
-                }
-            }
-
-            if (shouldMushShouldQuery.Count > 0)
-            {
-                shouldMustQuery.Add(q => q.Bool(b => b.Should(shouldMushShouldQuery)));
-            }
-
-            shouldQuery.Add(q => q.Bool(b => b.Must(shouldMustQuery)));
-        }
-
-        return shouldQuery;
-    }
+    
 
 }

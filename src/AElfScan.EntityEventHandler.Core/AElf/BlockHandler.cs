@@ -11,8 +11,6 @@ using Index = System.Index;
 namespace AElfScan.AElf;
 
 public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
-    IDistributedEventHandler<NewTransactionEto>,
-    IDistributedEventHandler<NewLogEventEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,
     IDistributedEventHandler<ConfirmTransactionsEto>,
     IDistributedEventHandler<ConfirmLogEventsEto>,ITransientDependency
@@ -42,51 +40,61 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     public async Task HandleEventAsync(NewBlockEto eventData)
     {
         _logger.LogInformation($"block is adding, id: {eventData.BlockHash}  , BlockNumber: {eventData.BlockNumber} , IsConfirmed: {eventData.IsConfirmed}");
-        var blockIndex = await _blockIndexRepository.GetAsync(q=>
-            q.Term(i=>i.Field(f=>f.BlockHash).Value(eventData.BlockHash)));
-        if (blockIndex != null)
+        // var blockIndex = await _blockIndexRepository.GetAsync(q=>
+        //     q.Term(i=>i.Field(f=>f.BlockHash).Value(eventData.BlockHash)));
+        // if (blockIndex != null)
+        // {
+        //     _logger.LogInformation($"block already exist-{blockIndex.Id}, Add failure!");
+        // }
+        // else
+        // {
+        //     await _blockIndexRepository.AddAsync(eventData);
+        //     _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(eventData); });
+        // }
+        await _blockIndexRepository.AddOrUpdateAsync(eventData);
+        _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(eventData); });
+
+        foreach (var transaction in eventData.Transactions)
         {
-            _logger.LogInformation($"block already exist-{blockIndex.Id}, Add failure!");
+            var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
+            transactionIndex.Id = transaction.BlockHash;
+            await _transactionIndexRepository.AddOrUpdateAsync(transactionIndex);
         }
-        else
-        {
-            await _blockIndexRepository.AddAsync(eventData);
-            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(eventData); });
-        }
+
         
     }
     
-    public async Task HandleEventAsync(NewTransactionEto eventData)
-    {
-        _logger.LogInformation($"transaction is adding, id: {eventData.TransactionId}  , BlockNumber: {eventData.BlockNumber} , IsConfirmed: {eventData.IsConfirmed}");
-        var transactionIndex = await _transactionIndexRepository.GetAsync(q=>
-            q.Term(i=>i.Field(f=>f.Id).Value(eventData.TransactionId)));
-        if (transactionIndex != null)
-        {
-            _logger.LogInformation($"transaction already exist-{transactionIndex.Id}, Add failure!");
-        }
-        else
-        {
-            await _transactionIndexRepository.AddAsync(eventData);
-        }
-        
-    }
+    // public async Task HandleEventAsync(NewTransactionEto eventData)
+    // {
+    //     _logger.LogInformation($"transaction is adding, id: {eventData.TransactionId}  , BlockNumber: {eventData.BlockNumber} , IsConfirmed: {eventData.IsConfirmed}");
+    //     var transactionIndex = await _transactionIndexRepository.GetAsync(q=>
+    //         q.Term(i=>i.Field(f=>f.Id).Value(eventData.TransactionId)));
+    //     if (transactionIndex != null)
+    //     {
+    //         _logger.LogInformation($"transaction already exist-{transactionIndex.Id}, Add failure!");
+    //     }
+    //     else
+    //     {
+    //         await _transactionIndexRepository.AddAsync(eventData);
+    //     }
+    //     
+    // }
     
-    public async Task HandleEventAsync(NewLogEventEto eventData)
-    {
-        _logger.LogInformation($"logevent is adding, id: {eventData.Id}  , BlockNumber: {eventData.BlockNumber} , TransactionId: {eventData.TransactionId} , EventName: {eventData.EventName}");
-        var logEventIndex = await _logEventIndexRepository.GetAsync(q=>
-            q.Term(i=>i.Field(f=>f.Id).Value(eventData.Id)));
-        if (logEventIndex != null)
-        {
-            _logger.LogInformation($"logevent already exist-{logEventIndex.Id}, Add failure!");
-        }
-        else
-        {
-            await _logEventIndexRepository.AddAsync(eventData);
-        }
-        
-    }
+    // public async Task HandleEventAsync(NewLogEventEto eventData)
+    // {
+    //     _logger.LogInformation($"logevent is adding, id: {eventData.Id}  , BlockNumber: {eventData.BlockNumber} , TransactionId: {eventData.TransactionId} , EventName: {eventData.EventName}");
+    //     var logEventIndex = await _logEventIndexRepository.GetAsync(q=>
+    //         q.Term(i=>i.Field(f=>f.Id).Value(eventData.Id)));
+    //     if (logEventIndex != null)
+    //     {
+    //         _logger.LogInformation($"logevent already exist-{logEventIndex.Id}, Add failure!");
+    //     }
+    //     else
+    //     {
+    //         await _logEventIndexRepository.AddAsync(eventData);
+    //     }
+    //     
+    // }
 
     public async Task HandleEventAsync(ConfirmBlocksEto eventData)
     {
