@@ -12,8 +12,9 @@ namespace AElfScan.AElf;
 
 public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,
-    IDistributedEventHandler<ConfirmTransactionsEto>,
-    IDistributedEventHandler<ConfirmLogEventsEto>,ITransientDependency
+    // IDistributedEventHandler<ConfirmTransactionsEto>,
+    // IDistributedEventHandler<ConfirmLogEventsEto>,
+    ITransientDependency
 {
     private readonly INESTRepository<BlockIndex, string> _blockIndexRepository;
     private readonly ILogger<BlockHandler> _logger;
@@ -57,8 +58,15 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         foreach (var transaction in eventData.Transactions)
         {
             var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
-            transactionIndex.Id = transaction.BlockHash;
+            transactionIndex.Id = transaction.TransactionId;
             await _transactionIndexRepository.AddOrUpdateAsync(transactionIndex);
+
+            foreach (var logEvent in transaction.LogEvents)
+            {
+                var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
+                logEventIndex.Id = transaction.TransactionId + "_" + logEvent.Index;
+                await _logEventIndexRepository.AddOrUpdateAsync(logEventIndex);
+            }
         }
 
         
@@ -112,6 +120,26 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             await _blockIndexRepository.UpdateAsync(blockIndex);
             indexes.Add(blockIndex);
 
+            foreach (var transaction in confirmBlock.Transactions)
+            {
+                var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
+                transactionIndex.Id = transaction.TransactionId;
+                transactionIndex.IsConfirmed = true;
+                foreach (var logEvent in transactionIndex.LogEvents)
+                {
+                    logEvent.IsConfirmed = true;
+                }
+                await _transactionIndexRepository.UpdateAsync(transactionIndex);
+
+                foreach (var logEvent in transaction.LogEvents)
+                {
+                    var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
+                    logEventIndex.Id = transaction.TransactionId + "_" + logEvent.Index;
+                    logEventIndex.IsConfirmed = true;
+                    await _logEventIndexRepository.UpdateAsync(logEventIndex);
+                }
+            }
+
             //find the same height blocks
             var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
             mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockNumber).Value(confirmBlock.BlockNumber)));
@@ -139,33 +167,33 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         _ = Task.Run(async () => { await _blockIndexHandler.ProcessConfirmBlocksAsync(indexes); });
     }
     
-    public async Task HandleEventAsync(ConfirmTransactionsEto eventData)
-    {
-        foreach (var confirmTransaction in eventData.ConfirmTransactions)
-        {
-            _logger.LogInformation($"transaction:{confirmTransaction.Id} is confirming");
-            var transactionIndex = _objectMapper.Map<ConfirmTransactionEto, TransactionIndex>(confirmTransaction);
-            transactionIndex.IsConfirmed = true;
-            foreach (var logEvent in transactionIndex.LogEvents)
-            {
-                logEvent.IsConfirmed = true;
-            }
-
-            await _transactionIndexRepository.UpdateAsync(transactionIndex);
-        }
-
-    }
+    // public async Task HandleEventAsync(ConfirmTransactionsEto eventData)
+    // {
+    //     foreach (var confirmTransaction in eventData.ConfirmTransactions)
+    //     {
+    //         _logger.LogInformation($"transaction:{confirmTransaction.Id} is confirming");
+    //         var transactionIndex = _objectMapper.Map<ConfirmTransactionEto, TransactionIndex>(confirmTransaction);
+    //         transactionIndex.IsConfirmed = true;
+    //         foreach (var logEvent in transactionIndex.LogEvents)
+    //         {
+    //             logEvent.IsConfirmed = true;
+    //         }
+    //
+    //         await _transactionIndexRepository.UpdateAsync(transactionIndex);
+    //     }
+    //
+    // }
     
-    public async Task HandleEventAsync(ConfirmLogEventsEto eventData)
-    {
-        foreach (var confirmLogEventEto in eventData.ConfirmLogEvents)
-        {
-            _logger.LogInformation($"logevent:{confirmLogEventEto.Id} is confirming");
-            var logEventIndex = _objectMapper.Map<ConfirmLogEventEto, LogEventIndex>(confirmLogEventEto);
-            logEventIndex.IsConfirmed = true;
-
-            await _logEventIndexRepository.UpdateAsync(logEventIndex);
-        }
-
-    }
+    // public async Task HandleEventAsync(ConfirmLogEventsEto eventData)
+    // {
+    //     foreach (var confirmLogEventEto in eventData.ConfirmLogEvents)
+    //     {
+    //         _logger.LogInformation($"logevent:{confirmLogEventEto.Id} is confirming");
+    //         var logEventIndex = _objectMapper.Map<ConfirmLogEventEto, LogEventIndex>(confirmLogEventEto);
+    //         logEventIndex.IsConfirmed = true;
+    //
+    //         await _logEventIndexRepository.UpdateAsync(logEventIndex);
+    //     }
+    //
+    // }
 }
