@@ -41,24 +41,12 @@ public class AElfScanHttpApiModule : AbpModule
     {
         var clientService = context.ServiceProvider.GetRequiredService<IClusterClientAppService>();
         AsyncHelper.RunSync(async () => await clientService.StartAsync());
-        
-        // TODO: Delete it after debug     
-        var client = clientService.Client;
-        AsyncHelper.RunSync(async () => await DoClientWork(client));
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
         var clientService = context.ServiceProvider.GetService<IClusterClientAppService>();
         AsyncHelper.RunSync(() => clientService.StopAsync());
-    }
-    
-    private static async Task DoClientWork(IClusterClient client)
-    {
-        var chainId = "AELF";
-        var chainGrain = client.GetGrain<IChainGrain>(chainId);
-        await chainGrain.SetLatestBlockAsync("Hash100",500);
-        await chainGrain.SetLatestConfirmBlockAsync("Hash100",500);
     }
 
     private void ConfigureLocalization()
