@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
 using AElfScan.AElf.Dtos;
@@ -41,6 +42,68 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         }
     }
 
+    
+    [Fact]
+    public async Task ElasticSearchBulkAllIndexTest()
+    {
+        //clear data for unit test
+        await ClearBlockIndex("AELF", 900, 999);
+        
+        var block_900 =
+            MockDataHelper.MockNewBlockEtoData(900, "900",false);
+        var block_901 =
+            MockDataHelper.MockNewBlockEtoData(901, "901",false);
+        var block_902 =
+            MockDataHelper.MockNewBlockEtoData(902, "902",false);
+        var block_903 =
+            MockDataHelper.MockNewBlockEtoData(903, "903",false);
+        List<BlockIndex> blockList = new List<BlockIndex>();
+        blockList.Add(block_900);
+        blockList.Add(block_901);
+        blockList.Add(block_902);
+        blockList.Add(block_903); 
+        await _blockIndexRepository.BulkAddOrUpdateAsync(blockList);
+        
+        block_900.IsConfirmed = true;
+        block_901.IsConfirmed = true;
+        block_902.IsConfirmed = true;
+        block_903.IsConfirmed = true;
+        List<BlockIndex> blockList2 = new List<BlockIndex>();
+        blockList2.Add(block_900);
+        blockList2.Add(block_901);
+        blockList2.Add(block_902);
+        blockList2.Add(block_903); 
+        await _blockIndexRepository.BulkAddOrUpdateAsync(blockList2);
+        
+    }
+
+    [Fact]
+    public async Task ElasticSearchBulkAllDeleteTest()
+    {
+        //clear data for unit test
+        await ClearBlockIndex("AELF", 900, 999);
+        
+        var block_900 =
+            MockDataHelper.MockNewBlockEtoData(900, "900",false);
+        var block_901 =
+            MockDataHelper.MockNewBlockEtoData(901, "901",false);
+        var block_902 =
+            MockDataHelper.MockNewBlockEtoData(902, "902",false);
+        var block_903 =
+            MockDataHelper.MockNewBlockEtoData(903, "903",false);
+        List<BlockIndex> blockList = new List<BlockIndex>();
+        blockList.Add(block_900);
+        blockList.Add(block_901);
+        blockList.Add(block_902);
+        blockList.Add(block_903); 
+        await _blockIndexRepository.BulkAddOrUpdateAsync(blockList);
+
+        var blockIndex_903 = await _blockIndexRepository.GetAsync("903");
+        blockIndex_903.BlockHash.ShouldBe(block_903.BlockHash);
+
+        await _blockIndexRepository.BulkDelete(blockList);
+    }
+
     [Fact]
     public async Task GetBlocksAsync_Test1_13()
     {
@@ -60,7 +123,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
             EndBlockNumber = 100,
             HasTransaction = true
         };
-        List<BlockDto> blockDtos_test1 =await _blockAppService.GetBlocksAsync(getBlocksInput_test1);
+        List<BlockDto> blockDtos_test1 = await _blockAppService.GetBlocksAsync(getBlocksInput_test1);
         blockDtos_test1.Count.ShouldBeGreaterThan(0);
         blockDtos_test1[0].BlockNumber.ShouldBe(100);
         
@@ -115,7 +178,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
             HasTransaction = false
         };
         List<BlockDto> blockDtos_test5 =await _blockAppService.GetBlocksAsync(getBlocksInput_test5);
-        blockDtos_test5.Select(x=>x.BlockNumber==180).Count().ShouldBe(2);
+        blockDtos_test5.Select(x=>x.BlockNumber==180).Count().ShouldBe(4);
         
         //Unit Test 6
         var block_1000 = MockDataHelper.MockNewBlockEtoData(1000, MockDataHelper.CreateBlockHash(),false);
@@ -165,7 +228,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
             HasTransaction = true
         };
         List<BlockDto> blockDtos_test8 =await _blockAppService.GetBlocksAsync(getBlocksInput_test8);
-        blockDtos_test8.Count().ShouldBe(1);
+        blockDtos_test8.Count.ShouldBe(1);
         blockDtos_test8[0].BlockHash.ShouldBe(block_180.BlockHash);
         
         //Unit Test 9
@@ -178,7 +241,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
             HasTransaction = true
         };
         List<BlockDto> blockDtos_test9 =await _blockAppService.GetBlocksAsync(getBlocksInput_test9);
-        blockDtos_test9.Count().ShouldBe(4);
+        blockDtos_test9.Count.ShouldBe(4);
         blockDtos_test9.ShouldContain(x=>x.BlockNumber==100);
         blockDtos_test9.ShouldContain(x=>x.BlockNumber==200);
         blockDtos_test9.Select(x=>x.BlockNumber==180).Count().ShouldBe(2);
@@ -316,15 +379,15 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
     }
     
     [Fact]
-    public async Task GetTransactionAsync_Test14_15()
+    public async Task GetTransactionAsync_Test14_20()
     {
         //clear data for unit test
         ClearTransactionIndex("AELF", 100, 110);
 
         //Unit Test 14
-        var transaction_100_1 = MockDataHelper.MockNewTransactionEtoData(100, true, "token_contract_address", "DonateResourceToken");
-        var transaction_100_2 = MockDataHelper.MockNewTransactionEtoData(100, true, "", "");
-        var transaction_100_3 = MockDataHelper.MockNewTransactionEtoData(100, true, "consensus_contract_address", "UpdateValue");
+        var transaction_100_1 = MockDataHelper.MockNewTransactionEtoData(100, false, "token_contract_address", "DonateResourceToken");
+        var transaction_100_2 = MockDataHelper.MockNewTransactionEtoData(100, false, "", "");
+        var transaction_100_3 = MockDataHelper.MockNewTransactionEtoData(100, false, "consensus_contract_address", "UpdateValue");
         var transaction_110 = MockDataHelper.MockNewTransactionEtoData(110, true, "consensus_contract_address", "UpdateTinyBlockInformation");
         await _transactionIndexRepository.AddAsync(transaction_100_1);
         await _transactionIndexRepository.AddAsync(transaction_100_2);
@@ -346,7 +409,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
             ChainId = "AELF",
             StartBlockNumber = 100,
             EndBlockNumber = 110,
-            IsOnlyConfirmed = true,
+            IsOnlyConfirmed = false,
             Events = new List<FilterContractEventInput>()
             {
                 new FilterContractEventInput()
@@ -365,5 +428,302 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         transactionDtos_test15.ShouldContain(x=>x.TransactionId==transaction_100_1.TransactionId);
         transactionDtos_test15.ShouldContain(x=>x.TransactionId==transaction_100_3.TransactionId);
         transactionDtos_test15.ShouldContain(x=>x.TransactionId==transaction_110.TransactionId);
+        
+        //Unit Test 16
+        GetTransactionsInput getTransactionsInput_test16 = new GetTransactionsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false,
+            Events = new List<FilterContractEventInput>()
+            {
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "",
+                    EventNames = new List<string>(){"UpdateValue","UpdateTinyBlockInformation"}
+                },
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "",
+                    EventNames = new List<string>(){"DonateResourceToken"}
+                }
+            }
+        };
+        List<TransactionDto> transactionDtos_test16 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test16);
+        transactionDtos_test16.Count.ShouldBe(3);
+        transactionDtos_test16.ShouldContain(x=>x.TransactionId==transaction_100_1.TransactionId);
+        transactionDtos_test16.ShouldContain(x=>x.TransactionId==transaction_100_3.TransactionId);
+        transactionDtos_test16.ShouldContain(x=>x.TransactionId==transaction_110.TransactionId);
+        
+        //Unit Test 17
+        GetTransactionsInput getTransactionsInput_test17 = new GetTransactionsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false,
+            Events = new List<FilterContractEventInput>()
+            {
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "consensus_contract_address",
+                    EventNames = new List<string>(){"UpdateValue","UpdateTinyBlockInformation"}
+                },
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "token_contract_address",
+                    EventNames = new List<string>(){"DonateResourceToken"}
+                }
+            }
+        };
+        List<TransactionDto> transactionDtos_test17 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test17);
+        transactionDtos_test17.Count.ShouldBe(3);
+        transactionDtos_test17.ShouldContain(x=>x.TransactionId==transaction_100_1.TransactionId);
+        transactionDtos_test17.ShouldContain(x=>x.TransactionId==transaction_100_3.TransactionId);
+        transactionDtos_test17.ShouldContain(x=>x.TransactionId==transaction_110.TransactionId);
+        
+        //Unit Test 18
+        GetTransactionsInput getTransactionsInput_test18 = new GetTransactionsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false,
+            Events = new List<FilterContractEventInput>()
+            {
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "consensus_contract_address",
+                    EventNames = new List<string>(){"DonateResourceToken"}
+                }
+            }
+        };
+        List<TransactionDto> transactionDtos_test18 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test18);
+        transactionDtos_test18.Count.ShouldBe(0);
+        
+        //Unit Test 19
+        GetTransactionsInput getTransactionsInput_test19 = new GetTransactionsInput()
+        {
+            ChainId = "AELG",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false
+        };
+        List<TransactionDto> transactionDtos_test19 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test19);
+        transactionDtos_test19.Count.ShouldBe(0);
+        
+        //Unit Test 20
+        GetTransactionsInput getTransactionsInput_test20 = new GetTransactionsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = true
+        };
+        List<TransactionDto> transactionDtos_test20 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test20);
+        transactionDtos_test20.Count.ShouldBe(1);
+    }
+    
+    private async Task ClearLogEventIndex(string chainId,long startBlockNumber,long endBlockNumber)
+    {
+        var mustQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();
+        mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId).Value(chainId)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(startBlockNumber)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(endBlockNumber)));
+        QueryContainer Filter(QueryContainerDescriptor<LogEventIndex> f) => f.Bool(b => b.Must(mustQuery));
+        var filterList=await _logEventIndexRepository.GetListAsync(Filter);
+        foreach (var deleteLogEvent in filterList.Item2)
+        {
+            await _logEventIndexRepository.DeleteAsync(deleteLogEvent);
+        }
+    }
+    
+    [Fact]
+    public async Task GetLogEventAsync_Test21_29()
+    {
+        //clear data for unit test
+        await ClearLogEventIndex("AELF", 100, 110);
+        
+        //Unit Test 21
+        GetLogEventsInput getLogEventsInput_test21 = new GetLogEventsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110
+        };
+        List<LogEventDto> logEventDtos_test21 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test21);
+        logEventDtos_test21.Count.ShouldBe(0);
+        
+        //Unit Test 22
+        string transactionId_105 = MockDataHelper.CreateBlockHash();
+        var logEvent_105_1 = MockDataHelper.MockNewLogEventEtoData(105, transactionId_105, 0, false,
+            "token_contract_address", "DonateResourceToken");
+        var logEvent_105_2 = MockDataHelper.MockNewLogEventEtoData(105, transactionId_105, 1, false,
+            "consensus_contract_address", "UpdateValue");
+        await _logEventIndexRepository.AddAsync(logEvent_105_1);
+        await _logEventIndexRepository.AddAsync(logEvent_105_2);
+        GetLogEventsInput getLogEventsInput_test22 = new GetLogEventsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false
+        };
+        List<LogEventDto> logEventDtos_test22 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test22);
+        logEventDtos_test22.Count.ShouldBe(2);
+        
+        //Unit Test 23
+        var logEvent_106 = MockDataHelper.MockNewLogEventEtoData(106, MockDataHelper.CreateBlockHash(), 0, false,
+            "consensus_contract_address", "UpdateTinyBlockInformation");
+        await _logEventIndexRepository.AddAsync(logEvent_106);
+        GetLogEventsInput getLogEventsInput_test23 = new GetLogEventsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false
+        };
+        List<LogEventDto> logEventDtos_test23 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test23);
+        logEventDtos_test23.Count.ShouldBe(3);
+        logEventDtos_test23.ShouldContain(x=>x.BlockNumber==105);
+        logEventDtos_test23.ShouldContain(x=>x.BlockNumber==106);
+        
+        //Unit Test 24
+        GetLogEventsInput getLogEventsInput_test24 = new GetLogEventsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false,
+            Events = new List<FilterContractEventInput>()
+            {
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "consensus_contract_address"
+                },
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "token_contract_address"
+                }
+            }
+        };
+        List<LogEventDto> logEventDtos_test24 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test24);
+        logEventDtos_test24.Count.ShouldBe(3);
+        logEventDtos_test24.ShouldContain(x=>x.EventName==logEvent_105_1.EventName);
+        logEventDtos_test24.ShouldContain(x=>x.EventName==logEvent_105_2.EventName);
+        logEventDtos_test24.ShouldContain(x=>x.EventName==logEvent_106.EventName);
+        
+        //Unit Test 25
+        var logEvent_107 = MockDataHelper.MockNewLogEventEtoData(107, MockDataHelper.CreateBlockHash(), 0, false,
+            "multitoken_contract_address", "Approve");
+        var logEvent_108 = MockDataHelper.MockNewLogEventEtoData(108, MockDataHelper.CreateBlockHash(), 0, true,
+            "Iptoken_contract_address", "Approve");
+        await _logEventIndexRepository.AddAsync(logEvent_107);
+        await _logEventIndexRepository.AddAsync(logEvent_108);
+        GetLogEventsInput getLogEventsInput_test25 = new GetLogEventsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false,
+            Events = new List<FilterContractEventInput>()
+            {
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "",
+                    EventNames = new List<string>(){"UpdateValue","UpdateTinyBlockInformation"}
+                },
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "",
+                    EventNames = new List<string>(){"DonateResourceToken"}
+                },
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "",
+                    EventNames = new List<string>(){"Approve"}
+                }
+            }
+        };
+        List<LogEventDto> logEventDtos_test25 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test25);
+        logEventDtos_test25.Count.ShouldBe(5);
+        logEventDtos_test25.ShouldContain(x=>x.BlockNumber==105);
+        logEventDtos_test25.ShouldContain(x=>x.BlockNumber==106);
+        logEventDtos_test25.ShouldContain(x=>x.BlockNumber==107);
+        logEventDtos_test25.ShouldContain(x=>x.BlockNumber==108);
+        
+        //Unit Test 26
+        var logEvent_104 = MockDataHelper.MockNewLogEventEtoData(104, MockDataHelper.CreateBlockHash(), 0, false,
+            "token_contract_address", "DonateResourceToken");
+        await _logEventIndexRepository.AddAsync(logEvent_104);
+        GetLogEventsInput getLogEventsInput_test26 = new GetLogEventsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false,
+            Events = new List<FilterContractEventInput>()
+            {
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "consensus_contract_address",
+                    EventNames = new List<string>(){"UpdateValue","UpdateTinyBlockInformation"}
+                },
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "token_contract_address",
+                    EventNames = new List<string>(){"DonateResourceToken"}
+                }
+            }
+        };
+        List<LogEventDto> logEventDtos_test26 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test26);
+        logEventDtos_test26.Count.ShouldBe(4);
+        logEventDtos_test26.ShouldContain(x=>x.BlockNumber==104);
+        logEventDtos_test26.ShouldContain(x=>x.BlockNumber==105);
+        logEventDtos_test26.ShouldContain(x=>x.BlockNumber==106);
+        
+        //Unit Test 27
+        GetLogEventsInput getLogEventsInput_test27 = new GetLogEventsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false,
+            Events = new List<FilterContractEventInput>()
+            {
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "consensus_contract_address",
+                    EventNames = new List<string>(){"DonateResourceToken"}
+                }
+            }
+        };
+        List<LogEventDto> logEventDtos_test27 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test27);
+        logEventDtos_test27.Count.ShouldBe(0);
+        
+        //Unit Test 28
+        GetLogEventsInput getLogEventsInput_test28 = new GetLogEventsInput()
+        {
+            ChainId = "AELG",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = false
+        };
+        List<LogEventDto> logEventDtos_test28 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test28);
+        logEventDtos_test28.Count.ShouldBe(0);
+        
+        //Unit Test 29
+        GetLogEventsInput getLogEventsInput_test29 = new GetLogEventsInput()
+        {
+            ChainId = "AELF",
+            StartBlockNumber = 100,
+            EndBlockNumber = 110,
+            IsOnlyConfirmed = true
+        };
+        List<LogEventDto> logEventDtos_test29 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test29);
+        logEventDtos_test29.Count.ShouldBe(1);
+        logEventDtos_test29.ShouldContain(x=>x.BlockNumber==108);
+        
     }
 }

@@ -64,34 +64,6 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             {
                 //publish new block event
                 await _distributedEventBus.PublishAsync(newBlockEto);
-
-                // if (newBlockEto.Transactions != null && newBlockEto.Transactions.Count > 0)
-                // {
-                //     //publish new transaction event
-                //     var newTransactionEtoList =
-                //         _objectMapper.Map<List<Transaction>, List<NewTransactionEto>>(newBlockEto.Transactions);
-                //     foreach (var newTransactionEto in newTransactionEtoList)
-                //     {
-                //         newTransactionEto.Id = newTransactionEto.TransactionId;
-                //         await _distributedEventBus.PublishAsync(newTransactionEto);
-                //
-                //         if (newTransactionEto.LogEvents != null && newTransactionEto.LogEvents.Count > 0)
-                //         {
-                //             //publish new log event
-                //             var newLogEventEtoList =
-                //                 _objectMapper.Map<List<LogEvent>, List<NewLogEventEto>>(newTransactionEto
-                //                     .LogEvents);
-                //             foreach (var newLogEventEto in newLogEventEtoList)
-                //             {
-                //                 newLogEventEto.Id = newTransactionEto.TransactionId + "_" + newLogEventEto.EventName;
-                //
-                //                 await _distributedEventBus.PublishAsync(newLogEventEto);
-                //             }
-                //         }
-                //
-                //     }
-                // }
-
                 
                 if (libBlockList.Count > 0)
                 {
@@ -100,47 +72,6 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                         _objectMapper.Map<List<BlockEventData>, List<ConfirmBlockEto>>(libBlockList);
                     await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                         { ConfirmBlocks = confirmBlockList });
-                    
-                    // foreach (var confirmBlockEto in confirmBlockList)
-                    // {
-                    //     if (confirmBlockEto.Transactions == null || confirmBlockEto.Transactions.Count <= 0)
-                    //     {
-                    //         continue;
-                    //     }
-                    //     
-                    //     //publish confirm trasactions event
-                    //     var confirmTransactionList =
-                    //         _objectMapper.Map<List<Transaction>, List<ConfirmTransactionEto>>(
-                    //             confirmBlockEto.Transactions);
-                    //     foreach (var confirmTransactionEto in confirmTransactionList)
-                    //     {
-                    //         confirmTransactionEto.Id = confirmTransactionEto.TransactionId;
-                    //
-                    //         if (confirmTransactionEto.LogEvents == null || confirmTransactionEto.LogEvents.Count <= 0)
-                    //         {
-                    //             continue;
-                    //         }
-                    //
-                    //         //publish confirm logevents event
-                    //         var confirmLogEventList =
-                    //             _objectMapper.Map<List<LogEvent>, List<ConfirmLogEventEto>>(confirmTransactionEto
-                    //                 .LogEvents);
-                    //         foreach (var confirmLogEventEto in confirmLogEventList)
-                    //         {
-                    //             confirmLogEventEto.Id =
-                    //                 confirmTransactionEto.TransactionId + "_" + confirmLogEventEto.EventName;
-                    //         }
-                    //
-                    //         await _distributedEventBus.PublishAsync(new ConfirmLogEventsEto()
-                    //         {
-                    //             ConfirmLogEvents = confirmLogEventList
-                    //         });
-                    //     }
-                    //
-                    //     await _distributedEventBus.PublishAsync(new ConfirmTransactionsEto()
-                    //         { ConfirmTransactions = confirmTransactionList });
-                    //     
-                    // }
                 }
                 
                 

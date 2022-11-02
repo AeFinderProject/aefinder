@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <PackageId>AElf.Indexing.Elasticsearch</PackageId>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="NEST.JsonNetSerializer" Version="7.17.1" />
+        <PackageReference Include="Volo.Abp.Autofac" Version="5.2.1" />
+        <PackageReference Include="Volo.Abp.Ddd.Domain" Version="5.2.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+      <PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0" />
+      <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
+      <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="NEST" Version="7.17.1" />
+    </ItemGroup>
+
+</Project>

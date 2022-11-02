@@ -244,4 +244,31 @@ public class MockDataHelper
         };
         return newTransaction;
     }
+
+    public static LogEventIndex MockNewLogEventEtoData(long blockNumber, string transactionId, int index, bool isConfirmed,
+        string contractAddress, string eventName)
+    {
+        string currentBlockHash = CreateBlockHash();
+        var newLogEvent = new LogEventIndex()
+        {
+            Id = transactionId + "_" + index,
+            ChainId = "AELF",
+            BlockHash = currentBlockHash,
+            BlockNumber = blockNumber,
+            BlockTime = DateTime.Now,
+            IsConfirmed = isConfirmed,
+            TransactionId = transactionId,
+            ContractAddress = contractAddress,
+            EventName = eventName,
+            Index = 0,
+            ExtraProperties = new Dictionary<string, string>()
+            {
+                ["Indexed"] =
+                    "[ \"CoIBMDRiY2QxYzg4N2NkMGVkYmQ0Y2NmOGQ5ZDJiM2Y3MmU3MjUxMWFhNjE4MzE5OTYwMDMxMzY4N2JhNmM1ODNmMTNjM2Q2ZDcxNmZhNDBkZjg2MDRhYWVkMGZjYWIzMTEzNWZlM2MyZDQ1YzAwOTgwMGMwNzUyNTRhMzc4MmI0YzRkYg==\", \"EgsIxNqlmQYQ4M74LQ==\", \"GhpVcGRhdGVUaW55QmxvY2tJbmZvcm1hdGlvbg==\", \"ILAi\", \"KiIKID3kBhYftHeFZBYS6VOXPeigGAAwZWM85SlzN48xJARW\" ]",
+                ["NonIndexed"] = ""
+            }
+        };
+
+        return newLogEvent;
+    }
 }
