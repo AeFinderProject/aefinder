@@ -33,7 +33,7 @@ public class ClientDemoService : ITransientDependency
                 Authority = "http://localhost:8080",
                 Scope = "AElfScan",
                 GrantType = "client_credentials",
-                ClientId = "AElfScan_App",
+                ClientId = "AElfScan_DApp",
                 ClientSecret = "1q2w3e*"
             });
 

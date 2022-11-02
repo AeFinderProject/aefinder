@@ -254,14 +254,24 @@ public class AElfScanHttpApiHostModule : AbpModule
         app.UseAbpSerilogEnrichers();
         app.UseUnitOfWork();
         app.UseConfiguredEndpoints();
-        
-        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        AsyncHelper.RunSync(async ()=> await client.Connect());
+
+        StartOrleans(context.ServiceProvider);
     }
     
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        StopOrleans(context.ServiceProvider);
+    }
+
+    private static void StartOrleans(IServiceProvider serviceProvider)
+    {
+        var client = serviceProvider.GetRequiredService<IClusterClient>();
+        AsyncHelper.RunSync(async ()=> await client.Connect());
+    }
+
+    private static void StopOrleans(IServiceProvider serviceProvider)
+    {
+        var client = serviceProvider.GetRequiredService<IClusterClient>();
         AsyncHelper.RunSync(client.Close);
     }
 }

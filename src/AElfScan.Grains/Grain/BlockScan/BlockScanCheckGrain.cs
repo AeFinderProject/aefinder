@@ -9,6 +9,9 @@ public class BlockScanCheckGrain : global::Orleans.Grain, IBlockScanCheckGrain
     
     public async Task ReceiveReminder(string reminderName, TickStatus status)
     {
+        // TODO: Use IManagementGrain to check the Grain status after the 4.0 release
+        // https://github.com/dotnet/orleans/pull/7216
+        
         var clientManagerGrain = GrainFactory.GetGrain<IClientManagerGrain>(0);
         var allClientIds = await clientManagerGrain.GetAllClientIdsAsync();
         foreach (var (_, clientIds) in allClientIds)
