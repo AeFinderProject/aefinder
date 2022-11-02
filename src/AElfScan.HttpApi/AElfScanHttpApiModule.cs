@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Localization.Resources.AbpUi;
 using AElfScan.Localization;
 using AElfScan.Orleans;
-using AElfScan.Orleans.EventSourcing.Grain.Chains;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;

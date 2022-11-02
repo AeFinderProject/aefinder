@@ -1,9 +1,9 @@
 using AElf.Orleans.EventSourcing.Snapshot;
-using AElfScan.Grain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
 using AElf.Orleans.EventSourcing.Snapshot.Hosting;
+using AElfScan.Grains.Grain;
 using EventStore.ClientAPI;
 using Orleans.Hosting;
 using Orleans.TestingHost;

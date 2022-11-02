@@ -1,5 +1,7 @@
 using AElf.Indexing.Elasticsearch.Options;
 using AElfScan;
+using AElfScan.Grains;
+using AElfScan.Grains.Grain.BlockScan;
 using AElfScan.Orleans;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.Extensions.DependencyInjection;

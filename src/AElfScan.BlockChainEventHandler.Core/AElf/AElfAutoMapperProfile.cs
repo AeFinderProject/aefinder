@@ -1,7 +1,7 @@
 using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
-using AElfScan.EventData;
+using AElfScan.Grains.EventData;
 using AutoMapper;
 using Volo.Abp.AutoMapper;
 

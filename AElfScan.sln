@@ -35,9 +35,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AElfScan.HttpApi.Client.Con
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AElfScan.DbMigrator", "src\AElfScan.DbMigrator\AElfScan.DbMigrator.csproj", "{AA94D832-1CCC-4715-95A9-A483F23A1A5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.Orleans.Silo", "src\AElfScan.Orleans.Silo\AElfScan.Orleans.Silo.csproj", "{B77D73DB-3E86-430E-B069-5B1A3558E220}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.Silo", "src\AElfScan.Silo\AElfScan.Silo.csproj", "{B77D73DB-3E86-430E-B069-5B1A3558E220}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.Orleans.EventSourcing", "src\AElfScan.Orleans.EventSourcing\AElfScan.Orleans.EventSourcing.csproj", "{25228440-E9F8-4B5E-A1E9-2525B2E568C4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.Grains", "src\AElfScan.Grains\AElfScan.Grains.csproj", "{25228440-E9F8-4B5E-A1E9-2525B2E568C4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.BlockChainEventHandler", "src\AElfScan.BlockChainEventHandler\AElfScan.BlockChainEventHandler.csproj", "{B9BCF4A4-A4EB-47E0-9F79-5458C6D30997}"
 EndProject
@@ -53,7 +53,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.EntityEventHandler
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.AuthServer", "src\AElfScan.AuthServer\AElfScan.AuthServer.csproj", "{2172371A-2E9E-437D-8EBF-BE4FF6D0583B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.Orleans.Grain.Tests", "test\AElfScan.Orleans.Grain.Tests\AElfScan.Orleans.Grain.Tests.csproj", "{00CA9094-16DA-47CB-8A69-D617802D8ED1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.Grains.Tests", "test\AElfScan.Grains.Tests\AElfScan.Grains.Tests.csproj", "{00CA9094-16DA-47CB-8A69-D617802D8ED1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.Orleans.TestBase", "test\AElfScan.Orleans.TestBase\AElfScan.Orleans.TestBase.csproj", "{916C22E5-5CF6-42A1-9FA7-C7EDE233D813}"
 EndProject

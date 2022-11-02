@@ -1,6 +1,6 @@
 using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Processors;
-using AElfScan.Grain;
+using AElfScan.Grains.Grain;
 using AElfScan.Orleans.TestBase;
 using Orleans.TestingHost;
 using Shouldly;

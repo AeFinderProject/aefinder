@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AElfScan.Application.Contracts\AElfScan.Application.Contracts.csproj" />
-    <ProjectReference Include="..\AElfScan.Orleans.EventSourcing\AElfScan.Orleans.EventSourcing.csproj" />
+    <ProjectReference Include="..\AElfScan.Grains\AElfScan.Grains.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,5 @@
 using AElfScan.AElf.DTOs;
+using AElfScan.Grains;
 using AElfScan.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
