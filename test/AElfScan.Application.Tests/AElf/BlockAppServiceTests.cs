@@ -115,7 +115,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
             MockDataHelper.MockNewBlockEtoData(100, MockDataHelper.CreateBlockHash(),false);
         block_100.Transactions = new List<Transaction>();
         await _blockIndexRepository.AddAsync(block_100);
-
+        Thread.Sleep(1000);
         GetBlocksInput getBlocksInput_test1 = new GetBlocksInput()
         {
             ChainId = "AELF",

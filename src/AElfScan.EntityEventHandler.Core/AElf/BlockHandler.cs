@@ -165,7 +165,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
                         var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
                         logEventIndex.Id = GetLogEventIndexId(confirmBlock.BlockHash, transaction.TransactionId,
                             logEvent.Index);
-                        confirmLogEventIndexList.Add(logEventIndex);
+                        forkLogEventIndexList.Add(logEventIndex);
                     }
                 }
             }
