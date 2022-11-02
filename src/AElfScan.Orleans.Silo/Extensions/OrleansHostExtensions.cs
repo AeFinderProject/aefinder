@@ -29,7 +29,7 @@ public static class OrleansHostExtensions
             .AddJsonFile("appsettings.json")
             .Build();
         if (configuration == null) throw new ArgumentNullException(nameof(configuration));
-        var configSection = configuration.GetSection("OrleansServer");
+        var configSection = configuration.GetSection("Orleans");
         if (configSection == null)
             throw new ArgumentNullException(nameof(configSection), "The OrleansServer node is missing");
         return hostBuilder.UseOrleans(siloBuilder =>
@@ -38,8 +38,8 @@ public static class OrleansHostExtensions
             siloBuilder
                 .UseRedisClustering(opt =>
                 {
-                    opt.ConnectionString = configSection.GetValue<string>("KVrocksConnection");
-                    opt.Database = 0;
+                    opt.ConnectionString = configSection.GetValue<string>("ClusterDbConnection");
+                    opt.Database = configSection.GetValue<int>("ClusterDbNumber");
                 })
                 .ConfigureEndpoints(siloPort: configSection.GetValue<int>("SiloPort"), gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
                 // .UseLocalhostClustering()
@@ -56,14 +56,14 @@ public static class OrleansHostExtensions
                 // })
                 .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
                 {
-                    options.DataConnectionString = configSection.GetValue<string>("KVrocksConnection"); // This is the deafult
+                    options.DataConnectionString = configSection.GetValue<string>("GrainStorageDbConnection"); 
+                    options.DatabaseNumber = configSection.GetValue<int>("GrainStorageDbNumber");
                     options.UseJson = true;
-                    options.DatabaseNumber = 0;
                 }))
                 .UseRedisReminderService(options =>
                 {
-                    // TODO: Rename options
-                    options.ConnectionString = configSection.GetValue<string>("KVrocksConnection"); 
+                    options.ConnectionString = configSection.GetValue<string>("ClusterDbConnection");
+                    options.DatabaseNumber = configSection.GetValue<int>("ClusterDbNumber");
                 })
                 .AddSnapshotStorageBasedConsistencyProviderAsDefault((op, name) =>
                 {
@@ -86,7 +86,6 @@ public static class OrleansHostExtensions
                 })
                 .AddSimpleMessageStreamProvider(AElfScanApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
-                // .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(TGrain).Assembly).WithReferences())
                 .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
                 .UseDashboard(options => {
                     options.Username = configSection.GetValue<string>("DashboardUserName");

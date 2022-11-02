@@ -138,12 +138,13 @@ public class AElfScanHttpApiHostModule : AbpModule
                 .ConfigureDefaults()
                 .UseRedisClustering(opt =>
                 {
-                    opt.ConnectionString = configuration["Redis:Configuration"];
+                    opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
+                    opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
                 })
                 .Configure<ClusterOptions>(options =>
                 {
-                    options.ClusterId = configuration["Orleans:Cluster:ClusterId"];
-                    options.ServiceId = configuration["Orleans:Cluster:ServiceId"];
+                    options.ClusterId = configuration["Orleans:ClusterId"];
+                    options.ServiceId = configuration["Orleans:ServiceId"];
                 })
                 .ConfigureApplicationParts(parts =>
                     parts.AddApplicationPart(typeof(AElfScanOrleansEventSourcingModule).Assembly).WithReferences())
