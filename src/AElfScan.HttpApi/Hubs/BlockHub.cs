@@ -21,20 +21,19 @@ public class BlockHub : AbpHub
 {
     private readonly ISubscribedBlockHandler _subscribedBlockHandler;
     private readonly IConnectionProvider _connectionProvider;
-    private readonly IClusterClientAppService _clusterClientAppService;
+    private readonly IClusterClient _clusterClient;
 
     public BlockHub(ISubscribedBlockHandler subscribedBlockHandler,
-        IConnectionProvider connectionProvider, IClusterClientAppService clusterClientAppService)
+        IConnectionProvider connectionProvider, IClusterClient clusterClient)
     {
         _subscribedBlockHandler = subscribedBlockHandler;
         _connectionProvider = connectionProvider;
-        _clusterClientAppService = clusterClientAppService;
+        _clusterClient = clusterClient;
     }
 
     [Authorize]
     public async Task Subscribe(List<SubscribeInfo> subscribeInfos)
     {
-        var client = _clusterClientAppService.Client;
         var clientId = Context.User.FindFirst(o=>o.ToString().StartsWith("client_id")).Value;
         var version = Guid.NewGuid().ToString("N");
         _connectionProvider.Add(clientId,Context.ConnectionId,version, subscribeInfos.Select(o=>o.ChainId).ToList());
@@ -42,13 +41,13 @@ public class BlockHub : AbpHub
         foreach (var subscribeInfo in subscribeInfos)
         {
             var id = subscribeInfo.ChainId + clientId;
-            var clientGrain = client.GetGrain<IClientGrain>(id);
+            var clientGrain = _clusterClient.GetGrain<IClientGrain>(id);
             await clientGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version, subscribeInfo);
             
-            var scanGrain = client.GetGrain<IBlockScanGrain>(id);
+            var scanGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
             var streamId = await scanGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version);
             var stream =
-                client
+                _clusterClient
                     .GetStreamProvider(AElfScanApplicationConsts.MessageStreamName)
                     .GetStream<SubscribedBlockDto>(streamId, AElfScanApplicationConsts.MessageStreamNamespace);
             
@@ -72,11 +71,10 @@ public class BlockHub : AbpHub
         var connection = _connectionProvider.GetConnectionByConnectionId(Context.ConnectionId);
         if (connection != null)
         {
-            var client = _clusterClientAppService.Client;
             foreach (var chainId in connection.ChainIds)
             {
                 var id = chainId + connection.ClientId;
-                var clientGrain = client.GetGrain<IClientGrain>(id);
+                var clientGrain = _clusterClient.GetGrain<IClientGrain>(id);
                 await clientGrain.StopAsync(connection.Version);
             }
             _connectionProvider.Remove(Context.ConnectionId);

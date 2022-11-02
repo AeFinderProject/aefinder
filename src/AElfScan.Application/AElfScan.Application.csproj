@@ -28,4 +28,10 @@
     <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Orleans_CodeGenInputs Remove="Orleans\ClusterClientAppService.cs" />
+    <Orleans_CodeGenInputs Remove="Orleans\HelloGrain.cs" />
+    <Orleans_CodeGenInputs Remove="Orleans\PersistentData.cs" />
+  </ItemGroup>
+
 </Project>

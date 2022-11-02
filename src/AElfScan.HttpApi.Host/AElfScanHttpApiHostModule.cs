@@ -16,9 +16,12 @@ using AElfScan.MultiTenancy;
 using AElfScan.Orleans;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using AElfScan.Orleans.EventSourcing.Grain.Chains;
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
 using Orleans;
+using Orleans.Configuration;
+using Orleans.Hosting;
 using Orleans.Streams;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
@@ -60,6 +63,7 @@ public class AElfScanHttpApiHostModule : AbpModule
         ConfigureDataProtection(context, configuration, hostingEnvironment);
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
+        ConfigureOrleans(context, configuration);
     }
 
     private void ConfigureCache(IConfiguration configuration)
@@ -124,6 +128,29 @@ public class AElfScanHttpApiHostModule : AbpModule
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
             });
+    }
+
+    private static void ConfigureOrleans(ServiceConfigurationContext context, IConfiguration configuration)
+    {
+        context.Services.AddSingleton<IClusterClient>(o =>
+        {
+            return new ClientBuilder()
+                .ConfigureDefaults()
+                .UseRedisClustering(opt =>
+                {
+                    opt.ConnectionString = configuration["Redis:Configuration"];
+                })
+                .Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = configuration["Orleans:Cluster:ClusterId"];
+                    options.ServiceId = configuration["Orleans:Cluster:ServiceId"];
+                })
+                .ConfigureApplicationParts(parts =>
+                    parts.AddApplicationPart(typeof(AElfScanOrleansEventSourcingModule).Assembly).WithReferences())
+                .AddSimpleMessageStreamProvider(AElfScanApplicationConsts.MessageStreamName)
+                .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
+                .Build();
+        });
     }
 
     private void ConfigureLocalization()
@@ -226,5 +253,14 @@ public class AElfScanHttpApiHostModule : AbpModule
         app.UseAbpSerilogEnrichers();
         app.UseUnitOfWork();
         app.UseConfiguredEndpoints();
+        
+        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        AsyncHelper.RunSync(async ()=> await client.Connect());
+    }
+    
+    public override void OnApplicationShutdown(ApplicationShutdownContext context)
+    {
+        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        AsyncHelper.RunSync(client.Close);
     }
 }

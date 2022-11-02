@@ -3,6 +3,11 @@ using AElfScan;
 using AElfScan.Orleans;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Orleans;
+using Orleans.Configuration;
+using Orleans.Hosting;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
@@ -21,26 +26,47 @@ public class AElfScanEntityEventHandlerModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        var configuration = context.Services.GetConfiguration();
         ConfigureEsIndexCreation();
         context.Services.AddHostedService<AElfScanHostedService>();
+        
+        context.Services.AddSingleton<IClusterClient>(o =>
+        {
+            return new ClientBuilder()
+                .ConfigureDefaults()
+                .UseRedisClustering(opt =>
+                {
+                    opt.ConnectionString = configuration["Redis:Configuration"];
+                })
+                .Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = configuration["Orleans:Cluster:ClusterId"];
+                    options.ServiceId = configuration["Orleans:Cluster:ServiceId"];
+                })
+                .ConfigureApplicationParts(parts =>
+                    parts.AddApplicationPart(typeof(AElfScanOrleansEventSourcingModule).Assembly).WithReferences())
+                .AddSimpleMessageStreamProvider(AElfScanApplicationConsts.MessageStreamName)
+                .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
+                .Build();
+        });
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
-        var clientService = context.ServiceProvider.GetRequiredService<IClusterClientAppService>();
-        AsyncHelper.RunSync(clientService.StartAsync);
+        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        AsyncHelper.RunSync(async ()=> await client.Connect());
         
         AsyncHelper.RunSync(async () =>
         {
-            var grain = clientService.Client.GetGrain<IBlockScanCheckGrain>(AElfScanApplicationConsts.BlockScanCheckGrainId);
+            var grain = client.GetGrain<IBlockScanCheckGrain>(AElfScanApplicationConsts.BlockScanCheckGrainId);
             await grain.Start();
         });
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        var clientService = context.ServiceProvider.GetService<IClusterClientAppService>();
-        AsyncHelper.RunSync(clientService.StopAsync);
+        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        AsyncHelper.RunSync(client.Close);
     }
 
     //Create the ElasticSearch Index based on Domain Entity
