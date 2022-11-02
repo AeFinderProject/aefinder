@@ -216,6 +216,11 @@ public class BlockAppService:ApplicationService,IBlockAppService
         mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(input.StartBlockNumber)));
         mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(input.EndBlockNumber)));
 
+        if (input.IsOnlyConfirmed)
+        {
+            mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.IsConfirmed).Value(input.IsOnlyConfirmed)));
+        }
+        
         if (input.Events != null && input.Events.Count>0)
         {
             var shouldQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();

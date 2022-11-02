@@ -97,6 +97,10 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             foreach (var transaction in blockIndex.Transactions)
             {
                 transaction.IsConfirmed = true;
+                foreach (var logEvent in transaction.LogEvents)
+                {
+                    logEvent.IsConfirmed = true;
+                }
             }
 
             confirmBlockIndexList.Add(blockIndex);
