@@ -44,7 +44,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
 
     
     [Fact]
-    public async Task ElasticSearchBulkAllTest()
+    public async Task ElasticSearchBulkAllIndexTest()
     {
         //clear data for unit test
         await ClearBlockIndex("AELF", 900, 999);
@@ -75,6 +75,33 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         blockList2.Add(block_903); 
         await _blockIndexRepository.BulkAddOrUpdateAsync(blockList2);
         
+    }
+
+    [Fact]
+    public async Task ElasticSearchBulkAllDeleteTest()
+    {
+        //clear data for unit test
+        await ClearBlockIndex("AELF", 900, 999);
+        
+        var block_900 =
+            MockDataHelper.MockNewBlockEtoData(900, "900",false);
+        var block_901 =
+            MockDataHelper.MockNewBlockEtoData(901, "901",false);
+        var block_902 =
+            MockDataHelper.MockNewBlockEtoData(902, "902",false);
+        var block_903 =
+            MockDataHelper.MockNewBlockEtoData(903, "903",false);
+        List<BlockIndex> blockList = new List<BlockIndex>();
+        blockList.Add(block_900);
+        blockList.Add(block_901);
+        blockList.Add(block_902);
+        blockList.Add(block_903); 
+        await _blockIndexRepository.BulkAddOrUpdateAsync(blockList);
+
+        var blockIndex_903 = await _blockIndexRepository.GetAsync("903");
+        blockIndex_903.BlockHash.ShouldBe(block_903.BlockHash);
+
+        await _blockIndexRepository.BulkDelete(blockList);
     }
 
     [Fact]

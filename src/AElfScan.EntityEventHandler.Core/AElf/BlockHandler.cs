@@ -12,8 +12,6 @@ namespace AElfScan.AElf;
 
 public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,
-    // IDistributedEventHandler<ConfirmTransactionsEto>,
-    // IDistributedEventHandler<ConfirmLogEventsEto>,
     ITransientDependency
 {
     private readonly INESTRepository<BlockIndex, string> _blockIndexRepository;
@@ -41,71 +39,55 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     public async Task HandleEventAsync(NewBlockEto eventData)
     {
         _logger.LogInformation($"block is adding, id: {eventData.BlockHash}  , BlockNumber: {eventData.BlockNumber} , IsConfirmed: {eventData.IsConfirmed}");
-        // var blockIndex = await _blockIndexRepository.GetAsync(q=>
-        //     q.Term(i=>i.Field(f=>f.BlockHash).Value(eventData.BlockHash)));
-        // if (blockIndex != null)
-        // {
-        //     _logger.LogInformation($"block already exist-{blockIndex.Id}, Add failure!");
-        // }
-        // else
-        // {
-        //     await _blockIndexRepository.AddAsync(eventData);
-        //     _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(eventData); });
-        // }
-        await _blockIndexRepository.AddOrUpdateAsync(eventData);
-        _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(eventData); });
-
-        foreach (var transaction in eventData.Transactions)
+        var blockIndex = await _blockIndexRepository.GetAsync(q=>
+            q.Term(i=>i.Field(f=>f.BlockHash).Value(eventData.BlockHash)));
+        if (blockIndex != null)
         {
-            var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
-            transactionIndex.Id = transaction.TransactionId;
-            await _transactionIndexRepository.AddOrUpdateAsync(transactionIndex);
+            _logger.LogInformation($"block already exist-{blockIndex.Id}, Add failure!");
+        }
+        else
+        {
+            await _blockIndexRepository.AddAsync(eventData);
+            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(eventData); });
 
-            foreach (var logEvent in transaction.LogEvents)
+            List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
+            List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
+            foreach (var transaction in eventData.Transactions)
             {
-                var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
-                logEventIndex.Id = transaction.TransactionId + "_" + logEvent.Index;
-                await _logEventIndexRepository.AddOrUpdateAsync(logEventIndex);
+                var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
+                transactionIndex.Id = GetTransactionIndexId(eventData.BlockHash, transaction.TransactionId);
+                // await _transactionIndexRepository.AddOrUpdateAsync(transactionIndex);
+                transactionIndexList.Add(transactionIndex);
+
+                foreach (var logEvent in transaction.LogEvents)
+                {
+                    var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
+                    logEventIndex.Id =
+                        GetLogEventIndexId(eventData.BlockHash, transaction.TransactionId, logEvent.Index);
+                    // await _logEventIndexRepository.AddOrUpdateAsync(logEventIndex);
+                    logEventIndexList.Add(logEventIndex);
+                }
+            }
+
+            if (transactionIndexList.Count > 0)
+            {
+                await _transactionIndexRepository.BulkAddOrUpdateAsync(transactionIndexList);
+            }
+            if (logEventIndexList.Count > 0)
+            {
+                await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
             }
         }
+        
 
         
     }
-    
-    // public async Task HandleEventAsync(NewTransactionEto eventData)
-    // {
-    //     _logger.LogInformation($"transaction is adding, id: {eventData.TransactionId}  , BlockNumber: {eventData.BlockNumber} , IsConfirmed: {eventData.IsConfirmed}");
-    //     var transactionIndex = await _transactionIndexRepository.GetAsync(q=>
-    //         q.Term(i=>i.Field(f=>f.Id).Value(eventData.TransactionId)));
-    //     if (transactionIndex != null)
-    //     {
-    //         _logger.LogInformation($"transaction already exist-{transactionIndex.Id}, Add failure!");
-    //     }
-    //     else
-    //     {
-    //         await _transactionIndexRepository.AddAsync(eventData);
-    //     }
-    //     
-    // }
-    
-    // public async Task HandleEventAsync(NewLogEventEto eventData)
-    // {
-    //     _logger.LogInformation($"logevent is adding, id: {eventData.Id}  , BlockNumber: {eventData.BlockNumber} , TransactionId: {eventData.TransactionId} , EventName: {eventData.EventName}");
-    //     var logEventIndex = await _logEventIndexRepository.GetAsync(q=>
-    //         q.Term(i=>i.Field(f=>f.Id).Value(eventData.Id)));
-    //     if (logEventIndex != null)
-    //     {
-    //         _logger.LogInformation($"logevent already exist-{logEventIndex.Id}, Add failure!");
-    //     }
-    //     else
-    //     {
-    //         await _logEventIndexRepository.AddAsync(eventData);
-    //     }
-    //     
-    // }
 
     public async Task HandleEventAsync(ConfirmBlocksEto eventData)
     {
+        List<BlockIndex> confirmBlockIndexList = new List<BlockIndex>();
+        List<TransactionIndex> confirmTransactionIndexList = new List<TransactionIndex>();
+        List<LogEventIndex> confirmLogEventIndexList = new List<LogEventIndex>(); 
         var indexes = new List<BlockIndex>();
         foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
@@ -117,26 +99,30 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
                 transaction.IsConfirmed = true;
             }
 
-            await _blockIndexRepository.UpdateAsync(blockIndex);
+            confirmBlockIndexList.Add(blockIndex);
+            // await _blockIndexRepository.UpdateAsync(blockIndex);
             indexes.Add(blockIndex);
 
             foreach (var transaction in confirmBlock.Transactions)
             {
                 var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
-                transactionIndex.Id = transaction.TransactionId;
+                transactionIndex.Id = GetTransactionIndexId(confirmBlock.BlockHash, transaction.TransactionId);
                 transactionIndex.IsConfirmed = true;
                 foreach (var logEvent in transactionIndex.LogEvents)
                 {
                     logEvent.IsConfirmed = true;
                 }
-                await _transactionIndexRepository.UpdateAsync(transactionIndex);
+                // await _transactionIndexRepository.UpdateAsync(transactionIndex);
+                confirmTransactionIndexList.Add(transactionIndex);
 
                 foreach (var logEvent in transaction.LogEvents)
                 {
                     var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
-                    logEventIndex.Id = transaction.TransactionId + "_" + logEvent.Index;
+                    logEventIndex.Id =
+                        GetLogEventIndexId(confirmBlock.BlockHash, transaction.TransactionId, logEvent.Index);
                     logEventIndex.IsConfirmed = true;
-                    await _logEventIndexRepository.UpdateAsync(logEventIndex);
+                    // await _logEventIndexRepository.UpdateAsync(logEventIndex);
+                    confirmLogEventIndexList.Add(logEventIndex);
                 }
             }
 
@@ -152,6 +138,9 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             }
 
             //delete the same height fork block
+            List<BlockIndex> forkBlockIndexList = new List<BlockIndex>();
+            List<TransactionIndex> forkTransactionIndexList = new List<TransactionIndex>();
+            List<LogEventIndex> forkLogEventIndexList = new List<LogEventIndex>();
             foreach (var forkBlock in forkBlockList.Item2)
             {
                 if (forkBlock.BlockHash == confirmBlock.BlockHash)
@@ -159,41 +148,60 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
                     continue;
                 }
 
-                await _blockIndexRepository.DeleteAsync(forkBlock);
-                _logger.LogInformation($"block {forkBlock.BlockHash} has been deleted.");
+                forkBlockIndexList.Add(forkBlock);
+                // await _blockIndexRepository.DeleteAsync(forkBlock);
+                // _logger.LogInformation($"block {forkBlock.BlockHash} has been deleted.");
+                foreach (var transaction in forkBlock.Transactions)
+                {
+                    var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
+                    transactionIndex.Id = GetTransactionIndexId(confirmBlock.BlockHash,transaction.TransactionId);
+                    forkTransactionIndexList.Add(transactionIndex);
+                    
+                    foreach (var logEvent in transaction.LogEvents)
+                    {
+                        var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
+                        logEventIndex.Id = GetLogEventIndexId(confirmBlock.BlockHash, transaction.TransactionId,
+                            logEvent.Index);
+                        confirmLogEventIndexList.Add(logEventIndex);
+                    }
+                }
+            }
+
+            if (forkBlockIndexList.Count > 0)
+            {
+                await _blockIndexRepository.BulkDelete(forkBlockIndexList);
+            }
+            if (forkTransactionIndexList.Count > 0)
+            {
+                await _transactionIndexRepository.BulkDelete(forkTransactionIndexList);
+            }
+            if (forkLogEventIndexList.Count > 0)
+            {
+                await _logEventIndexRepository.BulkDelete(forkLogEventIndexList);
             }
         }
 
+        await _blockIndexRepository.BulkAddOrUpdateAsync(confirmBlockIndexList);
+        if (confirmTransactionIndexList.Count > 0)
+        {
+            await _transactionIndexRepository.BulkAddOrUpdateAsync(confirmTransactionIndexList);
+        }
+        if (confirmLogEventIndexList.Count > 0)
+        {
+            await _logEventIndexRepository.BulkAddOrUpdateAsync(confirmLogEventIndexList);
+        }
+        
         _ = Task.Run(async () => { await _blockIndexHandler.ProcessConfirmBlocksAsync(indexes); });
     }
+
+    private string GetTransactionIndexId(string blockHash,string transactionId)
+    {
+        return blockHash + "_" + transactionId;
+    }
+
+    private string GetLogEventIndexId(string blockHash, string transactionId, int index)
+    {
+        return blockHash + "_" + transactionId + "_" + index;
+    }
     
-    // public async Task HandleEventAsync(ConfirmTransactionsEto eventData)
-    // {
-    //     foreach (var confirmTransaction in eventData.ConfirmTransactions)
-    //     {
-    //         _logger.LogInformation($"transaction:{confirmTransaction.Id} is confirming");
-    //         var transactionIndex = _objectMapper.Map<ConfirmTransactionEto, TransactionIndex>(confirmTransaction);
-    //         transactionIndex.IsConfirmed = true;
-    //         foreach (var logEvent in transactionIndex.LogEvents)
-    //         {
-    //             logEvent.IsConfirmed = true;
-    //         }
-    //
-    //         await _transactionIndexRepository.UpdateAsync(transactionIndex);
-    //     }
-    //
-    // }
-    
-    // public async Task HandleEventAsync(ConfirmLogEventsEto eventData)
-    // {
-    //     foreach (var confirmLogEventEto in eventData.ConfirmLogEvents)
-    //     {
-    //         _logger.LogInformation($"logevent:{confirmLogEventEto.Id} is confirming");
-    //         var logEventIndex = _objectMapper.Map<ConfirmLogEventEto, LogEventIndex>(confirmLogEventEto);
-    //         logEventIndex.IsConfirmed = true;
-    //
-    //         await _logEventIndexRepository.UpdateAsync(logEventIndex);
-    //     }
-    //
-    // }
 }
