@@ -25,6 +25,8 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
     {
         _blockAppService = GetRequiredService<BlockAppService>();
         _blockIndexRepository = GetRequiredService<INESTRepository<BlockIndex, string>>();
+        _transactionIndexRepository = GetRequiredService<INESTRepository<TransactionIndex, string>>();
+        _logEventIndexRepository = GetRequiredService<INESTRepository<LogEventIndex, string>>();
     }
 
     private async Task ClearBlockIndex(string chainId,long startBlockNumber,long endBlockNumber)
@@ -171,7 +173,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         var block_180_fork = MockDataHelper.MockNewBlockEtoData(180, MockDataHelper.CreateBlockHash(),false);
         await _blockIndexRepository.AddAsync(block_180);
         await _blockIndexRepository.AddAsync(block_180_fork);
-        Thread.Sleep(1000);
+        Thread.Sleep(1500);
         GetBlocksInput getBlocksInput_test5 = new GetBlocksInput()
         {
             ChainId = "AELF",
@@ -292,7 +294,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         block_106.Transactions = new List<Transaction>() { transaction_106 };
         await _blockIndexRepository.AddAsync(block_105);
         await _blockIndexRepository.AddAsync(block_106);
-        Thread.Sleep(1000);
+        Thread.Sleep(1500);
         GetBlocksInput getBlocksInput_test11 = new GetBlocksInput()
         {
             ChainId = "AELF",
@@ -323,7 +325,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
             MockDataHelper.CreateBlockHash(), true, "consensus_contract_address", "UpdateTinyBlockInformation");
         block_107.Transactions = new List<Transaction>() { transaction_107 };
         await _blockIndexRepository.AddAsync(block_107);
-        Thread.Sleep(1000);
+        Thread.Sleep(1500);
         GetBlocksInput getBlocksInput_test12 = new GetBlocksInput()
         {
             ChainId = "AELF",
