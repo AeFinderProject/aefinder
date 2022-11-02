@@ -30,6 +30,8 @@
   <ItemGroup>
     <Orleans_CodeGenInputs Remove="Chains\ChainStatusDto.cs" />
     <Orleans_CodeGenInputs Remove="Chains\IChainGrain.cs" />
+    <Orleans_CodeGenInputs Remove="Orleans\IClusterClientAppService.cs" />
+    <Orleans_CodeGenInputs Remove="Orleans\IHello.cs" />
   </ItemGroup>
 
 </Project>

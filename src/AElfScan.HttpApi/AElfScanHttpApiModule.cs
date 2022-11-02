@@ -5,7 +5,9 @@ using AElfScan.Localization;
 using AElfScan.Orleans;
 using AElfScan.Orleans.EventSourcing.Grain.Chains;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Orleans;
+using Orleans.Configuration;
 using Volo.Abp;
 using Volo.Abp.Account;
 using Volo.Abp.AspNetCore.SignalR;
@@ -35,18 +37,6 @@ public class AElfScanHttpApiModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         ConfigureLocalization();
-    }
-
-    public override void OnApplicationInitialization(ApplicationInitializationContext context)
-    {
-        var clientService = context.ServiceProvider.GetRequiredService<IClusterClientAppService>();
-        AsyncHelper.RunSync(async () => await clientService.StartAsync());
-    }
-
-    public override void OnApplicationShutdown(ApplicationShutdownContext context)
-    {
-        var clientService = context.ServiceProvider.GetService<IClusterClientAppService>();
-        AsyncHelper.RunSync(() => clientService.StopAsync());
     }
 
     private void ConfigureLocalization()
