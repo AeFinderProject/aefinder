@@ -39,8 +39,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     public async Task HandleEventAsync(NewBlockEto eventData)
     {
         _logger.LogInformation($"block is adding, id: {eventData.BlockHash}  , BlockNumber: {eventData.BlockNumber} , IsConfirmed: {eventData.IsConfirmed}");
-        var blockIndex = await _blockIndexRepository.GetAsync(q=>
-            q.Term(i=>i.Field(f=>f.BlockHash).Value(eventData.BlockHash)));
+        var blockIndex = await _blockIndexRepository.GetAsync(eventData.Id);
         if (blockIndex != null)
         {
             _logger.LogInformation($"block already exist-{blockIndex.Id}, Add failure!");
@@ -77,10 +76,10 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             {
                 await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
             }
+        
+            
         }
-        
 
-        
     }
 
     public async Task HandleEventAsync(ConfirmBlocksEto eventData)
