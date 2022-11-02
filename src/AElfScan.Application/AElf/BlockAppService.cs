@@ -33,7 +33,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
-        if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.BlockQueryAmountInterval)
+        if ((input.EndBlockNumber - input.StartBlockNumber) > _apiOptions.BlockQueryAmountInterval)
         {
             input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
         }
