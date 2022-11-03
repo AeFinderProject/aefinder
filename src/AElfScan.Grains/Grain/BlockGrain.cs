@@ -26,36 +26,37 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         var dicLibBlock = this.State.Blocks.Where(b => b.Value.IsConfirmed)
             .Select(x => x.Value)
             .FirstOrDefault();
-        if (dicLibBlock != null)
+        if (dicLibBlock != null && dicLibBlock.BlockNumber >= blockEvent.BlockNumber)
         {
-            if (dicLibBlock.BlockNumber >= blockEvent.BlockNumber)
-            {
-                // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
-                return null;
-            }
-
-            if (!this.State.Blocks.ContainsKey(blockEvent.PreviousBlockHash))
-            {
-                Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
-                throw new Exception($"Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
-            }
+            // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
+            return null;
         }
-        
 
-        BlockEventData currentLibBlock = this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
-        
+        //Ensure block continuity
+        if (this.State.Blocks.Count > 0 && !this.State.Blocks.ContainsKey(blockEvent.PreviousBlockHash))
+        {
+            Console.WriteLine(
+                $"[BlockGrain]Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+            throw new Exception(
+                $"Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+        }
+
+
+        BlockEventData currentLibBlock =
+            this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
+
         List<BlockEventData> libBlockList = new List<BlockEventData>();
         if (currentLibBlock != null)
         {
             GetLibBlockList(currentLibBlock.BlockHash, libBlockList);
         }
-        
+
         RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0);
         await ConfirmEvents();
 
         return libBlockList;
     }
-    
+
     private void GetLibBlockList(string currentLibBlockHash, List<BlockEventData> libBlockList)
     {
         while (this.State.Blocks.ContainsKey(currentLibBlockHash))
