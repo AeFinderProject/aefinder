@@ -13,6 +13,8 @@ public class AElfAutoMapperProfile:Profile
         CreateMap<ConfirmBlockEto,BlockIndex>();
         CreateMap<BlockIndex,ConfirmBlocksEto>();
         CreateMap<ConfirmBlocksEto,BlockDto>();
+
+        CreateMap<NewBlockEto, BlockIndex>();
         CreateMap<ConfirmBlockEto,BlockIndex>();
 
         CreateMap<Transaction, TransactionIndex>().Ignore(x => x.Id);

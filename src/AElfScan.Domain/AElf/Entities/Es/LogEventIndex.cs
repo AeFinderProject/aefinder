@@ -8,7 +8,14 @@ namespace AElfScan.AElf.Entities.Es;
 
 public class LogEventIndex:AElfScanEntity<string>,IIndexBuild,IBlockchainData
 {
-    [Keyword]public override string Id { get; set; }
+    [Keyword]
+    public override string Id
+    {
+        get
+        {
+            return BlockHash + "_" + TransactionId + "_" + Index;
+        }
+    }
     [Keyword]public string ChainId { get; set; }
     [Keyword]public string BlockHash { get; set; }
     

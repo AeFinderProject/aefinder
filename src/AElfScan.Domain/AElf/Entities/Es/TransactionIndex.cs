@@ -8,7 +8,14 @@ namespace AElfScan.AElf.Entities.Es;
 
 public class TransactionIndex:AElfScanEntity<string>,IIndexBuild,IBlockchainData
 {
-    [Keyword]public override string Id { get; set; }
+    [Keyword]
+    public override string Id
+    {
+        get
+        {
+            return BlockHash + "_" + TransactionId;
+        }
+    }
     [Keyword]public string TransactionId { get; set; }
     
     [Keyword]public string ChainId { get; set; }

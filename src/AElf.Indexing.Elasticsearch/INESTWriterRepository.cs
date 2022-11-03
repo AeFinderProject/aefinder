@@ -16,8 +16,8 @@ namespace AElf.Indexing.Elasticsearch
         
         Task DeleteAsync(TEntity model);
 
-        Task BulkAddOrUpdateAsync(List<TEntity> list, int bulkNum = 1000);
+        Task BulkAddOrUpdateAsync(List<TEntity> list);
 
-        Task BulkDelete(List<TEntity> list);
+        Task BulkDeleteAsync(List<TEntity> list);
     }
 }

@@ -111,13 +111,13 @@ namespace AElf.Indexing.Elasticsearch
             if (response.ServerError == null) return;
             throw new Exception($"Delete Docuemnt at index {indexName} :{response.ServerError.Error.Reason}");
         }
-        
-        public async Task BulkAddOrUpdateAsync(List<TEntity> list, int bulkNum = 1000)
-        {
-            await BulkAddOrUpdate(list);
-        }
 
-        private async Task BulkAddOrUpdate(List<TEntity> list)
+        /// <summary>
+        /// Batch add and modify
+        /// </summary>
+        /// <param name="list"></param>
+        /// <exception cref="ElasticSearchException"></exception>
+        public async Task BulkAddOrUpdateAsync(List<TEntity> list)
         {
             var indexName = IndexName;
             var client = GetElasticClient();
@@ -137,7 +137,12 @@ namespace AElf.Indexing.Elasticsearch
             }
         }
 
-        public async Task BulkDelete(List<TEntity> list)
+        /// <summary>
+        /// Deleting Documents in Batches
+        /// </summary>
+        /// <param name="list"></param>
+        /// <exception cref="ElasticSearchException"></exception>
+        public async Task BulkDeleteAsync(List<TEntity> list)
         {
             var indexName = IndexName;
             var client = GetElasticClient();
