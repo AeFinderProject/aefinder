@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using AElfScan.Grains;
 using AElfScan.Orleans;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

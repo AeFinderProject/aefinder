@@ -1,5 +1,7 @@
 using AElf.Indexing.Elasticsearch.Options;
 using AElfScan;
+using AElfScan.Grains;
+using AElfScan.Grains.Grain.BlockScan;
 using AElfScan.Orleans;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,12 +38,13 @@ public class AElfScanEntityEventHandlerModule : AbpModule
                 .ConfigureDefaults()
                 .UseRedisClustering(opt =>
                 {
-                    opt.ConnectionString = configuration["Redis:Configuration"];
+                    opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
+                    opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
                 })
                 .Configure<ClusterOptions>(options =>
                 {
-                    options.ClusterId = configuration["Orleans:Cluster:ClusterId"];
-                    options.ServiceId = configuration["Orleans:Cluster:ServiceId"];
+                    options.ClusterId = configuration["Orleans:ClusterId"];
+                    options.ServiceId = configuration["Orleans:ServiceId"];
                 })
                 .ConfigureApplicationParts(parts =>
                     parts.AddApplicationPart(typeof(AElfScanOrleansEventSourcingModule).Assembly).WithReferences())

@@ -12,10 +12,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using AElfScan.EntityFrameworkCore;
+using AElfScan.Grains;
 using AElfScan.MultiTenancy;
 using AElfScan.Orleans;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
-using AElfScan.Orleans.EventSourcing.Grain.Chains;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
@@ -138,12 +138,13 @@ public class AElfScanHttpApiHostModule : AbpModule
                 .ConfigureDefaults()
                 .UseRedisClustering(opt =>
                 {
-                    opt.ConnectionString = configuration["Redis:Configuration"];
+                    opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
+                    opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
                 })
                 .Configure<ClusterOptions>(options =>
                 {
-                    options.ClusterId = configuration["Orleans:Cluster:ClusterId"];
-                    options.ServiceId = configuration["Orleans:Cluster:ServiceId"];
+                    options.ClusterId = configuration["Orleans:ClusterId"];
+                    options.ServiceId = configuration["Orleans:ServiceId"];
                 })
                 .ConfigureApplicationParts(parts =>
                     parts.AddApplicationPart(typeof(AElfScanOrleansEventSourcingModule).Assembly).WithReferences())
@@ -253,14 +254,24 @@ public class AElfScanHttpApiHostModule : AbpModule
         app.UseAbpSerilogEnrichers();
         app.UseUnitOfWork();
         app.UseConfiguredEndpoints();
-        
-        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        AsyncHelper.RunSync(async ()=> await client.Connect());
+
+        StartOrleans(context.ServiceProvider);
     }
     
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        StopOrleans(context.ServiceProvider);
+    }
+
+    private static void StartOrleans(IServiceProvider serviceProvider)
+    {
+        var client = serviceProvider.GetRequiredService<IClusterClient>();
+        AsyncHelper.RunSync(async ()=> await client.Connect());
+    }
+
+    private static void StopOrleans(IServiceProvider serviceProvider)
+    {
+        var client = serviceProvider.GetRequiredService<IClusterClient>();
         AsyncHelper.RunSync(client.Close);
     }
 }

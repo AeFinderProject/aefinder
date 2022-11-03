@@ -1,6 +1,7 @@
 using System.Net;
-using AElfScan.Grain;
+using AElfScan.Grains.Grain;
 using AElfScan.Options;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -16,31 +17,27 @@ public class AElfScanClusterClientHostedService:IHostedService
     private readonly IAbpApplicationWithExternalServiceProvider _application;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<AElfScanClusterClientHostedService> _logger;
-    private readonly OrleansClientOption _orleansClientOption;
     public IClusterClient OrleansClient { get;}
 
     public AElfScanClusterClientHostedService(
         IAbpApplicationWithExternalServiceProvider application,
         ILogger<AElfScanClusterClientHostedService> logger,
-        IOptionsSnapshot<OrleansClientOption> orleansClientOption,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider, IConfiguration configuration)
     {
         _application = application;
         _serviceProvider = serviceProvider;
         _logger = logger;
-        _orleansClientOption = orleansClientOption.Value;
         OrleansClient = new ClientBuilder()
             .UseRedisClustering(opt =>
             {
-                opt.ConnectionString = _orleansClientOption.KVrocksConnection;
-                opt.Database = 0;
+                opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
+                opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
             })
-            // .UseLocalhostClustering()
             .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(IBlockGrain).Assembly).WithReferences())
             .Configure<ClusterOptions>(options =>
             {
-                options.ClusterId = _orleansClientOption.ClusterId;
-                options.ServiceId = _orleansClientOption.ServiceId;
+                options.ClusterId = configuration["Orleans:ClusterId"];
+                options.ServiceId = configuration["Orleans:ServiceId"];
             })
             .Build();
     }
@@ -52,8 +49,6 @@ public class AElfScanClusterClientHostedService:IHostedService
         _logger.LogInformation("before connect OrleansClient.IsInitialized:"+OrleansClient.IsInitialized);
         await OrleansClient.Connect();
         _logger.LogInformation("after connect OrleansClient.IsInitialized:"+OrleansClient.IsInitialized);
-
-        return;
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
@@ -62,6 +57,5 @@ public class AElfScanClusterClientHostedService:IHostedService
         OrleansClient.Dispose();
         _logger.LogInformation("OrleansClient Closed");
         _application.Shutdown();
-        return;
     }
 }

@@ -4,8 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfScan.AElf.Dtos;
 using AElfScan.AElf.Entities.Es;
+using AElfScan.Grains.State.BlockScan;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
-using AElfScan.Orleans.EventSourcing.State.BlockScan;
 using Volo.Abp.Account;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.IdentityModel;
@@ -33,7 +33,7 @@ public class ClientDemoService : ITransientDependency
                 Authority = "http://localhost:8080",
                 Scope = "AElfScan",
                 GrantType = "client_credentials",
-                ClientId = "AElfScan_App",
+                ClientId = "AElfScan_DApp",
                 ClientSecret = "1q2w3e*"
             });
 

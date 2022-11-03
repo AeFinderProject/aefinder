@@ -103,7 +103,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         var blockIndex_903 = await _blockIndexRepository.GetAsync("903");
         blockIndex_903.BlockHash.ShouldBe(block_903.BlockHash);
 
-        await _blockIndexRepository.BulkDelete(blockList);
+        await _blockIndexRepository.BulkDeleteAsync(blockList);
     }
 
     [Fact]

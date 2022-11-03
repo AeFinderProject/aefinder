@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using AElfScan.Grains;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
