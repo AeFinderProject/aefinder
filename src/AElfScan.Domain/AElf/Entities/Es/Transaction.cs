@@ -23,6 +23,7 @@ public class Transaction:IBlockchainData
     
     [Keyword]public string MethodName { get; set; }
     
+    [Text(Index = false)]
     public string Params { get; set; }
     
     [Keyword]public string Signature { get; set; }
