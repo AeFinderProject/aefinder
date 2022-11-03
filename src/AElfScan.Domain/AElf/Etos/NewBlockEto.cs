@@ -4,7 +4,7 @@ using Volo.Abp.EventBus;
 namespace AElfScan.AElf.Etos;
 
 [EventName("AElf.NewBlock")]
-public class NewBlockEto:BlockIndex
+public class NewBlockEto:BlockBase
 {
     
 }

@@ -34,9 +34,4 @@ public class AElfScanBlockChainEventHandlerModule:AbpModule
             sp.GetService<AElfScanClusterClientHostedService>().OrleansClient);
     }
     
-    public override void OnApplicationInitialization(ApplicationInitializationContext context)
-    {
-        var _logger = context.ServiceProvider.GetService<ILogger<AElfScanBlockChainEventHandlerModule>>();
-        var _distributedEventBus = context.ServiceProvider.GetService<IDistributedEventBus>();
-    }
 }

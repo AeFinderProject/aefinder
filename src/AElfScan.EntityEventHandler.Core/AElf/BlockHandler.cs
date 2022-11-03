@@ -39,15 +39,16 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
     public async Task HandleEventAsync(NewBlockEto eventData)
     {
         _logger.LogInformation($"block is adding, id: {eventData.BlockHash}  , BlockNumber: {eventData.BlockNumber} , IsConfirmed: {eventData.IsConfirmed}");
-        var blockIndex = await _blockIndexRepository.GetAsync(eventData.Id);
-        if (blockIndex != null)
+        var existBlockIndex = await _blockIndexRepository.GetAsync(eventData.Id);
+        if (existBlockIndex != null)
         {
-            _logger.LogInformation($"block already exist-{blockIndex.Id}, Add failure!");
+            _logger.LogInformation($"block already exist-{existBlockIndex.Id}, Add failure!");
         }
         else
         {
-            await _blockIndexRepository.AddAsync(eventData);
-            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(eventData); });
+            var blockIndex = _objectMapper.Map<NewBlockEto, BlockIndex>(eventData);
+            await _blockIndexRepository.AddAsync(blockIndex);
+            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(blockIndex); });
 
             List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
             List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
@@ -172,15 +173,15 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
 
             if (forkBlockIndexList.Count > 0)
             {
-                await _blockIndexRepository.BulkDelete(forkBlockIndexList);
+                await _blockIndexRepository.BulkDeleteAsync(forkBlockIndexList);
             }
             if (forkTransactionIndexList.Count > 0)
             {
-                await _transactionIndexRepository.BulkDelete(forkTransactionIndexList);
+                await _transactionIndexRepository.BulkDeleteAsync(forkTransactionIndexList);
             }
             if (forkLogEventIndexList.Count > 0)
             {
-                await _logEventIndexRepository.BulkDelete(forkLogEventIndexList);
+                await _logEventIndexRepository.BulkDeleteAsync(forkLogEventIndexList);
             }
         }
 
