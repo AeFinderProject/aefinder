@@ -154,6 +154,11 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             State.ScannedBlocks[b.BlockNumber] = scannedBlocks;
         }
 
+        if (unPushedBlock.Count == 0)
+        {
+            return;
+        }
+
         State.ScannedBlockHeight = unPushedBlock.Last().BlockNumber;
         State.ScannedBlockHash = unPushedBlock.Last().BlockHash;
 

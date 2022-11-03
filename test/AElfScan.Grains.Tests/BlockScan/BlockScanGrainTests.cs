@@ -79,6 +79,14 @@ public class BlockScanGrainTests : AElfScanGrainTestBase
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockNumber.ShouldBe(50);
         
+        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
+        subscribedBlock.Count.ShouldBe(55);
+        subscribedBlock.Last().BlockNumber.ShouldBe(50);
+        
+        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[49].First());
+        subscribedBlock.Count.ShouldBe(55);
+        subscribedBlock.Last().BlockNumber.ShouldBe(50);
+        
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[51].First());
         subscribedBlock.Count.ShouldBe(56);
         subscribedBlock.Last().BlockNumber.ShouldBe(51);
