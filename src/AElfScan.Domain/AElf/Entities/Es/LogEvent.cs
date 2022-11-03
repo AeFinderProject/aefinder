@@ -10,6 +10,7 @@ public class LogEvent:IBlockchainData
 
     [Keyword]public string BlockHash { get; set; }
     
+    [Keyword]public string PreviousBlockHash { get; set; }
     public long BlockNumber { get; set; }
     
     public DateTime BlockTime { get; set; }

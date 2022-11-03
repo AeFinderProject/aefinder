@@ -18,7 +18,7 @@ public class LogEventIndex:AElfScanEntity<string>,IIndexBuild,IBlockchainData
     }
     [Keyword]public string ChainId { get; set; }
     [Keyword]public string BlockHash { get; set; }
-    
+    [Keyword]public string PreviousBlockHash { get; set; }
     /// <summary>
     /// block height
     /// </summary>

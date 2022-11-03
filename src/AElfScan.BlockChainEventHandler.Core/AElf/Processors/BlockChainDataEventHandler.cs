@@ -110,6 +110,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             {
                 logEvent.ChainId = chainId;
                 logEvent.BlockHash = newBlock.BlockHash;
+                logEvent.PreviousBlockHash = newBlock.PreviousBlockHash;
                 logEvent.BlockNumber = newBlock.BlockNumber;
                 logEvent.BlockTime = newBlock.BlockTime;
                 logEvent.IsConfirmed = false;
