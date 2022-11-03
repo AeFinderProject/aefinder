@@ -65,14 +65,18 @@ public class BlockAppService:ApplicationService,IBlockAppService
                 }
 
                 var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
-                foreach (var eventName in eventInput.EventNames)
+                if (eventInput.EventNames != null)
                 {
-                    if (!string.IsNullOrEmpty(eventName))
+                    foreach (var eventName in eventInput.EventNames)
                     {
-                        shouldMushShouldQuery.Add(s =>
-                            s.Match(i => i.Field("Transactions.LogEvents.eventName").Query(eventName)));
+                        if (!string.IsNullOrEmpty(eventName))
+                        {
+                            shouldMushShouldQuery.Add(s =>
+                                s.Match(i => i.Field("Transactions.LogEvents.eventName").Query(eventName)));
+                        }
                     }
                 }
+                
 
                 if (shouldMushShouldQuery.Count > 0)
                 {
@@ -158,12 +162,15 @@ public class BlockAppService:ApplicationService,IBlockAppService
                 }
 
                 var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
-                foreach (var eventName in eventInput.EventNames)
+                if (eventInput.EventNames != null)
                 {
-                    if (!string.IsNullOrEmpty(eventName))
+                    foreach (var eventName in eventInput.EventNames)
                     {
-                        shouldMushShouldQuery.Add(s =>
-                            s.Match(i => i.Field("LogEvents.eventName").Query(eventName)));
+                        if (!string.IsNullOrEmpty(eventName))
+                        {
+                            shouldMushShouldQuery.Add(s =>
+                                s.Match(i => i.Field("LogEvents.eventName").Query(eventName)));
+                        }
                     }
                 }
 
@@ -235,12 +242,15 @@ public class BlockAppService:ApplicationService,IBlockAppService
                 }
 
                 var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();
-                foreach (var eventName in eventInput.EventNames)
+                if (eventInput.EventNames != null)
                 {
-                    if (!string.IsNullOrEmpty(eventName))
+                    foreach (var eventName in eventInput.EventNames)
                     {
-                        shouldMushShouldQuery.Add(s =>
-                            s.Match(i => i.Field(f=>f.EventName).Query(eventName)));
+                        if (!string.IsNullOrEmpty(eventName))
+                        {
+                            shouldMushShouldQuery.Add(s =>
+                                s.Match(i => i.Field(f=>f.EventName).Query(eventName)));
+                        }
                     }
                 }
 

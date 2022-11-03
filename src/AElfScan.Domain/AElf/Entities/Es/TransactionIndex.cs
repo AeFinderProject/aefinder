@@ -27,7 +27,7 @@ public class TransactionIndex:AElfScanEntity<string>,IIndexBuild,IBlockchainData
     
     [Keyword]public string MethodName { get; set; }
     
-    [Keyword]public string Params { get; set; }
+    public string Params { get; set; }
     
     [Keyword]public string Signature { get; set; }
     
