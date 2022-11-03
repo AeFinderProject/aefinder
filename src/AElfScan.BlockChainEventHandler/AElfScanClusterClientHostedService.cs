@@ -39,6 +39,10 @@ public class AElfScanClusterClientHostedService:IHostedService
                 options.ClusterId = configuration["Orleans:ClusterId"];
                 options.ServiceId = configuration["Orleans:ServiceId"];
             })
+            // .Configure<ClientMessagingOptions>(options =>
+            // {
+            //     options.ResponseTimeout = TimeSpan.MaxValue;
+            // })
             .Build();
     }
 
