@@ -4,11 +4,13 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using AElfScan.Grains.Grain.BlockScan;
+using AElfScan.Grains.Grain.Chains;
 using AElfScan.Grains.State.BlockScan;
 using AElfScan.Orleans;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using NUglify.Helpers;
 using Orleans;
 using Orleans.Streams;
@@ -40,6 +42,10 @@ public class BlockHub : AbpHub
         
         foreach (var subscribeInfo in subscribeInfos)
         {
+            var chainGrain = _clusterClient.GetGrain<IChainGrain>(subscribeInfo.ChainId);
+            var chainStatus = await chainGrain.GetChainStatusAsync();
+            Logger.LogDebug($"Chain: {subscribeInfo.ChainId}, BlockHeight: {chainStatus.BlockHeight},  ConfirmedBlockHeight: {chainStatus.ConfirmedBlockHeight}");
+            
             var id = subscribeInfo.ChainId + clientId;
             var clientGrain = _clusterClient.GetGrain<IClientGrain>(id);
             await clientGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version, subscribeInfo);
