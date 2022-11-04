@@ -40,14 +40,8 @@ public class BlockHub : AbpHub
         var version = Guid.NewGuid().ToString("N");
         _connectionProvider.Add(clientId,Context.ConnectionId,version, subscribeInfos.Select(o=>o.ChainId).ToList());
         
-        Logger.LogInformation($"Subscribe client_id: {clientId}");
-        
         foreach (var subscribeInfo in subscribeInfos)
         {
-            var chainGrain = _clusterClient.GetGrain<IChainGrain>(subscribeInfo.ChainId);
-            var chainStatus = await chainGrain.GetChainStatusAsync();
-            Logger.LogInformation($"Chain: {subscribeInfo.ChainId}, BlockHeight: {chainStatus.BlockHeight},  ConfirmedBlockHeight: {chainStatus.ConfirmedBlockHeight}");
-            
             var id = subscribeInfo.ChainId + clientId;
             var clientGrain = _clusterClient.GetGrain<IClientGrain>(id);
             await clientGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version, subscribeInfo);
