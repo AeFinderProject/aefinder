@@ -32,7 +32,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         _apiOptions = apiOptions.Value;
     }
 
-    [Authorize]
+    // [Authorize]
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
         if ((input.EndBlockNumber - input.StartBlockNumber) > _apiOptions.BlockQueryAmountInterval)
@@ -133,7 +133,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         return resultList;
     }
 
-    [Authorize]
+    // [Authorize]
     public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
     {
         if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.BlockQueryAmountInterval)
@@ -223,7 +223,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         return resultList;
     }
 
-    [Authorize]
+    // [Authorize]
     public async Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
     {
         if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.BlockQueryAmountInterval)
