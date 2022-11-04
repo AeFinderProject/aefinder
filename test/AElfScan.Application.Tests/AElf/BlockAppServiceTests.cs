@@ -186,7 +186,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         };
         List<BlockDto> blockDtos_test5 =await _blockAppService.GetBlocksAsync(getBlocksInput_test5);
         blockDtos_test5.Count(x=>x.BlockNumber==180).ShouldBe(2);
-        blockDtos_test5.ShouldAllBe(x => x.Transactions.Count == 0);
+        blockDtos_test5.ShouldAllBe(x => x.Transactions == null);
         
         //Unit Test 6
         var block_1000 = MockDataHelper.MockNewBlockEtoData(1000, MockDataHelper.CreateBlockHash(),false);
