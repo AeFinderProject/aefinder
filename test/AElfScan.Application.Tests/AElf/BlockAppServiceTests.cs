@@ -111,7 +111,8 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
     {
         //clear data for unit test
         await ClearBlockIndex("AELF", 100, 300);
-        
+        await ClearBlockIndex("AELF", 1000, 5000);
+        Thread.Sleep(2000);
         //Unit Test 1
         var block_100 =
             MockDataHelper.MockNewBlockEtoData(100, MockDataHelper.CreateBlockHash(),false);
@@ -128,6 +129,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         List<BlockDto> blockDtos_test1 = await _blockAppService.GetBlocksAsync(getBlocksInput_test1);
         blockDtos_test1.Count.ShouldBeGreaterThan(0);
         blockDtos_test1[0].BlockNumber.ShouldBe(100);
+        blockDtos_test1.ShouldAllBe(x => x.Transactions.Count == 0);
         
         //Unit Test 2
         GetBlocksInput getBlocksInput_test2 = new GetBlocksInput()
@@ -167,6 +169,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         blockDtos_test4.ShouldContain(x=>x.BlockNumber==100);
         blockDtos_test4.ShouldContain(x=>x.BlockNumber==200);
         blockDtos_test4.ShouldNotContain(x=>x.BlockNumber==300);
+        blockDtos_test4.ShouldContain(x => x.Transactions.Count > 0);
         
         //Unit Test 5
         var block_180 = MockDataHelper.MockNewBlockEtoData(180, MockDataHelper.CreateBlockHash(),true);
@@ -182,7 +185,8 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
             HasTransaction = false
         };
         List<BlockDto> blockDtos_test5 =await _blockAppService.GetBlocksAsync(getBlocksInput_test5);
-        blockDtos_test5.Select(x=>x.BlockNumber==180).Count().ShouldBe(4);
+        blockDtos_test5.Count(x=>x.BlockNumber==180).ShouldBe(2);
+        blockDtos_test5.ShouldAllBe(x => x.Transactions.Count == 0);
         
         //Unit Test 6
         var block_1000 = MockDataHelper.MockNewBlockEtoData(1000, MockDataHelper.CreateBlockHash(),false);
@@ -415,6 +419,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         //clear data for unit test
         ClearTransactionIndex("AELF", 100, 110);
 
+        Thread.Sleep(2000);
         //Unit Test 14
         var transaction_100_1 = MockDataHelper.MockNewTransactionEtoData(100, false, "token_contract_address", "DonateResourceToken");
         var transaction_100_2 = MockDataHelper.MockNewTransactionEtoData(100, false, "", "");
@@ -816,6 +821,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
         
     }
 
+    [Fact]
     public async Task GetLogEventAsync_Test33()
     {
         await ClearLogEventIndex("AELF", 1000, 5000);

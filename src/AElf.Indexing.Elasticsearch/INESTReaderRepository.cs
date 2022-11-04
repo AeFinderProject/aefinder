@@ -30,6 +30,12 @@ namespace AElf.Indexing.Elasticsearch
             Expression<Func<TEntity, object>> sortExp = null, SortOrder sortType = SortOrder.Ascending
             , int limit = 1000, int skip = 0);
         
+        Task<Tuple<long, List<TEntity>>> GetSortListAsync(
+            Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
+            Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
+            Func<SortDescriptor<TEntity>, IPromise<IList<ISort>>> sortFunc = null
+            , int limit = 1000, int skip = 0);
+        
         Task<ISearchResponse<TEntity>> SearchAsync(SearchDescriptor<TEntity> query,
             int skip, int size, string[] includeFields = null,
             string preTags = "<strong style=\"color: red;\">", string postTags = "</strong>", bool disableHigh = false,

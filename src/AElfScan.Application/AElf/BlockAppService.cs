@@ -37,7 +37,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         {
             input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
         }
-        
+
         var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
 
         List<BlockDto> items = new List<BlockDto>();
@@ -91,7 +91,8 @@ public class BlockAppService:ApplicationService,IBlockAppService
             QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Nested(q => q.Path("Transactions")
                         .Query(qq => qq.Bool(b => b.Must(mustQuery))));
             
-            var list = await _blockIndexRepository.GetListAsync(Filter);
+            var list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockNumber,
+                sortType:SortOrder.Ascending);
             items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
         }
         else
@@ -108,7 +109,8 @@ public class BlockAppService:ApplicationService,IBlockAppService
             
             QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
             
-            var list = await _blockIndexRepository.GetListAsync(Filter);
+            var list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockNumber,
+                sortType:SortOrder.Ascending);
             items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
         }
 
@@ -186,7 +188,11 @@ public class BlockAppService:ApplicationService,IBlockAppService
             
             QueryContainer Filter(QueryContainerDescriptor<TransactionIndex> f) => f.Nested(q => q.Path("LogEvents")
                 .Query(qq => qq.Bool(b => b.Must(mustQuery))));
-            var list = await _transactionIndexRepository.GetListAsync(Filter);
+
+            Func<SortDescriptor<TransactionIndex>, IPromise<IList<ISort>>> sort = s =>
+                s.Ascending(a => a.BlockNumber).Ascending(d => d.Index);
+            
+            var list = await _transactionIndexRepository.GetSortListAsync(Filter, sortFunc:sort);
             resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list.Item2);
         }
         else
@@ -202,7 +208,10 @@ public class BlockAppService:ApplicationService,IBlockAppService
             
             QueryContainer Filter(QueryContainerDescriptor<TransactionIndex> f) => f.Bool(b => b.Must(mustQuery));
             
-            var list = await _transactionIndexRepository.GetListAsync(Filter);
+            Func<SortDescriptor<TransactionIndex>, IPromise<IList<ISort>>> sort = s =>
+                s.Ascending(a => a.BlockNumber).Ascending(d => d.Index);
+            
+            var list = await _transactionIndexRepository.GetSortListAsync(Filter,sortFunc:sort);
 
             resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list.Item2);
         }
@@ -217,6 +226,10 @@ public class BlockAppService:ApplicationService,IBlockAppService
         {
             input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
         }
+        
+        var sortFuncs = new List<Func<SortDescriptor<TransactionIndex>, IPromise<IList<ISort>>>>();
+        sortFuncs.Add(srt => srt.Field(sf => sf.Field(p => p.BlockNumber).Order(SortOrder.Ascending)));
+        sortFuncs.Add(srt => srt.Field(sf => sf.Field(p => p.Index).Order(SortOrder.Ascending)));
 
         var mustQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();
         mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId).Value(input.ChainId)));
@@ -269,8 +282,10 @@ public class BlockAppService:ApplicationService,IBlockAppService
         QueryContainer Filter(QueryContainerDescriptor<LogEventIndex> f) => f.Bool(b => b.Must(mustQuery));
         List<LogEventDto> resultList = new List<LogEventDto>();
 
+        Func<SortDescriptor<LogEventIndex>, IPromise<IList<ISort>>> sort = s =>
+            s.Ascending(a => a.BlockNumber).Ascending(d => d.Index);
 
-        var list = await _logEventIndexRepository.GetListAsync(Filter);
+        var list = await _logEventIndexRepository.GetSortListAsync(Filter, sortFunc: sort);
 
         resultList = ObjectMapper.Map<List<LogEventIndex>, List<LogEventDto>>(list.Item2);
         

@@ -176,6 +176,38 @@ namespace AElf.Indexing.Elasticsearch
             return new Tuple<long, List<TEntity>>(result.Total, result.Documents.ToList());
         }
         
+        public async Task<Tuple<long, List<TEntity>>> GetSortListAsync(Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
+            Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
+            Func<SortDescriptor<TEntity>, IPromise<IList<ISort>>> sortFunc = null
+            , int limit = 1000, int skip = 0)
+        {
+            Func<SearchDescriptor<TEntity>, ISearchRequest> selector = null;
+            var indexName = IndexName;
+            var client = GetElasticClient();
+            if (sortFunc != null)
+            {
+                selector = new Func<SearchDescriptor<TEntity>, ISearchRequest>(s => s
+                    .Index(indexName)
+                    .Query(filterFunc ?? (q => q.MatchAll()))
+                    .Sort(sortFunc)
+                    .Source(includeFieldFunc ?? (i => i.IncludeAll()))
+                    .From(skip)
+                    .Size(limit));
+            }
+            else
+            {
+                selector = new Func<SearchDescriptor<TEntity>, ISearchRequest>(s => s
+                    .Index(indexName)
+                    .Query(filterFunc ?? (q => q.MatchAll()))
+                    .Source(includeFieldFunc ?? (i => i.IncludeAll()))
+                    .From(skip)
+                    .Size(limit));
+            }
+
+            var result = await client.SearchAsync(selector);
+            return new Tuple<long, List<TEntity>>(result.Total, result.Documents.ToList());
+        }
+        
         /// <summary>
         /// search
         /// </summary>
