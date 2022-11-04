@@ -97,12 +97,13 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     Version = State.Version,
                     Blocks = blocks
                 });
+                
+                Console.WriteLine($"HandleHistoricalBlockAsync: Height: {targetHeight} Block Count {blocks.Count}");
             }
 
             State.ScannedBlockHeight = targetHeight;
             State.ScannedConfirmedBlockHeight = targetHeight;
             
-            Console.WriteLine($"HandleHistoricalBlockAsync: Height: {targetHeight}");
             await WriteStateAsync();
 
             chainStatus = await chainGrain.GetChainStatusAsync();
