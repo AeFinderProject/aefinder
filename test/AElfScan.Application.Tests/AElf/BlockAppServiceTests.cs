@@ -634,6 +634,7 @@ public class BlockAppServiceTests:AElfScanApplicationTestBase
     {
         //clear data for unit test
         await ClearLogEventIndex("AELF", 100, 110);
+        Thread.Sleep(2000);
         
         //Unit Test 21
         GetLogEventsInput getLogEventsInput_test21 = new GetLogEventsInput()
