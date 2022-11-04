@@ -37,6 +37,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task HandleHistoricalBlockAsync()
     {
+        Console.WriteLine("HandleHistoricalBlockAsync-1");
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(this.GetPrimaryKeyString());
         var chainGrain = GrainFactory.GetGrain<IChainGrain>(State.ChainId);
         var subscribeInfo = await clientGrain.GetSubscribeInfoAsync();
@@ -48,11 +49,13 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             await WriteStateAsync();
         }
 
+        Console.WriteLine("HandleHistoricalBlockAsync-2");
         while (true)
         {
             var clientInfo = await clientGrain.GetClientInfoAsync();
             if (clientInfo.Version != State.Version || clientInfo.ScanModeInfo.ScanMode != ScanMode.HistoricalBlock)
             {
+                Console.WriteLine($"HandleHistoricalBlockAsync wrong version: {clientInfo.Version} - {State.Version}");
                 break;
             }
 
@@ -62,6 +65,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold)
             {
                 await clientGrain.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
+                Console.WriteLine($"HandleHistoricalBlock Stopped: {State.ScannedConfirmedBlockHeight + 1}");
                 break;
             }
 
@@ -97,6 +101,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
             State.ScannedBlockHeight = targetHeight;
             State.ScannedConfirmedBlockHeight = targetHeight;
+            
+            Console.WriteLine($"HandleHistoricalBlockAsync: Height: {targetHeight}");
             await WriteStateAsync();
 
             chainStatus = await chainGrain.GetChainStatusAsync();
