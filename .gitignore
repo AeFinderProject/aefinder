@@ -258,9 +258,11 @@ CodeCoverage
 src/AElfScan.HttpApi.Host/Logs/*
 src/AElfScan.AuthServer/Logs/*
 src/AElfScan.DbMigrator/Logs/*
-src/AElfScan.EntityHandler/Logs/*
 src/AElfScan.BlockChainEventHandler/Logs/*
 src/AElfScan.Orleans.Silo/Logs/*
+src/AElfScan.EntityEventHandler/Logs/*
+
+**/wwwroot/libs/*
 
 
 src/AElfScan.AuthServer/package-lock.json
