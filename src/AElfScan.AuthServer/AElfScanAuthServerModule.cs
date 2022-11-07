@@ -53,11 +53,13 @@ public class AElfScanAuthServerModule : AbpModule
 {
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
+        var configuration = context.Services.GetConfiguration();
         PreConfigure<OpenIddictBuilder>(builder =>
         {
             builder.AddServer(options =>
             {
                 options.UseAspNetCore().DisableTransportSecurityRequirement();
+                options.SetIssuer(new Uri(configuration["AuthServer:IssuerUri"]));
             });
             builder.AddValidation(options =>
             {
