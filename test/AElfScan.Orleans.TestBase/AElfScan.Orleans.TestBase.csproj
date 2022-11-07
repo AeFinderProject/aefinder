@@ -29,8 +29,14 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\src\AElfScan.BlockChainEventHandler.Core\AElfScan.BlockChainEventHandler.Core.csproj" />
+      <ProjectReference Include="..\..\src\AElfScan.EntityEventHandler.Core\AElfScan.EntityEventHandler.Core.csproj" />
       <ProjectReference Include="..\..\src\AElfScan.Grains\AElfScan.Grains.csproj" />
       <ProjectReference Include="..\AElfScan.TestBase\AElfScan.TestBase.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Orleans_CodeGenInputs Remove="Providers\TestBlockGrainProvider.cs" />
     </ItemGroup>
 
 </Project>

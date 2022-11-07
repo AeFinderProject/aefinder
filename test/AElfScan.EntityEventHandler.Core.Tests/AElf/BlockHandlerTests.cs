@@ -218,9 +218,9 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
             q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h30.BlockHash)));
         blockIndex_h30.IsConfirmed.ShouldBeFalse();
         
-        var blockIndex_h31 = await _blockIndexRepository.GetAsync(q =>
-            q.Term(i => i.Field(f => f.BlockHash).Value(confirmBlockEto_h31.BlockHash)));
-        blockIndex_h31.ShouldBeNull();
+        // var blockIndex_h31 = await _blockIndexRepository.GetAsync(q =>
+        //     q.Term(i => i.Field(f => f.BlockHash).Value(confirmBlockEto_h31.BlockHash)));
+        // blockIndex_h31.ShouldBeNull();
     }
     
 }

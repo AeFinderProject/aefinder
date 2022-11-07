@@ -33,27 +33,28 @@ public class ClusterFixture:IDisposable,ISingletonDependency
             hostBuilder.ConfigureServices(services => {
                     services.AddSingleton<IBlockGrain, BlockGrain>();
                 })
-                .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
-                {
-                    options.DataConnectionString = "localhost:6379"; // This is the deafult
-                    options.UseJson = true;
-                    options.DatabaseNumber = 0;
-                }))
-                // .AddMemoryGrainStorageAsDefault()
+                // .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
+                // {
+                //     options.DataConnectionString = "localhost:6379"; // This is the deafult
+                //     options.UseJson = true;
+                //     options.DatabaseNumber = 0;
+                // }))
+                .AddMemoryGrainStorage("PubSubStore")
+                .AddMemoryGrainStorageAsDefault()
                 .AddSnapshotStorageBasedLogConsistencyProviderAsDefault((op, name) => 
                 {
-                    // op.UseIndependentEventStorage = false;
-                    op.UseIndependentEventStorage = true;
-                    // Should configure event storage when set UseIndependentEventStorage true
-                    op.ConfigureIndependentEventStorage = (services, name) =>
-                    {
-                        var eventStoreConnectionString = "ConnectTo=tcp://admin:changeit@localhost:1113; HeartBeatTimeout=500";
-                        var eventStoreConnection = EventStoreConnection.Create(eventStoreConnectionString);
-                        eventStoreConnection.ConnectAsync().Wait();
-                
-                        services.AddSingleton(eventStoreConnection);
-                        services.AddSingleton<IGrainEventStorage, EventStoreGrainEventStorage>();
-                    };
+                    op.UseIndependentEventStorage = false;
+                    // op.UseIndependentEventStorage = true;
+                    // // Should configure event storage when set UseIndependentEventStorage true
+                    // op.ConfigureIndependentEventStorage = (services, name) =>
+                    // {
+                    //     var eventStoreConnectionString = "ConnectTo=tcp://admin:changeit@localhost:1113; HeartBeatTimeout=500";
+                    //     var eventStoreConnection = EventStoreConnection.Create(eventStoreConnectionString);
+                    //     eventStoreConnection.ConnectAsync().Wait();
+                    //
+                    //     services.AddSingleton(eventStoreConnection);
+                    //     services.AddSingleton<IGrainEventStorage, EventStoreGrainEventStorage>();
+                    // };
                 });
         }
     }

@@ -10,6 +10,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\src\AElfScan.EntityEventHandler.Core\AElfScan.EntityEventHandler.Core.csproj" />
       <ProjectReference Include="..\..\src\AElfScan.EntityEventHandler\AElfScan.EntityEventHandler.csproj" />
+      <ProjectReference Include="..\AElfScan.Orleans.TestBase\AElfScan.Orleans.TestBase.csproj" />
       <ProjectReference Include="..\AElfScan.TestBase\AElfScan.TestBase.csproj" />
     </ItemGroup>
 

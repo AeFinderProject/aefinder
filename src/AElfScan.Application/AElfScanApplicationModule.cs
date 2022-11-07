@@ -27,7 +27,7 @@ namespace AElfScan;
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
     typeof(AbpSettingManagementApplicationModule),
-    typeof(AElfScanOrleansEventSourcingModule)
+    typeof(AElfScanGrainsModule)
 )]
 public class AElfScanApplicationModule : AbpModule
 {

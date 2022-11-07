@@ -147,7 +147,7 @@ public class AElfScanHttpApiHostModule : AbpModule
                     options.ServiceId = configuration["Orleans:ServiceId"];
                 })
                 .ConfigureApplicationParts(parts =>
-                    parts.AddApplicationPart(typeof(AElfScanOrleansEventSourcingModule).Assembly).WithReferences())
+                    parts.AddApplicationPart(typeof(AElfScanGrainsModule).Assembly).WithReferences())
                 .AddSimpleMessageStreamProvider(AElfScanApplicationConsts.MessageStreamName)
                 .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
                 .Build();

@@ -1,6 +1,7 @@
 using AElfScan.AElf.DTOs;
 using AElfScan.Grains;
 using AElfScan.Options;
+using AElfScan.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,7 @@ using Volo.Abp.Modularity;
 namespace AElfScan;
 
 [DependsOn(typeof(AbpAutofacModule),
-    typeof(AElfScanOrleansEventSourcingModule),
+    typeof(AElfScanGrainsModule),
     typeof(AElfScanBlockChainEventHandlerCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpEventBusRabbitMqModule))]

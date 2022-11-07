@@ -6,6 +6,7 @@ using AElfScan.AElf.Etos;
 using AElfScan.Grains.EventData;
 using AElfScan.Grains.Grain;
 using AElfScan.Options;
+using AElfScan.Providers;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -24,12 +25,14 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
     private readonly OrleansClientOption _orleansClientOption;
+    private readonly IBlockGrainProvider _blockGrainProvider;
 
     public BlockChainDataEventHandler(
         IClusterClient clusterClient,
         ILogger<BlockChainDataEventHandler> logger,
         IObjectMapper objectMapper,
         IOptionsSnapshot<OrleansClientOption> orleansClientOption,
+        IBlockGrainProvider blockGrainProvider,
         IDistributedEventBus distributedEventBus)
     {
         _clusterClient = clusterClient;
@@ -37,12 +40,14 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         _distributedEventBus = distributedEventBus;
         _objectMapper = objectMapper;
         _orleansClientOption = orleansClientOption.Value;
+        _blockGrainProvider = blockGrainProvider;
     }
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
         _logger.LogInformation($"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockNumber}, end block: {eventData.Blocks.Last().BlockNumber},");
-        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(_orleansClientOption.AElfBlockGrainPrimaryKey);
+        // var blockGrain = _clusterClient.GetGrain<IBlockGrain>(_orleansClientOption.AElfBlockGrainPrimaryKey);
+        var blockGrain = _blockGrainProvider.GetBlockGrain();
         foreach (var blockItem in eventData.Blocks)
         {
             var newBlockEto = ConvertToNewBlockEto(blockItem, eventData.ChainId);
@@ -72,9 +77,8 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                     await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                         { ConfirmBlocks = confirmBlockList });
                 }
-                
-                
             }
+            
         }
         await Task.CompletedTask;
     }

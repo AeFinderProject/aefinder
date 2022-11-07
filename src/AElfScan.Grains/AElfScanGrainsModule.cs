@@ -6,7 +6,7 @@ using Volo.Abp.Modularity;
 namespace AElfScan.Grains;
 
 [DependsOn(typeof(AElfScanDomainModule), typeof(AElfScanApplicationContractsModule))]
-public class AElfScanOrleansEventSourcingModule : AbpModule
+public class AElfScanGrainsModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {

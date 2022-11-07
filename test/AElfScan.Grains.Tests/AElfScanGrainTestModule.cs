@@ -5,9 +5,8 @@ using Volo.Abp.Modularity;
 namespace AElfScan.Grains;
 
 [DependsOn(
-    typeof(AElfScanOrleansEventSourcingModule),
     typeof(AElfScanDomainTestModule),
-    typeof(AElfScanOrleansEventSourcingModule)
+    typeof(AElfScanGrainsModule)
     )]
 public class AElfScanGrainTestModule : AbpModule
 {

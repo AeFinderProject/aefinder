@@ -11,7 +11,7 @@ namespace AElfScan;
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AElfScanApplicationModule),
     typeof(AElfScanEntityFrameworkCoreModule),
-    typeof(AElfScanOrleansEventSourcingModule))]
+    typeof(AElfScanGrainsModule))]
 public class AElfScanOrleansSiloModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
