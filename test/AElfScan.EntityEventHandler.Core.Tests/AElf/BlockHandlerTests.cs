@@ -15,23 +15,25 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
     private readonly IDistributedEventHandler<NewBlockEto> _newBlockEventHandler;
     private readonly IDistributedEventHandler<ConfirmBlocksEto> _confirmBlockEventHandler;
     private readonly INESTRepository<BlockIndex, string> _blockIndexRepository;
+    private readonly IMockDataHelper _mockDataHelper;
 
     public BlockHandlerTests()
     {
         _newBlockEventHandler = GetRequiredService<BlockHandler>();
         _confirmBlockEventHandler = GetRequiredService<BlockHandler>();
         _blockIndexRepository = GetRequiredService<INESTRepository<BlockIndex, string>>();
+        _mockDataHelper = GetRequiredService<MockDataHelper>();
     }
 
     [Fact]
     public async Task HandleEvent_NewBlock_Test10_11()
     {
         //Unit test 10
-        var newBlockEto_h1 = MockDataHelper.MockNewBlockEtoData(1, MockDataHelper.CreateBlockHash());
-        var newBlockEto_h2 = MockDataHelper.MockNewBlockEtoData(2, newBlockEto_h1.BlockHash);
-        var newBlockEto_h3 = MockDataHelper.MockNewBlockEtoData(3, newBlockEto_h2.BlockHash);
-        var newBlockEto_h4 = MockDataHelper.MockNewBlockEtoData(4, newBlockEto_h3.BlockHash);
-        var newBlockEto_h5 = MockDataHelper.MockNewBlockEtoData(5, newBlockEto_h4.BlockHash);
+        var newBlockEto_h1 = _mockDataHelper.MockNewBlockEtoData(1, _mockDataHelper.CreateBlockHash());
+        var newBlockEto_h2 = _mockDataHelper.MockNewBlockEtoData(2, newBlockEto_h1.BlockHash);
+        var newBlockEto_h3 = _mockDataHelper.MockNewBlockEtoData(3, newBlockEto_h2.BlockHash);
+        var newBlockEto_h4 = _mockDataHelper.MockNewBlockEtoData(4, newBlockEto_h3.BlockHash);
+        var newBlockEto_h5 = _mockDataHelper.MockNewBlockEtoData(5, newBlockEto_h4.BlockHash);
 
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h1);
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h2);
@@ -57,11 +59,11 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
         blockIndex_h5.ShouldNotBeNull();
         
         //Unit test 11
-        var newBlockEto_h6 = MockDataHelper.MockNewBlockEtoData(6, newBlockEto_h5.BlockHash);
-        var newBlockEto_h7 = MockDataHelper.MockNewBlockEtoData(7, newBlockEto_h6.BlockHash);
-        var newBlockEto_h8 = MockDataHelper.MockNewBlockEtoData(8, newBlockEto_h7.BlockHash);
-        var newBlockEto_h9 = MockDataHelper.MockNewBlockEtoData(newBlockEto_h8.BlockHash,9, newBlockEto_h8.BlockHash);
-        var newBlockEto_h10 = MockDataHelper.MockNewBlockEtoData(10, newBlockEto_h9.BlockHash);
+        var newBlockEto_h6 = _mockDataHelper.MockNewBlockEtoData(6, newBlockEto_h5.BlockHash);
+        var newBlockEto_h7 = _mockDataHelper.MockNewBlockEtoData(7, newBlockEto_h6.BlockHash);
+        var newBlockEto_h8 = _mockDataHelper.MockNewBlockEtoData(8, newBlockEto_h7.BlockHash);
+        var newBlockEto_h9 = _mockDataHelper.MockNewBlockEtoData(newBlockEto_h8.BlockHash,9, newBlockEto_h8.BlockHash);
+        var newBlockEto_h10 = _mockDataHelper.MockNewBlockEtoData(10, newBlockEto_h9.BlockHash);
         
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h6);
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h7);
@@ -86,9 +88,9 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
     [Fact]
     public async Task HandleEvent_NewBlock_Test12()
     {
-        var newBlockEto_h11 = MockDataHelper.MockNewBlockEtoData(11, MockDataHelper.CreateBlockHash());
-        var newBlockEto_h13 = MockDataHelper.MockNewBlockEtoData(13, MockDataHelper.CreateBlockHash());
-        var newBlockEto_h15 = MockDataHelper.MockNewBlockEtoData(15, MockDataHelper.CreateBlockHash());
+        var newBlockEto_h11 = _mockDataHelper.MockNewBlockEtoData(11, _mockDataHelper.CreateBlockHash());
+        var newBlockEto_h13 = _mockDataHelper.MockNewBlockEtoData(13, _mockDataHelper.CreateBlockHash());
+        var newBlockEto_h15 = _mockDataHelper.MockNewBlockEtoData(15, _mockDataHelper.CreateBlockHash());
         
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h11);
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h13);
@@ -111,19 +113,19 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
     public async Task HandleEvent_ConfirmBlock_Test13_14()
     {
         //Unit test 13
-        var newBlockEto_h21 = MockDataHelper.MockNewBlockEtoData(21, MockDataHelper.CreateBlockHash());
-        var newBlockEto_h22 = MockDataHelper.MockNewBlockEtoData(22, newBlockEto_h21.BlockHash);
-        var newBlockEto_h23 = MockDataHelper.MockNewBlockEtoData(23, newBlockEto_h22.BlockHash);
-        var newBlockEto_h24 = MockDataHelper.MockNewBlockEtoData(24, newBlockEto_h23.BlockHash);
-        var newBlockEto_h25 = MockDataHelper.MockNewBlockEtoData(25, newBlockEto_h24.BlockHash);
-        var newBlockEto_h26 = MockDataHelper.MockNewBlockEtoData(26, newBlockEto_h25.BlockHash);
-        var newBlockEto_h27 = MockDataHelper.MockNewBlockEtoData(27, newBlockEto_h26.BlockHash);
-        var newBlockEto_h27_fork = MockDataHelper.MockNewBlockEtoData(27, newBlockEto_h26.BlockHash);
-        var newBlockEto_h28 = MockDataHelper.MockNewBlockEtoData(28, newBlockEto_h27.BlockHash);
-        var newBlockEto_h28_fork = MockDataHelper.MockNewBlockEtoData(28, newBlockEto_h27.BlockHash);
-        var newBlockEto_h29 = MockDataHelper.MockNewBlockEtoData(29, newBlockEto_h28.BlockHash);
-        var newBlockEto_h29_fork = MockDataHelper.MockNewBlockEtoData(29, newBlockEto_h28.BlockHash);
-        var newBlockEto_h30 = MockDataHelper.MockNewBlockEtoData(30, newBlockEto_h29.BlockHash);
+        var newBlockEto_h21 = _mockDataHelper.MockNewBlockEtoData(21, _mockDataHelper.CreateBlockHash());
+        var newBlockEto_h22 = _mockDataHelper.MockNewBlockEtoData(22, newBlockEto_h21.BlockHash);
+        var newBlockEto_h23 = _mockDataHelper.MockNewBlockEtoData(23, newBlockEto_h22.BlockHash);
+        var newBlockEto_h24 = _mockDataHelper.MockNewBlockEtoData(24, newBlockEto_h23.BlockHash);
+        var newBlockEto_h25 = _mockDataHelper.MockNewBlockEtoData(25, newBlockEto_h24.BlockHash);
+        var newBlockEto_h26 = _mockDataHelper.MockNewBlockEtoData(26, newBlockEto_h25.BlockHash);
+        var newBlockEto_h27 = _mockDataHelper.MockNewBlockEtoData(27, newBlockEto_h26.BlockHash);
+        var newBlockEto_h27_fork = _mockDataHelper.MockNewBlockEtoData(27, newBlockEto_h26.BlockHash);
+        var newBlockEto_h28 = _mockDataHelper.MockNewBlockEtoData(28, newBlockEto_h27.BlockHash);
+        var newBlockEto_h28_fork = _mockDataHelper.MockNewBlockEtoData(28, newBlockEto_h27.BlockHash);
+        var newBlockEto_h29 = _mockDataHelper.MockNewBlockEtoData(29, newBlockEto_h28.BlockHash);
+        var newBlockEto_h29_fork = _mockDataHelper.MockNewBlockEtoData(29, newBlockEto_h28.BlockHash);
+        var newBlockEto_h30 = _mockDataHelper.MockNewBlockEtoData(30, newBlockEto_h29.BlockHash);
         
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h21);
         await _newBlockEventHandler.HandleEventAsync(newBlockEto_h22);
@@ -141,14 +143,14 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
         
         Thread.Sleep(2000);
 
-        var confirmBlockEto_h21 = MockDataHelper.MockConfirmBlockEtoData(newBlockEto_h21.BlockHash, 21);
-        var confirmBlockEto_h22 = MockDataHelper.MockConfirmBlockEtoData(newBlockEto_h22.BlockHash, 22);
-        var confirmBlockEto_h23 = MockDataHelper.MockConfirmBlockEtoData(newBlockEto_h23.BlockHash, 23);
-        var confirmBlockEto_h24 = MockDataHelper.MockConfirmBlockEtoData(newBlockEto_h24.BlockHash, 24);
-        var confirmBlockEto_h25 = MockDataHelper.MockConfirmBlockEtoData(newBlockEto_h25.BlockHash, 25);
-        var confirmBlockEto_h26 = MockDataHelper.MockConfirmBlockEtoData(newBlockEto_h26.BlockHash, 26);
-        var confirmBlockEto_h27 = MockDataHelper.MockConfirmBlockEtoData(newBlockEto_h27.BlockHash, 27);
-        var confirmBlockEto_h28 = MockDataHelper.MockConfirmBlockEtoData(newBlockEto_h28.BlockHash, 28);
+        var confirmBlockEto_h21 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h21);
+        var confirmBlockEto_h22 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h22);
+        var confirmBlockEto_h23 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h23);
+        var confirmBlockEto_h24 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h24);
+        var confirmBlockEto_h25 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h25);
+        var confirmBlockEto_h26 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h26);
+        var confirmBlockEto_h27 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h27);
+        var confirmBlockEto_h28 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h28);
 
         List<ConfirmBlockEto> confirmBlockEtoList = new List<ConfirmBlockEto>();
         confirmBlockEtoList.Add(confirmBlockEto_h21);
@@ -196,7 +198,7 @@ public class BlockHandlerTests:AElfScanEntityEventHandlerCoreTestBase
         
         
         //Unit test 14
-        var confirmBlockEto_h31 = MockDataHelper.MockConfirmBlockEtoData(MockDataHelper.CreateBlockHash(), 31);
+        var confirmBlockEto_h31 = _mockDataHelper.MockConfirmBlockEtoData(_mockDataHelper.CreateBlockHash(), 31);
         ConfirmBlocksEto confirmBlocks = new ConfirmBlocksEto()
         {
             ConfirmBlocks = new List<ConfirmBlockEto>(){confirmBlockEto_h31}

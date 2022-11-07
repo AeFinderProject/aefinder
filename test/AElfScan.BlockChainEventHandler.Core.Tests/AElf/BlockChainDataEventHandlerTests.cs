@@ -21,7 +21,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         _cluster = fixture.Cluster;
     }
 
-    private readonly int grainPrimaryKey = 50;
+    private readonly int grainPrimaryKey = 57;
 
     [Fact]
     public async Task HandleEvent_StorageLogic_Test1_2_3_4()

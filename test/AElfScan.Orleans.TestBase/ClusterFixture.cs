@@ -35,9 +35,9 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                 })
                 .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
                 {
-                    options.DataConnectionString = "localhost:6666"; // This is the deafult
+                    options.DataConnectionString = "localhost:6379"; // This is the deafult
                     options.UseJson = true;
-                    options.DatabaseNumber = 1;
+                    options.DatabaseNumber = 0;
                 }))
                 // .AddMemoryGrainStorageAsDefault()
                 .AddSnapshotStorageBasedLogConsistencyProviderAsDefault((op, name) => 
