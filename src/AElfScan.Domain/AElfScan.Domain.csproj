@@ -8,11 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AElf.Indexing.Elasticsearch\AElf.Indexing.Elasticsearch.csproj" />
     <ProjectReference Include="..\AElfScan.Domain.Shared\AElfScan.Domain.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AElf.Indexing.Elasticsearch" Version="0.0.6" />
     <PackageReference Include="Volo.Abp.Emailing" Version="6.0.0" />
     <PackageReference Include="Volo.Abp.Identity.Domain" Version="6.0.0" />
     <PackageReference Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="6.0.0" />

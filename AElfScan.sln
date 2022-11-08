@@ -57,8 +57,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.Grains.Tests", "te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfScan.Orleans.TestBase", "test\AElfScan.Orleans.TestBase\AElfScan.Orleans.TestBase.csproj", "{916C22E5-5CF6-42A1-9FA7-C7EDE233D813}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElf.Indexing.Elasticsearch", "src\AElf.Indexing.Elasticsearch\AElf.Indexing.Elasticsearch.csproj", "{1675683C-D046-4C92-9CE0-08CA9B8638BB}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -165,10 +163,6 @@ Global
 		{916C22E5-5CF6-42A1-9FA7-C7EDE233D813}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{916C22E5-5CF6-42A1-9FA7-C7EDE233D813}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{916C22E5-5CF6-42A1-9FA7-C7EDE233D813}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1675683C-D046-4C92-9CE0-08CA9B8638BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1675683C-D046-4C92-9CE0-08CA9B8638BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1675683C-D046-4C92-9CE0-08CA9B8638BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1675683C-D046-4C92-9CE0-08CA9B8638BB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -199,7 +193,6 @@ Global
 		{2172371A-2E9E-437D-8EBF-BE4FF6D0583B} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{00CA9094-16DA-47CB-8A69-D617802D8ED1} = {04DBDB01-70F4-4E06-B468-8F87850B22BE}
 		{916C22E5-5CF6-42A1-9FA7-C7EDE233D813} = {04DBDB01-70F4-4E06-B468-8F87850B22BE}
-		{1675683C-D046-4C92-9CE0-08CA9B8638BB} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {28315BFD-90E7-4E14-A2EA-F3D23AF4126F}
