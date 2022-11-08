@@ -40,10 +40,4 @@
       </PackageReference>
     </ItemGroup>
 
-    <ItemGroup>
-      <Orleans_CodeGenInputs Remove="TestInfrastructure\ClusterCollection.cs" />
-      <Orleans_CodeGenInputs Remove="TestInfrastructure\ClusterFixture.cs" />
-      <Orleans_CodeGenInputs Remove="TestInfrastructure\EventStoreGrainEventStorage.cs" />
-    </ItemGroup>
-
 </Project>

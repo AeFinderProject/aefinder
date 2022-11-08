@@ -27,11 +27,4 @@
     <PackageReference Include="Volo.Abp.SettingManagement.Application.Contracts" Version="6.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Orleans_CodeGenInputs Remove="Chains\ChainStatusDto.cs" />
-    <Orleans_CodeGenInputs Remove="Chains\IChainGrain.cs" />
-    <Orleans_CodeGenInputs Remove="Orleans\IClusterClientAppService.cs" />
-    <Orleans_CodeGenInputs Remove="Orleans\IHello.cs" />
-  </ItemGroup>
-
 </Project>

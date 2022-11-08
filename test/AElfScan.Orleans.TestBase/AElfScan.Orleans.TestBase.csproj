@@ -35,8 +35,4 @@
       <ProjectReference Include="..\AElfScan.TestBase\AElfScan.TestBase.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Orleans_CodeGenInputs Remove="Providers\TestBlockGrainProvider.cs" />
-    </ItemGroup>
-
 </Project>
