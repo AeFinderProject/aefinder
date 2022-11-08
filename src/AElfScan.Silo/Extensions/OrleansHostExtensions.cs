@@ -41,7 +41,7 @@ public static class OrleansHostExtensions
                     opt.ConnectionString = configSection.GetValue<string>("ClusterDbConnection");
                     opt.Database = configSection.GetValue<int>("ClusterDbNumber");
                 })
-                .ConfigureEndpoints(siloPort: configSection.GetValue<int>("SiloPort"), gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
+                .ConfigureEndpoints(advertisedIP:IPAddress.Parse(configSection.GetValue<string>("AdvertisedIP")),siloPort: configSection.GetValue<int>("SiloPort"), gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
                 // .UseLocalhostClustering()
                 // .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
                 // .AddMongoDBGrainStorage("Default",(MongoDBGrainStorageOptions op) =>
