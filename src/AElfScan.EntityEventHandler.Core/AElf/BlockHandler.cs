@@ -55,16 +55,11 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             foreach (var transaction in eventData.Transactions)
             {
                 var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
-                transactionIndex.Id = GetTransactionIndexId(eventData.BlockHash, transaction.TransactionId);
-                // await _transactionIndexRepository.AddOrUpdateAsync(transactionIndex);
                 transactionIndexList.Add(transactionIndex);
 
                 foreach (var logEvent in transaction.LogEvents)
                 {
                     var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
-                    logEventIndex.Id =
-                        GetLogEventIndexId(eventData.BlockHash, transaction.TransactionId, logEvent.Index);
-                    // await _logEventIndexRepository.AddOrUpdateAsync(logEventIndex);
                     logEventIndexList.Add(logEventIndex);
                 }
             }
@@ -104,28 +99,22 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             }
 
             confirmBlockIndexList.Add(blockIndex);
-            // await _blockIndexRepository.UpdateAsync(blockIndex);
             indexes.Add(blockIndex);
 
             foreach (var transaction in confirmBlock.Transactions)
             {
                 var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
-                transactionIndex.Id = GetTransactionIndexId(confirmBlock.BlockHash, transaction.TransactionId);
                 transactionIndex.IsConfirmed = true;
                 foreach (var logEvent in transactionIndex.LogEvents)
                 {
                     logEvent.IsConfirmed = true;
                 }
-                // await _transactionIndexRepository.UpdateAsync(transactionIndex);
                 confirmTransactionIndexList.Add(transactionIndex);
 
                 foreach (var logEvent in transaction.LogEvents)
                 {
                     var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
-                    logEventIndex.Id =
-                        GetLogEventIndexId(confirmBlock.BlockHash, transaction.TransactionId, logEvent.Index);
                     logEventIndex.IsConfirmed = true;
-                    // await _logEventIndexRepository.UpdateAsync(logEventIndex);
                     confirmLogEventIndexList.Add(logEventIndex);
                 }
             }
@@ -153,19 +142,15 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
                 }
 
                 forkBlockIndexList.Add(forkBlock);
-                // await _blockIndexRepository.DeleteAsync(forkBlock);
                 // _logger.LogInformation($"block {forkBlock.BlockHash} has been deleted.");
                 foreach (var transaction in forkBlock.Transactions)
                 {
                     var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
-                    transactionIndex.Id = GetTransactionIndexId(confirmBlock.BlockHash,transaction.TransactionId);
                     forkTransactionIndexList.Add(transactionIndex);
                     
                     foreach (var logEvent in transaction.LogEvents)
                     {
                         var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
-                        logEventIndex.Id = GetLogEventIndexId(confirmBlock.BlockHash, transaction.TransactionId,
-                            logEvent.Index);
                         forkLogEventIndexList.Add(logEventIndex);
                     }
                 }
@@ -197,15 +182,6 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         
         _ = Task.Run(async () => { await _blockIndexHandler.ProcessConfirmBlocksAsync(indexes); });
     }
-
-    private string GetTransactionIndexId(string blockHash,string transactionId)
-    {
-        return blockHash + "_" + transactionId;
-    }
-
-    private string GetLogEventIndexId(string blockHash, string transactionId, int index)
-    {
-        return blockHash + "_" + transactionId + "_" + index;
-    }
+    
     
 }
