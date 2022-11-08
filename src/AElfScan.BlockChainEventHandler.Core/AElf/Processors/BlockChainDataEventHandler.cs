@@ -1,15 +1,10 @@
 using AElf.Contracts.Consensus.AEDPoS;
-using AElf.CSharp.Core.Extension;
 using AElfScan.AElf.DTOs;
-using AElfScan.AElf.Entities.Es;
 using AElfScan.AElf.Etos;
 using AElfScan.Grains.EventData;
-using AElfScan.Grains.Grain;
-using AElfScan.Options;
 using AElfScan.Providers;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Orleans;
 using Volo.Abp.DependencyInjection;
@@ -24,14 +19,12 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private readonly ILogger<BlockChainDataEventHandler> _logger;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
-    private readonly OrleansClientOption _orleansClientOption;
     private readonly IBlockGrainProvider _blockGrainProvider;
 
     public BlockChainDataEventHandler(
         IClusterClient clusterClient,
         ILogger<BlockChainDataEventHandler> logger,
         IObjectMapper objectMapper,
-        IOptionsSnapshot<OrleansClientOption> orleansClientOption,
         IBlockGrainProvider blockGrainProvider,
         IDistributedEventBus distributedEventBus)
     {
@@ -39,7 +32,6 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         _logger = logger;
         _distributedEventBus = distributedEventBus;
         _objectMapper = objectMapper;
-        _orleansClientOption = orleansClientOption.Value;
         _blockGrainProvider = blockGrainProvider;
     }
 
@@ -80,7 +72,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             }
             
         }
-        await Task.CompletedTask;
+
     }
 
     private long AnalysisBlockLibFoundEvent(string logEventIndexed)

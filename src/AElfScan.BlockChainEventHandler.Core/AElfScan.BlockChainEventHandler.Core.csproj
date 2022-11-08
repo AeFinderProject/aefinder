@@ -22,6 +22,7 @@
 
     <ItemGroup>
       <Orleans_CodeGenInputs Remove="AElf\Mappers\BlockMapper.cs" />
+      <Orleans_CodeGenInputs Remove="Orleans\Options\OrleansClientOption.cs" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,5 @@
 using AElfScan.AElf.DTOs;
 using AElfScan.Grains;
-using AElfScan.Options;
 using AElfScan.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,7 +26,6 @@ public class AElfScanBlockChainEventHandlerModule:AbpModule
         var configuration = context.Services.GetConfiguration();
         // context.Services.AddHostedService<AElfScanClusterClientHostedService>();
         
-        Configure<OrleansClientOption>(configuration.GetSection("OrleansClient"));
         context.Services.AddSingleton<AElfScanClusterClientHostedService>();
         context.Services.AddSingleton<IHostedService>(sp => sp.GetService<AElfScanClusterClientHostedService>());
         context.Services.AddSingleton<IClusterClient>(sp => sp.GetService<AElfScanClusterClientHostedService>().OrleansClient);

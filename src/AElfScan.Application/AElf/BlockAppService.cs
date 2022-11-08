@@ -31,8 +31,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         _logEventIndexRepository = logEventIndexRepository;
         _apiOptions = apiOptions.Value;
     }
-
-    // [Authorize]
+    
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
         if ((input.EndBlockNumber - input.StartBlockNumber) > _apiOptions.BlockQueryAmountInterval)
@@ -132,8 +131,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         
         return resultList;
     }
-
-    // [Authorize]
+    
     public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
     {
         if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.BlockQueryAmountInterval)
@@ -222,8 +220,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
         return resultList;
     }
-
-    // [Authorize]
+    
     public async Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
     {
         if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.BlockQueryAmountInterval)
