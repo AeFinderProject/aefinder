@@ -7,11 +7,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Volo.Abp.Autofac" Version="5.3.4" />
+      <ProjectReference Include="..\AElfScan.Domain\AElfScan.Domain.csproj" />
+      <ProjectReference Include="..\AElfScan.Grains\AElfScan.Grains.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\AElfScan.Application\AElfScan.Application.csproj" />
+      <PackageReference Include="AElf.CSharp.Core" Version="1.2.1" />
+      <PackageReference Include="Microsoft.Orleans.Client" Version="3.6.5" />
+      <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
     </ItemGroup>
 
 </Project>

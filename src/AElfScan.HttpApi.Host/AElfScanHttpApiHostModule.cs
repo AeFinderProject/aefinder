@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -11,13 +12,20 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using AElfScan.EntityFrameworkCore;
+using AElfScan.Grains;
 using AElfScan.MultiTenancy;
+using AElfScan.Orleans;
+using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
+using Orleans;
+using Orleans.Configuration;
+using Orleans.Hosting;
+using Orleans.Streams;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy;
-using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
@@ -25,6 +33,7 @@ using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
+using Volo.Abp.Threading;
 using Volo.Abp.VirtualFileSystem;
 
 namespace AElfScan;
@@ -54,6 +63,7 @@ public class AElfScanHttpApiHostModule : AbpModule
         ConfigureDataProtection(context, configuration, hostingEnvironment);
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
+        ConfigureOrleans(context, configuration);
     }
 
     private void ConfigureCache(IConfiguration configuration)
@@ -118,6 +128,30 @@ public class AElfScanHttpApiHostModule : AbpModule
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
             });
+    }
+
+    private static void ConfigureOrleans(ServiceConfigurationContext context, IConfiguration configuration)
+    {
+        context.Services.AddSingleton<IClusterClient>(o =>
+        {
+            return new ClientBuilder()
+                .ConfigureDefaults()
+                .UseRedisClustering(opt =>
+                {
+                    opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
+                    opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
+                })
+                .Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = configuration["Orleans:ClusterId"];
+                    options.ServiceId = configuration["Orleans:ServiceId"];
+                })
+                .ConfigureApplicationParts(parts =>
+                    parts.AddApplicationPart(typeof(AElfScanGrainsModule).Assembly).WithReferences())
+                .AddSimpleMessageStreamProvider(AElfScanApplicationConsts.MessageStreamName)
+                .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
+                .Build();
+        });
     }
 
     private void ConfigureLocalization()
@@ -220,5 +254,24 @@ public class AElfScanHttpApiHostModule : AbpModule
         app.UseAbpSerilogEnrichers();
         app.UseUnitOfWork();
         app.UseConfiguredEndpoints();
+
+        StartOrleans(context.ServiceProvider);
+    }
+    
+    public override void OnApplicationShutdown(ApplicationShutdownContext context)
+    {
+        StopOrleans(context.ServiceProvider);
+    }
+
+    private static void StartOrleans(IServiceProvider serviceProvider)
+    {
+        var client = serviceProvider.GetRequiredService<IClusterClient>();
+        AsyncHelper.RunSync(async ()=> await client.Connect());
+    }
+
+    private static void StopOrleans(IServiceProvider serviceProvider)
+    {
+        var client = serviceProvider.GetRequiredService<IClusterClient>();
+        AsyncHelper.RunSync(client.Close);
     }
 }

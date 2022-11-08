@@ -1,7 +1,12 @@
-using AElfScan.AElf;
+using System.Security.Cryptography;
+using AElfScan.Grains;
 using AElfScan.Orleans;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Orleans;
+using Orleans.Configuration;
+using Orleans.Hosting;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
@@ -22,19 +27,16 @@ namespace AElfScan;
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
     typeof(AbpSettingManagementApplicationModule),
-    typeof(AElfScanOrleansEventSourcingModule)
-    )]
+    typeof(AElfScanGrainsModule)
+)]
 public class AElfScanApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        Configure<AbpAutoMapperOptions>(options =>
-        {
-            options.AddMaps<AElfScanApplicationModule>();
-        });
-        
-        context.Services.AddSingleton<IAElfAppService, AElfTestAppService>();
-        context.Services.AddSingleton<IOrleansClusterClientFactory, OrleansClientFactory>();
+        Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AElfScanApplicationModule>(); });
+
+        var configuration = context.Services.GetConfiguration();
+        Configure<ApiOptions>(configuration.GetSection("Api"));
     }
 }
 

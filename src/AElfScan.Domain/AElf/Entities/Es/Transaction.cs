@@ -1,32 +1,35 @@
 using System;
 using System.Collections.Generic;
+using Nest;
 
 namespace AElfScan.AElf.Entities.Es;
 
 public class Transaction:IBlockchainData
 {
-    public string TransactionId { get; set; }
+    [Keyword]public string TransactionId { get; set; }
     
-    public string ChainId { get; set; }
+    [Keyword]public string ChainId { get; set; }
     
-    public string From { get; set; }
+    [Keyword]public string From { get; set; }
     
-    public string To { get; set; }
+    [Keyword]public string To { get; set; }
     
-    public string BlockHash { get; set; }
+    [Keyword]public string BlockHash { get; set; }
     
+    [Keyword]public string PreviousBlockHash { get; set; }
     public long BlockNumber { get; set; }
     
     public DateTime BlockTime { get; set; }
     
-    public string MethodName { get; set; }
+    [Keyword]public string MethodName { get; set; }
     
+    [Text(Index = false)]
     public string Params { get; set; }
     
-    public string Signature { get; set; }
+    [Keyword]public string Signature { get; set; }
     
     /// <summary>
-    /// 交易在区块内的排序位置
+    /// The ranking position of transactions within a block
     /// </summary>
     public int Index{get;set;}
     
@@ -36,5 +39,6 @@ public class Transaction:IBlockchainData
     
     public Dictionary<string,string> ExtraProperties {get;set;}
     
+    [Nested(Name = "LogEvents",Enabled = true,IncludeInParent = true)]
     public List<LogEvent> LogEvents{get;set;}
 }

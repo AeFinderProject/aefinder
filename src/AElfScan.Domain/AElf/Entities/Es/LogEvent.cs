@@ -1,38 +1,31 @@
 using System;
 using System.Collections.Generic;
+using Nest;
 
 namespace AElfScan.AElf.Entities.Es;
 
 public class LogEvent:IBlockchainData
 {
-    public string ChainId { get; set; }
-    /// <summary>
-    /// 区块Hash
-    /// </summary>
-    public string BlockHash { get; set; }
+    [Keyword]public string ChainId { get; set; }
+
+    [Keyword]public string BlockHash { get; set; }
     
-    /// <summary>
-    /// 区块高度
-    /// </summary>
+    [Keyword]public string PreviousBlockHash { get; set; }
     public long BlockNumber { get; set; }
     
-    /// <summary>
-    /// 交易Id
-    /// </summary>
-    public string TransactionId { get; set; }
-    
     public DateTime BlockTime { get; set; }
+    [Keyword]public string TransactionId { get; set; }
+
+    [Keyword]public string ContractAddress { get; set; }
     
-    public string ContractAddress { get; set; }
-    
-    public string EventName { get; set; }
+    [Keyword]public string EventName { get; set; }
     
     /// <summary>
-    /// 事件在交易内的排序位置 or Block内的排序位置？
+    /// The ranking position of the event within the transaction
     /// </summary>
     public int Index { get; set; }
     
     public bool IsConfirmed{get;set;}
-    
+
     public Dictionary<string,string> ExtraProperties {get;set;}
 }
