@@ -14,12 +14,12 @@ public class TestBlockGrainProvider: AElfScanTestBase<AElfScanOrleansTestBaseMod
     {
         _clusterClient = GetRequiredService<ClusterFixture>().Cluster.Client;
     }
-    
-    public IBlockGrain GetBlockGrain()
+
+    public async Task<IBlockGrain> GetBlockGrain(string chainId, int blockCount)
     {
         if (_blockGrain == null)
         {
-            _blockGrain = _clusterClient.GetGrain<IBlockGrain>(1);
+            _blockGrain = _clusterClient.GetGrain<IBlockGrain>("AELF_0");
         }
 
         return _blockGrain;

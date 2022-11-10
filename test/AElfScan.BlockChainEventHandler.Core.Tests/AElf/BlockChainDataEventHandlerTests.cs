@@ -62,7 +62,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h84);
 
         // var grain = Cluster.Client.GetGrain<IBlockGrain>(grainPrimaryKey);
-        var grain = _blockGrainProvider.GetBlockGrain();
+        var grain = await _blockGrainProvider.GetBlockGrain("AELF",0);
         var blockDictionary = await grain.GetBlockDictionary();
         
         blockDictionary.ShouldContainKey(blockChainDataEto_h81.Blocks[0].BlockHash);//Unit test 1
@@ -140,7 +140,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         
         
         // var grain = Cluster.Client.GetGrain<IBlockGrain>(grainPrimaryKey);
-        var grain = _blockGrainProvider.GetBlockGrain();
+        var grain = await _blockGrainProvider.GetBlockGrain("AELF",0);
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)
@@ -198,7 +198,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h111);
 
         // var grain = Cluster.Client.GetGrain<IBlockGrain>(grainPrimaryKey);
-        var grain = _blockGrainProvider.GetBlockGrain();
+        var grain = await _blockGrainProvider.GetBlockGrain("AELF",0);
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)
@@ -278,7 +278,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h121);
 
         // var grain = Cluster.Client.GetGrain<IBlockGrain>(grainPrimaryKey);
-        var grain = _blockGrainProvider.GetBlockGrain();
+        var grain = await _blockGrainProvider.GetBlockGrain("AELF",0);
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)

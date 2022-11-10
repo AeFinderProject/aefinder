@@ -53,5 +53,10 @@ public class BlockState
 
         return null;
     }
+
+    public void Apply(KeyValuePair<string,BlockEventData> keyValueEvent)
+    {
+        Blocks.Add(keyValueEvent.Key,keyValueEvent.Value);
+    }
     
 }

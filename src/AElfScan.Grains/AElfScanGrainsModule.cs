@@ -12,6 +12,7 @@ public class AElfScanGrainsModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         Configure<BlockScanOptions>(configuration.GetSection("BlockScan"));
+        Configure<PrimaryKeyOptions>(configuration.GetSection("GrainPrimaryKey"));
 
         context.Services.AddSingleton<IBlockGrain, BlockGrain>();
 

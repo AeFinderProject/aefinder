@@ -15,7 +15,9 @@ public class AElfScanApplicationTestModule : AbpModule
 
         context.Services.Configure<ApiOptions>(o =>
         {
-            o.BlockQueryAmountInterval = 1000;
+            o.BlockQueryHeightInterval = 1000;
+            o.TransactionQueryHeightInterval = 100;
+            o.LogEventQueryHeightInterval = 100;
         });
 
     }
