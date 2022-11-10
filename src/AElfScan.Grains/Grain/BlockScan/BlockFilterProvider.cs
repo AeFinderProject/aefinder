@@ -54,13 +54,10 @@ public class BlockFilterProvider : IBlockFilterProvider
             }
         }
 
-        return (from block in blocks
-            from transaction in block.Transactions
-            from logEvent in transaction.LogEvents
-            where (contractAddressFilter.Count > 0 &&
-                   contractAddressFilter.Contains(logEvent.ContractAddress)) ||
-                  (logEventFilter.Count > 0 &&
-                   logEventFilter.Contains(logEvent.ContractAddress + logEvent.EventName))
-            select block).ToList();
+        return blocks.Where(block => block.Transactions.Any(transaction => transaction.LogEvents.Any(logEvent =>
+            (contractAddressFilter.Count > 0 &&
+             contractAddressFilter.Contains(logEvent.ContractAddress)) ||
+            (logEventFilter.Count > 0 &&
+             logEventFilter.Contains(logEvent.ContractAddress + logEvent.EventName))))).ToList();
     }
 }
