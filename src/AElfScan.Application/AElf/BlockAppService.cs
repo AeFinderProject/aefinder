@@ -34,9 +34,9 @@ public class BlockAppService:ApplicationService,IBlockAppService
     
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
-        if ((input.EndBlockNumber - input.StartBlockNumber) > _apiOptions.BlockQueryAmountInterval)
+        if ((input.EndBlockNumber - input.StartBlockNumber) > _apiOptions.BlockQueryHeightInterval)
         {
-            input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
+            input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryHeightInterval;
         }
 
         var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
@@ -93,7 +93,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
                         .Query(qq => qq.Bool(b => b.Must(mustQuery))));
             
             var list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockNumber,
-                sortType:SortOrder.Ascending);
+                sortType:SortOrder.Ascending,limit:int.MaxValue);
             items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
         }
         else
@@ -111,7 +111,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
             QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
             
             var list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockNumber,
-                sortType:SortOrder.Ascending);
+                sortType:SortOrder.Ascending,limit:int.MaxValue);
             items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
         }
 
@@ -134,9 +134,9 @@ public class BlockAppService:ApplicationService,IBlockAppService
     
     public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
     {
-        if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.BlockQueryAmountInterval)
+        if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.TransactionQueryHeightInterval)
         {
-            input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
+            input.EndBlockNumber = input.StartBlockNumber + _apiOptions.TransactionQueryHeightInterval;
         }
 
         var mustQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
@@ -193,7 +193,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
             Func<SortDescriptor<TransactionIndex>, IPromise<IList<ISort>>> sort = s =>
                 s.Ascending(a => a.BlockNumber).Ascending(d => d.Index);
             
-            var list = await _transactionIndexRepository.GetSortListAsync(Filter, sortFunc:sort);
+            var list = await _transactionIndexRepository.GetSortListAsync(Filter, sortFunc:sort,limit:int.MaxValue);
             resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list.Item2);
         }
         else
@@ -212,7 +212,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
             Func<SortDescriptor<TransactionIndex>, IPromise<IList<ISort>>> sort = s =>
                 s.Ascending(a => a.BlockNumber).Ascending(d => d.Index);
             
-            var list = await _transactionIndexRepository.GetSortListAsync(Filter,sortFunc:sort);
+            var list = await _transactionIndexRepository.GetSortListAsync(Filter,sortFunc:sort,limit:int.MaxValue);
 
             resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list.Item2);
         }
@@ -223,9 +223,9 @@ public class BlockAppService:ApplicationService,IBlockAppService
     
     public async Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
     {
-        if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.BlockQueryAmountInterval)
+        if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.LogEventQueryHeightInterval)
         {
-            input.EndBlockNumber = input.StartBlockNumber + _apiOptions.BlockQueryAmountInterval;
+            input.EndBlockNumber = input.StartBlockNumber + _apiOptions.LogEventQueryHeightInterval;
         }
         
         var sortFuncs = new List<Func<SortDescriptor<TransactionIndex>, IPromise<IList<ISort>>>>();
@@ -286,7 +286,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         Func<SortDescriptor<LogEventIndex>, IPromise<IList<ISort>>> sort = s =>
             s.Ascending(a => a.BlockNumber).Ascending(d => d.Index);
 
-        var list = await _logEventIndexRepository.GetSortListAsync(Filter, sortFunc: sort);
+        var list = await _logEventIndexRepository.GetSortListAsync(Filter, sortFunc: sort,limit:int.MaxValue);
 
         resultList = ObjectMapper.Map<List<LogEventIndex>, List<LogEventDto>>(list.Item2);
         

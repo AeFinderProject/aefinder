@@ -6,7 +6,7 @@ namespace AElfScan.Providers;
 
 public interface IBlockGrainProvider
 {
-    IBlockGrain GetBlockGrain();
+    Task<IBlockGrain> GetBlockGrain(string chainId, int blockCount);
 }
 
 public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
@@ -18,8 +18,23 @@ public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
         _clusterClient = clusterClient;
     }
 
-    public IBlockGrain GetBlockGrain()
+    public async Task<IBlockGrain> GetBlockGrain(string chainId,int blocksCount)
     {
-        return _clusterClient.GetGrain<IBlockGrain>(1);
+        var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(chainId + "BlockGrainPrimaryKey");
+        var currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
+        var primaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId, blocksCount);
+        
+        if (currentPrimaryKey == primaryKey)
+        {
+            return _clusterClient.GetGrain<IBlockGrain>(currentPrimaryKey);
+        }
+
+        var oldGrain = _clusterClient.GetGrain<IBlockGrain>(currentPrimaryKey);
+        var blocksDictionary =  await oldGrain.GetBlockDictionary();
+        
+        var newGrain = _clusterClient.GetGrain<IBlockGrain>(primaryKey);
+        await newGrain.InitializeStateAsync(blocksDictionary);
+        
+        return newGrain;
     }
 }

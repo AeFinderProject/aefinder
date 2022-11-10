@@ -39,7 +39,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     {
         _logger.LogInformation($"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockNumber}, end block: {eventData.Blocks.Last().BlockNumber},");
         // var blockGrain = _clusterClient.GetGrain<IBlockGrain>(_orleansClientOption.AElfBlockGrainPrimaryKey);
-        var blockGrain = _blockGrainProvider.GetBlockGrain();
+        var blockGrain = await _blockGrainProvider.GetBlockGrain(eventData.ChainId, eventData.Blocks.Count);
         foreach (var blockItem in eventData.Blocks)
         {
             var newBlockEto = ConvertToNewBlockEto(blockItem, eventData.ChainId);
@@ -63,6 +63,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                 
                 if (libBlockList.Count > 0)
                 {
+                    libBlockList = libBlockList.OrderBy(b => b.BlockNumber).ToList();
                     //publish confirm blocks event
                     var confirmBlockList =
                         _objectMapper.Map<List<BlockEventData>, List<ConfirmBlockEto>>(libBlockList);
