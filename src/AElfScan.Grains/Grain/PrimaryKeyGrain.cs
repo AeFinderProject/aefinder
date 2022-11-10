@@ -14,8 +14,8 @@ public class PrimaryKeyGrain: global::Orleans.Grain<PrimaryKeyState>, IPrimaryKe
     
     public override Task OnActivateAsync()
     {
-        this.State.SwitchInterval = _primaryKeyOptions.BlockGrainSwitchInterval;
         this.ReadStateAsync();
+        this.State.SwitchInterval = _primaryKeyOptions.BlockGrainSwitchInterval;
         return base.OnActivateAsync();
     }
     
@@ -36,6 +36,7 @@ public class PrimaryKeyGrain: global::Orleans.Grain<PrimaryKeyState>, IPrimaryKe
         {
             this.State.GrainPrimaryKey = this.State.GrainPrimaryKey + 1;
             this.State.Counter = 0;
+            await WriteStateAsync();
             return chainId + "_" + this.State.GrainPrimaryKey;
         }
 

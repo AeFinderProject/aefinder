@@ -20,7 +20,7 @@ public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
 
     public async Task<IBlockGrain> GetBlockGrain(string chainId,int blocksCount)
     {
-        var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(chainId);
+        var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(chainId + "BlockGrainPrimaryKey");
         var currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
         var primaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId, blocksCount);
         
