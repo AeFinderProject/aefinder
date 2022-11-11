@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AElfScan.AElf.Dtos;
+using AElfScan.Block.Dtos;
 using Volo.Abp.DependencyInjection;
 
 namespace AElfScan.Grains.BlockScan;

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using AElfScan.AElf.Dtos;
+using AElfScan.Block.Dtos;
 
 namespace AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 

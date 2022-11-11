@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AElfScan.AElf.Dtos;
+using AElfScan.Block.Dtos;
 using AElfScan.Grains.Grain.BlockScan;
 using AElfScan.Grains.State.BlockScan;
 using Shouldly;

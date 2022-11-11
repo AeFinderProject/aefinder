@@ -1,5 +1,5 @@
 using System;
-using AElfScan.AElf;
+using AElfScan.Block;
 using AElfScan.Grains.BlockScan;
 using AElfScan.Grains.Grain.BlockScan;
 using Microsoft.Extensions.Configuration;

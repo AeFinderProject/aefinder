@@ -20,7 +20,5 @@ public class AElfScanBlockChainEventHandlerCoreModule:AbpModule
             //Add all mappings defined in the assembly of the MyModule class
             options.AddMaps<AElfScanBlockChainEventHandlerCoreModule>();
         });
-
-
     }
 }

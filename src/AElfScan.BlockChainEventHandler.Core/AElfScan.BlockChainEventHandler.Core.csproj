@@ -20,4 +20,15 @@
       </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+      <Orleans_CodeGenInputs Remove="AElf\Generated\Acs1.c.cs" />
+      <Orleans_CodeGenInputs Remove="AElf\Generated\Acs1.g.cs" />
+      <Orleans_CodeGenInputs Remove="AElf\Generated\Acs4.c.cs" />
+      <Orleans_CodeGenInputs Remove="AElf\Generated\Acs4.g.cs" />
+      <Orleans_CodeGenInputs Remove="AElf\Generated\AedposContractc.cs" />
+      <Orleans_CodeGenInputs Remove="AElf\Generated\AedposContractg.cs" />
+      <Orleans_CodeGenInputs Remove="AElf\Generated\AuthorityInfo.g.cs" />
+      <Orleans_CodeGenInputs Remove="AElf\Processors\BlockChainDataEventHandler.cs" />
+    </ItemGroup>
+
 </Project>

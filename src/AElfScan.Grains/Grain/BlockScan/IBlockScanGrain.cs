@@ -1,4 +1,4 @@
-using AElfScan.AElf.Dtos;
+using AElfScan.Block.Dtos;
 using Orleans;
 
 namespace AElfScan.Grains.Grain.BlockScan;

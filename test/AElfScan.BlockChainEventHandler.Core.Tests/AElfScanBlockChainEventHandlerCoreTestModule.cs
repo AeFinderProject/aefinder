@@ -1,5 +1,5 @@
-using AElfScan.AElf.DTOs;
-using AElfScan.AElf.Processors;
+using AElfScan.DTOs;
+using AElfScan.Processors;
 using AElfScan.Orleans.TestBase;
 using AElfScan.Providers;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,7 +1,7 @@
 using System.Runtime.Serialization;
-using AElfScan.AElf.Dtos;
-using AElfScan.AElf.Entities.Es;
-using AElfScan.AElf.Etos;
+using AElfScan.Block.Dtos;
+using AElfScan.Entities.Es;
+using AElfScan.Etos;
 using AElfScan.Grains.Grain.BlockScan;
 using AElfScan.Grains.Grain.Chains;
 using AElfScan.Orleans;

@@ -1,4 +1,4 @@
-using AElfScan.AElf.Dtos;
+using AElfScan.Block.Dtos;
 using AElfScan.Grains.Grain.Chains;
 using AElfScan.Grains.State.BlockScan;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;

@@ -1,4 +1,4 @@
-using AElfScan.AElf.Dtos;
+using AElfScan.Block.Dtos;
 
 namespace AElfScan.Grains.State.BlockScan;
 

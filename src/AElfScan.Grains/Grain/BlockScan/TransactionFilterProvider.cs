@@ -1,5 +1,5 @@
-using AElfScan.AElf;
-using AElfScan.AElf.Dtos;
+using AElfScan.Block;
+using AElfScan.Block.Dtos;
 
 namespace AElfScan.Grains.Grain.BlockScan;
 

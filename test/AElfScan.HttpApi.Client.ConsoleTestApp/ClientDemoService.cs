@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AElfScan.AElf.Dtos;
-using AElfScan.AElf.Entities.Es;
+using AElfScan.Block.Dtos;
+using AElfScan.Entities.Es;
 using AElfScan.Grains.State.BlockScan;
 using AElfScan.Orleans.EventSourcing.Grain.BlockScan;
 using Volo.Abp.Account;

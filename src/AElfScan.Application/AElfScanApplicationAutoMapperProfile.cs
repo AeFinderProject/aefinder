@@ -1,5 +1,5 @@
-using AElfScan.AElf.Dtos;
-using AElfScan.AElf.Entities.Es;
+using AElfScan.Block.Dtos;
+using AElfScan.Entities.Es;
 using AutoMapper;
 using Volo.Abp.AutoMapper;
 
