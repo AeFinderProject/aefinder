@@ -15,7 +15,7 @@ public class TestBlockGrainProvider: AElfScanTestBase<AElfScanOrleansTestBaseMod
         _clusterClient = GetRequiredService<ClusterFixture>().Cluster.Client;
     }
 
-    public async Task<IBlockGrain> GetBlockGrain(string chainId, int blockCount)
+    public async Task<IBlockGrain> GetBlockGrain(string chainId)
     {
         if (_blockGrain == null)
         {
