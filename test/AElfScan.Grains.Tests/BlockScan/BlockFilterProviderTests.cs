@@ -19,7 +19,7 @@ public class BlockFilterProviderTests : AElfScanGrainTestBase
     }
 
     [Fact]
-    public async Task FilterBlocks_RepeatedEvent_Test()
+    public async Task FilterBlocksTest()
     {
         var block = MockBlock();
         var filter = new List<FilterContractEventInput>
@@ -28,6 +28,14 @@ public class BlockFilterProviderTests : AElfScanGrainTestBase
             {
                 ContractAddress = "ContractAddress",
                 EventNames = new List<string> { "EventName" }
+            }
+        };
+        
+        var filterOnlyContractAddress = new List<FilterContractEventInput>
+        {
+            new FilterContractEventInput
+            {
+                ContractAddress = "ContractAddress2"
             }
         };
         
@@ -40,39 +48,84 @@ public class BlockFilterProviderTests : AElfScanGrainTestBase
             }
         };
 
-        var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Block);
-        
-        var filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filter);
-        filteredBlock.Count.ShouldBe(1);
-        filteredBlock[0].Transactions.Count().ShouldBe(2);
-        filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(3);
-        filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
-        
-        filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterNotExist);
-        filteredBlock.Count.ShouldBe(0);
-        
-        var transactionFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Transaction);
-        
-        filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filter);
-        filteredBlock.Count.ShouldBe(1);
-        filteredBlock[0].Transactions.Count().ShouldBe(2);
-        filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(3);
-        filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
-        
-        filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterNotExist);
-        filteredBlock.Count.ShouldBe(0);
-        
-        var logEventFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.LogEvent);
-        
-        filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filter);
-        filteredBlock.Count.ShouldBe(1);
-        filteredBlock.Count.ShouldBe(1);
-        filteredBlock[0].Transactions.Count().ShouldBe(2);
-        filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(2);
-        filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
-        
-        filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterNotExist);
-        filteredBlock.Count.ShouldBe(0);
+        {
+            var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Block);
+
+            var filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, null);
+            filteredBlock.Count.ShouldBe(1);
+
+            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block },
+                new List<FilterContractEventInput>());
+            filteredBlock.Count.ShouldBe(1);
+
+            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filter);
+            filteredBlock.Count.ShouldBe(1);
+            filteredBlock[0].Transactions.Count().ShouldBe(2);
+            filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(3);
+            filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
+            
+            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterOnlyContractAddress);
+            filteredBlock.Count.ShouldBe(1);
+            filteredBlock[0].Transactions.Count().ShouldBe(2);
+            filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(3);
+            filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
+
+            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterNotExist);
+            filteredBlock.Count.ShouldBe(0);
+        }
+
+        {
+            var transactionFilterProvider =
+                _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Transaction);
+
+            var filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, null);
+            filteredBlock.Count.ShouldBe(1);
+
+            filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block },
+                new List<FilterContractEventInput>());
+            filteredBlock.Count.ShouldBe(1);
+
+            filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filter);
+            filteredBlock.Count.ShouldBe(1);
+            filteredBlock[0].Transactions.Count().ShouldBe(2);
+            filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(3);
+            filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
+            
+            filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterOnlyContractAddress);
+            filteredBlock.Count.ShouldBe(1);
+            filteredBlock[0].Transactions.Count().ShouldBe(1);
+            filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(3);
+
+            filteredBlock =
+                await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterNotExist);
+            filteredBlock.Count.ShouldBe(0);
+        }
+
+        {
+            var logEventFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.LogEvent);
+
+            var filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, null);
+            filteredBlock.Count.ShouldBe(1);
+
+            filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block },
+                new List<FilterContractEventInput>());
+            filteredBlock.Count.ShouldBe(1);
+
+            filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filter);
+            filteredBlock.Count.ShouldBe(1);
+            filteredBlock[0].Transactions.Count().ShouldBe(2);
+            filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(2);
+            filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
+            
+            filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterOnlyContractAddress);
+            filteredBlock.Count.ShouldBe(1);
+            filteredBlock[0].Transactions.Count().ShouldBe(1);
+            filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(1);
+
+            filteredBlock =
+                await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterNotExist);
+            filteredBlock.Count.ShouldBe(0);
+        }
     }
 
     private BlockDto MockBlock()

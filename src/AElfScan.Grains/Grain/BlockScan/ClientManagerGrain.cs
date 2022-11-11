@@ -7,9 +7,9 @@ public class ClientManagerGrain : Grain<ClientManagerState>, IClientManagerGrain
 {
     public Task<List<string>> GetClientIdsByChainAsync(string chainId)
     {
-        return Task.FromResult(State.ClientIds[chainId].ToList());
+        return Task.FromResult(State.ClientIds.TryGetValue(chainId, out var ids) ? ids.ToList() : new List<string>());
     }
-    
+
     public Task<Dictionary<string, HashSet<string>>> GetAllClientIdsAsync()
     {
         return Task.FromResult(State.ClientIds);

@@ -34,7 +34,8 @@ public class ClientDemoService : ITransientDependency
                 Scope = "AElfScan",
                 GrantType = "client_credentials",
                 ClientId = "AElfScan_DApp",
-                ClientSecret = "1q2w3e*"
+                ClientSecret = "1q2w3e*",
+                RequireHttps = false
             });
 
             var connection = new HubConnectionBuilder()
@@ -56,7 +57,16 @@ public class ClientDemoService : ITransientDependency
                 {
                     ChainId = "AELF",
                     OnlyConfirmedBlock = true,
-                    StartBlockNumber = 40
+                    StartBlockNumber = 40,
+                    FilterType = BlockFilterType.LogEvent,
+                    SubscribeEvents = new List<FilterContractEventInput>
+                    {
+                        new FilterContractEventInput
+                        {
+                            ContractAddress = "ContractAddress",
+                            EventNames = new List<string>{"EventNames"}
+                        }
+                    }
                 }
             });
         }
