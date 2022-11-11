@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AElfScan.Grains.Grain.BlockScan;
 using AElfScan.Grains.Grain.Chains;
@@ -37,6 +38,7 @@ public class BlockHub : AbpHub
     public async Task Subscribe(List<SubscribeInfo> subscribeInfos)
     {
         var clientId = Context.User.FindFirst(o=>o.ToString().StartsWith("client_id")).Value;
+        Logger.LogInformation($"Client: {clientId} request subscribe: {JsonSerializer.Serialize(subscribeInfos)}");
         var version = Guid.NewGuid().ToString("N");
         _connectionProvider.Add(clientId,Context.ConnectionId,version, subscribeInfos.Select(o=>o.ChainId).ToList());
         
