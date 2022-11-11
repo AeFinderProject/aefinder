@@ -54,9 +54,9 @@ public class BlockState
         return null;
     }
 
-    public void Apply(KeyValuePair<string,BlockEventData> keyValueEvent)
+    public void Apply(BlockStateEventData stateEventData)
     {
-        Blocks.Add(keyValueEvent.Key,keyValueEvent.Value);
+        Blocks.Add(stateEventData.BlockHash, stateEventData.BlockInfo);
     }
     
 }

@@ -22,9 +22,12 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
     
     public async Task InitializeStateAsync(Dictionary<string, BlockEventData> blocksDictionary)
     {
-        foreach (KeyValuePair<string,BlockEventData> keyValueEvent in blocksDictionary)
+        foreach (KeyValuePair<string,BlockEventData> keyValueData in blocksDictionary)
         {
-            RaiseEvent(keyValueEvent);
+            BlockStateEventData blockStateEventData = new BlockStateEventData();
+            blockStateEventData.BlockHash = keyValueData.Key;
+            blockStateEventData.BlockInfo = keyValueData.Value;
+            RaiseEvent(blockStateEventData);
         }
         
         await ConfirmEvents();

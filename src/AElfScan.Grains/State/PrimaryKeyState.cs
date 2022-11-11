@@ -1,8 +1,12 @@
+using System.Numerics;
+
 namespace AElfScan.Grains.State;
 
 public class PrimaryKeyState
 {
-    public int GrainPrimaryKey;
+    public string GrainPrimaryKey;
+
+    public BigInteger SerialNumber;
 
     public int Counter;
 

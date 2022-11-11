@@ -7,7 +7,7 @@
         <Configuration>
           <Format>cobertura</Format>
           <Exclude>[xunit.*]*,[*Tests]*</Exclude> <!-- [Assembly-Filter]Type-Filter -->
-          <ExcludeByFile>**/test/**/*.cs,**/src/AElfScan.Application.Contracts/Permissions/**/*.cs,**/src/AElfScan.BlockChainEventHandler/**/*.cs,**/src/AElfScan.DbMigrator/**/*.cs,**/src/AElfScan.EntityHandler/**/*.cs,**/src/AElfScan.HttpApi.Host/**/*.cs,**/src/AElfScan.HttpApi.Client/**/*.cs,**/src/AElfScan.IdentityServer/**/*.cs</ExcludeByFile>
+          <ExcludeByFile>**/test/**/*.cs,**/src/AElfScan.Application.Contracts/Permissions/**/*.cs,**/src/AElfScan.BlockChainEventHandler/**/*.cs,**/src/AElfScan.DbMigrator/**/*.cs,**/src/AElfScan.EntityHandler/**/*.cs,**/src/AElfScan.HttpApi.Host/**/*.cs,**/src/AElfScan.HttpApi.Client/**/*.cs,**/src/AElfScan.AuthServer/**/*.cs</ExcludeByFile>
           <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
           <SingleHit>false</SingleHit>
         </Configuration>

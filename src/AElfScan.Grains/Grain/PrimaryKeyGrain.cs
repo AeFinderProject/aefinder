@@ -15,7 +15,10 @@ public class PrimaryKeyGrain: global::Orleans.Grain<PrimaryKeyState>, IPrimaryKe
     public override Task OnActivateAsync()
     {
         this.ReadStateAsync();
-        this.State.SwitchInterval = _primaryKeyOptions.BlockGrainSwitchInterval;
+        if (this.State.SwitchInterval == 0)
+        {
+            this.State.SwitchInterval = _primaryKeyOptions.BlockGrainSwitchInterval;
+        }
         return base.OnActivateAsync();
     }
     
@@ -25,22 +28,34 @@ public class PrimaryKeyGrain: global::Orleans.Grain<PrimaryKeyState>, IPrimaryKe
         return base.OnDeactivateAsync();
     }
 
+    public async Task SetCounter(int blocksCount)
+    {
+        this.State.Counter = this.State.Counter + blocksCount;
+    }
+
     public async Task<string> GetCurrentGrainPrimaryKey(string chainId)
     {
-        return chainId + "_" + this.State.GrainPrimaryKey;
+        if (string.IsNullOrEmpty(this.State.GrainPrimaryKey))
+        {
+            this.State.GrainPrimaryKey = await CreatePrimaryKey(chainId);
+        }
+        return this.State.GrainPrimaryKey;
     }
     
-    public async Task<string> GetGrainPrimaryKey(string chainId, int blocksCount)
+    public async Task<string> GetGrainPrimaryKey(string chainId)
     {
-        if (this.State.Counter > this.State.SwitchInterval)
+        if (this.State.Counter >= this.State.SwitchInterval)
         {
-            this.State.GrainPrimaryKey = this.State.GrainPrimaryKey + 1;
+            this.State.SerialNumber = this.State.SerialNumber + 1;
             this.State.Counter = 0;
             await WriteStateAsync();
-            return chainId + "_" + this.State.GrainPrimaryKey;
         }
+        this.State.GrainPrimaryKey = await CreatePrimaryKey(chainId);
+        return this.State.GrainPrimaryKey;
+    }
 
-        this.State.Counter = this.State.Counter + blocksCount;
-        return chainId + "_" + this.State.GrainPrimaryKey;
+    private async Task<string> CreatePrimaryKey(string chainId)
+    {
+        return chainId + "_" + this.State.SerialNumber; 
     }
 }
