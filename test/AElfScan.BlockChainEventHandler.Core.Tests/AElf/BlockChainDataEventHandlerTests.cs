@@ -292,15 +292,21 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         string chainId = "TEST";
         var primaryKeyGrain = Cluster.Client.GetGrain<IPrimaryKeyGrain>(chainId + AElfScanConsts.PrimaryKeyGrainIdSuffix);
         await primaryKeyGrain.SetCounter(100);
+        var currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
         var newPrimaryKey=await primaryKeyGrain.GetGrainPrimaryKey(chainId);
+        currentPrimaryKey.ShouldBe(chainId + "_0");
         newPrimaryKey.ShouldBe(chainId + "_1");
         
         await primaryKeyGrain.SetCounter(100);
+        currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
         newPrimaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId);
+        currentPrimaryKey.ShouldBe(chainId + "_1");
         newPrimaryKey.ShouldBe(chainId + "_2");
         
         await primaryKeyGrain.SetCounter(110);
+        currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
         newPrimaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId);
+        currentPrimaryKey.ShouldBe(chainId + "_2");
         newPrimaryKey.ShouldBe(chainId + "_3");
     }
     
