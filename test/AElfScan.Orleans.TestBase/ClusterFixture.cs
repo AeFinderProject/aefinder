@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
 using AElf.Orleans.EventSourcing.Snapshot.Hosting;
-using AElfScan.Grains.Grain;
+using AElfScan.Grains.Grain.Blocks;
 using EventStore.ClientAPI;
 using Orleans.Hosting;
 using Orleans.TestingHost;

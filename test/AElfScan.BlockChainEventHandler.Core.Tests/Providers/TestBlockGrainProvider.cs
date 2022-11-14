@@ -1,4 +1,4 @@
-using AElfScan.Grains.Grain;
+using AElfScan.Grains.Grain.Blocks;
 using AElfScan.Orleans.TestBase;
 using Orleans;
 using Volo.Abp.DependencyInjection;

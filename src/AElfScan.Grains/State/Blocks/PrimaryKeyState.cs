@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace AElfScan.Grains.State;
+namespace AElfScan.Grains.State.Blocks;
 
 public class PrimaryKeyState
 {

@@ -1,6 +1,6 @@
 using AElfScan.DTOs;
 using AElfScan.Processors;
-using AElfScan.Grains.Grain;
+using AElfScan.Grains.Grain.Blocks;
 using AElfScan.Orleans.TestBase;
 using AElfScan.Providers;
 using Microsoft.Extensions.DependencyInjection;

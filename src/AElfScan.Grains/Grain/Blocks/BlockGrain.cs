@@ -1,9 +1,9 @@
 using AElf.Orleans.EventSourcing.Snapshot;
 using AElfScan.Grains.EventData;
-using AElfScan.Grains.State;
+using AElfScan.Grains.State.Blocks;
 using Microsoft.Extensions.Logging;
 
-namespace AElfScan.Grains.Grain;
+namespace AElfScan.Grains.Grain.Blocks;
 
 public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
 {
