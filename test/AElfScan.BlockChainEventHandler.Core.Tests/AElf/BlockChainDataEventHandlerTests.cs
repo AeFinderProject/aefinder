@@ -3,7 +3,6 @@ using AElfScan.AElf.Processors;
 using AElfScan.Grains.Grain;
 using AElfScan.Orleans.TestBase;
 using AElfScan.Providers;
-using Orleans.TestingHost;
 using Shouldly;
 using Volo.Abp.EventBus.Distributed;
 using Xunit;
@@ -62,7 +61,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h84);
 
         // var grain = Cluster.Client.GetGrain<IBlockGrain>(grainPrimaryKey);
-        var grain = _blockGrainProvider.GetBlockGrain();
+        var grain = await _blockGrainProvider.GetBlockGrain("AELF");
         var blockDictionary = await grain.GetBlockDictionary();
         
         blockDictionary.ShouldContainKey(blockChainDataEto_h81.Blocks[0].BlockHash);//Unit test 1
@@ -140,7 +139,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         
         
         // var grain = Cluster.Client.GetGrain<IBlockGrain>(grainPrimaryKey);
-        var grain = _blockGrainProvider.GetBlockGrain();
+        var grain = await _blockGrainProvider.GetBlockGrain("AELF");
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)
@@ -198,7 +197,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h111);
 
         // var grain = Cluster.Client.GetGrain<IBlockGrain>(grainPrimaryKey);
-        var grain = _blockGrainProvider.GetBlockGrain();
+        var grain = await _blockGrainProvider.GetBlockGrain("AELF");
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)
@@ -278,7 +277,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h121);
 
         // var grain = Cluster.Client.GetGrain<IBlockGrain>(grainPrimaryKey);
-        var grain = _blockGrainProvider.GetBlockGrain();
+        var grain = await _blockGrainProvider.GetBlockGrain("AELF");
         var blockDictionary = await grain.GetBlockDictionary();
 
         foreach (var blockItem in blockDictionary)
@@ -286,5 +285,30 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
             blockItem.Value.BlockNumber.ShouldBeGreaterThanOrEqualTo(105);
         }
     }
+
+    [Fact]
+    public async Task HandleEvent_GrainSwitch_Test()
+    {
+        string chainId = "TEST";
+        var primaryKeyGrain = Cluster.Client.GetGrain<IPrimaryKeyGrain>(chainId + AElfScanConsts.PrimaryKeyGrainIdSuffix);
+        await primaryKeyGrain.SetCounter(100);
+        var currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
+        var newPrimaryKey=await primaryKeyGrain.GetGrainPrimaryKey(chainId);
+        currentPrimaryKey.ShouldBe(chainId + "_0");
+        newPrimaryKey.ShouldBe(chainId + "_1");
+        
+        await primaryKeyGrain.SetCounter(100);
+        currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
+        newPrimaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId);
+        currentPrimaryKey.ShouldBe(chainId + "_1");
+        newPrimaryKey.ShouldBe(chainId + "_2");
+        
+        await primaryKeyGrain.SetCounter(110);
+        currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
+        newPrimaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId);
+        currentPrimaryKey.ShouldBe(chainId + "_2");
+        newPrimaryKey.ShouldBe(chainId + "_3");
+    }
+    
     
 }

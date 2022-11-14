@@ -2,6 +2,7 @@ using AElf.Contracts.Consensus.AEDPoS;
 using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Etos;
 using AElfScan.Grains.EventData;
+using AElfScan.Grains.Grain;
 using AElfScan.Providers;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
@@ -39,7 +40,8 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     {
         _logger.LogInformation($"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockNumber}, end block: {eventData.Blocks.Last().BlockNumber},");
         // var blockGrain = _clusterClient.GetGrain<IBlockGrain>(_orleansClientOption.AElfBlockGrainPrimaryKey);
-        var blockGrain = _blockGrainProvider.GetBlockGrain();
+        var blockGrain = await _blockGrainProvider.GetBlockGrain(eventData.ChainId);
+        int processedBlockCount = 0;
         foreach (var blockItem in eventData.Blocks)
         {
             var newBlockEto = ConvertToNewBlockEto(blockItem, eventData.ChainId);
@@ -63,16 +65,22 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                 
                 if (libBlockList.Count > 0)
                 {
+                    libBlockList = libBlockList.OrderBy(b => b.BlockNumber).ToList();
                     //publish confirm blocks event
                     var confirmBlockList =
                         _objectMapper.Map<List<BlockEventData>, List<ConfirmBlockEto>>(libBlockList);
                     await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                         { ConfirmBlocks = confirmBlockList });
                 }
+
+                processedBlockCount = processedBlockCount + 1;
             }
             
         }
 
+        //set counter for grain switch
+        var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(eventData.ChainId + AElfScanConsts.PrimaryKeyGrainIdSuffix);
+        await primaryKeyGrain.SetCounter(processedBlockCount);
     }
 
     private long AnalysisBlockLibFoundEvent(string logEventIndexed)

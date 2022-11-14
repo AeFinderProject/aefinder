@@ -53,5 +53,10 @@ public class BlockState
 
         return null;
     }
+
+    public void Apply(BlockStateEventData stateEventData)
+    {
+        Blocks.Add(stateEventData.BlockHash, stateEventData.BlockInfo);
+    }
     
 }

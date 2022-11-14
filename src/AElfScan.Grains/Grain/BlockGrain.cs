@@ -19,6 +19,19 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
     {
         return this.State.Blocks;
     }
+    
+    public async Task InitializeStateAsync(Dictionary<string, BlockEventData> blocksDictionary)
+    {
+        foreach (KeyValuePair<string,BlockEventData> keyValueData in blocksDictionary)
+        {
+            BlockStateEventData blockStateEventData = new BlockStateEventData();
+            blockStateEventData.BlockHash = keyValueData.Key;
+            blockStateEventData.BlockInfo = keyValueData.Value;
+            RaiseEvent(blockStateEventData);
+        }
+        
+        await ConfirmEvents();
+    }
 
     public async Task<List<BlockEventData>> SaveBlock(BlockEventData blockEvent)
     {

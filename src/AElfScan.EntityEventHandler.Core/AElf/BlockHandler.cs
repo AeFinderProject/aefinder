@@ -180,7 +180,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
             await _logEventIndexRepository.BulkAddOrUpdateAsync(confirmLogEventIndexList);
         }
         
-        _ = Task.Run(async () => { await _blockIndexHandler.ProcessConfirmBlocksAsync(indexes); });
+        _ = Task.Run(async () => { await _blockIndexHandler.ProcessConfirmedBlocksAsync(indexes); });
     }
     
     
