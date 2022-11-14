@@ -1,4 +1,4 @@
-namespace AElfScan.Grains.Grain;
+namespace AElfScan.Grains.Grain.Blocks;
 
 public class PrimaryKeyOptions
 {

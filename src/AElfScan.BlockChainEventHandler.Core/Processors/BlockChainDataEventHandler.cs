@@ -2,7 +2,7 @@ using AElf.Contracts.Consensus.AEDPoS;
 using AElfScan.DTOs;
 using AElfScan.Etos;
 using AElfScan.Grains.EventData;
-using AElfScan.Grains.Grain;
+using AElfScan.Grains.Grain.Blocks;
 using AElfScan.Providers;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;

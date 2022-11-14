@@ -12,7 +12,7 @@ using Orleans.Hosting;
 using Serilog;
 using Serilog.Events;
 using AElfScan.Extensions;
-using AElfScan.Grains.Grain;
+using AElfScan.Grains.Grain.Blocks;
 
 namespace AElfScan;
 

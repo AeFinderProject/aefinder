@@ -1,4 +1,4 @@
-﻿using AElfScan.Grains.Grain;
+﻿using AElfScan.Grains.Grain.Blocks;
 using AElfScan.Grains.Grain.BlockScan;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;

@@ -1,6 +1,6 @@
 using AElfScan.Grains.EventData;
 
-namespace AElfScan.Grains.State;
+namespace AElfScan.Grains.State.Blocks;
 
 public class BlockState
 {

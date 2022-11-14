@@ -1,7 +1,7 @@
-using AElfScan.Grains.State;
+using AElfScan.Grains.State.Blocks;
 using Microsoft.Extensions.Options;
 
-namespace AElfScan.Grains.Grain;
+namespace AElfScan.Grains.Grain.Blocks;
 
 public class PrimaryKeyGrain: global::Orleans.Grain<PrimaryKeyState>, IPrimaryKeyGrain
 {

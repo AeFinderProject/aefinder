@@ -1,5 +1,5 @@
 using System.Net;
-using AElfScan.Grains.Grain;
+using AElfScan.Grains.Grain.Blocks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
