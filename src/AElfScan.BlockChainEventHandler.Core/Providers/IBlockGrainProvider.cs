@@ -1,3 +1,4 @@
+using AElfScan.Grains;
 using AElfScan.Grains.Grain;
 using Orleans;
 using Volo.Abp.DependencyInjection;
@@ -20,7 +21,7 @@ public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
 
     public async Task<IBlockGrain> GetBlockGrain(string chainId)
     {
-        var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(chainId + "BlockGrainPrimaryKey");
+        var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(chainId + GrainConstant.PrimaryKeyGrainIdSuffix);
         var currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
         var primaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId);
         

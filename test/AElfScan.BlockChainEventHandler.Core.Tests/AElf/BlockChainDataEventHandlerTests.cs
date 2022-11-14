@@ -1,8 +1,10 @@
 using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Processors;
+using AElfScan.Grains;
 using AElfScan.Grains.Grain;
 using AElfScan.Orleans.TestBase;
 using AElfScan.Providers;
+using Orleans;
 using Orleans.TestingHost;
 using Shouldly;
 using Volo.Abp.EventBus.Distributed;
@@ -286,5 +288,24 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
             blockItem.Value.BlockNumber.ShouldBeGreaterThanOrEqualTo(105);
         }
     }
+
+    [Fact]
+    public async Task HandleEvent_GrainSwitch_Test()
+    {
+        string chainId = "TEST";
+        var primaryKeyGrain = Cluster.Client.GetGrain<IPrimaryKeyGrain>(chainId + GrainConstant.PrimaryKeyGrainIdSuffix);
+        await primaryKeyGrain.SetCounter(100);
+        var newPrimaryKey=await primaryKeyGrain.GetGrainPrimaryKey(chainId);
+        newPrimaryKey.ShouldBe(chainId + "_1");
+        
+        await primaryKeyGrain.SetCounter(100);
+        newPrimaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId);
+        newPrimaryKey.ShouldBe(chainId + "_2");
+        
+        await primaryKeyGrain.SetCounter(110);
+        newPrimaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId);
+        newPrimaryKey.ShouldBe(chainId + "_3");
+    }
+    
     
 }
