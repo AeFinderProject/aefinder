@@ -1,7 +1,6 @@
 using AElf.Contracts.Consensus.AEDPoS;
 using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Etos;
-using AElfScan.Grains;
 using AElfScan.Grains.EventData;
 using AElfScan.Grains.Grain;
 using AElfScan.Providers;
@@ -80,7 +79,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         }
 
         //set counter for grain switch
-        var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(eventData.ChainId + GrainConstant.PrimaryKeyGrainIdSuffix);
+        var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(eventData.ChainId + AElfScanConsts.PrimaryKeyGrainIdSuffix);
         await primaryKeyGrain.SetCounter(processedBlockCount);
     }
 

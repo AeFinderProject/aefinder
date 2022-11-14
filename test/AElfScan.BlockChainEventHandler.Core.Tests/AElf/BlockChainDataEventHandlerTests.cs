@@ -1,11 +1,8 @@
 using AElfScan.AElf.DTOs;
 using AElfScan.AElf.Processors;
-using AElfScan.Grains;
 using AElfScan.Grains.Grain;
 using AElfScan.Orleans.TestBase;
 using AElfScan.Providers;
-using Orleans;
-using Orleans.TestingHost;
 using Shouldly;
 using Volo.Abp.EventBus.Distributed;
 using Xunit;
@@ -293,7 +290,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfScanBlockChainEventHandl
     public async Task HandleEvent_GrainSwitch_Test()
     {
         string chainId = "TEST";
-        var primaryKeyGrain = Cluster.Client.GetGrain<IPrimaryKeyGrain>(chainId + GrainConstant.PrimaryKeyGrainIdSuffix);
+        var primaryKeyGrain = Cluster.Client.GetGrain<IPrimaryKeyGrain>(chainId + AElfScanConsts.PrimaryKeyGrainIdSuffix);
         await primaryKeyGrain.SetCounter(100);
         var newPrimaryKey=await primaryKeyGrain.GetGrainPrimaryKey(chainId);
         newPrimaryKey.ShouldBe(chainId + "_1");
