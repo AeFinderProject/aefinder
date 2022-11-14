@@ -1,5 +1,6 @@
 using AElfScan.DTOs;
 using AElfScan.Processors;
+using AElfScan.Grains.Grain;
 using AElfScan.Orleans.TestBase;
 using AElfScan.Providers;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,11 @@ public class AElfScanBlockChainEventHandlerCoreTestModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        context.Services.Configure<PrimaryKeyOptions>(o =>
+        {
+            o.BlockGrainSwitchInterval = 100;
+        });
+        
         context.Services.AddTransient<IDistributedEventHandler<BlockChainDataEto>>(sp =>
             sp.GetService<BlockChainDataEventHandler>());
         context.Services.AddSingleton<IBlockGrainProvider>(sp => sp.GetService<TestBlockGrainProvider>());
