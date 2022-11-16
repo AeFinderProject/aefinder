@@ -68,11 +68,15 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             var targetHeight = Math.Min(State.ScannedConfirmedBlockHeight + _blockScanOptions.BatchPushBlockCount,
                 chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold);
             
-            Console.WriteLine($"Block filter test: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
             
             var blocks = await _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType)
                 .GetBlocksAsync(State.ChainId, State.ScannedConfirmedBlockHeight + 1, targetHeight, false,
                     subscribeInfo.SubscribeEvents);
+
+            if (blocks.Count == 0)
+            {
+                Console.WriteLine($"Block filter test: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
+            }
 
             if (blocks.Count > 0)
             {
