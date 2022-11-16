@@ -66,10 +66,12 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
 
             if (transactionIndexList.Count > 0)
             {
+                _logger.LogDebug($"Transaction is bulk-adding, its block number:{eventData.BlockNumber}, total transaction count:{transactionIndexList.Count}");
                 await _transactionIndexRepository.BulkAddOrUpdateAsync(transactionIndexList);
             }
             if (logEventIndexList.Count > 0)
             {
+                _logger.LogDebug($"LogEvent is bulk-adding, its block number:{eventData.BlockNumber}, total logevent count:{logEventIndexList.Count}");
                 await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
             }
         
@@ -158,25 +160,31 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
 
             if (forkBlockIndexList.Count > 0)
             {
+                _logger.LogDebug($"bulk delete blocks,total count {forkBlockIndexList.Count}");
                 await _blockIndexRepository.BulkDeleteAsync(forkBlockIndexList);
             }
             if (forkTransactionIndexList.Count > 0)
             {
+                _logger.LogDebug($"bulk delete transactions,total count {forkTransactionIndexList.Count}");
                 await _transactionIndexRepository.BulkDeleteAsync(forkTransactionIndexList);
             }
             if (forkLogEventIndexList.Count > 0)
             {
+                _logger.LogDebug($"bulk delete log events,total count {forkLogEventIndexList.Count}");
                 await _logEventIndexRepository.BulkDeleteAsync(forkLogEventIndexList);
             }
         }
 
+        _logger.LogDebug($"blocks is confirming,start {confirmBlockIndexList.First().BlockNumber} end {confirmBlockIndexList.Last().BlockNumber},total confirm {confirmBlockIndexList.Count}");
         await _blockIndexRepository.BulkAddOrUpdateAsync(confirmBlockIndexList);
         if (confirmTransactionIndexList.Count > 0)
         {
+            _logger.LogDebug($"transactions is confirming,start {confirmTransactionIndexList.First().BlockNumber} end {confirmTransactionIndexList.Last().BlockNumber},total confirm {confirmTransactionIndexList.Count}");
             await _transactionIndexRepository.BulkAddOrUpdateAsync(confirmTransactionIndexList);
         }
         if (confirmLogEventIndexList.Count > 0)
         {
+            _logger.LogDebug($"log events is confirming,start {confirmLogEventIndexList.First().BlockNumber} end {confirmLogEventIndexList.Last().BlockNumber},total confirm {confirmLogEventIndexList.Count}");
             await _logEventIndexRepository.BulkAddOrUpdateAsync(confirmLogEventIndexList);
         }
         
