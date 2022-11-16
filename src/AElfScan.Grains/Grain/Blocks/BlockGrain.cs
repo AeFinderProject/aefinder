@@ -48,8 +48,8 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         //Ensure block continuity
         if (this.State.Blocks.Count > 0 && !this.State.Blocks.ContainsKey(blockEvent.PreviousBlockHash))
         {
-            Console.WriteLine(
-                $"[BlockGrain]Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+            // Console.WriteLine(
+            //     $"[BlockGrain]Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
             throw new Exception(
                 $"Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
         }
