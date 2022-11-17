@@ -92,18 +92,39 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
                 $"Block {blockEventDataList.First().BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
         }
 
+        blockEventDataList = blockEventDataList.Where(b =>
+                dicLibBlock != null && b.BlockNumber > dicLibBlock.BlockNumber &&
+                !State.Blocks.ContainsKey(b.BlockHash))
+            .ToList();
 
-        List<BlockEventData> libBlockList = new List<BlockEventData>();
+        var tasks = new List<Task<List<BlockEventData>>>();
         foreach (var blockEvent in blockEventDataList)
         {
-            BlockEventData currentLibBlock =
-                this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
-
-            if (currentLibBlock != null)
+            var task = Task.Factory.StartNew(() =>
             {
-                GetLibBlockList(currentLibBlock.BlockHash, libBlockList);
-            }
+                var libBlockList = new List<BlockEventData>();
+                var currentLibBlock =
+                    State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
 
+                if (currentLibBlock != null)
+                {
+                    GetLibBlockList(currentLibBlock.BlockHash, libBlockList);
+                }
+
+                return libBlockList;
+            });
+            tasks.Add(task);
+        }
+
+        await Task.WhenAll(tasks);
+
+        var libBlockList = new List<BlockEventData>();
+        foreach (var task in tasks)
+        {
+            libBlockList.AddRange(task.Result);
+        }
+        foreach (var blockEvent in blockEventDataList)
+        {
             RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0);
             await ConfirmEvents();
         }
