@@ -6,6 +6,7 @@ using AElfScan.Grains.Grain.Blocks;
 using AElfScan.Providers;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Orleans;
 using Volo.Abp.DependencyInjection;
@@ -21,18 +22,21 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
     private readonly IBlockGrainProvider _blockGrainProvider;
+    private readonly BlockChainEventHandlerOptions _blockChainEventHandlerOptions;
 
     public BlockChainDataEventHandler(
         IClusterClient clusterClient,
         ILogger<BlockChainDataEventHandler> logger,
         IObjectMapper objectMapper,
         IBlockGrainProvider blockGrainProvider,
+        IOptionsSnapshot<BlockChainEventHandlerOptions> blockChainEventHandlerOptions,
         IDistributedEventBus distributedEventBus)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _distributedEventBus = distributedEventBus;
         _objectMapper = objectMapper;
+        _blockChainEventHandlerOptions = blockChainEventHandlerOptions.Value;
         _blockGrainProvider = blockGrainProvider;
     }
 
@@ -42,27 +46,51 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         // var blockGrain = _clusterClient.GetGrain<IBlockGrain>(_orleansClientOption.AElfBlockGrainPrimaryKey);
         var blockGrain = await _blockGrainProvider.GetBlockGrain(eventData.ChainId);
         int processedBlockCount = 0;
+
+        List<Task<NewBlockTaskEntity>> taskList = new List<Task<NewBlockTaskEntity>>();
+        List<NewBlockEto> newBlockEtos = new List<NewBlockEto>();
+        List<BlockEventData> blockEventDatas = new List<BlockEventData>();
         foreach (var blockItem in eventData.Blocks)
         {
-            var newBlockEto = ConvertToNewBlockEto(blockItem, eventData.ChainId);
-            BlockEventData blockEvent = new BlockEventData();
-            blockEvent = _objectMapper.Map<NewBlockEto, BlockEventData>(newBlockEto);
-
-            //analysis lib found event content
-            var libLogEvent = blockItem.Transactions?.SelectMany(t => t.LogEvents)
-                .FirstOrDefault(e => e.EventName == "IrreversibleBlockFound");
-            if (libLogEvent != null)
+            Func<NewBlockTaskEntity> funcBlockConvertTask = () =>
             {
-                blockEvent.LibBlockNumber = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
-            }
-            
-            List<BlockEventData> libBlockList = await blockGrain.SaveBlock(blockEvent);
+                return ConvertBlockDataTask(blockItem, eventData.ChainId);
+            };
+            Task<NewBlockTaskEntity> task = Task.Run(funcBlockConvertTask);
+            taskList.Add(task);
+        }
+
+        await Task.WhenAll(taskList.ToArray());
+
+        foreach (var task in taskList)
+        {
+            var newBlockTaskEntity = task.Result;
+            newBlockEtos.Add(newBlockTaskEntity.newBlockEto);
+            blockEventDatas.Add(newBlockTaskEntity.blockEventData);
+        }
+
+        int blockLimit = _blockChainEventHandlerOptions.BlockPartionLimit;
+        int partion = (eventData.Blocks.Count % blockLimit) == 0
+            ? (eventData.Blocks.Count / blockLimit)
+            : (eventData.Blocks.Count / blockLimit) + 1;
+        
+        _logger.LogInformation($"blockLimit:{blockLimit} partion:{partion} ");
+
+        for (var i = 0; i < partion; i++)
+        {
+            _logger.LogInformation("skip: "+(i*blockLimit).ToString());
+            List<BlockEventData> libBlockList = await blockGrain.SaveBlocks(blockEventDatas.Skip(i*blockLimit).Take(blockLimit).ToList());
 
             if (libBlockList != null)
             {
+                var newBlockPartEtos = newBlockEtos.Skip(i * blockLimit).Take(blockLimit).ToList();
+                _logger.LogInformation("newBlockPartEtos count: " + newBlockPartEtos.Count);
                 //publish new block event
-                await _distributedEventBus.PublishAsync(newBlockEto);
-                
+                await _distributedEventBus.PublishAsync(new NewBlocksEto()
+                    { NewBlocks = newBlockPartEtos });
+
+                processedBlockCount = processedBlockCount + newBlockPartEtos.Count;
+
                 if (libBlockList.Count > 0)
                 {
                     libBlockList = libBlockList.OrderBy(b => b.BlockNumber).ToList();
@@ -72,13 +100,9 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                     await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                         { ConfirmBlocks = confirmBlockList });
                 }
-
-                processedBlockCount = processedBlockCount + 1;
             }
-            
         }
 
-        //set counter for grain switch
         var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(eventData.ChainId + AElfScanConsts.PrimaryKeyGrainIdSuffix);
         await primaryKeyGrain.SetCounter(processedBlockCount);
     }
@@ -123,5 +147,26 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         }
 
         return newBlock;
+    }
+
+    private NewBlockTaskEntity ConvertBlockDataTask(BlockEto blockItem,string chainId)
+    {
+        var newBlockEto = ConvertToNewBlockEto(blockItem, chainId);
+        BlockEventData blockEvent = new BlockEventData();
+        blockEvent = _objectMapper.Map<NewBlockEto, BlockEventData>(newBlockEto);
+
+        //analysis lib found event content
+        var libLogEvent = blockItem.Transactions?.SelectMany(t => t.LogEvents)
+            .FirstOrDefault(e => e.EventName == "IrreversibleBlockFound");
+        if (libLogEvent != null)
+        {
+            blockEvent.LibBlockNumber = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
+        }
+
+        NewBlockTaskEntity resultEntity = new NewBlockTaskEntity();
+        resultEntity.newBlockEto = newBlockEto;
+        resultEntity.blockEventData = blockEvent;
+
+        return resultEntity;
     }
 }

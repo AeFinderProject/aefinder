@@ -25,6 +25,7 @@ public class AElfScanBlockChainEventHandlerModule:AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         // context.Services.AddHostedService<AElfScanClusterClientHostedService>();
+        Configure<BlockChainEventHandlerOptions>(configuration.GetSection("BlockChainEventHandler"));
         
         context.Services.AddSingleton<AElfScanClusterClientHostedService>();
         context.Services.AddSingleton<IHostedService>(sp => sp.GetService<AElfScanClusterClientHostedService>());

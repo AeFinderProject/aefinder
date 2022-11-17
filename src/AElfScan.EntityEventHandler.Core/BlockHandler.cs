@@ -10,7 +10,7 @@ using Index = System.Index;
 
 namespace AElfScan.AElf;
 
-public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
+public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,
     ITransientDependency
 {
@@ -34,6 +34,53 @@ public class BlockHandler:IDistributedEventHandler<NewBlockEto>,
         _transactionIndexRepository = transactionIndexRepository;
         _logEventIndexRepository = logEventIndexRepository;
         _blockIndexHandler = blockIndexHandler;
+    }
+
+    public async Task HandleEventAsync(NewBlocksEto eventData)
+    {
+        _logger.LogInformation(
+            $"blocks is adding, start BlockNumber: {eventData.NewBlocks.First().BlockNumber} , IsConfirmed: {eventData.NewBlocks.First().IsConfirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockNumber}");
+
+        var blockIndexList = _objectMapper.Map<List<NewBlockEto>, List<BlockIndex>>(eventData.NewBlocks);
+        await _blockIndexRepository.BulkAddOrUpdateAsync(blockIndexList);
+        foreach (var blockIndex in blockIndexList)
+        {
+            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(blockIndex); });
+        }
+
+        List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
+        List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
+        
+        foreach (var newBlock in eventData.NewBlocks)
+        {
+            foreach (var transaction in newBlock.Transactions)
+            {
+                var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
+                transactionIndexList.Add(transactionIndex);
+
+                foreach (var logEvent in transaction.LogEvents)
+                {
+                    var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
+                    logEventIndexList.Add(logEventIndex);
+                }
+            }
+        }
+
+        if (transactionIndexList.Count > 0)
+        {
+            _logger.LogDebug(
+                $"Transaction is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockNumber}, total transaction count:{transactionIndexList.Count}");
+            await _transactionIndexRepository.BulkAddOrUpdateAsync(transactionIndexList);
+        }
+
+        if (logEventIndexList.Count > 0)
+        {
+            _logger.LogDebug(
+                $"LogEvent is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockNumber}, total logevent count:{logEventIndexList.Count}");
+            await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
+        }
+
+
     }
 
     public async Task HandleEventAsync(NewBlockEto eventData)
