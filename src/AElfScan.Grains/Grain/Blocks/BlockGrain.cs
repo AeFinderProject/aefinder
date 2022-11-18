@@ -71,7 +71,7 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
 
     public async Task<List<BlockEventData>> SaveBlocks(List<BlockEventData> blockEventDataList)
     {
-        //Ignore blocks with height less than LIB block in Dictionary
+        // Ignore blocks with height less than LIB block in Dictionary
         var dicLibBlock = this.State.Blocks.Where(b => b.Value.IsConfirmed)
             .Select(x => x.Value)
             .FirstOrDefault();
@@ -82,7 +82,6 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
             return null;
         }
 
-
         //Ensure block continuity
         if (this.State.Blocks.Count > 0 && !this.State.Blocks.ContainsKey(blockEventDataList.First().PreviousBlockHash))
         {
@@ -91,42 +90,79 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
             throw new Exception(
                 $"Block {blockEventDataList.First().BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
         }
+        
+        List<BlockEventData> libBlockList = new List<BlockEventData>();
 
-        blockEventDataList = blockEventDataList.Where(b =>
-                dicLibBlock != null && b.BlockNumber > dicLibBlock.BlockNumber &&
-                !State.Blocks.ContainsKey(b.BlockHash))
-            .ToList();
-
-        var tasks = new List<Task<List<BlockEventData>>>();
-        foreach (var blockEvent in blockEventDataList)
+        if (blockEventDataList.Count <= 1)
         {
-            var task = Task.Factory.StartNew(() =>
+            foreach (var blockEvent in blockEventDataList)
             {
-                var libBlockList = new List<BlockEventData>();
-                var currentLibBlock =
-                    State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
-
+                BlockEventData currentLibBlock =
+                    this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
                 if (currentLibBlock != null)
                 {
                     GetLibBlockList(currentLibBlock.BlockHash, libBlockList);
                 }
-
-                return libBlockList;
-            });
-            tasks.Add(task);
+                this.State.ClearBlockStateDictionary(blockEvent.LibBlockNumber,currentLibBlock.BlockHash);
+                RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0);
+                await ConfirmEvents();
+            }
         }
-
-        await Task.WhenAll(tasks);
-
-        var libBlockList = new List<BlockEventData>();
-        foreach (var task in tasks)
+        else
         {
-            libBlockList.AddRange(task.Result);
-        }
-        foreach (var blockEvent in blockEventDataList)
-        {
-            RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0);
-            await ConfirmEvents();
+            long maxLibBlockNumber = 0;
+            foreach (var blockEvent in blockEventDataList)
+            {
+                if (blockEvent.LibBlockNumber > maxLibBlockNumber)
+                {
+                    maxLibBlockNumber = blockEvent.LibBlockNumber;
+                }
+            }
+            
+            List<BlockEventData> eventList = new List<BlockEventData>();
+            if (maxLibBlockNumber > 0)
+            {
+                foreach (var blockEvent in blockEventDataList)
+                {
+                    eventList.Add(blockEvent);
+                    if (blockEvent.LibBlockNumber == maxLibBlockNumber)
+                    {
+                        if (eventList.Count > 0)
+                        {
+                            RaiseEvents(eventList);
+                            await ConfirmEvents();
+                        }
+                        eventList = new List<BlockEventData>();
+                        
+                        BlockEventData currentLibBlock =
+                            this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
+                        if (currentLibBlock != null)
+                        {
+                            GetLibBlockList(currentLibBlock.BlockHash, libBlockList);
+                        }
+                        this.State.ClearBlockStateDictionary(blockEvent.LibBlockNumber,currentLibBlock.BlockHash);
+                        
+                        RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0);
+                        await ConfirmEvents();
+                    }
+                }
+
+                if (eventList.Count > 0)
+                {
+                    RaiseEvents(eventList);
+                    await ConfirmEvents();
+                }
+            }
+            else
+            {
+                foreach (var blockEvent in blockEventDataList)
+                {
+                    eventList.Add(blockEvent);
+                    RaiseEvents(eventList);
+                    await ConfirmEvents();
+                }
+            }
+
         }
 
         return libBlockList;

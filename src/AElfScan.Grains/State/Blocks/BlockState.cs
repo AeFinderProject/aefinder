@@ -9,18 +9,18 @@ public class BlockState
     public void Apply(BlockEventData blockEvent)
     {
         //Whether include the LibFound event
-        if (blockEvent.LibBlockNumber > 0)
-        {
-            //Contains LibFound event
-            BlockEventData currentLibBlock = FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
-
-            if (currentLibBlock != null)
-            {
-                Blocks.RemoveAll(b => b.Value.BlockNumber < blockEvent.LibBlockNumber);
-                Blocks.RemoveAll(b =>
-                    b.Value.BlockNumber == blockEvent.LibBlockNumber && b.Value.BlockHash != currentLibBlock.BlockHash);
-            }
-        }
+        // if (blockEvent.LibBlockNumber > 0)
+        // {
+        //     //Contains LibFound event
+        //     BlockEventData currentLibBlock = FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
+        //
+        //     if (currentLibBlock != null)
+        //     {
+        //         Blocks.RemoveAll(b => b.Value.BlockNumber < blockEvent.LibBlockNumber);
+        //         Blocks.RemoveAll(b =>
+        //             b.Value.BlockNumber == blockEvent.LibBlockNumber && b.Value.BlockHash != currentLibBlock.BlockHash);
+        //     }
+        // }
         
         bool addResult = Blocks.TryAdd(blockEvent.BlockHash, blockEvent);
         if (!addResult)
@@ -52,6 +52,13 @@ public class BlockState
         }
 
         return null;
+    }
+
+    public void ClearBlockStateDictionary(long libBlockNumber,string currentLibBlockHash)
+    {
+        Blocks.RemoveAll(b => b.Value.BlockNumber < libBlockNumber);
+        Blocks.RemoveAll(b =>
+            b.Value.BlockNumber == libBlockNumber && b.Value.BlockHash != currentLibBlockHash);
     }
 
     public void Apply(BlockStateEventData stateEventData)
