@@ -71,31 +71,48 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
 
     public async Task<List<BlockEventData>> SaveBlocks(List<BlockEventData> blockEventDataList)
     {
-        // Ignore blocks with height less than LIB block in Dictionary
-        var dicLibBlock = this.State.Blocks.Where(b => b.Value.IsConfirmed)
-            .Select(x => x.Value)
-            .FirstOrDefault();
-        if (dicLibBlock != null &&
-            dicLibBlock.BlockNumber >= blockEventDataList.OrderBy(x => x.BlockNumber).Last().BlockNumber)
+        if (this.State.Blocks.Count > 0)
         {
-            // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
-            return null;
-        }
+            // Ignore blocks with height less than LIB block in Dictionary
+            var dicLibBlock = this.State.Blocks.Where(b => b.Value.IsConfirmed)
+                .Select(x => x.Value)
+                .FirstOrDefault();
+            if (dicLibBlock != null)
+            {
+                if (dicLibBlock.BlockNumber >= blockEventDataList.OrderBy(x => x.BlockNumber).Last().BlockNumber)
+                {
+                    // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
+                    return null;
+                }
 
-        //Ensure block continuity
-        if (this.State.Blocks.Count > 0 && !this.State.Blocks.ContainsKey(blockEventDataList.First().PreviousBlockHash))
-        {
-            Console.WriteLine(
-                $"[BlockGrain]Block {blockEventDataList.First().BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
-            throw new Exception(
-                $"Block {blockEventDataList.First().BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+                blockEventDataList = blockEventDataList.Where(b =>
+                        b.BlockNumber > dicLibBlock.BlockNumber &&
+                        !State.Blocks.ContainsKey(b.BlockHash))
+                    .ToList();
+                
+                if (blockEventDataList.Count == 0)
+                {
+                    return null;
+                }
+            }
+            
+            //Ensure block continuity
+            if (!this.State.Blocks.ContainsKey(blockEventDataList.First().PreviousBlockHash))
+            {
+                Console.WriteLine(
+                    $"[BlockGrain]Block {blockEventDataList.First().BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+                throw new Exception(
+                    $"Block {blockEventDataList.First().BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+            }
+            
         }
+        
         
         List<BlockEventData> libBlockList = new List<BlockEventData>();
 
         if (blockEventDataList.Count == 0)
         {
-            return libBlockList;
+            return null;
         }
 
         if (blockEventDataList.Count == 1)
