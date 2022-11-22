@@ -170,6 +170,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
 
             //find the same height blocks
             var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(confirmBlock.ChainId)));
             mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockNumber).Value(confirmBlock.BlockNumber)));
             QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
 
