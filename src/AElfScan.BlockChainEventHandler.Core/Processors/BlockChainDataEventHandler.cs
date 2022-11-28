@@ -133,7 +133,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             transaction.BlockNumber = newBlock.BlockNumber;
             transaction.BlockTime = newBlock.BlockTime;
             transaction.IsConfirmed = false;
-
+        
             foreach (var logEvent in transaction.LogEvents)
             {
                 logEvent.ChainId = chainId;
