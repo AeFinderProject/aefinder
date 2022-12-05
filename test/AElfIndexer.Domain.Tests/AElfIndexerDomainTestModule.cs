@@ -39,6 +39,7 @@ public class AElfIndexerDomainTestModule : AbpModule
             options.NumberOfReplicas = 1;
             options.NumberOfShards = 1;
             options.Refresh = Refresh.True;
+            options.IndexPrefix = "AElfIndexer";
         });
         
         
