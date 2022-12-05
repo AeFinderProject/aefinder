@@ -23,6 +23,10 @@ public class AElfIndexerDomainTestModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        Configure<IndexCreateOption>(x =>
+        {
+            x.AddModule(typeof(AElfIndexerDomainModule));
+        });
         
         // Do not modify this!!!
         context.Services.Configure<EsEndpointOption>(options =>
