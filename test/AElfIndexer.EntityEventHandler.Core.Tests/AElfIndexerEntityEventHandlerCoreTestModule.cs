@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using AElf.Indexing.Elasticsearch.Options;
 using AElfIndexer.Grains;
 using AElfIndexer.Orleans.TestBase;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,9 @@ public class AElfIndexerEntityEventHandlerCoreTestModule:AbpModule
             options.AddMaps<AElfIndexerEntityEventHandlerCoreTestModule>();
         });
 
-        
+        Configure<IndexCreateOption>(x =>
+        {
+            x.AddModule(typeof(AElfIndexerDomainModule));
+        });
     }
 }
