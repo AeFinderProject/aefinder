@@ -4,4 +4,6 @@ namespace AElfScan.Grains.EventData;
 public class BlockEventData:AElfScan.Entities.Es.BlockBase
 {
     public long LibBlockNumber { get; set; }
+    
+    public bool ClearBlockStateDictionary { get; set; }
 }

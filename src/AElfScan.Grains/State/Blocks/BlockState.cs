@@ -9,11 +9,11 @@ public class BlockState
     public void Apply(BlockEventData blockEvent)
     {
         //Whether include the LibFound event
-        if (blockEvent.LibBlockNumber > 0)
+        if (blockEvent.ClearBlockStateDictionary && blockEvent.LibBlockNumber > 0)
         {
             //Contains LibFound event
             BlockEventData currentLibBlock = FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
-
+        
             if (currentLibBlock != null)
             {
                 Blocks.RemoveAll(b => b.Value.BlockNumber < blockEvent.LibBlockNumber);
@@ -30,8 +30,8 @@ public class BlockState
             Console.WriteLine($"Block hash: {blockEvent.BlockHash} exist: {Blocks.ContainsKey(blockEvent.BlockHash)}");
         }
 
-        Console.WriteLine(
-            $"Blocks count: {Blocks.Count}. Lib: {blockEvent.LibBlockNumber}. Block height: {blockEvent.BlockNumber}");
+        // Console.WriteLine(
+        //     $"Blocks count: {Blocks.Count}. Lib: {blockEvent.LibBlockNumber}. Block height: {blockEvent.BlockNumber}");
     }
 
     public BlockEventData FindLibBlock(string previousBlockHash, long libBlockNumber)

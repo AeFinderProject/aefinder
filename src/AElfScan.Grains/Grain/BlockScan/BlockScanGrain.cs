@@ -37,45 +37,59 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task HandleHistoricalBlockAsync()
     {
-        var clientGrain = GrainFactory.GetGrain<IClientGrain>(this.GetPrimaryKeyString());
-        var chainGrain = GrainFactory.GetGrain<IChainGrain>(State.ChainId);
-        var subscribeInfo = await clientGrain.GetSubscribeInfoAsync();
-        var chainStatus = await chainGrain.GetChainStatusAsync();
-        if (State.ScannedBlockHeight == 0 && State.ScannedConfirmedBlockHeight == 0)
+        try
         {
-            State.ScannedBlockHeight = subscribeInfo.StartBlockNumber - 1;
-            State.ScannedConfirmedBlockHeight = subscribeInfo.StartBlockNumber - 1;
-            await WriteStateAsync();
-        }
-
-        while (true)
-        {
-            var clientInfo = await clientGrain.GetClientInfoAsync();
-            if (clientInfo.Version != State.Version || clientInfo.ScanModeInfo.ScanMode != ScanMode.HistoricalBlock)
+            var clientGrain = GrainFactory.GetGrain<IClientGrain>(this.GetPrimaryKeyString());
+            var chainGrain = GrainFactory.GetGrain<IChainGrain>(State.ChainId);
+            var subscribeInfo = await clientGrain.GetSubscribeInfoAsync();
+            var chainStatus = await chainGrain.GetChainStatusAsync();
+            if (State.ScannedBlockHeight == 0 && State.ScannedConfirmedBlockHeight == 0)
             {
-                break;
+                State.ScannedBlockHeight = subscribeInfo.StartBlockNumber - 1;
+                State.ScannedConfirmedBlockHeight = subscribeInfo.StartBlockNumber - 1;
+                await WriteStateAsync();
             }
 
-            await clientGrain.SetHandleHistoricalBlockTimeAsync(DateTime.UtcNow);
-
-            if (State.ScannedConfirmedBlockHeight >=
-                chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold)
+            while (true)
             {
-                await clientGrain.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
-                break;
-            }
-
-            var targetHeight = Math.Min(State.ScannedConfirmedBlockHeight + _blockScanOptions.BatchPushBlockCount,
-                chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold);
-            var blocks = await _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType)
-                .GetBlocksAsync(State.ChainId, State.ScannedConfirmedBlockHeight + 1, targetHeight, false,
-                    subscribeInfo.SubscribeEvents);
-
-            if (blocks.Count > 0)
-            {
-                if (!subscribeInfo.OnlyConfirmedBlock)
+                var clientInfo = await clientGrain.GetClientInfoAsync();
+                if (clientInfo.Version != State.Version || clientInfo.ScanModeInfo.ScanMode != ScanMode.HistoricalBlock)
                 {
-                    SetIsConfirmed(blocks, false);
+                    break;
+                }
+
+                await clientGrain.SetHandleHistoricalBlockTimeAsync(DateTime.UtcNow);
+
+                if (State.ScannedConfirmedBlockHeight >=
+                    chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold)
+                {
+                    await clientGrain.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
+                    break;
+                }
+
+                var targetHeight = Math.Min(State.ScannedConfirmedBlockHeight + _blockScanOptions.BatchPushBlockCount,
+                    chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold);
+
+
+                var blocks = await _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType)
+                    .GetBlocksAsync(State.ChainId, State.ScannedConfirmedBlockHeight + 1, targetHeight, false,
+                        subscribeInfo.SubscribeEvents);
+
+                if (blocks.Count > 0)
+                {
+                    if (!subscribeInfo.OnlyConfirmedBlock)
+                    {
+                        SetIsConfirmed(blocks, false);
+                        await _stream.OnNextAsync(new SubscribedBlockDto
+                        {
+                            ClientId = State.ClientId,
+                            ChainId = State.ChainId,
+                            Version = State.Version,
+                            Blocks = blocks
+                        });
+                    }
+
+                    SetIsConfirmed(blocks, true);
                     await _stream.OnNextAsync(new SubscribedBlockDto
                     {
                         ClientId = State.ClientId,
@@ -84,24 +98,19 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                         Blocks = blocks
                     });
                 }
-                
-                SetIsConfirmed(blocks, true);
-                await _stream.OnNextAsync(new SubscribedBlockDto
-                {
-                    ClientId = State.ClientId,
-                    ChainId = State.ChainId,
-                    Version = State.Version,
-                    Blocks = blocks
-                });
-                
+
+                State.ScannedBlockHeight = targetHeight;
+                State.ScannedConfirmedBlockHeight = targetHeight;
+
+                await WriteStateAsync();
+
+                chainStatus = await chainGrain.GetChainStatusAsync();
             }
-
-            State.ScannedBlockHeight = targetHeight;
-            State.ScannedConfirmedBlockHeight = targetHeight;
-            
-            await WriteStateAsync();
-
-            chainStatus = await chainGrain.GetChainStatusAsync();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"HandleHistoricalBlock failed: {e.Message}");
+            throw;
         }
     }
 
