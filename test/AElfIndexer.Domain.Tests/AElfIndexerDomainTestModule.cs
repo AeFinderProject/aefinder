@@ -55,7 +55,7 @@ public class AElfIndexerDomainTestModule : AbpModule
             foreach (var t in types)
             {
                 AsyncHelper.RunSync(async () =>
-                    await elasticIndexService.DeleteIndexAsync(t.Name.ToLower()));
+                    await elasticIndexService.DeleteIndexAsync("aelfindexer." + t.Name.ToLower()));
             }
         });
     }
