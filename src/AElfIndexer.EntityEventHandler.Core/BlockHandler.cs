@@ -121,8 +121,6 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
                 _logger.LogDebug($"LogEvent is bulk-adding, its block number:{eventData.BlockNumber}, total logevent count:{logEventIndexList.Count}");
                 await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
             }
-        
-            
         }
 
     }
