@@ -17,7 +17,5 @@ public class BlockBase:AElfIndexerEntity<string>,IBlockchainData
     [Keyword]public string Signature { get; set; }
     public bool IsConfirmed{get;set;}
     public Dictionary<string,string> ExtraProperties {get;set;}
-    
-    // [Nested(Name = "Transactions",Enabled = true,IncludeInParent = true,IncludeInRoot = true)]
-    // public List<Transaction> Transactions {get;set;}
+
 }

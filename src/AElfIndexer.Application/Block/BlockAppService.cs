@@ -31,7 +31,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         _logEventIndexRepository = logEventIndexRepository;
         _apiOptions = apiOptions.Value;
     }
-    
+
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
         if ((input.EndBlockNumber - input.StartBlockNumber) > _apiOptions.BlockQueryHeightInterval)
@@ -42,78 +42,21 @@ public class BlockAppService:ApplicationService,IBlockAppService
         var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
 
         List<BlockDto> items = new List<BlockDto>();
-        // if (input.Events != null && input.Events.Count>0)
-        // {
-        //     mustQuery.Add(q=>q.Term(i=>i.Field("Transactions.chainId").Value(input.ChainId)));
-        //     // mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId.Suffix("keyword")).Value(input.ChainId)));
-        //     mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").GreaterThanOrEquals(input.StartBlockNumber)));
-        //     mustQuery.Add(q => q.Range(i => i.Field("Transactions.blockNumber").LessThanOrEquals(input.EndBlockNumber)));
-        //
-        //     if (input.IsOnlyConfirmed)
-        //     {
-        //         mustQuery.Add(q=>q.Term(i=>i.Field("Transactions.isConfirmed").Value(input.IsOnlyConfirmed)));
-        //     }
-        //     
-        //     var shouldQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
-        //     foreach (var eventInput in input.Events)
-        //     {
-        //         var shouldMustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
-        //         if (!string.IsNullOrEmpty(eventInput.ContractAddress))
-        //         {
-        //             shouldMustQuery.Add(s =>
-        //                 s.Match(i =>
-        //                     i.Field("Transactions.LogEvents.contractAddress").Query(eventInput.ContractAddress)));
-        //         }
-        //
-        //         var shouldMushShouldQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
-        //         if (eventInput.EventNames != null)
-        //         {
-        //             foreach (var eventName in eventInput.EventNames)
-        //             {
-        //                 if (!string.IsNullOrEmpty(eventName))
-        //                 {
-        //                     shouldMushShouldQuery.Add(s =>
-        //                         s.Match(i => i.Field("Transactions.LogEvents.eventName").Query(eventName)));
-        //                 }
-        //             }
-        //         }
-        //         
-        //
-        //         if (shouldMushShouldQuery.Count > 0)
-        //         {
-        //             shouldMustQuery.Add(q => q.Bool(b => b.Should(shouldMushShouldQuery)));
-        //         }
-        //
-        //         shouldQuery.Add(q => q.Bool(b => b.Must(shouldMustQuery)));
-        //     }
-        //
-        //     mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
-        //     
-        //     QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Nested(q => q.Path("Transactions")
-        //                 .Query(qq => qq.Bool(b => b.Must(mustQuery))));
-        //     
-        //     var list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockNumber,
-        //         sortType:SortOrder.Ascending,limit:int.MaxValue);
-        //     items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
-        // }
-        // else
-        // {
-            mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId).Value(input.ChainId)));
-            // mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId.Suffix("keyword")).Value(input.ChainId)));
-            mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(input.StartBlockNumber)));
-            mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(input.EndBlockNumber)));
+        mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(input.ChainId)));
+        // mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId.Suffix("keyword")).Value(input.ChainId)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(input.StartBlockNumber)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(input.EndBlockNumber)));
 
-            if (input.IsOnlyConfirmed)
-            {
-                mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.IsConfirmed).Value(input.IsOnlyConfirmed)));
-            }
-            
-            QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
-            
-            var list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockNumber,
-                sortType:SortOrder.Ascending,limit:int.MaxValue);
-            items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
-        // }
+        if (input.IsOnlyConfirmed)
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.IsConfirmed).Value(input.IsOnlyConfirmed)));
+        }
+
+        QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
+
+        var list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockNumber,
+            sortType: SortOrder.Ascending, limit: int.MaxValue);
+        items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
 
         List<BlockDto> resultList = new List<BlockDto>();
         if (!input.HasTransaction)
@@ -128,10 +71,10 @@ public class BlockAppService:ApplicationService,IBlockAppService
         {
             resultList.AddRange(items);
         }
-        
+
         return resultList;
     }
-    
+
     public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
     {
         if (input.EndBlockNumber - input.StartBlockNumber > _apiOptions.TransactionQueryHeightInterval)

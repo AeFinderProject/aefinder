@@ -8,6 +8,5 @@ namespace AElfIndexer.Entities.Es;
 
 public class BlockIndex:BlockBase,IIndexBuild
 {
-    // [Nested(Name = "Transactions",Enabled = true,IncludeInParent = true,IncludeInRoot = true)]
-    // public List<Transaction> Transactions {get;set;}
+
 }
