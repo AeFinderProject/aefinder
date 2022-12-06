@@ -32,7 +32,6 @@ public class ClusterFixture:IDisposable,ISingletonDependency
     private class TestSiloConfigurations : ISiloBuilderConfigurator {
         public void Configure(ISiloHostBuilder hostBuilder) {
             hostBuilder.ConfigureServices(services => {
-                    //services.AddApplication<AElfIndexerGrainTestModule>();
                     services.AddSingleton<IBlockAppService, MockBlockAppService>();
                     services.AddSingleton<IBlockDataProvider, BlockDataProvider>();
                     services.AddTransient<IBlockFilterProvider, BlockFilterProvider>();

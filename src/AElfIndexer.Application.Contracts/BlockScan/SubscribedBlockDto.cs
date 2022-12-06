@@ -9,5 +9,5 @@ public class SubscribedBlockDto
     public string ClientId { get; set; }
     public string Version { get; set; }
     public BlockFilterType FilterType { get; set; }
-    public List<BlockDto> Blocks { get; set; }
+    public List<BlockWithTransactionDto> Blocks { get; set; }
 }

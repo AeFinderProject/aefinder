@@ -17,8 +17,8 @@ namespace AElfIndexer;
 
 public interface IBlockIndexHandler
 {
-    Task ProcessNewBlockAsync(BlockIndex block);
-    Task ProcessConfirmedBlocksAsync(List<BlockIndex> confirmBlocks);
+    Task ProcessNewBlockAsync(BlockWithTransactionDto block);
+    Task ProcessConfirmedBlocksAsync(List<BlockWithTransactionDto> confirmBlocks);
 }
 
 public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
@@ -36,15 +36,13 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
         Logger = NullLogger<BlockIndexHandler>.Instance;
     }
 
-    public async Task ProcessNewBlockAsync(BlockIndex block)
+    public async Task ProcessNewBlockAsync(BlockWithTransactionDto block)
     {
         try
         {
             var chainGrain = _clusterClient.GetGrain<IChainGrain>(block.ChainId);
             await chainGrain.SetLatestBlockAsync(block.BlockHash, block.BlockHeight);
             
-            var dto = _objectMapper.Map<BlockIndex, BlockDto>(block);
-
             var clientManagerGrain = _clusterClient.GetGrain<IClientManagerGrain>(0);
             var clientIds = await clientManagerGrain.GetClientIdsByChainAsync(block.ChainId);
             var tasks = clientIds.Select(async clientId =>
@@ -55,7 +53,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                     clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= block.BlockHeight)
                 {
                     var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(clientId);
-                    await blockScanGrain.HandleNewBlockAsync(dto);
+                    await blockScanGrain.HandleNewBlockAsync(block);
                 }
             });
 
@@ -68,7 +66,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
         }
     }
 
-    public async Task ProcessConfirmedBlocksAsync(List<BlockIndex> confirmBlocks)
+    public async Task ProcessConfirmedBlocksAsync(List<BlockWithTransactionDto> confirmBlocks)
     {
         try
         {
@@ -77,9 +75,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
             var chainGrain = _clusterClient.GetGrain<IChainGrain>(chainId);
             await chainGrain.SetLatestConfirmBlockAsync(confirmBlocks.Last().BlockHash,
                 confirmBlocks.Last().BlockHeight);
-
-            var dtos = _objectMapper.Map<List<BlockIndex>, List<BlockDto>>(confirmBlocks);
-
+            
             var clientManagerGrain = _clusterClient.GetGrain<IClientManagerGrain>(0);
             var clientIds = await clientManagerGrain.GetClientIdsByChainAsync(chainId);
             var tasks = clientIds.Select(async clientId =>
@@ -90,7 +86,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                     clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= confirmBlocks.First().BlockHeight)
                 {
                     var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(clientId);
-                    await blockScanGrain.HandleConfirmedBlockAsync(dtos);
+                    await blockScanGrain.HandleConfirmedBlockAsync(confirmBlocks);
                 }
             });
 

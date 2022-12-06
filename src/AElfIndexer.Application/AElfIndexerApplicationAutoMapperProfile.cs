@@ -1,5 +1,6 @@
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Entities.Es;
+using AElfIndexer.Etos;
 using AutoMapper;
 using Volo.Abp.AutoMapper;
 
@@ -15,6 +16,10 @@ public class AElfIndexerApplicationAutoMapperProfile:Profile
 
         CreateMap<TransactionIndex, TransactionDto>();
         CreateMap<LogEventIndex, LogEventDto>();
+        
+        CreateMap<BlockDto,BlockWithTransactionDto>();
+        CreateMap<NewBlockEto,BlockWithTransactionDto>();
+        CreateMap<ConfirmBlockEto,BlockWithTransactionDto>();
     }
     
 }

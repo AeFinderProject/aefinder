@@ -15,5 +15,4 @@ public class BlockDto:EntityDto<string>
     public string Signature { get; set; }
     public bool IsConfirmed{get;set;}
     public Dictionary<string,string> ExtraProperties {get;set;}
-    public List<TransactionDto> Transactions {get;set;}
 }

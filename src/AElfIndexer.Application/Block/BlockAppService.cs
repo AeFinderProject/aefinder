@@ -63,7 +63,6 @@ public class BlockAppService:ApplicationService,IBlockAppService
         {
             foreach (var blockItem in items)
             {
-                blockItem.Transactions = null;
                 resultList.Add(blockItem);
             }
         }

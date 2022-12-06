@@ -14,7 +14,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
         _blockAppService = blockAppService;
     }
 
-    public async Task<List<BlockDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
+    public async Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
         bool onlyConfirmed, List<FilterContractEventInput> filters)
     {
         var logEvents = await _blockAppService.GetLogEventsAsync(new GetLogEventsInput()
@@ -50,7 +50,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
             }
         }
 
-        var blocks = new Dictionary<string, BlockDto>();
+        var blocks = new Dictionary<string, BlockWithTransactionDto>();
         foreach (var transaction in transactions.Values)
         {
             if (blocks.TryGetValue(transaction.BlockHash, out var block))
@@ -59,7 +59,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
             }
             else
             {
-                block = new BlockDto
+                block = new BlockWithTransactionDto
                 {
                     ChainId = transaction.ChainId,
                     BlockHash = transaction.BlockHash,
@@ -79,7 +79,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
         return blocks.Values.ToList();
     }
 
-    public async Task<List<BlockDto>> FilterBlocksAsync(List<BlockDto> blocks, List<FilterContractEventInput> filters)
+    public async Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<FilterContractEventInput> filters)
     {
         if (filters == null || filters.Count == 0)
         {
@@ -103,10 +103,10 @@ public class LogEventFilterProvider : IBlockFilterProvider
             }
         }
 
-        var result = new List<BlockDto>();
+        var result = new List<BlockWithTransactionDto>();
         foreach (var block in blocks)
         {
-            var filteredBlock = new BlockDto
+            var filteredBlock = new BlockWithTransactionDto
             {
                 ChainId = block.ChainId,
                 BlockHash = block.BlockHash,

@@ -44,7 +44,7 @@ public class BlockHub : AbpHub
         
         foreach (var subscribeInfo in subscribeInfos)
         {
-            var id = subscribeInfo.ChainId + clientId;
+            var id = subscribeInfo.ChainId + clientId + subscribeInfo.FilterType;
             var clientGrain = _clusterClient.GetGrain<IClientGrain>(id);
             await clientGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version, subscribeInfo);
             
