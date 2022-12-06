@@ -70,26 +70,26 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
         blockDictionary.ShouldNotContainKey(blockChainDataEto_h65_fork.Blocks[0].BlockHash);//Unit test 3
         blockDictionary.ShouldContainKey(blockChainDataEto_h84.Blocks[0].BlockHash);//Unit test 4
 
-        blockDictionary.Values.ShouldContain(x => x.BlockNumber == 81);
-        blockDictionary.Values.ShouldContain(x => x.BlockNumber == 82);
-        blockDictionary.Values.ShouldContain(x => x.BlockNumber == 84);
+        blockDictionary.Values.ShouldContain(x => x.BlockHeight == 81);
+        blockDictionary.Values.ShouldContain(x => x.BlockHeight == 82);
+        blockDictionary.Values.ShouldContain(x => x.BlockHeight == 84);
         foreach (var blockItem in blockDictionary)
         {
-            if (blockItem.Value.BlockNumber == 81)
+            if (blockItem.Value.BlockHeight == 81)
             {
                 blockItem.Value.ChainId.ShouldBe("AELF");
                 blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
                 blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h80.Blocks[0].BlockHash);
                 blockItem.Value.IsConfirmed.ShouldBeFalse();
             }
-            if (blockItem.Value.BlockNumber == 82)
+            if (blockItem.Value.BlockHeight == 82)
             {
                 blockItem.Value.ChainId.ShouldBe("AELF");
                 blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
                 blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h81.Blocks[0].BlockHash);
                 blockItem.Value.IsConfirmed.ShouldBeFalse();
             }
-            if (blockItem.Value.BlockNumber == 84)
+            if (blockItem.Value.BlockHeight == 84)
             {
                 blockItem.Value.ChainId.ShouldBe("AELF");
                 blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
@@ -144,9 +144,9 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
 
         foreach (var blockItem in blockDictionary)
         {
-            blockItem.Value.BlockNumber.ShouldBeGreaterThanOrEqualTo(90);
+            blockItem.Value.BlockHeight.ShouldBeGreaterThanOrEqualTo(90);
 
-            if (blockItem.Value.BlockNumber == 90)
+            if (blockItem.Value.BlockHeight == 90)
             {
                 blockItem.Value.IsConfirmed.ShouldBeTrue();
             }
@@ -156,7 +156,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
             }
         }
         
-        blockDictionary.Count(item=>item.Value.BlockNumber==90).ShouldBe(1);
+        blockDictionary.Count(item=>item.Value.BlockHeight==90).ShouldBe(1);
     }
 
     [Fact]
@@ -202,9 +202,9 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
 
         foreach (var blockItem in blockDictionary)
         {
-            blockItem.Value.BlockNumber.ShouldBeGreaterThanOrEqualTo(95);
+            blockItem.Value.BlockHeight.ShouldBeGreaterThanOrEqualTo(95);
             
-            if (blockItem.Value.BlockNumber == 95)
+            if (blockItem.Value.BlockHeight == 95)
             {
                 blockItem.Value.IsConfirmed.ShouldBeTrue();
             }
@@ -282,7 +282,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
 
         foreach (var blockItem in blockDictionary)
         {
-            blockItem.Value.BlockNumber.ShouldBeGreaterThanOrEqualTo(105);
+            blockItem.Value.BlockHeight.ShouldBeGreaterThanOrEqualTo(105);
         }
     }
 

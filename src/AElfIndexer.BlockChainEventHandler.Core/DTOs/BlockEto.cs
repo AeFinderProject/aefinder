@@ -3,7 +3,7 @@ namespace AElfIndexer.DTOs;
 public class BlockEto
 {
     public string BlockHash { get; set; }
-    public long BlockNumber { get; set; }
+    public long BlockHeight { get; set; }
     public string PreviousBlockHash { get; set; }
     public DateTime BlockTime { get; set; }
     public string SignerPubkey { get; set; }

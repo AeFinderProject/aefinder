@@ -1,9 +1,9 @@
+using System.Collections.Generic;
 using AElfIndexer.Entities.Es;
-using Volo.Abp.EventBus;
 
 namespace AElfIndexer.Etos;
 
 public class ConfirmBlockEto:BlockBase
 {
-    
+    public List<Transaction> Transactions {get;set;}
 }

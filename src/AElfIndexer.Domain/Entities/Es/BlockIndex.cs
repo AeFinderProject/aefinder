@@ -8,5 +8,5 @@ namespace AElfIndexer.Entities.Es;
 
 public class BlockIndex:BlockBase,IIndexBuild
 {
-    
+
 }

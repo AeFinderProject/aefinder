@@ -22,7 +22,7 @@ public class LogEventIndex:AElfIndexerEntity<string>,IIndexBuild,IBlockchainData
     /// <summary>
     /// block height
     /// </summary>
-    public long BlockNumber { get; set; }
+    public long BlockHeight { get; set; }
     
     [Keyword]public string TransactionId { get; set; }
     

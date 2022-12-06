@@ -38,7 +38,7 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         var dicLibBlock = this.State.Blocks.Where(b => b.Value.IsConfirmed)
             .Select(x => x.Value)
             .FirstOrDefault();
-        if (dicLibBlock != null && dicLibBlock.BlockNumber >= blockEvent.BlockNumber)
+        if (dicLibBlock != null && dicLibBlock.BlockHeight >= blockEvent.BlockHeight)
         {
             // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
             return null;
@@ -50,12 +50,12 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
             // Console.WriteLine(
             //     $"[BlockGrain]Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
             throw new Exception(
-                $"Block {blockEvent.BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+                $"Block {blockEvent.BlockHeight} can't be processed now, its PreviousBlockHash is not exist in dictionary");
         }
 
 
         BlockEventData currentLibBlock =
-            this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
+            this.State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockHeight);
 
         List<BlockEventData> libBlockList = new List<BlockEventData>();
         if (currentLibBlock != null)
@@ -63,7 +63,7 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
             GetLibBlockList(currentLibBlock.BlockHash, libBlockList);
         }
 
-        RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0);
+        RaiseEvent(blockEvent, blockEvent.LibBlockHeight > 0);
         await ConfirmEvents();
 
         return libBlockList;
@@ -79,14 +79,14 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
                 .FirstOrDefault();
             if (dicLibBlock != null)
             {
-                if (dicLibBlock.BlockNumber >= blockEventDataList.OrderBy(x => x.BlockNumber).Last().BlockNumber)
+                if (dicLibBlock.BlockHeight >= blockEventDataList.OrderBy(x => x.BlockHeight).Last().BlockHeight)
                 {
                     // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
                     return null;
                 }
 
                 blockEventDataList = blockEventDataList.Where(b =>
-                        b.BlockNumber > dicLibBlock.BlockNumber &&
+                        b.BlockHeight > dicLibBlock.BlockHeight &&
                         !State.Blocks.ContainsKey(b.BlockHash))
                     .ToList();
                 
@@ -100,9 +100,9 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
             if (!this.State.Blocks.ContainsKey(blockEventDataList.First().PreviousBlockHash))
             {
                 Console.WriteLine(
-                    $"[BlockGrain]Block {blockEventDataList.First().BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+                    $"[BlockGrain]Block {blockEventDataList.First().BlockHeight} can't be processed now, its PreviousBlockHash is not exist in dictionary");
                 throw new Exception(
-                    $"Block {blockEventDataList.First().BlockNumber} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+                    $"Block {blockEventDataList.First().BlockHeight} can't be processed now, its PreviousBlockHash is not exist in dictionary");
             }
             
         }
@@ -122,13 +122,13 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         }
         else
         {
-            long maxLibBlockNumber = blockEventDataList.Max(b => b.LibBlockNumber);
+            long maxLibBlockNumber = blockEventDataList.Max(b => b.LibBlockHeight);
 
             List<BlockEventData> eventList = new List<BlockEventData>();
             if (maxLibBlockNumber > 0)
             {
                 //find the last block index in list with block's lib block number is maxLibBlockNumber
-                var index = blockEventDataList.FindLastIndex(b => b.LibBlockNumber == maxLibBlockNumber);
+                var index = blockEventDataList.FindLastIndex(b => b.LibBlockHeight == maxLibBlockNumber);
 
                 var beforeList = blockEventDataList.GetRange(0, index);
                 RaiseEvents(beforeList);
@@ -171,7 +171,7 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
 
     private async Task RaiseSingleBlock(BlockEventData blockEvent,List<BlockEventData> libBlockList)
     {
-        var currentLibBlock = State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
+        var currentLibBlock = State.FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockHeight);
 
         if (currentLibBlock != null)
         {
@@ -179,7 +179,7 @@ public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
         }
 
         blockEvent.ClearBlockStateDictionary = true;
-        RaiseEvent(blockEvent, blockEvent.LibBlockNumber > 0);
+        RaiseEvent(blockEvent, blockEvent.LibBlockHeight > 0);
         await ConfirmEvents();
     }
     

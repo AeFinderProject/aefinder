@@ -32,8 +32,8 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         var id = chainId + clientId;
         
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
-        await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockNumber);
-        await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockNumber);
+        await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockHeight);
+        await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockHeight);
 
         var clientGrain = Cluster.Client.GetGrain<IClientGrain>(id);
         await clientGrain.InitializeAsync(chainId, clientId, version, new SubscribeInfo
@@ -77,39 +77,39 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(55);
-        subscribedBlock.Last().BlockNumber.ShouldBe(50);
+        subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(55);
-        subscribedBlock.Last().BlockNumber.ShouldBe(50);
+        subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[49].First());
         subscribedBlock.Count.ShouldBe(55);
-        subscribedBlock.Last().BlockNumber.ShouldBe(50);
+        subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[51].First());
         subscribedBlock.Count.ShouldBe(56);
-        subscribedBlock.Last().BlockNumber.ShouldBe(51);
+        subscribedBlock.Last().BlockHeight.ShouldBe(51);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[53].First());
         subscribedBlock.Count.ShouldBe(61);
-        subscribedBlock.Last().BlockNumber.ShouldBe(53);
+        subscribedBlock.Last().BlockHeight.ShouldBe(53);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[54].First());
         subscribedBlock.Count.ShouldBe(62);
-        subscribedBlock.Last().BlockNumber.ShouldBe(54);
+        subscribedBlock.Last().BlockHeight.ShouldBe(54);
         
         await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto>{_blockDataProvider.Blocks[46].First()});
         subscribedBlock.Count.ShouldBe(63);
-        subscribedBlock.Last().BlockNumber.ShouldBe(46);
+        subscribedBlock.Last().BlockHeight.ShouldBe(46);
         
         await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto>{_blockDataProvider.Blocks[48].First()});
         subscribedBlock.Count.ShouldBe(65);
-        subscribedBlock.Last().BlockNumber.ShouldBe(48);
+        subscribedBlock.Last().BlockHeight.ShouldBe(48);
         
         await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto>{_blockDataProvider.Blocks[56].First()});
         subscribedBlock.Count.ShouldBe(65);
-        subscribedBlock.Last().BlockNumber.ShouldBe(48);
+        subscribedBlock.Last().BlockHeight.ShouldBe(48);
     }
 
     [Fact]
@@ -122,9 +122,9 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
 
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
-            _blockDataProvider.Blocks[60].First().BlockNumber);
+            _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
-            _blockDataProvider.Blocks[50].First().BlockNumber);
+            _blockDataProvider.Blocks[50].First().BlockHeight);
 
         var clientGrain = Cluster.Client.GetGrain<IClientGrain>(id);
         await clientGrain.InitializeAsync(chainId, clientId, version, new SubscribeInfo
@@ -160,7 +160,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         var number = 21;
         foreach (var block in subscribedBlock)
         {
-            block.BlockNumber.ShouldBe(number);
+            block.BlockHeight.ShouldBe(number);
             block.IsConfirmed.ShouldBe(true);
             number++;
         }
@@ -176,9 +176,9 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
 
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
-            _blockDataProvider.Blocks[60].First().BlockNumber);
+            _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
-            _blockDataProvider.Blocks[50].First().BlockNumber);
+            _blockDataProvider.Blocks[50].First().BlockHeight);
 
         var clientGrain = Cluster.Client.GetGrain<IClientGrain>(id);
         await clientGrain.InitializeAsync(chainId, clientId, version, new SubscribeInfo
@@ -226,8 +226,8 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         var id = chainId + clientId;
         
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
-        await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockNumber);
-        await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockNumber);
+        await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockHeight);
+        await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockHeight);
 
         var clientGrain = Cluster.Client.GetGrain<IClientGrain>(id);
         await clientGrain.InitializeAsync(chainId, clientId, version, new SubscribeInfo
@@ -265,14 +265,14 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         
         await scanGrain.HandleHistoricalBlockAsync();
         subscribedBlock.Count.ShouldBe(2);
-        subscribedBlock.Last().BlockNumber.ShouldBe(30);
+        subscribedBlock.Last().BlockHeight.ShouldBe(30);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(3);
-        subscribedBlock.Last().BlockNumber.ShouldBe(50);
+        subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await scanGrain.HandleConfirmedBlockAsync(new List<BlockDto>{_blockDataProvider.Blocks[50].First()});
         subscribedBlock.Count.ShouldBe(4);
-        subscribedBlock.Last().BlockNumber.ShouldBe(50);
+        subscribedBlock.Last().BlockHeight.ShouldBe(50);
     }
 }

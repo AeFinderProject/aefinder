@@ -39,7 +39,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     public async Task HandleEventAsync(NewBlocksEto eventData)
     {
         _logger.LogInformation(
-            $"blocks is adding, start BlockNumber: {eventData.NewBlocks.First().BlockNumber} , IsConfirmed: {eventData.NewBlocks.First().IsConfirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockNumber}");
+            $"blocks is adding, start BlockNumber: {eventData.NewBlocks.First().BlockHeight} , IsConfirmed: {eventData.NewBlocks.First().IsConfirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockHeight}");
 
         var blockIndexList = _objectMapper.Map<List<NewBlockEto>, List<BlockIndex>>(eventData.NewBlocks);
         await _blockIndexRepository.BulkAddOrUpdateAsync(blockIndexList);
@@ -69,14 +69,14 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         if (transactionIndexList.Count > 0)
         {
             _logger.LogDebug(
-                $"Transaction is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockNumber}, total transaction count:{transactionIndexList.Count}");
+                $"Transaction is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockHeight}, total transaction count:{transactionIndexList.Count}");
             await _transactionIndexRepository.BulkAddOrUpdateAsync(transactionIndexList);
         }
 
         if (logEventIndexList.Count > 0)
         {
             _logger.LogDebug(
-                $"LogEvent is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockNumber}, total logevent count:{logEventIndexList.Count}");
+                $"LogEvent is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockHeight}, total logevent count:{logEventIndexList.Count}");
             await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
         }
 
@@ -85,7 +85,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
 
     public async Task HandleEventAsync(NewBlockEto eventData)
     {
-        _logger.LogInformation($"block is adding, id: {eventData.BlockHash}  , BlockNumber: {eventData.BlockNumber} , IsConfirmed: {eventData.IsConfirmed}");
+        _logger.LogInformation($"block is adding, id: {eventData.BlockHash}  , BlockNumber: {eventData.BlockHeight} , IsConfirmed: {eventData.IsConfirmed}");
         var existBlockIndex = await _blockIndexRepository.GetAsync(eventData.Id);
         if (existBlockIndex != null)
         {
@@ -113,12 +113,12 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
 
             if (transactionIndexList.Count > 0)
             {
-                _logger.LogDebug($"Transaction is bulk-adding, its block number:{eventData.BlockNumber}, total transaction count:{transactionIndexList.Count}");
+                _logger.LogDebug($"Transaction is bulk-adding, its block number:{eventData.BlockHeight}, total transaction count:{transactionIndexList.Count}");
                 await _transactionIndexRepository.BulkAddOrUpdateAsync(transactionIndexList);
             }
             if (logEventIndexList.Count > 0)
             {
-                _logger.LogDebug($"LogEvent is bulk-adding, its block number:{eventData.BlockNumber}, total logevent count:{logEventIndexList.Count}");
+                _logger.LogDebug($"LogEvent is bulk-adding, its block number:{eventData.BlockHeight}, total logevent count:{logEventIndexList.Count}");
                 await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
             }
         }
@@ -133,17 +133,9 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         var indexes = new List<BlockIndex>();
         foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
-            _logger.LogInformation($"block:{confirmBlock.BlockNumber} is confirming");
+            _logger.LogInformation($"block:{confirmBlock.BlockHeight} is confirming");
             var blockIndex = _objectMapper.Map<ConfirmBlockEto, BlockIndex>(confirmBlock);
             blockIndex.IsConfirmed = true;
-            foreach (var transaction in blockIndex.Transactions)
-            {
-                transaction.IsConfirmed = true;
-                foreach (var logEvent in transaction.LogEvents)
-                {
-                    logEvent.IsConfirmed = true;
-                }
-            }
 
             confirmBlockIndexList.Add(blockIndex);
             indexes.Add(blockIndex);
@@ -169,7 +161,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             //find the same height blocks
             var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
             mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(confirmBlock.ChainId)));
-            mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockNumber).Value(confirmBlock.BlockNumber)));
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockHeight).Value(confirmBlock.BlockHeight)));
             QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
 
             var forkBlockList = await _blockIndexRepository.GetListAsync(Filter);
@@ -190,12 +182,12 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
                 }
 
                 forkBlockIndexList.Add(forkBlock);
-                // _logger.LogInformation($"block {forkBlock.BlockHash} has been deleted.");
-                foreach (var transaction in forkBlock.Transactions)
+
+                var transactionIndexList = await GetTransactionListAsync(forkBlock.ChainId,forkBlock.BlockHash);
+                forkTransactionIndexList.AddRange(transactionIndexList);
+
+                foreach (var transaction in transactionIndexList)
                 {
-                    var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
-                    forkTransactionIndexList.Add(transactionIndex);
-                    
                     foreach (var logEvent in transaction.LogEvents)
                     {
                         var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
@@ -221,21 +213,37 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             }
         }
 
-        _logger.LogDebug($"blocks is confirming,start {confirmBlockIndexList.First().BlockNumber} end {confirmBlockIndexList.Last().BlockNumber},total confirm {confirmBlockIndexList.Count}");
+        _logger.LogDebug($"blocks is confirming,start {confirmBlockIndexList.First().BlockHeight} end {confirmBlockIndexList.Last().BlockHeight},total confirm {confirmBlockIndexList.Count}");
         await _blockIndexRepository.BulkAddOrUpdateAsync(confirmBlockIndexList);
         if (confirmTransactionIndexList.Count > 0)
         {
-            _logger.LogDebug($"transactions is confirming,start {confirmTransactionIndexList.First().BlockNumber} end {confirmTransactionIndexList.Last().BlockNumber},total confirm {confirmTransactionIndexList.Count}");
+            _logger.LogDebug($"transactions is confirming,start {confirmTransactionIndexList.First().BlockHeight} end {confirmTransactionIndexList.Last().BlockHeight},total confirm {confirmTransactionIndexList.Count}");
             await _transactionIndexRepository.BulkAddOrUpdateAsync(confirmTransactionIndexList);
         }
         if (confirmLogEventIndexList.Count > 0)
         {
-            _logger.LogDebug($"log events is confirming,start {confirmLogEventIndexList.First().BlockNumber} end {confirmLogEventIndexList.Last().BlockNumber},total confirm {confirmLogEventIndexList.Count}");
+            _logger.LogDebug($"log events is confirming,start {confirmLogEventIndexList.First().BlockHeight} end {confirmLogEventIndexList.Last().BlockHeight},total confirm {confirmLogEventIndexList.Count}");
             await _logEventIndexRepository.BulkAddOrUpdateAsync(confirmLogEventIndexList);
         }
         
         _ = Task.Run(async () => { await _blockIndexHandler.ProcessConfirmedBlocksAsync(indexes); });
     }
-    
-    
+
+    private async Task<List<TransactionIndex>> GetTransactionListAsync(string chainId,string blockHash)
+    {
+        var mustQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
+        mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(chainId)));
+        mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockHash).Value(blockHash)));
+        QueryContainer Filter(QueryContainerDescriptor<TransactionIndex> f) => f.Bool(b => b.Must(mustQuery));
+
+        var forkTransactionList = await _transactionIndexRepository.GetListAsync(Filter);
+        if (forkTransactionList.Item1 == 0)
+        {
+            return new List<TransactionIndex>();
+        }
+
+        return forkTransactionList.Item2;
+    }
+
+
 }

@@ -20,8 +20,8 @@ public class LogEventFilterProvider : IBlockFilterProvider
         var logEvents = await _blockAppService.GetLogEventsAsync(new GetLogEventsInput()
         {
             ChainId = chainId,
-            StartBlockNumber = startBlockNumber,
-            EndBlockNumber = endBlockNumber,
+            StartBlockHeight = startBlockNumber,
+            EndBlockHeight = endBlockNumber,
             IsOnlyConfirmed = onlyConfirmed,
             Events = filters
         });
@@ -39,7 +39,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                 {
                     ChainId = logEvent.ChainId,
                     BlockHash = logEvent.BlockHash,
-                    BlockNumber = logEvent.BlockNumber,
+                    BlockHeight = logEvent.BlockHeight,
                     BlockTime = logEvent.BlockTime,
                     PreviousBlockHash = logEvent.PreviousBlockHash,
                     IsConfirmed = logEvent.IsConfirmed,
@@ -63,7 +63,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                 {
                     ChainId = transaction.ChainId,
                     BlockHash = transaction.BlockHash,
-                    BlockNumber = transaction.BlockNumber,
+                    BlockHeight = transaction.BlockHeight,
                     BlockTime = transaction.BlockTime,
                     IsConfirmed = transaction.IsConfirmed,
                     PreviousBlockHash = transaction.PreviousBlockHash,
@@ -110,7 +110,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
             {
                 ChainId = block.ChainId,
                 BlockHash = block.BlockHash,
-                BlockNumber = block.BlockNumber,
+                BlockHeight = block.BlockHeight,
                 BlockTime = block.BlockTime,
                 PreviousBlockHash = block.PreviousBlockHash,
                 IsConfirmed = block.IsConfirmed,
@@ -123,7 +123,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                 {
                     ChainId = transaction.ChainId,
                     BlockHash = transaction.BlockHash,
-                    BlockNumber = transaction.BlockNumber,
+                    BlockHeight = transaction.BlockHeight,
                     BlockTime = transaction.BlockTime,
                     PreviousBlockHash = transaction.PreviousBlockHash,
                     IsConfirmed = transaction.IsConfirmed,

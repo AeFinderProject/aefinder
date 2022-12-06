@@ -28,7 +28,7 @@ public class TransactionIndex:AElfIndexerEntity<string>,IIndexBuild,IBlockchainD
     
     [Keyword]public string PreviousBlockHash { get; set; }
     
-    public long BlockNumber { get; set; }
+    public long BlockHeight { get; set; }
     
     public DateTime BlockTime { get; set; }
     
