@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using AElf.Indexing.Elasticsearch.Options;
 using AElfIndexer.Grains;
 using AElfIndexer.Orleans.TestBase;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +10,8 @@ using Volo.Abp.Modularity;
 namespace AElfIndexer.EntityEventHandler.Core.Tests;
 
 [DependsOn(typeof(AElfIndexerEntityEventHandlerCoreModule),
-    typeof(AElfIndexerOrleansTestBaseModule))]
+    typeof(AElfIndexerOrleansTestBaseModule),
+    typeof(AElfIndexerDomainTestModule))]
 public class AElfIndexerEntityEventHandlerCoreTestModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -19,7 +21,6 @@ public class AElfIndexerEntityEventHandlerCoreTestModule:AbpModule
             //Add all mappings defined in the assembly of the MyModule class
             options.AddMaps<AElfIndexerEntityEventHandlerCoreTestModule>();
         });
-
         
     }
 }

@@ -9,16 +9,16 @@ public class BlockState
     public void Apply(BlockEventData blockEvent)
     {
         //Whether include the LibFound event
-        if (blockEvent.ClearBlockStateDictionary && blockEvent.LibBlockNumber > 0)
+        if (blockEvent.ClearBlockStateDictionary && blockEvent.LibBlockHeight > 0)
         {
             //Contains LibFound event
-            BlockEventData currentLibBlock = FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockNumber);
+            BlockEventData currentLibBlock = FindLibBlock(blockEvent.PreviousBlockHash, blockEvent.LibBlockHeight);
         
             if (currentLibBlock != null)
             {
-                Blocks.RemoveAll(b => b.Value.BlockNumber < blockEvent.LibBlockNumber);
+                Blocks.RemoveAll(b => b.Value.BlockHeight < blockEvent.LibBlockHeight);
                 Blocks.RemoveAll(b =>
-                    b.Value.BlockNumber == blockEvent.LibBlockNumber && b.Value.BlockHash != currentLibBlock.BlockHash);
+                    b.Value.BlockHeight == blockEvent.LibBlockHeight && b.Value.BlockHash != currentLibBlock.BlockHash);
             }
         }
         
@@ -26,7 +26,7 @@ public class BlockState
         if (!addResult)
         {
             // TODO: Use Logger
-            Console.WriteLine($"[Block State Apply]Add new block{blockEvent.BlockNumber} to dictionary {addResult}");
+            Console.WriteLine($"[Block State Apply]Add new block{blockEvent.BlockHeight} to dictionary {addResult}");
             Console.WriteLine($"Block hash: {blockEvent.BlockHash} exist: {Blocks.ContainsKey(blockEvent.BlockHash)}");
         }
 
@@ -43,7 +43,7 @@ public class BlockState
         
         while (Blocks.ContainsKey(previousBlockHash))
         {
-            if (Blocks[previousBlockHash].BlockNumber == libBlockNumber)
+            if (Blocks[previousBlockHash].BlockHeight == libBlockNumber)
             {
                 return Blocks[previousBlockHash];
             }

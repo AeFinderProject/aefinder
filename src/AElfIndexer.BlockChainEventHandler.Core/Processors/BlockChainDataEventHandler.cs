@@ -42,7 +42,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
-        _logger.LogInformation($"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockNumber}, end block: {eventData.Blocks.Last().BlockNumber},");
+        _logger.LogInformation($"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockHeight}, end block: {eventData.Blocks.Last().BlockHeight},");
         // var blockGrain = _clusterClient.GetGrain<IBlockGrain>(_orleansClientOption.AElfBlockGrainPrimaryKey);
         var blockGrain = await _blockGrainProvider.GetBlockGrain(eventData.ChainId);
         int processedBlockCount = 0;
@@ -93,7 +93,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
 
                 if (libBlockList.Count > 0)
                 {
-                    libBlockList = libBlockList.OrderBy(b => b.BlockNumber).ToList();
+                    libBlockList = libBlockList.OrderBy(b => b.BlockHeight).ToList();
                     //publish confirm blocks event
                     var confirmBlockList =
                         _objectMapper.Map<List<BlockEventData>, List<ConfirmBlockEto>>(libBlockList);
@@ -130,16 +130,16 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             transaction.ChainId = chainId;
             transaction.BlockHash = newBlock.BlockHash;
             transaction.PreviousBlockHash = newBlock.PreviousBlockHash;
-            transaction.BlockNumber = newBlock.BlockNumber;
+            transaction.BlockHeight = newBlock.BlockHeight;
             transaction.BlockTime = newBlock.BlockTime;
             transaction.IsConfirmed = false;
-
+        
             foreach (var logEvent in transaction.LogEvents)
             {
                 logEvent.ChainId = chainId;
                 logEvent.BlockHash = newBlock.BlockHash;
                 logEvent.PreviousBlockHash = newBlock.PreviousBlockHash;
-                logEvent.BlockNumber = newBlock.BlockNumber;
+                logEvent.BlockHeight = newBlock.BlockHeight;
                 logEvent.BlockTime = newBlock.BlockTime;
                 logEvent.IsConfirmed = false;
                 logEvent.TransactionId = transaction.TransactionId;
@@ -160,7 +160,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             .FirstOrDefault(e => e.EventName == "IrreversibleBlockFound");
         if (libLogEvent != null)
         {
-            blockEvent.LibBlockNumber = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
+            blockEvent.LibBlockHeight = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
         }
 
         NewBlockTaskEntity resultEntity = new NewBlockTaskEntity();

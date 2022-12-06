@@ -15,7 +15,7 @@ public class TransactionDto
     
     public string BlockHash { get; set; }
     
-    public long BlockNumber { get; set; }
+    public long BlockHeight { get; set; }
 
     public string PreviousBlockHash { get; set; }
 

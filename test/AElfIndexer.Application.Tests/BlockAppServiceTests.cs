@@ -35,8 +35,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
         mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId).Value(chainId)));
         // mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId.Suffix("keyword")).Value(input.ChainId)));
-        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(startBlockNumber)));
-        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(endBlockNumber)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockHeight).GreaterThanOrEquals(startBlockNumber)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockHeight).LessThanOrEquals(endBlockNumber)));
         QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
         var filterList=await _blockIndexRepository.GetListAsync(Filter);
         foreach (var deleteBlock in filterList.Item2)
@@ -117,27 +117,27 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         //Unit Test 1
         var block_100 =
             MockDataHelper.MockNewBlockEtoData(100, MockDataHelper.CreateBlockHash(),false);
-        block_100.Transactions = new List<Transaction>();
+        // block_100.Transactions = new List<Transaction>();
         await _blockIndexRepository.AddAsync(block_100);
         Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test1 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 100,
+            StartBlockHeight = 100,
+            EndBlockHeight = 100,
             HasTransaction = true
         };
         List<BlockDto> blockDtos_test1 = await _blockAppService.GetBlocksAsync(getBlocksInput_test1);
         blockDtos_test1.Count.ShouldBeGreaterThan(0);
-        blockDtos_test1[0].BlockNumber.ShouldBe(100);
-        blockDtos_test1.ShouldAllBe(x => x.Transactions.Count == 0);
+        blockDtos_test1[0].BlockHeight.ShouldBe(100);
+        // blockDtos_test1.ShouldAllBe(x => x.Transactions.Count == 0);
         
         //Unit Test 2
         GetBlocksInput getBlocksInput_test2 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 50
+            StartBlockHeight = 100,
+            EndBlockHeight = 50
         };
         List<BlockDto> blockDtos_test2 =await _blockAppService.GetBlocksAsync(getBlocksInput_test2);
         blockDtos_test2.Count.ShouldBe(0);
@@ -146,12 +146,12 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetBlocksInput getBlocksInput_test3 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 100
+            StartBlockHeight = 100,
+            EndBlockHeight = 100
         };
         List<BlockDto> blockDtos_test3 =await _blockAppService.GetBlocksAsync(getBlocksInput_test3);
         blockDtos_test3.Count.ShouldBeGreaterThan(0);
-        blockDtos_test3[0].BlockNumber.ShouldBe(100);
+        blockDtos_test3[0].BlockHeight.ShouldBe(100);
         
         //Unit Test 4
         var block_200 =
@@ -161,16 +161,16 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetBlocksInput getBlocksInput_test4 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 300,
+            StartBlockHeight = 100,
+            EndBlockHeight = 300,
             HasTransaction = true
         };
         List<BlockDto> blockDtos_test4 =await _blockAppService.GetBlocksAsync(getBlocksInput_test4);
         blockDtos_test4.Count.ShouldBeGreaterThan(0);
-        blockDtos_test4.ShouldContain(x=>x.BlockNumber==100);
-        blockDtos_test4.ShouldContain(x=>x.BlockNumber==200);
-        blockDtos_test4.ShouldNotContain(x=>x.BlockNumber==300);
-        blockDtos_test4.ShouldContain(x => x.Transactions.Count > 0);
+        blockDtos_test4.ShouldContain(x=>x.BlockHeight==100);
+        blockDtos_test4.ShouldContain(x=>x.BlockHeight==200);
+        blockDtos_test4.ShouldNotContain(x=>x.BlockHeight==300);
+        // blockDtos_test4.ShouldContain(x => x.Transactions.Count > 0);
         
         //Unit Test 5
         var block_180 = MockDataHelper.MockNewBlockEtoData(180, MockDataHelper.CreateBlockHash(),true);
@@ -181,13 +181,13 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetBlocksInput getBlocksInput_test5 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 200,
+            StartBlockHeight = 100,
+            EndBlockHeight = 200,
             HasTransaction = false
         };
         List<BlockDto> blockDtos_test5 =await _blockAppService.GetBlocksAsync(getBlocksInput_test5);
-        blockDtos_test5.Count(x=>x.BlockNumber==180).ShouldBe(2);
-        blockDtos_test5.ShouldAllBe(x => x.Transactions == null);
+        blockDtos_test5.Count(x=>x.BlockHeight==180).ShouldBe(2);
+        // blockDtos_test5.ShouldAllBe(x => x.Transactions == null);
         
         //Unit Test 6
         var block_1000 = MockDataHelper.MockNewBlockEtoData(1000, MockDataHelper.CreateBlockHash(),false);
@@ -210,19 +210,19 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetBlocksInput getBlocksInput_test6 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 1000,
-            EndBlockNumber = 5000,
+            StartBlockHeight = 1000,
+            EndBlockHeight = 5000,
             HasTransaction = true
         };
         List<BlockDto> blockDtos_test6 =await _blockAppService.GetBlocksAsync(getBlocksInput_test6);
-        blockDtos_test6.Max(x=>x.BlockNumber).ShouldBe(2000);
+        blockDtos_test6.Max(x=>x.BlockHeight).ShouldBe(2000);
         
         //Unit Test 7
         GetBlocksInput getBlocksInput_test7 = new GetBlocksInput()
         {
             ChainId = "AELG",
-            StartBlockNumber = 100,
-            EndBlockNumber = 100,
+            StartBlockHeight = 100,
+            EndBlockHeight = 100,
             HasTransaction = true
         };
         List<BlockDto> blockDtos_test7 =await _blockAppService.GetBlocksAsync(getBlocksInput_test7);
@@ -232,8 +232,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetBlocksInput getBlocksInput_test8 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 200,
+            StartBlockHeight = 100,
+            EndBlockHeight = 200,
             IsOnlyConfirmed = true,
             HasTransaction = true
         };
@@ -245,31 +245,31 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetBlocksInput getBlocksInput_test9 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 200,
+            StartBlockHeight = 100,
+            EndBlockHeight = 200,
             IsOnlyConfirmed = false,
             HasTransaction = true
         };
         List<BlockDto> blockDtos_test9 =await _blockAppService.GetBlocksAsync(getBlocksInput_test9);
         blockDtos_test9.Count.ShouldBe(4);
-        blockDtos_test9.ShouldContain(x=>x.BlockNumber==100);
-        blockDtos_test9.ShouldContain(x=>x.BlockNumber==200);
+        blockDtos_test9.ShouldContain(x=>x.BlockHeight==100);
+        blockDtos_test9.ShouldContain(x=>x.BlockHeight==200);
         blockDtos_test9.ShouldContain(x => x.BlockHash == block_180_fork.BlockHash);
         blockDtos_test9.ShouldContain(x => x.BlockHash == block_180.BlockHash);
-        blockDtos_test9.Count(x=>x.BlockNumber==180).ShouldBe(2);
+        blockDtos_test9.Count(x=>x.BlockHeight==180).ShouldBe(2);
         
         //Unit Test 10
         var block_110 = MockDataHelper.MockNewBlockEtoData(110, MockDataHelper.CreateBlockHash(), true);
-        var transaction_110 = MockDataHelper.MockTransactionWithLogEventData(110, block_110.BlockHash,
-            MockDataHelper.CreateBlockHash(), true, "consensus_contract_address", "");
-        block_110.Transactions = new List<Transaction>() { transaction_110 };
+        // var transaction_110 = MockDataHelper.MockTransactionWithLogEventData(110, block_110.BlockHash,
+        //     MockDataHelper.CreateBlockHash(), true, "consensus_contract_address", "");
+        // block_110.Transactions = new List<Transaction>() { transaction_110 };
         await _blockIndexRepository.AddAsync(block_110);
         Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test10 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = true,
             HasTransaction = true,
             Events = new List<FilterContractEventInput>()
@@ -286,117 +286,117 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         };
         List<BlockDto> blockDtos_test10 =await _blockAppService.GetBlocksAsync(getBlocksInput_test10);
         blockDtos_test10.Count.ShouldBe(1);
-        blockDtos_test10.ShouldContain(x=>x.BlockNumber==110);
+        blockDtos_test10.ShouldContain(x=>x.BlockHeight==110);
         
         //Unit Test 11
         var block_105 = MockDataHelper.MockNewBlockEtoData(105, MockDataHelper.CreateBlockHash(), true);
-        var transaction_105 = MockDataHelper.MockTransactionWithLogEventData(105, block_105.BlockHash,
-            MockDataHelper.CreateBlockHash(), true, "contract_address_a", "UpdateTinyBlockInformation");
-        block_105.Transactions = new List<Transaction>() { transaction_105 };
+        // var transaction_105 = MockDataHelper.MockTransactionWithLogEventData(105, block_105.BlockHash,
+        //     MockDataHelper.CreateBlockHash(), true, "contract_address_a", "UpdateTinyBlockInformation");
+        // block_105.Transactions = new List<Transaction>() { transaction_105 };
         var block_106 = MockDataHelper.MockNewBlockEtoData(106, MockDataHelper.CreateBlockHash(), true);
-        var transaction_106 = MockDataHelper.MockTransactionWithLogEventData(106,block_106.BlockHash, MockDataHelper.CreateBlockHash(),
-            true, "token_contract_address", "DonateResourceToken");
-        block_106.Transactions = new List<Transaction>() { transaction_106 };
+        // var transaction_106 = MockDataHelper.MockTransactionWithLogEventData(106,block_106.BlockHash, MockDataHelper.CreateBlockHash(),
+        //     true, "token_contract_address", "DonateResourceToken");
+        // block_106.Transactions = new List<Transaction>() { transaction_106 };
         await _blockIndexRepository.AddAsync(block_105);
         await _blockIndexRepository.AddAsync(block_106);
         Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test11 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = true,
             HasTransaction = true,
-            Events = new List<FilterContractEventInput>()
-            {
-                new FilterContractEventInput()
-                {
-                    EventNames = new List<string>(){"UpdateValue","UpdateTinyBlockInformation"}
-                },
-                new FilterContractEventInput()
-                {
-                    EventNames = new List<string>(){"DonateResourceToken"}
-                }
-            }
+            // Events = new List<FilterContractEventInput>()
+            // {
+            //     new FilterContractEventInput()
+            //     {
+            //         EventNames = new List<string>(){"UpdateValue","UpdateTinyBlockInformation"}
+            //     },
+            //     new FilterContractEventInput()
+            //     {
+            //         EventNames = new List<string>(){"DonateResourceToken"}
+            //     }
+            // }
         };
         List<BlockDto> blockDtos_test11 =await _blockAppService.GetBlocksAsync(getBlocksInput_test11);
-        blockDtos_test11.Count.ShouldBe(2);
-        blockDtos_test11.ShouldContain(x=>x.BlockNumber==105);
-        blockDtos_test11.ShouldContain(x=>x.BlockNumber==106);
+        // blockDtos_test11.Count.ShouldBe(2);
+        blockDtos_test11.ShouldContain(x=>x.BlockHeight==105);
+        blockDtos_test11.ShouldContain(x=>x.BlockHeight==106);
         
         //Unit Test 12
         var block_107 = MockDataHelper.MockNewBlockEtoData(107, MockDataHelper.CreateBlockHash(), true);
-        var transaction_107 = MockDataHelper.MockTransactionWithLogEventData(107, block_107.BlockHash,
-            MockDataHelper.CreateBlockHash(), true, "consensus_contract_address", "UpdateTinyBlockInformation");
-        block_107.Transactions = new List<Transaction>() { transaction_107 };
+        // var transaction_107 = MockDataHelper.MockTransactionWithLogEventData(107, block_107.BlockHash,
+        //     MockDataHelper.CreateBlockHash(), true, "consensus_contract_address", "UpdateTinyBlockInformation");
+        // block_107.Transactions = new List<Transaction>() { transaction_107 };
         await _blockIndexRepository.AddAsync(block_107);
         Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test12 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = true,
             HasTransaction = true,
-            Events = new List<FilterContractEventInput>()
-            {
-                new FilterContractEventInput()
-                {
-                    ContractAddress = "consensus_contract_address",
-                    EventNames = new List<string>(){"UpdateValue","UpdateTinyBlockInformation"}
-                },
-                new FilterContractEventInput()
-                {
-                    ContractAddress = "token_contract_address",
-                    EventNames = new List<string>(){"DonateResourceToken"}
-                }
-            }
+            // Events = new List<FilterContractEventInput>()
+            // {
+            //     new FilterContractEventInput()
+            //     {
+            //         ContractAddress = "consensus_contract_address",
+            //         EventNames = new List<string>(){"UpdateValue","UpdateTinyBlockInformation"}
+            //     },
+            //     new FilterContractEventInput()
+            //     {
+            //         ContractAddress = "token_contract_address",
+            //         EventNames = new List<string>(){"DonateResourceToken"}
+            //     }
+            // }
         };
         List<BlockDto> blockDtos_test12 =await _blockAppService.GetBlocksAsync(getBlocksInput_test12);
-        blockDtos_test12.Count.ShouldBe(2);
+        // blockDtos_test12.Count.ShouldBe(2);
         blockDtos_test12.ShouldContain(x=>x.BlockHash==block_106.BlockHash);
         blockDtos_test12.ShouldContain(x=>x.BlockHash==block_107.BlockHash);
-        blockDtos_test12.ShouldNotContain(x=>x.BlockHash==block_105.BlockHash);
+        // blockDtos_test12.ShouldNotContain(x=>x.BlockHash==block_105.BlockHash);
         
         //Unit Test 13
         GetBlocksInput getBlocksInput_test13 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = true,
             HasTransaction = true,
-            Events = new List<FilterContractEventInput>()
-            {
-                new FilterContractEventInput()
-                {
-                    ContractAddress = "consensus_contract_address",
-                    EventNames = new List<string>(){"DonateResourceToken"}
-                }
-            }
+            // Events = new List<FilterContractEventInput>()
+            // {
+            //     new FilterContractEventInput()
+            //     {
+            //         ContractAddress = "consensus_contract_address",
+            //         EventNames = new List<string>(){"DonateResourceToken"}
+            //     }
+            // }
         };
         List<BlockDto> blockDtos_test13 =await _blockAppService.GetBlocksAsync(getBlocksInput_test13);
-        blockDtos_test13.Count.ShouldBe(0);
+        // blockDtos_test13.Count.ShouldBe(0);
         
         //Unit Test 30
         GetBlocksInput getBlocksInput_test30 = new GetBlocksInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 200,
+            StartBlockHeight = 100,
+            EndBlockHeight = 200,
             IsOnlyConfirmed = true,
             HasTransaction = true,
-            Events = new List<FilterContractEventInput>()
-            {
-                new FilterContractEventInput()
-                {
-                    ContractAddress = "consensus_contract_address",
-                    EventNames = new List<string>(){"UpdateTinyBlockInformation"}
-                }
-            }
+            // Events = new List<FilterContractEventInput>()
+            // {
+            //     new FilterContractEventInput()
+            //     {
+            //         ContractAddress = "consensus_contract_address",
+            //         EventNames = new List<string>(){"UpdateTinyBlockInformation"}
+            //     }
+            // }
         };
         List<BlockDto> blockDtos_test30 =await _blockAppService.GetBlocksAsync(getBlocksInput_test30);
-        blockDtos_test30.Count.ShouldBe(1);
+        // blockDtos_test30.Count.ShouldBe(1);
         blockDtos_test30.ShouldContain(x=>x.BlockHash==block_107.BlockHash);
     }
 
@@ -404,8 +404,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
         mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId).Value(chainId)));
-        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(startBlockNumber)));
-        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(endBlockNumber)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockHeight).GreaterThanOrEquals(startBlockNumber)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockHeight).LessThanOrEquals(endBlockNumber)));
         QueryContainer Filter(QueryContainerDescriptor<TransactionIndex> f) => f.Bool(b => b.Must(mustQuery));
         var filterList=await _transactionIndexRepository.GetListAsync(Filter);
         foreach (var deleteTransaction in filterList.Item2)
@@ -434,8 +434,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetTransactionsInput getTransactionsInput_test14 = new GetTransactionsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110
+            StartBlockHeight = 100,
+            EndBlockHeight = 110
         };
         List<TransactionDto> transactionDtos_test14 =
             await _blockAppService.GetTransactionsAsync(getTransactionsInput_test14);
@@ -445,8 +445,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetTransactionsInput getTransactionsInput_test15 = new GetTransactionsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false,
             Events = new List<FilterContractEventInput>()
             {
@@ -471,8 +471,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetTransactionsInput getTransactionsInput_test16 = new GetTransactionsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false,
             Events = new List<FilterContractEventInput>()
             {
@@ -498,8 +498,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetTransactionsInput getTransactionsInput_test17 = new GetTransactionsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false,
             Events = new List<FilterContractEventInput>()
             {
@@ -525,8 +525,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetTransactionsInput getTransactionsInput_test18 = new GetTransactionsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false,
             Events = new List<FilterContractEventInput>()
             {
@@ -544,8 +544,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetTransactionsInput getTransactionsInput_test19 = new GetTransactionsInput()
         {
             ChainId = "AELG",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false
         };
         List<TransactionDto> transactionDtos_test19 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test19);
@@ -555,8 +555,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetTransactionsInput getTransactionsInput_test20 = new GetTransactionsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = true
         };
         List<TransactionDto> transactionDtos_test20 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test20);
@@ -566,8 +566,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetTransactionsInput getTransactionsInput_test32 = new GetTransactionsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 200,
+            StartBlockHeight = 100,
+            EndBlockHeight = 200,
             IsOnlyConfirmed = true,
             Events = new List<FilterContractEventInput>()
             {
@@ -609,19 +609,19 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetTransactionsInput getTransactionsInput_test31 = new GetTransactionsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 1000,
-            EndBlockNumber = 5000
+            StartBlockHeight = 1000,
+            EndBlockHeight = 5000
         };
         List<TransactionDto> getBlocksInput_test31 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test31);
-        getBlocksInput_test31.Max(x=>x.BlockNumber).ShouldBe(2000);
+        getBlocksInput_test31.Max(x=>x.BlockHeight).ShouldBe(2000);
     }
     
     private async Task ClearLogEventIndex(string chainId,long startBlockNumber,long endBlockNumber)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();
         mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.ChainId).Value(chainId)));
-        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(startBlockNumber)));
-        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(endBlockNumber)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockHeight).GreaterThanOrEquals(startBlockNumber)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockHeight).LessThanOrEquals(endBlockNumber)));
         QueryContainer Filter(QueryContainerDescriptor<LogEventIndex> f) => f.Bool(b => b.Must(mustQuery));
         var filterList=await _logEventIndexRepository.GetListAsync(Filter);
         foreach (var deleteLogEvent in filterList.Item2)
@@ -641,8 +641,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetLogEventsInput getLogEventsInput_test21 = new GetLogEventsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110
+            StartBlockHeight = 100,
+            EndBlockHeight = 110
         };
         List<LogEventDto> logEventDtos_test21 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test21);
         logEventDtos_test21.Count.ShouldBe(0);
@@ -659,8 +659,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetLogEventsInput getLogEventsInput_test22 = new GetLogEventsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false
         };
         List<LogEventDto> logEventDtos_test22 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test22);
@@ -674,21 +674,21 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetLogEventsInput getLogEventsInput_test23 = new GetLogEventsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false
         };
         List<LogEventDto> logEventDtos_test23 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test23);
         logEventDtos_test23.Count.ShouldBe(3);
-        logEventDtos_test23.ShouldContain(x=>x.BlockNumber==105);
-        logEventDtos_test23.ShouldContain(x=>x.BlockNumber==106);
+        logEventDtos_test23.ShouldContain(x=>x.BlockHeight==105);
+        logEventDtos_test23.ShouldContain(x=>x.BlockHeight==106);
         
         //Unit Test 24
         GetLogEventsInput getLogEventsInput_test24 = new GetLogEventsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false,
             Events = new List<FilterContractEventInput>()
             {
@@ -719,8 +719,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetLogEventsInput getLogEventsInput_test25 = new GetLogEventsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false,
             Events = new List<FilterContractEventInput>()
             {
@@ -743,10 +743,10 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         };
         List<LogEventDto> logEventDtos_test25 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test25);
         logEventDtos_test25.Count.ShouldBe(5);
-        logEventDtos_test25.ShouldContain(x=>x.BlockNumber==105);
-        logEventDtos_test25.ShouldContain(x=>x.BlockNumber==106);
-        logEventDtos_test25.ShouldContain(x=>x.BlockNumber==107);
-        logEventDtos_test25.ShouldContain(x=>x.BlockNumber==108);
+        logEventDtos_test25.ShouldContain(x=>x.BlockHeight==105);
+        logEventDtos_test25.ShouldContain(x=>x.BlockHeight==106);
+        logEventDtos_test25.ShouldContain(x=>x.BlockHeight==107);
+        logEventDtos_test25.ShouldContain(x=>x.BlockHeight==108);
         
         //Unit Test 26
         var logEvent_104 = MockDataHelper.MockNewLogEventEtoData(104, MockDataHelper.CreateBlockHash(), 0, false,
@@ -756,8 +756,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetLogEventsInput getLogEventsInput_test26 = new GetLogEventsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false,
             Events = new List<FilterContractEventInput>()
             {
@@ -775,16 +775,16 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         };
         List<LogEventDto> logEventDtos_test26 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test26);
         logEventDtos_test26.Count.ShouldBe(4);
-        logEventDtos_test26.ShouldContain(x=>x.BlockNumber==104);
-        logEventDtos_test26.ShouldContain(x=>x.BlockNumber==105);
-        logEventDtos_test26.ShouldContain(x=>x.BlockNumber==106);
+        logEventDtos_test26.ShouldContain(x=>x.BlockHeight==104);
+        logEventDtos_test26.ShouldContain(x=>x.BlockHeight==105);
+        logEventDtos_test26.ShouldContain(x=>x.BlockHeight==106);
         
         //Unit Test 27
         GetLogEventsInput getLogEventsInput_test27 = new GetLogEventsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false,
             Events = new List<FilterContractEventInput>()
             {
@@ -802,8 +802,8 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetLogEventsInput getLogEventsInput_test28 = new GetLogEventsInput()
         {
             ChainId = "AELG",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = false
         };
         List<LogEventDto> logEventDtos_test28 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test28);
@@ -813,13 +813,13 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetLogEventsInput getLogEventsInput_test29 = new GetLogEventsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 100,
-            EndBlockNumber = 110,
+            StartBlockHeight = 100,
+            EndBlockHeight = 110,
             IsOnlyConfirmed = true
         };
         List<LogEventDto> logEventDtos_test29 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test29);
         logEventDtos_test29.Count.ShouldBe(1);
-        logEventDtos_test29.ShouldContain(x=>x.BlockNumber==108);
+        logEventDtos_test29.ShouldContain(x=>x.BlockHeight==108);
         
     }
 
@@ -849,10 +849,10 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         GetLogEventsInput getLogEventsInput_test33 = new GetLogEventsInput()
         {
             ChainId = "AELF",
-            StartBlockNumber = 1000,
-            EndBlockNumber = 5000
+            StartBlockHeight = 1000,
+            EndBlockHeight = 5000
         };
         List<LogEventDto> logEventDtos_test33 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test33);
-        logEventDtos_test33.Max(x=>x.BlockNumber).ShouldBe(2000);
+        logEventDtos_test33.Max(x=>x.BlockHeight).ShouldBe(2000);
     }
 }

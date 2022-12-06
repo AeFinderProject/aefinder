@@ -27,6 +27,7 @@ public class AElfIndexerDomainTestModule : AbpModule
         {
             x.AddModule(typeof(AElfIndexerDomainModule));
         });
+        
         // Do not modify this!!!
         context.Services.Configure<EsEndpointOption>(options =>
         {
@@ -38,7 +39,10 @@ public class AElfIndexerDomainTestModule : AbpModule
             options.NumberOfReplicas = 1;
             options.NumberOfShards = 1;
             options.Refresh = Refresh.True;
+            options.IndexPrefix = "AElfIndexer";
         });
+        
+        
     }
     
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
@@ -52,7 +56,7 @@ public class AElfIndexerDomainTestModule : AbpModule
             foreach (var t in types)
             {
                 AsyncHelper.RunSync(async () =>
-                    await elasticIndexService.DeleteIndexAsync(t.Name.ToLower()));
+                    await elasticIndexService.DeleteIndexAsync("aelfindexer." + t.Name.ToLower()));
             }
         });
     }

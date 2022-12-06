@@ -21,8 +21,8 @@ public class BlockFilterProvider : IBlockFilterProvider
         {
             ChainId = chainId,
             HasTransaction = true,
-            StartBlockNumber = startBlockNumber,
-            EndBlockNumber = endBlockNumber,
+            StartBlockHeight = startBlockNumber,
+            EndBlockHeight = endBlockNumber,
             IsOnlyConfirmed = onlyConfirmed,
             Events = filters
         });
