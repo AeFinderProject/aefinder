@@ -13,7 +13,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
     {
         _blockAppService = blockAppService;
     }
-    
+
     public async Task<List<BlockDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
         bool onlyConfirmed, List<FilterContractEventInput> filters)
     {
@@ -22,7 +22,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
             ChainId = chainId,
             StartBlockNumber = startBlockNumber,
             EndBlockNumber = endBlockNumber,
-            IsOnlyConfirmed = onlyConfirmed, 
+            IsOnlyConfirmed = onlyConfirmed,
             Events = filters
         });
 
@@ -102,10 +102,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
                 filteredBlock.Transactions.Add(transaction);
             }
 
-            if (filteredBlock.Transactions.Count > 0)
-            {
-                result.Add(filteredBlock);
-            }
+            result.Add(filteredBlock);
         }
 
         return result;

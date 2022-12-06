@@ -13,7 +13,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
     {
         _blockAppService = blockAppService;
     }
-    
+
     public async Task<List<BlockDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
         bool onlyConfirmed, List<FilterContractEventInput> filters)
     {
@@ -49,7 +49,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                 transactions.Add(logEvent.TransactionId, transaction);
             }
         }
-        
+
         var blocks = new Dictionary<string, BlockDto>();
         foreach (var transaction in transactions.Values)
         {
@@ -146,10 +146,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                 }
             }
 
-            if (filteredBlock.Transactions.Count > 0)
-            {
-                result.Add(filteredBlock);
-            }
+            result.Add(filteredBlock);
         }
 
         return result;

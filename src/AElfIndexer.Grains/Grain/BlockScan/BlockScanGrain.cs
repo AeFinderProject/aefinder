@@ -71,33 +71,35 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold);
 
 
-                var blocks = await _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType)
+                var filteredBlocks = await _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType)
                     .GetBlocksAsync(State.ChainId, State.ScannedConfirmedBlockHeight + 1, targetHeight, false,
                         subscribeInfo.SubscribeEvents);
 
-                if (blocks.Count > 0)
-                {
-                    if (!subscribeInfo.OnlyConfirmedBlock)
-                    {
-                        SetIsConfirmed(blocks, false);
-                        await _stream.OnNextAsync(new SubscribedBlockDto
-                        {
-                            ClientId = State.ClientId,
-                            ChainId = State.ChainId,
-                            Version = State.Version,
-                            Blocks = blocks
-                        });
-                    }
+                var blocks = await FillVacantBlockAsync(filteredBlocks, State.ScannedConfirmedBlockHeight + 1,
+                    targetHeight);
 
-                    SetIsConfirmed(blocks, true);
+                if (!subscribeInfo.OnlyConfirmedBlock)
+                {
+                    SetIsConfirmed(blocks, false);
                     await _stream.OnNextAsync(new SubscribedBlockDto
                     {
                         ClientId = State.ClientId,
                         ChainId = State.ChainId,
                         Version = State.Version,
+                        FilterType = subscribeInfo.FilterType,
                         Blocks = blocks
                     });
                 }
+
+                SetIsConfirmed(blocks, true);
+                await _stream.OnNextAsync(new SubscribedBlockDto
+                {
+                    ClientId = State.ClientId,
+                    ChainId = State.ChainId,
+                    Version = State.Version,
+                    FilterType = subscribeInfo.FilterType,
+                    Blocks = blocks
+                });
 
                 State.ScannedBlockHeight = targetHeight;
                 State.ScannedConfirmedBlockHeight = targetHeight;
@@ -109,9 +111,37 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         catch (Exception e)
         {
+            // TODO: Use log provider
             Console.WriteLine($"HandleHistoricalBlock failed: {e.Message}");
             throw;
         }
+    }
+
+    private async Task<List<BlockDto>> FillVacantBlockAsync(List<BlockDto> filteredBlocks, long startHeight,
+        long endHeight)
+    {
+        if (filteredBlocks.Count == startHeight - endHeight + 1)
+        {
+            return filteredBlocks;
+        }
+
+        var result = new List<BlockDto>();
+        var allBlocks = await _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Block)
+            .GetBlocksAsync(State.ChainId, startHeight, endHeight, false, null);
+        var filteredBlockDic = filteredBlocks.ToDictionary(o => o.BlockNumber, o => o);
+        foreach (var b in allBlocks)
+        {
+            if (filteredBlockDic.TryGetValue(b.BlockNumber, out var filteredBlock))
+            {
+                result.Add(filteredBlock);
+            }
+            else
+            {
+                result.Add(b);
+            }
+        }
+
+        return result;
     }
 
     public async Task HandleNewBlockAsync(BlockDto block)
@@ -181,6 +211,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             ClientId = State.ClientId,
             ChainId = State.ChainId,
             Version = State.Version,
+            FilterType = subscribeInfo.FilterType,
             Blocks = subscribedBlocks
         });
 
@@ -249,6 +280,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             ClientId = State.ClientId,
             ChainId = State.ChainId,
             Version = State.Version,
+            FilterType = subscribeInfo.FilterType,
             Blocks = subscribedBlocks
         });
 
