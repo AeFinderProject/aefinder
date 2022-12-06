@@ -203,9 +203,15 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
                 // }
                 var transactionIndexList = await GetTransactionListAsync(forkBlock.ChainId,forkBlock.BlockHash);
                 forkTransactionIndexList.AddRange(transactionIndexList);
-                
-                var logEventIndexList = await GetLogEventListAsync(forkBlock.ChainId,forkBlock.BlockHash);
-                forkLogEventIndexList.AddRange(logEventIndexList);
+
+                foreach (var transaction in transactionIndexList)
+                {
+                    foreach (var logEvent in transaction.LogEvents)
+                    {
+                        var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
+                        forkLogEventIndexList.Add(logEventIndex);
+                    }
+                }
             }
 
             if (forkBlockIndexList.Count > 0)
@@ -257,21 +263,21 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         return forkTransactionList.Item2;
     }
     
-    private async Task<List<LogEventIndex>> GetLogEventListAsync(string chainId,string blockHash)
-    {
-        var mustQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();
-        mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(chainId)));
-        mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockHash).Value(blockHash)));
-        QueryContainer Filter(QueryContainerDescriptor<LogEventIndex> f) => f.Bool(b => b.Must(mustQuery));
-
-        var forkLogEventList = await _logEventIndexRepository.GetListAsync(Filter);
-        if (forkLogEventList.Item1 == 0)
-        {
-            return new List<LogEventIndex>();
-        }
-
-        return forkLogEventList.Item2;
-    }
+    // private async Task<List<LogEventIndex>> GetLogEventListAsync(string chainId,string blockHash)
+    // {
+    //     var mustQuery = new List<Func<QueryContainerDescriptor<LogEventIndex>, QueryContainer>>();
+    //     mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(chainId)));
+    //     mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockHash).Value(blockHash)));
+    //     QueryContainer Filter(QueryContainerDescriptor<LogEventIndex> f) => f.Bool(b => b.Must(mustQuery));
+    //
+    //     var forkLogEventList = await _logEventIndexRepository.GetListAsync(Filter);
+    //     if (forkLogEventList.Item1 == 0)
+    //     {
+    //         return new List<LogEventIndex>();
+    //     }
+    //
+    //     return forkLogEventList.Item2;
+    // }
 
 
 }
