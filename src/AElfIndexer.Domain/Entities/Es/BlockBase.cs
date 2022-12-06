@@ -10,7 +10,7 @@ public class BlockBase:AElfIndexerEntity<string>,IBlockchainData
     [Keyword]public override string Id { get; set; }
     [Keyword]public string ChainId { get; set; }
     [Keyword]public string BlockHash { get; set; }
-    public long BlockNumber { get; set; }
+    public long BlockHeight { get; set; }
     [Keyword]public string PreviousBlockHash { get; set; }
     public DateTime BlockTime { get; set; }
     [Keyword]public string SignerPubkey { get; set; }

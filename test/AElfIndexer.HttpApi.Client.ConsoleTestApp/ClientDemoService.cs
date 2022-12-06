@@ -47,7 +47,7 @@ public class ClientDemoService : ITransientDependency
                 s =>
                 {
                     Console.WriteLine(
-                        $"Receive Block From {s.First().BlockNumber} To {s.Last().BlockNumber}");
+                        $"Receive Block From {s.First().BlockHeight} To {s.Last().BlockHeight}");
                 });
             
             await connection.StartAsync().ConfigureAwait(false);

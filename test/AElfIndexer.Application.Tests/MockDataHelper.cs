@@ -18,7 +18,7 @@ public class MockDataHelper
     public static string Event_LIB = "IrreversibleBlockFound";
     
     
-    public static BlockIndex MockNewBlockEtoData(long blockNumber,string blockHash,bool isConfirmed)
+    public static BlockIndex MockNewBlockEtoData(long blockHeight,string blockHash,bool isConfirmed)
     {
         string currentBlockHash = blockHash;
         var newBlockEto = new BlockIndex
@@ -27,7 +27,7 @@ public class MockDataHelper
             Id = currentBlockHash,
             ChainId = "AELF",
             BlockHash = currentBlockHash,
-            BlockNumber = blockNumber,
+            BlockHeight = blockHeight,
             PreviousBlockHash = CreateBlockHash(),
             BlockTime = DateTime.Now,
             SignerPubkey =
@@ -133,7 +133,7 @@ public class MockDataHelper
     }
 
 
-    public static Transaction MockTransactionWithLogEventData(long blockNumber,string blockHash, string transactionId,bool isConfirmed,string contractAddress,string eventName)
+    public static Transaction MockTransactionWithLogEventData(long blockHeight,string blockHash, string transactionId,bool isConfirmed,string contractAddress,string eventName)
     {
         string currentBlockHash = blockHash;
         var newTransaction = new Transaction()
@@ -143,7 +143,7 @@ public class MockDataHelper
             From = "2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e",
             To = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
             BlockHash = currentBlockHash,
-            BlockNumber = blockNumber,
+            BlockHeight = blockHeight,
             BlockTime = DateTime.Now,
             MethodName = "UpdateValue",
             Params =
@@ -169,7 +169,7 @@ public class MockDataHelper
                 {
                     ChainId = "AELF",
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     IsConfirmed = isConfirmed,
                     TransactionId = transactionId,
@@ -188,7 +188,7 @@ public class MockDataHelper
         return newTransaction;
     }
 
-    public static TransactionIndex MockNewTransactionEtoData(long blockNumber,bool isConfirmed,string contractAddress,string eventName)
+    public static TransactionIndex MockNewTransactionEtoData(long blockHeight,bool isConfirmed,string contractAddress,string eventName)
     {
         string currentBlockHash = CreateBlockHash();
         string transactionId = CreateBlockHash();
@@ -200,7 +200,7 @@ public class MockDataHelper
             From = "2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e",
             To = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
             BlockHash = currentBlockHash,
-            BlockNumber = blockNumber,
+            BlockHeight = blockHeight,
             BlockTime = DateTime.Now,
             MethodName = "UpdateValue",
             Params =
@@ -226,7 +226,7 @@ public class MockDataHelper
                 {
                     ChainId = "AELF",
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     IsConfirmed = isConfirmed,
                     TransactionId = transactionId,
@@ -245,7 +245,7 @@ public class MockDataHelper
         return newTransaction;
     }
 
-    public static LogEventIndex MockNewLogEventEtoData(long blockNumber, string transactionId, int index, bool isConfirmed,
+    public static LogEventIndex MockNewLogEventEtoData(long blockHeight, string transactionId, int index, bool isConfirmed,
         string contractAddress, string eventName)
     {
         string currentBlockHash = CreateBlockHash();
@@ -254,7 +254,7 @@ public class MockDataHelper
             Id = transactionId + "_" + index,
             ChainId = "AELF",
             BlockHash = currentBlockHash,
-            BlockNumber = blockNumber,
+            BlockHeight = blockHeight,
             BlockTime = DateTime.Now,
             IsConfirmed = isConfirmed,
             TransactionId = transactionId,

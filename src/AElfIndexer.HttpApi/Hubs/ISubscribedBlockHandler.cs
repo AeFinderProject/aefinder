@@ -32,7 +32,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         if (connection != null && connection.Version == subscribedBlock.Version)
         {
             Logger.LogInformation(
-                $"Receive Block {subscribedBlock.ClientId} From {subscribedBlock.Blocks.First().BlockNumber} To {subscribedBlock.Blocks.Last().BlockNumber}");
+                $"Receive Block {subscribedBlock.ClientId} From {subscribedBlock.Blocks.First().BlockHeight} To {subscribedBlock.Blocks.Last().BlockHeight}");
             await _hubContext.Clients.Client(connection.ConnectionId).SendAsync("ReceiveBlock", subscribedBlock.Blocks);
         }
     }

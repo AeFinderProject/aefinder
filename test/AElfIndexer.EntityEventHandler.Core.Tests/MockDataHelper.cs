@@ -18,7 +18,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
         return Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
     }
     
-    public NewBlockEto MockNewBlockEtoData(long blockNumber, string previousBlockHash)
+    public NewBlockEto MockNewBlockEtoData(long blockHeight, string previousBlockHash)
     {
         string currentBlockHash = CreateBlockHash();
         var newBlockEto = new NewBlockEto
@@ -27,7 +27,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
             Id = currentBlockHash,
             ChainId = "AELF",
             BlockHash = currentBlockHash,
-            BlockNumber = blockNumber,
+            BlockHeight = blockHeight,
             PreviousBlockHash = previousBlockHash,
             BlockTime = DateTime.Now,
             SignerPubkey =
@@ -56,7 +56,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                     From = "2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e",
                     To = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     MethodName = "UpdateValue",
                     Params =
@@ -100,7 +100,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                     From = "2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e",
                     To = "JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE",
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     MethodName = "DonateResourceToken",
                     Params = "EiIKIBVv83IRVLMOCL29OquFBxwryHRNwySUcRAMISaLtGQaGM8C",
@@ -127,7 +127,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
         return newBlockEto;
     }
     
-    public NewBlockEto MockNewBlockEtoData(string blockHash,long blockNumber, string previousBlockHash)
+    public NewBlockEto MockNewBlockEtoData(string blockHash,long blockHeight, string previousBlockHash)
     {
         string currentBlockHash = blockHash;
         var newBlockEto = new NewBlockEto
@@ -136,7 +136,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
             Id = currentBlockHash,
             ChainId = "AELF",
             BlockHash = currentBlockHash,
-            BlockNumber = blockNumber,
+            BlockHeight = blockHeight,
             PreviousBlockHash = previousBlockHash,
             BlockTime = DateTime.Now,
             SignerPubkey =
@@ -165,7 +165,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                     From = "2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e",
                     To = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     MethodName = "UpdateValue",
                     Params =
@@ -209,7 +209,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                     From = "2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e",
                     To = "JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE",
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     MethodName = "DonateResourceToken",
                     Params = "EiIKIBVv83IRVLMOCL29OquFBxwryHRNwySUcRAMISaLtGQaGM8C",
@@ -253,7 +253,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
         return confirmBlockEto;
     }
 
-    public ConfirmBlockEto MockConfirmBlockEtoData(string currentBlockHash, long blockNumber)
+    public ConfirmBlockEto MockConfirmBlockEtoData(string currentBlockHash, long blockHeight)
     {
         string previousBlockHash = CreateBlockHash();
         var confirmBlockEto = new ConfirmBlockEto()
@@ -262,7 +262,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
             Id = currentBlockHash,
             ChainId = "AELF",
             BlockHash = currentBlockHash,
-            BlockNumber = blockNumber,
+            BlockHeight = blockHeight,
             PreviousBlockHash = previousBlockHash,
             BlockTime = DateTime.Now,
             SignerPubkey =
@@ -291,7 +291,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                     From = "2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e",
                     To = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     MethodName = "UpdateValue",
                     Params =
@@ -335,7 +335,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                     From = "2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e",
                     To = "JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE",
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     MethodName = "DonateResourceToken",
                     Params = "EiIKIBVv83IRVLMOCL29OquFBxwryHRNwySUcRAMISaLtGQaGM8C",

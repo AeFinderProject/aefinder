@@ -14,7 +14,7 @@ public class MockDataHelper
         return Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
     }
 
-    public static BlockChainDataEto MockBasicEtoData(long blockNumber,string previousBlockHash)
+    public static BlockChainDataEto MockBasicEtoData(long blockHeight,string previousBlockHash)
     {
         string currentBlockHash = CreateBlockHash();
         var blockChainDataEto = new BlockChainDataEto
@@ -25,7 +25,7 @@ public class MockDataHelper
                     new BlockEto()
                     {
                         BlockHash = currentBlockHash,
-                        BlockNumber = blockNumber,
+                        BlockHeight = blockHeight,
                         BlockTime = DateTime.Now,
                         PreviousBlockHash = previousBlockHash,
                         Signature = "0b1eec144cdf8575f3004352811123a408c505d8f20084bad27bb2aa16cf797a68078fb06a4706207874b0328096d0e03cde427bdcc1605519b2ec277853cb2f01",
@@ -46,7 +46,7 @@ public class MockDataHelper
         return blockChainDataEto;
     }
 
-    public static BlockChainDataEto MockEtoDataWithTransactions(long blockNumber,string previousBlockHash)
+    public static BlockChainDataEto MockEtoDataWithTransactions(long blockHeight,string previousBlockHash)
     {
         string currentBlockHash = CreateBlockHash();
         var blockChainDataEto = new BlockChainDataEto
@@ -57,7 +57,7 @@ public class MockDataHelper
                 new BlockEto()
                 {
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     PreviousBlockHash = previousBlockHash,
                     Signature =
@@ -131,7 +131,7 @@ public class MockDataHelper
         return blockChainDataEto;
     }
 
-    public static BlockChainDataEto MockEtoDataWithLogEvents(long blockNumber,string previousBlockHash)
+    public static BlockChainDataEto MockEtoDataWithLogEvents(long blockHeight,string previousBlockHash)
     {
         string currentBlockHash = CreateBlockHash();
         var blockChainDataEto = new BlockChainDataEto
@@ -142,7 +142,7 @@ public class MockDataHelper
                 new BlockEto()
                 {
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     PreviousBlockHash = previousBlockHash,
                     Signature =
@@ -229,7 +229,7 @@ public class MockDataHelper
         return blockChainDataEto;
     }
     
-    public static BlockChainDataEto MockEtoDataWithLibFoundEvent(long blockNumber, string previousBlockHash,long libBlockNumber)
+    public static BlockChainDataEto MockEtoDataWithLibFoundEvent(long blockHeight, string previousBlockHash,long libBlockNumber)
     {
         var libFound = new IrreversibleBlockFound();
         libFound.IrreversibleBlockHeight = libBlockNumber;
@@ -244,7 +244,7 @@ public class MockDataHelper
                 new BlockEto()
                 {
                     BlockHash = currentBlockHash,
-                    BlockNumber = blockNumber,
+                    BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
                     PreviousBlockHash = previousBlockHash,
                     Signature =
@@ -345,13 +345,13 @@ public class MockDataHelper
     }
 
 
-    public static BlockEto MockBlockEto(long blockNumber, string previousBlockHash)
+    public static BlockEto MockBlockEto(long blockHeight, string previousBlockHash)
     {
         string currentBlockHash = CreateBlockHash();
         var blockEto = new BlockEto()
         {
             BlockHash = currentBlockHash,
-            BlockNumber = blockNumber,
+            BlockHeight = blockHeight,
             BlockTime = DateTime.Now,
             PreviousBlockHash = previousBlockHash,
             Signature =
@@ -374,7 +374,7 @@ public class MockDataHelper
         return blockEto;
     }
 
-    public static BlockEto MockBlockEtoWithLibFoundEvent(long blockNumber, string previousBlockHash,long libBlockNumber)
+    public static BlockEto MockBlockEtoWithLibFoundEvent(long blockHeight, string previousBlockHash,long libBlockNumber)
     {
         var libFound = new IrreversibleBlockFound();
         libFound.IrreversibleBlockHeight = libBlockNumber;
@@ -384,7 +384,7 @@ public class MockDataHelper
         var blockEto = new BlockEto()
         {
             BlockHash = currentBlockHash,
-            BlockNumber = blockNumber,
+            BlockHeight = blockHeight,
             BlockTime = DateTime.Now,
             PreviousBlockHash = previousBlockHash,
             Signature =

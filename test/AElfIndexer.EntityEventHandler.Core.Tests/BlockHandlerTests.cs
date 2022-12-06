@@ -88,7 +88,7 @@ public class BlockHandlerTests:AElfIndexerEntityEventHandlerCoreTestBase
         
         var blockIndex_h9 = await _blockIndexRepository.GetAsync(q =>
             q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h9.BlockHash)) &&
-            q.Term(i => i.Field(f => f.BlockNumber).Value(newBlockEto_h9.BlockNumber)));
+            q.Term(i => i.Field(f => f.BlockHeight).Value(newBlockEto_h9.BlockHeight)));
         blockIndex_h9.ShouldNotBeNull();
     }
 
@@ -192,8 +192,8 @@ public class BlockHandlerTests:AElfIndexerEntityEventHandlerCoreTestBase
         blockIndex_h29_fork.ShouldNotBeNull();
         
         var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
-        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).GreaterThanOrEquals(21)));
-        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockNumber).LessThanOrEquals(28)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockHeight).GreaterThanOrEquals(21)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockHeight).LessThanOrEquals(28)));
         QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
         var blockIndex_h21_28=await _blockIndexRepository.GetListAsync(Filter);
         foreach (var blockItem in blockIndex_h21_28.Item2)

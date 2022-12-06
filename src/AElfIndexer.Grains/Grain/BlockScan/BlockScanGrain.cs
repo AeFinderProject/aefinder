@@ -129,16 +129,16 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
         var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType);
         var blocks = new List<BlockDto>();
-        if (block.BlockNumber == State.ScannedBlockHeight + 1 && block.PreviousBlockHash == State.ScannedBlockHash)
+        if (block.BlockHeight == State.ScannedBlockHeight + 1 && block.PreviousBlockHash == State.ScannedBlockHash)
         {
             blocks.Add(block);
         }
         else if (State.ScannedBlocks.Count == 0)
         {
             blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, State.ScannedBlockHeight + 1,
-                block.BlockNumber, false, null);
+                block.BlockHeight, false, null);
         }
-        else if (State.ScannedBlocks.TryGetValue(block.BlockNumber - 1, out var previousBlocks) &&
+        else if (State.ScannedBlocks.TryGetValue(block.BlockHeight - 1, out var previousBlocks) &&
                  previousBlocks.Contains(block.PreviousBlockHash))
         {
             blocks.Add(block);
@@ -146,13 +146,13 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         else
         {
             blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, State.ScannedBlocks.Keys.Min(),
-                block.BlockNumber, false, null);
+                block.BlockHeight, false, null);
         }
 
         var unPushedBlock = new List<BlockDto>();
         foreach (var b in blocks)
         {
-            if (!State.ScannedBlocks.TryGetValue(b.BlockNumber, out var scannedBlocks))
+            if (!State.ScannedBlocks.TryGetValue(b.BlockHeight, out var scannedBlocks))
             {
                 scannedBlocks = new HashSet<string>();
             }
@@ -162,7 +162,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 unPushedBlock.Add(b);
             }
 
-            State.ScannedBlocks[b.BlockNumber] = scannedBlocks;
+            State.ScannedBlocks[b.BlockHeight] = scannedBlocks;
         }
 
         if (unPushedBlock.Count == 0)
@@ -170,7 +170,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             return;
         }
 
-        State.ScannedBlockHeight = unPushedBlock.Last().BlockNumber;
+        State.ScannedBlockHeight = unPushedBlock.Last().BlockHeight;
         State.ScannedBlockHash = unPushedBlock.Last().BlockHash;
 
         var subscribedBlocks = await blockFilterProvider.FilterBlocksAsync(unPushedBlock, subscribeInfo.SubscribeEvents);
@@ -193,7 +193,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var clientInfo = await clientGrain.GetClientInfoAsync();
         if (clientInfo.Version != State.Version
             || clientInfo.ScanModeInfo.ScanMode != ScanMode.NewBlock
-            || blocks.First().BlockNumber <= State.ScannedConfirmedBlockHeight)
+            || blocks.First().BlockHeight <= State.ScannedConfirmedBlockHeight)
         {
             return;
         }
@@ -202,7 +202,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType);
 
         var scannedBlocks = new List<BlockDto>();
-        if (blocks.First().BlockNumber == State.ScannedConfirmedBlockHeight + 1)
+        if (blocks.First().BlockHeight == State.ScannedConfirmedBlockHeight + 1)
         {
             scannedBlocks.AddRange(blocks);
         }
@@ -210,19 +210,19 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         {
             scannedBlocks.AddRange(await blockFilterProvider.GetBlocksAsync(State.ChainId,
                 State.ScannedConfirmedBlockHeight + 1,
-                blocks.Last().BlockNumber, true, null));
+                blocks.Last().BlockHeight, true, null));
         }
 
         if (!subscribeInfo.OnlyConfirmedBlock)
         {
             foreach (var b in scannedBlocks)
             {
-                if (!State.ScannedBlocks.TryGetValue(b.BlockNumber, out var existBlocks) ||
+                if (!State.ScannedBlocks.TryGetValue(b.BlockHeight, out var existBlocks) ||
                     !existBlocks.Contains(b.BlockHash))
                 {
-                    if (b.BlockNumber < State.ScannedBlockHeight)
+                    if (b.BlockHeight < State.ScannedBlockHeight)
                     {
-                        State.ScannedBlockHeight = b.BlockNumber - 1;
+                        State.ScannedBlockHeight = b.BlockHeight - 1;
                         State.ScannedBlockHash = b.PreviousBlockHash;
                         await WriteStateAsync();
                     }
@@ -231,13 +231,13 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 }
                 else
                 {
-                    State.ScannedBlocks.RemoveAll(o => o.Key <= b.BlockNumber);
-                    State.ScannedBlockHeight = b.BlockNumber;
+                    State.ScannedBlocks.RemoveAll(o => o.Key <= b.BlockHeight);
+                    State.ScannedBlockHeight = b.BlockHeight;
                 }
             }
         }
 
-        State.ScannedConfirmedBlockHeight = scannedBlocks.Last().BlockNumber;
+        State.ScannedConfirmedBlockHeight = scannedBlocks.Last().BlockHeight;
         State.ScannedConfirmedBlockHash = scannedBlocks.Last().BlockHash;
 
         var subscribedBlocks =

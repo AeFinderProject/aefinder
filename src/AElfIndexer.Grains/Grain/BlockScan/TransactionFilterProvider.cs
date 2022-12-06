@@ -20,8 +20,8 @@ public class TransactionFilterProvider : IBlockFilterProvider
         var transactions = await _blockAppService.GetTransactionsAsync(new GetTransactionsInput()
         {
             ChainId = chainId,
-            StartBlockNumber = startBlockNumber,
-            EndBlockNumber = endBlockNumber,
+            StartBlockHeight = startBlockNumber,
+            EndBlockHeight = endBlockNumber,
             IsOnlyConfirmed = onlyConfirmed, 
             Events = filters
         });
@@ -39,7 +39,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
                 {
                     ChainId = transaction.ChainId,
                     BlockHash = transaction.BlockHash,
-                    BlockNumber = transaction.BlockNumber,
+                    BlockHeight = transaction.BlockHeight,
                     PreviousBlockHash = transaction.PreviousBlockHash,
                     BlockTime = transaction.BlockTime,
                     IsConfirmed = transaction.IsConfirmed,
@@ -86,7 +86,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
             {
                 ChainId = block.ChainId,
                 BlockHash = block.BlockHash,
-                BlockNumber = block.BlockNumber,
+                BlockHeight = block.BlockHeight,
                 BlockTime = block.BlockTime,
                 PreviousBlockHash = block.PreviousBlockHash,
                 IsConfirmed = block.IsConfirmed,
