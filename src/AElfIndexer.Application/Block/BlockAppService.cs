@@ -34,9 +34,9 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
-        if ((input.EndBlockHeight - input.StartBlockHeight) > _apiOptions.BlockQueryHeightInterval)
+        if ((input.EndBlockHeight - input.StartBlockHeight+1) > _apiOptions.BlockQueryHeightInterval)
         {
-            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.BlockQueryHeightInterval;
+            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.BlockQueryHeightInterval-1;
         }
 
         var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
@@ -72,6 +72,24 @@ public class BlockAppService:ApplicationService,IBlockAppService
         }
 
         return resultList;
+    }
+    
+    public async Task<long> GetBlockCountAsync(GetBlocksInput input)
+    {
+        var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
+        mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(input.ChainId)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockHeight).GreaterThanOrEquals(input.StartBlockHeight)));
+        mustQuery.Add(q => q.Range(i => i.Field(f => f.BlockHeight).LessThanOrEquals(input.EndBlockHeight)));
+
+        if (input.IsOnlyConfirmed)
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.IsConfirmed).Value(input.IsOnlyConfirmed)));
+        }
+
+        QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
+
+        var count = await _blockIndexRepository.CountAsync(Filter);
+        return count.Count;
     }
 
     public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)

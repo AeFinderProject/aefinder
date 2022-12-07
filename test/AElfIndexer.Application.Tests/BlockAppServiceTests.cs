@@ -855,4 +855,34 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         List<LogEventDto> logEventDtos_test33 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test33);
         logEventDtos_test33.Max(x=>x.BlockHeight).ShouldBe(2000);
     }
+
+    [Fact]
+    public async Task GetBlockCountTest()
+    {
+        for (int i = 0; i < 20; i++)
+        {
+            var block = MockDataHelper.MockNewBlockEtoData(100+i, MockDataHelper.CreateBlockHash(),true);
+            await _blockIndexRepository.AddAsync(block);
+            block = MockDataHelper.MockNewBlockEtoData(120+i, MockDataHelper.CreateBlockHash(),false);
+            await _blockIndexRepository.AddAsync(block);
+        }
+
+        var count = await _blockAppService.GetBlockCountAsync(new GetBlocksInput
+        {
+            ChainId = "AELF",
+            StartBlockHeight = 110,
+            EndBlockHeight = 129,
+            IsOnlyConfirmed = false
+        });
+        count.ShouldBe(20);
+        
+        count = await _blockAppService.GetBlockCountAsync(new GetBlocksInput
+        {
+            ChainId = "AELF",
+            StartBlockHeight = 110,
+            EndBlockHeight = 129,
+            IsOnlyConfirmed = true
+        });
+        count.ShouldBe(10);
+    }
 }

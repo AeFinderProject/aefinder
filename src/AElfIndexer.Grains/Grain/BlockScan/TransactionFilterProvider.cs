@@ -107,4 +107,64 @@ public class TransactionFilterProvider : IBlockFilterProvider
 
         return result;
     }
+    
+    public async Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks)
+    {
+        var filteredBlocks = new List<BlockWithTransactionDto>();
+        var blockDtos = (await _blockAppService.GetBlocksAsync(new GetBlocksInput
+        {
+            ChainId = chainId,
+            IsOnlyConfirmed = true,
+            StartBlockHeight = blocks.First().BlockHeight,
+            EndBlockHeight = blocks.Last().BlockHeight
+        })).ToDictionary(o=>o.BlockHash, o=>o);
+
+        foreach (var block in blocks)
+        {
+            if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
+                block.Transactions.Count != blockDto.TransactionIds.Count)
+            {
+                break;
+            }
+
+            filteredBlocks.Add(block);
+        }
+
+        return filteredBlocks;
+    }
+
+    public async Task<List<BlockWithTransactionDto>> FilterIncompleteConfirmedBlocksAsync(string chainId, 
+        List<BlockWithTransactionDto> blocks, string previousBlockHash, long previousBlockHeight)
+    {
+        var filteredBlocks = new List<BlockWithTransactionDto>();
+        var blockDtos = (await _blockAppService.GetBlocksAsync(new GetBlocksInput
+        {
+            ChainId = chainId,
+            IsOnlyConfirmed = true,
+            StartBlockHeight = blocks.First().BlockHeight,
+            EndBlockHeight = blocks.Last().BlockHeight
+        })).ToDictionary(o=>o.BlockHash, o=>o);
+
+
+        foreach (var block in blocks)
+        {
+            if (block.PreviousBlockHash != previousBlockHash || block.BlockHeight != previousBlockHeight + 1)
+            {
+                break;
+            }
+
+            if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
+                block.Transactions.Count != blockDto.TransactionIds.Count)
+            {
+                break;
+            }
+            
+            filteredBlocks.Add(block);
+            
+            previousBlockHash = block.BlockHash;
+            previousBlockHeight = block.BlockHeight;
+        }
+
+        return filteredBlocks;
+    }
 }

@@ -1,4 +1,6 @@
 using System.Runtime.Serialization;
+using AElf.Indexing.Elasticsearch;
+using AElfIndexer.Block;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
@@ -25,14 +27,16 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
 {
     private readonly IClusterClient _clusterClient;
     private readonly IObjectMapper _objectMapper;
+    private readonly IBlockAppService _blockAppService;
     
     public ILogger<BlockIndexHandler> Logger { get; set; }
 
-    public BlockIndexHandler(IObjectMapper objectMapper, IClusterClient clusterClient)
+    public BlockIndexHandler(IObjectMapper objectMapper, IClusterClient clusterClient, IBlockAppService blockAppService)
     {
         _objectMapper = objectMapper;
         _clusterClient = clusterClient;
-        
+        _blockAppService = blockAppService;
+
         Logger = NullLogger<BlockIndexHandler>.Instance;
     }
 
@@ -70,12 +74,37 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
     {
         try
         {
-            var chainId = confirmBlocks.First().ChainId;
+            var firstBlock = confirmBlocks.First();
+            var chainId = firstBlock.ChainId;
 
             var chainGrain = _clusterClient.GetGrain<IChainGrain>(chainId);
+            var chainStatus = await chainGrain.GetChainStatusAsync();
+            if (chainStatus.ConfirmedBlockHeight >= firstBlock.BlockHeight)
+            {
+                return;
+            }
+
+            if (chainStatus.ConfirmedBlockHash != firstBlock.PreviousBlockHash ||
+                chainStatus.ConfirmedBlockHeight != firstBlock.BlockHeight - 1)
+            {
+                var start = chainStatus.ConfirmedBlockHeight + 1;
+                var end = firstBlock.BlockHeight - 1;
+                var count = await _blockAppService.GetBlockCountAsync(new GetBlocksInput
+                {
+                    ChainId = chainId,
+                    IsOnlyConfirmed = true,
+                    StartBlockHeight = start,
+                    EndBlockHeight = end
+                });
+                if (count != end - start + 1)
+                {
+                    return;
+                }
+            }
+
             await chainGrain.SetLatestConfirmBlockAsync(confirmBlocks.Last().BlockHash,
                 confirmBlocks.Last().BlockHeight);
-            
+
             var clientManagerGrain = _clusterClient.GetGrain<IClientManagerGrain>(0);
             var clientIds = await clientManagerGrain.GetClientIdsByChainAsync(chainId);
             var tasks = clientIds.Select(async clientId =>

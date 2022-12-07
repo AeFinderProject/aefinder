@@ -47,4 +47,29 @@ public class BlockFilterProvider : IBlockFilterProvider
     {
         return blocks;
     }
+    
+    public async Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks)
+    {
+        return blocks;
+    }
+
+    public async Task<List<BlockWithTransactionDto>> FilterIncompleteConfirmedBlocksAsync(string chainId, 
+        List<BlockWithTransactionDto> blocks, string previousBlockHash, long previousBlockHeight)
+    {
+        var filteredBlocks = new List<BlockWithTransactionDto>();
+        foreach (var block in blocks)
+        {
+            if (block.PreviousBlockHash != previousBlockHash || block.BlockHeight != previousBlockHeight + 1)
+            {
+                break;
+            }
+            
+            filteredBlocks.Add(block);
+            
+            previousBlockHash = block.BlockHash;
+            previousBlockHeight = block.BlockHeight;
+        }
+
+        return filteredBlocks;
+    }
 }

@@ -22,22 +22,30 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
         var result = new List<BlockDto>();
         for (var i = input.StartBlockHeight; i <= input.EndBlockHeight; i++)
         {
-            result.AddRange(_blockDataProvider.Blocks[i].Select(block => new BlockDto
-            {
-                Id = block.Id,
-                Signature = block.Signature,
-                BlockHash = block.BlockHash,
-                BlockHeight = block.BlockHeight,
-                BlockTime = block.BlockTime,
-                ChainId = block.ChainId,
-                ExtraProperties = block.ExtraProperties,
-                IsConfirmed = block.IsConfirmed,
-                SignerPubkey = block.SignerPubkey,
-                PreviousBlockHash = block.PreviousBlockHash
-            }));
+            result.AddRange(_blockDataProvider.Blocks[i].Where(o => !input.IsOnlyConfirmed || o.IsConfirmed).Select(
+                block => new BlockDto
+                {
+                    Id = block.Id,
+                    Signature = block.Signature,
+                    BlockHash = block.BlockHash,
+                    BlockHeight = block.BlockHeight,
+                    BlockTime = block.BlockTime,
+                    ChainId = block.ChainId,
+                    ExtraProperties = block.ExtraProperties,
+                    IsConfirmed = block.IsConfirmed,
+                    SignerPubkey = block.SignerPubkey,
+                    PreviousBlockHash = block.PreviousBlockHash,
+                    TransactionIds = block.Transactions.Select(o => o.TransactionId).ToList(),
+                    LogEventCount = block.Transactions.Sum(o => o.LogEvents.Count)
+                }));
         }
 
         return result;
+    }
+
+    public async Task<long> GetBlockCountAsync(GetBlocksInput input)
+    {
+        return input.EndBlockHeight - input.StartBlockHeight + 1;
     }
 
     public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)

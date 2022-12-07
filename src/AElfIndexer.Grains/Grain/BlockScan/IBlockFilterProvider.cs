@@ -10,4 +10,10 @@ public interface IBlockFilterProvider
         List<FilterContractEventInput> filters);
     
     Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<FilterContractEventInput> filters);
+
+    Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId,
+        List<BlockWithTransactionDto> blocks);
+
+    Task<List<BlockWithTransactionDto>> FilterIncompleteConfirmedBlocksAsync(string chainId,
+        List<BlockWithTransactionDto> blocks, string previousBlockHash, long previousBlockHeight);
 }

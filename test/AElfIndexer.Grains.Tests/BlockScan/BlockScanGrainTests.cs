@@ -109,8 +109,8 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         subscribedBlock.Last().BlockHeight.ShouldBe(48);
         
         await scanGrain.HandleConfirmedBlockAsync(new List<BlockWithTransactionDto>{_blockDataProvider.Blocks[56].First()});
-        subscribedBlock.Count.ShouldBe(65);
-        subscribedBlock.Last().BlockHeight.ShouldBe(48);
+        subscribedBlock.Count.ShouldBe(67);
+        subscribedBlock.Last().BlockHeight.ShouldBe(50);
     }
 
     [Fact]
