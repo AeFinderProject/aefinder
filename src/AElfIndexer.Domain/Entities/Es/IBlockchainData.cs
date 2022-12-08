@@ -9,5 +9,5 @@ public interface IBlockchainData
     string PreviousBlockHash { get; set; }
     long BlockHeight { get; set; }
     DateTime BlockTime{get;set;}
-    bool IsConfirmed{get;set;}
+    bool Confirmed{get;set;}
 }

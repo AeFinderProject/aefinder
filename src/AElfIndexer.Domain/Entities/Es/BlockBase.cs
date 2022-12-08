@@ -15,7 +15,7 @@ public class BlockBase:AElfIndexerEntity<string>,IBlockchainData
     public DateTime BlockTime { get; set; }
     [Keyword]public string SignerPubkey { get; set; }
     [Keyword]public string Signature { get; set; }
-    public bool IsConfirmed{get;set;}
+    public bool Confirmed{get;set;}
     public Dictionary<string,string> ExtraProperties {get;set;}
 
 }

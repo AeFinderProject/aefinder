@@ -67,10 +67,10 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         blockList.Add(block_903); 
         await _blockIndexRepository.BulkAddOrUpdateAsync(blockList);
         
-        block_900.IsConfirmed = true;
-        block_901.IsConfirmed = true;
-        block_902.IsConfirmed = true;
-        block_903.IsConfirmed = true;
+        block_900.Confirmed = true;
+        block_901.Confirmed = true;
+        block_902.Confirmed = true;
+        block_903.Confirmed = true;
         List<BlockIndex> blockList2 = new List<BlockIndex>();
         blockList2.Add(block_900);
         blockList2.Add(block_901);

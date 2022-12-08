@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
+using Orleans.Providers.MongoDB.Configuration;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
@@ -36,10 +37,16 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
         {
             return new ClientBuilder()
                 .ConfigureDefaults()
-                .UseRedisClustering(opt =>
+                // .UseRedisClustering(opt =>
+                // {
+                //     opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
+                //     opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
+                // })
+                .UseMongoDBClient(configuration["Orleans:MongoDBClient"])
+                .UseMongoDBClustering(options =>
                 {
-                    opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
-                    opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
+                    options.DatabaseName = configuration["Orleans:DataBase"];;
+                    options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
                 .Configure<ClusterOptions>(options =>
                 {

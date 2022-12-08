@@ -34,7 +34,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                 "04bcd1c887cd0edbd4ccf8d9d2b3f72e72511aa6183199600313687ba6c583f13c3d6d716fa40df8604aaed0fcab31135fe3c2d45c009800c075254a3782b4c4db",
             Signature =
                 "2c4117170f79e4f4c01976265b9782ebe840735b7ec25fb82fbce6756b34218e5996a5c6650be7b4594397f999e222beb45c0ed11412b67871857968871ce03f01",
-            IsConfirmed = false,
+            Confirmed = false,
             ExtraProperties = new Dictionary<string, string>()
             {
                 ["Version"] = "0",
@@ -65,7 +65,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                         "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
                     Index = 0,
                     Status = TransactionStatus.Mined,
-                    IsConfirmed = false,
+                    Confirmed = false,
                     ExtraProperties = new Dictionary<string, string>()
                     {
                         ["Version"] = "0",
@@ -108,7 +108,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                         "3USrQq3C0VJ28pg1SEA4DJ3vH3suBiW5oFIp53kW7989vdrbgWhCW82qD4ovb6Q9gZOJsqgu388++MMk/3cHDgE=",
                     Index = 1,
                     Status = TransactionStatus.Mined,
-                    IsConfirmed = false,
+                    Confirmed = false,
                     ExtraProperties = new Dictionary<string, string>()
                     {
                         ["Version"] = "0",
@@ -143,7 +143,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                 "04bcd1c887cd0edbd4ccf8d9d2b3f72e72511aa6183199600313687ba6c583f13c3d6d716fa40df8604aaed0fcab31135fe3c2d45c009800c075254a3782b4c4db",
             Signature =
                 "2c4117170f79e4f4c01976265b9782ebe840735b7ec25fb82fbce6756b34218e5996a5c6650be7b4594397f999e222beb45c0ed11412b67871857968871ce03f01",
-            IsConfirmed = false,
+            Confirmed = false,
             ExtraProperties = new Dictionary<string, string>()
             {
                 ["Version"] = "0",
@@ -174,7 +174,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                         "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
                     Index = 0,
                     Status = TransactionStatus.Mined,
-                    IsConfirmed = false,
+                    Confirmed = false,
                     ExtraProperties = new Dictionary<string, string>()
                     {
                         ["Version"] = "0",
@@ -217,7 +217,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                         "3USrQq3C0VJ28pg1SEA4DJ3vH3suBiW5oFIp53kW7989vdrbgWhCW82qD4ovb6Q9gZOJsqgu388++MMk/3cHDgE=",
                     Index = 1,
                     Status = TransactionStatus.Mined,
-                    IsConfirmed = false,
+                    Confirmed = false,
                     ExtraProperties = new Dictionary<string, string>()
                     {
                         ["Version"] = "0",
@@ -240,13 +240,13 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
     public ConfirmBlockEto MockConfirmBlockEtoData(NewBlockEto newBlockEto)
     {
         var confirmBlockEto = _objectMapper.Map<NewBlockEto, ConfirmBlockEto>(newBlockEto);
-        confirmBlockEto.IsConfirmed = true;
+        confirmBlockEto.Confirmed = true;
         foreach (var transaction in confirmBlockEto.Transactions)
         {
-            transaction.IsConfirmed = true;
+            transaction.Confirmed = true;
             foreach (var logEvent in transaction.LogEvents)
             {
-                logEvent.IsConfirmed = true;
+                logEvent.Confirmed = true;
             }
         }
 
@@ -269,7 +269,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                 "04bcd1c887cd0edbd4ccf8d9d2b3f72e72511aa6183199600313687ba6c583f13c3d6d716fa40df8604aaed0fcab31135fe3c2d45c009800c075254a3782b4c4db",
             Signature =
                 "2c4117170f79e4f4c01976265b9782ebe840735b7ec25fb82fbce6756b34218e5996a5c6650be7b4594397f999e222beb45c0ed11412b67871857968871ce03f01",
-            IsConfirmed = false,
+            Confirmed = false,
             ExtraProperties = new Dictionary<string, string>()
             {
                 ["Version"] = "0",
@@ -300,7 +300,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                         "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
                     Index = 0,
                     Status = TransactionStatus.Mined,
-                    IsConfirmed = false,
+                    Confirmed = false,
                     ExtraProperties = new Dictionary<string, string>()
                     {
                         ["Version"] = "0",
@@ -343,7 +343,7 @@ public class MockDataHelper:IMockDataHelper,IScopedDependency
                         "3USrQq3C0VJ28pg1SEA4DJ3vH3suBiW5oFIp53kW7989vdrbgWhCW82qD4ovb6Q9gZOJsqgu388++MMk/3cHDgE=",
                     Index = 1,
                     Status = TransactionStatus.Mined,
-                    IsConfirmed = false,
+                    Confirmed = false,
                     ExtraProperties = new Dictionary<string, string>()
                     {
                         ["Version"] = "0",

@@ -5,12 +5,23 @@ namespace AElfIndexer.Grains.Grain.Blocks;
 
 public interface IBlockGrain : IGrainWithStringKey
 {
-    Task<List<BlockEventData>> SaveBlock(BlockEventData blockEvent);
+    Task SaveBlock(BlockEventData blockEvent);
 
-    Task<List<BlockEventData>> SaveBlocks(List<BlockEventData> blockEventDataList);
+    Task<long> GetBlockHeight();
 
-    Task<Dictionary<string, BlockEventData>> GetBlockDictionary();
+    Task<BlockEventData> GetBlockEventData();
 
-    Task InitializeStateAsync(Dictionary<string, BlockEventData> blocksDictionary);
+    Task<string> GetBlockPreviousBlockHash();
+
+    Task SetBlockConfirmed();
+
+    Task<bool> IsBlockConfirmed();
+    // Task<List<BlockEventData>> SaveBlock(BlockEventData blockEvent);
+    //
+    // Task<List<BlockEventData>> SaveBlocks(List<BlockEventData> blockEventDataList);
+    //
+    // Task<Dictionary<string, BlockEventData>> GetBlockDictionary();
+    //
+    // Task InitializeStateAsync(Dictionary<string, BlockEventData> blocksDictionary);
 }
 

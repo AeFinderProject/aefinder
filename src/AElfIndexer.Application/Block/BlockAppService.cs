@@ -34,9 +34,9 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
-        if ((input.EndBlockHeight - input.StartBlockHeight) > _apiOptions.BlockQueryHeightInterval)
+        if ((input.EndBlockHeight - input.StartBlockHeight + 1) > _apiOptions.BlockQueryHeightInterval)
         {
-            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.BlockQueryHeightInterval;
+            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.BlockQueryHeightInterval - 1;
         }
 
         var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
@@ -49,7 +49,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
         if (input.IsOnlyConfirmed)
         {
-            mustQuery.Add(q => q.Term(i => i.Field(f => f.IsConfirmed).Value(input.IsOnlyConfirmed)));
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.Confirmed).Value(input.IsOnlyConfirmed)));
         }
 
         QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
@@ -59,27 +59,29 @@ public class BlockAppService:ApplicationService,IBlockAppService
         items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
 
         List<BlockDto> resultList = new List<BlockDto>();
-        if (!input.HasTransaction)
-        {
-            foreach (var blockItem in items)
-            {
-                blockItem.Transactions = null;
-                resultList.Add(blockItem);
-            }
-        }
-        else
-        {
-            resultList.AddRange(items);
-        }
+        // if (!input.HasTransaction)
+        // {
+        //     foreach (var blockItem in items)
+        //     {
+        //         blockItem.Transactions = null;
+        //         resultList.Add(blockItem);
+        //     }
+        // }
+        // else
+        // {
+        //     resultList.AddRange(items);
+        // }
+        
+        resultList.AddRange(items);
 
         return resultList;
     }
 
     public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
     {
-        if (input.EndBlockHeight - input.StartBlockHeight > _apiOptions.TransactionQueryHeightInterval)
+        if ((input.EndBlockHeight - input.StartBlockHeight + 1) > _apiOptions.TransactionQueryHeightInterval)
         {
-            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.TransactionQueryHeightInterval;
+            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.TransactionQueryHeightInterval - 1;
         }
 
         var mustQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
@@ -147,7 +149,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
             
             if (input.IsOnlyConfirmed)
             {
-                mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.IsConfirmed).Value(input.IsOnlyConfirmed)));
+                mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.Confirmed).Value(input.IsOnlyConfirmed)));
             }
             
             QueryContainer Filter(QueryContainerDescriptor<TransactionIndex> f) => f.Bool(b => b.Must(mustQuery));
@@ -166,11 +168,11 @@ public class BlockAppService:ApplicationService,IBlockAppService
     
     public async Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
     {
-        if (input.EndBlockHeight - input.StartBlockHeight > _apiOptions.LogEventQueryHeightInterval)
+        if ((input.EndBlockHeight - input.StartBlockHeight + 1) > _apiOptions.LogEventQueryHeightInterval)
         {
-            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.LogEventQueryHeightInterval;
+            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.LogEventQueryHeightInterval - 1;
         }
-        
+
         var sortFuncs = new List<Func<SortDescriptor<TransactionIndex>, IPromise<IList<ISort>>>>();
         sortFuncs.Add(srt => srt.Field(sf => sf.Field(p => p.BlockHeight).Order(SortOrder.Ascending)));
         sortFuncs.Add(srt => srt.Field(sf => sf.Field(p => p.Index).Order(SortOrder.Ascending)));
@@ -182,7 +184,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
         if (input.IsOnlyConfirmed)
         {
-            mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.IsConfirmed).Value(input.IsOnlyConfirmed)));
+            mustQuery.Add(q=>q.Term(i=>i.Field(f=>f.Confirmed).Value(input.IsOnlyConfirmed)));
         }
         
         if (input.Events != null && input.Events.Count>0)

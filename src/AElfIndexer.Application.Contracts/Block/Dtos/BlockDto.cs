@@ -16,4 +16,6 @@ public class BlockDto:EntityDto<string>
     public bool IsConfirmed{get;set;}
     public Dictionary<string,string> ExtraProperties {get;set;}
     public List<TransactionDto> Transactions {get;set;}
+    public List<string> TransactionIds { get; set; }
+    public int LogEventCount { get; set; }
 }

@@ -10,8 +10,6 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Orleans;
 using Orleans.Configuration;
-using AElf.Orleans.EventSourcing.Snapshot;
-using AElf.Orleans.EventSourcing.Snapshot.Hosting;
 using Orleans.Configuration.Overrides;
 using Orleans.Hosting;
 using Orleans.Providers;
@@ -36,49 +34,59 @@ public static class OrleansHostExtensions
         {
             //Configure OrleansSnapshot
             siloBuilder
-                .UseRedisClustering(opt =>
-                {
-                    opt.ConnectionString = configSection.GetValue<string>("ClusterDbConnection");
-                    opt.Database = configSection.GetValue<int>("ClusterDbNumber");
-                })
+                // .UseRedisClustering(opt =>
+                // {
+                //     opt.ConnectionString = configSection.GetValue<string>("ClusterDbConnection");
+                //     opt.Database = configSection.GetValue<int>("ClusterDbNumber");
+                // })
                 .ConfigureEndpoints(advertisedIP:IPAddress.Parse(configSection.GetValue<string>("AdvertisedIP")),siloPort: configSection.GetValue<int>("SiloPort"), gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
                 // .UseLocalhostClustering()
-                // .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
-                // .AddMongoDBGrainStorage("Default",(MongoDBGrainStorageOptions op) =>
-                // {
-                //     op.CollectionPrefix = "GrainStorage";
-                //     op.DatabaseName = configSection.GetValue<string>("DataBase");
-                //
-                //     op.ConfigureJsonSerializerSettings = jsonSettings =>
-                //     {
-                //         jsonSettings.ContractResolver = new PrivateSetterContractResolver();
-                //     };
-                // })
-                .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
+                .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
+                .UseMongoDBClustering(options =>
                 {
-                    options.DataConnectionString = configSection.GetValue<string>("GrainStorageDbConnection"); 
-                    options.DatabaseNumber = configSection.GetValue<int>("GrainStorageDbNumber");
-                    options.UseJson = true;
-                }))
-                .UseRedisReminderService(options =>
-                {
-                    options.ConnectionString = configSection.GetValue<string>("ClusterDbConnection");
-                    options.DatabaseNumber = configSection.GetValue<int>("ClusterDbNumber");
+                    options.DatabaseName = configSection.GetValue<string>("DataBase");;
+                    options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
-                .AddSnapshotStorageBasedConsistencyProviderAsDefault((op, name) =>
+                .AddMongoDBGrainStorage("Default",(MongoDBGrainStorageOptions op) =>
                 {
-                    op.UseIndependentEventStorage = true;
-                    // Should configure event storage when set UseIndependentEventStorage true
-                    op.ConfigureIndependentEventStorage = (services, name) =>
+                    op.CollectionPrefix = "GrainStorage";
+                    op.DatabaseName = configSection.GetValue<string>("DataBase");
+                
+                    op.ConfigureJsonSerializerSettings = jsonSettings =>
                     {
-                        var eventStoreConnectionString = configSection.GetValue<string>("EventStoreConnection");
-                        var eventStoreConnection = EventStoreConnection.Create(eventStoreConnectionString);
-                        eventStoreConnection.ConnectAsync().Wait();
-                    
-                        services.AddSingleton(eventStoreConnection);
-                        services.AddSingleton<IGrainEventStorage, EventStoreGrainEventStorage>();
+                        jsonSettings.ContractResolver = new PrivateSetterContractResolver();
                     };
                 })
+                // .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
+                // {
+                //     options.DataConnectionString = configSection.GetValue<string>("GrainStorageDbConnection"); 
+                //     options.DatabaseNumber = configSection.GetValue<int>("GrainStorageDbNumber");
+                //     options.UseJson = true;
+                // }))
+                // .UseRedisReminderService(options =>
+                // {
+                //     options.ConnectionString = configSection.GetValue<string>("ClusterDbConnection");
+                //     options.DatabaseNumber = configSection.GetValue<int>("ClusterDbNumber");
+                // })
+                .UseMongoDBReminders(options =>
+                {
+                    options.DatabaseName = configSection.GetValue<string>("DataBase");
+                    options.CreateShardKeyForCosmos = false;
+                })
+                // .AddSnapshotStorageBasedConsistencyProviderAsDefault((op, name) =>
+                // {
+                //     op.UseIndependentEventStorage = true;
+                //     // Should configure event storage when set UseIndependentEventStorage true
+                //     op.ConfigureIndependentEventStorage = (services, name) =>
+                //     {
+                //         var eventStoreConnectionString = configSection.GetValue<string>("EventStoreConnection");
+                //         var eventStoreConnection = EventStoreConnection.Create(eventStoreConnectionString);
+                //         eventStoreConnection.ConnectAsync().Wait();
+                //     
+                //         services.AddSingleton(eventStoreConnection);
+                //         services.AddSingleton<IGrainEventStorage, EventStoreGrainEventStorage>();
+                //     };
+                // })
                 .Configure<ClusterOptions>(options =>
                 {
                     options.ClusterId = configSection.GetValue<string>("ClusterId");

@@ -7,4 +7,6 @@ public static class AElfIndexerConsts
     public const string DbSchema = null;
     
     public const string PrimaryKeyGrainIdSuffix = "BlockGrainPrimaryKey";
+    
+    public const string BlockGrainIdSuffix = "BlockGrain";
 }

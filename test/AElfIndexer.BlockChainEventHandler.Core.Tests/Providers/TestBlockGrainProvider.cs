@@ -15,13 +15,31 @@ public class TestBlockGrainProvider: AElfIndexerTestBase<AElfIndexerOrleansTestB
         _clusterClient = GetRequiredService<ClusterFixture>().Cluster.Client;
     }
 
-    public async Task<IBlockGrain> GetBlockGrain(string chainId)
+    // public async Task<IBlockGrain> GetBlockGrain(string chainId)
+    // {
+    //     if (_blockGrain == null)
+    //     {
+    //         _blockGrain = _clusterClient.GetGrain<IBlockGrain>("AELF_0");
+    //     }
+    //
+    //     return _blockGrain;
+    // }
+    
+    public async Task<IBlockGrain> GetBlockGrain(string chainId, string blockHash)
     {
-        if (_blockGrain == null)
-        {
-            _blockGrain = _clusterClient.GetGrain<IBlockGrain>("AELF_0");
-        }
+        string primaryKey = chainId + AElfIndexerConsts.BlockGrainIdSuffix + blockHash;
+        var newGrain = _clusterClient.GetGrain<IBlockGrain>(primaryKey);
 
-        return _blockGrain;
+        return newGrain;
+    }
+
+    public async Task<bool> GrainExist(string chainId, string blockHash)
+    {
+        string primaryKey = chainId + AElfIndexerConsts.BlockGrainIdSuffix + blockHash;
+        var grain = _clusterClient.GetGrain<IBlockGrain>(primaryKey);
+
+        var blockHeight = await grain.GetBlockHeight();
+
+        return blockHeight > 0 ? true : false;
     }
 }

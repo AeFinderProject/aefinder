@@ -34,7 +34,7 @@ public class MockDataHelper
                 "04bcd1c887cd0edbd4ccf8d9d2b3f72e72511aa6183199600313687ba6c583f13c3d6d716fa40df8604aaed0fcab31135fe3c2d45c009800c075254a3782b4c4db",
             Signature =
                 "2c4117170f79e4f4c01976265b9782ebe840735b7ec25fb82fbce6756b34218e5996a5c6650be7b4594397f999e222beb45c0ed11412b67871857968871ce03f01",
-            IsConfirmed = isConfirmed,
+            Confirmed = isConfirmed,
             ExtraProperties = new Dictionary<string, string>()
             {
                 ["Version"] = "0",
@@ -152,7 +152,7 @@ public class MockDataHelper
                 "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
             Index = 0,
             Status = TransactionStatus.Mined,
-            IsConfirmed = isConfirmed,
+            Confirmed = isConfirmed,
             ExtraProperties = new Dictionary<string, string>()
             {
                 ["Version"] = "0",
@@ -171,7 +171,7 @@ public class MockDataHelper
                     BlockHash = currentBlockHash,
                     BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
-                    IsConfirmed = isConfirmed,
+                    Confirmed = isConfirmed,
                     TransactionId = transactionId,
                     ContractAddress = contractAddress,
                     EventName = eventName,
@@ -209,7 +209,7 @@ public class MockDataHelper
                 "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
             Index = 0,
             Status = TransactionStatus.Mined,
-            IsConfirmed = isConfirmed,
+            Confirmed = isConfirmed,
             ExtraProperties = new Dictionary<string, string>()
             {
                 ["Version"] = "0",
@@ -228,7 +228,7 @@ public class MockDataHelper
                     BlockHash = currentBlockHash,
                     BlockHeight = blockHeight,
                     BlockTime = DateTime.Now,
-                    IsConfirmed = isConfirmed,
+                    Confirmed = isConfirmed,
                     TransactionId = transactionId,
                     ContractAddress = contractAddress,
                     EventName = eventName,
@@ -256,7 +256,7 @@ public class MockDataHelper
             BlockHash = currentBlockHash,
             BlockHeight = blockHeight,
             BlockTime = DateTime.Now,
-            IsConfirmed = isConfirmed,
+            Confirmed = isConfirmed,
             TransactionId = transactionId,
             ContractAddress = contractAddress,
             EventName = eventName,

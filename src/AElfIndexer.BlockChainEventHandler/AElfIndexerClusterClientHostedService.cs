@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Configuration;
+using Orleans.Providers.MongoDB.Configuration;
 using Volo.Abp;
 using Volo.Abp.EventBus.Distributed;
 
@@ -27,10 +28,16 @@ public class AElfIndexerClusterClientHostedService:IHostedService
         _serviceProvider = serviceProvider;
         _logger = logger;
         OrleansClient = new ClientBuilder()
-            .UseRedisClustering(opt =>
+            // .UseRedisClustering(opt =>
+            // {
+            //     opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
+            //     opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
+            // })
+            .UseMongoDBClient(configuration["Orleans:MongoDBClient"])
+            .UseMongoDBClustering(options =>
             {
-                opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
-                opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
+                options.DatabaseName = configuration["Orleans:DataBase"];;
+                options.Strategy = MongoDBMembershipStrategy.SingleDocument;
             })
             .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(IBlockGrain).Assembly).WithReferences())
             .Configure<ClusterOptions>(options =>
