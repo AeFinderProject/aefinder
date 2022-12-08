@@ -2,6 +2,7 @@ using AElfIndexer.Block.Dtos;
 using AElfIndexer.Grains.Grain.Chains;
 using AElfIndexer.Grains.State.BlockScan;
 using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Streams;
@@ -12,13 +13,15 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 {
     private readonly IEnumerable<IBlockFilterProvider> _blockFilterProviders;
     private readonly BlockScanOptions _blockScanOptions;
+    private readonly ILogger<BlockScanGrain> _logger;
 
     private IAsyncStream<SubscribedBlockDto> _stream = null!;
 
     public BlockScanGrain(IOptionsSnapshot<BlockScanOptions> blockScanOptions,
-        IEnumerable<IBlockFilterProvider> blockFilterProviders)
+        IEnumerable<IBlockFilterProvider> blockFilterProviders, ILogger<BlockScanGrain> logger)
     {
         _blockFilterProviders = blockFilterProviders;
+        _logger = logger;
         _blockScanOptions = blockScanOptions.Value;
     }
 
@@ -115,8 +118,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         catch (Exception e)
         {
-            // TODO: Use log provider
-            Console.WriteLine($"HandleHistoricalBlock failed: {e.Message}");
+            _logger.LogError(e, $"HandleHistoricalBlock failed: {e.Message}");
             throw;
         }
     }
@@ -179,7 +181,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else
         {
-            blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, State.ScannedBlocks.Keys.Min(),
+            _logger.LogDebug($"Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+            blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, GetMinScannedBlockHeight(),
                 block.BlockHeight, false, null);
         }
 
@@ -230,6 +233,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else
         {
+            _logger.LogDebug($"Not linked confirmed block, block height: {blocks.First().BlockHeight}, block hash: {blocks.First().BlockHash}");
             scannedBlocks.AddRange(await blockFilterProvider.GetBlocksAsync(State.ChainId,
                 State.ScannedConfirmedBlockHeight + 1,
                 blocks.Last().BlockHeight, true, null));

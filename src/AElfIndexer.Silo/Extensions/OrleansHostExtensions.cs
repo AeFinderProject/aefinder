@@ -18,6 +18,7 @@ using Orleans.Providers;
 using Orleans.Providers.MongoDB.Configuration;
 using Orleans.Statistics;
 using Serilog;
+using Serilog.Extensions.Logging;
 
 namespace AElfIndexer.Extensions;
 
@@ -41,7 +42,9 @@ public static class OrleansHostExtensions
                     opt.ConnectionString = configSection.GetValue<string>("ClusterDbConnection");
                     opt.Database = configSection.GetValue<int>("ClusterDbNumber");
                 })
-                .ConfigureEndpoints(advertisedIP:IPAddress.Parse(configSection.GetValue<string>("AdvertisedIP")),siloPort: configSection.GetValue<int>("SiloPort"), gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
+                .ConfigureEndpoints(advertisedIP: IPAddress.Parse(configSection.GetValue<string>("AdvertisedIP")),
+                    siloPort: configSection.GetValue<int>("SiloPort"),
+                    gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
                 // .UseLocalhostClustering()
                 // .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
                 // .AddMongoDBGrainStorage("Default",(MongoDBGrainStorageOptions op) =>
@@ -56,7 +59,7 @@ public static class OrleansHostExtensions
                 // })
                 .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
                 {
-                    options.DataConnectionString = configSection.GetValue<string>("GrainStorageDbConnection"); 
+                    options.DataConnectionString = configSection.GetValue<string>("GrainStorageDbConnection");
                     options.DatabaseNumber = configSection.GetValue<int>("GrainStorageDbNumber");
                     options.UseJson = true;
                 }))
@@ -74,7 +77,7 @@ public static class OrleansHostExtensions
                         var eventStoreConnectionString = configSection.GetValue<string>("EventStoreConnection");
                         var eventStoreConnection = EventStoreConnection.Create(eventStoreConnectionString);
                         eventStoreConnection.ConnectAsync().Wait();
-                    
+
                         services.AddSingleton(eventStoreConnection);
                         services.AddSingleton<IGrainEventStorage, EventStoreGrainEventStorage>();
                     };
@@ -87,7 +90,8 @@ public static class OrleansHostExtensions
                 .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
                 .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
-                .UseDashboard(options => {
+                .UseDashboard(options =>
+                {
                     options.Username = configSection.GetValue<string>("DashboardUserName");
                     options.Password = configSection.GetValue<string>("DashboardPassword");
                     options.Host = "*";
@@ -95,8 +99,7 @@ public static class OrleansHostExtensions
                     options.HostSelf = true;
                     options.CounterUpdateIntervalMs = configSection.GetValue<int>("DashboardCounterUpdateIntervalMs");
                 })
-                .UseLinuxEnvironmentStatistics()
-                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); });
+                .UseLinuxEnvironmentStatistics();
         });
     }
 }
