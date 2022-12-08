@@ -6,8 +6,6 @@ using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
 using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.Grain.Chains;
-using AElfIndexer.Orleans;
-using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Nito.AsyncEx;
@@ -47,11 +45,11 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
             var chainGrain = _clusterClient.GetGrain<IChainGrain>(block.ChainId);
             await chainGrain.SetLatestBlockAsync(block.BlockHash, block.BlockHeight);
             
-            var clientManagerGrain = _clusterClient.GetGrain<IClientManagerGrain>(0);
-            var clientIds = await clientManagerGrain.GetClientIdsByChainAsync(block.ChainId);
+            var clientManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
+            var clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync(block.ChainId);
             var tasks = clientIds.Select(async clientId =>
             {
-                var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
+                var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(clientId);
                 var clientInfo = await clientGrain.GetClientInfoAsync();
                 if (clientInfo.ScanModeInfo.ScanMode == ScanMode.NewBlock &&
                     clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= block.BlockHeight)
@@ -105,11 +103,11 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
             await chainGrain.SetLatestConfirmBlockAsync(confirmBlocks.Last().BlockHash,
                 confirmBlocks.Last().BlockHeight);
 
-            var clientManagerGrain = _clusterClient.GetGrain<IClientManagerGrain>(0);
-            var clientIds = await clientManagerGrain.GetClientIdsByChainAsync(chainId);
+            var clientManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
+            var clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync(chainId);
             var tasks = clientIds.Select(async clientId =>
             {
-                var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
+                var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(clientId);
                 var clientInfo = await clientGrain.GetClientInfoAsync();
                 if (clientInfo.ScanModeInfo.ScanMode == ScanMode.NewBlock &&
                     clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= confirmBlocks.First().BlockHeight)

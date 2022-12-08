@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using AElfIndexer.Block.Dtos;
 
-namespace AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
+namespace AElfIndexer.BlockScan;
 
 public class SubscribedBlockDto
 {

@@ -1,13 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
-using Localization.Resources.AbpUi;
+﻿using Localization.Resources.AbpUi;
 using AElfIndexer.Localization;
-using AElfIndexer.Orleans;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Orleans;
-using Orleans.Configuration;
-using Volo.Abp;
 using Volo.Abp.Account;
 using Volo.Abp.AspNetCore.SignalR;
 using Volo.Abp.FeatureManagement;
@@ -17,7 +9,6 @@ using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement.HttpApi;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.TenantManagement;
-using Volo.Abp.Threading;
 
 namespace AElfIndexer;
 

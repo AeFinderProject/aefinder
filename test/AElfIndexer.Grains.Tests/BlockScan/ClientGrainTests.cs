@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.State.BlockScan;
 using Shouldly;
@@ -34,10 +35,9 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
+        var clientGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(clientId);
         await clientGrain.InitializeAsync(chainId, clientId,  version,subscribeInfo);
         var clientInfo = await clientGrain.GetClientInfoAsync();
-        clientInfo.Version.ShouldBe(version);
         clientInfo.ChainId.ShouldBe(chainId);
         clientInfo.ClientId.ShouldBe(clientId);
         clientInfo.ScanModeInfo.ScanMode.ShouldBe(ScanMode.HistoricalBlock);
@@ -52,12 +52,12 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
         subscribe.SubscribeEvents[0].EventNames.Count.ShouldBe(1);
         subscribe.SubscribeEvents[0].EventNames[0].ShouldBe(subscribeInfo.SubscribeEvents[0].EventNames[0]);
 
-        var clientManagerGrain = Cluster.Client.GetGrain<IClientManagerGrain>(0);
-        var clientIds = await clientManagerGrain.GetClientIdsByChainAsync("AELF");
+        var clientManagerGrain = Cluster.Client.GetGrain<IBlockScanManagerGrain>(0);
+        var clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync("AELF");
         clientIds.Count.ShouldBe(1);
         clientIds[0].ShouldBe(clientId);
 
-        var allClientIds = await clientManagerGrain.GetAllClientIdsAsync();
+        var allClientIds = await clientManagerGrain.GetAllBlockScanIdsAsync();
         allClientIds.Keys.Count.ShouldBe(1);
         allClientIds["AELF"].Count.ShouldBe(1);
         allClientIds["AELF"].First().ShouldBe(clientId);
@@ -67,27 +67,27 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
         clientInfo.ScanModeInfo.ScanMode.ShouldBe(ScanMode.NewBlock);
         clientInfo.ScanModeInfo.ScanNewBlockStartHeight.ShouldBe(80);
 
-        await clientGrain.StopAsync(Guid.NewGuid().ToString());
-        clientInfo = await clientGrain.GetClientInfoAsync();
-        clientInfo.Version.ShouldBe(version);
+        // await clientGrain.StopAsync(Guid.NewGuid().ToString());
+        // clientInfo = await clientGrain.GetClientInfoAsync();
+        // clientInfo.Version.ShouldBe(version);
         
-        clientIds = await clientManagerGrain.GetClientIdsByChainAsync("AELF");
+        clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync("AELF");
         clientIds.Count.ShouldBe(1);
         clientIds[0].ShouldBe(clientId);
         
-        allClientIds = await clientManagerGrain.GetAllClientIdsAsync();
+        allClientIds = await clientManagerGrain.GetAllBlockScanIdsAsync();
         allClientIds.Keys.Count.ShouldBe(1);
         allClientIds["AELF"].Count.ShouldBe(1);
         allClientIds["AELF"].First().ShouldBe(clientId);
         
-        await clientGrain.StopAsync(version);
-        clientInfo = await clientGrain.GetClientInfoAsync();
-        clientInfo.Version.ShouldNotBe(version);
+        // await clientGrain.StopAsync(version);
+        // clientInfo = await clientGrain.GetClientInfoAsync();
+        // clientInfo.Version.ShouldNotBe(version);
         
-        clientIds = await clientManagerGrain.GetClientIdsByChainAsync("AELF");
+        clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync("AELF");
         clientIds.Count.ShouldBe(0);
         
-        allClientIds = await clientManagerGrain.GetAllClientIdsAsync();
+        allClientIds = await clientManagerGrain.GetAllBlockScanIdsAsync();
         allClientIds.Keys.Count.ShouldBe(1);
         allClientIds["AELF"].Count.ShouldBe(0);
     }

@@ -1,7 +1,7 @@
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.Chains;
 using AElfIndexer.Grains.State.BlockScan;
-using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -35,7 +35,20 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         State.ScannedConfirmedBlockHeight = 0;
         State.ScannedConfirmedBlockHash = null;
         State.ScannedBlocks = new SortedDictionary<long, HashSet<string>>();
+        
+        var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
+        var steamId = await clientGrain.GetMessageStreamIdAsync();
+        State.MessageStreamId = steamId;
+        
         await WriteStateAsync();
+
+        if (_stream == null)
+        {
+            var streamProvider = GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
+        
+            _stream = streamProvider.GetStream<SubscribedBlockDto>(
+                Guid.NewGuid(), AElfIndexerApplicationConsts.MessageStreamNamespace);
+        }
 
         return _stream.Guid;
     }
@@ -44,9 +57,10 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     {
         try
         {
-            var clientGrain = GrainFactory.GetGrain<IClientGrain>(this.GetPrimaryKeyString());
+            var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
+            var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
             var chainGrain = GrainFactory.GetGrain<IChainGrain>(State.ChainId);
-            var subscribeInfo = await clientGrain.GetSubscribeInfoAsync();
+            var subscribeInfo = await blockScanInfo.GetSubscribeInfoAsync();
             var chainStatus = await chainGrain.GetChainStatusAsync();
             if (State.ScannedBlockHeight == 0 && State.ScannedConfirmedBlockHeight == 0)
             {
@@ -57,18 +71,19 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
             while (true)
             {
-                var clientInfo = await clientGrain.GetClientInfoAsync();
-                if (clientInfo.Version != State.Version || clientInfo.ScanModeInfo.ScanMode != ScanMode.HistoricalBlock)
+                var clientInfo = await blockScanInfo.GetClientInfoAsync();
+                var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
+                if (!isVersionAvailable || clientInfo.ScanModeInfo.ScanMode != ScanMode.HistoricalBlock)
                 {
                     break;
                 }
 
-                await clientGrain.SetHandleHistoricalBlockTimeAsync(DateTime.UtcNow);
+                await blockScanInfo.SetHandleHistoricalBlockTimeAsync(DateTime.UtcNow);
 
                 if (State.ScannedConfirmedBlockHeight >=
                     chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold)
                 {
-                    await clientGrain.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
+                    await blockScanInfo.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
                     break;
                 }
 
@@ -152,11 +167,13 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task HandleNewBlockAsync(BlockWithTransactionDto block)
     {
-        var clientGrain = GrainFactory.GetGrain<IClientGrain>(this.GetPrimaryKeyString());
-        var clientInfo = await clientGrain.GetClientInfoAsync();
-        var subscribeInfo = await clientGrain.GetSubscribeInfoAsync();
+        var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
+        var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
+        var clientInfo = await blockScanInfo.GetClientInfoAsync();
+        var subscribeInfo = await blockScanInfo.GetSubscribeInfoAsync();
 
-        if (clientInfo.Version != State.Version
+        var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
+        if (!isVersionAvailable
             || clientInfo.ScanModeInfo.ScanMode != ScanMode.NewBlock
             || subscribeInfo.OnlyConfirmedBlock)
         {
@@ -214,16 +231,19 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task HandleConfirmedBlockAsync(List<BlockWithTransactionDto> blocks)
     {
-        var clientGrain = GrainFactory.GetGrain<IClientGrain>(this.GetPrimaryKeyString());
-        var clientInfo = await clientGrain.GetClientInfoAsync();
-        if (clientInfo.Version != State.Version
+        var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
+        var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
+        var clientInfo = await blockScanInfo.GetClientInfoAsync();
+        
+        var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
+        if (!isVersionAvailable
             || clientInfo.ScanModeInfo.ScanMode != ScanMode.NewBlock
             || blocks.First().BlockHeight <= State.ScannedConfirmedBlockHeight)
         {
             return;
         }
 
-        var subscribeInfo = await clientGrain.GetSubscribeInfoAsync();
+        var subscribeInfo = await blockScanInfo.GetSubscribeInfoAsync();
         var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType);
 
         var scannedBlocks = new List<BlockWithTransactionDto>();
@@ -344,10 +364,13 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     {
         await ReadStateAsync();
 
-        var streamProvider = GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
+        if (State.MessageStreamId != Guid.Empty)
+        {
+            var streamProvider = GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
 
-        _stream = streamProvider.GetStream<SubscribedBlockDto>(
-            Guid.NewGuid(), AElfIndexerApplicationConsts.MessageStreamNamespace);
+            _stream = streamProvider.GetStream<SubscribedBlockDto>(
+                Guid.NewGuid(), AElfIndexerApplicationConsts.MessageStreamNamespace);
+        }
 
         await base.OnActivateAsync();
     }

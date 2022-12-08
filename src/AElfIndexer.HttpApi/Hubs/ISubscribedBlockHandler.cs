@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
+using AElfIndexer.BlockScan;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Orleans.Streams;

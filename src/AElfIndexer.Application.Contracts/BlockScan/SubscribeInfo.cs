@@ -1,6 +1,7 @@
+using System.Collections.Generic;
 using AElfIndexer.Block.Dtos;
 
-namespace AElfIndexer.Grains.State.BlockScan;
+namespace AElfIndexer.BlockScan;
 
 public class SubscribeInfo
 {

@@ -1,4 +1,4 @@
-using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
+using AElfIndexer.BlockScan;
 using Orleans.Streams;
 
 namespace AElfIndexer.Client.Handlers;

@@ -1,22 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScan;
-using AElfIndexer.Grains.Grain.Chains;
-using AElfIndexer.Grains.State.BlockScan;
-using AElfIndexer.Orleans;
-using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using NUglify.Helpers;
 using Orleans;
 using Orleans.Streams;
 using Volo.Abp.AspNetCore.SignalR;
-using Volo.Abp.Clients;
 
 namespace AElfIndexer.Hubs;
 
@@ -45,7 +39,7 @@ public class BlockHub : AbpHub
         foreach (var subscribeInfo in subscribeInfos)
         {
             var id = subscribeInfo.ChainId + clientId + subscribeInfo.FilterType;
-            var clientGrain = _clusterClient.GetGrain<IClientGrain>(id);
+            var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
             await clientGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version, subscribeInfo);
             
             var scanGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
@@ -72,16 +66,16 @@ public class BlockHub : AbpHub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var connection = _connectionProvider.GetConnectionByConnectionId(Context.ConnectionId);
-        if (connection != null)
-        {
-            foreach (var chainId in connection.ChainIds)
-            {
-                var id = chainId + connection.ClientId;
-                var clientGrain = _clusterClient.GetGrain<IClientGrain>(id);
-                await clientGrain.StopAsync(connection.Version);
-            }
-            _connectionProvider.Remove(Context.ConnectionId);
-        }
+        // var connection = _connectionProvider.GetConnectionByConnectionId(Context.ConnectionId);
+        // if (connection != null)
+        // {
+        //     foreach (var chainId in connection.ChainIds)
+        //     {
+        //         var id = chainId + connection.ClientId;
+        //         var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
+        //         await clientGrain.StopAsync(connection.Version);
+        //     }
+        //     _connectionProvider.Remove(Context.ConnectionId);
+        // }
     }
 }

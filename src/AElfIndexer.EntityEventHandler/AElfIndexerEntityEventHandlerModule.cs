@@ -2,8 +2,6 @@ using AElf.Indexing.Elasticsearch.Options;
 using AElfIndexer;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
-using AElfIndexer.Orleans;
-using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
