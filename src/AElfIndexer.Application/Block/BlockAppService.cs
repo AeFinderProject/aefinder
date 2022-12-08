@@ -95,7 +95,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
             if (input.IsOnlyConfirmed)
             {
-                mustQuery.Add(q=>q.Term(i=>i.Field("LogEvents.isConfirmed").Value(input.IsOnlyConfirmed)));
+                mustQuery.Add(q=>q.Term(i=>i.Field("LogEvents.confirmed").Value(input.IsOnlyConfirmed)));
             }
             
             var shouldQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
