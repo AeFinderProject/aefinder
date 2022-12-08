@@ -34,9 +34,9 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
-        if ((input.EndBlockHeight - input.StartBlockHeight+1) > _apiOptions.BlockQueryHeightInterval)
+        if ((input.EndBlockHeight - input.StartBlockHeight) > _apiOptions.BlockQueryHeightInterval)
         {
-            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.BlockQueryHeightInterval-1;
+            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.BlockQueryHeightInterval;
         }
 
         var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
