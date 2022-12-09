@@ -28,8 +28,8 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
                 $"BlockStateSets_{chainId}_{clientId}");
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
         var libBlockHeight = blockStateSets.Count != 0 ? blockStateSets.Min(b => b.Value.BlockHeight) : 0;
-        if (!CheckLinked(blockDtos, blockStateSets)) return; //TODO 直接忽略还是抛异常？
-        if (!GetBlockMap(blockDtos, out var blockMap, out var bestChainBlockHashMap)) return; //TODO 直接忽略还是抛异常？
+        if (!CheckLinked(blockDtos, blockStateSets)) return;
+        if (!GetBlockMap(blockDtos, out var blockMap, out var bestChainBlockHashMap)) return;
         // Set best chain hashes
         await blockStateSetsGrain.SetBestChainHashes(bestChainBlockHashMap);
         // Order block by block height ascending.If there are many same height blocks, best chain block will be in first index.

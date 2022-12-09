@@ -1,7 +1,9 @@
+using System.Linq.Expressions;
 using AElf.Indexing.Elasticsearch;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
+using Nest;
 using Newtonsoft.Json;
 using Orleans;
 
@@ -115,6 +117,46 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         var currentBlockStateSet = await blockStateSetsGrain.GetCurrentBlockStateSet();
         return GetEntityFromBlockStateSets(entityKey, blockStateSets, currentBlockStateSet.BlockHash,
             currentBlockStateSet.BlockHeight, entity.LIBValue);
+    }
+
+    public async Task<TEntity> GetAsync(
+        Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
+        Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
+        Expression<Func<TEntity, object>> sortExp = null,
+        SortOrder sortType = SortOrder.Ascending,
+        string index = null)
+    {
+        return await _nestRepository.GetAsync(filterFunc, includeFieldFunc, sortExp, sortType, index);
+    }
+
+    public async Task<Tuple<long, List<TEntity>>> GetListAsync(
+        Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
+        Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
+        Expression<Func<TEntity, object>> sortExp = null,
+        SortOrder sortType = SortOrder.Ascending,
+        int limit = 1000,
+        int skip = 0,
+        string index = null)
+    {
+        return await _nestRepository.GetListAsync(filterFunc, includeFieldFunc, sortExp, sortType, limit, skip, index);
+    }
+
+    public async Task<Tuple<long, List<TEntity>>> GetSortListAsync(
+        Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
+        Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
+        Func<SortDescriptor<TEntity>, IPromise<IList<ISort>>> sortFunc = null,
+        int limit = 1000,
+        int skip = 0,
+        string index = null)
+    {
+        return await _nestRepository.GetSortListAsync(filterFunc, includeFieldFunc, sortFunc, limit, skip, index);
+    }
+
+    public async Task<CountResponse> CountAsync(
+        Func<QueryContainerDescriptor<TEntity>, QueryContainer> query,
+        string indexPrefix = null)
+    {
+        return await _nestRepository.CountAsync(query, indexPrefix);
     }
     
     private bool IsValidate(TEntity entity)

@@ -20,15 +20,14 @@
     <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="6.0.0" />
     <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="6.0.0" />
     <PackageReference Include="Volo.Abp.Swashbuckle" Version="6.0.0" />
-
     <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="7.1.1" />
-    <ProjectReference Include="..\AElfIndexer.Client\AElfIndexer.Client.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AElfIndexer.Application\AElfIndexer.Application.csproj" />
     <ProjectReference Include="..\AElfIndexer.EntityFrameworkCore\AElfIndexer.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\AElfIndexer.HttpApi\AElfIndexer.HttpApi.csproj" />
+    <ProjectReference Include="..\AElfIndexer.Client\AElfIndexer.Client.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
