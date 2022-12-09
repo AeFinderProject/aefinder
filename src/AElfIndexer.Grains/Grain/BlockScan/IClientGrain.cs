@@ -16,4 +16,5 @@ public interface IClientGrain: IGrainWithStringKey
     Task UpgradeVersionAsync();
     Task RemoveVersionInfoAsync(string version);
     Task<VersionStatus> GetVersionStatus(string version);
+    Task StartAsync(string version);
 }

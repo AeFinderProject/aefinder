@@ -45,8 +45,17 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         var version = await client.AddSubscribeInfoAsync(subscribeInfos);
         return version;
     }
-    
-    public async Task StartScanAsync(string clientId, string version, Func<SubscribedBlockDto, StreamSequenceToken, Task> handler)
+
+    public async Task<List<string>> GetMessageStreamIdsAsync(string clientId, string version)
+    {
+        var client = _clusterClient.GetGrain<IClientGrain>(clientId);
+        var subscribeInfos = await client.GetSubscribeInfoAsync(version);
+
+        return subscribeInfos
+            .Select(subscribeInfo => subscribeInfo.ChainId + clientId + version + subscribeInfo.FilterType).ToList();
+    }
+
+    public async Task StartScanAsync(string clientId, string version)
     {
         Logger.LogInformation($"Client: {clientId} start scan, version: {version}");
 
@@ -66,24 +75,31 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                 await scanGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version);
             }
 
-            var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
-            var stream =
-                _clusterClient
-                    .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
-                    .GetStream<SubscribedBlockDto>(streamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
-            
-            var subscriptionHandles = await stream.GetAllSubscriptionHandles();
-            if (!subscriptionHandles.IsNullOrEmpty())
-            {
-                subscriptionHandles.ForEach(async x => await x.ResumeAsync(handler));
-            }
-            else
-            {
-                await stream.SubscribeAsync(handler);
-            }
+            // var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
+            // var stream =
+            //     _clusterClient
+            //         .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
+            //         .GetStream<SubscribedBlockDto>(streamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
+            //
+            // var subscriptionHandles = await stream.GetAllSubscriptionHandles();
+            // if (!subscriptionHandles.IsNullOrEmpty())
+            // {
+            //     subscriptionHandles.ForEach(async x => await x.ResumeAsync<SubscribedBlockDto>(onNextAsync));
+            // }
+            // else
+            // {
+            //     await stream.SubscribeAsync<SubscribedBlockDto>(onNextAsync);
+            // }
             
             _ = Task.Run(scanGrain.HandleHistoricalBlockAsync);
         }
+        
+        await client.StartAsync(version);
+    }
+    
+    public static async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken? token = null)
+    {
+        Console.WriteLine($"========= Version: {subscribedBlock.Version}");
     }
 
     public async Task UpgradeVersionAsync(string clientId)

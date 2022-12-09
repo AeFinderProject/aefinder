@@ -56,7 +56,7 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
 
     public async Task<bool> IsVersionAvailableAsync(string version)
     {
-        return version != State.NewVersion || version != State.CurrentVersion;
+        return version == State.NewVersion || version == State.CurrentVersion;
     }
 
     public async Task<string> GetCurrentVersionAsync()
@@ -95,6 +95,12 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
     public async Task<VersionStatus> GetVersionStatus(string version)
     {
         return State.VersionInfos[version].VersionStatus;
+    }
+
+    public async Task StartAsync(string version)
+    {
+        State.VersionInfos[version].VersionStatus = VersionStatus.Started;
+        await WriteStateAsync();
     }
 
     public override async Task OnActivateAsync()
