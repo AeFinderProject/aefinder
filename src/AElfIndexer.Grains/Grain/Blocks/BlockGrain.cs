@@ -54,11 +54,6 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
         await this.WriteStateAsync();
     }
 
-    public async Task<long> GetBlockHeight()
-    {
-        return this.State.Block.BlockHeight;
-    }
-
     public async Task<BlockEventData> GetBlockEventData()
     {
         // if (this.State.Block.Transactions != null)
@@ -67,11 +62,6 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
         //     this.State.Block.Transactions = this.State.Block.Transactions.DistinctBy(x=>x.TransactionId).ToList();
         // }
         return this.State.Block;
-    }
-
-    public async Task<string> GetBlockPreviousBlockHash()
-    {
-        return this.State.Block.PreviousBlockHash;
     }
 
     public async Task SetBlockConfirmed()

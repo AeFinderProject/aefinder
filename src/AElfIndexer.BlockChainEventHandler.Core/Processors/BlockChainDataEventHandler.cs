@@ -23,7 +23,6 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
     private readonly IBlockGrainProvider _blockGrainProvider;
-    private readonly IBlockDictionaryGrainProvider _blockDictionaryGrainProvider;
     private readonly BlockChainEventHandlerOptions _blockChainEventHandlerOptions;
 
     public BlockChainDataEventHandler(
@@ -31,7 +30,6 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         ILogger<BlockChainDataEventHandler> logger,
         IObjectMapper objectMapper,
         IBlockGrainProvider blockGrainProvider,
-        IBlockDictionaryGrainProvider blockDictionaryGrainProvider,
         IOptionsSnapshot<BlockChainEventHandlerOptions> blockChainEventHandlerOptions,
         IDistributedEventBus distributedEventBus)
     {
@@ -41,7 +39,6 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         _objectMapper = objectMapper;
         _blockChainEventHandlerOptions = blockChainEventHandlerOptions.Value;
         _blockGrainProvider = blockGrainProvider;
-        _blockDictionaryGrainProvider = blockDictionaryGrainProvider;
     }
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
@@ -72,33 +69,8 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             blockEventDatas.Add(newBlockTaskEntity.blockEventData);
         }
 
-        var blockDictionaryGrain = await _blockDictionaryGrainProvider.GetBlockDictionaryGrain(eventData.ChainId);
-        // Ignore blocks with height less than LIB block in Dictionary
-        blockEventDatas = await blockDictionaryGrain.CheckBlockList(blockEventDatas);
-        if (blockEventDatas == null)
-        {
-            return;
-        }
-
-        //save block data by grain
-        List<Task> grainTaskList = new List<Task>();
-        foreach (var blockItem in blockEventDatas)
-        {
-            Task task = Task.Run(async () =>
-            {
-                var blockGrain = await _blockGrainProvider.GetBlockGrain(eventData.ChainId, blockItem.BlockHash);
-                await blockGrain.SaveBlock(blockItem);
-                // _logger.LogInformation("SaveBlock: " + blockItem.BlockHeight);
-                
-                await blockDictionaryGrain.AddBlockToDictionary(blockItem);
-            });
-            grainTaskList.Add(task);
-
-        }
-        await Task.WhenAll(grainTaskList.ToArray());
-
-
-        List<BlockEventData> libBlockList = await blockDictionaryGrain.GetLibBlockList(blockEventDatas);
+        var blockBranchGrain = await _blockGrainProvider.GetBlockBranchGrain(eventData.ChainId);
+        List<BlockEventData> libBlockList = await blockBranchGrain.SaveBlocks(blockEventDatas);
 
         if (libBlockList != null)
         {
@@ -116,8 +88,6 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                     _objectMapper.Map<List<BlockEventData>, List<ConfirmBlockEto>>(libBlockList);
                 await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                     { ConfirmBlocks = confirmBlockList });
-
-                await blockDictionaryGrain.ClearDictionary(libBlockList.Last().BlockHeight, libBlockList.Last().BlockHash);
             }
         }
 
@@ -250,17 +220,6 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         NewBlockTaskEntity resultEntity = new NewBlockTaskEntity();
         resultEntity.newBlockEto = newBlockEto;
         resultEntity.blockEventData = blockEvent;
-        
-        //save block data by grain
-        // AsyncHelper.RunSync(async ()=>
-        // {
-        //     var blockGrain = await _blockGrainProvider.GetBlockGrain(chainId,blockItem.BlockHash);
-        //     await blockGrain.SaveBlock(blockEvent);
-        //     _logger.LogInformation("SaveBlock: " + blockEvent.BlockHeight);
-        //
-        //     var blockDictionaryGrain = await _blockDictionaryGrainProvider.GetBlockDictionaryGrain(chainId);
-        //     blockDictionaryGrain.AddBlockToDictionary(blockEvent);
-        // });
 
         return resultEntity;
     }

@@ -8,9 +8,9 @@ public interface IBlockGrainProvider
 {
     // Task<IBlockGrain> GetBlockGrain(string chainId);
 
-    Task<IBlockGrain> GetBlockGrain(string chainId, string blockHash);
+    // Task<IBlockGrain> GetBlockGrain(string chainId, string blockHash);
 
-    Task<bool> GrainExist(string chainId,string blockHash);
+    Task<IBlockBranchGrain> GetBlockBranchGrain(string chainId);
 }
 
 public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
@@ -42,21 +42,19 @@ public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
     //     return newGrain;
     // }
 
-    public async Task<IBlockGrain> GetBlockGrain(string chainId, string blockHash)
+    // public async Task<IBlockGrain> GetBlockGrain(string chainId, string blockHash)
+    // {
+    //     string primaryKey = chainId + AElfIndexerConsts.BlockGrainIdSuffix + blockHash;
+    //     var newGrain = _clusterClient.GetGrain<IBlockGrain>(primaryKey);
+    //
+    //     return newGrain;
+    // }
+
+    public async Task<IBlockBranchGrain> GetBlockBranchGrain(string chainId)
     {
-        string primaryKey = chainId + AElfIndexerConsts.BlockGrainIdSuffix + blockHash;
-        var newGrain = _clusterClient.GetGrain<IBlockGrain>(primaryKey);
+        string primaryKey = chainId + AElfIndexerConsts.BlockDictionaryGrainIdSuffix;
+        var grain = _clusterClient.GetGrain<IBlockBranchGrain>(primaryKey);
 
-        return newGrain;
-    }
-
-    public async Task<bool> GrainExist(string chainId, string blockHash)
-    {
-        string primaryKey = chainId + AElfIndexerConsts.BlockGrainIdSuffix + blockHash;
-        var grain = _clusterClient.GetGrain<IBlockGrain>(primaryKey);
-
-        var blockHeight = await grain.GetBlockHeight();
-
-        return blockHeight > 0 ? true : false;
+        return grain;
     }
 }

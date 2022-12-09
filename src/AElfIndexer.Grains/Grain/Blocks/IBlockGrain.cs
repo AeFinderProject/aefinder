@@ -7,11 +7,7 @@ public interface IBlockGrain : IGrainWithStringKey
 {
     Task SaveBlock(BlockEventData blockEvent);
 
-    Task<long> GetBlockHeight();
-
     Task<BlockEventData> GetBlockEventData();
-
-    Task<string> GetBlockPreviousBlockHash();
 
     Task SetBlockConfirmed();
 

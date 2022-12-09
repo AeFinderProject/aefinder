@@ -1,5 +1,6 @@
 using AElfIndexer.Grains.EventData;
 using AElfIndexer.Grains.State.Blocks;
+using Microsoft.Extensions.Logging;
 using Orleans.Providers;
 using Orleans;
 using Volo.Abp.Threading;
@@ -7,8 +8,15 @@ using Volo.Abp.Threading;
 namespace AElfIndexer.Grains.Grain.Blocks;
 
 [StorageProvider(ProviderName= "Default")]
-public class BlockDictionaryGrain:Grain<BlockDictionaryState>,IBlockDictionaryGrain
+public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
 {
+    private readonly ILogger<BlockBranchGrain> _logger;
+
+    public BlockBranchGrain(
+        ILogger<BlockBranchGrain> logger)
+    {
+        _logger = logger;
+    }
 
     public override Task OnActivateAsync()
     {
@@ -20,6 +28,36 @@ public class BlockDictionaryGrain:Grain<BlockDictionaryState>,IBlockDictionaryGr
     {
         this.WriteStateAsync();
         return base.OnDeactivateAsync();
+    }
+
+    public async Task<List<BlockEventData>> SaveBlocks(List<BlockEventData> blockEventDataList)
+    {
+        blockEventDataList = await CheckBlockList(blockEventDataList);
+        
+        //save block data by grain
+        List<Task> grainTaskList = new List<Task>();
+        foreach (var blockItem in blockEventDataList)
+        {
+            Task task = Task.Factory.StartNew(async () =>
+            {
+                string primaryKey = blockItem.ChainId + AElfIndexerConsts.BlockGrainIdSuffix + blockItem.BlockHash;
+                // var blockGrain = await _blockGrainProvider.GetBlockGrain(eventData.ChainId, blockItem.BlockHash);
+                var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
+                await blockGrain.SaveBlock(blockItem);
+                
+                _logger.LogInformation("SaveBlock: " + blockItem.BlockHeight);
+            });
+            grainTaskList.Add(task);
+        }
+        await Task.WhenAll(grainTaskList.ToArray());
+
+
+        AddBlocksToDictionary(blockEventDataList);
+
+        var libBlockList = await GetLibBlockList(blockEventDataList);
+
+        await ClearDictionary(libBlockList.Last().BlockHeight, libBlockList.Last().BlockHash);
+        return libBlockList;
     }
 
     public async Task<List<BlockEventData>> CheckBlockList(List<BlockEventData> blockEventDataList)
@@ -68,6 +106,15 @@ public class BlockDictionaryGrain:Grain<BlockDictionaryState>,IBlockDictionaryGr
         return this.State.Blocks.TryAdd(blockEventData.BlockHash, blockEventData);
     }
 
+    private Task AddBlocksToDictionary(List<BlockEventData> blockEventDataList)
+    {
+        foreach (var blockEventData in blockEventDataList)
+        {
+            this.State.Blocks.TryAdd(blockEventData.BlockHash, blockEventData);
+        }
+        return Task.CompletedTask;
+    }
+
     public async Task<List<BlockEventData>> GetLibBlockList(List<BlockEventData> blockEventDataList)
     {
         List<BlockEventData> libBlockList = new List<BlockEventData>();
@@ -91,10 +138,9 @@ public class BlockDictionaryGrain:Grain<BlockDictionaryState>,IBlockDictionaryGr
         }
         
         return libBlockList;
-
     }
 
-    public BlockEventData FindLibBlock(string previousBlockHash, long libBlockHeight)
+    private BlockEventData FindLibBlock(string previousBlockHash, long libBlockHeight)
     {
         if (libBlockHeight <= 0)
         {
