@@ -3,7 +3,7 @@ using AElfIndexer.Entities.Es;
 namespace AElfIndexer.Grains.EventData;
 
 
-[Serializable]
+// [Serializable]
 public class BlockEventData:AElfIndexer.Entities.Es.BlockBase
 {
     public long LibBlockHeight { get; set; }

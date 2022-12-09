@@ -9,4 +9,6 @@ public static class AElfIndexerConsts
     public const string PrimaryKeyGrainIdSuffix = "BlockGrainPrimaryKey";
     
     public const string BlockGrainIdSuffix = "BlockGrain";
+    
+    public const string BlockDictionaryGrainIdSuffix = "BlockDictionaryGrain";
 }
