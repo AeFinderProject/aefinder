@@ -35,20 +35,16 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         State.ScannedConfirmedBlockHeight = 0;
         State.ScannedConfirmedBlockHash = null;
         State.ScannedBlocks = new SortedDictionary<long, HashSet<string>>();
-        
-        var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
+
+        var clientGrain = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
         var steamId = await clientGrain.GetMessageStreamIdAsync();
         State.MessageStreamId = steamId;
-        
-        await WriteStateAsync();
 
-        if (_stream == null)
-        {
-            var streamProvider = GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
-        
-            _stream = streamProvider.GetStream<SubscribedBlockDto>(
-                Guid.NewGuid(), AElfIndexerApplicationConsts.MessageStreamNamespace);
-        }
+        var streamProvider = GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
+        _stream = streamProvider.GetStream<SubscribedBlockDto>(
+            steamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
+
+        await WriteStateAsync();
 
         return _stream.Guid;
     }

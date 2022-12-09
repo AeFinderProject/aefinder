@@ -24,11 +24,11 @@ public class BlockScanController : AbpController
     }
     
     [HttpPost]
-    [Route("subscribe")]
+    [Route("submit-subscribe-info")]
     [Authorize]
     public virtual Task SubscribeAsync(List<SubscribeInfo> subscribeInfos)
     {
-        var clientId = CurrentUser.GetAllClaims().First(o=>o.ToString().StartsWith("client_id")).Value;
-        return _blockScanAppService.SubscribeAsync(clientId,subscribeInfos);
+        var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
+        return _blockScanAppService.SubmitSubscribeInfoAsync(clientId,subscribeInfos);
     }
 }

@@ -43,8 +43,8 @@ public class BlockScanInfoGrain : Grain<BlockScanInfoState>, IBlockScanInfoGrain
 
     public async Task InitializeAsync(string chainId, string clientId, string version, SubscribeInfo info)
     {
-        var clientGrain = GrainFactory.GetGrain<IBlockScanManagerGrain>(0);
-        await clientGrain.AddBlockScanAsync(chainId, this.GetPrimaryKeyString());
+        var blockScanManager = GrainFactory.GetGrain<IBlockScanManagerGrain>(0);
+        await blockScanManager.AddBlockScanAsync(chainId, this.GetPrimaryKeyString());
 
         State.ClientInfo = new ClientInfo
         {
@@ -60,5 +60,22 @@ public class BlockScanInfoGrain : Grain<BlockScanInfoState>, IBlockScanInfoGrain
         };
         State.SubscribeInfo = info;
         await WriteStateAsync();
+    }
+
+    public async Task StopAsync()
+    {
+        var blockScanManager = GrainFactory.GetGrain<IBlockScanManagerGrain>(0);
+        await blockScanManager.RemoveBlockScanAsync(State.ClientInfo.ChainId, this.GetPrimaryKeyString());
+    }
+    
+    public async Task<Guid> GetMessageStreamIdAsync()
+    {
+        if (State.MessageStreamId == Guid.Empty)
+        {
+            State.MessageStreamId = Guid.NewGuid();
+            await WriteStateAsync();
+        }
+
+        return State.MessageStreamId;
     }
 }

@@ -1,15 +1,10 @@
 using AElf.Indexing.Elasticsearch.Options;
-using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.Grain.BlockScan;
 using GraphQL.Server.Ui.Playground;
 using GraphQL.Types;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using NUglify.Helpers;
-using Orleans;
 using Volo.Abp;
 using Volo.Abp.Modularity;
-using Volo.Abp.Threading;
 
 namespace AElfIndexer.Client;
 
@@ -53,29 +48,5 @@ public class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery> : AbpMo
                 GraphQLEndPoint = "../graphql",
                 SubscriptionsEndPoint = "../graphql",
             });
-
-        AsyncHelper.RunSync(async () => await ResumeStreamAsync(context));
-    }
-
-    private async Task ResumeStreamAsync(ApplicationInitializationContext context)
-    {
-        var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        var clientGrain = clusterClient.GetGrain<IClientGrain>(ClientId);
-        var streamId = await clientGrain.GetMessageStreamIdAsync();
-        var stream =
-            clusterClient
-                .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(streamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
-
-        var subscriptionHandles = await stream.GetAllSubscriptionHandles();
-        if (!subscriptionHandles.IsNullOrEmpty())
-        {
-            // subscriptionHandles.ForEach(
-            //     async x => await x.ResumeAsync(_subscribedBlockHandler.HandleAsync));
-        }
-        else
-        {
-            //await stream.SubscribeAsync(_subscribedBlockHandler.HandleAsync);
-        }
     }
 }
