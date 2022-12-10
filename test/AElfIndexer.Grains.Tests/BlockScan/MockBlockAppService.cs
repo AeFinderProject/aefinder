@@ -22,7 +22,7 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
         var result = new List<BlockDto>();
         for (var i = input.StartBlockHeight; i <= input.EndBlockHeight; i++)
         {
-            result.AddRange(_blockDataProvider.Blocks[i].Where(o => !input.IsOnlyConfirmed || o.IsConfirmed).Select(
+            result.AddRange(_blockDataProvider.Blocks[i].Where(o => !input.IsOnlyConfirmed || o.Confirmed).Select(
                 block => new BlockDto
                 {
                     Id = block.Id,
@@ -32,7 +32,7 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
                     BlockTime = block.BlockTime,
                     ChainId = block.ChainId,
                     ExtraProperties = block.ExtraProperties,
-                    IsConfirmed = block.IsConfirmed,
+                    Confirmed = block.Confirmed,
                     SignerPubkey = block.SignerPubkey,
                     PreviousBlockHash = block.PreviousBlockHash,
                     TransactionIds = block.Transactions.Select(o => o.TransactionId).ToList(),

@@ -19,6 +19,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
     private readonly string _entityName;
     private readonly string _clientId;
     private readonly string _version;
+    private readonly string _indexName; 
 
     public AElfIndexerClientEntityRepository(INESTRepository<TEntity, TKey> nestRepository,
         IClusterClient clusterClient, IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider)
@@ -28,6 +29,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         _entityName = typeof(TEntity).Name;
         _clientId = aelfIndexerClientInfoProvider.GetClientId();
         _version = aelfIndexerClientInfoProvider.GetVersion();
+        _indexName = $"{_clientId}_{_version}.{_entityName}".ToLower();
     }
 
     public async Task AddOrUpdateAsync(TEntity entity)
@@ -85,12 +87,12 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
                     bestChainBlockStateSet.BlockHeight, dataValue.LIBValue);
                 if (entityFromBlockStateSet != null)
                 {
-                    await _nestRepository.AddOrUpdateAsync(entityFromBlockStateSet, indexName);
+                    await _nestRepository.AddOrUpdateAsync(entityFromBlockStateSet, _indexName);
                     await dappGrain.SetLatestValue(entityFromBlockStateSet);
                 }
                 else
                 {
-                    await _nestRepository.DeleteAsync(entity, indexName);
+                    await _nestRepository.DeleteAsync(entity, _indexName);
                     await dappGrain.SetLIBValue(null);
                     await dappGrain.SetLatestValue(null);
                 }
@@ -98,7 +100,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         }
     }
     
-    public async Task<TEntity> GetAsync(TKey id, string chainId)
+    public async Task<TEntity> GetFromBlockStateSetAsync(TKey id, string chainId)
     {
         var entityKey = $"{_entityName}_{id}";
         var dappGrain = _clusterClient.GetGrain<IDappDataGrain<TEntity>>(
@@ -119,6 +121,11 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         var currentBlockStateSet = await blockStateSetsGrain.GetCurrentBlockStateSet();
         return GetEntityFromBlockStateSets(entityKey, blockStateSets, currentBlockStateSet.BlockHash,
             currentBlockStateSet.BlockHeight, entity.LIBValue);
+    }
+
+    public async Task<TEntity> GetAsync(TKey id)
+    {
+        return await _nestRepository.GetAsync(id,_indexName);
     }
 
     public async Task<TEntity> GetAsync(

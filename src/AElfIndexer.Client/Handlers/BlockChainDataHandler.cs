@@ -56,6 +56,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
                         BlockHeight = block.BlockHeight,
                         PreviousBlockHash = block.PreviousBlockHash,
                         Changes = new Dictionary<string, string>(),
+                        Confirmed = block.Confirmed,
                         Data = GetData(block)
                     };
                 }

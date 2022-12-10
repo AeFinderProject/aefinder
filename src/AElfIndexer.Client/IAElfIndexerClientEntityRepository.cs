@@ -10,7 +10,9 @@ public interface IAElfIndexerClientEntityRepository<TEntity, TKey, TData, T>
     where TData : BlockChainDataBase
 {
     Task AddOrUpdateAsync(TEntity entity);
-    Task<TEntity> GetAsync(TKey id, string chainId);
+    Task<TEntity> GetFromBlockStateSetAsync(TKey id, string chainId);
+
+    Task<TEntity> GetAsync(TKey id);
     
     Task<TEntity> GetAsync(
         Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,

@@ -2,52 +2,64 @@ using System;
 using System.Linq;
 using AElf.Client;
 using AElf.Indexing.Elasticsearch;
+using AElfIndexer.Grains;
 using GraphQL;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Orleans;
+using Orleans.Configuration;
+using Orleans.Hosting;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
+using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 
 namespace AElfIndexer.Dapp;
 
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AElfIndexingElasticsearchModule),
+    typeof(AbpAutoMapperModule),
     typeof(AbpAspNetCoreSerilogModule))]
 public class AElfIndexerDappModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
-        
-        // context.Services.AddSingleton<IClusterClient>(o =>
-        // {
-            // return new ClientBuilder()
-            //     .ConfigureDefaults()
-            //     .UseRedisClustering(opt =>
-            //     {
-            //         opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
-            //         opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
-            //     })
-            //     .Configure<ClusterOptions>(options =>
-            //     {
-            //         options.ClusterId = configuration["Orleans:ClusterId"];
-            //         options.ServiceId = configuration["Orleans:ServiceId"];
-            //     })
-            //     .ConfigureApplicationParts(parts =>
-            //         parts.AddApplicationPart(typeof(AElfIndexerGrainsModule).Assembly).WithReferences())
-            //     .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
-            //     .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
-            //     .Build();
-        // });
         ConfigureCors(context, configuration);
+        ConfigureOrleans(context, configuration);
         context.Services.AddGraphQL(b => b
             .AddAutoClrMappings()
             .AddSystemTextJson()
             .AddErrorInfoProvider(e => e.ExposeExceptionDetails = true));
+    }
+    
+    private static void ConfigureOrleans(ServiceConfigurationContext context, IConfiguration configuration)
+    {
+        context.Services.AddSingleton<IClusterClient>(o =>
+        {
+            return new ClientBuilder()
+                .ConfigureDefaults()
+                .UseRedisClustering(opt =>
+                {
+                    opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
+                    opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
+                })
+                .Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = configuration["Orleans:ClusterId"];
+                    options.ServiceId = configuration["Orleans:ServiceId"];
+                })
+                .ConfigureApplicationParts(parts =>
+                    parts.AddApplicationPart(typeof(AElfIndexerGrainsModule).Assembly).WithReferences())
+                .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
+                .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
+                .Build();
+        });
     }
     
     private void ConfigureCors(ServiceConfigurationContext context, IConfiguration configuration)

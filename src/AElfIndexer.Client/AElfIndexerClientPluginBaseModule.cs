@@ -12,6 +12,7 @@ using NUglify.Helpers;
 using Orleans;
 using Orleans.Streams;
 using Volo.Abp;
+using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 using Volo.Abp.Threading;
 
@@ -26,6 +27,7 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
     
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        Configure<AbpAutoMapperOptions>(options => { options.AddMaps<TModule>(); });
         context.Services.AddSingleton<IAElfIndexerClientInfoProvider<T>, AElfIndexerClientInfoProvider<T>>();
         context.Services.AddSingleton<ISubscribedBlockHandler<T>, SubscribedBlockHandler<T>>();
         context.Services.AddTransient<IBlockChainDataHandler<T>, LogEventDataHandler<T>>();
@@ -72,7 +74,7 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
         // TODO: Is correct?
         var subscribedBlockHandler = context.ServiceProvider.GetRequiredService<ISubscribedBlockHandler<T>>();
-        var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(ClientId, IndexPrefix);
+        var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(ClientId, Version);
         foreach (var streamId in messageStreamIds)
         {
             var stream =
@@ -92,7 +94,7 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
             }
         }
 
-        await blockScanService.StartScanAsync(ClientId, IndexPrefix);
+        await blockScanService.StartScanAsync(ClientId, Version);
     }
 
     private void ConfigNodes(IServiceCollection serviceCollection)

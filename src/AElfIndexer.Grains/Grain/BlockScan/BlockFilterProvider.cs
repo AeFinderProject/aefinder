@@ -36,7 +36,7 @@ public class BlockFilterProvider : IBlockFilterProvider
                 BlockTime = block.BlockTime,
                 ChainId = block.ChainId,
                 ExtraProperties = block.ExtraProperties,
-                IsConfirmed = block.IsConfirmed,
+                Confirmed = block.Confirmed,
                 SignerPubkey = block.SignerPubkey,
                 PreviousBlockHash = block.PreviousBlockHash
             })
