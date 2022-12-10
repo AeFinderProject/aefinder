@@ -1,4 +1,5 @@
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
 using Orleans;
@@ -12,11 +13,13 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
 {
     private readonly IClusterClient _clusterClient;
     protected readonly IObjectMapper ObjectMapper;
+    private readonly string _indexPrefix;
 
-    protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper)
+    protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper, IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider)
     {
         _clusterClient = clusterClient;
         ObjectMapper = objectMapper;
+        _indexPrefix = aelfIndexerClientInfoProvider.GetIndexPrefix();
     }
     
     public abstract BlockFilterType FilterType { get; }
@@ -25,7 +28,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
     {
         var blockStateSetsGrain =
             _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(
-                $"BlockStateSets_{chainId}_{clientId}");
+                $"BlockStateSets_{clientId}_{chainId}_{_indexPrefix}");
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
         var libBlockHeight = blockStateSets.Count != 0 ? blockStateSets.Min(b => b.Value.BlockHeight) : 0;
         if (!CheckLinked(blockDtos, blockStateSets)) return;

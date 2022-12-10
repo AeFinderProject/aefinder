@@ -1,4 +1,8 @@
-using AElf.Indexing.Elasticsearch.Options;
+using System.Reflection;
+using AElf.Indexing.Elasticsearch.Services;
+using AElfIndexer.Client.GraphQL;
+using AElfIndexer.Client.Handlers;
+using AElfIndexer.Client.Providers;
 using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,30 +11,40 @@ using Volo.Abp.Modularity;
 
 namespace AElfIndexer.Client;
 
-public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery> : AbpModule 
-    where TModule : AElfIndexerClientPluginBaseModule<TModule,TSchema,TQuery>
+public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery, T> : AbpModule 
+    where TModule : AElfIndexerClientPluginBaseModule<TModule,TSchema,TQuery, T>
     where TSchema : AElfIndexerClientSchema<TQuery>
 {
     protected abstract string ClientId { get; }
+    protected abstract string IndexPrefix { get; }
+    
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        ConfigureEsIndexCreation();
-        ConfigureServices(context.Services);
-        context.Services.AddSingleton<TSchema>();
+        context.Services.AddSingleton<IAElfIndexerClientInfoProvider<T>, AElfIndexerClientInfoProvider<T>>();
+        context.Services.AddSingleton<ISubscribedBlockHandler<T>, SubscribedBlockHandler<T>>();
+        context.Services.AddTransient<IBlockChainDataHandler<T>, LogEventDataHandler<T>>();
         context.Services.AddTransient(typeof(IAElfIndexerClientEntityRepository<,,,>),
             typeof(AElfIndexerClientEntityRepository<,,,>));
+        
+        ConfigureServices(context.Services);
+        ConfigNodes(context.Services);
+        ConfigGraphQL(context.Services);
     }
 
     protected virtual void ConfigureServices(IServiceCollection serviceCollection)
     {
         
     }
-        
-    private void ConfigureEsIndexCreation()
+
+    public override async Task OnPreApplicationInitializationAsync(ApplicationInitializationContext context)
     {
-        Configure<IndexCreateOption>(x => { x.AddModule(typeof(TModule)); });
+        var provider = context.ServiceProvider.GetRequiredService<IAElfIndexerClientInfoProvider<T>>();
+        provider.SetClientId(ClientId);
+        provider.SetIndexPrefix(IndexPrefix);
+        await CreateIndexAsync(context.ServiceProvider);
+        await base.OnPreApplicationInitializationAsync(context);
     }
-    
+
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         var app = context.GetApplicationBuilder();
@@ -43,5 +57,38 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
                 GraphQLEndPoint = "../graphql",
                 SubscriptionsEndPoint = "../graphql",
             });
+    }
+    
+    private void ConfigNodes(IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddTransient<IAElfClientService, AElfClientService>();
+        serviceCollection.AddSingleton<IAElfClientProvider, AElfClientProvider>();
+        Configure<NodeOptions>(serviceCollection.GetConfiguration().GetSection("Node"));
+    }
+
+    private void ConfigGraphQL(IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddSingleton<TSchema>();
+    }
+    
+    private async Task CreateIndexAsync(IServiceProvider serviceProvider)
+    {
+        var types = GetTypesAssignableFrom<IIndexEntity>(typeof(TModule).Assembly);
+        var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
+        foreach (var t in types)
+        {
+            var indexName = $"{ClientId}_{IndexPrefix}.{t.Name}".ToLower();
+            //TODO Need to confirm shard and numberOfReplicas
+            await elasticIndexService.CreateIndexAsync(indexName, t, 5,1);
+        }
+    }
+
+    private List<Type> GetTypesAssignableFrom<T>(Assembly assembly)
+    {
+        var compareType = typeof(T);
+        return assembly.DefinedTypes
+            .Where(type => compareType.IsAssignableFrom(type) && !compareType.IsAssignableFrom(type.BaseType) &&
+                           !type.IsAbstract && type.IsClass && compareType != type)
+            .Cast<Type>().ToList();
     }
 }

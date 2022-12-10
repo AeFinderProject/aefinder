@@ -1,6 +1,6 @@
 using GraphQL.Types;
 
-namespace AElfIndexer.Client;
+namespace AElfIndexer.Client.GraphQL;
 
 public class AElfIndexerClientSchema<TQuery> : Schema
 {

@@ -80,9 +80,6 @@ public class AElfIndexerDappModule : AbpModule
         app.UseRouting();
         app.UseCors();
         app.UseConfiguredEndpoints();
-        
-        var clientService = context.ServiceProvider.GetService<IAElfClientService>();
-
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)

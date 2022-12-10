@@ -1,4 +1,5 @@
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.Client.Providers;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Grains.State.Client;
 using Orleans;
@@ -10,8 +11,10 @@ public abstract class TransactionDataHandler<T> : BlockChainDataHandler<Transact
 {
     private readonly IEnumerable<IAElfLogEventProcessor<T>> _processors;
 
-    public TransactionDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
-        IEnumerable<IAElfLogEventProcessor<T>> processors) : base(clusterClient, objectMapper)
+    protected TransactionDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
+        IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider,
+        IEnumerable<IAElfLogEventProcessor<T>> processors) : base(clusterClient, objectMapper,
+        aelfIndexerClientInfoProvider)
     {
         _processors = processors;
     }
