@@ -21,13 +21,13 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
     
     public override Task OnActivateAsync()
     {
-        this.ReadStateAsync();
+        ReadStateAsync();
         return base.OnActivateAsync();
     }
 
     public override Task OnDeactivateAsync()
     {
-        this.WriteStateAsync();
+        WriteStateAsync();
         return base.OnDeactivateAsync();
     }
 
@@ -50,8 +50,8 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
 
     public async Task SaveBlock(BlockEventData blockEvent)
     {
-        this.State.Block = blockEvent;
-        await this.WriteStateAsync();
+        State.Block = blockEvent;
+        await WriteStateAsync();
     }
 
     public async Task<BlockEventData> GetBlockEventData()
@@ -61,18 +61,18 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
         //     //Clear Duplicate transactions
         //     this.State.Block.Transactions = this.State.Block.Transactions.DistinctBy(x=>x.TransactionId).ToList();
         // }
-        return this.State.Block;
+        return State.Block;
     }
 
     public async Task SetBlockConfirmed()
     {
-        this.State.Block.Confirmed = true;
-        await this.WriteStateAsync();
+        State.Block.Confirmed = true;
+        await WriteStateAsync();
     }
 
     public async Task<bool> IsBlockConfirmed()
     {
-        return this.State.Block.Confirmed;
+        return State.Block.Confirmed;
     }
     
     // public async Task<List<BlockEventData>> SaveBlock(BlockEventData blockEvent)
