@@ -54,29 +54,6 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         try
         {
             var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
-
-            while (true)
-            {
-                var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
-                if (!isVersionAvailable)
-                {
-                    _logger.LogInformation("Wrong version");
-                    break;
-                }
-
-                await _stream.OnNextAsync(new SubscribedBlockDto
-                {
-                    ClientId = State.ClientId,
-                    ChainId = State.ChainId,
-                    Version = State.Version,
-                    FilterType = BlockFilterType.Block,
-                    Blocks = new List<BlockWithTransactionDto>()
-                });
-
-                await Task.Delay(3000);
-            }
-            
-            //var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
             var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
             var chainGrain = GrainFactory.GetGrain<IChainGrain>(State.ChainId);
             var subscribeInfo = await blockScanInfo.GetSubscribeInfoAsync();
