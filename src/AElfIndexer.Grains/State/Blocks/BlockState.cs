@@ -4,7 +4,7 @@ namespace AElfIndexer.Grains.State.Blocks;
 
 public class BlockState
 {
-    public BlockEventData Block = new BlockEventData();
+    public BlockData Block = new BlockData();
     
     // public Dictionary<string, BlockEventData> Blocks = new Dictionary<string, BlockEventData>();
     //

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace AElfIndexer.Grains.State.BlockScan;
 
 public class ClientManagerState

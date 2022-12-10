@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
-using AElfIndexer.Entities.Es;
 using AElfIndexer.Grains.State.BlockScan;
 using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
 using Volo.Abp.Account;

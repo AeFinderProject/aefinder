@@ -6,5 +6,5 @@ namespace AElfIndexer;
 public class NewBlockTaskEntity
 {
     public NewBlockEto newBlockEto { get; set; }
-    public BlockEventData blockEventData { get; set; }
+    public BlockData BlockData { get; set; }
 }

@@ -288,7 +288,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
     public async Task HandleEvent_GrainSwitch_Test()
     {
         string chainId = "TEST";
-        var primaryKeyGrain = Cluster.Client.GetGrain<IPrimaryKeyGrain>(chainId + AElfIndexerConsts.PrimaryKeyGrainIdSuffix);
+        var primaryKeyGrain = Cluster.Client.GetGrain<IPrimaryKeyGrain>(chainId + AElfIndexerApplicationConsts.PrimaryKeyGrainIdSuffix);
         await primaryKeyGrain.SetCounter(100);
         var currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
         var newPrimaryKey=await primaryKeyGrain.GetGrainPrimaryKey(chainId);

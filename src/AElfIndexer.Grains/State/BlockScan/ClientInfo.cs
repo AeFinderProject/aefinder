@@ -1,3 +1,5 @@
+using System;
+
 namespace AElfIndexer.Grains.State.BlockScan;
 
 public class ClientInfo

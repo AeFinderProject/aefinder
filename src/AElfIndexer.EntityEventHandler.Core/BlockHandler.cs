@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
@@ -90,48 +94,6 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
 
 
     }
-
-    // public async Task HandleEventAsync(NewBlockEto eventData)
-    // {
-    //     _logger.LogInformation($"block is adding, id: {eventData.BlockHash}  , BlockNumber: {eventData.BlockHeight} , IsConfirmed: {eventData.Confirmed}");
-    //     var existBlockIndex = await _blockIndexRepository.GetAsync(eventData.Id);
-    //     if (existBlockIndex != null)
-    //     {
-    //         _logger.LogInformation($"block already exist-{existBlockIndex.Id}, Add failure!");
-    //     }
-    //     else
-    //     {
-    //         var blockIndex = _objectMapper.Map<NewBlockEto, BlockIndex>(eventData);
-    //         await _blockIndexRepository.AddAsync(blockIndex);
-    //         _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(blockIndex); });
-    //
-    //         List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
-    //         List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
-    //         foreach (var transaction in eventData.Transactions)
-    //         {
-    //             var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
-    //             transactionIndexList.Add(transactionIndex);
-    //
-    //             foreach (var logEvent in transaction.LogEvents)
-    //             {
-    //                 var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
-    //                 logEventIndexList.Add(logEventIndex);
-    //             }
-    //         }
-    //
-    //         if (transactionIndexList.Count > 0)
-    //         {
-    //             _logger.LogDebug($"Transaction is bulk-adding, its block number:{eventData.BlockHeight}, total transaction count:{transactionIndexList.Count}");
-    //             await _transactionIndexRepository.BulkAddOrUpdateAsync(transactionIndexList);
-    //         }
-    //         if (logEventIndexList.Count > 0)
-    //         {
-    //             _logger.LogDebug($"LogEvent is bulk-adding, its block number:{eventData.BlockHeight}, total logevent count:{logEventIndexList.Count}");
-    //             await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
-    //         }
-    //     }
-    //
-    // }
 
     public async Task HandleEventAsync(ConfirmBlocksEto eventData)
     {

@@ -2,8 +2,6 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <RootNamespace>AElfIndexer.Grains</RootNamespace>
         <PackageId>AElfIndexer.Grains</PackageId>
     </PropertyGroup>
@@ -20,7 +18,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AElfIndexer.Application.Contracts\AElfIndexer.Application.Contracts.csproj" />
-      <ProjectReference Include="..\AElfIndexer.Domain\AElfIndexer.Domain.csproj" />
     </ItemGroup>
 
 </Project>

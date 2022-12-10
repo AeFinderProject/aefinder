@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using AElf.Contracts.Consensus.AEDPoS;
 using AElfIndexer.DTOs;
 using AElfIndexer.Etos;
@@ -49,7 +53,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         //prepare data
         List<Task<NewBlockTaskEntity>> prepareDataTaskList = new List<Task<NewBlockTaskEntity>>();
         List<NewBlockEto> newBlockEtos = new List<NewBlockEto>();
-        List<BlockEventData> blockEventDatas = new List<BlockEventData>();
+        List<BlockData> blockEventDatas = new List<BlockData>();
         foreach (var blockItem in eventData.Blocks)
         {
             Func<NewBlockTaskEntity> funcBlockConvertTask = () =>
@@ -66,11 +70,11 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         {
             var newBlockTaskEntity = task.Result;
             newBlockEtos.Add(newBlockTaskEntity.newBlockEto);
-            blockEventDatas.Add(newBlockTaskEntity.blockEventData);
+            blockEventDatas.Add(newBlockTaskEntity.BlockData);
         }
 
         var blockBranchGrain = await _blockGrainProvider.GetBlockBranchGrain(eventData.ChainId);
-        List<BlockEventData> libBlockList = await blockBranchGrain.SaveBlocks(blockEventDatas);
+        List<BlockData> libBlockList = await blockBranchGrain.SaveBlocks(blockEventDatas);
 
         if (libBlockList != null)
         {
@@ -85,7 +89,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
 
                 //publish confirm blocks event
                 var confirmBlockList =
-                    _objectMapper.Map<List<BlockEventData>, List<ConfirmBlockEto>>(libBlockList);
+                    _objectMapper.Map<List<BlockData>, List<ConfirmBlockEto>>(libBlockList);
                 await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                     { ConfirmBlocks = confirmBlockList });
             }
@@ -206,20 +210,20 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private NewBlockTaskEntity ConvertBlockDataTask(BlockEto blockItem,string chainId)
     {
         var newBlockEto = ConvertToNewBlockEto(blockItem, chainId);
-        BlockEventData blockEvent = new BlockEventData();
-        blockEvent = _objectMapper.Map<NewBlockEto, BlockEventData>(newBlockEto);
+        BlockData block = new BlockData();
+        block = _objectMapper.Map<NewBlockEto, BlockData>(newBlockEto);
 
         //analysis lib found event content
         var libLogEvent = blockItem.Transactions?.SelectMany(t => t.LogEvents)
             .FirstOrDefault(e => e.EventName == "IrreversibleBlockFound");
         if (libLogEvent != null)
         {
-            blockEvent.LibBlockHeight = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
+            block.LibBlockHeight = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
         }
 
         NewBlockTaskEntity resultEntity = new NewBlockTaskEntity();
         resultEntity.newBlockEto = newBlockEto;
-        resultEntity.blockEventData = blockEvent;
+        resultEntity.BlockData = block;
 
         return resultEntity;
     }

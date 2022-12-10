@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace AElfIndexer.DTOs;
 
 public class LogEventEto

@@ -38,7 +38,7 @@ public class TestBlockGrainProvider: AElfIndexerTestBase<AElfIndexerOrleansTestB
     {
         if (_blockBranchGrain == null)
         {
-            string primaryKey = chainId + AElfIndexerConsts.BlockDictionaryGrainIdSuffix;
+            string primaryKey = chainId + AElfIndexerApplicationConsts.BlockDictionaryGrainIdSuffix;
             _blockBranchGrain = _clusterClient.GetGrain<IBlockBranchGrain>(primaryKey);
         }
 

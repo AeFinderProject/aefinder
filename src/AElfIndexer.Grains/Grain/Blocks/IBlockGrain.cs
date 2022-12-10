@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using AElfIndexer.Grains.EventData;
 using Orleans;
 
@@ -5,19 +6,13 @@ namespace AElfIndexer.Grains.Grain.Blocks;
 
 public interface IBlockGrain : IGrainWithStringKey
 {
-    Task SaveBlock(BlockEventData blockEvent);
+    Task SaveBlock(BlockData block);
 
-    Task<BlockEventData> GetBlockEventData();
+    Task<BlockData> GetBlockData();
 
     Task SetBlockConfirmed();
 
     Task<bool> IsBlockConfirmed();
-    // Task<List<BlockEventData>> SaveBlock(BlockEventData blockEvent);
-    //
-    // Task<List<BlockEventData>> SaveBlocks(List<BlockEventData> blockEventDataList);
-    //
-    // Task<Dictionary<string, BlockEventData>> GetBlockDictionary();
-    //
-    // Task InitializeStateAsync(Dictionary<string, BlockEventData> blocksDictionary);
+
 }
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AElfIndexer.Block.Dtos;
 
 namespace AElfIndexer.Grains.State.BlockScan;
