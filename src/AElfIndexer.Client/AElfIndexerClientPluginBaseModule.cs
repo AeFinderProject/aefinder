@@ -1,13 +1,18 @@
 using System.Reflection;
 using AElf.Indexing.Elasticsearch.Services;
+using AElfIndexer.BlockScan;
 using AElfIndexer.Client.GraphQL;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
 using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using NUglify.Helpers;
+using Orleans;
+using Orleans.Streams;
 using Volo.Abp;
 using Volo.Abp.Modularity;
+using Volo.Abp.Threading;
 
 namespace AElfIndexer.Client;
 
@@ -57,8 +62,39 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
                 GraphQLEndPoint = "../graphql",
                 SubscriptionsEndPoint = "../graphql",
             });
+
+        AsyncHelper.RunSync(async () => await InitBlockScanAsync(context));
     }
-    
+
+    private async Task InitBlockScanAsync(ApplicationInitializationContext context)
+    {
+        var blockScanService = context.ServiceProvider.GetRequiredService<IBlockScanAppService>();
+        var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        // TODO: Is correct?
+        var subscribedBlockHandler = context.ServiceProvider.GetRequiredService<ISubscribedBlockHandler<T>>();
+        var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(ClientId, IndexPrefix);
+        foreach (var streamId in messageStreamIds)
+        {
+            var stream =
+                clusterClient
+                    .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
+                    .GetStream<SubscribedBlockDto>(streamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
+
+            var subscriptionHandles = await stream.GetAllSubscriptionHandles();
+            if (!subscriptionHandles.IsNullOrEmpty())
+            {
+                subscriptionHandles.ForEach(async x =>
+                    await x.ResumeAsync(subscribedBlockHandler.HandleAsync));
+            }
+            else
+            {
+                await stream.SubscribeAsync(subscribedBlockHandler.HandleAsync);
+            }
+        }
+
+        await blockScanService.StartScanAsync(ClientId, IndexPrefix);
+    }
+
     private void ConfigNodes(IServiceCollection serviceCollection)
     {
         serviceCollection.AddTransient<IAElfClientService, AElfClientService>();

@@ -22,3 +22,9 @@ public enum VersionStatus
     Initialized = 0,
     Started = 1
 }
+
+public class ClientVersion
+{
+    public string CurrentVersion { get;set; }
+    public string NewVersion { get; set; }
+}

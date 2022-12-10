@@ -29,7 +29,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         Logger.LogInformation($"Client: {clientId} submit subscribe: {JsonSerializer.Serialize(subscriptionInfos)}");
 
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
-        var oldVersion = await client.GetNewVersionAsync();
+        var oldVersion = (await client.GetVersionAsync()).NewVersion;
         if (!string.IsNullOrWhiteSpace(oldVersion))
         {
             var scanIds = await client.GetBlockScanIdsAsync(oldVersion);
@@ -46,13 +46,20 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         return version;
     }
 
-    public async Task<List<string>> GetMessageStreamIdsAsync(string clientId, string version)
+    public async Task<List<Guid>> GetMessageStreamIdsAsync(string clientId, string version)
     {
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
         var subscriptionInfos = await client.GetSubscriptionInfoAsync(version);
+        var streamIds = new List<Guid>();
+        foreach (var subscriptionInfo in subscriptionInfos)
+        {
+            var id = subscriptionInfo.ChainId + clientId + version + subscriptionInfo.FilterType;
+            var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
+            var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
+            streamIds.Add(streamId);
+        }
 
-        return subscriptionInfos
-            .Select(subscriptionInfo => subscriptionInfo.ChainId + clientId + version + subscriptionInfo.FilterType).ToList();
+        return streamIds;
     }
 
     public async Task StartScanAsync(string clientId, string version)
@@ -61,7 +68,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
 
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
         var subscriptionInfos = await client.GetSubscriptionInfoAsync(version);
-        var versionStatus = await client.GetVersionStatus(version);
+        var versionStatus = await client.GetVersionStatusAsync(version);
         foreach (var subscriptionInfo in subscriptionInfos)
         {
             var id = subscriptionInfo.ChainId + clientId + version + subscriptionInfo.FilterType;
@@ -75,22 +82,6 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                 await scanGrain.InitializeAsync(subscriptionInfo.ChainId, clientId, version);
             }
 
-            // var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
-            // var stream =
-            //     _clusterClient
-            //         .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
-            //         .GetStream<SubscribedBlockDto>(streamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
-            //
-            // var subscriptionHandles = await stream.GetAllSubscriptionHandles();
-            // if (!subscriptionHandles.IsNullOrEmpty())
-            // {
-            //     subscriptionHandles.ForEach(async x => await x.ResumeAsync<SubscribedBlockDto>(onNextAsync));
-            // }
-            // else
-            // {
-            //     await stream.SubscribeAsync<SubscribedBlockDto>(onNextAsync);
-            // }
-            
             _ = Task.Run(scanGrain.HandleHistoricalBlockAsync);
         }
         
@@ -105,7 +96,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
     public async Task UpgradeVersionAsync(string clientId)
     {
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
-        var currentVersion = await client.GetCurrentVersionAsync();
+        var currentVersion = (await client.GetVersionAsync()).CurrentVersion;
         var scanIds = await client.GetBlockScanIdsAsync(currentVersion);
         foreach (var scanId in scanIds)
         {
@@ -114,6 +105,17 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         }
 
         await client.UpgradeVersionAsync();
+    }
+    
+    public async Task<ClientVersionDto> GetClientVersionAsync(string clientId)
+    {
+        var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
+        var version = await clientGrain.GetVersionAsync();
+        return new ClientVersionDto
+        {
+            CurrentVersion = version.CurrentVersion,
+            NewVersion = version.NewVersion
+        };
     }
 
     public async Task<bool> IsVersionAvailableAsync(string clientId, string version)

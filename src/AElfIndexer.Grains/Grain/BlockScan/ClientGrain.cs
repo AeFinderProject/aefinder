@@ -59,16 +59,6 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         return version == State.NewVersion || version == State.CurrentVersion;
     }
 
-    public async Task<string> GetCurrentVersionAsync()
-    {
-        return State.CurrentVersion;
-    }
-
-    public async Task<string> GetNewVersionAsync()
-    {
-        return State.NewVersion;
-    }
-
     public async Task UpgradeVersionAsync()
     {
         if (State.CurrentVersion == State.NewVersion || string.IsNullOrWhiteSpace(State.NewVersion))
@@ -78,6 +68,7 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
 
         State.VersionInfos.Remove(State.CurrentVersion);
         State.CurrentVersion = State.NewVersion;
+        State.NewVersion = null;
         await WriteStateAsync();
     }
     
@@ -92,7 +83,7 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         await WriteStateAsync();
     }
 
-    public async Task<VersionStatus> GetVersionStatus(string version)
+    public async Task<VersionStatus> GetVersionStatusAsync(string version)
     {
         return State.VersionInfos[version].VersionStatus;
     }
@@ -101,6 +92,15 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
     {
         State.VersionInfos[version].VersionStatus = VersionStatus.Started;
         await WriteStateAsync();
+    }
+
+    public async Task<ClientVersion> GetVersionAsync()
+    {
+        return new ClientVersion
+        {
+            CurrentVersion = State.CurrentVersion,
+            NewVersion = State.NewVersion
+        };
     }
 
     public override async Task OnActivateAsync()
