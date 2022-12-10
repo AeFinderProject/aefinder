@@ -25,7 +25,7 @@ public class LogEvent:IBlockchainData
     /// </summary>
     public int Index { get; set; }
     
-    public bool IsConfirmed{get;set;}
+    public bool Confirmed{get;set;}
 
     public Dictionary<string,string> ExtraProperties {get;set;}
 }

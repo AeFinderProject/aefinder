@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using AElfIndexer.Grains.Grain.Blocks;
 using Orleans;
 using Volo.Abp.DependencyInjection;
@@ -6,7 +7,7 @@ namespace AElfIndexer.Providers;
 
 public interface IBlockGrainProvider
 {
-    Task<IBlockGrain> GetBlockGrain(string chainId);
+    Task<IBlockBranchGrain> GetBlockBranchGrain(string chainId);
 }
 
 public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
@@ -18,23 +19,11 @@ public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
         _clusterClient = clusterClient;
     }
 
-    public async Task<IBlockGrain> GetBlockGrain(string chainId)
+    public async Task<IBlockBranchGrain> GetBlockBranchGrain(string chainId)
     {
-        var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(chainId + AElfIndexerConsts.PrimaryKeyGrainIdSuffix);
-        var currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
-        var primaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId);
-        
-        if (currentPrimaryKey == primaryKey)
-        {
-            return _clusterClient.GetGrain<IBlockGrain>(currentPrimaryKey);
-        }
+        string primaryKey = chainId + AElfIndexerApplicationConsts.BlockDictionaryGrainIdSuffix;
+        var grain = _clusterClient.GetGrain<IBlockBranchGrain>(primaryKey);
 
-        var oldGrain = _clusterClient.GetGrain<IBlockGrain>(currentPrimaryKey);
-        var blocksDictionary =  await oldGrain.GetBlockDictionary();
-        
-        var newGrain = _clusterClient.GetGrain<IBlockGrain>(primaryKey);
-        await newGrain.InitializeStateAsync(blocksDictionary);
-        
-        return newGrain;
+        return grain;
     }
 }

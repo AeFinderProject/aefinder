@@ -1,7 +1,5 @@
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Client.Providers;
-using AElfIndexer.Entities.Es;
-using AElfIndexer.Grains.State.Client;
 using Orleans;
 using Volo.Abp.ObjectMapping;
 

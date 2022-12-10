@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using AElf.Contracts.Consensus.AEDPoS;
 using AElfIndexer.DTOs;
 using AElfIndexer.Etos;
@@ -12,6 +16,7 @@ using Orleans;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
+using Volo.Abp.Threading;
 
 namespace AElfIndexer.Processors;
 
@@ -42,14 +47,13 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
-        _logger.LogInformation($"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockHeight}, end block: {eventData.Blocks.Last().BlockHeight},");
-        // var blockGrain = _clusterClient.GetGrain<IBlockGrain>(_orleansClientOption.AElfBlockGrainPrimaryKey);
-        var blockGrain = await _blockGrainProvider.GetBlockGrain(eventData.ChainId);
-        int processedBlockCount = 0;
+        _logger.LogInformation(
+            $"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockHeight}, end block: {eventData.Blocks.Last().BlockHeight},");
 
-        List<Task<NewBlockTaskEntity>> taskList = new List<Task<NewBlockTaskEntity>>();
+        //prepare data
+        List<Task<NewBlockTaskEntity>> prepareDataTaskList = new List<Task<NewBlockTaskEntity>>();
         List<NewBlockEto> newBlockEtos = new List<NewBlockEto>();
-        List<BlockEventData> blockEventDatas = new List<BlockEventData>();
+        List<BlockData> blockEventDatas = new List<BlockData>();
         foreach (var blockItem in eventData.Blocks)
         {
             Func<NewBlockTaskEntity> funcBlockConvertTask = () =>
@@ -57,55 +61,109 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                 return ConvertBlockDataTask(blockItem, eventData.ChainId);
             };
             Task<NewBlockTaskEntity> task = Task.Run(funcBlockConvertTask);
-            taskList.Add(task);
+            prepareDataTaskList.Add(task);
         }
 
-        await Task.WhenAll(taskList.ToArray());
+        await Task.WhenAll(prepareDataTaskList.ToArray());
 
-        foreach (var task in taskList)
+        foreach (var task in prepareDataTaskList)
         {
             var newBlockTaskEntity = task.Result;
             newBlockEtos.Add(newBlockTaskEntity.newBlockEto);
-            blockEventDatas.Add(newBlockTaskEntity.blockEventData);
+            blockEventDatas.Add(newBlockTaskEntity.BlockData);
         }
 
-        int blockLimit = _blockChainEventHandlerOptions.BlockPartionLimit;
-        int partion = (eventData.Blocks.Count % blockLimit) == 0
-            ? (eventData.Blocks.Count / blockLimit)
-            : (eventData.Blocks.Count / blockLimit) + 1;
-        
-        _logger.LogInformation($"blockLimit:{blockLimit} partion:{partion} ");
+        var blockBranchGrain = await _blockGrainProvider.GetBlockBranchGrain(eventData.ChainId);
+        List<BlockData> libBlockList = await blockBranchGrain.SaveBlocks(blockEventDatas);
 
-        for (var i = 0; i < partion; i++)
+        if (libBlockList != null)
         {
-            _logger.LogInformation("skip: "+(i*blockLimit).ToString());
-            List<BlockEventData> libBlockList = await blockGrain.SaveBlocks(blockEventDatas.Skip(i*blockLimit).Take(blockLimit).ToList());
+            // _logger.LogInformation("newBlockEtos count: " + newBlockEtos.Count);
+            //publish new block event
+            await _distributedEventBus.PublishAsync(new NewBlocksEto()
+                { NewBlocks = newBlockEtos });
 
-            if (libBlockList != null)
+            if (libBlockList.Count > 0)
             {
-                var newBlockPartEtos = newBlockEtos.Skip(i * blockLimit).Take(blockLimit).ToList();
-                _logger.LogInformation("newBlockPartEtos count: " + newBlockPartEtos.Count);
-                //publish new block event
-                await _distributedEventBus.PublishAsync(new NewBlocksEto()
-                    { NewBlocks = newBlockPartEtos });
+                libBlockList = libBlockList.OrderBy(b => b.BlockHeight).ToList();
 
-                processedBlockCount = processedBlockCount + newBlockPartEtos.Count;
-
-                if (libBlockList.Count > 0)
-                {
-                    libBlockList = libBlockList.OrderBy(b => b.BlockHeight).ToList();
-                    //publish confirm blocks event
-                    var confirmBlockList =
-                        _objectMapper.Map<List<BlockEventData>, List<ConfirmBlockEto>>(libBlockList);
-                    await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
-                        { ConfirmBlocks = confirmBlockList });
-                }
+                //publish confirm blocks event
+                var confirmBlockList =
+                    _objectMapper.Map<List<BlockData>, List<ConfirmBlockEto>>(libBlockList);
+                await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
+                    { ConfirmBlocks = confirmBlockList });
             }
         }
 
-        var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(eventData.ChainId + AElfIndexerConsts.PrimaryKeyGrainIdSuffix);
-        await primaryKeyGrain.SetCounter(processedBlockCount);
+
     }
+
+    // public async Task HandleEventAsync(BlockChainDataEto eventData)
+    // {
+    //     _logger.LogInformation($"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockHeight}, end block: {eventData.Blocks.Last().BlockHeight},");
+    //     // var blockGrain = _clusterClient.GetGrain<IBlockGrain>(_orleansClientOption.AElfBlockGrainPrimaryKey);
+    //     var blockGrain = await _blockGrainProvider.GetBlockGrain(eventData.ChainId);
+    //     int processedBlockCount = 0;
+    //
+    //     List<Task<NewBlockTaskEntity>> taskList = new List<Task<NewBlockTaskEntity>>();
+    //     List<NewBlockEto> newBlockEtos = new List<NewBlockEto>();
+    //     List<BlockEventData> blockEventDatas = new List<BlockEventData>();
+    //     foreach (var blockItem in eventData.Blocks)
+    //     {
+    //         Func<NewBlockTaskEntity> funcBlockConvertTask = () =>
+    //         {
+    //             return ConvertBlockDataTask(blockItem, eventData.ChainId);
+    //         };
+    //         Task<NewBlockTaskEntity> task = Task.Run(funcBlockConvertTask);
+    //         taskList.Add(task);
+    //     }
+    //
+    //     await Task.WhenAll(taskList.ToArray());
+    //
+    //     foreach (var task in taskList)
+    //     {
+    //         var newBlockTaskEntity = task.Result;
+    //         newBlockEtos.Add(newBlockTaskEntity.newBlockEto);
+    //         blockEventDatas.Add(newBlockTaskEntity.blockEventData);
+    //     }
+    //
+    //     int blockLimit = _blockChainEventHandlerOptions.BlockPartionLimit;
+    //     int partion = (eventData.Blocks.Count % blockLimit) == 0
+    //         ? (eventData.Blocks.Count / blockLimit)
+    //         : (eventData.Blocks.Count / blockLimit) + 1;
+    //     
+    //     _logger.LogInformation($"blockLimit:{blockLimit} partion:{partion} ");
+    //
+    //     for (var i = 0; i < partion; i++)
+    //     {
+    //         _logger.LogInformation("skip: "+(i*blockLimit).ToString());
+    //         List<BlockEventData> libBlockList = await blockGrain.SaveBlocks(blockEventDatas.Skip(i*blockLimit).Take(blockLimit).ToList());
+    //
+    //         if (libBlockList != null)
+    //         {
+    //             var newBlockPartEtos = newBlockEtos.Skip(i * blockLimit).Take(blockLimit).ToList();
+    //             _logger.LogInformation("newBlockPartEtos count: " + newBlockPartEtos.Count);
+    //             //publish new block event
+    //             await _distributedEventBus.PublishAsync(new NewBlocksEto()
+    //                 { NewBlocks = newBlockPartEtos });
+    //
+    //             processedBlockCount = processedBlockCount + newBlockPartEtos.Count;
+    //
+    //             if (libBlockList.Count > 0)
+    //             {
+    //                 libBlockList = libBlockList.OrderBy(b => b.BlockHeight).ToList();
+    //                 //publish confirm blocks event
+    //                 var confirmBlockList =
+    //                     _objectMapper.Map<List<BlockEventData>, List<ConfirmBlockEto>>(libBlockList);
+    //                 await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
+    //                     { ConfirmBlocks = confirmBlockList });
+    //             }
+    //         }
+    //     }
+    //
+    //     var primaryKeyGrain = _clusterClient.GetGrain<IPrimaryKeyGrain>(eventData.ChainId + AElfIndexerConsts.PrimaryKeyGrainIdSuffix);
+    //     await primaryKeyGrain.SetCounter(processedBlockCount);
+    // }
 
     private long AnalysisBlockLibFoundEvent(string logEventIndexed)
     {
@@ -124,7 +182,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         // newBlock.Id = Guid.NewGuid();
         newBlock.Id = newBlock.BlockHash;
         newBlock.ChainId = chainId;
-        newBlock.IsConfirmed = false;
+        newBlock.Confirmed = false;
         foreach (var transaction in newBlock.Transactions)
         {
             transaction.ChainId = chainId;
@@ -132,7 +190,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             transaction.PreviousBlockHash = newBlock.PreviousBlockHash;
             transaction.BlockHeight = newBlock.BlockHeight;
             transaction.BlockTime = newBlock.BlockTime;
-            transaction.IsConfirmed = false;
+            transaction.Confirmed = false;
         
             foreach (var logEvent in transaction.LogEvents)
             {
@@ -141,7 +199,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                 logEvent.PreviousBlockHash = newBlock.PreviousBlockHash;
                 logEvent.BlockHeight = newBlock.BlockHeight;
                 logEvent.BlockTime = newBlock.BlockTime;
-                logEvent.IsConfirmed = false;
+                logEvent.Confirmed = false;
                 logEvent.TransactionId = transaction.TransactionId;
             }
         }
@@ -152,20 +210,20 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private NewBlockTaskEntity ConvertBlockDataTask(BlockEto blockItem,string chainId)
     {
         var newBlockEto = ConvertToNewBlockEto(blockItem, chainId);
-        BlockEventData blockEvent = new BlockEventData();
-        blockEvent = _objectMapper.Map<NewBlockEto, BlockEventData>(newBlockEto);
+        BlockData block = new BlockData();
+        block = _objectMapper.Map<NewBlockEto, BlockData>(newBlockEto);
 
         //analysis lib found event content
         var libLogEvent = blockItem.Transactions?.SelectMany(t => t.LogEvents)
             .FirstOrDefault(e => e.EventName == "IrreversibleBlockFound");
         if (libLogEvent != null)
         {
-            blockEvent.LibBlockHeight = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
+            block.LibBlockHeight = AnalysisBlockLibFoundEvent(libLogEvent.ExtraProperties["Indexed"]);
         }
 
         NewBlockTaskEntity resultEntity = new NewBlockTaskEntity();
         resultEntity.newBlockEto = newBlockEto;
-        resultEntity.blockEventData = blockEvent;
+        resultEntity.BlockData = block;
 
         return resultEntity;
     }

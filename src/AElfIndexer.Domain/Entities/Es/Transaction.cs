@@ -35,7 +35,7 @@ public class Transaction:IBlockchainData
     
     public TransactionStatus Status { get; set; }
     
-    public bool IsConfirmed{get;set;}
+    public bool Confirmed{get;set;}
     
     public Dictionary<string,string> ExtraProperties {get;set;}
     

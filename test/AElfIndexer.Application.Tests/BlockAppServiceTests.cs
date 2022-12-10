@@ -67,10 +67,10 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
         blockList.Add(block_903); 
         await _blockIndexRepository.BulkAddOrUpdateAsync(blockList);
         
-        block_900.IsConfirmed = true;
-        block_901.IsConfirmed = true;
-        block_902.IsConfirmed = true;
-        block_903.IsConfirmed = true;
+        block_900.Confirmed = true;
+        block_901.Confirmed = true;
+        block_902.Confirmed = true;
+        block_903.Confirmed = true;
         List<BlockIndex> blockList2 = new List<BlockIndex>();
         blockList2.Add(block_900);
         blockList2.Add(block_901);
@@ -215,7 +215,7 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
             HasTransaction = true
         };
         List<BlockDto> blockDtos_test6 =await _blockAppService.GetBlocksAsync(getBlocksInput_test6);
-        blockDtos_test6.Max(x=>x.BlockHeight).ShouldBe(2000);
+        blockDtos_test6.Max(x=>x.BlockHeight).ShouldBe(1999);
         
         //Unit Test 7
         GetBlocksInput getBlocksInput_test7 = new GetBlocksInput()
@@ -613,7 +613,7 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
             EndBlockHeight = 5000
         };
         List<TransactionDto> getBlocksInput_test31 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test31);
-        getBlocksInput_test31.Max(x=>x.BlockHeight).ShouldBe(2000);
+        getBlocksInput_test31.Max(x=>x.BlockHeight).ShouldBe(1999);
     }
     
     private async Task ClearLogEventIndex(string chainId,long startBlockNumber,long endBlockNumber)
@@ -853,7 +853,7 @@ public class BlockAppServiceTests:AElfIndexerApplicationTestBase
             EndBlockHeight = 5000
         };
         List<LogEventDto> logEventDtos_test33 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test33);
-        logEventDtos_test33.Max(x=>x.BlockHeight).ShouldBe(2000);
+        logEventDtos_test33.Max(x=>x.BlockHeight).ShouldBe(1999);
     }
 
     [Fact]

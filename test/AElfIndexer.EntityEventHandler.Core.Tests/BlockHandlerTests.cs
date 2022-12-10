@@ -198,15 +198,15 @@ public class BlockHandlerTests:AElfIndexerEntityEventHandlerCoreTestBase
         var blockIndex_h21_28=await _blockIndexRepository.GetListAsync(Filter);
         foreach (var blockItem in blockIndex_h21_28.Item2)
         {
-            blockItem.IsConfirmed.ShouldBeTrue();
+            blockItem.Confirmed.ShouldBeTrue();
         }
         var blockIndex_h29 = await _blockIndexRepository.GetAsync(q =>
             q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h29.BlockHash)));
-        blockIndex_h29.IsConfirmed.ShouldBeFalse();
-        blockIndex_h29_fork.IsConfirmed.ShouldBeFalse();
+        blockIndex_h29.Confirmed.ShouldBeFalse();
+        blockIndex_h29_fork.Confirmed.ShouldBeFalse();
         var blockIndex_h30 = await _blockIndexRepository.GetAsync(q =>
             q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h30.BlockHash)));
-        blockIndex_h30.IsConfirmed.ShouldBeFalse();
+        blockIndex_h30.Confirmed.ShouldBeFalse();
         
         
         //Unit test 14
@@ -228,7 +228,7 @@ public class BlockHandlerTests:AElfIndexerEntityEventHandlerCoreTestBase
         Thread.Sleep(1000);
         blockIndex_h30 = await _blockIndexRepository.GetAsync(q =>
             q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h30.BlockHash)));
-        blockIndex_h30.IsConfirmed.ShouldBeFalse();
+        blockIndex_h30.Confirmed.ShouldBeFalse();
         
         // var blockIndex_h31 = await _blockIndexRepository.GetAsync(q =>
         //     q.Term(i => i.Field(f => f.BlockHash).Value(confirmBlockEto_h31.BlockHash)));

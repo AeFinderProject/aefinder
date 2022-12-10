@@ -15,6 +15,7 @@
         <PackageReference Include="GraphQL.Server.Ui.Playground" Version="7.1.1" />
         <PackageReference Include="AElf.Client" Version="1.2.1" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <PackageReference Include="AElf.Indexing.Elasticsearch" Version="0.0.12" />
     </ItemGroup>
 
     <ItemGroup>

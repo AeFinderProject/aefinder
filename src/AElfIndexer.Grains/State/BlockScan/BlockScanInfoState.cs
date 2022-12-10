@@ -1,3 +1,4 @@
+using System;
 using AElfIndexer.BlockScan;
 
 namespace AElfIndexer.Grains.State.BlockScan;

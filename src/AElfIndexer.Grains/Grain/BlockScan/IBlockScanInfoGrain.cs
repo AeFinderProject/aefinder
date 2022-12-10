@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.State.BlockScan;
 using Orleans;

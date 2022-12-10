@@ -9,10 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="AElf.Orleans.EventSourcing.Snapshot" Version="1.0.3" />
-      <PackageReference Include="EventStore.Client" Version="5.0.2" />
       <PackageReference Include="JsonNet.PrivateSettersContractResolvers" Version="1.0.0" />
-      <PackageReference Include="Microsoft.Orleans.EventSourcing" Version="3.6.5" />
       <PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Linux" Version="3.6.5" />
       <PackageReference Include="Microsoft.Orleans.Server" Version="3.6.5" />
       <PackageReference Include="Orleans.Clustering.Redis" Version="3.2.2" />

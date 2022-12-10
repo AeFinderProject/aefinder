@@ -5,7 +5,7 @@ using Volo.Abp.Modularity;
 
 namespace AElfIndexer.Grains;
 
-[DependsOn(typeof(AElfIndexerDomainModule), typeof(AElfIndexerApplicationContractsModule))]
+[DependsOn(typeof(AElfIndexerApplicationContractsModule))]
 public class AElfIndexerGrainsModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

@@ -1,6 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using AElf.Indexing.Elasticsearch;
 using AElfIndexer.Block;
+using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
