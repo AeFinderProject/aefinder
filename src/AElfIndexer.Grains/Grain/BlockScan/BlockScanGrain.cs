@@ -259,7 +259,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     {
         foreach (var block in blocks)
         {
-            block.IsConfirmed = isConfirmed;
+            block.Confirmed = isConfirmed;
             foreach (var transaction in block.Transactions)
             {
                 transaction.IsConfirmed = isConfirmed;

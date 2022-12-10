@@ -51,7 +51,7 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
             ChainId = chainId,
             BlockHash = blockHash,
             BlockHeight = blockNum,
-            IsConfirmed = isConfirmed,
+            Confirmed = isConfirmed,
             BlockTime = DateTime.UtcNow,
             PreviousBlockHash = previousHash,
             Transactions = new List<TransactionDto>

@@ -6,7 +6,7 @@ public interface IAElfIndexerClientInfoProvider<T>
 
     void SetClientId(string clientId);
 
-    string GetIndexPrefix();
+    string GetVersion();
 
-    void SetIndexPrefix(string prefix);
+    void SetVersion(string version);
 }

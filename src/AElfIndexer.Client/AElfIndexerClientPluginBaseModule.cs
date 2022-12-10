@@ -1,4 +1,5 @@
 using System.Reflection;
+using AElf.Indexing.Elasticsearch;
 using AElf.Indexing.Elasticsearch.Services;
 using AElfIndexer.Client.GraphQL;
 using AElfIndexer.Client.Handlers;
@@ -16,7 +17,7 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
     where TSchema : AElfIndexerClientSchema<TQuery>
 {
     protected abstract string ClientId { get; }
-    protected abstract string IndexPrefix { get; }
+    protected abstract string Version { get; }
     
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -40,9 +41,8 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
     {
         var provider = context.ServiceProvider.GetRequiredService<IAElfIndexerClientInfoProvider<T>>();
         provider.SetClientId(ClientId);
-        provider.SetIndexPrefix(IndexPrefix);
+        provider.SetVersion(Version);
         await CreateIndexAsync(context.ServiceProvider);
-        await base.OnPreApplicationInitializationAsync(context);
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
@@ -73,11 +73,11 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
     
     private async Task CreateIndexAsync(IServiceProvider serviceProvider)
     {
-        var types = GetTypesAssignableFrom<IIndexEntity>(typeof(TModule).Assembly);
+        var types = GetTypesAssignableFrom<IIndexBuild>(typeof(TModule).Assembly);
         var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
         foreach (var t in types)
         {
-            var indexName = $"{ClientId}_{IndexPrefix}.{t.Name}".ToLower();
+            var indexName = $"{ClientId}_{Version}.{t.Name}".ToLower();
             //TODO Need to confirm shard and numberOfReplicas
             await elasticIndexService.CreateIndexAsync(indexName, t, 5,1);
         }

@@ -66,7 +66,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         await scanGrain.HandleHistoricalBlockAsync();
         
         subscribedBlock.Count.ShouldBe(50);
-        subscribedBlock.Count(o => o.IsConfirmed).ShouldBe(25);
+        subscribedBlock.Count(o => o.Confirmed).ShouldBe(25);
 
         var clientInfo = await clientGrain.GetClientInfoAsync();
         clientInfo.ScanModeInfo.ScanMode.ShouldBe(ScanMode.NewBlock);
@@ -161,7 +161,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         foreach (var block in subscribedBlock)
         {
             block.BlockHeight.ShouldBe(number);
-            block.IsConfirmed.ShouldBe(true);
+            block.Confirmed.ShouldBe(true);
             number++;
         }
     }
@@ -211,7 +211,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         await scanGrain.HandleHistoricalBlockAsync();
 
         subscribedBlock.Count.ShouldBe(50);
-        subscribedBlock.Count(o => o.IsConfirmed).ShouldBe(25);
+        subscribedBlock.Count(o => o.Confirmed).ShouldBe(25);
     }
 
     [Theory]

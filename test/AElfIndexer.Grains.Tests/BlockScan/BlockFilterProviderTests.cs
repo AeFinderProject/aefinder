@@ -139,7 +139,7 @@ public class BlockFilterProviderTests : AElfIndexerGrainTestBase
             ChainId = chainId,
             BlockHash = blockHash,
             BlockHeight = blockNum,
-            IsConfirmed = true,
+            Confirmed = true,
             BlockTime = DateTime.UtcNow,
             PreviousBlockHash = "PreviousHash",
             Transactions = new List<TransactionDto>

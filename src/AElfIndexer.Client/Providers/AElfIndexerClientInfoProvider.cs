@@ -6,7 +6,7 @@ public class AElfIndexerClientInfoProvider<T> : IAElfIndexerClientInfoProvider<T
 {
     private string _clientId;
     // chainId => IndexPrefix
-    private string _indexPrefix;
+    private string _version;
 
 
     public string GetClientId()
@@ -19,13 +19,13 @@ public class AElfIndexerClientInfoProvider<T> : IAElfIndexerClientInfoProvider<T
         _clientId = clientId;
     }
 
-    public string GetIndexPrefix()
+    public string GetVersion()
     {
-        return _indexPrefix;
+        return _version;
     }
 
-    public void SetIndexPrefix(string indexPrefix)
+    public void SetVersion(string version)
     {
-        _indexPrefix = indexPrefix;
+        _version = version;
     }
 }

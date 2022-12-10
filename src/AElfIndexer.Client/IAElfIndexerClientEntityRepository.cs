@@ -1,10 +1,12 @@
 using System.Linq.Expressions;
+using AElf.Indexing.Elasticsearch;
 using AElfIndexer.Client.Handlers;
 using Nest;
 
 namespace AElfIndexer.Client;
 
-public interface IAElfIndexerClientEntityRepository<TEntity,TKey,TData,T> where TEntity: AElfIndexerClientEntity<TKey>, new() 
+public interface IAElfIndexerClientEntityRepository<TEntity, TKey, TData, T>
+    where TEntity : AElfIndexerClientEntity<TKey>, IIndexBuild, new()
     where TData : BlockChainDataBase
 {
     Task AddOrUpdateAsync(TEntity entity);

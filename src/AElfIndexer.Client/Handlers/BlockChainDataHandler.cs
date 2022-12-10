@@ -13,13 +13,13 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
 {
     private readonly IClusterClient _clusterClient;
     protected readonly IObjectMapper ObjectMapper;
-    private readonly string _indexPrefix;
+    private readonly string _version;
 
     protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper, IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider)
     {
         _clusterClient = clusterClient;
         ObjectMapper = objectMapper;
-        _indexPrefix = aelfIndexerClientInfoProvider.GetIndexPrefix();
+        _version = aelfIndexerClientInfoProvider.GetVersion();
     }
     
     public abstract BlockFilterType FilterType { get; }
@@ -28,7 +28,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
     {
         var blockStateSetsGrain =
             _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(
-                $"BlockStateSets_{clientId}_{chainId}_{_indexPrefix}");
+                $"BlockStateSets_{clientId}_{chainId}_{_version}");
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
         var libBlockHeight = blockStateSets.Count != 0 ? blockStateSets.Min(b => b.Value.BlockHeight) : 0;
         if (!CheckLinked(blockDtos, blockStateSets)) return;
@@ -46,7 +46,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
                 //TODO 重复区块不处理是否有问题
                 //TODO 出现异常导致中断是否有影响
                 // Skip if blockStateSets contain unconfirmed block 
-                if (blockStateSets.TryGetValue(block.BlockHash, out var blockStateSet) && !block.IsConfirmed) continue;
+                if (blockStateSets.TryGetValue(block.BlockHash, out var blockStateSet) && !block.Confirmed) continue;
                 
                 if (blockStateSet == null)
                 {
@@ -72,7 +72,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
         }
 
         //Clean block state sets under latest lib block
-        var confirmBlock = blockDtos.LastOrDefault(b => b.IsConfirmed);
+        var confirmBlock = blockDtos.LastOrDefault(b => b.Confirmed);
         if (confirmBlock != null)
         {
             await blockStateSetsGrain.CleanBlockStateSets(confirmBlock.BlockHeight, confirmBlock.BlockHash);
@@ -86,7 +86,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
     private bool GetBlockMap(List<BlockDto> blockDtos, out Dictionary<long, List<BlockDto>> blockMap, out Dictionary<string,string> bestChainBlockHashMap) 
     {
         // Confirmed blocks do not need to check fork block.
-        if (blockDtos.First().IsConfirmed)
+        if (blockDtos.First().Confirmed)
         {
             blockMap = blockDtos.ToDictionary(b => b.BlockHeight, b => new List<BlockDto>
             {

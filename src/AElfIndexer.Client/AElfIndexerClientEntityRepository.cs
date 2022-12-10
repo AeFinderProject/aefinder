@@ -11,14 +11,14 @@ using Orleans;
 namespace AElfIndexer.Client;
 
 public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfIndexerClientEntityRepository<TEntity,TKey,TData,T>
-    where TEntity: AElfIndexerClientEntity<TKey>, new()
+    where TEntity : AElfIndexerClientEntity<TKey>, IIndexBuild, new()
     where TData : BlockChainDataBase
 {
     private readonly INESTRepository<TEntity, TKey> _nestRepository;
     private readonly IClusterClient _clusterClient;
     private readonly string _entityName;
     private readonly string _clientId;
-    private readonly string _indexPrefix;
+    private readonly string _version;
 
     public AElfIndexerClientEntityRepository(INESTRepository<TEntity, TKey> nestRepository,
         IClusterClient clusterClient, IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider)
@@ -27,7 +27,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         _clusterClient = clusterClient;
         _entityName = typeof(TEntity).Name;
         _clientId = aelfIndexerClientInfoProvider.GetClientId();
-        _indexPrefix = aelfIndexerClientInfoProvider.GetIndexPrefix();
+        _version = aelfIndexerClientInfoProvider.GetVersion();
     }
 
     public async Task AddOrUpdateAsync(TEntity entity)
@@ -35,16 +35,16 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         if (!IsValidate(entity)) throw new Exception($"Invalid entity: {entity.ToJsonString()}");
         var entityKey = $"{_entityName}_{entity.Id}";
         //TODO 统一GrainId的格式
-        var blockStateSetsGrainKey = $"BlockStateSets_{_clientId}_{entity.ChainId}_{_indexPrefix}";
+        var blockStateSetsGrainKey = $"BlockStateSets_{_clientId}_{entity.ChainId}_{_version}";
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(blockStateSetsGrainKey);
         var dappGrain = _clusterClient.GetGrain<IDappDataGrain<TEntity>>(
-            $"DappData_{_clientId}_{entity.ChainId}_{_indexPrefix}_{entityKey}");
+            $"DappData_{_clientId}_{entity.ChainId}_{_version}_{entityKey}");
         var dataValue = await dappGrain.GetValue();
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
         var blockStateSet = blockStateSets[entity.BlockHash];
         // Entity is confirmed,save it to es search directly
-        var indexName = $"{_clientId}{_indexPrefix}.{_entityName}".ToLower();
-        if (entity.IsConfirmed)
+        var indexName = $"{_clientId}{_version}.{_entityName}".ToLower();
+        if (entity.Confirmed)
         {
             if ((dataValue.LIBValue?.BlockHeight??0) >= blockStateSet.BlockHeight) return;
             // Use value in BlockStateSet to override confirmed entity value
@@ -102,10 +102,10 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
     {
         var entityKey = $"{_entityName}_{id}";
         var dappGrain = _clusterClient.GetGrain<IDappDataGrain<TEntity>>(
-            $"DappData_{_clientId}_{chainId}_{_indexPrefix}_{entityKey}");
+            $"DappData_{_clientId}_{chainId}_{_version}_{entityKey}");
         var blockStateSetsGrain =
             _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(
-                $"BlockStateSets_{_clientId}_{chainId}_{_indexPrefix}");
+                $"BlockStateSets_{_clientId}_{chainId}_{_version}");
         var entity = await dappGrain.GetValue();
         // Do not have fork, just return latest value
         if (!await blockStateSetsGrain.HasFork())
@@ -172,7 +172,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         if (blockStateSet.Changes.TryGetValue(entityKey, out _)) return false;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
         //$"{IndexSettingOptions.IndexPrefix.ToLower()}.{typeof(TEntity).Name.ToLower()}"
-        await _nestRepository.AddOrUpdateAsync(entity, $"{_clientId}{_indexPrefix}.{_entityName}".ToLower());
+        await _nestRepository.AddOrUpdateAsync(entity, $"{_clientId}{_version}.{_entityName}".ToLower());
         await dappGrain.SetLatestValue(entity);
         await blockStateSetsGrain.SetBlockStateSet(blockStateSet);
         return true;
