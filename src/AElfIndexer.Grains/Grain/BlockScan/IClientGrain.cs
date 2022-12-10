@@ -6,8 +6,8 @@ namespace AElfIndexer.Grains.Grain.BlockScan;
 
 public interface IClientGrain: IGrainWithStringKey
 {
-    Task<string> AddSubscribeInfoAsync(List<SubscribeInfo> subscribeInfos);
-    Task<List<SubscribeInfo>> GetSubscribeInfoAsync(string version);
+    Task<string> AddSubscriptionInfoAsync(List<SubscriptionInfo> subscriptionInfos);
+    Task<List<SubscriptionInfo>> GetSubscriptionInfoAsync(string version);
     Task AddBlockScanIdAsync(string version, string id);
     Task<List<string>> GetBlockScanIdsAsync(string version);
     Task<bool> IsVersionAvailableAsync(string version);

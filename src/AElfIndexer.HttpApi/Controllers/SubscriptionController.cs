@@ -30,10 +30,10 @@ public class SubscriptionController : AbpController
     [HttpPut]
     [Route("subscription")]
     [Authorize]
-    public virtual Task<string> SubmitSubscribeInfoAsync(List<SubscribeInfo> subscribeInfos)
+    public virtual Task<string> SubmitSubscriptionInfoAsync(List<SubscriptionInfo> subscriptionInfos)
     {
         var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
-        return _blockScanAppService.SubmitSubscribeInfoAsync(clientId,subscribeInfos);
+        return _blockScanAppService.SubmitSubscriptionInfoAsync(clientId,subscriptionInfos);
     }
     
     // Test

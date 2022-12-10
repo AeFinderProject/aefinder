@@ -56,12 +56,12 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
             var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
             var chainGrain = GrainFactory.GetGrain<IChainGrain>(State.ChainId);
-            var subscribeInfo = await blockScanInfo.GetSubscribeInfoAsync();
+            var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
             var chainStatus = await chainGrain.GetChainStatusAsync();
             if (State.ScannedBlockHeight == 0 && State.ScannedConfirmedBlockHeight == 0)
             {
-                State.ScannedBlockHeight = subscribeInfo.StartBlockNumber - 1;
-                State.ScannedConfirmedBlockHeight = subscribeInfo.StartBlockNumber - 1;
+                State.ScannedBlockHeight = subscriptionInfo.StartBlockNumber - 1;
+                State.ScannedConfirmedBlockHeight = subscriptionInfo.StartBlockNumber - 1;
                 await WriteStateAsync();
             }
 
@@ -87,14 +87,14 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold);
 
 
-                var filteredBlocks = await _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType)
+                var filteredBlocks = await _blockFilterProviders.First(o => o.FilterType == subscriptionInfo.FilterType)
                     .GetBlocksAsync(State.ChainId, State.ScannedConfirmedBlockHeight + 1, targetHeight, true,
-                        subscribeInfo.SubscribeEvents);
+                        subscriptionInfo.SubscribeEvents);
 
                 var blocks = await FillVacantBlockAsync(filteredBlocks, State.ScannedConfirmedBlockHeight + 1,
                     targetHeight);
 
-                if (!subscribeInfo.OnlyConfirmedBlock)
+                if (!subscriptionInfo.OnlyConfirmedBlock)
                 {
                     SetIsConfirmed(blocks, false);
                     await _stream.OnNextAsync(new SubscribedBlockDto
@@ -102,7 +102,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                         ClientId = State.ClientId,
                         ChainId = State.ChainId,
                         Version = State.Version,
-                        FilterType = subscribeInfo.FilterType,
+                        FilterType = subscriptionInfo.FilterType,
                         Blocks = blocks
                     });
                 }
@@ -113,7 +113,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     ClientId = State.ClientId,
                     ChainId = State.ChainId,
                     Version = State.Version,
-                    FilterType = subscribeInfo.FilterType,
+                    FilterType = subscriptionInfo.FilterType,
                     Blocks = blocks
                 });
 
@@ -166,17 +166,17 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
         var clientInfo = await blockScanInfo.GetClientInfoAsync();
-        var subscribeInfo = await blockScanInfo.GetSubscribeInfoAsync();
+        var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
 
         var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
         if (!isVersionAvailable
             || clientInfo.ScanModeInfo.ScanMode != ScanMode.NewBlock
-            || subscribeInfo.OnlyConfirmedBlock)
+            || subscriptionInfo.OnlyConfirmedBlock)
         {
             return;
         }
 
-        var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType);
+        var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == subscriptionInfo.FilterType);
         var blocks = new List<BlockWithTransactionDto>();
         if (block.BlockHeight == State.ScannedBlockHeight + 1 && block.PreviousBlockHash == State.ScannedBlockHash)
         {
@@ -210,7 +210,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         State.ScannedBlockHeight = unPushedBlock.Last().BlockHeight;
         State.ScannedBlockHash = unPushedBlock.Last().BlockHash;
 
-        var subscribedBlocks = await blockFilterProvider.FilterBlocksAsync(unPushedBlock, subscribeInfo.SubscribeEvents);
+        var subscribedBlocks = await blockFilterProvider.FilterBlocksAsync(unPushedBlock, subscriptionInfo.SubscribeEvents);
         
         SetIsConfirmed(subscribedBlocks, false);
         await _stream.OnNextAsync(new SubscribedBlockDto
@@ -218,7 +218,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             ClientId = State.ClientId,
             ChainId = State.ChainId,
             Version = State.Version,
-            FilterType = subscribeInfo.FilterType,
+            FilterType = subscriptionInfo.FilterType,
             Blocks = subscribedBlocks
         });
 
@@ -239,8 +239,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             return;
         }
 
-        var subscribeInfo = await blockScanInfo.GetSubscribeInfoAsync();
-        var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == subscribeInfo.FilterType);
+        var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
+        var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == subscriptionInfo.FilterType);
 
         var scannedBlocks = new List<BlockWithTransactionDto>();
         if (blocks.First().BlockHeight == State.ScannedConfirmedBlockHeight + 1)
@@ -258,7 +258,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         scannedBlocks = await blockFilterProvider.FilterIncompleteConfirmedBlocksAsync(State.ChainId, scannedBlocks,
             State.ScannedConfirmedBlockHash, State.ScannedConfirmedBlockHeight);
 
-        if (!subscribeInfo.OnlyConfirmedBlock)
+        if (!subscriptionInfo.OnlyConfirmedBlock)
         {
             foreach (var b in scannedBlocks)
             {
@@ -283,7 +283,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
 
         var subscribedBlocks =
-            await blockFilterProvider.FilterBlocksAsync(scannedBlocks, subscribeInfo.SubscribeEvents);
+            await blockFilterProvider.FilterBlocksAsync(scannedBlocks, subscriptionInfo.SubscribeEvents);
 
         SetIsConfirmed(subscribedBlocks, true);
         await _stream.OnNextAsync(new SubscribedBlockDto
@@ -291,7 +291,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             ClientId = State.ClientId,
             ChainId = State.ChainId,
             Version = State.Version,
-            FilterType = subscribeInfo.FilterType,
+            FilterType = subscriptionInfo.FilterType,
             Blocks = subscribedBlocks
         });
 

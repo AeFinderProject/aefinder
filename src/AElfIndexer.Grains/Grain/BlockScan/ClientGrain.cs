@@ -6,12 +6,12 @@ namespace AElfIndexer.Grains.Grain.BlockScan;
 
 public class ClientGrain : Grain<ClientState>, IClientGrain
 {
-    public async Task<string> AddSubscribeInfoAsync(List<SubscribeInfo> subscribeInfos)
+    public async Task<string> AddSubscriptionInfoAsync(List<SubscriptionInfo> subscriptionInfos)
     {
         var newVersion = Guid.NewGuid().ToString("N");
         State.VersionInfos[newVersion] = new ClientVersionInfo
         {
-            SubscribeInfos = subscribeInfos,
+            SubscriptionInfos = subscriptionInfos,
             BlockScanIds = new HashSet<string>(),
             VersionStatus = VersionStatus.Initialized
         };
@@ -28,9 +28,9 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         return newVersion;
     }
 
-    public async Task<List<SubscribeInfo>> GetSubscribeInfoAsync(string version)
+    public async Task<List<SubscriptionInfo>> GetSubscriptionInfoAsync(string version)
     {
-        return State.VersionInfos[version].SubscribeInfos;
+        return State.VersionInfos[version].SubscriptionInfos;
     }
 
     public async Task AddBlockScanIdAsync(string version, string id)

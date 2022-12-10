@@ -3,7 +3,7 @@ using AElfIndexer.Block.Dtos;
 
 namespace AElfIndexer.BlockScan;
 
-public class SubscribeInfo
+public class SubscriptionInfo
 {
     public string ChainId { get; set; }
     public long StartBlockNumber{get;set;}

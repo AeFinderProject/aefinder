@@ -29,21 +29,21 @@ public class BlockHub : AbpHub
     }
 
     [Authorize]
-    public async Task Subscribe(List<SubscribeInfo> subscribeInfos)
+    public async Task Subscribe(List<SubscriptionInfo> subscriptionInfos)
     {
         var clientId = Context.User.FindFirst(o=>o.ToString().StartsWith("client_id")).Value;
-        Logger.LogInformation($"Client: {clientId} request subscribe: {JsonSerializer.Serialize(subscribeInfos)}");
+        Logger.LogInformation($"Client: {clientId} request subscribe: {JsonSerializer.Serialize(subscriptionInfos)}");
         var version = Guid.NewGuid().ToString("N");
-        _connectionProvider.Add(clientId,Context.ConnectionId,version, subscribeInfos.Select(o=>o.ChainId).ToList());
+        _connectionProvider.Add(clientId,Context.ConnectionId,version, subscriptionInfos.Select(o=>o.ChainId).ToList());
         
-        foreach (var subscribeInfo in subscribeInfos)
+        foreach (var subscriptionInfo in subscriptionInfos)
         {
-            var id = subscribeInfo.ChainId + clientId + subscribeInfo.FilterType;
+            var id = subscriptionInfo.ChainId + clientId + subscriptionInfo.FilterType;
             var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
-            await clientGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version, subscribeInfo);
+            await clientGrain.InitializeAsync(subscriptionInfo.ChainId, clientId, version, subscriptionInfo);
             
             var scanGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
-            var streamId = await scanGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version);
+            var streamId = await scanGrain.InitializeAsync(subscriptionInfo.ChainId, clientId, version);
             var stream =
                 _clusterClient
                     .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)

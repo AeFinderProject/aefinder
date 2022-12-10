@@ -7,10 +7,10 @@ namespace AElfIndexer.Grains.Grain.BlockScan;
 public interface IBlockScanInfoGrain : IGrainWithStringKey
 {
     Task<ClientInfo> GetClientInfoAsync();
-    Task<SubscribeInfo> GetSubscribeInfoAsync();
+    Task<SubscriptionInfo> GetSubscriptionInfoAsync();
     Task SetScanNewBlockStartHeightAsync(long height);
     Task SetHandleHistoricalBlockTimeAsync(DateTime time);
-    Task InitializeAsync(string chainId, string clientId, string version, SubscribeInfo info);
+    Task InitializeAsync(string chainId, string clientId, string version, SubscriptionInfo info);
     Task StopAsync();
     Task<Guid> GetMessageStreamIdAsync();
 }

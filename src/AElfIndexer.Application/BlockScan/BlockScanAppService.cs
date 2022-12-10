@@ -24,9 +24,9 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         _clusterClient = clusterClient;
     }
 
-    public async Task<string> SubmitSubscribeInfoAsync(string clientId, List<SubscribeInfo> subscribeInfos)
+    public async Task<string> SubmitSubscriptionInfoAsync(string clientId, List<SubscriptionInfo> subscriptionInfos)
     {
-        Logger.LogInformation($"Client: {clientId} submit subscribe: {JsonSerializer.Serialize(subscribeInfos)}");
+        Logger.LogInformation($"Client: {clientId} submit subscribe: {JsonSerializer.Serialize(subscriptionInfos)}");
 
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
         var oldVersion = await client.GetNewVersionAsync();
@@ -42,17 +42,17 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             await client.RemoveVersionInfoAsync(oldVersion);
         }
 
-        var version = await client.AddSubscribeInfoAsync(subscribeInfos);
+        var version = await client.AddSubscriptionInfoAsync(subscriptionInfos);
         return version;
     }
 
     public async Task<List<string>> GetMessageStreamIdsAsync(string clientId, string version)
     {
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
-        var subscribeInfos = await client.GetSubscribeInfoAsync(version);
+        var subscriptionInfos = await client.GetSubscriptionInfoAsync(version);
 
-        return subscribeInfos
-            .Select(subscribeInfo => subscribeInfo.ChainId + clientId + version + subscribeInfo.FilterType).ToList();
+        return subscriptionInfos
+            .Select(subscriptionInfo => subscriptionInfo.ChainId + clientId + version + subscriptionInfo.FilterType).ToList();
     }
 
     public async Task StartScanAsync(string clientId, string version)
@@ -60,19 +60,19 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         Logger.LogInformation($"Client: {clientId} start scan, version: {version}");
 
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
-        var subscribeInfos = await client.GetSubscribeInfoAsync(version);
+        var subscriptionInfos = await client.GetSubscriptionInfoAsync(version);
         var versionStatus = await client.GetVersionStatus(version);
-        foreach (var subscribeInfo in subscribeInfos)
+        foreach (var subscriptionInfo in subscriptionInfos)
         {
-            var id = subscribeInfo.ChainId + clientId + version + subscribeInfo.FilterType;
+            var id = subscriptionInfo.ChainId + clientId + version + subscriptionInfo.FilterType;
             var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
             var scanGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
 
             if (versionStatus == VersionStatus.Initialized)
             {
                 await client.AddBlockScanIdAsync(version, id);
-                await blockScanInfoGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version, subscribeInfo);
-                await scanGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version);
+                await blockScanInfoGrain.InitializeAsync(subscriptionInfo.ChainId, clientId, version, subscriptionInfo);
+                await scanGrain.InitializeAsync(subscriptionInfo.ChainId, clientId, version);
             }
 
             // var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();

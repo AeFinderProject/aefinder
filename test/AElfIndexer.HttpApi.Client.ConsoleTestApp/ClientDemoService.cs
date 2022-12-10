@@ -51,9 +51,9 @@ public class ClientDemoService : ITransientDependency
                 });
             
             await connection.StartAsync().ConfigureAwait(false);
-            await connection.InvokeAsync("Subscribe", new List<SubscribeInfo>
+            await connection.InvokeAsync("Subscribe", new List<SubscriptionInfo>
             {
-                new SubscribeInfo
+                new SubscriptionInfo
                 {
                     ChainId = "AELF",
                     OnlyConfirmedBlock = true,
