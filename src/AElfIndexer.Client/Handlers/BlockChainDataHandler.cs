@@ -24,7 +24,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
     
     public abstract BlockFilterType FilterType { get; }
 
-    public async Task HandleBlockChainDataAsync(string chainId, string clientId, List<BlockDto> blockDtos)
+    public async Task HandleBlockChainDataAsync(string chainId, string clientId, List<BlockWithTransactionDto> blockDtos)
     {
         var blockStateSetsGrain =
             _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(
@@ -79,16 +79,16 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
         }
     }
 
-    protected abstract List<TData> GetData(BlockDto blockDto);
+    protected abstract List<TData> GetData(BlockWithTransactionDto blockDto);
 
     protected abstract Task ProcessDataAsync(List<TData> data);
     
-    private bool GetBlockMap(List<BlockDto> blockDtos, out Dictionary<long, List<BlockDto>> blockMap, out Dictionary<string,string> bestChainBlockHashMap) 
+    private bool GetBlockMap(List<BlockWithTransactionDto> blockDtos, out Dictionary<long, List<BlockWithTransactionDto>> blockMap, out Dictionary<string,string> bestChainBlockHashMap) 
     {
         // Confirmed blocks do not need to check fork block.
         if (blockDtos.First().Confirmed)
         {
-            blockMap = blockDtos.ToDictionary(b => b.BlockHeight, b => new List<BlockDto>
+            blockMap = blockDtos.ToDictionary(b => b.BlockHeight, b => new List<BlockWithTransactionDto>
             {
                 b
             });
@@ -105,7 +105,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
         {
             if (!blockMap.TryGetValue(currentBlock.BlockHeight, out var list))
             {
-                list = new List<BlockDto>();
+                list = new List<BlockWithTransactionDto>();
             }
             
             //Add best chain block 
@@ -125,7 +125,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
     }
 
     //Check min height block linked to block state sets
-    private bool CheckLinked(List<BlockDto> blockDtos, Dictionary<string,BlockStateSet<TData>> blockStateSets)
+    private bool CheckLinked(List<BlockWithTransactionDto> blockDtos, Dictionary<string,BlockStateSet<TData>> blockStateSets)
     {
         var minBlockHeight = blockDtos.Min(b => b.BlockHeight);
         var minBlocks = blockDtos.Where(b => b.BlockHeight == minBlockHeight).ToList();

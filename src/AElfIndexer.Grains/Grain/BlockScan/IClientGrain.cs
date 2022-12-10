@@ -1,14 +1,19 @@
+using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.State.BlockScan;
 using Orleans;
 
 namespace AElfIndexer.Grains.Grain.BlockScan;
 
-public interface IClientGrain : IGrainWithStringKey
+public interface IClientGrain: IGrainWithStringKey
 {
-    Task<ClientInfo> GetClientInfoAsync();
-    Task<SubscribeInfo> GetSubscribeInfoAsync();
-    Task SetScanNewBlockStartHeightAsync(long height);
-    Task SetHandleHistoricalBlockTimeAsync(DateTime time);
-    Task InitializeAsync(string chainId, string clientId, string version, SubscribeInfo info);
-    Task StopAsync(string version);
+    Task<string> AddSubscriptionInfoAsync(List<SubscriptionInfo> subscriptionInfos);
+    Task<List<SubscriptionInfo>> GetSubscriptionInfoAsync(string version);
+    Task AddBlockScanIdAsync(string version, string id);
+    Task<List<string>> GetBlockScanIdsAsync(string version);
+    Task<bool> IsVersionAvailableAsync(string version);
+    Task UpgradeVersionAsync();
+    Task RemoveVersionInfoAsync(string version);
+    Task<VersionStatus> GetVersionStatusAsync(string version);
+    Task StartAsync(string version);
+    Task<ClientVersion> GetVersionAsync();
 }

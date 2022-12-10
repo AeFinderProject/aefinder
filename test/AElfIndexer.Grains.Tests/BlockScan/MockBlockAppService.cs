@@ -20,19 +20,32 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
         var result = new List<BlockDto>();
-        var filter = GetFilter(input.Events);
         for (var i = input.StartBlockHeight; i <= input.EndBlockHeight; i++)
         {
-            result.AddRange((from block in _blockDataProvider.Blocks[i]
-                from transaction in block.Transactions
-                from logEvent in transaction.LogEvents
-                where filter.Item1.Count ==0 && filter.Item2.Count ==0 ||
-                      filter.Item1.Count !=0 && filter.Item1.Contains(logEvent.ContractAddress) ||
-                      filter.Item2.Count !=0 && filter.Item2.Contains(logEvent.ContractAddress + logEvent.EventName)
-                select block).ToList());
+            result.AddRange(_blockDataProvider.Blocks[i].Where(o => !input.IsOnlyConfirmed || o.IsConfirmed).Select(
+                block => new BlockDto
+                {
+                    Id = block.Id,
+                    Signature = block.Signature,
+                    BlockHash = block.BlockHash,
+                    BlockHeight = block.BlockHeight,
+                    BlockTime = block.BlockTime,
+                    ChainId = block.ChainId,
+                    ExtraProperties = block.ExtraProperties,
+                    IsConfirmed = block.IsConfirmed,
+                    SignerPubkey = block.SignerPubkey,
+                    PreviousBlockHash = block.PreviousBlockHash,
+                    TransactionIds = block.Transactions.Select(o => o.TransactionId).ToList(),
+                    LogEventCount = block.Transactions.Sum(o => o.LogEvents.Count)
+                }));
         }
 
         return result;
+    }
+
+    public async Task<long> GetBlockCountAsync(GetBlocksInput input)
+    {
+        return input.EndBlockHeight - input.StartBlockHeight + 1;
     }
 
     public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)

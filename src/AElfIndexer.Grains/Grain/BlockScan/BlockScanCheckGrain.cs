@@ -12,13 +12,13 @@ public class BlockScanCheckGrain : global::Orleans.Grain, IBlockScanCheckGrain
         // TODO: Use IManagementGrain to check the Grain status after the 4.0 release
         // https://github.com/dotnet/orleans/pull/7216
         
-        var clientManagerGrain = GrainFactory.GetGrain<IClientManagerGrain>(0);
-        var allClientIds = await clientManagerGrain.GetAllClientIdsAsync();
+        var clientManagerGrain = GrainFactory.GetGrain<IBlockScanManagerGrain>(0);
+        var allClientIds = await clientManagerGrain.GetAllBlockScanIdsAsync();
         foreach (var (_, clientIds) in allClientIds)
         {
             foreach (var clientId in clientIds)
             {
-                var clientGrain = GrainFactory.GetGrain<IClientGrain>(clientId);
+                var clientGrain = GrainFactory.GetGrain<IBlockScanInfoGrain>(clientId);
                 var clientInfo = await clientGrain.GetClientInfoAsync();
                 if (clientInfo.ScanModeInfo.ScanMode != ScanMode.HistoricalBlock ||
                     clientInfo.LastHandleHistoricalBlockTime >= DateTime.UtcNow.AddMinutes(-5))

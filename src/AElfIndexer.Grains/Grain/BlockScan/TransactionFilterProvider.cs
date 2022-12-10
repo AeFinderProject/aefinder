@@ -13,8 +13,8 @@ public class TransactionFilterProvider : IBlockFilterProvider
     {
         _blockAppService = blockAppService;
     }
-    
-    public async Task<List<BlockDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
+
+    public async Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
         bool onlyConfirmed, List<FilterContractEventInput> filters)
     {
         var transactions = await _blockAppService.GetTransactionsAsync(new GetTransactionsInput()
@@ -26,7 +26,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
             Events = filters
         });
 
-        var blocks = new Dictionary<string, BlockDto>();
+        var blocks = new Dictionary<string, BlockWithTransactionDto>();
         foreach (var transaction in transactions)
         {
             if (blocks.TryGetValue(transaction.BlockHash, out var block))
@@ -35,7 +35,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
             }
             else
             {
-                block = new BlockDto
+                block = new BlockWithTransactionDto
                 {
                     ChainId = transaction.ChainId,
                     BlockHash = transaction.BlockHash,
@@ -55,7 +55,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
         return blocks.Values.ToList();
     }
 
-    public async Task<List<BlockDto>> FilterBlocksAsync(List<BlockDto> blocks, List<FilterContractEventInput> filters)
+    public async Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<FilterContractEventInput> filters)
     {
         if (filters == null || filters.Count == 0)
         {
@@ -79,10 +79,10 @@ public class TransactionFilterProvider : IBlockFilterProvider
             }
         }
 
-        var result = new List<BlockDto>();
+        var result = new List<BlockWithTransactionDto>();
         foreach (var block in blocks)
         {
-            var filteredBlock = new BlockDto
+            var filteredBlock = new BlockWithTransactionDto
             {
                 ChainId = block.ChainId,
                 BlockHash = block.BlockHash,
@@ -102,12 +102,69 @@ public class TransactionFilterProvider : IBlockFilterProvider
                 filteredBlock.Transactions.Add(transaction);
             }
 
-            if (filteredBlock.Transactions.Count > 0)
-            {
-                result.Add(filteredBlock);
-            }
+            result.Add(filteredBlock);
         }
 
         return result;
+    }
+    
+    public async Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks)
+    {
+        var filteredBlocks = new List<BlockWithTransactionDto>();
+        var blockDtos = (await _blockAppService.GetBlocksAsync(new GetBlocksInput
+        {
+            ChainId = chainId,
+            IsOnlyConfirmed = true,
+            StartBlockHeight = blocks.First().BlockHeight,
+            EndBlockHeight = blocks.Last().BlockHeight
+        })).ToDictionary(o=>o.BlockHash, o=>o);
+
+        foreach (var block in blocks)
+        {
+            if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
+                block.Transactions.Count != blockDto.TransactionIds.Count)
+            {
+                break;
+            }
+
+            filteredBlocks.Add(block);
+        }
+
+        return filteredBlocks;
+    }
+
+    public async Task<List<BlockWithTransactionDto>> FilterIncompleteConfirmedBlocksAsync(string chainId, 
+        List<BlockWithTransactionDto> blocks, string previousBlockHash, long previousBlockHeight)
+    {
+        var filteredBlocks = new List<BlockWithTransactionDto>();
+        var blockDtos = (await _blockAppService.GetBlocksAsync(new GetBlocksInput
+        {
+            ChainId = chainId,
+            IsOnlyConfirmed = true,
+            StartBlockHeight = blocks.First().BlockHeight,
+            EndBlockHeight = blocks.Last().BlockHeight
+        })).ToDictionary(o=>o.BlockHash, o=>o);
+
+
+        foreach (var block in blocks)
+        {
+            if (block.PreviousBlockHash != previousBlockHash || block.BlockHeight != previousBlockHeight + 1)
+            {
+                break;
+            }
+
+            if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
+                block.Transactions.Count != blockDto.TransactionIds.Count)
+            {
+                break;
+            }
+            
+            filteredBlocks.Add(block);
+            
+            previousBlockHash = block.BlockHash;
+            previousBlockHeight = block.BlockHeight;
+        }
+
+        return filteredBlocks;
     }
 }

@@ -16,7 +16,7 @@ public class AElfIndexerEntityEventHandlerCoreAutoMapperProfile:Profile
 
         CreateMap<NewBlockEto, BlockIndex>();
         CreateMap<ConfirmBlockEto,BlockIndex>();
-
+        
         CreateMap<Transaction, TransactionIndex>().Ignore(x => x.Id);
         CreateMap<LogEvent, LogEventIndex>().Ignore(x => x.Id);
     }

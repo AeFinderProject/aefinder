@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Grains.Grain.BlockScan;
+using Force.DeepCloner;
 using Shouldly;
 using Xunit;
 
@@ -12,10 +13,12 @@ namespace AElfIndexer.Grains.BlockScan;
 public class BlockFilterProviderTests : AElfIndexerGrainTestBase
 {
     private readonly IEnumerable<IBlockFilterProvider> _blockFilterProviders;
+    private readonly IBlockDataProvider _blockDataProvider;
 
     public BlockFilterProviderTests()
     {
         _blockFilterProviders = GetRequiredService<IEnumerable<IBlockFilterProvider>>();
+        _blockDataProvider = GetRequiredService<IBlockDataProvider>();
     }
 
     [Fact]
@@ -51,90 +54,231 @@ public class BlockFilterProviderTests : AElfIndexerGrainTestBase
         {
             var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Block);
 
-            var filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, null);
+            var filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null);
             filteredBlock.Count.ShouldBe(1);
 
-            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block },
+            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block },
                 new List<FilterContractEventInput>());
             filteredBlock.Count.ShouldBe(1);
 
-            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filter);
+            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, filter);
             filteredBlock.Count.ShouldBe(1);
-            filteredBlock[0].Transactions.Count().ShouldBe(2);
-            filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(3);
-            filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
             
-            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterOnlyContractAddress);
+            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, filterOnlyContractAddress);
             filteredBlock.Count.ShouldBe(1);
-            filteredBlock[0].Transactions.Count().ShouldBe(2);
-            filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(3);
-            filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
 
-            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterNotExist);
-            filteredBlock.Count.ShouldBe(0);
+            filteredBlock = await blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, filterNotExist);
+            filteredBlock.Count.ShouldBe(1);
         }
 
         {
             var transactionFilterProvider =
                 _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Transaction);
 
-            var filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, null);
+            var filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null);
             filteredBlock.Count.ShouldBe(1);
 
-            filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block },
+            filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block },
                 new List<FilterContractEventInput>());
             filteredBlock.Count.ShouldBe(1);
 
-            filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filter);
+            filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, filter);
             filteredBlock.Count.ShouldBe(1);
             filteredBlock[0].Transactions.Count().ShouldBe(2);
             filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(3);
             filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
             
-            filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterOnlyContractAddress);
+            filteredBlock = await transactionFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, filterOnlyContractAddress);
             filteredBlock.Count.ShouldBe(1);
             filteredBlock[0].Transactions.Count().ShouldBe(1);
             filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(3);
 
             filteredBlock =
-                await transactionFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterNotExist);
-            filteredBlock.Count.ShouldBe(0);
+                await transactionFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, filterNotExist);
+            filteredBlock.Count.ShouldBe(1);
+            filteredBlock[0].Transactions.Count.ShouldBe(0);
         }
 
         {
             var logEventFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.LogEvent);
 
-            var filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, null);
+            var filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null);
             filteredBlock.Count.ShouldBe(1);
 
-            filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block },
+            filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block },
                 new List<FilterContractEventInput>());
             filteredBlock.Count.ShouldBe(1);
 
-            filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filter);
+            filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, filter);
             filteredBlock.Count.ShouldBe(1);
             filteredBlock[0].Transactions.Count().ShouldBe(2);
             filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(2);
             filteredBlock[0].Transactions[1].LogEvents.Count().ShouldBe(2);
             
-            filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterOnlyContractAddress);
+            filteredBlock = await logEventFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, filterOnlyContractAddress);
             filteredBlock.Count.ShouldBe(1);
             filteredBlock[0].Transactions.Count().ShouldBe(1);
             filteredBlock[0].Transactions[0].LogEvents.Count().ShouldBe(1);
 
             filteredBlock =
-                await logEventFilterProvider.FilterBlocksAsync(new List<BlockDto> { block }, filterNotExist);
-            filteredBlock.Count.ShouldBe(0);
+                await logEventFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, filterNotExist);
+            filteredBlock.Count.ShouldBe(1);
+            filteredBlock[0].Transactions.Count.ShouldBe(0);
         }
     }
 
-    private BlockDto MockBlock()
+    [Fact]
+    public async Task FilterIncompleteBlocks_Unlinked_Test()
+    {
+        var blocks = new List<BlockWithTransactionDto>();
+        blocks.Add(_blockDataProvider.Blocks[21][0]);
+        blocks.Add(_blockDataProvider.Blocks[22][0]);
+        blocks.Add(_blockDataProvider.Blocks[24][0]);
+
+        {
+            var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Block);
+
+            var filteredBlock = await blockFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
+            filteredBlock.Count.ShouldBe(2);
+
+            filteredBlock = await blockFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+            filteredBlock.Count.ShouldBe(3);
+        }
+        
+        {
+            var transactionFilterProvider =
+                _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Transaction);
+
+            var filteredBlock = await transactionFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
+            filteredBlock.Count.ShouldBe(2);
+
+            filteredBlock = await transactionFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+            filteredBlock.Count.ShouldBe(3);
+        }
+
+        {
+            var logEventFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.LogEvent);
+            var filteredBlock = await logEventFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
+            filteredBlock.Count.ShouldBe(2);
+
+            filteredBlock = await logEventFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+            filteredBlock.Count.ShouldBe(3);
+        }
+    }
+    
+    [Fact]
+    public async Task FilterIncompleteBlocks_WrongBlock_Test()
+    {
+        var blocks = new List<BlockWithTransactionDto>();
+        blocks.Add(_blockDataProvider.Blocks[21][0]);
+        blocks.Add(_blockDataProvider.Blocks[22][0]);
+        var block = MockBlock();
+        block.PreviousBlockHash = _blockDataProvider.Blocks[22][0].BlockHash;
+        block.BlockHeight = _blockDataProvider.Blocks[22][0].BlockHeight+1;
+        blocks.Add(block);
+        blocks.Add(_blockDataProvider.Blocks[24][0]);
+        
+        {
+            var transactionFilterProvider =
+                _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Transaction);
+
+            var filteredBlock = await transactionFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
+            filteredBlock.Count.ShouldBe(2);
+
+            filteredBlock = await transactionFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+            filteredBlock.Count.ShouldBe(2);
+        }
+
+        {
+            var logEventFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.LogEvent);
+            var filteredBlock = await logEventFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
+            filteredBlock.Count.ShouldBe(2);
+
+            filteredBlock = await logEventFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+            filteredBlock.Count.ShouldBe(2);
+        }
+    }
+    
+    [Fact]
+    public async Task FilterIncompleteBlocks_WrongTransaction_Test()
+    {
+        var blocks = new List<BlockWithTransactionDto>();
+        blocks.Add(_blockDataProvider.Blocks[21][0]);
+        blocks.Add(_blockDataProvider.Blocks[22][0]);
+        var block = _blockDataProvider.Blocks[23][0].DeepClone();
+        block.Transactions.Add(new TransactionDto());
+        blocks.Add(block);
+        blocks.Add(_blockDataProvider.Blocks[24][0]);
+        
+        {
+            var transactionFilterProvider =
+                _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Transaction);
+
+            var filteredBlock = await transactionFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
+            filteredBlock.Count.ShouldBe(2);
+
+            filteredBlock = await transactionFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+            filteredBlock.Count.ShouldBe(2);
+        }
+
+        {
+            var logEventFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.LogEvent);
+            var filteredBlock = await logEventFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
+            filteredBlock.Count.ShouldBe(2);
+
+            filteredBlock = await logEventFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+            filteredBlock.Count.ShouldBe(2);
+        }
+    }
+    
+    [Fact]
+    public async Task FilterIncompleteBlocks_WrongLogEvent_Test()
+    {
+        var blocks = new List<BlockWithTransactionDto>();
+        blocks.Add(_blockDataProvider.Blocks[21][0]);
+        blocks.Add(_blockDataProvider.Blocks[22][0]);
+        var block = _blockDataProvider.Blocks[23][0].DeepClone();
+        block.Transactions[0].LogEvents.Add(new LogEventDto());
+        blocks.Add(block);
+        blocks.Add(_blockDataProvider.Blocks[24][0]);
+        
+        {
+            var transactionFilterProvider =
+                _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Transaction);
+
+            var filteredBlock = await transactionFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
+            filteredBlock.Count.ShouldBe(4);
+
+            filteredBlock = await transactionFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+            filteredBlock.Count.ShouldBe(4);
+        }
+
+        {
+            var logEventFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.LogEvent);
+            var filteredBlock = await logEventFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
+            filteredBlock.Count.ShouldBe(2);
+
+            filteredBlock = await logEventFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+            filteredBlock.Count.ShouldBe(2);
+        }
+    }
+
+    private BlockWithTransactionDto MockBlock()
     {
         var chainId = "AELF";
         var blockNum = 1000;
         
         var blockHash = "BlockHash";
-        return  new BlockDto
+        return  new BlockWithTransactionDto
         {
             ChainId = chainId,
             BlockHash = blockHash,

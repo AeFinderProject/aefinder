@@ -15,5 +15,8 @@ public class BlockDto:EntityDto<string>
     public string Signature { get; set; }
     public bool Confirmed{get;set;}
     public Dictionary<string,string> ExtraProperties {get;set;}
-    public List<TransactionDto> Transactions {get;set;}
+    
+    // TODO: Set these properties.
+    public List<string> TransactionIds { get; set; } = new();
+    public int LogEventCount { get; set; }
 }

@@ -3,35 +3,35 @@ using Orleans;
 
 namespace AElfIndexer.Grains.Grain.BlockScan;
 
-public class ClientManagerGrain : Grain<ClientManagerState>, IClientManagerGrain
+public class BlockScanManagerGrain : Grain<ClientManagerState>, IBlockScanManagerGrain
 {
-    public Task<List<string>> GetClientIdsByChainAsync(string chainId)
+    public Task<List<string>> GetBlockScanIdsByChainAsync(string chainId)
     {
         return Task.FromResult(State.ClientIds.TryGetValue(chainId, out var ids) ? ids.ToList() : new List<string>());
     }
 
-    public Task<Dictionary<string, HashSet<string>>> GetAllClientIdsAsync()
+    public Task<Dictionary<string, HashSet<string>>> GetAllBlockScanIdsAsync()
     {
         return Task.FromResult(State.ClientIds);
     }
 
-    public async Task AddClientAsync(string chainId, string clientId)
+    public async Task AddBlockScanAsync(string chainId, string blockScanId)
     {
         if (!State.ClientIds.TryGetValue(chainId, out var clientIds))
         {
             clientIds = new HashSet<string>();
         }
 
-        clientIds.Add(clientId);
+        clientIds.Add(blockScanId);
         State.ClientIds[chainId] = clientIds;
         await WriteStateAsync();
     }
 
-    public async Task RemoveClientAsync(string chainId, string clientId)
+    public async Task RemoveBlockScanAsync(string chainId, string blockScanId)
     {
         if (State.ClientIds.TryGetValue(chainId, out var clientIds))
         {
-            if (clientIds.Remove(clientId))
+            if (clientIds.Remove(blockScanId))
             {
                 State.ClientIds[chainId] = clientIds;
                 await WriteStateAsync();

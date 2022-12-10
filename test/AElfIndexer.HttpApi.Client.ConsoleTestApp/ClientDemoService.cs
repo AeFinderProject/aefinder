@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.BlockScan;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Grains.State.BlockScan;
-using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
 using Volo.Abp.Account;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.IdentityModel;
@@ -51,9 +51,9 @@ public class ClientDemoService : ITransientDependency
                 });
             
             await connection.StartAsync().ConfigureAwait(false);
-            await connection.InvokeAsync("Subscribe", new List<SubscribeInfo>
+            await connection.InvokeAsync("Subscribe", new List<SubscriptionInfo>
             {
-                new SubscribeInfo
+                new SubscriptionInfo
                 {
                     ChainId = "AELF",
                     OnlyConfirmedBlock = true,

@@ -8,29 +8,29 @@ namespace AElfIndexer.Grains.BlockScan;
 
 public interface IBlockDataProvider
 {
-    Dictionary<long, List<BlockDto>> Blocks { get; }
+    Dictionary<long, List<BlockWithTransactionDto>> Blocks { get; }
 }
 
 public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
 {
-    public Dictionary<long, List<BlockDto>> Blocks { get; }
+    public Dictionary<long, List<BlockWithTransactionDto>> Blocks { get; }
 
     public BlockDataProvider()
     {
-        Blocks = new Dictionary<long, List<BlockDto>>();
+        Blocks = new Dictionary<long, List<BlockWithTransactionDto>>();
         var chainId = "AELF";
         var previousHash = "PreviousHash";
         for (var i = 1; i <= 50; i++)
         {
             var block = MockBlock(chainId, i, previousHash, true, "0");
-            Blocks[i]= new List<BlockDto>{block};
+            Blocks[i]= new List<BlockWithTransactionDto>{block};
             previousHash = block.BlockHash;
         }
         
         for (var i = 51; i <= 60; i++)
         {
             var block = MockBlock(chainId, i, previousHash, false, "1");
-            Blocks[i]= new List<BlockDto>{block};
+            Blocks[i]= new List<BlockWithTransactionDto>{block};
             previousHash = block.BlockHash;
         }
 
@@ -43,10 +43,10 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
         }
     }
 
-    private BlockDto MockBlock(string chainId, long blockNum, string previousHash, bool isConfirmed, string branch)
+    private BlockWithTransactionDto MockBlock(string chainId, long blockNum, string previousHash, bool isConfirmed, string branch)
     {
         var blockHash = $"BlockHash-{blockNum}-{branch}";
-        return new BlockDto
+        return new BlockWithTransactionDto
         {
             ChainId = chainId,
             BlockHash = blockHash,

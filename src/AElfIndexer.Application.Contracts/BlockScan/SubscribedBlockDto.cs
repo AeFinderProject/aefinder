@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using AElfIndexer.Block.Dtos;
 
-namespace AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
+namespace AElfIndexer.BlockScan;
 
 public class SubscribedBlockDto
 {
     public string ChainId { get; set; }
     public string ClientId { get; set; }
     public string Version { get; set; }
-    public List<BlockDto> Blocks { get; set; }
-    public BlockFilterType FilterType { get; } = BlockFilterType.Block;
+    public BlockFilterType FilterType { get; set; }
+    public List<BlockWithTransactionDto> Blocks { get; set; }
 }

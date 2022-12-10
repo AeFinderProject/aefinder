@@ -14,8 +14,6 @@ using Microsoft.Extensions.Hosting;
 using AElfIndexer.EntityFrameworkCore;
 using AElfIndexer.Grains;
 using AElfIndexer.MultiTenancy;
-using AElfIndexer.Orleans;
-using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
 using GraphQL;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;

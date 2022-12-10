@@ -1,4 +1,5 @@
 using AElf.Indexing.Elasticsearch;
+using AElfIndexer.Block.Dtos;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
 using Microsoft.Extensions.Logging;
@@ -43,10 +44,6 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
 
         var blockIndexList = _objectMapper.Map<List<NewBlockEto>, List<BlockIndex>>(eventData.NewBlocks);
         await _blockIndexRepository.BulkAddOrUpdateAsync(blockIndexList);
-        foreach (var blockIndex in blockIndexList)
-        {
-            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(blockIndex); });
-        }
 
         List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
         List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
@@ -80,7 +77,11 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
         }
 
-
+        var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
+        foreach (var dto in blockDtos)
+        {
+            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(dto); });
+        }
     }
 
     public async Task HandleEventAsync(NewBlockEto eventData)
@@ -95,7 +96,6 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         {
             var blockIndex = _objectMapper.Map<NewBlockEto, BlockIndex>(eventData);
             await _blockIndexRepository.AddAsync(blockIndex);
-            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(blockIndex); });
 
             List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
             List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
@@ -121,8 +121,10 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
                 _logger.LogDebug($"LogEvent is bulk-adding, its block number:{eventData.BlockHeight}, total logevent count:{logEventIndexList.Count}");
                 await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
             }
+            
+            var blockDtos = _objectMapper.Map<NewBlockEto, BlockWithTransactionDto>(eventData);
+            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(blockDtos); });
         }
-
     }
 
     public async Task HandleEventAsync(ConfirmBlocksEto eventData)
@@ -226,7 +228,8 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             await _logEventIndexRepository.BulkAddOrUpdateAsync(confirmLogEventIndexList);
         }
         
-        _ = Task.Run(async () => { await _blockIndexHandler.ProcessConfirmedBlocksAsync(indexes); });
+        var blockDtos = _objectMapper.Map<List<ConfirmBlockEto>, List<BlockWithTransactionDto>>(eventData.ConfirmBlocks);
+        _ = Task.Run(async () => { await _blockIndexHandler.ProcessConfirmedBlocksAsync(blockDtos); });
     }
 
     private async Task<List<TransactionIndex>> GetTransactionListAsync(string chainId,string blockHash)

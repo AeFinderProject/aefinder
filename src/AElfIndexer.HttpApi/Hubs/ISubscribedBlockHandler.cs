@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
+using AElfIndexer.BlockScan;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Orleans.Streams;
@@ -28,12 +28,15 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
 
     public async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken? token = null)
     {
-        var connection = _connectionProvider.GetConnectionByClientId(subscribedBlock.ClientId);
-        if (connection != null && connection.Version == subscribedBlock.Version)
-        {
-            Logger.LogInformation(
-                $"Receive Block {subscribedBlock.ClientId} From {subscribedBlock.Blocks.First().BlockHeight} To {subscribedBlock.Blocks.Last().BlockHeight}");
-            await _hubContext.Clients.Client(connection.ConnectionId).SendAsync("ReceiveBlock", subscribedBlock.Blocks);
-        }
+        Logger.LogInformation(
+            $"========= Version: {subscribedBlock.Version}");
+        
+        // var connection = _connectionProvider.GetConnectionByClientId(subscribedBlock.ClientId);
+        // if (connection != null && connection.Version == subscribedBlock.Version)
+        // {
+        //     Logger.LogInformation(
+        //         $"Receive Block {subscribedBlock.ClientId} From {subscribedBlock.Blocks.First().BlockHeight} To {subscribedBlock.Blocks.Last().BlockHeight}");
+        //     await _hubContext.Clients.Client(connection.ConnectionId).SendAsync("ReceiveBlock", subscribedBlock.Blocks);
+        // }
     }
 }

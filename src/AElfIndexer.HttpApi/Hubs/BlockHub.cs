@@ -1,22 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScan;
-using AElfIndexer.Grains.Grain.Chains;
-using AElfIndexer.Grains.State.BlockScan;
-using AElfIndexer.Orleans;
-using AElfIndexer.Orleans.EventSourcing.Grain.BlockScan;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using NUglify.Helpers;
 using Orleans;
 using Orleans.Streams;
 using Volo.Abp.AspNetCore.SignalR;
-using Volo.Abp.Clients;
 
 namespace AElfIndexer.Hubs;
 
@@ -35,21 +29,21 @@ public class BlockHub : AbpHub
     }
 
     [Authorize]
-    public async Task Subscribe(List<SubscribeInfo> subscribeInfos)
+    public async Task Subscribe(List<SubscriptionInfo> subscriptionInfos)
     {
         var clientId = Context.User.FindFirst(o=>o.ToString().StartsWith("client_id")).Value;
-        Logger.LogInformation($"Client: {clientId} request subscribe: {JsonSerializer.Serialize(subscribeInfos)}");
+        Logger.LogInformation($"Client: {clientId} request subscribe: {JsonSerializer.Serialize(subscriptionInfos)}");
         var version = Guid.NewGuid().ToString("N");
-        _connectionProvider.Add(clientId,Context.ConnectionId,version, subscribeInfos.Select(o=>o.ChainId).ToList());
+        _connectionProvider.Add(clientId,Context.ConnectionId,version, subscriptionInfos.Select(o=>o.ChainId).ToList());
         
-        foreach (var subscribeInfo in subscribeInfos)
+        foreach (var subscriptionInfo in subscriptionInfos)
         {
-            var id = subscribeInfo.ChainId + clientId;
-            var clientGrain = _clusterClient.GetGrain<IClientGrain>(id);
-            await clientGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version, subscribeInfo);
+            var id = subscriptionInfo.ChainId + clientId + subscriptionInfo.FilterType;
+            var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
+            await clientGrain.InitializeAsync(subscriptionInfo.ChainId, clientId, version, subscriptionInfo);
             
             var scanGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
-            var streamId = await scanGrain.InitializeAsync(subscribeInfo.ChainId, clientId, version);
+            var streamId = await scanGrain.InitializeAsync(subscriptionInfo.ChainId, clientId, version);
             var stream =
                 _clusterClient
                     .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
@@ -72,16 +66,16 @@ public class BlockHub : AbpHub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var connection = _connectionProvider.GetConnectionByConnectionId(Context.ConnectionId);
-        if (connection != null)
-        {
-            foreach (var chainId in connection.ChainIds)
-            {
-                var id = chainId + connection.ClientId;
-                var clientGrain = _clusterClient.GetGrain<IClientGrain>(id);
-                await clientGrain.StopAsync(connection.Version);
-            }
-            _connectionProvider.Remove(Context.ConnectionId);
-        }
+        // var connection = _connectionProvider.GetConnectionByConnectionId(Context.ConnectionId);
+        // if (connection != null)
+        // {
+        //     foreach (var chainId in connection.ChainIds)
+        //     {
+        //         var id = chainId + connection.ClientId;
+        //         var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
+        //         await clientGrain.StopAsync(connection.Version);
+        //     }
+        //     _connectionProvider.Remove(Context.ConnectionId);
+        // }
     }
 }

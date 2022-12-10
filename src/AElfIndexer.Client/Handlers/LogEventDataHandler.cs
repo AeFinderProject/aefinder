@@ -19,7 +19,7 @@ public class LogEventDataHandler<T> : BlockChainDataHandler<LogEventInfo,T>
 
     public override BlockFilterType FilterType => BlockFilterType.LogEvent;
 
-    protected override List<LogEventInfo> GetData(BlockDto blockDto)
+    protected override List<LogEventInfo> GetData(BlockWithTransactionDto blockDto)
     {
         return ObjectMapper.Map<List<LogEventDto>, List<LogEventInfo>>(blockDto.Transactions.SelectMany(t => t.LogEvents).ToList());
     }

@@ -6,7 +6,7 @@ namespace AElfIndexer.Grains.Grain.Chains;
 
 public class ChainGrain : Grain<ChainState>, IChainGrain
 {
-    private readonly ILogger logger;
+    private readonly ILogger<ChainGrain> _logger;
 
     public override Task OnActivateAsync()
     {
@@ -22,7 +22,7 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
 
     public ChainGrain(ILogger<ChainGrain> logger)
     {
-        this.logger = logger;
+        this._logger = logger;
 
     }
 

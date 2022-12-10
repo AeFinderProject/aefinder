@@ -21,7 +21,7 @@ public abstract class TransactionDataHandler<T> : BlockChainDataHandler<Transact
 
     public override BlockFilterType FilterType => BlockFilterType.Transaction;
 
-    protected override List<TransactionInfo> GetData(BlockDto blockDto)
+    protected override List<TransactionInfo> GetData(BlockWithTransactionDto blockDto)
     {
         return ObjectMapper.Map<List<TransactionDto>, List<TransactionInfo>>(blockDto.Transactions);
     }
