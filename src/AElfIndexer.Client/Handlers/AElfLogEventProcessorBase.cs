@@ -1,4 +1,5 @@
 using AElf.CSharp.Core;
+using AElfIndexer.Client.Helpers;
 using AElfIndexer.Grains.State.Client;
 using Volo.Abp.DependencyInjection;
 
@@ -12,7 +13,7 @@ public abstract class AElfLogEventProcessorBase<TEvent,T> : IAElfLogEventProcess
     protected AElfLogEventProcessorBase()
     {
         _eventName = typeof(TEvent).Name;
-        //_eventName = new TEvent().Descriptor.Name;  //这个更准确
+        //_eventName = new TEvent().Descriptor.Name;
     }
 
     public virtual async Task HandleEventAsync(LogEventInfo logEventInfo, LogEventContext context = null)

@@ -7,7 +7,7 @@ using Serilog;
 using Serilog.Events;
 using Volo.Abp.Modularity.PlugIns;
 
-namespace AElfIndexer;
+namespace AElfIndexer.Dapp;
 
 public class Program
 {
@@ -33,7 +33,7 @@ public class Program
             builder.Host.AddAppSettingsSecretsJson()
                 .UseAutofac()
                 .UseSerilog();
-            await builder.AddApplicationAsync<AElfIndexerHttpApiHostModule>(options =>
+            await builder.AddApplicationAsync<AElfIndexerDappModule>(options =>
             {
                 options.PlugInSources.AddFolder(builder.Configuration.GetSection("PlugIns")["Path"]);
             });

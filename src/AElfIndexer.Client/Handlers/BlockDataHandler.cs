@@ -1,4 +1,5 @@
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.Client.Providers;
 using Orleans;
 using Volo.Abp.ObjectMapping;
 
@@ -6,8 +7,9 @@ namespace AElfIndexer.Client.Handlers;
 
 public abstract class BlockDataHandler<T> : BlockChainDataHandler<BlockInfo,T>
 {
-    protected BlockDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper) : base(clusterClient,
-        objectMapper)
+    protected BlockDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
+        IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider) : base(clusterClient,
+        objectMapper, aelfIndexerClientInfoProvider)
     {
     }
 

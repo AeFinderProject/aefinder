@@ -1,10 +1,9 @@
-using AElf.Indexing.Elasticsearch;
 using Newtonsoft.Json;
 using Volo.Abp.Domain.Entities;
 
 namespace AElfIndexer.Client;
 
-public abstract class AElfIndexerClientEntity<TKey> : Entity, IEntity<TKey>, IIndexBuild
+public abstract class AElfIndexerClientEntity<TKey> : Entity, IEntity<TKey>, IIndexEntity
 {
     public virtual TKey Id { get; set; }
     

@@ -1,4 +1,5 @@
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
 using Orleans;
@@ -12,11 +13,13 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
 {
     private readonly IClusterClient _clusterClient;
     protected readonly IObjectMapper ObjectMapper;
+    private readonly string _indexPrefix;
 
-    protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper)
+    protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper, IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider)
     {
         _clusterClient = clusterClient;
         ObjectMapper = objectMapper;
+        _indexPrefix = aelfIndexerClientInfoProvider.GetIndexPrefix();
     }
     
     public abstract BlockFilterType FilterType { get; }
@@ -25,11 +28,11 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
     {
         var blockStateSetsGrain =
             _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(
-                $"BlockStateSets_{chainId}_{clientId}");
+                $"BlockStateSets_{clientId}_{chainId}_{_indexPrefix}");
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
         var libBlockHeight = blockStateSets.Count != 0 ? blockStateSets.Min(b => b.Value.BlockHeight) : 0;
-        if (!CheckLinked(blockDtos, blockStateSets)) return; //TODO 直接忽略还是抛异常？
-        if (!GetBlockMap(blockDtos, out var blockMap, out var bestChainBlockHashMap)) return; //TODO 直接忽略还是抛异常？
+        if (!CheckLinked(blockDtos, blockStateSets)) return;
+        if (!GetBlockMap(blockDtos, out var blockMap, out var bestChainBlockHashMap)) return;
         // Set best chain hashes
         await blockStateSetsGrain.SetBestChainHashes(bestChainBlockHashMap);
         // Order block by block height ascending.If there are many same height blocks, best chain block will be in first index.

@@ -1,7 +1,10 @@
+using System.Linq.Expressions;
 using AElf.Indexing.Elasticsearch;
 using AElfIndexer.Client.Handlers;
+using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
+using Nest;
 using Newtonsoft.Json;
 using Orleans;
 
@@ -14,32 +17,33 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
     private readonly INESTRepository<TEntity, TKey> _nestRepository;
     private readonly IClusterClient _clusterClient;
     private readonly string _entityName;
-    private readonly IClientInfoProvider<T> _clientInfoProvider;
+    private readonly string _clientId;
+    private readonly string _indexPrefix;
 
     public AElfIndexerClientEntityRepository(INESTRepository<TEntity, TKey> nestRepository,
-        IClusterClient clusterClient, IClientInfoProvider<T> clientInfoProvider)
+        IClusterClient clusterClient, IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider)
     {
         _nestRepository = nestRepository;
         _clusterClient = clusterClient;
-        _clientInfoProvider = clientInfoProvider;
         _entityName = typeof(TEntity).Name;
+        _clientId = aelfIndexerClientInfoProvider.GetClientId();
+        _indexPrefix = aelfIndexerClientInfoProvider.GetIndexPrefix();
     }
 
     public async Task AddOrUpdateAsync(TEntity entity)
     {
         if (!IsValidate(entity)) throw new Exception($"Invalid entity: {entity.ToJsonString()}");
-        var clientId = _clientInfoProvider.GetClientId();
-        var indexPrefix = _clientInfoProvider.GetIndexPrefixes()[entity.ChainId];
         var entityKey = $"{_entityName}_{entity.Id}";
         //TODO 统一GrainId的格式
-        var blockStateSetsGrainKey = $"BlockStateSets_{entity.ChainId}_{clientId}";
+        var blockStateSetsGrainKey = $"BlockStateSets_{_clientId}_{entity.ChainId}_{_indexPrefix}";
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(blockStateSetsGrainKey);
         var dappGrain = _clusterClient.GetGrain<IDappDataGrain<TEntity>>(
-            $"DappData_{entity.ChainId}_{clientId}_{indexPrefix}_{entityKey}");
+            $"DappData_{_clientId}_{entity.ChainId}_{_indexPrefix}_{entityKey}");
         var dataValue = await dappGrain.GetValue();
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
         var blockStateSet = blockStateSets[entity.BlockHash];
         // Entity is confirmed,save it to es search directly
+        var indexName = $"{_clientId}{_indexPrefix}.{_entityName}".ToLower();
         if (entity.IsConfirmed)
         {
             if ((dataValue.LIBValue?.BlockHeight??0) >= blockStateSet.BlockHeight) return;
@@ -48,7 +52,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
                 throw new Exception($"{blockStateSetsGrainKey} does not contain {entityKey}");
             entity = JsonConvert.DeserializeObject<TEntity>(value);
             //$"{IndexSettingOptions.IndexPrefix.ToLower()}.{typeof(TEntity).Name.ToLower()}"
-            await _nestRepository.AddOrUpdateAsync(entity, $"{clientId}{indexPrefix}.{_entityName}".ToLower());
+            await _nestRepository.AddOrUpdateAsync(entity, indexName);
             await dappGrain.SetLIBValue(entity);
             return;
         }
@@ -81,12 +85,12 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
                     bestChainBlockStateSet.BlockHeight, dataValue.LIBValue);
                 if (entityFromBlockStateSet != null)
                 {
-                    await _nestRepository.AddOrUpdateAsync(entityFromBlockStateSet, $"{clientId}{indexPrefix}.{_entityName}".ToLower());
+                    await _nestRepository.AddOrUpdateAsync(entityFromBlockStateSet, indexName);
                     await dappGrain.SetLatestValue(entityFromBlockStateSet);
                 }
                 else
                 {
-                    await _nestRepository.DeleteAsync(entity, $"{clientId}{indexPrefix}.{_entityName}".ToLower());
+                    await _nestRepository.DeleteAsync(entity, indexName);
                     await dappGrain.SetLIBValue(null);
                     await dappGrain.SetLatestValue(null);
                 }
@@ -96,12 +100,12 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
     
     public async Task<TEntity> GetAsync(TKey id, string chainId)
     {
-        var clientId = _clientInfoProvider.GetClientId();
-        var indexPrefix = _clientInfoProvider.GetIndexPrefixes()[chainId];
         var entityKey = $"{_entityName}_{id}";
         var dappGrain = _clusterClient.GetGrain<IDappDataGrain<TEntity>>(
-            $"DappData_{chainId}_{clientId}_{indexPrefix}_{entityKey}");
-        var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>($"BlockStateSets_{chainId}_{clientId}");
+            $"DappData_{_clientId}_{chainId}_{_indexPrefix}_{entityKey}");
+        var blockStateSetsGrain =
+            _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(
+                $"BlockStateSets_{_clientId}_{chainId}_{_indexPrefix}");
         var entity = await dappGrain.GetValue();
         // Do not have fork, just return latest value
         if (!await blockStateSetsGrain.HasFork())
@@ -116,6 +120,46 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         return GetEntityFromBlockStateSets(entityKey, blockStateSets, currentBlockStateSet.BlockHash,
             currentBlockStateSet.BlockHeight, entity.LIBValue);
     }
+
+    public async Task<TEntity> GetAsync(
+        Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
+        Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
+        Expression<Func<TEntity, object>> sortExp = null,
+        SortOrder sortType = SortOrder.Ascending,
+        string index = null)
+    {
+        return await _nestRepository.GetAsync(filterFunc, includeFieldFunc, sortExp, sortType, index);
+    }
+
+    public async Task<Tuple<long, List<TEntity>>> GetListAsync(
+        Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
+        Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
+        Expression<Func<TEntity, object>> sortExp = null,
+        SortOrder sortType = SortOrder.Ascending,
+        int limit = 1000,
+        int skip = 0,
+        string index = null)
+    {
+        return await _nestRepository.GetListAsync(filterFunc, includeFieldFunc, sortExp, sortType, limit, skip, index);
+    }
+
+    public async Task<Tuple<long, List<TEntity>>> GetSortListAsync(
+        Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
+        Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
+        Func<SortDescriptor<TEntity>, IPromise<IList<ISort>>> sortFunc = null,
+        int limit = 1000,
+        int skip = 0,
+        string index = null)
+    {
+        return await _nestRepository.GetSortListAsync(filterFunc, includeFieldFunc, sortFunc, limit, skip, index);
+    }
+
+    public async Task<CountResponse> CountAsync(
+        Func<QueryContainerDescriptor<TEntity>, QueryContainer> query,
+        string indexPrefix = null)
+    {
+        return await _nestRepository.CountAsync(query, indexPrefix);
+    }
     
     private bool IsValidate(TEntity entity)
     {
@@ -125,12 +169,10 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
 
     private async Task<bool> TryAddToBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey, TEntity entity, IDappDataGrain<TEntity> dappGrain, IBlockStateSetsGrain<TData> blockStateSetsGrain)
     {
-        var clientId = _clientInfoProvider.GetClientId();
-        var indexPrefix = _clientInfoProvider.GetIndexPrefixes()[entity.ChainId];
         if (blockStateSet.Changes.TryGetValue(entityKey, out _)) return false;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
         //$"{IndexSettingOptions.IndexPrefix.ToLower()}.{typeof(TEntity).Name.ToLower()}"
-        await _nestRepository.AddOrUpdateAsync(entity, $"{clientId}{indexPrefix}.{_entityName}".ToLower());
+        await _nestRepository.AddOrUpdateAsync(entity, $"{_clientId}{_indexPrefix}.{_entityName}".ToLower());
         await dappGrain.SetLatestValue(entity);
         await blockStateSetsGrain.SetBlockStateSet(blockStateSet);
         return true;

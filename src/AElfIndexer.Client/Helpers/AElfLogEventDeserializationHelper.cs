@@ -2,11 +2,10 @@ using AElf.CSharp.Core;
 using AElf.CSharp.Core.Extension;
 using AElf.Types;
 using AElfIndexer.Client.Handlers;
-using AElfIndexer.Grains.State.Client;
 using Google.Protobuf;
 using Newtonsoft.Json;
 
-namespace AElfIndexer.Client;
+namespace AElfIndexer.Client.Helpers;
 
 public  static class AElfLogEventDeserializationHelper
 {
