@@ -42,32 +42,15 @@ public class ClientDemoService : ITransientDependency
                     options => { options.AccessTokenProvider = () => Task.FromResult(accessToken); })
                 .Build();
 
-            connection.On<List<BlockDto>>("ReceiveBlock",
+            connection.On<SubscribedBlockDto>("ReceiveBlock",
                 s =>
                 {
                     Console.WriteLine(
-                        $"Receive Block From {s.First().BlockHeight} To {s.Last().BlockHeight}");
+                        $"Receive Block From {s.Blocks.First().BlockHeight} To {s.Blocks.Last().BlockHeight}");
                 });
             
             await connection.StartAsync().ConfigureAwait(false);
-            await connection.InvokeAsync("Subscribe", new List<SubscriptionInfo>
-            {
-                new SubscriptionInfo
-                {
-                    ChainId = "AELF",
-                    OnlyConfirmedBlock = true,
-                    StartBlockNumber = 40,
-                    FilterType = BlockFilterType.LogEvent,
-                    SubscribeEvents = new List<FilterContractEventInput>
-                    {
-                        new FilterContractEventInput
-                        {
-                            ContractAddress = "ContractAddress",
-                            EventNames = new List<string>{"EventNames"}
-                        }
-                    }
-                }
-            });
+            await connection.InvokeAsync("Start", "");
         }
         catch (Exception e)
         {

@@ -33,20 +33,20 @@ public class SubscriptionController : AbpController
     
     [HttpPut]
     [Route("subscription")]
-    [Authorize]
-    public virtual Task<string> SubmitSubscriptionInfoAsync(List<SubscriptionInfo> subscriptionInfos)
+    //[Authorize]
+    public virtual Task<string> SubmitSubscriptionInfoAsync(string clientId, List<SubscriptionInfo> subscriptionInfos)
     {
-        var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
+        //var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
         return _blockScanAppService.SubmitSubscriptionInfoAsync(clientId,subscriptionInfos);
     }
     
     // TODO: Only for Test
     [HttpPost]
     [Route("start")]
-    [Authorize]
-    public virtual async Task StartScanAsync(string version)
+    //[Authorize]
+    public virtual async Task StartScanAsync(string clientId, string version)
     {
-        var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
+        //var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
         
         var messageStreamIds = await _blockScanAppService.GetMessageStreamIdsAsync(clientId, version);
         foreach (var streamId in messageStreamIds)
@@ -73,10 +73,10 @@ public class SubscriptionController : AbpController
     
     [HttpPost]
     [Route("upgrade")]
-    [Authorize]
-    public virtual Task UpgradeVersionAsync()
+    //[Authorize]
+    public virtual Task UpgradeVersionAsync(string clientId)
     {
-        var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
+        //var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
         return _blockScanAppService.UpgradeVersionAsync(clientId);
     }
     

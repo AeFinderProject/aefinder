@@ -44,6 +44,6 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
 
         Logger.LogInformation(
             $"Receive Block {subscribedBlock.ClientId} From {subscribedBlock.Blocks.First().BlockHeight} To {subscribedBlock.Blocks.Last().BlockHeight}");
-        await _hubContext.Clients.Client(connection.ConnectionId).SendAsync("ReceiveBlock", subscribedBlock.Blocks);
+        await _hubContext.Clients.Client(connection.ConnectionId).SendAsync("ReceiveBlock", subscribedBlock);
     }
 }
