@@ -38,7 +38,7 @@ public class ClientDemoService : ITransientDependency
             // });
 
             var connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:8081/signalr-hubs/block"）
+                .WithUrl("http://172.25.181.75:8081/signalr-hubs/block")
                 .Build();
 
             connection.On<SubscribedBlockDto>("ReceiveBlock",
@@ -49,7 +49,7 @@ public class ClientDemoService : ITransientDependency
                 });
             
             await connection.StartAsync().ConfigureAwait(false);
-            await connection.InvokeAsync("Start", "clientId", "version");
+            await connection.InvokeAsync("Start", "AElfIndexer_DApp", "b91ab7d22fcc4d6d94d0eb3aca85cefe");
         }
         catch (Exception e)
         {

@@ -1,7 +1,4 @@
 using AElfIndexer.BlockScan;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using AElfIndexer.Grains.State.BlockScan;
 using Orleans;
 
@@ -29,6 +26,7 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         }
 
         return newVersion;
+        
     }
 
     public async Task<List<SubscriptionInfo>> GetSubscriptionInfoAsync(string version)

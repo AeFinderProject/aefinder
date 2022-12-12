@@ -32,7 +32,6 @@ public class SubscriptionController : AbpController
     }
     
     [HttpPut]
-    [Route("subscription")]
     //[Authorize]
     public virtual Task<string> SubmitSubscriptionInfoAsync(string clientId, List<SubscriptionInfo> subscriptionInfos)
     {
@@ -80,7 +79,7 @@ public class SubscriptionController : AbpController
         return _blockScanAppService.UpgradeVersionAsync(clientId);
     }
     
-    public async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken? token = null)
+    private async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken? token = null)
     {
         var clientVersion = await _blockScanAppService.GetClientVersionAsync(subscribedBlock.ClientId);
         if (subscribedBlock.Version != clientVersion.CurrentVersion &&

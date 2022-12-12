@@ -82,6 +82,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                 await scanGrain.InitializeAsync(subscriptionInfo.ChainId, clientId, version);
             }
 
+            Logger.LogDebug($"Start client: {clientId}, id: {id}");
             _ = Task.Run(scanGrain.HandleHistoricalBlockAsync);
         }
         
