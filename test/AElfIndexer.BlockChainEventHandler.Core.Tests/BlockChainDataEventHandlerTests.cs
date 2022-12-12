@@ -102,15 +102,15 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
     [Fact]
     public async Task HandleEvent_StorageLogic_Test5_8_9()
     {
-        var blockChainDataEto_h1 = MockDataHelper.MockBasicEtoData(1,MockDataHelper.CreateBlockHash());
-        var blockChainDataEto_h64 = MockDataHelper.MockBasicEtoData(64, blockChainDataEto_h1.Blocks[0].BlockHash);
+        var blockChainDataEto_h63 = MockDataHelper.MockBasicEtoData(63,MockDataHelper.CreateBlockHash());
+        var blockChainDataEto_h64 = MockDataHelper.MockBasicEtoData(64, blockChainDataEto_h63.Blocks[0].BlockHash);
         var blockChainDataEto_h65 = MockDataHelper.MockBasicEtoData(65, blockChainDataEto_h64.Blocks[0].BlockHash);
         var blockChainDataEto_h66 = MockDataHelper.MockBasicEtoData(66, blockChainDataEto_h65.Blocks[0].BlockHash);
         var blockChainDataEto_h70 = MockDataHelper.MockBasicEtoData(70, blockChainDataEto_h66.Blocks[0].BlockHash);
         var blockChainDataEto_h75 = MockDataHelper.MockBasicEtoData(75, blockChainDataEto_h70.Blocks[0].BlockHash);
         var blockChainDataEto_h80 = MockDataHelper.MockEtoDataWithLibFoundEvent(80, blockChainDataEto_h75.Blocks[0].BlockHash,65);
         
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h1);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h1);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h64);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h65);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h66);
@@ -139,41 +139,41 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h110);
         
         
-        // var grain = await _blockGrainProvider.GetBlockGrain("AELF");
-        // var blockDictionary = await grain.GetBlockDictionary();
-        //
-        // foreach (var blockItem in blockDictionary)
-        // {
-        //     blockItem.Value.BlockHeight.ShouldBeGreaterThanOrEqualTo(90);
-        //
-        //     if (blockItem.Value.BlockHeight == 90)
-        //     {
-        //         blockItem.Value.IsConfirmed.ShouldBeTrue();
-        //     }
-        //     else
-        //     {
-        //         blockItem.Value.IsConfirmed.ShouldBeFalse();
-        //     }
-        // }
-        //
-        // blockDictionary.Count(item=>item.Value.BlockHeight==90).ShouldBe(1);
+        var grain = await _blockGrainProvider.GetBlockBranchGrain("AELF");
+        var blockDictionary = await grain.GetBlockDictionary();
+        
+        foreach (var blockItem in blockDictionary)
+        {
+            blockItem.Value.BlockHeight.ShouldBeGreaterThanOrEqualTo(90);
+        
+            if (blockItem.Value.BlockHeight == 90)
+            {
+                blockItem.Value.Confirmed.ShouldBeTrue();
+            }
+            else
+            {
+                blockItem.Value.Confirmed.ShouldBeFalse();
+            }
+        }
+        
+        blockDictionary.Count(item=>item.Value.BlockHeight==90).ShouldBe(1);
     }
 
     [Fact]
     public async Task HandleEvent_StorageLogic_Test6()
     {
-        var blockChainDataEto_h1 = MockDataHelper.MockBasicEtoData(1, MockDataHelper.CreateBlockHash());
-        var blockEto_h95 = MockDataHelper.MockBlockEto(95, blockChainDataEto_h1.Blocks[0].BlockHash);
+        var blockChainDataEto_h90 = MockDataHelper.MockBasicEtoData(90, MockDataHelper.CreateBlockHash());
+        var blockEto_h95 = MockDataHelper.MockBlockEto(95, blockChainDataEto_h90.Blocks[0].BlockHash);
         var blockEto_h99 = MockDataHelper.MockBlockEto(99, blockEto_h95.BlockHash);
         var blockEto_h100 = MockDataHelper.MockBlockEtoWithLibFoundEvent(100, blockEto_h99.BlockHash, 95);
         var blockEto_h105 = MockDataHelper.MockBlockEto(105, blockEto_h100.BlockHash);
         var blockEto_h110 = MockDataHelper.MockBlockEtoWithLibFoundEvent(110, blockEto_h105.BlockHash, 1);
-        blockChainDataEto_h1.Blocks.Add(blockEto_h95);
-        blockChainDataEto_h1.Blocks.Add(blockEto_h99);
-        blockChainDataEto_h1.Blocks.Add(blockEto_h100);
-        blockChainDataEto_h1.Blocks.Add(blockEto_h105);
-        blockChainDataEto_h1.Blocks.Add(blockEto_h110);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h1);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h95);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h99);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h100);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h105);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h110);
+        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h90);
 
         var blockChainDataEto_h111 = MockDataHelper.MockBasicEtoData(111, blockEto_h110.BlockHash);
         var blockEto_h112 = MockDataHelper.MockBlockEto(112, blockChainDataEto_h111.Blocks[0].BlockHash);
@@ -196,40 +196,40 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
         blockChainDataEto_h111.Blocks.Add(blockEto_h120);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h111);
         
-        // var grain = await _blockGrainProvider.GetBlockGrain("AELF");
-        // var blockDictionary = await grain.GetBlockDictionary();
-        //
-        // foreach (var blockItem in blockDictionary)
-        // {
-        //     blockItem.Value.BlockHeight.ShouldBeGreaterThanOrEqualTo(95);
-        //     
-        //     if (blockItem.Value.BlockHeight == 95)
-        //     {
-        //         blockItem.Value.IsConfirmed.ShouldBeTrue();
-        //     }
-        //     else
-        //     {
-        //         blockItem.Value.IsConfirmed.ShouldBeFalse();
-        //     }
-        // }
+        var grain = await _blockGrainProvider.GetBlockBranchGrain("AELF");
+        var blockDictionary = await grain.GetBlockDictionary();
+        
+        foreach (var blockItem in blockDictionary)
+        {
+            blockItem.Value.BlockHeight.ShouldBeGreaterThanOrEqualTo(95);
+            
+            if (blockItem.Value.BlockHeight == 95)
+            {
+                blockItem.Value.Confirmed.ShouldBeTrue();
+            }
+            else
+            {
+                blockItem.Value.Confirmed.ShouldBeFalse();
+            }
+        }
     }
 
     [Fact]
     public async Task HandleEvent_StorageLogic_Test7()
     {
-        var blockChainDataEto_h1 = MockDataHelper.MockBasicEtoData(1, MockDataHelper.CreateBlockHash());
-        var blockEto_h95 = MockDataHelper.MockBlockEto(95, blockChainDataEto_h1.Blocks[0].BlockHash);
+        var blockChainDataEto_h90 = MockDataHelper.MockBasicEtoData(90, MockDataHelper.CreateBlockHash());
+        var blockEto_h95 = MockDataHelper.MockBlockEto(95, blockChainDataEto_h90.Blocks[0].BlockHash);
         var blockEto_h99 = MockDataHelper.MockBlockEto(99, blockEto_h95.BlockHash);
         var blockEto_h100 = MockDataHelper.MockBlockEtoWithLibFoundEvent(100, blockEto_h99.BlockHash, 95);
         var blockEto_h105 = MockDataHelper.MockBlockEto(105, blockEto_h100.BlockHash);
         var blockEto_h110 = MockDataHelper.MockBlockEtoWithLibFoundEvent(110, blockEto_h105.BlockHash, 1);
-        blockChainDataEto_h1.Blocks.Add(blockEto_h95);
-        blockChainDataEto_h1.Blocks.Add(blockEto_h99);
-        blockChainDataEto_h1.Blocks.Add(blockEto_h100);
-        blockChainDataEto_h1.Blocks.Add(blockEto_h105);
-        blockChainDataEto_h1.Blocks.Add(blockEto_h110);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h95);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h99);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h100);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h105);
+        blockChainDataEto_h90.Blocks.Add(blockEto_h110);
 
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h1);
+        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h90);
 
         var blockChainDataEto_h111 = MockDataHelper.MockBasicEtoData(111, blockEto_h110.BlockHash);
         var blockEto_h112 = MockDataHelper.MockBlockEto(112, blockChainDataEto_h111.Blocks[0].BlockHash);
@@ -275,13 +275,13 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
 
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h121);
         
-        // var grain = await _blockGrainProvider.GetBlockGrain("AELF");
-        // var blockDictionary = await grain.GetBlockDictionary();
-        //
-        // foreach (var blockItem in blockDictionary)
-        // {
-        //     blockItem.Value.BlockHeight.ShouldBeGreaterThanOrEqualTo(105);
-        // }
+        var grain = await _blockGrainProvider.GetBlockBranchGrain("AELF");
+        var blockDictionary = await grain.GetBlockDictionary();
+        
+        foreach (var blockItem in blockDictionary)
+        {
+            blockItem.Value.BlockHeight.ShouldBeGreaterThanOrEqualTo(105);
+        }
     }
 
     [Fact]
