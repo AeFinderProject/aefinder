@@ -27,19 +27,18 @@ public class ClientDemoService : ITransientDependency
     {
         try
         {
-            var accessToken = await _authenticationService.GetAccessTokenAsync(new IdentityClientConfiguration
-            {
-                Authority = "http://localhost:8080",
-                Scope = "AElfIndexer",
-                GrantType = "client_credentials",
-                ClientId = "AElfIndexer_DApp",
-                ClientSecret = "1q2w3e*",
-                RequireHttps = false
-            });
+            // var accessToken = await _authenticationService.GetAccessTokenAsync(new IdentityClientConfiguration
+            // {
+            //     Authority = "http://localhost:8080",
+            //     Scope = "AElfIndexer",
+            //     GrantType = "client_credentials",
+            //     ClientId = "AElfIndexer_DApp",
+            //     ClientSecret = "1q2w3e*",
+            //     RequireHttps = false
+            // });
 
             var connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:8081/signalr-hubs/block",
-                    options => { options.AccessTokenProvider = () => Task.FromResult(accessToken); })
+                .WithUrl("http://localhost:8081/signalr-hubs/block"）
                 .Build();
 
             connection.On<SubscribedBlockDto>("ReceiveBlock",
@@ -50,7 +49,7 @@ public class ClientDemoService : ITransientDependency
                 });
             
             await connection.StartAsync().ConfigureAwait(false);
-            await connection.InvokeAsync("Start", "");
+            await connection.InvokeAsync("Start", "clientId", "version");
         }
         catch (Exception e)
         {

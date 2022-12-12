@@ -14,7 +14,6 @@ using Microsoft.Extensions.Hosting;
 using AElfIndexer.EntityFrameworkCore;
 using AElfIndexer.Grains;
 using AElfIndexer.MultiTenancy;
-using GraphQL;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
@@ -64,10 +63,10 @@ public class AElfIndexerHttpApiHostModule : AbpModule
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
         ConfigureOrleans(context, configuration);
-        context.Services.AddGraphQL(b => b
-            .AddAutoClrMappings()
-            .AddSystemTextJson()
-            .AddErrorInfoProvider(e => e.ExposeExceptionDetails = true));
+        // context.Services.AddGraphQL(b => b
+        //     .AddAutoClrMappings()
+        //     .AddSystemTextJson()
+        //     .AddErrorInfoProvider(e => e.ExposeExceptionDetails = true));
     }
 
     private void ConfigureCache(IConfiguration configuration)

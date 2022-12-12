@@ -33,10 +33,7 @@ public class Program
             builder.Host.AddAppSettingsSecretsJson()
                 .UseAutofac()
                 .UseSerilog();
-            // await builder.AddApplicationAsync<AElfIndexerHttpApiHostModule>(options =>
-            // {
-            //     options.PlugInSources.AddFolder(builder.Configuration.GetSection("PlugIns")["Path"]);
-            // });
+            await builder.AddApplicationAsync<AElfIndexerHttpApiHostModule>();
             var app = builder.Build();
             await app.InitializeApplicationAsync();
             await app.RunAsync();
