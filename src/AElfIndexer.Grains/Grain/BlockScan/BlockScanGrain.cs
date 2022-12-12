@@ -97,7 +97,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
                 if (filteredBlocks.Count == 0)
                 {
-                    _logger.LogDebug($"Cannot get blocks: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
+                    _logger.LogError($"Cannot get blocks: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
                 }
 
                 var blocks = await FillVacantBlockAsync(filteredBlocks, State.ScannedConfirmedBlockHeight + 1,
@@ -105,7 +105,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 
                 if (blocks.Count == 0)
                 {
-                    _logger.LogDebug($"Cannot fill vacant blocks: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
+                    _logger.LogError($"Cannot fill vacant blocks: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
                 }
 
                 if (!subscriptionInfo.OnlyConfirmedBlock)
