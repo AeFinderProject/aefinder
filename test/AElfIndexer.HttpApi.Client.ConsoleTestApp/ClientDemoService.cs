@@ -49,7 +49,7 @@ public class ClientDemoService : ITransientDependency
                 });
             
             await connection.StartAsync().ConfigureAwait(false);
-            await connection.InvokeAsync("Start", "AElfIndexer_DApp", "b91ab7d22fcc4d6d94d0eb3aca85cefe");
+            await connection.InvokeAsync("Start", "AElfIndexer_DApp", "04c0474b5ad148dd9ea5a676adca7dec");
         }
         catch (Exception e)
         {

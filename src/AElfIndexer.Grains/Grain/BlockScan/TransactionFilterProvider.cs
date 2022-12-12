@@ -151,7 +151,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
 
         foreach (var block in blocks)
         {
-            if (block.PreviousBlockHash != previousBlockHash || block.BlockHeight != previousBlockHeight + 1)
+            if (block.PreviousBlockHash != previousBlockHash && previousBlockHash!=null  || block.BlockHeight != previousBlockHeight + 1)
             {
                 break;
             }
