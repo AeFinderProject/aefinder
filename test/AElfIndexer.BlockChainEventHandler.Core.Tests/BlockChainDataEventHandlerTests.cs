@@ -26,15 +26,15 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
     [Fact]
     public async Task HandleEvent_StorageLogic_Test1_2_3_4()
     {
-        var blockChainDataEto_h1 = MockDataHelper.MockBasicEtoData(1,MockDataHelper.CreateBlockHash());
-        var blockChainDataEto_h64 = MockDataHelper.MockBasicEtoData(64, blockChainDataEto_h1.Blocks[0].BlockHash);
+        var blockChainDataEto_h63 = MockDataHelper.MockBasicEtoData(63,MockDataHelper.CreateBlockHash());
+        var blockChainDataEto_h64 = MockDataHelper.MockBasicEtoData(64, blockChainDataEto_h63.Blocks[0].BlockHash);
         var blockChainDataEto_h65 = MockDataHelper.MockBasicEtoData(65, blockChainDataEto_h64.Blocks[0].BlockHash);
         var blockChainDataEto_h66 = MockDataHelper.MockBasicEtoData(66, blockChainDataEto_h65.Blocks[0].BlockHash);
         var blockChainDataEto_h70 = MockDataHelper.MockBasicEtoData(70, blockChainDataEto_h66.Blocks[0].BlockHash);
         var blockChainDataEto_h75 = MockDataHelper.MockBasicEtoData(75, blockChainDataEto_h70.Blocks[0].BlockHash);
         var blockChainDataEto_h80 = MockDataHelper.MockEtoDataWithLibFoundEvent(80, blockChainDataEto_h75.Blocks[0].BlockHash,65);
         
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h1);
+        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h63);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h64);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h65);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h66);
@@ -50,7 +50,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h82);
         
         //Unit test 3
-        var blockChainDataEto_h64_fork = MockDataHelper.MockEtoDataWithTransactions(64, blockChainDataEto_h1.Blocks[0].BlockHash);
+        var blockChainDataEto_h64_fork = MockDataHelper.MockEtoDataWithTransactions(64, blockChainDataEto_h63.Blocks[0].BlockHash);
         var blockChainDataEto_h65_fork = MockDataHelper.MockEtoDataWithTransactions(65, blockChainDataEto_h64.Blocks[0].BlockHash);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h64_fork);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h65_fork);
@@ -61,42 +61,42 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h83);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h84);
         
-        // var grain = await _blockGrainProvider.GetBlockGrain("AELF");
-        // var blockDictionary = await grain.GetBlockDictionary();
-        //
-        // blockDictionary.ShouldContainKey(blockChainDataEto_h81.Blocks[0].BlockHash);//Unit test 1
-        // blockDictionary.ShouldContainKey(blockChainDataEto_h82.Blocks[0].BlockHash);//Unit test 2
-        // blockDictionary.ShouldNotContainKey(blockChainDataEto_h64_fork.Blocks[0].BlockHash);//Unit test 3
-        // blockDictionary.ShouldNotContainKey(blockChainDataEto_h65_fork.Blocks[0].BlockHash);//Unit test 3
-        // blockDictionary.ShouldContainKey(blockChainDataEto_h84.Blocks[0].BlockHash);//Unit test 4
-        //
-        // blockDictionary.Values.ShouldContain(x => x.BlockHeight == 81);
-        // blockDictionary.Values.ShouldContain(x => x.BlockHeight == 82);
-        // blockDictionary.Values.ShouldContain(x => x.BlockHeight == 84);
-        // foreach (var blockItem in blockDictionary)
-        // {
-        //     if (blockItem.Value.BlockHeight == 81)
-        //     {
-        //         blockItem.Value.ChainId.ShouldBe("AELF");
-        //         blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
-        //         blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h80.Blocks[0].BlockHash);
-        //         blockItem.Value.IsConfirmed.ShouldBeFalse();
-        //     }
-        //     if (blockItem.Value.BlockHeight == 82)
-        //     {
-        //         blockItem.Value.ChainId.ShouldBe("AELF");
-        //         blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
-        //         blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h81.Blocks[0].BlockHash);
-        //         blockItem.Value.IsConfirmed.ShouldBeFalse();
-        //     }
-        //     if (blockItem.Value.BlockHeight == 84)
-        //     {
-        //         blockItem.Value.ChainId.ShouldBe("AELF");
-        //         blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
-        //         blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h83.Blocks[0].BlockHash);
-        //         blockItem.Value.IsConfirmed.ShouldBeFalse();
-        //     }
-        // }
+        var grain = await _blockGrainProvider.GetBlockBranchGrain("AELF");
+        var blockDictionary = await grain.GetBlockDictionary();
+        
+        blockDictionary.ShouldContainKey(blockChainDataEto_h81.Blocks[0].BlockHash);//Unit test 1
+        blockDictionary.ShouldContainKey(blockChainDataEto_h82.Blocks[0].BlockHash);//Unit test 2
+        blockDictionary.ShouldNotContainKey(blockChainDataEto_h64_fork.Blocks[0].BlockHash);//Unit test 3
+        blockDictionary.ShouldNotContainKey(blockChainDataEto_h65_fork.Blocks[0].BlockHash);//Unit test 3
+        blockDictionary.ShouldContainKey(blockChainDataEto_h84.Blocks[0].BlockHash);//Unit test 4
+        
+        blockDictionary.Values.ShouldContain(x => x.BlockHeight == 81);
+        blockDictionary.Values.ShouldContain(x => x.BlockHeight == 82);
+        blockDictionary.Values.ShouldContain(x => x.BlockHeight == 84);
+        foreach (var blockItem in blockDictionary)
+        {
+            if (blockItem.Value.BlockHeight == 81)
+            {
+                blockItem.Value.ChainId.ShouldBe("AELF");
+                blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
+                blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h80.Blocks[0].BlockHash);
+                blockItem.Value.Confirmed.ShouldBeFalse();
+            }
+            if (blockItem.Value.BlockHeight == 82)
+            {
+                blockItem.Value.ChainId.ShouldBe("AELF");
+                blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
+                blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h81.Blocks[0].BlockHash);
+                blockItem.Value.Confirmed.ShouldBeFalse();
+            }
+            if (blockItem.Value.BlockHeight == 84)
+            {
+                blockItem.Value.ChainId.ShouldBe("AELF");
+                blockItem.Key.ShouldBe(blockItem.Value.BlockHash);
+                blockItem.Value.PreviousBlockHash.ShouldBe(blockChainDataEto_h83.Blocks[0].BlockHash);
+                blockItem.Value.Confirmed.ShouldBeFalse();
+            }
+        }
     }
 
     [Fact]
