@@ -34,6 +34,11 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         return base.OnDeactivateAsync();
     }
 
+    public async Task<Dictionary<string, BlockData>> GetBlockDictionary()
+    {
+        return this.State.Blocks;
+    }
+
     public async Task<List<BlockData>> SaveBlocks(List<BlockData> blockEventDataList)
     {
         blockEventDataList = await FilterBlockList(blockEventDataList);
@@ -49,8 +54,9 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
 
         var libBlockList = GetLibBlockList(blockEventDataList);
         await ConfirmBlocksAsync(libBlockList);
+        
+        var libBlock = libBlockList.OrderBy(x => x.BlockHeight).LastOrDefault();
 
-        var libBlock = libBlockList.LastOrDefault();
         if (libBlock != null)
         {
             ClearDictionary(libBlock.BlockHeight, libBlock.BlockHash);
