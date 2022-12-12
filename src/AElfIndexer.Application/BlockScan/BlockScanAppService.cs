@@ -87,11 +87,6 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         
         await client.StartAsync(version);
     }
-    
-    public static async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken? token = null)
-    {
-        Console.WriteLine($"========= Version: {subscribedBlock.Version}");
-    }
 
     public async Task UpgradeVersionAsync(string clientId)
     {

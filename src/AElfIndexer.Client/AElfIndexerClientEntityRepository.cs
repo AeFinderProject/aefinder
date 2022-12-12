@@ -53,7 +53,8 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
                 throw new Exception($"{blockStateSetsGrainKey} does not contain {entityKey}");
             entity = JsonConvert.DeserializeObject<TEntity>(value);
             //$"{IndexSettingOptions.IndexPrefix.ToLower()}.{typeof(TEntity).Name.ToLower()}"
-            await _nestRepository.AddOrUpdateAsync(entity, indexName);
+            
+            // TODO: build error //await _nestRepository.AddOrUpdateAsync(entity, indexName);
             await dappGrain.SetLIBValue(entity);
             return;
         }
