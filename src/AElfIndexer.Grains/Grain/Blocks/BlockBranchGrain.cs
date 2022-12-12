@@ -55,7 +55,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         {
             ClearDictionary(libBlock.BlockHeight, libBlock.BlockHash);
         }
-        
+
         await WriteStateAsync();
         return libBlockList;
     }

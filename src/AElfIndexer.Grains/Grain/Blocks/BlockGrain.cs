@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using AElfIndexer.Grains.EventData;
 using AElfIndexer.Grains.State.Blocks;
@@ -35,6 +36,9 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
     {
         State.Block = block;
         await WriteStateAsync();
+        
+        // DeactivateOnIdle();
+        DelayDeactivation(TimeSpan.FromMinutes(1));
     }
 
     public async Task<BlockData> GetBlockData()
@@ -51,6 +55,10 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
     {
         State.Block.Confirmed = true;
         await WriteStateAsync();
+        
+        // DeactivateOnIdle();
+        
+        DelayDeactivation(TimeSpan.FromSeconds(30));
     }
 
     public async Task<bool> IsBlockConfirmed()
