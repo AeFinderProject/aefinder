@@ -50,7 +50,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         var libBlockList = GetLibBlockList(blockEventDataList);
         await ConfirmBlocksAsync(libBlockList);
 
-        var libBlock = libBlockList.Last();
+        var libBlock = libBlockList.OrderBy(x => x.BlockHeight).Last();
         if (libBlock != null)
         {
             ClearDictionary(libBlock.BlockHeight, libBlock.BlockHash);
