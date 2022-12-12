@@ -1,4 +1,4 @@
-namespace AElfIndexer.Client.Handlers;
+namespace AElfIndexer.Grains.State.Client;
 
 public class TransactionBase : BlockChainDataBase
 {

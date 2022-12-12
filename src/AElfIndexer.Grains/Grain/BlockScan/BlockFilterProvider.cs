@@ -62,7 +62,8 @@ public class BlockFilterProvider : IBlockFilterProvider
         var filteredBlocks = new List<BlockWithTransactionDto>();
         foreach (var block in blocks)
         {
-            if (block.PreviousBlockHash != previousBlockHash || block.BlockHeight != previousBlockHeight + 1)
+            //TODO previousBlockHash is null.
+            if (block.PreviousBlockHash != previousBlockHash && previousBlockHash!=null || block.BlockHeight != previousBlockHeight + 1)
             {
                 break;
             }

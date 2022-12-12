@@ -1,8 +1,8 @@
 namespace AElfIndexer.Grains.State.Client;
 
-public class DappDataGrainState<T>
+public class DappDataGrainState
 {
-    public T LatestValue { get; set; }
+    public string LatestValue { get; set; }
 
-    public T LIBValue { get; set; }
+    public string LIBValue { get; set; }
 }

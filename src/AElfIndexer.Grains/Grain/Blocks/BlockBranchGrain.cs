@@ -50,8 +50,11 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         var libBlockList = GetLibBlockList(blockEventDataList);
         await ConfirmBlocksAsync(libBlockList);
 
-        var libBlock = libBlockList.Last();
-        ClearDictionary(libBlock.BlockHeight, libBlock.BlockHash);
+        var libBlock = libBlockList.LastOrDefault();
+        if (libBlock != null)
+        {
+            ClearDictionary(libBlock.BlockHeight, libBlock.BlockHash);
+        }
         
         await WriteStateAsync();
         return libBlockList;
@@ -78,6 +81,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
 
     private async Task ConfirmBlocksAsync(List<BlockData> confirmBlocks)
     {
+        if (confirmBlocks.Count == 0) return;
         var blockGrainPrimaryKeyFormat = "{0}" + AElfIndexerApplicationConsts.BlockGrainIdSuffix + "{1}";
         var grainTaskList = new List<Task>();
         foreach (var blockItem in confirmBlocks)

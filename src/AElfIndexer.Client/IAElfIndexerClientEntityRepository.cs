@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AElf.Indexing.Elasticsearch;
 using AElfIndexer.Client.Handlers;
+using AElfIndexer.Grains.State.Client;
 using Nest;
 
 namespace AElfIndexer.Client;

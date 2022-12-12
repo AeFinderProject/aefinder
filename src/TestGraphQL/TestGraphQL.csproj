@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>GraphQL</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\AElfIndexer.Application\AElfIndexer.Application.csproj" />
+        <ProjectReference Include="..\AElfIndexer.Client\AElfIndexer.Client.csproj" />
+    </ItemGroup>
+</Project>

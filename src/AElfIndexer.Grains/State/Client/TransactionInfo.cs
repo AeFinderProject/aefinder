@@ -1,6 +1,4 @@
-using AElfIndexer.Grains.State.Client;
-
-namespace AElfIndexer.Client.Handlers;
+namespace AElfIndexer.Grains.State.Client;
 
 public class TransactionInfo : TransactionBase
 {

@@ -28,7 +28,7 @@ public class Program
 
         try
         {
-            Log.Information("Starting AElfIndexer.HttpApi.Host.");
+            Log.Information("Starting AElfIndexer.Dapp.");
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.AddAppSettingsSecretsJson()
                 .UseAutofac()

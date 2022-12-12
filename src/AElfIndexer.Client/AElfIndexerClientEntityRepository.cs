@@ -39,14 +39,13 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         //TODO 统一GrainId的格式
         var blockStateSetsGrainKey = $"BlockStateSets_{_clientId}_{entity.ChainId}_{_version}";
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(blockStateSetsGrainKey);
-        var dappGrain = _clusterClient.GetGrain<IDappDataGrain<TEntity>>(
+        var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
             $"DappData_{_clientId}_{entity.ChainId}_{_version}_{entityKey}");
-        var dataValue = await dappGrain.GetValue();
+        var dataValue = await dappGrain.GetValue<TEntity>();
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
         var blockStateSet = blockStateSets[entity.BlockHash];
         // Entity is confirmed,save it to es search directly
-        var indexName = $"{_clientId}{_version}.{_entityName}".ToLower();
-        if (entity.Confirmed)
+        if (blockStateSet.Confirmed)
         {
             if ((dataValue.LIBValue?.BlockHeight??0) >= blockStateSet.BlockHeight) return;
             // Use value in BlockStateSet to override confirmed entity value
@@ -103,12 +102,12 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
     public async Task<TEntity> GetFromBlockStateSetAsync(TKey id, string chainId)
     {
         var entityKey = $"{_entityName}_{id}";
-        var dappGrain = _clusterClient.GetGrain<IDappDataGrain<TEntity>>(
+        var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
             $"DappData_{_clientId}_{chainId}_{_version}_{entityKey}");
         var blockStateSetsGrain =
             _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(
                 $"BlockStateSets_{_clientId}_{chainId}_{_version}");
-        var entity = await dappGrain.GetValue();
+        var entity = await dappGrain.GetValue<TEntity>();
         // Do not have fork, just return latest value
         if (!await blockStateSetsGrain.HasFork())
         {
@@ -174,7 +173,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
                !string.IsNullOrWhiteSpace(entity.ChainId) && !string.IsNullOrWhiteSpace(entity.PreviousBlockHash);
     }
 
-    private async Task<bool> TryAddToBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey, TEntity entity, IDappDataGrain<TEntity> dappGrain, IBlockStateSetsGrain<TData> blockStateSetsGrain)
+    private async Task<bool> TryAddToBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey, TEntity entity, IDappDataGrain dappGrain, IBlockStateSetsGrain<TData> blockStateSetsGrain)
     {
         if (blockStateSet.Changes.TryGetValue(entityKey, out _)) return false;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();

@@ -1,8 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using AElf.Client;
 using AElf.Indexing.Elasticsearch;
+using AElfIndexer.Client.Handlers;
+using AElfIndexer.EntityFrameworkCore;
 using AElfIndexer.Grains;
+using AElfIndexer.Grains.Grain.Client;
+using AElfIndexer.Grains.State.Client;
 using GraphQL;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -13,16 +18,20 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
+using Orleans.Providers.MongoDB.Configuration;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
+using Volo.Abp.Threading;
 
 namespace AElfIndexer.Dapp;
 
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AElfIndexingElasticsearchModule),
+    typeof(AElfIndexerApplicationModule),
+    typeof(AElfIndexerEntityFrameworkCoreModule),
     typeof(AbpAutoMapperModule),
     typeof(AbpAspNetCoreSerilogModule))]
 public class AElfIndexerDappModule : AbpModule
@@ -44,10 +53,16 @@ public class AElfIndexerDappModule : AbpModule
         {
             return new ClientBuilder()
                 .ConfigureDefaults()
-                .UseRedisClustering(opt =>
+                // .UseRedisClustering(opt =>
+                // {
+                //     opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
+                //     opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
+                // })
+                .UseMongoDBClient(configuration["Orleans:MongoDBClient"])
+                .UseMongoDBClustering(options =>
                 {
-                    opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
-                    opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
+                    options.DatabaseName = configuration["Orleans:DataBase"];;
+                    options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
                 .Configure<ClusterOptions>(options =>
                 {
@@ -84,6 +99,12 @@ public class AElfIndexerDappModule : AbpModule
         });
     }
 
+    public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
+    {
+        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        AsyncHelper.RunSync(async ()=> await client.Connect());
+    }
+
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         // var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
@@ -96,7 +117,7 @@ public class AElfIndexerDappModule : AbpModule
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        // var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        // AsyncHelper.RunSync(client.Close);
+        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        AsyncHelper.RunSync(client.Close);
     }
 }

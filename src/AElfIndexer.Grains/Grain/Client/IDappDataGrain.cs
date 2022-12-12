@@ -2,11 +2,11 @@ using Orleans;
 
 namespace AElfIndexer.Grains.Grain.Client;
 
-public interface IDappDataGrain<T> : IGrainWithStringKey
+public interface IDappDataGrain : IGrainWithStringKey
 {
-    Task<T> GetLatestValue();
-    Task<T> GetLIBValue();
-    Task<DappDataValue<T>> GetValue();
-    Task SetLatestValue(T value);
-    Task SetLIBValue(T value);
+    Task<string> GetLatestValue();
+    Task<string> GetLIBValue();
+    Task<DappDataValue> GetValue();
+    Task SetLatestValue(string value);
+    Task SetLIBValue(string value);
 }
