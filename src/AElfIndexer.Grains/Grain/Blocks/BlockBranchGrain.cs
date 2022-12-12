@@ -34,6 +34,11 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         return base.OnDeactivateAsync();
     }
 
+    public async Task<Dictionary<string, BlockData>> GetBlockDictionary()
+    {
+        return this.State.Blocks;
+    }
+
     public async Task<List<BlockData>> SaveBlocks(List<BlockData> blockEventDataList)
     {
         blockEventDataList = await FilterBlockList(blockEventDataList);
