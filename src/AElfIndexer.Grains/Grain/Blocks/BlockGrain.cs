@@ -56,9 +56,8 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
         State.Block.Confirmed = true;
         await WriteStateAsync();
         
-        DeactivateOnIdle();
-        
-        // DelayDeactivation(TimeSpan.FromSeconds(30));
+        // DeactivateOnIdle();
+        DelayDeactivation(TimeSpan.FromSeconds(5));
     }
 
     public async Task<bool> IsBlockConfirmed()
