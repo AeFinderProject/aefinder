@@ -28,15 +28,24 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
     {
         var chainId = "AELF";
         var clientId = "DApp";
-        var version = Guid.NewGuid().ToString();
-        var id = chainId + clientId;
         
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockHeight);
+        
+        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
+        var version = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>{new SubscriptionInfo
+        {
+            ChainId = chainId,
+            OnlyConfirmedBlock = true,
+            StartBlockNumber = 21,
+            FilterType = BlockFilterType.Block
+        }});
 
-        var clientGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
-        await clientGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
+        var id = chainId + clientId + version + BlockFilterType.Block;
+
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
         {
             ChainId = chainId,
             OnlyConfirmedBlock = false,
@@ -69,7 +78,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         subscribedBlock.Count.ShouldBe(50);
         subscribedBlock.Count(o => o.Confirmed).ShouldBe(25);
 
-        var clientInfo = await clientGrain.GetClientInfoAsync();
+        var clientInfo = await blockScanInfoGrain.GetClientInfoAsync();
         clientInfo.ScanModeInfo.ScanMode.ShouldBe(ScanMode.NewBlock);
         clientInfo.ScanModeInfo.ScanNewBlockStartHeight.ShouldBe(46);
         
@@ -118,8 +127,6 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
     {
         var chainId = "AELF";
         var clientId = "DApp";
-        var version = Guid.NewGuid().ToString();
-        var id = chainId + clientId;
 
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
@@ -127,12 +134,24 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
 
-        var clientGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
-        await clientGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
+        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
+        var version = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>{new SubscriptionInfo
         {
             ChainId = chainId,
             OnlyConfirmedBlock = true,
-            StartBlockNumber = 21
+            StartBlockNumber = 21,
+            FilterType = BlockFilterType.Block
+        }});
+
+        var id = chainId + clientId + version + BlockFilterType.Block;
+
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
+        {
+            ChainId = chainId,
+            OnlyConfirmedBlock = true,
+            StartBlockNumber = 21,
+            FilterType = BlockFilterType.Block
         });
 
         var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
@@ -173,17 +192,26 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
     {
         var chainId = "AELF";
         var clientId = "DApp";
-        var version = Guid.NewGuid().ToString();
-        var id = chainId + clientId;
 
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
             _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
+        
+        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
+        var version = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>{new SubscriptionInfo
+        {
+            ChainId = chainId,
+            OnlyConfirmedBlock = true,
+            StartBlockNumber = 21,
+            FilterType = BlockFilterType.Block
+        }});
 
-        var clientGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
-        await clientGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
+        var id = chainId + clientId + version + BlockFilterType.Block;
+
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
         {
             ChainId = chainId,
             OnlyConfirmedBlock = false,
@@ -225,17 +253,34 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
     {
         var chainId = "AELF";
         var clientId = "DApp";
-        var version = Guid.NewGuid().ToString();
-        var id = chainId + clientId;
 
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
             _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
+        
+        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
+        var version = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>{new SubscriptionInfo
+        {
+            ChainId = chainId,
+            OnlyConfirmedBlock = false,
+            StartBlockNumber = 21,
+            FilterType = filterType,
+            SubscribeEvents = new List<FilterContractEventInput>
+            {
+                new FilterContractEventInput
+                {
+                    ContractAddress = "ContractAddress0",
+                    EventNames = new List<string> { "EventName30", "EventName50" }
+                }
+            }
+        }});
 
-        var clientGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
-        await clientGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
+        var id = chainId + clientId + version + BlockFilterType.Block;
+
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
         {
             ChainId = chainId,
             OnlyConfirmedBlock = false,
