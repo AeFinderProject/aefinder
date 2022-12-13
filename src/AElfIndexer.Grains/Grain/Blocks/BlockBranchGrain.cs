@@ -56,7 +56,6 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         await ConfirmBlocksAsync(libBlockList);
         
         var libBlock = libBlockList.OrderBy(x => x.BlockHeight).LastOrDefault();
-
         if (libBlock != null)
         {
             ClearDictionary(libBlock.BlockHeight, libBlock.BlockHash);
@@ -136,9 +135,10 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
             if (!State.Blocks.ContainsKey(blockEventDataList.First().PreviousBlockHash))
             {
                 Console.WriteLine(
-                    $"[BlockGrain]Block {blockEventDataList.First().BlockHeight} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+                    $"[BlockGrain]Block {blockEventDataList.First().BlockHeight} can't be processed now, its PreviousBlockHash:{blockEventDataList.First().BlockHash} is not exist in dictionary");
                 throw new Exception(
-                    $"Block {blockEventDataList.First().BlockHeight} can't be processed now, its PreviousBlockHash is not exist in dictionary");
+                    $"Block {blockEventDataList.First().BlockHeight} can't be processed now, its PreviousBlockHash:{blockEventDataList.First().BlockHash} is not exist in dictionary " +
+                    $"which max block height is {State.Blocks.Max(d=>d.Value.BlockHeight)}");
             }
 
         }
