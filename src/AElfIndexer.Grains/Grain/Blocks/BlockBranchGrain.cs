@@ -97,7 +97,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
                 var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
                 await blockGrain.SetBlockConfirmed();
                 
-                _logger.LogDebug("ConfirmBlock: " + blockItem.BlockHeight);
+                _logger.LogInformation("ConfirmBlock: " + blockItem.BlockHeight);
             });
             grainTaskList.Add(task);
         }
