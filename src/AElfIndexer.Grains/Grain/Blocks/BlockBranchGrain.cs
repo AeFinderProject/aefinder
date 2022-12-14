@@ -77,7 +77,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
                 var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
                 await blockGrain.SaveBlock(blockItem);
                 
-                _logger.LogDebug("SaveBlock: " + blockItem.BlockHeight);
+                _logger.LogInformation("SaveBlock: " + blockItem.BlockHeight);
             });
             grainTaskList.Add(task);
         }
