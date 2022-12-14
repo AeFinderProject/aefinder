@@ -36,7 +36,7 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
     {
         State.Block = block;
         await WriteStateAsync();
-        
+        _logger.LogInformation($"save block {State.Block.BlockHeight} success");
         // DeactivateOnIdle();
         // DelayDeactivation(TimeSpan.FromMinutes(1));
     }
