@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using AElfIndexer.Grains.Grain.Blocks;
 using JsonNet.PrivateSettersContractResolvers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,6 +66,15 @@ public static class OrleansHostExtensions
                         jsonSettings.ObjectCreationHandling = ObjectCreationHandling.Replace;
                     };
                     
+                })
+                .Configure<GrainCollectionOptions>(options =>
+                {
+                    // Set the value of CollectionAge to 10 minutes for all grain
+                    // options.CollectionAge = TimeSpan.FromMinutes(10);
+
+                    // Override the value of CollectionAge to 1 minutes for MyGrainImplementation
+                    options.ClassSpecificCollectionAge[typeof(BlockGrain).FullName] =
+                        TimeSpan.FromSeconds(1);
                 })
                 // .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
                 // {
