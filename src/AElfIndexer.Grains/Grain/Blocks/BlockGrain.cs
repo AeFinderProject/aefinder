@@ -55,7 +55,7 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
     {
         State.Block.Confirmed = true;
         await WriteStateAsync();
-        
+        _logger.LogInformation($"write block {State.Block.BlockHeight} confirmed {State.Block.Confirmed} success");
         // DeactivateOnIdle();
         // DelayDeactivation(TimeSpan.FromSeconds(5));
     }

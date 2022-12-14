@@ -72,7 +72,7 @@ public static class OrleansHostExtensions
                     // Set the value of CollectionAge to 10 minutes for all grain
                     // options.CollectionAge = TimeSpan.FromMinutes(10);
 
-                    // Override the value of CollectionAge to 1 minutes for MyGrainImplementation
+                    // Override the value of CollectionAge to 1 minutes for BlockGrain
                     options.ClassSpecificCollectionAge[typeof(BlockGrain).FullName] =
                         TimeSpan.FromSeconds(61);
                 })
