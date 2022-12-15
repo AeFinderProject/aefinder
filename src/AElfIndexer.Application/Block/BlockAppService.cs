@@ -10,10 +10,12 @@ using Microsoft.Extensions.Options;
 using Nest;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Auditing;
 
 namespace AElfIndexer.Block;
 
 [RemoteService(IsEnabled = false)]
+[DisableAuditing]
 public class BlockAppService:ApplicationService,IBlockAppService
 {
     private readonly INESTRepository<BlockIndex, string> _blockIndexRepository;
