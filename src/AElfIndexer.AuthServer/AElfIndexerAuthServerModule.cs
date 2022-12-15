@@ -120,6 +120,7 @@ public class AElfIndexerAuthServerModule : AbpModule
         {
                 //options.IsEnabledForGetRequests = true;
                 options.ApplicationName = "AuthServer";
+                options.IsEnabled = false;//Disables the auditing system
         });
 
         if (hostingEnvironment.IsDevelopment())

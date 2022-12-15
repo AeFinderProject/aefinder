@@ -26,6 +26,7 @@ using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy;
 using Volo.Abp.AspNetCore.Serilog;
+using Volo.Abp.Auditing;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
@@ -67,6 +68,11 @@ public class AElfIndexerHttpApiHostModule : AbpModule
         //     .AddAutoClrMappings()
         //     .AddSystemTextJson()
         //     .AddErrorInfoProvider(e => e.ExposeExceptionDetails = true));
+        
+        Configure<AbpAuditingOptions>(options =>
+        {
+            options.IsEnabled = false;//Disables the auditing system
+        });
     }
 
     private void ConfigureCache(IConfiguration configuration)

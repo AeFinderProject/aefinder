@@ -71,15 +71,6 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         var grainTaskList = new List<Task>();
         foreach (var blockItem in blocks)
         {
-            // Task task = Task.Factory.StartNew(async () =>
-            // {
-            //     var primaryKey = string.Format(blockGrainPrimaryKeyFormat,blockItem.ChainId,blockItem.BlockHash);
-            //     var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
-            //     await blockGrain.SaveBlock(blockItem);
-            //     
-            //     _logger.LogInformation("SaveBlock: " + blockItem.BlockHeight);
-            // });
-            // grainTaskList.Add(task);
             var primaryKey = string.Format(blockGrainPrimaryKeyFormat,blockItem.ChainId,blockItem.BlockHash);
             var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
             grainTaskList.Add(blockGrain.SaveBlock(blockItem));
@@ -94,15 +85,6 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         var grainTaskList = new List<Task>();
         foreach (var blockItem in confirmBlocks)
         {
-            // Task task = Task.Factory.StartNew(async () =>
-            // {
-            //     var primaryKey = string.Format(blockGrainPrimaryKeyFormat,blockItem.ChainId,blockItem.BlockHash);
-            //     var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
-            //     await blockGrain.SetBlockConfirmed();
-            //     
-            //     _logger.LogInformation("ConfirmBlock: " + blockItem.BlockHeight);
-            // });
-            // grainTaskList.Add(task);
             var primaryKey = string.Format(blockGrainPrimaryKeyFormat,blockItem.ChainId,blockItem.BlockHash);
             var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
             grainTaskList.Add(blockGrain.SetBlockConfirmed());

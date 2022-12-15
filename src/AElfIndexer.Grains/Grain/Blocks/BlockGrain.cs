@@ -43,11 +43,6 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
 
     public async Task<BlockData> GetBlockData()
     {
-        // if (this.State.Block.Transactions != null)
-        // {
-        //     //Clear Duplicate transactions
-        //     this.State.Block.Transactions = this.State.Block.Transactions.DistinctBy(x=>x.TransactionId).ToList();
-        // }
         return State.Block;
     }
 
