@@ -122,8 +122,44 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         return await clientGrain.IsVersionAvailableAsync(version);
     }
 
+    public async Task<SubscriptionInfoDto> GetSubscriptionInfoAsync(string clientId)
+    {
+        var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
+        var version = await clientGrain.GetVersionAsync();
+        var subscriptionInfos = new SubscriptionInfoDto();
+        if (!string.IsNullOrWhiteSpace(version.CurrentVersion))
+        {
+            var subscriptionInfo = await clientGrain.GetSubscriptionInfoAsync(version.CurrentVersion);
+            subscriptionInfos.CurrentVersion = new SubscriptionInfoDetailDto
+            {
+                Version = version.CurrentVersion,
+                SubscriptionInfos = subscriptionInfo
+            };
+        }
+        
+        if (!string.IsNullOrWhiteSpace(version.NewVersion))
+        {
+            var subscriptionInfo = await clientGrain.GetSubscriptionInfoAsync(version.NewVersion);
+            subscriptionInfos.NewVersion = new SubscriptionInfoDetailDto
+            {
+                Version = version.NewVersion,
+                SubscriptionInfos = subscriptionInfo
+            };
+        }
+
+        return subscriptionInfos;
+    }
+
     public async Task StopAsync(string clientId, string version)
     {
-        //TODO: Maybe no need?
+        var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
+        var scanIds = await clientGrain.GetBlockScanIdsAsync(version);
+        foreach (var scanId in scanIds)
+        {
+            var scanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(scanId);
+            await scanInfoGrain.StopAsync();
+        }
+
+        await clientGrain.StopAsync(version);
     }
 }

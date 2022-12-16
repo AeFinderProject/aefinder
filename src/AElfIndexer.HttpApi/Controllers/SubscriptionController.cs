@@ -39,6 +39,13 @@ public class SubscriptionController : AbpController
         return _blockScanAppService.SubmitSubscriptionInfoAsync(clientId,subscriptionInfos);
     }
     
+    [HttpGet]
+    //[Authorize]
+    public virtual Task<SubscriptionInfoDto> GetSubscriptionInfoAsync(string clientId)
+    {
+        return _blockScanAppService.GetSubscriptionInfoAsync(clientId);
+    }
+    
     // TODO: Only for Test
     [HttpPost]
     [Route("start")]
