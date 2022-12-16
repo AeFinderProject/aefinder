@@ -32,7 +32,7 @@
   <ItemGroup>
     <PackageReference Include="Volo.Abp.Autofac" Version="6.0.0" />
     <ProjectReference Include="..\AElfIndexer.Application.Contracts\AElfIndexer.Application.Contracts.csproj" />
-    <ProjectReference Include="..\AElfIndexer.EntityFrameworkCore\AElfIndexer.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\AElfIndexer.MongoDB\AElfIndexer.MongoDB.csproj" />
   </ItemGroup>
 
   <ItemGroup>

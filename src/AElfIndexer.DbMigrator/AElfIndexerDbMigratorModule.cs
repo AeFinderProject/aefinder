@@ -1,4 +1,4 @@
-﻿using AElfIndexer.EntityFrameworkCore;
+﻿using AElfIndexer.MongoDB;
 using Volo.Abp.Autofac;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Modularity;
@@ -7,7 +7,7 @@ namespace AElfIndexer.DbMigrator;
 
 [DependsOn(
     typeof(AbpAutofacModule),
-    typeof(AElfIndexerEntityFrameworkCoreModule),
+    typeof(AElfIndexerMongoDbModule),
     typeof(AElfIndexerApplicationContractsModule)
     )]
 public class AElfIndexerDbMigratorModule : AbpModule

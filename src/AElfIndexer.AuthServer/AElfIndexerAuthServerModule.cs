@@ -9,8 +9,8 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using AElfIndexer.EntityFrameworkCore;
 using AElfIndexer.Localization;
+using AElfIndexer.MongoDB;
 using AElfIndexer.MultiTenancy;
 using StackExchange.Redis;
 using Volo.Abp;
@@ -46,7 +46,7 @@ namespace AElfIndexer;
     typeof(AbpAccountApplicationModule),
     typeof(AbpAccountHttpApiModule),
     typeof(AbpAspNetCoreMvcUiLeptonXLiteThemeModule),
-    typeof(AElfIndexerEntityFrameworkCoreModule),
+    typeof(AElfIndexerMongoDbModule),
     typeof(AbpAspNetCoreSerilogModule)
     )]
 public class AElfIndexerAuthServerModule : AbpModule
