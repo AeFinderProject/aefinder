@@ -36,29 +36,24 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
     {
         State.Block = block;
         await WriteStateAsync();
-        
+        _logger.LogInformation($"save block {State.Block.BlockHeight} success");
         // DeactivateOnIdle();
-        DelayDeactivation(TimeSpan.FromMinutes(1));
+        // DelayDeactivation(TimeSpan.FromMinutes(1));
     }
 
     public async Task<BlockData> GetBlockData()
     {
-        // if (this.State.Block.Transactions != null)
-        // {
-        //     //Clear Duplicate transactions
-        //     this.State.Block.Transactions = this.State.Block.Transactions.DistinctBy(x=>x.TransactionId).ToList();
-        // }
         return State.Block;
     }
 
     public async Task SetBlockConfirmed()
     {
         State.Block.Confirmed = true;
+        _logger.LogInformation($"before write block {State.Block.BlockHeight} confirmed {State.Block.Confirmed} success");
         await WriteStateAsync();
-        
-        // DeactivateOnIdle();
-        
-        DelayDeactivation(TimeSpan.FromSeconds(30));
+        _logger.LogInformation($"after write block {State.Block.BlockHeight} confirmed {State.Block.Confirmed} success");
+        DeactivateOnIdle();
+        // DelayDeactivation(TimeSpan.FromSeconds(5));
     }
 
     public async Task<bool> IsBlockConfirmed()

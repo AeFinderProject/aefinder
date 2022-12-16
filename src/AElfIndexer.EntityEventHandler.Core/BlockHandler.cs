@@ -102,13 +102,13 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         List<TransactionIndex> confirmTransactionIndexList = new List<TransactionIndex>();
         List<LogEventIndex> confirmLogEventIndexList = new List<LogEventIndex>(); 
         var indexes = new List<BlockIndex>();
+        _logger.LogInformation($"block:{eventData.ConfirmBlocks.First().BlockHeight}-{eventData.ConfirmBlocks.Last().BlockHeight} is confirming");
         foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
-            _logger.LogInformation($"block:{confirmBlock.BlockHeight} is confirming");
             var blockIndex = _objectMapper.Map<ConfirmBlockEto, BlockIndex>(confirmBlock);
             blockIndex.TransactionIds = confirmBlock.Transactions.Select(b => b.TransactionId).ToList();
             
-            _logger.LogInformation("confirm block transacionids count:" + blockIndex.TransactionIds.Count);
+            // _logger.LogInformation("confirm block transacionids count:" + blockIndex.TransactionIds.Count);
             blockIndex.LogEventCount = confirmBlock.Transactions.Sum(t => t.LogEvents.Count);
             blockIndex.Confirmed = true;
 

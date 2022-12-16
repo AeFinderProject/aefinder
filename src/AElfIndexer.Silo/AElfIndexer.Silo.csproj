@@ -25,7 +25,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AElfIndexer.Application\AElfIndexer.Application.csproj" />
-      <ProjectReference Include="..\AElfIndexer.EntityFrameworkCore\AElfIndexer.EntityFrameworkCore.csproj" />
       <ProjectReference Include="..\AElfIndexer.Grains\AElfIndexer.Grains.csproj" />
     </ItemGroup>
 

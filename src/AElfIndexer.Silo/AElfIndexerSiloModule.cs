@@ -1,4 +1,3 @@
-using AElfIndexer.EntityFrameworkCore;
 using AElfIndexer.Grains;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AspNetCore.Serilog;
@@ -10,7 +9,6 @@ namespace AElfIndexer;
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AElfIndexerApplicationModule),
-    typeof(AElfIndexerEntityFrameworkCoreModule),
     typeof(AElfIndexerGrainsModule))]
 public class AElfIndexerOrleansSiloModule:AbpModule
 {
