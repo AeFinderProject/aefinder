@@ -1,6 +1,5 @@
 using AElf.Indexing.Elasticsearch.Options;
 using AElfIndexer;
-using AElfIndexer.EntityFrameworkCore;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +21,6 @@ namespace AElfIndexer;
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AElfIndexerEntityEventHandlerCoreModule),
-    typeof(AElfIndexerEntityFrameworkCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpEventBusRabbitMqModule))]
 public class AElfIndexerEntityEventHandlerModule : AbpModule
