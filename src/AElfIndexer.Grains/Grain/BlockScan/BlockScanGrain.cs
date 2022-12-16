@@ -94,18 +94,14 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 var filteredBlocks = await _blockFilterProviders.First(o => o.FilterType == subscriptionInfo.FilterType)
                     .GetBlocksAsync(State.ChainId, State.ScannedConfirmedBlockHeight + 1, targetHeight, true,
                         subscriptionInfo.SubscribeEvents);
-
-                if (filteredBlocks.Count == 0)
-                {
-                    _logger.LogError($"Cannot get blocks: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
-                }
-
+                
                 var blocks = await FillVacantBlockAsync(filteredBlocks, State.ScannedConfirmedBlockHeight + 1,
                     targetHeight);
-                
-                if (blocks.Count == 0)
+
+                if (blocks.Count != targetHeight - State.ScannedConfirmedBlockHeight)
                 {
-                    _logger.LogError($"Cannot fill vacant blocks: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
+                    throw new ApplicationException(
+                        $"Cannot fill vacant blocks: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
                 }
 
                 if (!subscriptionInfo.OnlyConfirmedBlock)

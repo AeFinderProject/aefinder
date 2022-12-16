@@ -43,8 +43,6 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
             if(blockHeight <= libBlockHeight) continue;
             foreach (var block in blocks)
             {
-                //TODO 重复区块不处理是否有问题
-                //TODO 出现异常导致中断是否有影响
                 // Skip if blockStateSets contain unconfirmed block 
                 if (blockStateSets.TryGetValue(block.BlockHash, out var blockStateSet) && !block.Confirmed) continue;
                 
