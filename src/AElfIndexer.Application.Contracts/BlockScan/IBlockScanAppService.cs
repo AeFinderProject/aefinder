@@ -14,4 +14,5 @@ public interface IBlockScanAppService
     Task<ClientVersionDto> GetClientVersionAsync(string clientId);
     Task StopAsync(string clientId, string version);
     Task<bool> IsVersionAvailableAsync(string clientId, string version);
+    Task<SubscriptionInfoDto> GetSubscriptionInfoAsync(string clientId);
 }

@@ -1,6 +1,4 @@
 using AElfIndexer.BlockScan;
-using System;
-using System.Threading.Tasks;
 using AElfIndexer.Grains.State.BlockScan;
 using Orleans;
 
@@ -18,4 +16,5 @@ public interface IClientGrain: IGrainWithStringKey
     Task<VersionStatus> GetVersionStatusAsync(string version);
     Task StartAsync(string version);
     Task<ClientVersion> GetVersionAsync();
+    Task StopAsync(string version);
 }
