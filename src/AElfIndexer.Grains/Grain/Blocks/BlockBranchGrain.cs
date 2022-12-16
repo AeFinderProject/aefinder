@@ -178,7 +178,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         {
             if (State.Blocks[currentLibBlockHash].Confirmed)
             {
-                libBlockList.Add(State.Blocks[currentLibBlockHash]);
+                // libBlockList.Add(State.Blocks[currentLibBlockHash]);
                 return libBlockList;
             }
             
