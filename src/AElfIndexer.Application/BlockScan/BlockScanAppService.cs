@@ -11,10 +11,12 @@ using NUglify.Helpers;
 using Orleans;
 using Orleans.Streams;
 using Volo.Abp;
+using Volo.Abp.Auditing;
 
 namespace AElfIndexer.BlockScan;
 
 [RemoteService(IsEnabled = false)]
+[DisableAuditing]
 public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
 {
     private readonly IClusterClient _clusterClient;
