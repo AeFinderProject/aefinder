@@ -264,13 +264,16 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 State.ScannedConfirmedBlockHeight + 1,
                 blocks.Last().BlockHeight, true, null));
         }
+        
+        var subscribedBlocks =
+            await blockFilterProvider.FilterBlocksAsync(scannedBlocks, subscriptionInfo.SubscribeEvents);
 
-        scannedBlocks = await blockFilterProvider.FilterIncompleteConfirmedBlocksAsync(State.ChainId, scannedBlocks,
+        subscribedBlocks = await blockFilterProvider.FilterIncompleteConfirmedBlocksAsync(State.ChainId, subscribedBlocks,
             State.ScannedConfirmedBlockHash, State.ScannedConfirmedBlockHeight);
 
         if (!subscriptionInfo.OnlyConfirmedBlock)
         {
-            foreach (var b in scannedBlocks)
+            foreach (var b in subscribedBlocks)
             {
                 if (!State.ScannedBlocks.TryGetValue(b.BlockHeight, out var existBlocks) ||
                     !existBlocks.Contains(b.BlockHash))
@@ -291,10 +294,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 }
             }
         }
-
-        var subscribedBlocks =
-            await blockFilterProvider.FilterBlocksAsync(scannedBlocks, subscriptionInfo.SubscribeEvents);
-
+        
         SetIsConfirmed(subscribedBlocks, true);
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
