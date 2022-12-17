@@ -147,7 +147,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     private async Task<List<BlockWithTransactionDto>> FillVacantBlockAsync(List<BlockWithTransactionDto> filteredBlocks, long startHeight,
         long endHeight)
     {
-        if (filteredBlocks.Count == startHeight - endHeight + 1)
+        if (filteredBlocks.Count == endHeight- startHeight + 1)
         {
             return filteredBlocks;
         }

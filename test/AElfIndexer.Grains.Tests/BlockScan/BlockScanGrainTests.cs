@@ -123,6 +123,68 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
     }
 
     [Fact]
+    public async Task Block_WrongVersion_Test()
+    {
+        var chainId = "AELF";
+        var clientId = "DApp";
+
+        var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
+        await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
+            _blockDataProvider.Blocks[60].First().BlockHeight);
+        await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
+            _blockDataProvider.Blocks[50].First().BlockHeight);
+
+        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
+        var version = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>
+        {
+            new SubscriptionInfo
+            {
+                ChainId = chainId,
+                OnlyConfirmedBlock = true,
+                StartBlockNumber = 21,
+                FilterType = BlockFilterType.Block
+            }
+        });
+
+        var id = chainId + clientId + version + BlockFilterType.Block;
+
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
+        {
+            ChainId = chainId,
+            OnlyConfirmedBlock = false,
+            StartBlockNumber = 21
+        });
+
+        var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
+        var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
+        var stream =
+            Cluster.Client
+                .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
+                .GetStream<SubscribedBlockDto>(streamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
+
+        var subscribedBlock = new List<BlockDto>();
+        await stream.SubscribeAsync((v, t) =>
+        {
+            v.ChainId.ShouldBe(chainId);
+            v.ClientId.ShouldBe(clientId);
+            v.Version.ShouldBe(version);
+            v.FilterType.ShouldBe(BlockFilterType.Block);
+            subscribedBlock.AddRange(v.Blocks);
+            return Task.CompletedTask;
+        });
+
+        await scanGrain.HandleNewBlockAsync(new BlockWithTransactionDto());
+        subscribedBlock.Count.ShouldBe(0);
+
+        await clientGrain.StopAsync(version);
+        
+        await scanGrain.HandleHistoricalBlockAsync();
+
+        subscribedBlock.Count.ShouldBe(0);
+    }
+
+    [Fact]
     public async Task OnlyConfirmedBlockTest()
     {
         var chainId = "AELF";
@@ -235,14 +297,13 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
-
-        await scanGrain.HandleNewBlockAsync(new BlockWithTransactionDto());
-        subscribedBlock.Count.ShouldBe(0);
-
+        
         await scanGrain.HandleHistoricalBlockAsync();
-
+        
         subscribedBlock.Count.ShouldBe(50);
-        subscribedBlock.Count(o => o.Confirmed).ShouldBe(25);
+        
+        await scanGrain.HandleConfirmedBlockAsync(new List<BlockWithTransactionDto>{_blockDataProvider.Blocks[46].First()});
+        subscribedBlock.Count.ShouldBe(50);
     }
 
     [Theory]

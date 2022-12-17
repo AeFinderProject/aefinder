@@ -43,8 +43,7 @@ public class ChainGrainTests : AElfIndexerGrainTestBase
         chainStatus.ConfirmedBlockHeight.ShouldBe(confirmedBlockHeight);
         chainStatus.ConfirmedBlockHash.ShouldBe(confirmedBlockHash);
         
-        await grain.SetLatestBlockAsync("NewBlockHash", 70);
-        
+        await grain.SetLatestConfirmBlockAsync("NewConfirmedBlockHash", 60);
         chainStatus = await grain.GetChainStatusAsync();
         chainStatus.ConfirmedBlockHeight.ShouldBe(confirmedBlockHeight);
         chainStatus.ConfirmedBlockHash.ShouldBe(confirmedBlockHash);

@@ -28,6 +28,8 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
         
         var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
         var version1 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo1);
+        
+        await clientGrain.UpgradeVersionAsync();
 
         var subscription1 = await clientGrain.GetSubscriptionInfoAsync(version1);
         subscription1.Count.ShouldBe(1);
@@ -56,6 +58,10 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
         isAvailable.ShouldBe(true);
         isAvailable = await clientGrain.IsVersionAvailableAsync(Guid.NewGuid().ToString());
         isAvailable.ShouldBe(false);
+        isAvailable = await clientGrain.IsVersionAvailableAsync(null);
+        isAvailable.ShouldBe(false);
+        isAvailable = await clientGrain.IsVersionAvailableAsync(string.Empty);
+        isAvailable.ShouldBe(false);
 
         var version = await clientGrain.GetVersionAsync();
         version.CurrentVersion.ShouldBe(version1);
@@ -73,6 +79,47 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
         await clientGrain.UpgradeVersionAsync();
         version = await clientGrain.GetVersionAsync();
         version.CurrentVersion.ShouldBe(version2);
+        version.NewVersion.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task StopTest()
+    {
+        var clientId = "client";
+        var subscriptionInfo1 = new List<SubscriptionInfo>
+        {
+            new SubscriptionInfo
+            {
+                ChainId = "AELF",
+                FilterType = BlockFilterType.Block,
+            }
+        };
+        
+        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
+        var version1 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo1);
+        
+        var subscription1 = await clientGrain.GetSubscriptionInfoAsync(version1);
+        subscription1.Count.ShouldBe(1);
+        subscription1[0].ChainId.ShouldBe("AELF");
+        subscription1[0].FilterType.ShouldBe(BlockFilterType.Block);
+        
+        var subscriptionInfo2 = new List<SubscriptionInfo>
+        {
+            new SubscriptionInfo
+            {
+                ChainId = "AELF",
+                FilterType = BlockFilterType.Transaction,
+            }
+        };
+        
+        var version2 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo2);
+
+        await clientGrain.StopAsync(version1);
+        var version = await clientGrain.GetVersionAsync();
+        version.CurrentVersion.ShouldBeNull();
+        
+        await clientGrain.StopAsync(version2);
+        version = await clientGrain.GetVersionAsync();
         version.NewVersion.ShouldBeNull();
     }
 
@@ -105,6 +152,7 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
 
         await clientGrain.AddBlockScanIdAsync(version1, "id1");
         await clientGrain.AddBlockScanIdAsync(version2, "id2");
+        await clientGrain.AddBlockScanIdAsync("wrong-version", "id3");
 
         var ids = await clientGrain.GetBlockScanIdsAsync(version1);
         ids.Count.ShouldBe(1);

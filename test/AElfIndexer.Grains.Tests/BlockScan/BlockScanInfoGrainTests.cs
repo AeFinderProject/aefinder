@@ -84,5 +84,8 @@ public class BlockScanInfoGrainTests : AElfIndexerGrainTestBase
         allClientIds = await clientManagerGrain.GetAllBlockScanIdsAsync();
         allClientIds.Keys.Count.ShouldBe(1);
         allClientIds["AELF"].Count.ShouldBe(0);
+        
+        clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync("tDVV");
+        clientIds.Count.ShouldBe(0);
     }
 }

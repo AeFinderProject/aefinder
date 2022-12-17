@@ -1,15 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.State.BlockScan;
 using Microsoft.Extensions.Logging;
-using Nest;
-using NUglify.Helpers;
 using Orleans;
-using Orleans.Streams;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 
@@ -94,8 +90,13 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
     public async Task UpgradeVersionAsync(string clientId)
     {
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
-        var currentVersion = (await client.GetVersionAsync()).CurrentVersion;
-        var scanIds = await client.GetBlockScanIdsAsync(currentVersion);
+        var version = await client.GetVersionAsync();
+        if (string.IsNullOrWhiteSpace(version.NewVersion))
+        {
+            return;
+        }
+
+        var scanIds = await client.GetBlockScanIdsAsync(version.CurrentVersion);
         foreach (var scanId in scanIds)
         {
             var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(scanId);
@@ -114,12 +115,6 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             CurrentVersion = version.CurrentVersion,
             NewVersion = version.NewVersion
         };
-    }
-
-    public async Task<bool> IsVersionAvailableAsync(string clientId, string version)
-    {
-        var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
-        return await clientGrain.IsVersionAvailableAsync(version);
     }
 
     public async Task<SubscriptionInfoDto> GetSubscriptionInfoAsync(string clientId)

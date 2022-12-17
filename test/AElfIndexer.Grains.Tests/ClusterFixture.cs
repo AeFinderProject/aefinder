@@ -29,7 +29,8 @@ public class ClusterFixture:IDisposable,ISingletonDependency
 
     public TestCluster Cluster { get; private set; }
 
-    private class TestSiloConfigurations : ISiloBuilderConfigurator {
+    private class TestSiloConfigurations : ISiloBuilderConfigurator 
+    {
         public void Configure(ISiloHostBuilder hostBuilder) {
             hostBuilder.ConfigureServices(services => {
                     services.AddSingleton<IBlockAppService, MockBlockAppService>();
@@ -52,8 +53,6 @@ public class ClusterFixture:IDisposable,ISingletonDependency
     private class TestClientBuilderConfigurator : IClientBuilderConfigurator
     {
         public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) => clientBuilder
-            .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
-        ;
-        
+            .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
     }
 }

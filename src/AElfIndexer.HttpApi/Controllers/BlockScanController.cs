@@ -12,7 +12,12 @@ namespace AElfIndexer.Controllers;
 public class BlockScanController: AbpController
 {
     private readonly IBlockScanAppService _blockScanAppService;
-    
+
+    public BlockScanController(IBlockScanAppService blockScanAppService)
+    {
+        _blockScanAppService = blockScanAppService;
+    }
+
     [HttpPost]
     [Route("stop")]
     //[Authorize]

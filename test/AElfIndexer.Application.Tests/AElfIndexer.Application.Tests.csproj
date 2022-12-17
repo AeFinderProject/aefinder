@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\AElfIndexer.Application\AElfIndexer.Application.csproj" />
     <ProjectReference Include="..\AElfIndexer.Domain.Tests\AElfIndexer.Domain.Tests.csproj" />
+    <ProjectReference Include="..\AElfIndexer.Orleans.TestBase\AElfIndexer.Orleans.TestBase.csproj" />
   </ItemGroup>
 
   <ItemGroup>
