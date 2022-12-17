@@ -173,7 +173,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task HandleNewBlockAsync(BlockWithTransactionDto block)
     {
-        _logger.LogDebug($"HandleNewBlock {this.GetPrimaryKeyString()}, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+        _logger.LogInformation($"HandleNewBlock {this.GetPrimaryKeyString()}, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
         
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
@@ -185,7 +185,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             || clientInfo.ScanModeInfo.ScanMode != ScanMode.NewBlock
             || subscriptionInfo.OnlyConfirmedBlock)
         {
-            _logger.LogDebug($"HandleNewBlock failed {this.GetPrimaryKeyString()}, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+            _logger.LogInformation($"HandleNewBlock failed {this.GetPrimaryKeyString()}, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
             return;
         }
 
@@ -207,7 +207,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else
         {
-            _logger.LogDebug($"Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+            _logger.LogInformation($"Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
             blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, GetMinScannedBlockHeight(),
                 block.BlockHeight, false, null);
         }
@@ -217,7 +217,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var unPushedBlock = GetUnPushedBlocks(blocks);
         if (unPushedBlock.Count == 0)
         {
-            _logger.LogDebug($"HandleNewBlock failed {this.GetPrimaryKeyString()}, no unpushed block. block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+            _logger.LogInformation($"HandleNewBlock failed {this.GetPrimaryKeyString()}, no unpushed block. block height: {block.BlockHeight}, block hash: {block.BlockHash}");
             return;
         }
 
@@ -241,7 +241,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task HandleConfirmedBlockAsync(List<BlockWithTransactionDto> blocks)
     {
-        _logger.LogDebug($"HandleConfirmedBlock {this.GetPrimaryKeyString()}, start block height: {blocks.First().BlockHeight}, end block height: {blocks.Last().BlockHeight}");
+        _logger.LogInformation($"HandleConfirmedBlock {this.GetPrimaryKeyString()}, start block height: {blocks.First().BlockHeight}, end block height: {blocks.Last().BlockHeight}");
 
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
@@ -252,7 +252,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             || clientInfo.ScanModeInfo.ScanMode != ScanMode.NewBlock
             || blocks.First().BlockHeight <= State.ScannedConfirmedBlockHeight)
         {
-            _logger.LogDebug($"HandleConfirmedBlock failed {this.GetPrimaryKeyString()}, start block height: {blocks.First().BlockHeight}, end block height: {blocks.Last().BlockHeight}");
+            _logger.LogInformation($"HandleConfirmedBlock failed {this.GetPrimaryKeyString()}, start block height: {blocks.First().BlockHeight}, end block height: {blocks.Last().BlockHeight}");
             return;
         }
 
@@ -266,7 +266,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else
         {
-            _logger.LogDebug($"Not linked confirmed block, block height: {blocks.First().BlockHeight}, block hash: {blocks.First().BlockHash}");
+            _logger.LogInformation($"Not linked confirmed block, block height: {blocks.First().BlockHeight}, block hash: {blocks.First().BlockHash}");
             scannedBlocks.AddRange(await blockFilterProvider.GetBlocksAsync(State.ChainId,
                 State.ScannedConfirmedBlockHeight + 1,
                 blocks.Last().BlockHeight, true, null));

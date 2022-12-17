@@ -68,7 +68,7 @@ public class BlockFilterProvider : IBlockFilterProvider
             //TODO previousBlockHash is null.
             if (block.PreviousBlockHash != previousBlockHash && previousBlockHash!=null || block.BlockHeight != previousBlockHeight + 1)
             {
-                _logger.LogDebug($"Wrong confirmed previousBlockHash or previousBlockHash: block hash {block.BlockHash}, block height {block.BlockHeight}");
+                _logger.LogError($"Wrong confirmed previousBlockHash or previousBlockHash: block hash {block.BlockHash}, block height {block.BlockHeight}");
                 break;
             }
             

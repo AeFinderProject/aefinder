@@ -175,7 +175,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                 block.Transactions.Count != blockDto.TransactionIds.Count ||
                 block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.LogEventCount)
             {
-                _logger.LogDebug(
+                _logger.LogError(
                     $"Wrong confirmed Transactions or LogEvents: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}, logevent count {block.Transactions.Sum(o => o.LogEvents.Count)}");
                 break;            }
 
@@ -201,7 +201,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
         {
             if (block.PreviousBlockHash != previousBlockHash && previousBlockHash!=null  || block.BlockHeight != previousBlockHeight + 1)
             {
-                _logger.LogDebug($"Wrong confirmed previousBlockHash or previousBlockHash: block hash {block.BlockHash}, block height {block.BlockHeight}");
+                _logger.LogError($"Wrong confirmed previousBlockHash or previousBlockHash: block hash {block.BlockHash}, block height {block.BlockHeight}");
                 break;
             }
             
@@ -209,7 +209,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                 block.Transactions.Count != blockDto.TransactionIds.Count ||
                 block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.LogEventCount)
             {
-                _logger.LogDebug(
+                _logger.LogError(
                     $"Wrong confirmed Transactions or LogEvents: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}, logevent count {block.Transactions.Sum(o => o.LogEvents.Count)}");
                 break;
             }
