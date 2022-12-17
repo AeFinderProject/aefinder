@@ -58,6 +58,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                 if (clientInfo.ScanModeInfo.ScanMode == ScanMode.NewBlock &&
                     clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= block.BlockHeight)
                 {
+                    Logger.LogDebug($"HandleConfirmedBlock: {block.ChainId} Client: {clientId} BlockHeight: {block.BlockHeight} BlockHash: {block.BlockHash}");
                     var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(clientId);
                     await blockScanGrain.HandleNewBlockAsync(block);
                 }
@@ -117,6 +118,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                 if (clientInfo.ScanModeInfo.ScanMode == ScanMode.NewBlock &&
                     clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= confirmBlocks.First().BlockHeight)
                 {
+                    Logger.LogDebug($"HandleConfirmedBlock: {chainId} Client: {clientId} StartBlockHeight: {firstBlock.BlockHeight} EndBlockHeight: {confirmBlocks.Last().BlockHeight}");
                     var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(clientId);
                     await blockScanGrain.HandleConfirmedBlockAsync(confirmBlocks);
                 }
