@@ -5,6 +5,8 @@ using Orleans.Configuration;
 using AElf.Orleans.EventSourcing.Snapshot.Hosting;
 using AElfIndexer.Grains.Grain.Blocks;
 using EventStore.ClientAPI;
+using Microsoft.Extensions.Configuration;
+using Orleans;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;
@@ -17,6 +19,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
     {
         var builder = new TestClusterBuilder();
         builder.AddSiloBuilderConfigurator<TestSiloConfigurations>();
+        builder.AddClientBuilderConfigurator<TestClientBuilderConfigurator>();
         Cluster = builder.Build();
         Cluster.Deploy();
     }
@@ -28,7 +31,8 @@ public class ClusterFixture:IDisposable,ISingletonDependency
 
     public TestCluster Cluster { get; private set; }
     
-    private class TestSiloConfigurations : ISiloBuilderConfigurator {
+    private class TestSiloConfigurations : ISiloBuilderConfigurator 
+    {
         public void Configure(ISiloHostBuilder hostBuilder) {
             hostBuilder.ConfigureServices(services => {
                     services.AddSingleton<IBlockGrain, BlockGrain>();
@@ -39,6 +43,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                 //     options.UseJson = true;
                 //     options.DatabaseNumber = 0;
                 // }))
+                .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
                 .AddMemoryGrainStorageAsDefault()
                 .AddSnapshotStorageBasedLogConsistencyProviderAsDefault((op, name) => 
@@ -57,5 +62,11 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     // };
                 });
         }
+    }
+    
+    private class TestClientBuilderConfigurator : IClientBuilderConfigurator
+    {
+        public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) => clientBuilder
+            .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
     }
 }

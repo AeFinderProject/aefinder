@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using AElfIndexer.Orleans.TestBase;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute.Extensions;
 using Volo.Abp.Modularity;
 
@@ -6,7 +7,8 @@ namespace AElfIndexer;
 
 [DependsOn(
     typeof(AElfIndexerApplicationModule),
-    typeof(AElfIndexerDomainTestModule)
+    typeof(AElfIndexerDomainTestModule),
+    typeof(AElfIndexerOrleansTestBaseModule)
     )]
 public class AElfIndexerApplicationTestModule : AbpModule
 {
