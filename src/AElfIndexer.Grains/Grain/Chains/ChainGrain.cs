@@ -17,7 +17,7 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
 
     public ChainGrain(ILogger<ChainGrain> logger)
     {
-        this._logger = logger;
+        _logger = logger;
 
     }
 

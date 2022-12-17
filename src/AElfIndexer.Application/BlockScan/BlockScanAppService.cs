@@ -94,8 +94,13 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
     public async Task UpgradeVersionAsync(string clientId)
     {
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
-        var currentVersion = (await client.GetVersionAsync()).CurrentVersion;
-        var scanIds = await client.GetBlockScanIdsAsync(currentVersion);
+        var version = await client.GetVersionAsync();
+        if (string.IsNullOrWhiteSpace(version.NewVersion))
+        {
+            return;
+        }
+
+        var scanIds = await client.GetBlockScanIdsAsync(version.CurrentVersion);
         foreach (var scanId in scanIds)
         {
             var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(scanId);
