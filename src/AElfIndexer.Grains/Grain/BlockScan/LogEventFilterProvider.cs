@@ -170,7 +170,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
         {
             if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
                 block.Transactions.Count != blockDto.TransactionIds.Count ||
-                block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.TransactionIds.LongCount())
+                block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.LogEventCount)
             {
                 break;
             }
@@ -202,7 +202,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
             
             if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
                 block.Transactions.Count != blockDto.TransactionIds.Count ||
-                block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.TransactionIds.LongCount())
+                block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.LogEventCount)
             {
                 break;
             }

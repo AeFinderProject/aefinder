@@ -62,7 +62,7 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
 
     public async Task UpgradeVersionAsync()
     {
-        if (State.CurrentVersion == State.NewVersion || string.IsNullOrWhiteSpace(State.NewVersion))
+        if (string.IsNullOrWhiteSpace(State.NewVersion))
         {
             return;
         }

@@ -56,12 +56,13 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
         {
             foreach (var block in _blockDataProvider.Blocks[i])
             {
-                result.AddRange((from transaction in block.Transactions
-                    from logEvent in transaction.LogEvents
-                    where filter.Item1.Count ==0 && filter.Item2.Count ==0 ||
-                          filter.Item1.Count !=0 && filter.Item1.Contains(logEvent.ContractAddress) ||
-                          filter.Item2.Count !=0 && filter.Item2.Contains(logEvent.ContractAddress + logEvent.EventName)
-                    select transaction).ToList());
+                foreach (var transaction in block.Transactions.Where(transaction => transaction.LogEvents.Any(logEvent =>
+                             (filter.Item1.Count ==0 && filter.Item2.Count ==0 ||
+                              filter.Item1.Count !=0 && filter.Item1.Contains(logEvent.ContractAddress) ||
+                              filter.Item2.Count !=0 && filter.Item2.Contains(logEvent.ContractAddress + logEvent.EventName)))))
+                {
+                    result.Add(transaction);
+                }
             }
         }
 

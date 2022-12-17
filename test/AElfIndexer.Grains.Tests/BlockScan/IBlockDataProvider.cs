@@ -46,6 +46,8 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
     private BlockWithTransactionDto MockBlock(string chainId, long blockNum, string previousHash, bool isConfirmed, string branch)
     {
         var blockHash = $"BlockHash-{blockNum}-{branch}";
+        var txId1 = Guid.NewGuid().ToString();
+        var txId2 = Guid.NewGuid().ToString();
         return new BlockWithTransactionDto
         {
             ChainId = chainId,
@@ -59,7 +61,7 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
                 new TransactionDto
                 {
                     ChainId = chainId,
-                    TransactionId = Guid.NewGuid().ToString(),
+                    TransactionId = txId1,
                     BlockHash = blockHash,
                     BlockHeight = blockNum,
                     IsConfirmed = isConfirmed,
@@ -70,7 +72,7 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
                         new LogEventDto
                         {
                             ChainId = chainId,
-                            TransactionId = Guid.NewGuid().ToString(),
+                            TransactionId = txId1,
                             BlockHash = blockHash,
                             BlockHeight = blockNum,
                             IsConfirmed = isConfirmed,
@@ -78,6 +80,43 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
                             PreviousBlockHash = previousHash,
                             ContractAddress = "ContractAddress" + blockNum % 10,
                             EventName = "EventName" + blockNum
+                        }
+                    }
+                },
+                new TransactionDto
+                {
+                    ChainId = chainId,
+                    TransactionId = txId2,
+                    BlockHash = blockHash,
+                    BlockHeight = blockNum,
+                    IsConfirmed = isConfirmed,
+                    BlockTime = DateTime.UtcNow,
+                    PreviousBlockHash = previousHash,
+                    LogEvents = new List<LogEventDto>
+                    {
+                        new LogEventDto
+                        {
+                            ChainId = chainId,
+                            TransactionId = txId2,
+                            BlockHash = blockHash,
+                            BlockHeight = blockNum,
+                            IsConfirmed = isConfirmed,
+                            BlockTime = DateTime.UtcNow,
+                            PreviousBlockHash = previousHash,
+                            ContractAddress = "FakeContractAddress1" + blockNum % 10,
+                            EventName = "FakeEventName1" + blockNum
+                        },
+                        new LogEventDto
+                        {
+                            ChainId = chainId,
+                            TransactionId = txId2,
+                            BlockHash = blockHash,
+                            BlockHeight = blockNum,
+                            IsConfirmed = isConfirmed,
+                            BlockTime = DateTime.UtcNow,
+                            PreviousBlockHash = previousHash,
+                            ContractAddress = "FakeContractAddress2" + blockNum % 10,
+                            EventName = "FakeEventName2" + blockNum
                         }
                     }
                 }
