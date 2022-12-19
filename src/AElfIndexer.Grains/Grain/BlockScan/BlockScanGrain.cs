@@ -338,16 +338,18 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     private List<BlockWithTransactionDto> GetUnPushedBlocks(List<BlockWithTransactionDto> blocks)
     {
         var unPushedBlock = new List<BlockWithTransactionDto>();
+        _logger.LogInformation($"Get unpushed block, from {blocks.First().BlockHeight} to {blocks.Last().BlockHeight}");
         foreach (var b in blocks)
         {
-            // var minScannedBlockHeight = GetMinScannedBlockHeight();
-            // if (minScannedBlockHeight != 0
-            //     && minScannedBlockHeight < b.BlockHeight
-            //     && (!State.ScannedBlocks.TryGetValue(b.BlockHeight - 1, out var preScannedBlocks) ||
-            //         !preScannedBlocks.Contains(b.PreviousBlockHash)))
-            // {
-            //     continue;
-            // }
+            var minScannedBlockHeight = GetMinScannedBlockHeight();
+            if (minScannedBlockHeight != 0
+                && minScannedBlockHeight < b.BlockHeight
+                && (!State.ScannedBlocks.TryGetValue(b.BlockHeight - 1, out var preScannedBlocks) ||
+                    !preScannedBlocks.Contains(b.PreviousBlockHash)))
+            {
+                _logger.LogError($"UnLinked block, height {b.BlockHeight}, hash {b.BlockHash}");
+                continue;
+            }
 
             if (!State.ScannedBlocks.TryGetValue(b.BlockHeight, out var scannedBlocks))
             {
@@ -358,10 +360,14 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             {
                 unPushedBlock.Add(b);
             }
+            else
+            {
+                _logger.LogError($"Pushed block, height {b.BlockHeight}, hash {b.BlockHash}");
+            }
 
             State.ScannedBlocks[b.BlockHeight] = scannedBlocks;
         }
-
+        
         return unPushedBlock;
     }
 
