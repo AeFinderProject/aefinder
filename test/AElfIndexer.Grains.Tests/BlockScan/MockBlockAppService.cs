@@ -22,6 +22,11 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
         var result = new List<BlockDto>();
         for (var i = input.StartBlockHeight; i <= input.EndBlockHeight; i++)
         {
+            if (!_blockDataProvider.Blocks.TryGetValue(i, out var block))
+            {
+                break;
+            }
+
             result.AddRange(_blockDataProvider.Blocks[i].Where(o => !input.IsOnlyConfirmed || o.Confirmed).Select(
                 block => new BlockDto
                 {
