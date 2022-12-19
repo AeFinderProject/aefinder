@@ -106,7 +106,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
                 if (!subscriptionInfo.OnlyConfirmedBlock)
                 {
-                    SetIsConfirmed(blocks, false);
+                    SetConfirmed(blocks, false);
                     await _stream.OnNextAsync(new SubscribedBlockDto
                     {
                         ClientId = State.ClientId,
@@ -117,7 +117,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     });
                 }
 
-                SetIsConfirmed(blocks, true);
+                SetConfirmed(blocks, true);
                 await _stream.OnNextAsync(new SubscribedBlockDto
                 {
                     ClientId = State.ClientId,
@@ -230,7 +230,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
         var subscribedBlocks = await blockFilterProvider.FilterBlocksAsync(unPushedBlock, subscriptionInfo.SubscribeEvents);
         
-        SetIsConfirmed(subscribedBlocks, false);
+        SetConfirmed(subscribedBlocks, false);
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
             ClientId = State.ClientId,
@@ -312,7 +312,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             }
         }
         
-        SetIsConfirmed(scannedBlocks, true);
+        SetConfirmed(scannedBlocks, true);
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
             ClientId = State.ClientId,
@@ -387,17 +387,17 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         return State.ScannedBlocks.First().Key;
     }
 
-    private void SetIsConfirmed(List<BlockWithTransactionDto> blocks, bool isConfirmed)
+    private void SetConfirmed(List<BlockWithTransactionDto> blocks, bool confirmed)
     {
         foreach (var block in blocks)
         {
-            block.Confirmed = isConfirmed;
+            block.Confirmed = confirmed;
             foreach (var transaction in block.Transactions)
             {
-                transaction.IsConfirmed = isConfirmed;
+                transaction.Confirmed = confirmed;
                 foreach (var logEvent in transaction.LogEvents)
                 {
-                    logEvent.IsConfirmed = isConfirmed;
+                    logEvent.Confirmed = confirmed;
                 }
             }
         }

@@ -48,7 +48,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                     BlockHeight = logEvent.BlockHeight,
                     BlockTime = logEvent.BlockTime,
                     PreviousBlockHash = logEvent.PreviousBlockHash,
-                    IsConfirmed = logEvent.IsConfirmed,
+                    Confirmed = logEvent.Confirmed,
                     TransactionId = logEvent.TransactionId,
                     LogEvents = new List<LogEventDto> { logEvent }
                 };
@@ -71,7 +71,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                     BlockHash = transaction.BlockHash,
                     BlockHeight = transaction.BlockHeight,
                     BlockTime = transaction.BlockTime,
-                    Confirmed = transaction.IsConfirmed,
+                    Confirmed = transaction.Confirmed,
                     PreviousBlockHash = transaction.PreviousBlockHash,
                     Transactions = new List<TransactionDto>
                     {
@@ -132,7 +132,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                     BlockHeight = transaction.BlockHeight,
                     BlockTime = transaction.BlockTime,
                     PreviousBlockHash = transaction.PreviousBlockHash,
-                    IsConfirmed = transaction.IsConfirmed,
+                    Confirmed = transaction.Confirmed,
                     TransactionId = transaction.TransactionId,
                     LogEvents = new List<LogEventDto>()
                 };

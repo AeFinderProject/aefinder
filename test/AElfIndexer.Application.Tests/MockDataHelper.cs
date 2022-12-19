@@ -65,7 +65,7 @@ public class MockDataHelper
             //             "1KblGpvuuo+HSDdh0OhRq/vg3Ts4HoqcIwBeni/356pdEbgnnR2yqbpgvzNs+oNeBb4Ux2kE1XY9lk+p60LfWgA=",
             //         Index = 0,
             //         Status = TransactionStatus.Mined,
-            //         IsConfirmed = isConfirmed,
+            //         Confirmed = isConfirmed,
             //         ExtraProperties = new Dictionary<string, string>()
             //         {
             //             ["Version"] = "0",
@@ -84,7 +84,7 @@ public class MockDataHelper
             //                 BlockHash = currentBlockHash,
             //                 BlockNumber = blockNumber,
             //                 BlockTime = DateTime.Now,
-            //                 IsConfirmed = isConfirmed,
+            //                 Confirmed = isConfirmed,
             //                 TransactionId = "1ce2f46ebfe64f59bef89af5b3f44efb37e4b2ef9e28b28803e960c4a4a400b6",
             //                 ContractAddress = "pGa4e5hNGsgkfjEGm72TEvbF7aRDqKBd4LuXtab4ucMbXLcgJ",
             //                 EventName = "MiningInformationUpdated",
@@ -113,7 +113,7 @@ public class MockDataHelper
             //             "3USrQq3C0VJ28pg1SEA4DJ3vH3suBiW5oFIp53kW7989vdrbgWhCW82qD4ovb6Q9gZOJsqgu388++MMk/3cHDgE=",
             //         Index = 1,
             //         Status = TransactionStatus.Mined,
-            //         IsConfirmed = isConfirmed,
+            //         Confirmed = isConfirmed,
             //         ExtraProperties = new Dictionary<string, string>()
             //         {
             //             ["Version"] = "0",

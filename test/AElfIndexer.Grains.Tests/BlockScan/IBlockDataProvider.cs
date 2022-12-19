@@ -43,7 +43,7 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
         }
     }
 
-    private BlockWithTransactionDto MockBlock(string chainId, long blockNum, string previousHash, bool isConfirmed, string branch)
+    private BlockWithTransactionDto MockBlock(string chainId, long blockNum, string previousHash, bool confirmed, string branch)
     {
         var blockHash = $"BlockHash-{blockNum}-{branch}";
         var txId1 = Guid.NewGuid().ToString();
@@ -53,7 +53,7 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
             ChainId = chainId,
             BlockHash = blockHash,
             BlockHeight = blockNum,
-            Confirmed = isConfirmed,
+            Confirmed = confirmed,
             BlockTime = DateTime.UtcNow,
             PreviousBlockHash = previousHash,
             Transactions = new List<TransactionDto>
@@ -64,7 +64,7 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
                     TransactionId = txId1,
                     BlockHash = blockHash,
                     BlockHeight = blockNum,
-                    IsConfirmed = isConfirmed,
+                    Confirmed = confirmed,
                     BlockTime = DateTime.UtcNow,
                     PreviousBlockHash = previousHash,
                     LogEvents = new List<LogEventDto>
@@ -75,7 +75,7 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
                             TransactionId = txId1,
                             BlockHash = blockHash,
                             BlockHeight = blockNum,
-                            IsConfirmed = isConfirmed,
+                            Confirmed = confirmed,
                             BlockTime = DateTime.UtcNow,
                             PreviousBlockHash = previousHash,
                             ContractAddress = "ContractAddress" + blockNum % 10,
@@ -89,7 +89,7 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
                     TransactionId = txId2,
                     BlockHash = blockHash,
                     BlockHeight = blockNum,
-                    IsConfirmed = isConfirmed,
+                    Confirmed = confirmed,
                     BlockTime = DateTime.UtcNow,
                     PreviousBlockHash = previousHash,
                     LogEvents = new List<LogEventDto>
@@ -100,7 +100,7 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
                             TransactionId = txId2,
                             BlockHash = blockHash,
                             BlockHeight = blockNum,
-                            IsConfirmed = isConfirmed,
+                            Confirmed = confirmed,
                             BlockTime = DateTime.UtcNow,
                             PreviousBlockHash = previousHash,
                             ContractAddress = "FakeContractAddress1" + blockNum % 10,
@@ -112,7 +112,7 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
                             TransactionId = txId2,
                             BlockHash = blockHash,
                             BlockHeight = blockNum,
-                            IsConfirmed = isConfirmed,
+                            Confirmed = confirmed,
                             BlockTime = DateTime.UtcNow,
                             PreviousBlockHash = previousHash,
                             ContractAddress = "FakeContractAddress2" + blockNum % 10,

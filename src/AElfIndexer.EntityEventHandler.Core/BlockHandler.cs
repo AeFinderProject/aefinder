@@ -44,7 +44,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     public async Task HandleEventAsync(NewBlocksEto eventData)
     {
         _logger.LogInformation(
-            $"blocks is adding, start BlockNumber: {eventData.NewBlocks.First().BlockHeight} , IsConfirmed: {eventData.NewBlocks.First().Confirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockHeight}");
+            $"blocks is adding, start BlockNumber: {eventData.NewBlocks.First().BlockHeight} , Confirmed: {eventData.NewBlocks.First().Confirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockHeight}");
 
         var blockIndexList = new List<BlockIndex>();
         foreach (var newBlock in eventData.NewBlocks)

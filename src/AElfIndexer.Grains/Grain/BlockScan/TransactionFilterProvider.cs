@@ -48,7 +48,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
                     BlockHeight = transaction.BlockHeight,
                     PreviousBlockHash = transaction.PreviousBlockHash,
                     BlockTime = transaction.BlockTime,
-                    Confirmed = transaction.IsConfirmed,
+                    Confirmed = transaction.Confirmed,
                     Transactions = new List<TransactionDto>
                     {
                         transaction
