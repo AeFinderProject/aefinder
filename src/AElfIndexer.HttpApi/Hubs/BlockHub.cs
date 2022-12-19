@@ -30,10 +30,10 @@ public class BlockHub : AbpHub
         _blockScanAppService = blockScanAppService;
     }
 
-    //[Authorize]
-    public async Task Start(string clientId, string version)
+    [Authorize]
+    public async Task Start(string version)
     {
-        //var clientId = Context.User.FindFirst(o=>o.ToString().StartsWith("client_id")).Value;
+        var clientId = Context.User.FindFirst(o=>o.ToString().StartsWith("client_id")).Value;
         
         _connectionProvider.Add(clientId,Context.ConnectionId,version, new List<string>());
 
