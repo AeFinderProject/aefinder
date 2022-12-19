@@ -176,7 +176,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                 block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.LogEventCount)
             {
                 _logger.LogError(
-                    $"Wrong confirmed Transactions or LogEvents: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}, logevent count {block.Transactions.Sum(o => o.LogEvents.Count)}");
+                    $"Wrong Transactions or LogEvents: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}, logevent count {block.Transactions.Sum(o => o.LogEvents.Count)}");
                 break;            }
 
             filteredBlocks.Add(block);

@@ -211,7 +211,10 @@ public class BlockFilterProviderTests : AElfIndexerGrainTestBase
         blocks.Add(_blockDataProvider.Blocks[21][0]);
         blocks.Add(_blockDataProvider.Blocks[22][0]);
         var block = _blockDataProvider.Blocks[23][0].DeepClone();
-        block.Transactions.Add(new TransactionDto());
+        block.Transactions.Add(new TransactionDto
+        {
+            LogEvents = new List<LogEventDto>()
+        });
         blocks.Add(block);
         blocks.Add(_blockDataProvider.Blocks[24][0]);
         

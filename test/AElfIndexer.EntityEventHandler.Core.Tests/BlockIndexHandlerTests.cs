@@ -53,48 +53,48 @@ public class BlockIndexHandlerTests : EntityEventHandlerCoreBlockIndexTestBase
         var chainGrain = _clusterClient.GetGrain<IChainGrain>("AELF");
         await chainGrain.SetLatestConfirmBlockAsync("BlockHash100", 100);
 
-        await _blockIndexHandler.ProcessConfirmedBlocksAsync(new List<BlockWithTransactionDto>{new BlockWithTransactionDto
+        await _blockIndexHandler.ProcessConfirmedBlocksAsync(new BlockWithTransactionDto
         {
             ChainId = "AELF",
             BlockHeight = 90,
             BlockHash = "BlockHash90"
-        }});
+        });
 
         var chainStatus = await chainGrain.GetChainStatusAsync();
         chainStatus.ConfirmedBlockHash.ShouldBe("BlockHash100");
         chainStatus.ConfirmedBlockHeight.ShouldBe(100);
         
-        await _blockIndexHandler.ProcessConfirmedBlocksAsync(new List<BlockWithTransactionDto>{new BlockWithTransactionDto
+        await _blockIndexHandler.ProcessConfirmedBlocksAsync(new BlockWithTransactionDto
         {
             ChainId = "AELF",
             BlockHeight = 111,
             BlockHash = "BlockHash111",
             PreviousBlockHash = "BlockHash110"
-        }});
+        });
         
         chainStatus = await chainGrain.GetChainStatusAsync();
         chainStatus.ConfirmedBlockHash.ShouldBe("BlockHash111");
         chainStatus.ConfirmedBlockHeight.ShouldBe(111);
         
-        await _blockIndexHandler.ProcessConfirmedBlocksAsync(new List<BlockWithTransactionDto>{new BlockWithTransactionDto
+        await _blockIndexHandler.ProcessConfirmedBlocksAsync(new BlockWithTransactionDto
         {
             ChainId = "AELF",
             BlockHeight = 121,
             BlockHash = "BlockHash121",
             PreviousBlockHash = "BlockHash120"
-        }});
+        });
         
         chainStatus = await chainGrain.GetChainStatusAsync();
         chainStatus.ConfirmedBlockHash.ShouldBe("BlockHash111");
         chainStatus.ConfirmedBlockHeight.ShouldBe(111);
         
-        await _blockIndexHandler.ProcessConfirmedBlocksAsync(new List<BlockWithTransactionDto>{new BlockWithTransactionDto
+        await _blockIndexHandler.ProcessConfirmedBlocksAsync(new BlockWithTransactionDto
         {
             ChainId = "AELF",
             BlockHeight = 112,
             BlockHash = "BlockHash112",
             PreviousBlockHash = "BlockHash111"
-        }});
+        });
         
         chainStatus = await chainGrain.GetChainStatusAsync();
         chainStatus.ConfirmedBlockHash.ShouldBe("BlockHash112");

@@ -22,7 +22,7 @@ namespace AElfIndexer;
 public interface IBlockIndexHandler
 {
     Task ProcessNewBlockAsync(BlockWithTransactionDto block);
-    Task ProcessConfirmedBlocksAsync(List<BlockWithTransactionDto> confirmBlocks);
+    Task ProcessConfirmedBlocksAsync(BlockWithTransactionDto confirmBlock);
 }
 
 public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
@@ -55,10 +55,12 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
             {
                 var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(clientId);
                 var clientInfo = await clientGrain.GetClientInfoAsync();
+                var subscriptionInfo = await clientGrain.GetSubscriptionInfoAsync();
                 if (clientInfo.ScanModeInfo.ScanMode == ScanMode.NewBlock &&
-                    clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= block.BlockHeight)
+                    clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= block.BlockHeight &&
+                    !subscriptionInfo.OnlyConfirmedBlock)
                 {
-                    Logger.LogDebug($"HandleConfirmedBlock: {block.ChainId} Client: {clientId} BlockHeight: {block.BlockHeight} BlockHash: {block.BlockHash}");
+                    Logger.LogDebug($"HandleNewBlock: {block.ChainId} Client: {clientId} BlockHeight: {block.BlockHeight} BlockHash: {block.BlockHash}");
                     var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(clientId);
                     await blockScanGrain.HandleNewBlockAsync(block);
                 }
@@ -73,25 +75,24 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
         }
     }
 
-    public async Task ProcessConfirmedBlocksAsync(List<BlockWithTransactionDto> confirmBlocks)
+    public async Task ProcessConfirmedBlocksAsync(BlockWithTransactionDto confirmBlock)
     {
         try
         {
-            var firstBlock = confirmBlocks.First();
-            var chainId = firstBlock.ChainId;
+            var chainId = confirmBlock.ChainId;
 
             var chainGrain = _clusterClient.GetGrain<IChainGrain>(chainId);
             var chainStatus = await chainGrain.GetChainStatusAsync();
-            if (chainStatus.ConfirmedBlockHeight >= firstBlock.BlockHeight)
+            if (chainStatus.ConfirmedBlockHeight >= confirmBlock.BlockHeight)
             {
                 return;
             }
 
-            if (chainStatus.ConfirmedBlockHash != firstBlock.PreviousBlockHash ||
-                chainStatus.ConfirmedBlockHeight != firstBlock.BlockHeight - 1)
+            if (chainStatus.ConfirmedBlockHash != confirmBlock.PreviousBlockHash ||
+                chainStatus.ConfirmedBlockHeight != confirmBlock.BlockHeight - 1)
             {
                 var start = chainStatus.ConfirmedBlockHeight + 1;
-                var end = firstBlock.BlockHeight - 1;
+                var end = confirmBlock.BlockHeight - 1;
                 var count = await _blockAppService.GetBlockCountAsync(new GetBlocksInput
                 {
                     ChainId = chainId,
@@ -106,8 +107,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                 }
             }
 
-            await chainGrain.SetLatestConfirmBlockAsync(confirmBlocks.Last().BlockHash,
-                confirmBlocks.Last().BlockHeight);
+            await chainGrain.SetLatestConfirmBlockAsync(confirmBlock.BlockHash, confirmBlock.BlockHeight);
 
             var clientManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
             var clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync(chainId);
@@ -116,11 +116,11 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                 var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(clientId);
                 var clientInfo = await clientGrain.GetClientInfoAsync();
                 if (clientInfo.ScanModeInfo.ScanMode == ScanMode.NewBlock &&
-                    clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= confirmBlocks.First().BlockHeight)
+                    clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= confirmBlock.BlockHeight)
                 {
-                    Logger.LogDebug($"HandleConfirmedBlock: {chainId} Client: {clientId} StartBlockHeight: {firstBlock.BlockHeight} EndBlockHeight: {confirmBlocks.Last().BlockHeight}");
+                    Logger.LogDebug($"HandleConfirmedBlock: {chainId} Client: {clientId} BlockHeight: {confirmBlock.BlockHeight}");
                     var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(clientId);
-                    await blockScanGrain.HandleConfirmedBlockAsync(confirmBlocks);
+                    await blockScanGrain.HandleConfirmedBlockAsync(confirmBlock);
                 }
             });
 

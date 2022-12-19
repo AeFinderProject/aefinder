@@ -10,6 +10,6 @@ public interface IBlockScanGrain : IGrainWithStringKey
 {
     Task HandleHistoricalBlockAsync();
     Task HandleNewBlockAsync(BlockWithTransactionDto block);
-    Task HandleConfirmedBlockAsync(List<BlockWithTransactionDto> blocks);
+    Task HandleConfirmedBlockAsync(BlockWithTransactionDto block);
     Task<Guid> InitializeAsync(string chainId, string clientId, string version);
 }
