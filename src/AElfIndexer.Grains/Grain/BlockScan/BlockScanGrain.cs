@@ -262,7 +262,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else
         {
-            _logger.LogInformation($"Not linked confirmed block, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+            _logger.LogInformation(
+                $"Not linked confirmed block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, current block height: {State.ScannedConfirmedBlockHeight}");
             scannedBlocks.AddRange(await blockFilterProvider.GetBlocksAsync(State.ChainId,
                 State.ScannedConfirmedBlockHeight + 1, block.BlockHeight, true, null));
             
@@ -272,7 +273,15 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         
         scannedBlocks =
             await blockFilterProvider.FilterBlocksAsync(scannedBlocks, subscriptionInfo.SubscribeEvents);
-        
+
+        if (scannedBlocks.Count == 0)
+        {
+            var message =
+                $"Cannot get confirmed blocks: from {State.ScannedConfirmedBlockHeight + 1} to {block.BlockHeight}";
+            _logger.LogError(message);
+            throw new ApplicationException(message);
+        }
+
         if (!subscriptionInfo.OnlyConfirmedBlock)
         {
             foreach (var b in scannedBlocks)
