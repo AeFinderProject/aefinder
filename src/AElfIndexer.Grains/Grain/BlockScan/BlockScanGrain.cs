@@ -205,12 +205,26 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else
         {
-            _logger.LogInformation($"Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+            _logger.LogInformation($"Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, from height: {GetMinScannedBlockHeight()}");
             blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, GetMinScannedBlockHeight(),
                 block.BlockHeight, false, null);
+                
+            if (blocks.Count == 0)
+            {
+                var message =
+                    $"Cannot get blocks: from {GetMinScannedBlockHeight()} to {block.BlockHeight}";
+                _logger.LogError(message);
+                throw new ApplicationException(message);
+            }
         }
 
         blocks = await blockFilterProvider.FilterIncompleteBlocksAsync(State.ChainId, blocks);
+        if (blocks.Count == 0)
+        {
+            var message = $"Cannot filter incomplete blocks";
+            _logger.LogError(message);
+            throw new ApplicationException(message);
+        }
 
         var unPushedBlock = GetUnPushedBlocks(blocks);
         if (unPushedBlock.Count == 0)
