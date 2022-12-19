@@ -15,15 +15,9 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
         return base.OnActivateAsync();
     }
 
-    public override Task OnDeactivateAsync()
-    {
-        this.WriteStateAsync();
-        return base.OnDeactivateAsync();
-    }
-
     public ChainGrain(ILogger<ChainGrain> logger)
     {
-        this._logger = logger;
+        _logger = logger;
 
     }
 

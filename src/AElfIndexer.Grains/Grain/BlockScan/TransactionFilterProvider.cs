@@ -3,18 +3,21 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block;
 using AElfIndexer.Block.Dtos;
+using Microsoft.Extensions.Logging;
 
 namespace AElfIndexer.Grains.Grain.BlockScan;
 
 public class TransactionFilterProvider : IBlockFilterProvider
 {
     private readonly IBlockAppService _blockAppService;
+    private readonly ILogger<TransactionFilterProvider> _logger;
 
     public BlockFilterType FilterType { get; } = BlockFilterType.Transaction;
 
-    public TransactionFilterProvider(IBlockAppService blockAppService)
+    public TransactionFilterProvider(IBlockAppService blockAppService, ILogger<TransactionFilterProvider> logger)
     {
         _blockAppService = blockAppService;
+        _logger = logger;
     }
 
     public async Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
@@ -45,7 +48,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
                     BlockHeight = transaction.BlockHeight,
                     PreviousBlockHash = transaction.PreviousBlockHash,
                     BlockTime = transaction.BlockTime,
-                    Confirmed = transaction.IsConfirmed,
+                    Confirmed = transaction.Confirmed,
                     Transactions = new List<TransactionDto>
                     {
                         transaction
@@ -127,6 +130,8 @@ public class TransactionFilterProvider : IBlockFilterProvider
             if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
                 block.Transactions.Count != blockDto.TransactionIds.Count)
             {
+                _logger.LogError(
+                    $"Wrong Transactions: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}");
                 break;
             }
 
@@ -153,12 +158,15 @@ public class TransactionFilterProvider : IBlockFilterProvider
         {
             if (block.PreviousBlockHash != previousBlockHash && previousBlockHash!=null  || block.BlockHeight != previousBlockHeight + 1)
             {
+                _logger.LogError($"Wrong confirmed previousBlockHash or previousBlockHash: block hash {block.BlockHash}, block height {block.BlockHeight}");
                 break;
             }
 
             if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
                 block.Transactions.Count != blockDto.TransactionIds.Count)
             {
+                _logger.LogError(
+                    $"Wrong confirmed Transactions: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}");
                 break;
             }
             

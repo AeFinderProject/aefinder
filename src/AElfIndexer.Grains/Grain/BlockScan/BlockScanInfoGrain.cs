@@ -14,12 +14,6 @@ public class BlockScanInfoGrain : Grain<BlockScanInfoState>, IBlockScanInfoGrain
         return base.OnActivateAsync();
     }
 
-    public override Task OnDeactivateAsync()
-    {
-        this.WriteStateAsync();
-        return base.OnDeactivateAsync();
-    }
-
     public Task<ClientInfo> GetClientInfoAsync()
     {
         return Task.FromResult(State.ClientInfo);

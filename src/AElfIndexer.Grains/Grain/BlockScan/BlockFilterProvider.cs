@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block;
 using AElfIndexer.Block.Dtos;
+using Microsoft.Extensions.Logging;
 using Volo.Abp.ObjectMapping;
 
 namespace AElfIndexer.Grains.Grain.BlockScan;
@@ -10,12 +11,14 @@ namespace AElfIndexer.Grains.Grain.BlockScan;
 public class BlockFilterProvider : IBlockFilterProvider
 {
     private readonly IBlockAppService _blockAppService;
+    private readonly ILogger<BlockFilterProvider> _logger;
 
     public BlockFilterType FilterType { get; } = BlockFilterType.Block;
 
-    public BlockFilterProvider(IBlockAppService blockAppService)
+    public BlockFilterProvider(IBlockAppService blockAppService, ILogger<BlockFilterProvider> logger)
     {
         _blockAppService = blockAppService;
+        _logger = logger;
     }
 
     public async Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
@@ -65,6 +68,7 @@ public class BlockFilterProvider : IBlockFilterProvider
             //TODO previousBlockHash is null.
             if (block.PreviousBlockHash != previousBlockHash && previousBlockHash!=null || block.BlockHeight != previousBlockHeight + 1)
             {
+                _logger.LogError($"Wrong confirmed previousBlockHash or previousBlockHash: block hash {block.BlockHash}, block height {block.BlockHeight}");
                 break;
             }
             

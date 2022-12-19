@@ -25,8 +25,8 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
             State.NewVersion = newVersion;
         }
 
+        await WriteStateAsync();
         return newVersion;
-        
     }
 
     public async Task<List<SubscriptionInfo>> GetSubscriptionInfoAsync(string version)
@@ -57,12 +57,12 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
 
     public async Task<bool> IsVersionAvailableAsync(string version)
     {
-        return version == State.NewVersion || version == State.CurrentVersion;
+        return !string.IsNullOrWhiteSpace(version) && (version == State.NewVersion || version == State.CurrentVersion);
     }
 
     public async Task UpgradeVersionAsync()
     {
-        if (State.CurrentVersion == State.NewVersion || string.IsNullOrWhiteSpace(State.NewVersion))
+        if (string.IsNullOrWhiteSpace(State.NewVersion))
         {
             return;
         }
@@ -102,6 +102,22 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
             CurrentVersion = State.CurrentVersion,
             NewVersion = State.NewVersion
         };
+    }
+
+    public async Task StopAsync(string version)
+    {
+        State.VersionInfos.Remove(version);
+        if (State.CurrentVersion == version)
+        {
+            State.CurrentVersion = null;
+        }
+        
+        if (State.NewVersion == version)
+        {
+            State.NewVersion = null;
+        }
+        
+        await WriteStateAsync();
     }
 
     public override async Task OnActivateAsync()

@@ -4,3 +4,8 @@ public abstract class AElfIndexerApplicationTestBase : AElfIndexerTestBase<AElfI
 {
 
 }
+
+public class AElfIndexerApplicationOrleansTestBase:AElfIndexerOrleansTestBase<AElfIndexerApplicationTestModule>
+{
+    
+}

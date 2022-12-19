@@ -4,3 +4,8 @@ public class AElfIndexerEntityEventHandlerCoreTestBase:AElfIndexerOrleansTestBas
 {
     
 }
+
+public class EntityEventHandlerCoreBlockIndexTestBase:AElfIndexerOrleansTestBase<EntityEventHandlerCoreBlockIndexTestModule>
+{
+    
+}

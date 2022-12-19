@@ -44,7 +44,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     public async Task HandleEventAsync(NewBlocksEto eventData)
     {
         _logger.LogInformation(
-            $"blocks is adding, start BlockNumber: {eventData.NewBlocks.First().BlockHeight} , IsConfirmed: {eventData.NewBlocks.First().Confirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockHeight}");
+            $"blocks is adding, start BlockNumber: {eventData.NewBlocks.First().BlockHeight} , Confirmed: {eventData.NewBlocks.First().Confirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockHeight}");
 
         var blockIndexList = new List<BlockIndex>();
         foreach (var newBlock in eventData.NewBlocks)
@@ -90,10 +90,13 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         }
 
         var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
-        foreach (var dto in blockDtos)
+        _ = Task.Run(async () =>
         {
-            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(dto); });
-        }
+            foreach (var dto in blockDtos)
+            {
+                await _blockIndexHandler.ProcessNewBlockAsync(dto);
+            }
+        });
     }
     
     public async Task HandleEventAsync(ConfirmBlocksEto eventData)
@@ -202,7 +205,13 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         }
         
         var blockDtos = _objectMapper.Map<List<ConfirmBlockEto>, List<BlockWithTransactionDto>>(eventData.ConfirmBlocks);
-        _ = Task.Run(async () => { await _blockIndexHandler.ProcessConfirmedBlocksAsync(blockDtos); });
+        _ = Task.Run(async () =>
+        {
+            foreach (var dto in blockDtos)
+            {
+                await _blockIndexHandler.ProcessConfirmedBlocksAsync(dto);
+            }
+        });
     }
 
     private async Task<List<TransactionIndex>> GetTransactionListAsync(string chainId,string blockHash)

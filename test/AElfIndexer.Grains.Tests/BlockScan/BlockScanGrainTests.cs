@@ -109,17 +109,79 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         subscribedBlock.Count.ShouldBe(62);
         subscribedBlock.Last().BlockHeight.ShouldBe(54);
         
-        await scanGrain.HandleConfirmedBlockAsync(new List<BlockWithTransactionDto>{_blockDataProvider.Blocks[46].First()});
+        await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[46].First());
         subscribedBlock.Count.ShouldBe(63);
         subscribedBlock.Last().BlockHeight.ShouldBe(46);
         
-        await scanGrain.HandleConfirmedBlockAsync(new List<BlockWithTransactionDto>{_blockDataProvider.Blocks[48].First()});
+        await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[48].First());
         subscribedBlock.Count.ShouldBe(65);
         subscribedBlock.Last().BlockHeight.ShouldBe(48);
         
-        await scanGrain.HandleConfirmedBlockAsync(new List<BlockWithTransactionDto>{_blockDataProvider.Blocks[56].First()});
+        await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[56].First());
         subscribedBlock.Count.ShouldBe(67);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
+    }
+
+    [Fact]
+    public async Task Block_WrongVersion_Test()
+    {
+        var chainId = "AELF";
+        var clientId = "DApp";
+
+        var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
+        await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
+            _blockDataProvider.Blocks[60].First().BlockHeight);
+        await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
+            _blockDataProvider.Blocks[50].First().BlockHeight);
+
+        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
+        var version = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>
+        {
+            new SubscriptionInfo
+            {
+                ChainId = chainId,
+                OnlyConfirmedBlock = true,
+                StartBlockNumber = 21,
+                FilterType = BlockFilterType.Block
+            }
+        });
+
+        var id = chainId + clientId + version + BlockFilterType.Block;
+
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
+        {
+            ChainId = chainId,
+            OnlyConfirmedBlock = false,
+            StartBlockNumber = 21
+        });
+
+        var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
+        var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
+        var stream =
+            Cluster.Client
+                .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
+                .GetStream<SubscribedBlockDto>(streamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
+
+        var subscribedBlock = new List<BlockDto>();
+        await stream.SubscribeAsync((v, t) =>
+        {
+            v.ChainId.ShouldBe(chainId);
+            v.ClientId.ShouldBe(clientId);
+            v.Version.ShouldBe(version);
+            v.FilterType.ShouldBe(BlockFilterType.Block);
+            subscribedBlock.AddRange(v.Blocks);
+            return Task.CompletedTask;
+        });
+
+        await scanGrain.HandleNewBlockAsync(new BlockWithTransactionDto());
+        subscribedBlock.Count.ShouldBe(0);
+
+        await clientGrain.StopAsync(version);
+        
+        await scanGrain.HandleHistoricalBlockAsync();
+
+        subscribedBlock.Count.ShouldBe(0);
     }
 
     [Fact]
@@ -172,7 +234,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             return Task.CompletedTask;
         });
 
-        await scanGrain.HandleConfirmedBlockAsync(new List<BlockWithTransactionDto>{new BlockWithTransactionDto() });
+        await scanGrain.HandleConfirmedBlockAsync(new BlockWithTransactionDto());
         subscribedBlock.Count.ShouldBe(0);
 
         await scanGrain.HandleHistoricalBlockAsync();
@@ -235,14 +297,13 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
-
-        await scanGrain.HandleNewBlockAsync(new BlockWithTransactionDto());
-        subscribedBlock.Count.ShouldBe(0);
-
+        
         await scanGrain.HandleHistoricalBlockAsync();
-
+        
         subscribedBlock.Count.ShouldBe(50);
-        subscribedBlock.Count(o => o.Confirmed).ShouldBe(25);
+        
+        await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[46].First());
+        subscribedBlock.Count.ShouldBe(50);
     }
 
     [Theory]
@@ -322,7 +383,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
 
-        await scanGrain.HandleConfirmedBlockAsync(new List<BlockWithTransactionDto> { _blockDataProvider.Blocks[50].First() });
+        await scanGrain.HandleConfirmedBlockAsync( _blockDataProvider.Blocks[50].First() );
         subscribedBlock.Count.ShouldBe(60);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
 

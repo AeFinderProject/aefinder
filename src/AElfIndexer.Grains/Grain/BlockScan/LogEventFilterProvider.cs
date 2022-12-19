@@ -3,18 +3,21 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block;
 using AElfIndexer.Block.Dtos;
+using Microsoft.Extensions.Logging;
 
 namespace AElfIndexer.Grains.Grain.BlockScan;
 
 public class LogEventFilterProvider : IBlockFilterProvider
 {
     private readonly IBlockAppService _blockAppService;
+    private readonly ILogger<LogEventFilterProvider> _logger;
 
     public BlockFilterType FilterType { get; } = BlockFilterType.LogEvent;
 
-    public LogEventFilterProvider(IBlockAppService blockAppService)
+    public LogEventFilterProvider(IBlockAppService blockAppService, ILogger<LogEventFilterProvider> logger)
     {
         _blockAppService = blockAppService;
+        _logger = logger;
     }
 
     public async Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
@@ -45,7 +48,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                     BlockHeight = logEvent.BlockHeight,
                     BlockTime = logEvent.BlockTime,
                     PreviousBlockHash = logEvent.PreviousBlockHash,
-                    IsConfirmed = logEvent.IsConfirmed,
+                    Confirmed = logEvent.Confirmed,
                     TransactionId = logEvent.TransactionId,
                     LogEvents = new List<LogEventDto> { logEvent }
                 };
@@ -68,7 +71,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                     BlockHash = transaction.BlockHash,
                     BlockHeight = transaction.BlockHeight,
                     BlockTime = transaction.BlockTime,
-                    Confirmed = transaction.IsConfirmed,
+                    Confirmed = transaction.Confirmed,
                     PreviousBlockHash = transaction.PreviousBlockHash,
                     Transactions = new List<TransactionDto>
                     {
@@ -129,7 +132,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
                     BlockHeight = transaction.BlockHeight,
                     BlockTime = transaction.BlockTime,
                     PreviousBlockHash = transaction.PreviousBlockHash,
-                    IsConfirmed = transaction.IsConfirmed,
+                    Confirmed = transaction.Confirmed,
                     TransactionId = transaction.TransactionId,
                     LogEvents = new List<LogEventDto>()
                 };
@@ -170,10 +173,11 @@ public class LogEventFilterProvider : IBlockFilterProvider
         {
             if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
                 block.Transactions.Count != blockDto.TransactionIds.Count ||
-                block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.TransactionIds.LongCount())
+                block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.LogEventCount)
             {
-                break;
-            }
+                _logger.LogError(
+                    $"Wrong Transactions or LogEvents: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}, logevent count {block.Transactions.Sum(o => o.LogEvents.Count)}");
+                break;            }
 
             filteredBlocks.Add(block);
         }
@@ -197,13 +201,16 @@ public class LogEventFilterProvider : IBlockFilterProvider
         {
             if (block.PreviousBlockHash != previousBlockHash && previousBlockHash!=null  || block.BlockHeight != previousBlockHeight + 1)
             {
+                _logger.LogError($"Wrong confirmed previousBlockHash or previousBlockHash: block hash {block.BlockHash}, block height {block.BlockHeight}");
                 break;
             }
             
             if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
                 block.Transactions.Count != blockDto.TransactionIds.Count ||
-                block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.TransactionIds.LongCount())
+                block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.LogEventCount)
             {
+                _logger.LogError(
+                    $"Wrong confirmed Transactions or LogEvents: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}, logevent count {block.Transactions.Sum(o => o.LogEvents.Count)}");
                 break;
             }
 
