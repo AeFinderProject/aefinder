@@ -90,36 +90,20 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
-        subscribedBlock.Count.ShouldBe(55);
-        subscribedBlock.Last().BlockHeight.ShouldBe(50);
+        subscribedBlock.Count.ShouldBe(70);
+        subscribedBlock.Last().BlockHeight.ShouldBe(60);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[49].First());
-        subscribedBlock.Count.ShouldBe(55);
-        subscribedBlock.Last().BlockHeight.ShouldBe(50);
+        subscribedBlock.Count.ShouldBe(70);
+        subscribedBlock.Last().BlockHeight.ShouldBe(60);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[51].First());
-        subscribedBlock.Count.ShouldBe(56);
-        subscribedBlock.Last().BlockHeight.ShouldBe(51);
+        subscribedBlock.Count.ShouldBe(70);
+        subscribedBlock.Last().BlockHeight.ShouldBe(60);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[53].First());
-        subscribedBlock.Count.ShouldBe(61);
-        subscribedBlock.Last().BlockHeight.ShouldBe(53);
-        
-        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[54].First());
-        subscribedBlock.Count.ShouldBe(62);
-        subscribedBlock.Last().BlockHeight.ShouldBe(54);
-        
-        await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[46].First());
-        subscribedBlock.Count.ShouldBe(63);
-        subscribedBlock.Last().BlockHeight.ShouldBe(46);
-        
-        await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[48].First());
-        subscribedBlock.Count.ShouldBe(65);
-        subscribedBlock.Last().BlockHeight.ShouldBe(48);
-        
-        await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[56].First());
-        subscribedBlock.Count.ShouldBe(67);
-        subscribedBlock.Last().BlockHeight.ShouldBe(50);
+        subscribedBlock.Count.ShouldBe(70);
+        subscribedBlock.Last().BlockHeight.ShouldBe(60);
     }
 
     [Fact]
