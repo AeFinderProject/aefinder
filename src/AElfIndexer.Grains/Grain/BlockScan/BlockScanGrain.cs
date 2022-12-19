@@ -340,14 +340,14 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var unPushedBlock = new List<BlockWithTransactionDto>();
         foreach (var b in blocks)
         {
-            var minScannedBlockHeight = GetMinScannedBlockHeight();
-            if (minScannedBlockHeight != 0
-                && minScannedBlockHeight < b.BlockHeight
-                && (!State.ScannedBlocks.TryGetValue(b.BlockHeight - 1, out var preScannedBlocks) ||
-                    !preScannedBlocks.Contains(b.PreviousBlockHash)))
-            {
-                continue;
-            }
+            // var minScannedBlockHeight = GetMinScannedBlockHeight();
+            // if (minScannedBlockHeight != 0
+            //     && minScannedBlockHeight < b.BlockHeight
+            //     && (!State.ScannedBlocks.TryGetValue(b.BlockHeight - 1, out var preScannedBlocks) ||
+            //         !preScannedBlocks.Contains(b.PreviousBlockHash)))
+            // {
+            //     continue;
+            // }
 
             if (!State.ScannedBlocks.TryGetValue(b.BlockHeight, out var scannedBlocks))
             {
