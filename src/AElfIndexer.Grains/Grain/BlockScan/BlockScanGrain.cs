@@ -218,15 +218,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             }
         }
 
-        blocks = await blockFilterProvider.FilterIncompleteBlocksAsync(State.ChainId, blocks);
-        if (blocks.Count == 0)
-        {
-            var message = $"Cannot filter incomplete blocks";
-            _logger.LogError(message);
-            throw new ApplicationException(message);
-        }
-
-        var unPushedBlock = GetUnPushedBlocks(blocks);
+        var unPushedBlock = await GetUnPushedBlocksAsync(blocks, blockFilterProvider);
         if (unPushedBlock.Count == 0)
         {
             _logger.LogInformation($"HandleNewBlock failed {this.GetPrimaryKeyString()}, no unpushed block. block height: {block.BlockHeight}, block hash: {block.BlockHash}");
@@ -335,37 +327,51 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         await WriteStateAsync();
     }
 
-    private List<BlockWithTransactionDto> GetUnPushedBlocks(List<BlockWithTransactionDto> blocks)
+    private async Task<List<BlockWithTransactionDto>> GetUnPushedBlocksAsync(List<BlockWithTransactionDto> blocks, IBlockFilterProvider blockFilterProvider)
     {
         var unPushedBlock = new List<BlockWithTransactionDto>();
-        _logger.LogInformation($"Get unpushed block, from {blocks.First().BlockHeight} to {blocks.Last().BlockHeight}");
-        foreach (var b in blocks)
+        while (unPushedBlock.Count ==0)
         {
-            var minScannedBlockHeight = GetMinScannedBlockHeight();
-            if (minScannedBlockHeight != 0
-                && minScannedBlockHeight < b.BlockHeight
-                && (!State.ScannedBlocks.TryGetValue(b.BlockHeight - 1, out var preScannedBlocks) ||
-                    !preScannedBlocks.Contains(b.PreviousBlockHash)))
+            blocks = await blockFilterProvider.FilterIncompleteBlocksAsync(State.ChainId, blocks);
+            if (blocks.Count == 0)
             {
-                _logger.LogError($"UnLinked block, height {b.BlockHeight}, hash {b.BlockHash}");
-                continue;
+                var message = $"Cannot filter incomplete blocks";
+                _logger.LogError(message);
+                throw new ApplicationException(message);
+            }
+            
+            foreach (var b in blocks)
+            {
+                var minScannedBlockHeight = GetMinScannedBlockHeight();
+                if (minScannedBlockHeight != 0
+                    && minScannedBlockHeight < b.BlockHeight
+                    && (!State.ScannedBlocks.TryGetValue(b.BlockHeight - 1, out var preScannedBlocks) ||
+                        !preScannedBlocks.Contains(b.PreviousBlockHash)))
+                {
+                    _logger.LogError($"UnLinked block, height {b.BlockHeight}, hash {b.BlockHash}");
+                    continue;
+                }
+
+                if (!State.ScannedBlocks.TryGetValue(b.BlockHeight, out var scannedBlocks))
+                {
+                    scannedBlocks = new HashSet<string>();
+                }
+
+                if (scannedBlocks.Add(b.BlockHash))
+                {
+                    unPushedBlock.Add(b);
+                }
+
+                State.ScannedBlocks[b.BlockHeight] = scannedBlocks;
             }
 
-            if (!State.ScannedBlocks.TryGetValue(b.BlockHeight, out var scannedBlocks))
+            var startBlockHeight = blocks.Last().BlockHeight + 1;
+            blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, startBlockHeight,
+                startBlockHeight + _blockScanOptions.BatchPushBlockCount - 1, false, null);
+            if (blocks.Count == 0)
             {
-                scannedBlocks = new HashSet<string>();
+                break;
             }
-
-            if (scannedBlocks.Add(b.BlockHash))
-            {
-                unPushedBlock.Add(b);
-            }
-            else
-            {
-                _logger.LogError($"Pushed block, height {b.BlockHeight}, hash {b.BlockHash}");
-            }
-
-            State.ScannedBlocks[b.BlockHeight] = scannedBlocks;
         }
         
         return unPushedBlock;
