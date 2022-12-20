@@ -40,12 +40,12 @@ public class AElfIndexerDbMigrationService : ITransientDependency
 
     public async Task MigrateAsync()
     {
-        var initialMigrationAdded = AddInitialMigrationIfNotExist();
-
-        if (initialMigrationAdded)
-        {
-            return;
-        }
+        // var initialMigrationAdded = AddInitialMigrationIfNotExist();
+        //
+        // if (initialMigrationAdded)
+        // {
+        //     return;
+        // }
 
         Logger.LogInformation("Started database migrations...");
 
