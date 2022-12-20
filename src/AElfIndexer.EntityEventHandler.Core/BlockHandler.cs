@@ -92,17 +92,18 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
                     $"LogEvent is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockHeight}, total logevent count:{logEventIndexList.Count}");
                 await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
             }
+            
+            var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
+            foreach (var dto in blockDtos)
+            {
+                _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(dto); });
+            }
         }
         catch (Exception e)
         {
-            _logger.LogError(e, $"Handle newBlocks add event error:{e.Message}，start BlockHeight: {eventData.NewBlocks.First().BlockHeight}, end BlockHeight: {eventData.NewBlocks.Last().BlockHeight}");
+            _logger.LogError(e,
+                $"Handle newBlocks add event error:{e.Message}，start BlockHeight: {eventData.NewBlocks.First().BlockHeight}, end BlockHeight: {eventData.NewBlocks.Last().BlockHeight}");
             HandleEventAsync(eventData);
-        }
-
-        var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
-        foreach (var dto in blockDtos)
-        {
-            _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(dto); });
         }
     }
 
