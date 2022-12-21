@@ -376,7 +376,6 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     && (!State.ScannedBlocks.TryGetValue(b.BlockHeight - 1, out var preScannedBlocks) ||
                         !preScannedBlocks.Contains(b.PreviousBlockHash)))
                 {
-                    _logger.LogError($"UnLinked block, height {b.BlockHeight}, hash {b.BlockHash}");
                     continue;
                 }
 
