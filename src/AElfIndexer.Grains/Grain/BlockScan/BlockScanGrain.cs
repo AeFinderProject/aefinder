@@ -439,7 +439,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             var streamProvider = GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
 
             _stream = streamProvider.GetStream<SubscribedBlockDto>(
-                Guid.NewGuid(), AElfIndexerApplicationConsts.MessageStreamNamespace);
+                State.MessageStreamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
         }
 
         await base.OnActivateAsync();

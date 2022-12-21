@@ -26,4 +26,12 @@ public class BlockScanController: AElfIndexerController
     {
         return _blockScanAppService.StopAsync(ClientId,version);
     }
+    
+    [HttpPost]
+    [Route("upgrade")]
+    [Authorize]
+    public virtual Task UpgradeVersionAsync()
+    {
+        return _blockScanAppService.UpgradeVersionAsync(ClientId);
+    }
 }
