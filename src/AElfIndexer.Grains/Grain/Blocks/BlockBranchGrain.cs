@@ -22,16 +22,16 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         _logger = logger;
     }
 
-    public override Task OnActivateAsync()
+    public override async Task OnActivateAsync()
     {
-        ReadStateAsync();
-        return base.OnActivateAsync();
+        await ReadStateAsync();
+        await base.OnActivateAsync();
     }
 
-    public override Task OnDeactivateAsync()
+    public override async Task OnDeactivateAsync()
     {
-        WriteStateAsync();
-        return base.OnDeactivateAsync();
+        await WriteStateAsync();
+        await base.OnDeactivateAsync();
     }
 
     public async Task<Dictionary<string, BlockData>> GetBlockDictionary()

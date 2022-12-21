@@ -9,10 +9,10 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
 {
     private readonly ILogger<ChainGrain> _logger;
 
-    public override Task OnActivateAsync()
+    public override async Task OnActivateAsync()
     {
-        this.ReadStateAsync();
-        return base.OnActivateAsync();
+        await this.ReadStateAsync();
+        await base.OnActivateAsync();
     }
 
     public ChainGrain(ILogger<ChainGrain> logger)

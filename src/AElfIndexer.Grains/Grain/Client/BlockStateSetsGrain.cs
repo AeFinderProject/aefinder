@@ -82,15 +82,15 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
         await WriteStateAsync();
     }
 
-    public override Task OnActivateAsync()
+    public override async Task OnActivateAsync()
     {
-        ReadStateAsync();
-        return base.OnActivateAsync();
+        await ReadStateAsync();
+        await base.OnActivateAsync();
     }
 
-    public override Task OnDeactivateAsync()
+    public override async Task OnDeactivateAsync()
     {
-        WriteStateAsync();
-        return base.OnDeactivateAsync();
+        await WriteStateAsync();
+        await base.OnDeactivateAsync();
     }
 }

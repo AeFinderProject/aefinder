@@ -8,10 +8,10 @@ namespace AElfIndexer.Grains.Grain.BlockScan;
 
 public class BlockScanInfoGrain : Grain<BlockScanInfoState>, IBlockScanInfoGrain
 {
-    public override Task OnActivateAsync()
+    public override async Task OnActivateAsync()
     {
-        this.ReadStateAsync();
-        return base.OnActivateAsync();
+        await this.ReadStateAsync();
+        await base.OnActivateAsync();
     }
 
     public Task<ClientInfo> GetClientInfoAsync()
