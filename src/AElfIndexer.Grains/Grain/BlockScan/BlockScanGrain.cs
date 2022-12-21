@@ -57,6 +57,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     {
         try
         {
+            await ReadStateAsync();
+            
             var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
             var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
             var chainGrain = GrainFactory.GetGrain<IChainGrain>(State.ChainId);
@@ -201,6 +203,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task HandleNewBlockAsync(BlockWithTransactionDto block)
     {
+        await ReadStateAsync();
+        
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
         var clientInfo = await blockScanInfo.GetClientInfoAsync();
@@ -273,6 +277,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task HandleConfirmedBlockAsync(BlockWithTransactionDto block)
     {
+        await ReadStateAsync();
+        
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
         var clientInfo = await blockScanInfo.GetClientInfoAsync();
