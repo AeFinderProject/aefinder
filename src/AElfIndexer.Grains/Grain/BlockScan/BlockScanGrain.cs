@@ -95,8 +95,36 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     .GetBlocksAsync(State.ChainId, State.ScannedConfirmedBlockHeight + 1, targetHeight, true,
                         subscriptionInfo.SubscribeEvents);
                 
+                if (subscriptionInfo.FilterType == BlockFilterType.Transaction)
+                {
+                    foreach (var b in filteredBlocks)
+                    {
+                        foreach (var t in b.Transactions)
+                        {
+                            if (t == null)
+                            {
+                                _logger.LogError($"Found null tx1: {b.BlockHeight}, {b.BlockHash}");
+                            }
+                        }
+                    }
+                }
+                
                 var blocks = await FillVacantBlockAsync(filteredBlocks, State.ScannedConfirmedBlockHeight + 1,
                     targetHeight);
+                
+                if (subscriptionInfo.FilterType == BlockFilterType.Transaction)
+                {
+                    foreach (var b in blocks)
+                    {
+                        foreach (var t in b.Transactions)
+                        {
+                            if (t == null)
+                            {
+                                _logger.LogError($"Found null tx2: {b.BlockHeight}, {b.BlockHash}");
+                            }
+                        }
+                    }
+                }
 
                 if (blocks.Count != targetHeight - State.ScannedConfirmedBlockHeight)
                 {
