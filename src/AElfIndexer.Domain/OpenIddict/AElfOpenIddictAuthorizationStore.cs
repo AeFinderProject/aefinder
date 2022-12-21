@@ -3,9 +3,7 @@ using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenIddict.Abstractions;
 using Volo.Abp.Guids;
-using Volo.Abp.OpenIddict;
 using Volo.Abp.OpenIddict.Applications;
 using Volo.Abp.OpenIddict.Authorizations;
 using Volo.Abp.OpenIddict.Tokens;
@@ -13,14 +11,14 @@ using Volo.Abp.Uow;
 
 namespace AElfIndexer.OpenIddict;
 
-public class AElfOpenIddictTokenStore:AbpOpenIddictTokenStore
+public class AElfOpenIddictAuthorizationStore:AbpOpenIddictAuthorizationStore
 {
-    public AElfOpenIddictTokenStore(IOpenIddictTokenRepository repository,
+    public AElfOpenIddictAuthorizationStore(IOpenIddictAuthorizationRepository repository,
         IUnitOfWorkManager unitOfWorkManager,
         IGuidGenerator guidGenerator,
         IOpenIddictApplicationRepository applicationRepository,
-        IOpenIddictAuthorizationRepository authorizationRepository)
-        : base(repository, unitOfWorkManager, guidGenerator,applicationRepository,authorizationRepository)
+        IOpenIddictTokenRepository tokenRepository)
+        : base(repository, unitOfWorkManager, guidGenerator,applicationRepository,tokenRepository)
     {
         
     }
@@ -40,13 +38,13 @@ public class AElfOpenIddictTokenStore:AbpOpenIddictTokenStore
             {
                 var date = threshold.UtcDateTime;
 
-                var tokens = await Repository.GetPruneListAsync(date, 1_000, cancellationToken);
-                if (!tokens.Any())
+                var authorizations = await Repository.GetPruneListAsync(date, 1_000, cancellationToken);
+                if (!authorizations.Any())
                 {
                     break;
                 }
 
-                await Repository.DeleteManyAsync(tokens, autoSave: true, cancellationToken: cancellationToken);
+                await Repository.DeleteManyAsync(authorizations, autoSave: true, cancellationToken: cancellationToken);
                 await uow.CompleteAsync(cancellationToken);
             }
         }
