@@ -46,6 +46,7 @@ public class AElfIndexerDomainModule : AbpModule
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
 #endif
         //Override AbpOpenIddictTokenStore and set PruneAsync isTransactional as false
-        // context.Services.Replace(new ServiceDescriptor(typeof(IOpenIddictTokenStore<>), typeof(AElfOpenIddictTokenStore), ServiceLifetime.Scoped));
+        var root = OpenIddictHelpers.FindGenericBaseType(typeof(AElfOpenIddictTokenStore), typeof(IOpenIddictTokenStore<>));
+        context.Services.Replace(new ServiceDescriptor(typeof(IOpenIddictTokenStore<>).MakeGenericType(root.GenericTypeArguments[0]), typeof(AElfOpenIddictTokenStore), ServiceLifetime.Scoped));
     }
 }
