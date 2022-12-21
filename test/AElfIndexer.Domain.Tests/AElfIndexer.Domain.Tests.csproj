@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AElfIndexer.EntityFrameworkCore.Tests\AElfIndexer.EntityFrameworkCore.Tests.csproj" />
+    <ProjectReference Include="..\AElfIndexer.MongoDB.Tests\AElfIndexer.MongoDB.Tests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

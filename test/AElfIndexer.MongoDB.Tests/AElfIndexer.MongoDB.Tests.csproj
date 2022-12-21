@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>AElfIndexer</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AElfIndexer.MongoDB\AElfIndexer.MongoDB.csproj" />
+    <ProjectReference Include="..\AElfIndexer.TestBase\AElfIndexer.TestBase.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+    <PackageReference Include="Mongo2Go" Version="3.1.3" />
+  </ItemGroup>
+
+</Project>

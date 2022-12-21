@@ -1,20 +1,20 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Shouldly;
-using System;
-using System.Linq;
+﻿using System;
 using System.Threading.Tasks;
+using MongoDB.Driver.Linq;
+using Shouldly;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Xunit;
 
-namespace AElfIndexer.EntityFrameworkCore.Samples;
+namespace AElfIndexer.MongoDB.Samples;
 
 /* This is just an example test class.
  * Normally, you don't test ABP framework code
  * (like default AppUser repository IRepository<AppUser, Guid> here).
  * Only test your custom repository methods.
  */
-public class SampleRepositoryTests : AElfIndexerEntityFrameworkCoreTestBase
+[Collection(AElfIndexerTestConsts.CollectionDefinitionName)]
+public class SampleRepositoryTests : AElfIndexerMongoDbTestBase
 {
     private readonly IRepository<IdentityUser, Guid> _appUserRepository;
 
@@ -32,9 +32,8 @@ public class SampleRepositoryTests : AElfIndexerEntityFrameworkCoreTestBase
         await WithUnitOfWorkAsync(async () =>
         {
                 //Act
-                var adminUser = await (await _appUserRepository.GetQueryableAsync())
-                .Where(u => u.UserName == "admin")
-                .FirstOrDefaultAsync();
+                var adminUser = await (await _appUserRepository.GetMongoQueryableAsync())
+                .FirstOrDefaultAsync(u => u.UserName == "admin");
 
                 //Assert
                 adminUser.ShouldNotBeNull();
