@@ -2,6 +2,7 @@ using AElf.Indexing.Elasticsearch.Options;
 using AElfIndexer;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
+using AElfIndexer.MongoDB;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,7 @@ namespace AElfIndexer;
 
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreSerilogModule),
+    typeof(AElfIndexerMongoDbModule),
     typeof(AElfIndexerEntityEventHandlerCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpEventBusRabbitMqModule))]
