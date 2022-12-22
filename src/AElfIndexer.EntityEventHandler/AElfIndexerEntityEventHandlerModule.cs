@@ -29,8 +29,8 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
+        ConfigureTokenCleanupService();
         ConfigureEsIndexCreation();
-        
         context.Services.AddHostedService<AElfIndexerHostedService>();
         
         context.Services.AddSingleton<IClusterClient>(o =>
