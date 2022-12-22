@@ -17,7 +17,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AElfIndexer.EntityEventHandler.Core\AElfIndexer.EntityEventHandler.Core.csproj" />
-      <ProjectReference Include="..\AElfIndexer.MongoDB\AElfIndexer.MongoDB.csproj" />
     </ItemGroup>
 
     <ItemGroup>

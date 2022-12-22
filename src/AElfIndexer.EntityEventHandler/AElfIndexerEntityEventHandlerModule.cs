@@ -2,7 +2,6 @@ using AElf.Indexing.Elasticsearch.Options;
 using AElfIndexer;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
-using AElfIndexer.MongoDB;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,13 +14,13 @@ using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
+using Volo.Abp.OpenIddict.Tokens;
 using Volo.Abp.Threading;
 
 namespace AElfIndexer;
 
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AElfIndexerMongoDbModule),
     typeof(AElfIndexerEntityEventHandlerCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpEventBusRabbitMqModule))]
@@ -31,6 +30,7 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         ConfigureEsIndexCreation();
+        
         context.Services.AddHostedService<AElfIndexerHostedService>();
         
         context.Services.AddSingleton<IClusterClient>(o =>
@@ -83,5 +83,11 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
     private void ConfigureEsIndexCreation()
     {
         Configure<IndexCreateOption>(x => { x.AddModule(typeof(AElfIndexerDomainModule)); });
+    }
+    
+    //Disable TokenCleanupService
+    private void ConfigureTokenCleanupService()
+    {
+        Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
 }
