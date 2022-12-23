@@ -19,6 +19,7 @@ using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
+using Orleans.Streams.Kafka.Config;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
@@ -71,8 +72,18 @@ public class AElfIndexerDappModule : AbpModule
                 })
                 .ConfigureApplicationParts(parts =>
                     parts.AddApplicationPart(typeof(AElfIndexerGrainsModule).Assembly).WithReferences())
-                .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
+                // .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
                 .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
+                .AddKafka(AElfIndexerApplicationConsts.MessageStreamName)
+                .WithOptions(options =>
+                {
+                    options.BrokerList =  new [] {"127.0.0.1:9092"};
+                    options.ConsumerGroupId = "AElfIndexer";
+                    options.ConsumeMode = ConsumeMode.LastCommittedMessage;
+                    options.AddTopic(AElfIndexerApplicationConsts.MessageStreamNamespace,new TopicCreationConfig { AutoCreate = true });
+                })
+                .AddJson()
+                .Build()
                 .Build();
         });
     }

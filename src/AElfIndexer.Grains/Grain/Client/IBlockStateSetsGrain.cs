@@ -7,12 +7,17 @@ public interface IBlockStateSetsGrain<T> : IGrainWithStringKey
 {
     Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSets();
     // Task<bool> TryGetBlockStateSet(string blockHash, out BlockStateSet<T> blockStateSet);
-    Task<Dictionary<string, string>> GetBestChainHashes();
-    Task SetBestChainHashes(Dictionary<string,string> bestChainHashes);
+    Task<Dictionary<string, string>> GetLongestChainHashes();
+    Task SetLongestChainHashes(Dictionary<string,string> bestChainHashes);
     Task<bool> TryAddBlockStateSet(BlockStateSet<T> blockStateSet);
     Task<bool> HasFork();
     Task SetBlockStateSet(BlockStateSet<T> blockStateSet);
     Task<BlockStateSet<T>> GetCurrentBlockStateSet();
+    Task<BlockStateSet<T>> GetLongestChainBlockStateSet();
+    Task<BlockStateSet<T>> GetBestChainBlockStateSet();
+    Task SetBestChainBlockStateSet(string blockHash);
+    Task SetLongestChainBlockStateSet(string blockHash);
+    Task SetCurrentBlockStateSet(BlockStateSet<T> blockStateSet);
     Task CleanBlockStateSets(long blockHeight,string blockHash);
     Task Initialize();
 }

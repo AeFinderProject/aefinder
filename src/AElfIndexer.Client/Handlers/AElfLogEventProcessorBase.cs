@@ -1,6 +1,7 @@
 using AElf.CSharp.Core;
 using AElfIndexer.Client.Helpers;
 using AElfIndexer.Grains.State.Client;
+using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.Client.Handlers;
@@ -9,9 +10,11 @@ public abstract class AElfLogEventProcessorBase<TEvent,T> : IAElfLogEventProcess
     where TEvent : IEvent<TEvent>, new()
 {
     private readonly string _eventName;
+    private readonly ILogger<AElfLogEventProcessorBase<TEvent, T>> _logger;
     
-    protected AElfLogEventProcessorBase()
+    protected AElfLogEventProcessorBase(ILogger<AElfLogEventProcessorBase<TEvent, T>> logger)
     {
+        _logger = logger;
         _eventName = typeof(TEvent).Name;
         //_eventName = new TEvent().Descriptor.Name;
     }
@@ -19,7 +22,14 @@ public abstract class AElfLogEventProcessorBase<TEvent,T> : IAElfLogEventProcess
     public virtual async Task HandleEventAsync(LogEventInfo logEventInfo, LogEventContext context = null)
     {
         var value = AElfLogEventDeserializationHelper.DeserializeAElfLogEvent<TEvent>(logEventInfo);
-        await HandleEventAsync(value, context);
+        try
+        {
+            await HandleEventAsync(value, context);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, e.Message);
+        }
     }
 
     public string GetEventName(){

@@ -1,6 +1,7 @@
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.State.Client;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp.ObjectMapping;
 
@@ -12,7 +13,8 @@ public class LogEventDataHandler<T> : BlockChainDataHandler<LogEventInfo,T>
 
     public LogEventDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
         IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider,
-        IEnumerable<IAElfLogEventProcessor<T>> processors) : base(clusterClient, objectMapper,aelfIndexerClientInfoProvider)
+        IEnumerable<IAElfLogEventProcessor<T>> processors, ILogger<LogEventDataHandler<T>> logger) : base(clusterClient,
+        objectMapper, aelfIndexerClientInfoProvider, logger)
     {
         _processors = processors;
     }

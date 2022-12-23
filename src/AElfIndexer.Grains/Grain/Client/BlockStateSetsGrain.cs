@@ -5,14 +5,14 @@ namespace AElfIndexer.Grains.Grain.Client;
 
 public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlockStateSetsGrain<T>
 {
-    public Task<Dictionary<string, string>> GetBestChainHashes()
+    public Task<Dictionary<string, string>> GetLongestChainHashes()
     {
-        return Task.FromResult(State.BestChainHashes);
+        return Task.FromResult(State.LongestCainHashes);
     }
 
-    public async Task SetBestChainHashes(Dictionary<string, string> bestChainHashes)
+    public async Task SetLongestChainHashes(Dictionary<string, string> longestCainHashes)
     {
-        State.BestChainHashes = bestChainHashes;
+        State.LongestCainHashes = longestCainHashes;
         await WriteStateAsync();
     }
 
@@ -25,13 +25,29 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
 
         // BlockStateSet will not be added to State.BlockStateSets 
         State.BlockStateSets.TryAdd(blockStateSet.BlockHash, blockStateSet);
-        if (blockStateSet.PreviousBlockHash != State.CurrentBlockStateSet.BlockHash)
+        if (State.LongestCainBlockStateSet == null ||
+            State.LongestCainBlockStateSet.BlockHash == blockStateSet.PreviousBlockHash)
         {
-            State.HasFork = true;
+            State.LongestCainBlockStateSet = blockStateSet;
         }
-        State.CurrentBlockStateSet = blockStateSet;
+        else if (blockStateSet.BlockHeight > State.LongestCainBlockStateSet.BlockHeight)
+        {
+            if (!CheckLinked(blockStateSet.BlockHash)) return false;
+            State.LongestCainBlockStateSet = blockStateSet;
+        }
         await WriteStateAsync();
         return false;
+    }
+
+    private bool CheckLinked(string blockHash)
+    {
+        BlockStateSet<T> blockStateSet;
+        while (State.BlockStateSets.TryGetValue(blockHash, out blockStateSet) && !blockStateSet.Processed)
+        {
+            blockHash = blockStateSet.PreviousBlockHash;
+        }
+
+        return blockStateSet != null && blockStateSet.Processed;
     }
 
     public async Task SetBlockStateSet(BlockStateSet<T> blockStateSet)
@@ -45,7 +61,42 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
     {
         return Task.FromResult(State.CurrentBlockStateSet);
     }
-    
+
+    public Task<BlockStateSet<T>> GetLongestChainBlockStateSet()
+    {
+        return Task.FromResult(State.LongestCainBlockStateSet);
+    }
+
+    public Task<BlockStateSet<T>> GetBestChainBlockStateSet()
+    {
+        return Task.FromResult(State.BestCainBlockStateSet);
+    }
+
+    public async Task SetBestChainBlockStateSet(string blockHash)
+    {
+        if (State.BlockStateSets.TryGetValue(blockHash, out _))
+        {
+            State.BlockStateSets[blockHash].Processed = true;
+            State.BestCainBlockStateSet = State.BlockStateSets[blockHash];
+            await WriteStateAsync();
+        }
+    }
+
+    public async Task SetLongestChainBlockStateSet(string blockHash)
+    {
+        if (State.BlockStateSets.TryGetValue(blockHash, out _))
+        {
+            State.LongestCainBlockStateSet = State.BlockStateSets[blockHash];
+            await WriteStateAsync();
+        }
+    }
+
+    public async Task SetCurrentBlockStateSet(BlockStateSet<T> blockStateSet)
+    {
+        State.CurrentBlockStateSet = blockStateSet;
+        await WriteStateAsync();
+    }
+
     public Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSets()
     {
         return Task.FromResult(State.BlockStateSets);
@@ -66,10 +117,10 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
     {
         State.BlockStateSets.RemoveAll(set => set.Value.BlockHeight < blockHeight);
         State.BlockStateSets.RemoveAll(set => set.Value.BlockHeight == blockHeight && set.Value.BlockHash != blockHash);
-        if (State.HasFork)
-        {
-            State.HasFork = State.BlockStateSets.GroupBy(b => b.Value.BlockHeight).Any(g => g.Count() > 1);
-        }
+        // if (State.HasFork)
+        // {
+        //     State.HasFork = State.BlockStateSets.GroupBy(b => b.Value.BlockHeight).Any(g => g.Count() > 1);
+        // }
 
         await WriteStateAsync();
     }
@@ -82,15 +133,15 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
         await WriteStateAsync();
     }
 
-    public override Task OnActivateAsync()
+    public override async Task OnActivateAsync()
     {
-        ReadStateAsync();
-        return base.OnActivateAsync();
+        await ReadStateAsync();
+        await base.OnActivateAsync();
     }
 
-    public override Task OnDeactivateAsync()
+    public override async Task OnDeactivateAsync()
     {
-        WriteStateAsync();
-        return base.OnDeactivateAsync();
+        await WriteStateAsync();
+        await base.OnDeactivateAsync();
     }
 }

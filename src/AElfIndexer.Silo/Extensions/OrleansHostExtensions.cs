@@ -15,6 +15,7 @@ using Orleans.Hosting;
 using Orleans.Providers;
 using Orleans.Providers.MongoDB.Configuration;
 using Orleans.Statistics;
+using Orleans.Streams.Kafka.Config;
 using Serilog;
 
 namespace AElfIndexer.Extensions;
@@ -39,12 +40,14 @@ public static class OrleansHostExtensions
                 //     opt.ConnectionString = configSection.GetValue<string>("ClusterDbConnection");
                 //     opt.Database = configSection.GetValue<int>("ClusterDbNumber");
                 // })
-                .ConfigureEndpoints(advertisedIP:IPAddress.Parse(configSection.GetValue<string>("AdvertisedIP")),siloPort: configSection.GetValue<int>("SiloPort"), gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
+                .ConfigureEndpoints(advertisedIP: IPAddress.Parse(configSection.GetValue<string>("AdvertisedIP")),
+                    siloPort: configSection.GetValue<int>("SiloPort"),
+                    gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
                 // .UseLocalhostClustering()
                 .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
                 .UseMongoDBClustering(options =>
                 {
-                    options.DatabaseName = configSection.GetValue<string>("DataBase");;
+                    options.DatabaseName = configSection.GetValue<string>("DataBase");
                     options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
                 // .Configure<JsonGrainStateSerializerOptions>(options => options.ConfigureJsonSerializerSettings = settings =>
@@ -53,11 +56,11 @@ public static class OrleansHostExtensions
                 //     settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
                 //     settings.DefaultValueHandling = DefaultValueHandling.Populate;
                 // })
-                .AddMongoDBGrainStorage("Default",(MongoDBGrainStorageOptions op) =>
+                .AddMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
                 {
                     op.CollectionPrefix = "GrainStorage";
                     op.DatabaseName = configSection.GetValue<string>("DataBase");
-                
+
                     op.ConfigureJsonSerializerSettings = jsonSettings =>
                     {
                         // jsonSettings.ContractResolver = new PrivateSetterContractResolver();
@@ -65,7 +68,7 @@ public static class OrleansHostExtensions
                         jsonSettings.DefaultValueHandling = DefaultValueHandling.Populate;
                         jsonSettings.ObjectCreationHandling = ObjectCreationHandling.Replace;
                     };
-                    
+
                 })
                 .Configure<GrainCollectionOptions>(options =>
                 {
@@ -111,10 +114,11 @@ public static class OrleansHostExtensions
                     options.ClusterId = configSection.GetValue<string>("ClusterId");
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
                 })
-                .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
+                //.AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
                 .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
-                .UseDashboard(options => {
+                .UseDashboard(options =>
+                {
                     options.Username = configSection.GetValue<string>("DashboardUserName");
                     options.Password = configSection.GetValue<string>("DashboardPassword");
                     options.Host = "*";
@@ -123,7 +127,18 @@ public static class OrleansHostExtensions
                     options.CounterUpdateIntervalMs = configSection.GetValue<int>("DashboardCounterUpdateIntervalMs");
                 })
                 .UseLinuxEnvironmentStatistics()
-                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); });
+                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); })
+                .AddKafka(AElfIndexerApplicationConsts.MessageStreamName)
+                .WithOptions(options =>
+                {
+                    options.BrokerList = new[] { "127.0.0.1:9092" };
+                    options.ConsumerGroupId = "AElfIndexer";
+                    options.ConsumeMode = ConsumeMode.LastCommittedMessage;
+                    options.AddTopic(AElfIndexerApplicationConsts.MessageStreamNamespace,
+                        new TopicCreationConfig { AutoCreate = true });
+                })
+                .AddJson()
+                .AddLoggingTracker().Build();
         });
     }
 }

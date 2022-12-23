@@ -53,7 +53,7 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
                 })
                 .ConfigureApplicationParts(parts =>
                     parts.AddApplicationPart(typeof(AElfIndexerGrainsModule).Assembly).WithReferences())
-                .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
+                //.AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
                 .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
                 .Build();
         });

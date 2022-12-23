@@ -9,5 +9,7 @@ public class BlockStateSet<T>
     
     public bool Confirmed { get; set; }
     
+    public bool Processed { get; set; }
+    
     public List<T> Data { get; set; } = new();
 }

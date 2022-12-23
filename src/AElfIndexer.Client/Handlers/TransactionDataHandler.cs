@@ -1,6 +1,7 @@
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.State.Client;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp.ObjectMapping;
 
@@ -12,8 +13,8 @@ public abstract class TransactionDataHandler<T> : BlockChainDataHandler<Transact
 
     protected TransactionDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
         IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider,
-        IEnumerable<IAElfLogEventProcessor<T>> processors) : base(clusterClient, objectMapper,
-        aelfIndexerClientInfoProvider)
+        IEnumerable<IAElfLogEventProcessor<T>> processors, ILogger<TransactionDataHandler<T>> logger) : base(clusterClient, objectMapper,
+        aelfIndexerClientInfoProvider, logger)
     {
         _processors = processors;
     }
@@ -27,8 +28,15 @@ public abstract class TransactionDataHandler<T> : BlockChainDataHandler<Transact
 
     protected override async Task ProcessDataAsync(List<TransactionInfo> data)
     {
-        await ProcessTransactionsAsync(data);
-        await ProcessLogEventsAsync(data);
+        try
+        {
+            await ProcessTransactionsAsync(data);
+            await ProcessLogEventsAsync(data);
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+        }
     }
 
     protected abstract Task ProcessTransactionsAsync(List<TransactionInfo> transactions);

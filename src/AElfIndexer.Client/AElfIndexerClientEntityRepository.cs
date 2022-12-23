@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using AElf.Indexing.Elasticsearch;
-using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
@@ -48,26 +47,15 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         if (blockStateSet.Confirmed)
         {
             if ((dataValue.LIBValue?.BlockHeight??0) >= blockStateSet.BlockHeight) return;
-            // Use value in BlockStateSet to override confirmed entity value
-            if (!blockStateSet.Changes.TryGetValue(entityKey, out var value))
-                throw new Exception($"{blockStateSetsGrainKey} does not contain {entityKey}");
-            entity = JsonConvert.DeserializeObject<TEntity>(value);
-            //$"{IndexSettingOptions.IndexPrefix.ToLower()}.{typeof(TEntity).Name.ToLower()}"
             
-            // TODO: build error //await _nestRepository.AddOrUpdateAsync(entity, indexName);
+            await _nestRepository.AddOrUpdateAsync(entity, _indexName);
             await dappGrain.SetLIBValue(entity);
             return;
         }
-        // No fork, save it to es search directly
-        if (!await blockStateSetsGrain.HasFork())
-        {
-            await TryAddToBlockStateSetAsync(blockStateSet, entityKey, entity, dappGrain, blockStateSetsGrain);
-            return;
-        }
         //Deal with fork
-        var bestChainHashes = await blockStateSetsGrain.GetBestChainHashes();
+        var longestChainHashes = await blockStateSetsGrain.GetLongestChainHashes();
         // entity is on best chain
-        if (bestChainHashes.ContainsKey(entity.BlockHash))
+        if (longestChainHashes.ContainsKey(entity.BlockHash))
         {
             await TryAddToBlockStateSetAsync(blockStateSet, entityKey, entity, dappGrain, blockStateSetsGrain);
         }
@@ -75,27 +63,23 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         {
             //if block state set has entityKey, use it to set entity.
             if (blockStateSet.Changes.TryGetValue(entityKey, out var value))
-                entity = JsonConvert.DeserializeObject<TEntity>(value);
-            // if latest value == entity, need to update es search and latest value
-            if (entity != null && entity.ToJsonString() == dataValue.LatestValue?.ToJsonString())
             {
-                //if current block state is not on best chain, get the best chain block state set
-                var bestChainBlockStateSet = blockStateSets.First(b =>
-                    b.Value.BlockHeight == entity.BlockHeight &&
-                    bestChainHashes.ContainsKey(b.Value.BlockHash)).Value;
-                var entityFromBlockStateSet = GetEntityFromBlockStateSets(entityKey, blockStateSets, bestChainBlockStateSet.BlockHash,
-                    bestChainBlockStateSet.BlockHeight, dataValue.LIBValue);
-                if (entityFromBlockStateSet != null)
-                {
-                    await _nestRepository.AddOrUpdateAsync(entityFromBlockStateSet, _indexName);
-                    await dappGrain.SetLatestValue(entityFromBlockStateSet);
-                }
-                else
-                {
-                    await _nestRepository.DeleteAsync(entity, _indexName);
-                    await dappGrain.SetLIBValue(null);
-                    await dappGrain.SetLatestValue(null);
-                }
+                entity = JsonConvert.DeserializeObject<TEntity>(value);
+            }
+                
+            //if current block state is not on best chain, get the best chain block state set
+            var bestChainBlockStateSet = await blockStateSetsGrain.GetBestChainBlockStateSet();
+            var entityFromBlockStateSet = GetEntityFromBlockStateSets(entityKey, blockStateSets, bestChainBlockStateSet.BlockHash,
+                bestChainBlockStateSet.BlockHeight, dataValue.LIBValue);
+            if (entityFromBlockStateSet != null)
+            {
+                await _nestRepository.AddOrUpdateAsync(entityFromBlockStateSet, _indexName);
+                // await dappGrain.SetLatestValue(entityFromBlockStateSet);
+            }
+            else
+            {
+                await _nestRepository.DeleteAsync(entity, _indexName);
+                await dappGrain.SetLIBValue(null);
             }
         }
     }
@@ -109,11 +93,6 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
             _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(
                 $"BlockStateSets_{_clientId}_{chainId}_{_version}");
         var entity = await dappGrain.GetValue<TEntity>();
-        // Do not have fork, just return latest value
-        if (!await blockStateSetsGrain.HasFork())
-        {
-            return entity.LatestValue;
-        }
 
         // Has fork, get value from block state sets first.
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
