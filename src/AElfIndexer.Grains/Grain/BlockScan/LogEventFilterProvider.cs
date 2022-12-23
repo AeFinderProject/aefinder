@@ -172,7 +172,6 @@ public class LogEventFilterProvider : IBlockFilterProvider
         foreach (var block in blocks)
         {
             if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
-                block.Transactions.Count != blockDto.TransactionIds.Count ||
                 block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.LogEventCount)
             {
                 _logger.LogError(
@@ -206,7 +205,6 @@ public class LogEventFilterProvider : IBlockFilterProvider
             }
             
             if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
-                block.Transactions.Count != blockDto.TransactionIds.Count ||
                 block.Transactions.Sum(o=>o.LogEvents.Count) != blockDto.LogEventCount)
             {
                 _logger.LogError(

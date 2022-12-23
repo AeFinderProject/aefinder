@@ -203,44 +203,7 @@ public class BlockFilterProviderTests : AElfIndexerGrainTestBase
             filteredBlock.Count.ShouldBe(2);
         }
     }
-    
-    [Fact]
-    public async Task FilterIncompleteBlocks_WrongTransaction_Test()
-    {
-        var blocks = new List<BlockWithTransactionDto>();
-        blocks.Add(_blockDataProvider.Blocks[21][0]);
-        blocks.Add(_blockDataProvider.Blocks[22][0]);
-        var block = _blockDataProvider.Blocks[23][0].DeepClone();
-        block.Transactions.Add(new TransactionDto
-        {
-            LogEvents = new List<LogEventDto>()
-        });
-        blocks.Add(block);
-        blocks.Add(_blockDataProvider.Blocks[24][0]);
-        
-        {
-            var transactionFilterProvider =
-                _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Transaction);
 
-            var filteredBlock = await transactionFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
-                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
-            filteredBlock.Count.ShouldBe(2);
-
-            filteredBlock = await transactionFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
-            filteredBlock.Count.ShouldBe(2);
-        }
-
-        {
-            var logEventFilterProvider = _blockFilterProviders.First(o => o.FilterType == BlockFilterType.LogEvent);
-            var filteredBlock = await logEventFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
-                _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
-            filteredBlock.Count.ShouldBe(2);
-
-            filteredBlock = await logEventFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
-            filteredBlock.Count.ShouldBe(2);
-        }
-    }
-    
     [Fact]
     public async Task FilterIncompleteBlocks_WrongLogEvent_Test()
     {

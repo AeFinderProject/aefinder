@@ -20,7 +20,7 @@ namespace AElfIndexer.Controllers;
 [RemoteService]
 [ControllerName("Subscription")]
 [Route("api/app/subscription")]
-public class SubscriptionController : AbpController
+public class SubscriptionController : AElfIndexerController
 {
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IClusterClient _clusterClient;
@@ -32,69 +32,16 @@ public class SubscriptionController : AbpController
     }
     
     [HttpPut]
-    //[Authorize]
-    public virtual Task<string> SubmitSubscriptionInfoAsync(string clientId, List<SubscriptionInfo> subscriptionInfos)
+    [Authorize]
+    public virtual Task<string> SubmitSubscriptionInfoAsync(List<SubscriptionInfo> subscriptionInfos)
     {
-        //var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
-        return _blockScanAppService.SubmitSubscriptionInfoAsync(clientId,subscriptionInfos);
+        return _blockScanAppService.SubmitSubscriptionInfoAsync(ClientId,subscriptionInfos);
     }
     
     [HttpGet]
-    //[Authorize]
-    public virtual Task<SubscriptionInfoDto> GetSubscriptionInfoAsync(string clientId)
+    [Authorize]
+    public virtual Task<SubscriptionInfoDto> GetSubscriptionInfoAsync()
     {
-        return _blockScanAppService.GetSubscriptionInfoAsync(clientId);
-    }
-    
-    // TODO: Only for Test
-    [HttpPost]
-    [Route("start")]
-    //[Authorize]
-    public virtual async Task StartScanAsync(string clientId, string version)
-    {
-        //var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
-        
-        var messageStreamIds = await _blockScanAppService.GetMessageStreamIdsAsync(clientId, version);
-        foreach (var streamId in messageStreamIds)
-        {
-            var stream =
-                _clusterClient
-                    .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
-                    .GetStream<SubscribedBlockDto>(streamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
-
-            var subscriptionHandles = await stream.GetAllSubscriptionHandles();
-            if (!subscriptionHandles.IsNullOrEmpty())
-            {
-                subscriptionHandles.ForEach(async x =>
-                    await x.ResumeAsync(HandleAsync));
-            }
-            else
-            {
-                await stream.SubscribeAsync(HandleAsync);
-            }
-        }
-        
-        await _blockScanAppService.StartScanAsync(clientId, version);
-    }
-    
-    [HttpPost]
-    [Route("upgrade")]
-    //[Authorize]
-    public virtual Task UpgradeVersionAsync(string clientId)
-    {
-        //var clientId = CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;;
-        return _blockScanAppService.UpgradeVersionAsync(clientId);
-    }
-    
-    private async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken? token = null)
-    {
-        var clientVersion = await _blockScanAppService.GetClientVersionAsync(subscribedBlock.ClientId);
-        if (subscribedBlock.Version != clientVersion.CurrentVersion &&
-            subscribedBlock.Version != clientVersion.NewVersion)
-        {
-            return;
-        }
-        
-        Console.WriteLine($"========= Version: {subscribedBlock.Version}");
+        return _blockScanAppService.GetSubscriptionInfoAsync(ClientId);
     }
 }

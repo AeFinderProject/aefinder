@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using AElfIndexer.BlockScan;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
@@ -9,7 +10,7 @@ namespace AElfIndexer.Controllers;
 [RemoteService]
 [ControllerName("BlockScan")]
 [Route("api/app/block-scan")]
-public class BlockScanController: AbpController
+public class BlockScanController: AElfIndexerController
 {
     private readonly IBlockScanAppService _blockScanAppService;
 
@@ -20,9 +21,17 @@ public class BlockScanController: AbpController
 
     [HttpPost]
     [Route("stop")]
-    //[Authorize]
-    public virtual Task StopAsync(string clientId, string version)
+    [Authorize]
+    public virtual Task StopAsync(string version)
     {
-        return _blockScanAppService.StopAsync(clientId,version);
+        return _blockScanAppService.StopAsync(ClientId,version);
+    }
+    
+    [HttpPost]
+    [Route("upgrade")]
+    [Authorize]
+    public virtual Task UpgradeVersionAsync()
+    {
+        return _blockScanAppService.UpgradeVersionAsync(ClientId);
     }
 }

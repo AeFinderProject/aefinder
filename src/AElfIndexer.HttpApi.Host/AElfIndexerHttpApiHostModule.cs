@@ -11,8 +11,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using AElfIndexer.EntityFrameworkCore;
 using AElfIndexer.Grains;
+using AElfIndexer.MongoDB;
 using AElfIndexer.MultiTenancy;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
@@ -44,7 +44,7 @@ namespace AElfIndexer;
     typeof(AbpCachingStackExchangeRedisModule),
     typeof(AbpAspNetCoreMvcUiMultiTenancyModule),
     typeof(AElfIndexerApplicationModule),
-    typeof(AElfIndexerEntityFrameworkCoreModule),
+    typeof(AElfIndexerMongoDbModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpSwashbuckleModule)
 )]

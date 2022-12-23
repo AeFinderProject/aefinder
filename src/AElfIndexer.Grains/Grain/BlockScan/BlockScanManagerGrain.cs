@@ -42,9 +42,9 @@ public class BlockScanManagerGrain : Grain<ClientManagerState>, IBlockScanManage
         }
     }
 
-    public override Task OnActivateAsync()
+    public override async Task OnActivateAsync()
     {
-        this.ReadStateAsync();
-        return base.OnActivateAsync();
+        await this.ReadStateAsync();
+        await base.OnActivateAsync();
     }
 }

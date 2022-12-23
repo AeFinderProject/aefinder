@@ -13,20 +13,20 @@ public class PrimaryKeyGrain: global::Orleans.Grain<PrimaryKeyState>, IPrimaryKe
         _primaryKeyOptions = primaryKeyOptions.Value;
     }
     
-    public override Task OnActivateAsync()
+    public override async Task OnActivateAsync()
     {
-        this.ReadStateAsync();
+        await this.ReadStateAsync();
         if (this.State.SwitchInterval == 0)
         {
             this.State.SwitchInterval = _primaryKeyOptions.BlockGrainSwitchInterval;
         }
-        return base.OnActivateAsync();
+        await base.OnActivateAsync();
     }
     
-    public override Task OnDeactivateAsync()
+    public override async Task OnDeactivateAsync()
     {
-        this.WriteStateAsync();
-        return base.OnDeactivateAsync();
+        await this.WriteStateAsync();
+        await base.OnDeactivateAsync();
     }
 
     public async Task SetCounter(int blocksCount)

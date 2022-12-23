@@ -5,7 +5,7 @@ using System.Reflection;
 using AElf.Indexing.Elasticsearch;
 using AElf.Indexing.Elasticsearch.Options;
 using AElf.Indexing.Elasticsearch.Services;
-using AElfIndexer.EntityFrameworkCore;
+using AElfIndexer.MongoDB;
 using Elasticsearch.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -16,7 +16,7 @@ using Volo.Abp.Threading;
 namespace AElfIndexer;
 
 [DependsOn(
-    typeof(AElfIndexerEntityFrameworkCoreTestModule)
+    typeof(AElfIndexerMongoDbTestModule)
     )]
 public class AElfIndexerDomainTestModule : AbpModule
 {

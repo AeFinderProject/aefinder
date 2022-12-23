@@ -20,6 +20,6 @@
     <ItemGroup>
         <ProjectReference Include="..\AElfIndexer.Application\AElfIndexer.Application.csproj" />
         <ProjectReference Include="..\AElfIndexer.Client\AElfIndexer.Client.csproj" />
-        <ProjectReference Include="..\AElfIndexer.EntityFrameworkCore\AElfIndexer.EntityFrameworkCore.csproj" />
+        <ProjectReference Include="..\AElfIndexer.MongoDB\AElfIndexer.MongoDB.csproj" />
     </ItemGroup>
 </Project>

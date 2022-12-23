@@ -73,6 +73,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     {
         try
         {
+            await ReadStateAsync();
+            
             var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
             var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
             var chainGrain = GrainFactory.GetGrain<IChainGrain>(State.ChainId);
@@ -112,8 +114,36 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     .GetBlocksAsync(State.ChainId, State.ScannedConfirmedBlockHeight + 1, targetHeight, true,
                         subscriptionInfo.SubscribeEvents);
                 
+                if (subscriptionInfo.FilterType == BlockFilterType.Transaction)
+                {
+                    foreach (var b in filteredBlocks)
+                    {
+                        foreach (var t in b.Transactions)
+                        {
+                            if (t == null)
+                            {
+                                _logger.LogError($"Found null tx1: {b.BlockHeight}, {b.BlockHash}");
+                            }
+                        }
+                    }
+                }
+                
                 var blocks = await FillVacantBlockAsync(filteredBlocks, State.ScannedConfirmedBlockHeight + 1,
                     targetHeight);
+                
+                if (subscriptionInfo.FilterType == BlockFilterType.Transaction)
+                {
+                    foreach (var b in blocks)
+                    {
+                        foreach (var t in b.Transactions)
+                        {
+                            if (t == null)
+                            {
+                                _logger.LogError($"Found null tx2: {b.BlockHeight}, {b.BlockHash}");
+                            }
+                        }
+                    }
+                }
 
                 if (blocks.Count != targetHeight - State.ScannedConfirmedBlockHeight)
                 {
@@ -192,6 +222,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task HandleNewBlockAsync(BlockWithTransactionDto block)
     {
+        await ReadStateAsync();
+        
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
         var clientInfo = await blockScanInfo.GetClientInfoAsync();
@@ -265,6 +297,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task HandleConfirmedBlockAsync(BlockWithTransactionDto block)
     {
+        await ReadStateAsync();
+        
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
         var clientInfo = await blockScanInfo.GetClientInfoAsync();
@@ -369,7 +403,6 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     && (!State.ScannedBlocks.TryGetValue(b.BlockHeight - 1, out var preScannedBlocks) ||
                         !preScannedBlocks.Contains(b.PreviousBlockHash)))
                 {
-                    _logger.LogError($"UnLinked block, height {b.BlockHeight}, hash {b.BlockHash}");
                     continue;
                 }
 

@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using AElfIndexer.MultiTenancy;
+using AElfIndexer.OpenIddict;
+using OpenIddict.Abstractions;
 using Volo.Abp.AuditLogging;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Emailing;
@@ -43,5 +45,13 @@ public class AElfIndexerDomainModule : AbpModule
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
 #endif
+        //Override AbpOpenIddictTokenStore and set PruneAsync isTransactional as false
+        var tokenStoreRootType = OpenIddictHelpers.FindGenericBaseType(typeof(AElfOpenIddictTokenStore), typeof(IOpenIddictTokenStore<>));
+        context.Services.Replace(new ServiceDescriptor(typeof(IOpenIddictTokenStore<>).MakeGenericType(tokenStoreRootType.GenericTypeArguments[0]), typeof(AElfOpenIddictTokenStore), ServiceLifetime.Scoped));
+        
+        //Override AbpOpenIddictTokenStore and set PruneAsync isTransactional as false
+        var authorizationStoreRootType = OpenIddictHelpers.FindGenericBaseType(typeof(AElfOpenIddictAuthorizationStore), typeof(IOpenIddictAuthorizationStore<>));
+        context.Services.Replace(new ServiceDescriptor(typeof(IOpenIddictAuthorizationStore<>)
+            .MakeGenericType(authorizationStoreRootType.GenericTypeArguments[0]), typeof(AElfOpenIddictAuthorizationStore), ServiceLifetime.Scoped));
     }
 }

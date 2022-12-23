@@ -14,6 +14,7 @@ using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
+using Volo.Abp.OpenIddict.Tokens;
 using Volo.Abp.Threading;
 
 namespace AElfIndexer;
@@ -28,6 +29,7 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
+        ConfigureTokenCleanupService();
         ConfigureEsIndexCreation();
         context.Services.AddHostedService<AElfIndexerHostedService>();
         
@@ -81,5 +83,11 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
     private void ConfigureEsIndexCreation()
     {
         Configure<IndexCreateOption>(x => { x.AddModule(typeof(AElfIndexerDomainModule)); });
+    }
+    
+    //Disable TokenCleanupService
+    private void ConfigureTokenCleanupService()
+    {
+        Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
 }
