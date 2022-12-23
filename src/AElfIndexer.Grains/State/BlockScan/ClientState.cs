@@ -7,6 +7,8 @@ public class ClientState
     public string CurrentVersion { get;set; }
     public string NewVersion { get; set; }
     public Dictionary<string, ClientVersionInfo> VersionInfos { get; set; } = new();
+
+    public Dictionary<string, string> TokenInfos { get; set; } = new();
 }
 
 public class ClientVersionInfo

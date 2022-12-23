@@ -13,4 +13,5 @@ public class BlockScanState
     public long ScannedConfirmedBlockHeight { get; set; }
     public string ScannedConfirmedBlockHash { get; set; }
     public SortedDictionary<long, HashSet<string>> ScannedBlocks = new();
+    public string Token { get; set; }
 }

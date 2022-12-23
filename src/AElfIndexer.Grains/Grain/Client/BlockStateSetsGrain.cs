@@ -74,19 +74,27 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
 
     public async Task SetBestChainBlockStateSet(string blockHash)
     {
+        if (State.BlockStateSets.TryGetValue(blockHash, out var blockStateSet))
+        {
+            State.BestCainBlockStateSet = blockStateSet;
+            await WriteStateAsync();
+        }
+    }
+
+    public async Task SetBlockStateSetProcessed(string blockHash)
+    {
         if (State.BlockStateSets.TryGetValue(blockHash, out _))
         {
             State.BlockStateSets[blockHash].Processed = true;
-            State.BestCainBlockStateSet = State.BlockStateSets[blockHash];
             await WriteStateAsync();
         }
     }
 
     public async Task SetLongestChainBlockStateSet(string blockHash)
     {
-        if (State.BlockStateSets.TryGetValue(blockHash, out _))
+        if (State.BlockStateSets.TryGetValue(blockHash, out var blockStateSet))
         {
-            State.LongestCainBlockStateSet = State.BlockStateSets[blockHash];
+            State.LongestCainBlockStateSet = blockStateSet;
             await WriteStateAsync();
         }
     }
@@ -106,12 +114,6 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
     // {
     //     return Task.FromResult(State.BlockStateSets.TryGetValue(blockHash, out blockStateSet));
     // }
-    
-    public Task<bool> HasFork()
-    {
-        //TODO 需要再确认下是否有问题
-        return Task.FromResult(State.HasFork);
-    }
 
     public async Task CleanBlockStateSets(long blockHeight, string blockHash)
     {
@@ -122,14 +124,6 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
         //     State.HasFork = State.BlockStateSets.GroupBy(b => b.Value.BlockHeight).Any(g => g.Count() > 1);
         // }
 
-        await WriteStateAsync();
-    }
-
-    public async Task Initialize()
-    {
-        State.CurrentBlockStateSet = null;
-        State.BlockStateSets = new();
-        State.HasFork = false;
         await WriteStateAsync();
     }
 

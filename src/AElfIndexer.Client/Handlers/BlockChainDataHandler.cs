@@ -79,10 +79,11 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
             {
                 blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
                 longestChain = GetLongestChain(blockStateSets, blockDto.BlockHash);
+                
                 if (longestChain.All(b => b.BlockHash != longestChainBlockStateSet.BlockHash))
                 {
                     var bestChainBlockStateSet = await blockStateSetsGrain.GetBestChainBlockStateSet();
-                    forkBlockStateSets = GetForkBlockStateSets(blockStateSets, longestChain, bestChainBlockStateSet.BlockHash, out var forkBlockHash);
+                    forkBlockStateSets = GetForkBlockStateSets(blockStateSets, longestChain, bestChainBlockStateSet.BlockHash);
                 }
                 longestChainBlockStateSet = blockStateSet;
                 await blockStateSetsGrain.SetLongestChainBlockStateSet(blockStateSet.BlockHash);
@@ -90,28 +91,35 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
         }
         await blockStateSetsGrain.SetLongestChainHashes(longestChain.ToDictionary(b => b.BlockHash,
             b => b.PreviousBlockHash));
-
-        foreach (var blockStateSet in longestChain)
-        {
-            //Set Current block state
-            await blockStateSetsGrain.SetCurrentBlockStateSet(blockStateSet);
-            await ProcessDataAsync(blockStateSet.Data);
-            //Set BestChain
-            await blockStateSetsGrain.SetBestChainBlockStateSet(blockStateSet.BlockHash);
-        }
-
+        
         foreach (var blockStateSet in forkBlockStateSets)
         {
             //Set Current block state
             await blockStateSetsGrain.SetCurrentBlockStateSet(blockStateSet);
             await ProcessDataAsync(blockStateSet.Data);
         }
-        
+
+        foreach (var blockStateSet in longestChain)
+        {
+            //Set Current block state
+            await blockStateSetsGrain.SetCurrentBlockStateSet(blockStateSet);
+            await ProcessDataAsync(blockStateSet.Data);
+            await blockStateSetsGrain.SetBlockStateSetProcessed(blockStateSet.BlockHash);
+        }
+
+        if (longestChainBlockStateSet != null)
+        {
+            //Set BestChain
+            await blockStateSetsGrain.SetBestChainBlockStateSet(longestChainBlockStateSet.BlockHash);
+        }
+
         //Clean block state sets under latest lib block
         var confirmBlock = blockDtos.LastOrDefault(b => b.Confirmed);
         if (confirmBlock != null)
         {
             await blockStateSetsGrain.CleanBlockStateSets(confirmBlock.BlockHeight, confirmBlock.BlockHash);
+            var blockStateSetInfoGrain = _clusterClient.GetGrain<IBlockStateSetInfoGrain>($"BlockStateSetInfo_{clientId}_{chainId}_{_version}");
+            await blockStateSetInfoGrain.SetConfirmedBlockHeight(FilterType, confirmBlock.BlockHeight);
         }
     }
     
@@ -142,13 +150,13 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
             blockHash = blockStateSet.PreviousBlockHash;
         }
 
-        if (blockStateSet == null || !blockStateSet.Processed) throw new Exception($"Invalid block hash:{blockHash}");
+        if (blockStateSet == null) throw new Exception($"Invalid block hash:{blockHash}");
 
         return longestChain.OrderBy(b => b.BlockHeight).ToList();
     }
 
     private List<BlockStateSet<TData>> GetForkBlockStateSets(Dictionary<string, BlockStateSet<TData>> blockStateSets,
-        List<BlockStateSet<TData>> longestChain, string blockHash, out string forkBlockHash)
+        List<BlockStateSet<TData>> longestChain, string blockHash)
     {
         var forkBlockSateSets = new List<BlockStateSet<TData>>();
         while (longestChain.All(b => b.PreviousBlockHash != blockHash) &&
@@ -157,7 +165,6 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
             forkBlockSateSets.Add(blockStateSet);
             blockHash = blockStateSet.PreviousBlockHash;
         }
-        forkBlockHash = blockHash;
         return forkBlockSateSets.OrderBy(b => b.BlockHeight).ToList();
     }
 

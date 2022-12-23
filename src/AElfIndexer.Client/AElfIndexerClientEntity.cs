@@ -16,7 +16,6 @@ public abstract class AElfIndexerClientEntity<TKey> : Entity, IEntity<TKey>
     
     [Keyword]public string PreviousBlockHash { get; set; }
     
-    public bool Confirmed { get; set; }
 
     protected AElfIndexerClientEntity()
     {

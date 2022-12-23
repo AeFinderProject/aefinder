@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AElfIndexer.Grains.Grain.BlockScan;
+using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.BlockScan;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -67,6 +68,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
         var subscriptionInfos = await client.GetSubscriptionInfoAsync(version);
         var versionStatus = await client.GetVersionStatusAsync(version);
+        await client.SetTokenAsync(version);
         foreach (var subscriptionInfo in subscriptionInfos)
         {
             var id = subscriptionInfo.ChainId + clientId + version + subscriptionInfo.FilterType;
@@ -78,6 +80,12 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                 await client.AddBlockScanIdAsync(version, id);
                 await blockScanInfoGrain.InitializeAsync(subscriptionInfo.ChainId, clientId, version, subscriptionInfo);
                 await scanGrain.InitializeAsync(subscriptionInfo.ChainId, clientId, version);
+            }
+            else
+            {
+                var blockStateSetInfoGrain = _clusterClient.GetGrain<IBlockStateSetInfoGrain>($"BlockStateSetInfo_{clientId}_{subscriptionInfo.ChainId}_{version}");
+                await scanGrain.ReScanAsync(
+                    await blockStateSetInfoGrain.GetConfirmedBlockHeight(subscriptionInfo.FilterType));
             }
 
             Logger.LogDebug($"Start client: {clientId}, id: {id}");
@@ -115,6 +123,12 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             CurrentVersion = version.CurrentVersion,
             NewVersion = version.NewVersion
         };
+    }
+
+    public async Task<string> GetClientTokenAsync(string clientId, string version)
+    {
+        var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
+        return await clientGrain.GetTokenAsync(version);
     }
 
     public async Task<SubscriptionInfoDto> GetSubscriptionInfoAsync(string clientId)

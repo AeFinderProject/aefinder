@@ -104,6 +104,18 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         };
     }
 
+    public async Task SetTokenAsync(string version)
+    {
+        var token = Guid.NewGuid().ToString("N");
+        State.TokenInfos[version] = token;
+        await WriteStateAsync();
+    }
+
+    public Task<string> GetTokenAsync(string version)
+    {
+        return Task.FromResult(State.TokenInfos[version]);
+    }
+
     public async Task StopAsync(string version)
     {
         State.VersionInfos.Remove(version);

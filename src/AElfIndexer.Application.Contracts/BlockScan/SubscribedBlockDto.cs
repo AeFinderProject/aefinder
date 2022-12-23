@@ -10,4 +10,5 @@ public class SubscribedBlockDto
     public string Version { get; set; }
     public BlockFilterType FilterType { get; set; }
     public List<BlockWithTransactionDto> Blocks { get; set; }
+    public string Token { get; set; }
 }

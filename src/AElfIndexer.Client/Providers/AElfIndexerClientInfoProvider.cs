@@ -5,7 +5,6 @@ namespace AElfIndexer.Client.Providers;
 public class AElfIndexerClientInfoProvider<T> : IAElfIndexerClientInfoProvider<T>, ISingletonDependency
 {
     private string _clientId;
-    // chainId => IndexPrefix
     private string _version;
 
 

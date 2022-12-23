@@ -35,7 +35,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
     {
         if (!IsValidate(entity)) throw new Exception($"Invalid entity: {entity.ToJsonString()}");
         var entityKey = $"{_entityName}_{entity.Id}";
-        //TODO 统一GrainId的格式
+        
         var blockStateSetsGrainKey = $"BlockStateSets_{_clientId}_{entity.ChainId}_{_version}";
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(blockStateSetsGrainKey);
         var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
@@ -57,7 +57,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         // entity is on best chain
         if (longestChainHashes.ContainsKey(entity.BlockHash))
         {
-            await TryAddToBlockStateSetAsync(blockStateSet, entityKey, entity, dappGrain, blockStateSetsGrain);
+            await AddToBlockStateSetAsync(blockStateSet, entityKey, entity, blockStateSetsGrain);
         }
         else // entity is not on best chain.
         {
@@ -68,9 +68,9 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
             }
                 
             //if current block state is not on best chain, get the best chain block state set
-            var bestChainBlockStateSet = await blockStateSetsGrain.GetBestChainBlockStateSet();
-            var entityFromBlockStateSet = GetEntityFromBlockStateSets(entityKey, blockStateSets, bestChainBlockStateSet.BlockHash,
-                bestChainBlockStateSet.BlockHeight, dataValue.LIBValue);
+            var longestChainBlockStateSet = await blockStateSetsGrain.GetLongestChainBlockStateSet();
+            var entityFromBlockStateSet = GetEntityFromBlockStateSets(entityKey, blockStateSets, longestChainBlockStateSet.BlockHash,
+                longestChainBlockStateSet.BlockHeight, dataValue.LIBValue);
             if (entityFromBlockStateSet != null)
             {
                 await _nestRepository.AddOrUpdateAsync(entityFromBlockStateSet, _indexName);
@@ -94,7 +94,6 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
                 $"BlockStateSets_{_clientId}_{chainId}_{_version}");
         var entity = await dappGrain.GetValue<TEntity>();
 
-        // Has fork, get value from block state sets first.
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
         
         var currentBlockStateSet = await blockStateSetsGrain.GetCurrentBlockStateSet();
@@ -153,15 +152,13 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
                !string.IsNullOrWhiteSpace(entity.ChainId) && !string.IsNullOrWhiteSpace(entity.PreviousBlockHash);
     }
 
-    private async Task<bool> TryAddToBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey, TEntity entity, IDappDataGrain dappGrain, IBlockStateSetsGrain<TData> blockStateSetsGrain)
+    private async Task AddToBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey, TEntity entity, IBlockStateSetsGrain<TData> blockStateSetsGrain)
     {
-        if (blockStateSet.Changes.TryGetValue(entityKey, out _)) return false;
+        if (blockStateSet.Changes.TryGetValue(entityKey, out _)) return;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
         //$"{IndexSettingOptions.IndexPrefix.ToLower()}.{typeof(TEntity).Name.ToLower()}"
         await _nestRepository.AddOrUpdateAsync(entity, $"{_clientId}{_version}.{_entityName}".ToLower());
-        await dappGrain.SetLatestValue(entity);
         await blockStateSetsGrain.SetBlockStateSet(blockStateSet);
-        return true;
     }
     
     private TEntity GetEntityFromBlockStateSets(string entityKey, Dictionary<string, BlockStateSet<TData>> blockStateSets, string currentBlockHash, long currentBlockHeight, TEntity libValue)
@@ -179,6 +176,6 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
 
         // if block state sets don't contain entity, return LIB value
         // lib value's block height should less than min block state set's block height.
-        return libValue.BlockHeight < currentBlockHeight ? libValue : null;
+        return libValue != null && libValue.BlockHeight < currentBlockHeight ? libValue : null;
     }
 }

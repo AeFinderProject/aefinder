@@ -16,5 +16,7 @@ public interface IClientGrain: IGrainWithStringKey
     Task<VersionStatus> GetVersionStatusAsync(string version);
     Task StartAsync(string version);
     Task<ClientVersion> GetVersionAsync();
+    Task SetTokenAsync(string version);
+    Task<string> GetTokenAsync(string version);
     Task StopAsync(string version);
 }

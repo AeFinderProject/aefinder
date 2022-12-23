@@ -39,9 +39,12 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         State.ScannedConfirmedBlockHeight = 0;
         State.ScannedConfirmedBlockHash = null;
         State.ScannedBlocks = new SortedDictionary<long, HashSet<string>>();
+        
+        var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
+        State.Token = await clientGrain.GetTokenAsync(State.Version);
 
-        var clientGrain = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
-        var steamId = await clientGrain.GetMessageStreamIdAsync();
+        var blockScanInfoGrain = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
+        var steamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
         State.MessageStreamId = steamId;
 
         var streamProvider = GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
@@ -53,6 +56,16 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         return _stream.Guid;
     }
 
+    public async Task ReScanAsync(long blockHeight)
+    {
+        State.ScannedBlockHeight = blockHeight;
+        State.ScannedBlockHash = null;
+        State.ScannedConfirmedBlockHeight = blockHeight;
+        State.ScannedConfirmedBlockHash = null;
+        var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
+        State.Token = await clientGrain.GetTokenAsync(State.Version);
+    }
+    
     public async Task HandleHistoricalBlockAsync()
     {
         try
@@ -73,7 +86,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             {
                 var clientInfo = await blockScanInfo.GetClientInfoAsync();
                 var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
-                if (!isVersionAvailable || clientInfo.ScanModeInfo.ScanMode != ScanMode.HistoricalBlock)
+                var token = await clientGrain.GetTokenAsync(State.Version);
+                if (!isVersionAvailable || clientInfo.ScanModeInfo.ScanMode != ScanMode.HistoricalBlock || token != State.Token)
                 {
                     break;
                 }
@@ -113,7 +127,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                         ChainId = State.ChainId,
                         Version = State.Version,
                         FilterType = subscriptionInfo.FilterType,
-                        Blocks = blocks
+                        Blocks = blocks,
+                        Token = State.Token
                     });
                 }
 
@@ -124,7 +139,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     ChainId = State.ChainId,
                     Version = State.Version,
                     FilterType = subscriptionInfo.FilterType,
-                    Blocks = blocks
+                    Blocks = blocks,
+                    Token = State.Token
                 });
 
                 State.ScannedBlockHeight = blocks.Last().BlockHeight;
@@ -237,7 +253,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             ChainId = State.ChainId,
             Version = State.Version,
             FilterType = subscriptionInfo.FilterType,
-            Blocks = subscribedBlocks
+            Blocks = subscribedBlocks,
+            Token = State.Token
         });
 
         await WriteStateAsync();
@@ -319,7 +336,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             ChainId = State.ChainId,
             Version = State.Version,
             FilterType = subscriptionInfo.FilterType,
-            Blocks = scannedBlocks
+            Blocks = scannedBlocks,
+            Token = State.Token
         });
 
         State.ScannedConfirmedBlockHeight = scannedBlocks.Last().BlockHeight;
@@ -412,7 +430,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             var streamProvider = GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
 
             _stream = streamProvider.GetStream<SubscribedBlockDto>(
-                Guid.NewGuid(), AElfIndexerApplicationConsts.MessageStreamNamespace);
+                State.MessageStreamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
         }
 
         await base.OnActivateAsync();
