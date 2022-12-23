@@ -35,7 +35,7 @@ public class SubscribedBlockHandler<T> : ISubscribedBlockHandler<T>, ISingletonD
         var clientToken =
             await _blockScanAppService.GetClientTokenAsync(subscribedBlock.ClientId, subscribedBlock.Version);
         if (subscribedBlock.Version != clientVersion.CurrentVersion &&
-            subscribedBlock.Version != clientVersion.NewVersion && subscribedBlock.Token != clientToken)
+            subscribedBlock.Version != clientVersion.NewVersion || subscribedBlock.Token != clientToken)
         {
             return;
         }

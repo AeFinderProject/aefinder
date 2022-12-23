@@ -31,6 +31,13 @@ public class BlockScanInfoGrain : Grain<BlockScanInfoState>, IBlockScanInfoGrain
         await WriteStateAsync();
     }
     
+    public async Task SetHistoricalBlockScanModeAsync()
+    {
+        State.ClientInfo.ScanModeInfo.ScanMode = ScanMode.HistoricalBlock;
+        State.ClientInfo.ScanModeInfo.ScanNewBlockStartHeight = 0;
+        await WriteStateAsync();
+    }
+    
     public async Task SetHandleHistoricalBlockTimeAsync(DateTime time)
     {
         State.ClientInfo.LastHandleHistoricalBlockTime = time;

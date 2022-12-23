@@ -64,6 +64,9 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         State.ScannedConfirmedBlockHash = null;
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         State.Token = await clientGrain.GetTokenAsync(State.Version);
+        var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
+        await blockScanInfo.SetHistoricalBlockScanModeAsync();
+        await WriteStateAsync();
     }
     
     public async Task HandleHistoricalBlockAsync()
