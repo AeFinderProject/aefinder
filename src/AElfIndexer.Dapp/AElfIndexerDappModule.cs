@@ -7,7 +7,6 @@ using AElfIndexer.Client.Handlers;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
-using AElfIndexer.MongoDB;
 using GraphQL;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -32,7 +31,6 @@ namespace AElfIndexer.Dapp;
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AElfIndexingElasticsearchModule),
     typeof(AElfIndexerApplicationModule),
-    typeof(AElfIndexerMongoDbModule),
     typeof(AbpAutoMapperModule),
     typeof(AbpAspNetCoreSerilogModule))]
 public class AElfIndexerDappModule : AbpModule
