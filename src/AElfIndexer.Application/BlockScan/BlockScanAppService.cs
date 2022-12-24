@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.State.BlockScan;
 using Microsoft.Extensions.Logging;
@@ -51,7 +52,8 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         var streamIds = new List<Guid>();
         foreach (var subscriptionInfo in subscriptionInfos)
         {
-            var id = subscriptionInfo.ChainId + clientId + version + subscriptionInfo.FilterType;
+            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.ChainId, clientId, version,
+                subscriptionInfo.FilterType);
             var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
             var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
             streamIds.Add(streamId);
@@ -69,7 +71,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         var versionStatus = await client.GetVersionStatusAsync(version);
         foreach (var subscriptionInfo in subscriptionInfos)
         {
-            var id = subscriptionInfo.ChainId + clientId + version + subscriptionInfo.FilterType;
+            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.ChainId, clientId, version, subscriptionInfo.FilterType);
             var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
             var scanGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
 

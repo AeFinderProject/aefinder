@@ -1,3 +1,4 @@
+using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Blocks;
 using AElfIndexer.Orleans.TestBase;
 using Orleans;
@@ -38,8 +39,8 @@ public class TestBlockGrainProvider: AElfIndexerTestBase<AElfIndexerOrleansTestB
     {
         if (_blockBranchGrain == null)
         {
-            string primaryKey = chainId + AElfIndexerApplicationConsts.BlockDictionaryGrainIdSuffix;
-            _blockBranchGrain = _clusterClient.GetGrain<IBlockBranchGrain>(primaryKey);
+            _blockBranchGrain = _clusterClient.GetGrain<IBlockBranchGrain>(
+                GrainIdHelper.GenerateGrainId(chainId, AElfIndexerApplicationConsts.BlockBranchGrainIdSuffix));
         }
 
         return _blockBranchGrain;

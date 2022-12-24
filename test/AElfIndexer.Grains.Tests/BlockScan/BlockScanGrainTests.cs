@@ -42,7 +42,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             FilterType = BlockFilterType.Block
         }});
 
-        var id = chainId + clientId + version + BlockFilterType.Block;
+        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
         var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
@@ -130,7 +130,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             }
         });
 
-        var id = chainId + clientId + version + BlockFilterType.Block;
+        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
         var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
@@ -189,7 +189,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             FilterType = BlockFilterType.Block
         }});
 
-        var id = chainId + clientId + version + BlockFilterType.Block;
+        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
         var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
@@ -254,7 +254,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             FilterType = BlockFilterType.Block
         }});
 
-        var id = chainId + clientId + version + BlockFilterType.Block;
+        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
         var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
@@ -322,7 +322,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             }
         }});
 
-        var id = chainId + clientId + version + BlockFilterType.Block;
+        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
         var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo

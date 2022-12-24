@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.State.BlockScan;
 using Orleans;
@@ -50,7 +51,8 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         version.NewVersion.ShouldBeNull();
         
         var streamIds = await _blockScanAppService.GetMessageStreamIdsAsync(clientId, version1);
-        var id = subscriptionInfo1[0].ChainId + clientId + version1 + subscriptionInfo1[0].FilterType;
+        var id = GrainIdHelper.GenerateGrainId(subscriptionInfo1[0].ChainId, clientId, version1,
+            subscriptionInfo1[0].FilterType);
         var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
         var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
         streamIds.Count.ShouldBe(1);

@@ -115,7 +115,7 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
         foreach (var t in types)
         {
-            var indexName = $"{ClientId}_{Version}.{t.Name}".ToLower();
+            var indexName = $"{ClientId}-{Version}.{t.Name}".ToLower();
             //TODO Need to confirm shard and numberOfReplicas
             await elasticIndexService.CreateIndexAsync(indexName, t, 5,1);
         }

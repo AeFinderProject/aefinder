@@ -7,5 +7,5 @@ public class AElfIndexerApplicationConsts
     public const string BlockScanCheckGrainId = "BlockScanCheck";
     public const string PrimaryKeyGrainIdSuffix = "BlockGrainPrimaryKey";
     public const string BlockGrainIdSuffix = "BlockGrain";
-    public const string BlockDictionaryGrainIdSuffix = "BlockDictionaryGrain";
+    public const string BlockBranchGrainIdSuffix = "BlockBranchGrain";
 }
