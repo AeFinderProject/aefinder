@@ -10,19 +10,19 @@ using Orleans;
 
 namespace AElfIndexer.Client;
 
-public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfIndexerClientEntityRepository<TEntity,TKey,TData,T>
-    where TEntity : AElfIndexerClientEntity<TKey>, IIndexBuild, new()
+public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClientEntityRepository<TEntity,TData>
+    where TEntity : AElfIndexerClientEntity<string>, IIndexBuild, new()
     where TData : BlockChainDataBase
 {
-    private readonly INESTRepository<TEntity, TKey> _nestRepository;
+    private readonly INESTRepository<TEntity, string> _nestRepository;
     private readonly IClusterClient _clusterClient;
     private readonly string _entityName;
     private readonly string _clientId;
     private readonly string _version;
     private readonly string _indexName; 
 
-    public AElfIndexerClientEntityRepository(INESTRepository<TEntity, TKey> nestRepository,
-        IClusterClient clusterClient, IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider)
+    public AElfIndexerClientEntityRepository(INESTRepository<TEntity, string> nestRepository,
+        IClusterClient clusterClient, IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider)
     {
         _nestRepository = nestRepository;
         _clusterClient = clusterClient;
@@ -88,7 +88,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         }
     }
     
-    public async Task<TEntity> GetFromBlockStateSetAsync(TKey id, string chainId)
+    public async Task<TEntity> GetFromBlockStateSetAsync(string id, string chainId)
     {
         var entityKey = $"{_entityName}-{id}";
         var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
@@ -106,7 +106,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
             currentBlockStateSet.BlockHeight, entity.LIBValue);
     }
 
-    public async Task<TEntity> GetAsync(TKey id)
+    public async Task<TEntity> GetAsync(string id)
     {
         return await _nestRepository.GetAsync(id,_indexName);
     }

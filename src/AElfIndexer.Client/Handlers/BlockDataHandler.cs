@@ -7,11 +7,11 @@ using Volo.Abp.ObjectMapping;
 
 namespace AElfIndexer.Client.Handlers;
 
-public abstract class BlockDataHandler<T> : BlockChainDataHandler<BlockInfo,T>
+public abstract class BlockDataHandler: BlockChainDataHandler<BlockInfo>
 {
     protected BlockDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
-        IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider,
-        ILogger<BlockDataHandler<T>> logger) : base(clusterClient,
+        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
+        ILogger<BlockDataHandler> logger) : base(clusterClient,
         objectMapper, aelfIndexerClientInfoProvider, logger)
     {
     }

@@ -2,7 +2,7 @@ using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.Client.Providers;
 
-public class AElfIndexerClientInfoProvider<T> : IAElfIndexerClientInfoProvider<T>, ISingletonDependency
+public class AElfIndexerClientInfoProvider : IAElfIndexerClientInfoProvider, ISingletonDependency
 {
     private string _clientId;
     private string _version;

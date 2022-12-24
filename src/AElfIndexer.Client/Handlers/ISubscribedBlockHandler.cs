@@ -3,7 +3,7 @@ using Orleans.Streams;
 
 namespace AElfIndexer.Client.Handlers;
 
-public interface ISubscribedBlockHandler<T>
+public interface ISubscribedBlockHandler
 {
     Task HandleAsync(SubscribedBlockDto blocks, StreamSequenceToken token = null);
 }

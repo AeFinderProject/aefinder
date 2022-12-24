@@ -9,12 +9,12 @@ using Volo.Abp.Modularity;
 namespace GraphQL;
 
 [DependsOn(typeof(AElfIndexerApplicationModule), typeof(AElfIndexerClientModule))]
-public class TestGraphQLModule : AElfIndexerClientPluginBaseModule<TestGraphQLModule, TestSchema, Query, Query>
+public class TestGraphQLModule : AElfIndexerClientPluginBaseModule<TestGraphQLModule, TestSchema, Query>
 {
     protected override void ConfigureServices(IServiceCollection serviceCollection)
     {
         serviceCollection.AddSingleton<IBlockService, BlockService>();
-        serviceCollection.AddTransient<IBlockChainDataHandler<Query>, BlockHandler>();
+        serviceCollection.AddTransient<IBlockChainDataHandler, BlockHandler>();
     }
 
     protected override string ClientId => "AElfIndexer_DApp";

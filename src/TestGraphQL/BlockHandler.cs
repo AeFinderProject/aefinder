@@ -8,13 +8,13 @@ using Volo.Abp.ObjectMapping;
 
 namespace GraphQL;
 
-public class BlockHandler : BlockDataHandler<Query>
+public class BlockHandler : BlockDataHandler
 {
-    private readonly IAElfIndexerClientEntityRepository<TestBlockIndex, string, BlockInfo, Query> _repository;
+    private readonly IAElfIndexerClientEntityRepository<TestBlockIndex, BlockInfo> _repository;
 
     public BlockHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
-        IAElfIndexerClientInfoProvider<Query> aelfIndexerClientInfoProvider,
-        IAElfIndexerClientEntityRepository<TestBlockIndex, string, BlockInfo, Query> repository,
+        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
+        IAElfIndexerClientEntityRepository<TestBlockIndex, BlockInfo> repository,
         ILogger<BlockHandler> logger) : base(clusterClient, objectMapper, aelfIndexerClientInfoProvider,logger)
     {
         _repository = repository;

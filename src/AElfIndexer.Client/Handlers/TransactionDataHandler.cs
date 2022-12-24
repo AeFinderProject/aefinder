@@ -7,13 +7,13 @@ using Volo.Abp.ObjectMapping;
 
 namespace AElfIndexer.Client.Handlers;
 
-public abstract class TransactionDataHandler<T> : BlockChainDataHandler<TransactionInfo,T>
+public abstract class TransactionDataHandler : BlockChainDataHandler<TransactionInfo>
 {
-    private readonly IEnumerable<IAElfLogEventProcessor<T>> _processors;
+    private readonly IEnumerable<IAElfLogEventProcessor> _processors;
 
     protected TransactionDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
-        IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider,
-        IEnumerable<IAElfLogEventProcessor<T>> processors, ILogger<TransactionDataHandler<T>> logger) : base(clusterClient, objectMapper,
+        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
+        IEnumerable<IAElfLogEventProcessor> processors, ILogger<TransactionDataHandler> logger) : base(clusterClient, objectMapper,
         aelfIndexerClientInfoProvider, logger)
     {
         _processors = processors;

@@ -6,13 +6,13 @@ using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.Client.Handlers;
 
-public abstract class AElfLogEventProcessorBase<TEvent,T> : IAElfLogEventProcessor<T>, ISingletonDependency
+public abstract class AElfLogEventProcessorBase<TEvent> : IAElfLogEventProcessor, ISingletonDependency
     where TEvent : IEvent<TEvent>, new()
 {
     private readonly string _eventName;
-    private readonly ILogger<AElfLogEventProcessorBase<TEvent, T>> _logger;
+    private readonly ILogger<AElfLogEventProcessorBase<TEvent>> _logger;
     
-    protected AElfLogEventProcessorBase(ILogger<AElfLogEventProcessorBase<TEvent, T>> logger)
+    protected AElfLogEventProcessorBase(ILogger<AElfLogEventProcessorBase<TEvent>> logger)
     {
         _logger = logger;
         _eventName = typeof(TEvent).Name;

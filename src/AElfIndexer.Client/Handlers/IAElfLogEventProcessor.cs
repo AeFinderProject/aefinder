@@ -2,7 +2,7 @@ using AElfIndexer.Grains.State.Client;
 
 namespace AElfIndexer.Client.Handlers;
 
-public interface IAElfLogEventProcessor<T>
+public interface IAElfLogEventProcessor
 {
     Task HandleEventAsync(LogEventInfo logEventInfo, LogEventContext context = null);
     string GetEventName();

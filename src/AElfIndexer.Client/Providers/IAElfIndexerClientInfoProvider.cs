@@ -1,6 +1,6 @@
 namespace AElfIndexer.Client.Providers;
 
-public interface IAElfIndexerClientInfoProvider<T>
+public interface IAElfIndexerClientInfoProvider
 {
     string GetClientId();
 

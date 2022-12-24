@@ -11,16 +11,16 @@ using Volo.Abp.ObjectMapping;
 
 namespace AElfIndexer.Client.Handlers;
 
-public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>, ITransientDependency 
+public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITransientDependency 
     where TData : BlockChainDataBase
 {
     private readonly IClusterClient _clusterClient;
     protected readonly IObjectMapper ObjectMapper;
     private readonly string _version;
     private readonly string _clientId;
-    protected readonly ILogger<BlockChainDataHandler<TData, T>> Logger;
+    protected readonly ILogger<BlockChainDataHandler<TData>> Logger;
 
-    protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper, IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider, ILogger<BlockChainDataHandler<TData, T>> logger)
+    protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper, IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, ILogger<BlockChainDataHandler<TData>> logger)
     {
         _clusterClient = clusterClient;
         ObjectMapper = objectMapper;

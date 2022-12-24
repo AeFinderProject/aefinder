@@ -10,7 +10,7 @@ public class BlockService : IBlockService
     private readonly INESTRepository<TestBlockIndex, string> _nestRepository;
     private readonly string _indexName;
 
-    public BlockService(INESTRepository<TestBlockIndex, string> nestRepository,IAElfIndexerClientInfoProvider<Query> provider)
+    public BlockService(INESTRepository<TestBlockIndex, string> nestRepository,IAElfIndexerClientInfoProvider provider)
     {
         _nestRepository = nestRepository;
         _indexName = $"{provider.GetClientId()}{provider.GetVersion()}.{nameof(TestBlockIndex)}".ToLower();

@@ -12,7 +12,7 @@ public class Query
     public static Task<TestBlock> Block([FromServices] IBlockService blockService, string id)
         => blockService.GetBlockAsync(id);
     
-    public static async Task<TestBlock> BlockTest([FromServices] IAElfIndexerClientEntityRepository<TestBlockIndex,string,BlockInfo,Query> repository, [FromServices] IObjectMapper objectMapper, string id)
+    public static async Task<TestBlock> BlockTest([FromServices] IAElfIndexerClientEntityRepository<TestBlockIndex,BlockInfo> repository, [FromServices] IObjectMapper objectMapper, string id)
     {
         var block = await repository.GetAsync(id);
         return objectMapper.Map<TestBlockIndex,TestBlock>(block);

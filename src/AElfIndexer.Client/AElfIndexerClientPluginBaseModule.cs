@@ -18,8 +18,8 @@ using Volo.Abp.Threading;
 
 namespace AElfIndexer.Client;
 
-public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery, T> : AbpModule 
-    where TModule : AElfIndexerClientPluginBaseModule<TModule,TSchema,TQuery, T>
+public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery> : AbpModule 
+    where TModule : AElfIndexerClientPluginBaseModule<TModule,TSchema,TQuery>
     where TSchema : AElfIndexerClientSchema<TQuery>
 {
     protected abstract string ClientId { get; }
@@ -28,11 +28,11 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<TModule>(); });
-        context.Services.AddSingleton<IAElfIndexerClientInfoProvider<T>, AElfIndexerClientInfoProvider<T>>();
-        context.Services.AddSingleton<ISubscribedBlockHandler<T>, SubscribedBlockHandler<T>>();
-        context.Services.AddTransient<IBlockChainDataHandler<T>, LogEventDataHandler<T>>();
-        context.Services.AddTransient(typeof(IAElfIndexerClientEntityRepository<,,,>),
-            typeof(AElfIndexerClientEntityRepository<,,,>));
+        context.Services.AddSingleton<IAElfIndexerClientInfoProvider, AElfIndexerClientInfoProvider>();
+        context.Services.AddSingleton<ISubscribedBlockHandler, SubscribedBlockHandler>();
+        context.Services.AddTransient<IBlockChainDataHandler, LogEventDataHandler>();
+        context.Services.AddTransient(typeof(IAElfIndexerClientEntityRepository<,>),
+            typeof(AElfIndexerClientEntityRepository<,>));
         
         ConfigureServices(context.Services);
         ConfigNodes(context.Services);
@@ -46,7 +46,7 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
 
     public override async Task OnPreApplicationInitializationAsync(ApplicationInitializationContext context)
     {
-        var provider = context.ServiceProvider.GetRequiredService<IAElfIndexerClientInfoProvider<T>>();
+        var provider = context.ServiceProvider.GetRequiredService<IAElfIndexerClientInfoProvider>();
         provider.SetClientId(ClientId);
         provider.SetVersion(Version);
         await CreateIndexAsync(context.ServiceProvider);
@@ -73,7 +73,7 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         var blockScanService = context.ServiceProvider.GetRequiredService<IBlockScanAppService>();
         var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
         // TODO: Is correct?
-        var subscribedBlockHandler = context.ServiceProvider.GetRequiredService<ISubscribedBlockHandler<T>>();
+        var subscribedBlockHandler = context.ServiceProvider.GetRequiredService<ISubscribedBlockHandler>();
         var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(ClientId, Version);
         foreach (var streamId in messageStreamIds)
         {

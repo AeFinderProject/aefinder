@@ -7,13 +7,13 @@ using Volo.Abp.ObjectMapping;
 
 namespace AElfIndexer.Client.Handlers;
 
-public class LogEventDataHandler<T> : BlockChainDataHandler<LogEventInfo,T>
+public class LogEventDataHandler : BlockChainDataHandler<LogEventInfo>
 {
-    private readonly IEnumerable<IAElfLogEventProcessor<T>> _processors;
+    private readonly IEnumerable<IAElfLogEventProcessor> _processors;
 
     public LogEventDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
-        IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider,
-        IEnumerable<IAElfLogEventProcessor<T>> processors, ILogger<LogEventDataHandler<T>> logger) : base(clusterClient,
+        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
+        IEnumerable<IAElfLogEventProcessor> processors, ILogger<LogEventDataHandler> logger) : base(clusterClient,
         objectMapper, aelfIndexerClientInfoProvider, logger)
     {
         _processors = processors;

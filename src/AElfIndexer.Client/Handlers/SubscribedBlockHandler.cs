@@ -8,16 +8,16 @@ using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.Client.Handlers;
 
-public class SubscribedBlockHandler<T> : ISubscribedBlockHandler<T>, ISingletonDependency
+public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDependency
 {
-    private readonly IEnumerable<IBlockChainDataHandler<T>> _handlers;
+    private readonly IEnumerable<IBlockChainDataHandler> _handlers;
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IClusterClient _clusterClient;
-    public ILogger<SubscribedBlockHandler<T>> Logger { get; set; }
+    public ILogger<SubscribedBlockHandler> Logger { get; set; }
     private readonly string _clientId;
 
-    public SubscribedBlockHandler(IEnumerable<IBlockChainDataHandler<T>> handlers,
-        IAElfIndexerClientInfoProvider<T> aelfIndexerClientInfoProvider, IBlockScanAppService blockScanAppService,
+    public SubscribedBlockHandler(IEnumerable<IBlockChainDataHandler> handlers,
+        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, IBlockScanAppService blockScanAppService,
         IClusterClient clusterClient)
     {
         _handlers = handlers;

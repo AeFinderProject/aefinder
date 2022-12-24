@@ -6,14 +6,14 @@ using Nest;
 
 namespace AElfIndexer.Client;
 
-public interface IAElfIndexerClientEntityRepository<TEntity, TKey, TData, T>
-    where TEntity : AElfIndexerClientEntity<TKey>, IIndexBuild, new()
+public interface IAElfIndexerClientEntityRepository<TEntity, TData>
+    where TEntity : AElfIndexerClientEntity<string>, IIndexBuild, new()
     where TData : BlockChainDataBase
 {
     Task AddOrUpdateAsync(TEntity entity);
-    Task<TEntity> GetFromBlockStateSetAsync(TKey id, string chainId);
+    Task<TEntity> GetFromBlockStateSetAsync(string id, string chainId);
 
-    Task<TEntity> GetAsync(TKey id);
+    Task<TEntity> GetAsync(string id);
     
     Task<TEntity> GetAsync(
         Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
