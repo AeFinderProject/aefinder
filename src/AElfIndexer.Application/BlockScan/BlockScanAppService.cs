@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.BlockScan;
@@ -52,7 +53,8 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         var streamIds = new List<Guid>();
         foreach (var subscriptionInfo in subscriptionInfos)
         {
-            var id = subscriptionInfo.ChainId + clientId + version + subscriptionInfo.FilterType;
+            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.ChainId, clientId, version,
+                subscriptionInfo.FilterType);
             var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
             var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
             streamIds.Add(streamId);
@@ -71,7 +73,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         await client.SetTokenAsync(version);
         foreach (var subscriptionInfo in subscriptionInfos)
         {
-            var id = subscriptionInfo.ChainId + clientId + version + subscriptionInfo.FilterType;
+            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.ChainId, clientId, version, subscriptionInfo.FilterType);
             var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
             var scanGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
 
@@ -83,7 +85,8 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             }
             else
             {
-                var blockStateSetInfoGrain = _clusterClient.GetGrain<IBlockStateSetInfoGrain>($"BlockStateSetInfo_{clientId}_{subscriptionInfo.ChainId}_{version}");
+                var blockStateSetInfoGrain = _clusterClient.GetGrain<IBlockStateSetInfoGrain>(
+                    GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, subscriptionInfo.ChainId, version));
                 await scanGrain.ReScanAsync(
                     await blockStateSetInfoGrain.GetConfirmedBlockHeight(subscriptionInfo.FilterType));
             }

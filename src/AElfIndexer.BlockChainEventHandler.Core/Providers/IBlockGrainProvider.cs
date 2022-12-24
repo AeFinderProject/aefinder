@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Blocks;
 using Orleans;
 using Volo.Abp.DependencyInjection;
@@ -21,7 +22,8 @@ public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
 
     public async Task<IBlockBranchGrain> GetBlockBranchGrain(string chainId)
     {
-        string primaryKey = chainId + AElfIndexerApplicationConsts.BlockDictionaryGrainIdSuffix;
+        var primaryKey =
+            GrainIdHelper.GenerateGrainId(chainId, AElfIndexerApplicationConsts.BlockBranchGrainIdSuffix);
         var grain = _clusterClient.GetGrain<IBlockBranchGrain>(primaryKey);
 
         return grain;

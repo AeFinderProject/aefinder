@@ -1,5 +1,6 @@
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Client.Providers;
+using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
 using Microsoft.Extensions.Logging;
@@ -34,7 +35,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
     {
         var blockStateSetsGrain =
             _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(
-                $"BlockStateSets_{clientId}_{chainId}_{_version}");
+                GrainIdHelper.GenerateGrainId("BlockStateSets", clientId, chainId, _version));
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
         var longestChainBlockStateSet = await blockStateSetsGrain.GetLongestChainBlockStateSet();
 
@@ -115,7 +116,9 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
         if (confirmBlock != null)
         {
             await blockStateSetsGrain.CleanBlockStateSets(confirmBlock.BlockHeight, confirmBlock.BlockHash);
-            var blockStateSetInfoGrain = _clusterClient.GetGrain<IBlockStateSetInfoGrain>($"BlockStateSetInfo_{clientId}_{chainId}_{_version}");
+            var blockStateSetInfoGrain =
+                _clusterClient.GetGrain<IBlockStateSetInfoGrain>(
+                    GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, chainId, _version));
             await blockStateSetInfoGrain.SetConfirmedBlockHeight(FilterType, confirmBlock.BlockHeight);
         }
     }
@@ -149,7 +152,7 @@ public abstract class BlockChainDataHandler<TData,T> : IBlockChainDataHandler<T>
             tasks.Add(Task.Factory.StartNew(async () =>
             {
                 var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
-                    $"DappData_{_clientId}_{blockDto.ChainId}_{_version}_{change.Key}");
+                    GrainIdHelper.GenerateGrainId("DappData", _clientId, blockDto.ChainId, _version, change.Key));
                 var value = await dappGrain.GetLIBValue<AElfIndexerClientEntity<string>>();
                 if (value != null && value.BlockHeight > blockDto.BlockHeight) return;
                 await dappGrain.SetLIBValue(change.Value);

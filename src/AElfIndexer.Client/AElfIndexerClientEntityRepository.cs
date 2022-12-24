@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using AElf.Indexing.Elasticsearch;
 using AElfIndexer.Client.Providers;
+using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
 using Nest;
@@ -28,18 +29,21 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
         _entityName = typeof(TEntity).Name;
         _clientId = aelfIndexerClientInfoProvider.GetClientId();
         _version = aelfIndexerClientInfoProvider.GetVersion();
-        _indexName = $"{_clientId}_{_version}.{_entityName}".ToLower();
+        _indexName = $"{_clientId}-{_version}.{_entityName}".ToLower();
     }
 
     public async Task AddOrUpdateAsync(TEntity entity)
     {
         if (!IsValidate(entity)) throw new Exception($"Invalid entity: {entity.ToJsonString()}");
-        var entityKey = $"{_entityName}_{entity.Id}";
+        var entityKey = $"{_entityName}-{entity.Id}";
         
-        var blockStateSetsGrainKey = $"BlockStateSets_{_clientId}_{entity.ChainId}_{_version}";
+        var blockStateSetsGrainKey =
+            GrainIdHelper.GenerateGrainId("BlockStateSets", _clientId, entity.ChainId, _version);
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(blockStateSetsGrainKey);
-        var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
-            $"DappData_{_clientId}_{entity.ChainId}_{_version}_{entityKey}");
+        var dappGrain =
+            _clusterClient.GetGrain<IDappDataGrain>(GrainIdHelper.GenerateGrainId("DappData", _clientId, entity.ChainId,
+                _version, entityKey));
+        
         var dataValue = await dappGrain.GetValue<TEntity>();
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
         var blockStateSet = blockStateSets[entity.BlockHash];
@@ -86,12 +90,13 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
     
     public async Task<TEntity> GetFromBlockStateSetAsync(TKey id, string chainId)
     {
-        var entityKey = $"{_entityName}_{id}";
+        var entityKey = $"{_entityName}-{id}";
         var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
-            $"DappData_{_clientId}_{chainId}_{_version}_{entityKey}");
+            GrainIdHelper.GenerateGrainId("DappData", _clientId, chainId, _version, entityKey));
         var blockStateSetsGrain =
             _clusterClient.GetGrain<IBlockStateSetsGrain<TData>>(
-                $"BlockStateSets_{_clientId}_{chainId}_{_version}");
+                GrainIdHelper.GenerateGrainId("BlockStateSets", _clientId, chainId, _version));
+        
         var entity = await dappGrain.GetValue<TEntity>();
 
         var blockStateSets = await blockStateSetsGrain.GetBlockStateSets();
@@ -156,8 +161,8 @@ public class AElfIndexerClientEntityRepository<TEntity,TKey,TData,T> : IAElfInde
     {
         if (blockStateSet.Changes.TryGetValue(entityKey, out _)) return;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
-        //$"{IndexSettingOptions.IndexPrefix.ToLower()}.{typeof(TEntity).Name.ToLower()}"
-        await _nestRepository.AddOrUpdateAsync(entity, $"{_clientId}{_version}.{_entityName}".ToLower());
+
+        await _nestRepository.AddOrUpdateAsync(entity, _indexName);
         await blockStateSetsGrain.SetBlockStateSet(blockStateSet);
     }
     
