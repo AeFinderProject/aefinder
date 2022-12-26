@@ -6,6 +6,8 @@
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>AElfIndexer</RootNamespace>
     <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+    <PackageId>AElfIndexer.Domain.Shared</PackageId>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
