@@ -4,6 +4,8 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>AElfIndexer.Client</RootNamespace>
+        <PackageId>AElfIndexer.Client</PackageId>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 <!--        <Nullable>enable</Nullable>-->
     </PropertyGroup>
 
