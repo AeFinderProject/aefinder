@@ -6,6 +6,7 @@
 <!--        <Nullable>enable</Nullable>-->
         <RootNamespace>AElfIndexer.Grains</RootNamespace>
         <PackageId>AElfIndexer.Grains</PackageId>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>
