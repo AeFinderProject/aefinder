@@ -3,7 +3,7 @@
   <Import Project="..\..\common.props" />
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>AElfIndexer</RootNamespace>
   </PropertyGroup>
 
@@ -21,12 +21,12 @@
     <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.6.5" />
     <PackageReference Include="NUglify" Version="1.20.0" />
     <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />
-    <PackageReference Include="Volo.Abp.Account.Application" Version="6.0.0" />
-    <PackageReference Include="Volo.Abp.Identity.Application" Version="6.0.0" />
-    <PackageReference Include="Volo.Abp.PermissionManagement.Application" Version="6.0.0" />
-    <PackageReference Include="Volo.Abp.TenantManagement.Application" Version="6.0.0" />
-    <PackageReference Include="Volo.Abp.FeatureManagement.Application" Version="6.0.0" />
-    <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="6.0.0" />
+    <PackageReference Include="Volo.Abp.Account.Application" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.Identity.Application" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Application" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.TenantManagement.Application" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.Application" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="7.0.0-rc.5" />
   </ItemGroup>
 
 </Project>
