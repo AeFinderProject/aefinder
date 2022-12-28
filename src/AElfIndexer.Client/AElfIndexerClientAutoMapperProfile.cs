@@ -12,6 +12,7 @@ public class AElfIndexerClientAutoMapperProfile:Profile
         CreateMap<LogEventDto, LogEventInfo>();
         CreateMap<BlockWithTransactionDto, BlockInfo>();
         CreateMap<TransactionInfo, LogEventContext>();
+        CreateMap<TransactionDto, TransactionInfo>();
     }
     
 }
