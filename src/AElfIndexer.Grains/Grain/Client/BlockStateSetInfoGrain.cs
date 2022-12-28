@@ -8,7 +8,9 @@ public class BlockStateSetInfoGrain : Grain<BlockStateSetInfoGrainState>, IBlock
 {
     public Task<long> GetConfirmedBlockHeight(BlockFilterType filterType)
     {
-        return Task.FromResult(State.BlockHeightInfo[filterType]);
+        return State.BlockHeightInfo.TryGetValue(filterType, out var blockHeight)
+            ? Task.FromResult(State.BlockHeightInfo[filterType])
+            : Task.FromResult(0L);
     }
     
     public async Task SetConfirmedBlockHeight(BlockFilterType filterType, long blockHeight)

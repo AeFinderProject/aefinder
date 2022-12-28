@@ -87,8 +87,9 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             {
                 var blockStateSetInfoGrain = _clusterClient.GetGrain<IBlockStateSetInfoGrain>(
                     GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, subscriptionInfo.ChainId, version));
-                await scanGrain.ReScanAsync(
-                    await blockStateSetInfoGrain.GetConfirmedBlockHeight(subscriptionInfo.FilterType));
+                var blockHeight = await blockStateSetInfoGrain.GetConfirmedBlockHeight(subscriptionInfo.FilterType);
+                if (blockHeight == 0) blockHeight = subscriptionInfo.StartBlockNumber;
+                await scanGrain.ReScanAsync(blockHeight);
             }
 
             Logger.LogDebug($"Start client: {clientId}, id: {id}");
