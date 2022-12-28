@@ -131,7 +131,7 @@ public static class OrleansHostExtensions
                 .AddKafka(AElfIndexerApplicationConsts.MessageStreamName)
                 .WithOptions(options =>
                 {
-                    options.BrokerList = new[] { "127.0.0.1:9092" };
+                    options.BrokerList = configuration.GetSection("Kafka:Brokers").Get<List<string>>();
                     options.ConsumerGroupId = "AElfIndexer";
                     options.ConsumeMode = ConsumeMode.LastCommittedMessage;
                     options.AddTopic(AElfIndexerApplicationConsts.MessageStreamNamespace,
