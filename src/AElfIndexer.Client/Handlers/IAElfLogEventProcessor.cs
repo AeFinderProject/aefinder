@@ -8,3 +8,8 @@ public interface IAElfLogEventProcessor
     string GetEventName();
     string GetContractAddress();
 }
+
+public interface IAElfLogEventProcessor<TData> : IAElfLogEventProcessor where TData : BlockChainDataBase
+{
+    
+}
