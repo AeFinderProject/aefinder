@@ -164,7 +164,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
         var blockDtos = (await _blockAppService.GetBlocksAsync(new GetBlocksInput
         {
             ChainId = chainId,
-            IsOnlyConfirmed = true,
+            IsOnlyConfirmed = false,
             StartBlockHeight = blocks.First().BlockHeight,
             EndBlockHeight = blocks.Last().BlockHeight
         })).ToDictionary(o=>o.BlockHash, o=>o);
