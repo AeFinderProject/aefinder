@@ -171,7 +171,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             blockHash = blockStateSet.PreviousBlockHash;
         }
 
-        if (blockStateSet == null) throw new Exception($"Invalid block hash:{blockHash}");
+        if (blockStateSet == null && blockHash != "0000000000000000000000000000000000000000000000000000000000000000") throw new Exception($"Invalid block hash:{blockHash}");
 
         return longestChain.OrderBy(b => b.BlockHeight).ToList();
     }
