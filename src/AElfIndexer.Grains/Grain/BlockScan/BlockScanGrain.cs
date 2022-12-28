@@ -230,9 +230,11 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
 
         var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
+        var token = await clientGrain.GetTokenAsync(State.Version);
         if (!isVersionAvailable
             || clientInfo.ScanModeInfo.ScanMode != ScanMode.NewBlock
-            || subscriptionInfo.OnlyConfirmedBlock)
+            || subscriptionInfo.OnlyConfirmedBlock
+            || token != State.Token)
         {
             _logger.LogInformation($"HandleNewBlock failed {this.GetPrimaryKeyString()}, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
             return;
@@ -304,9 +306,11 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var clientInfo = await blockScanInfo.GetClientInfoAsync();
         
         var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
+        var token = await clientGrain.GetTokenAsync(State.Version);
         if (!isVersionAvailable
             || clientInfo.ScanModeInfo.ScanMode != ScanMode.NewBlock
-            || block.BlockHeight <= State.ScannedConfirmedBlockHeight)
+            || block.BlockHeight <= State.ScannedConfirmedBlockHeight
+            || token != State.Token)
         {
             _logger.LogInformation($"HandleConfirmedBlock failed {this.GetPrimaryKeyString()}, block height: {block.BlockHeight}");
             return;
