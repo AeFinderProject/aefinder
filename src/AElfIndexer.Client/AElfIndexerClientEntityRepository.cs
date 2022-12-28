@@ -115,10 +115,9 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
         Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
         Expression<Func<TEntity, object>> sortExp = null,
-        SortOrder sortType = SortOrder.Ascending,
-        string index = null)
+        SortOrder sortType = SortOrder.Ascending)
     {
-        return await _nestRepository.GetAsync(filterFunc, includeFieldFunc, sortExp, sortType, index);
+        return await _nestRepository.GetAsync(filterFunc, includeFieldFunc, sortExp, sortType, _indexName);
     }
 
     public async Task<Tuple<long, List<TEntity>>> GetListAsync(
@@ -127,10 +126,9 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         Expression<Func<TEntity, object>> sortExp = null,
         SortOrder sortType = SortOrder.Ascending,
         int limit = 1000,
-        int skip = 0,
-        string index = null)
+        int skip = 0)
     {
-        return await _nestRepository.GetListAsync(filterFunc, includeFieldFunc, sortExp, sortType, limit, skip, index);
+        return await _nestRepository.GetListAsync(filterFunc, includeFieldFunc, sortExp, sortType, limit, skip, _indexName);
     }
 
     public async Task<Tuple<long, List<TEntity>>> GetSortListAsync(
@@ -138,17 +136,15 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
         Func<SortDescriptor<TEntity>, IPromise<IList<ISort>>> sortFunc = null,
         int limit = 1000,
-        int skip = 0,
-        string index = null)
+        int skip = 0)
     {
-        return await _nestRepository.GetSortListAsync(filterFunc, includeFieldFunc, sortFunc, limit, skip, index);
+        return await _nestRepository.GetSortListAsync(filterFunc, includeFieldFunc, sortFunc, limit, skip, _indexName);
     }
 
     public async Task<CountResponse> CountAsync(
-        Func<QueryContainerDescriptor<TEntity>, QueryContainer> query,
-        string indexPrefix = null)
+        Func<QueryContainerDescriptor<TEntity>, QueryContainer> query)
     {
-        return await _nestRepository.CountAsync(query, indexPrefix);
+        return await _nestRepository.CountAsync(query, _indexName);
     }
     
     private bool IsValidate(TEntity entity)

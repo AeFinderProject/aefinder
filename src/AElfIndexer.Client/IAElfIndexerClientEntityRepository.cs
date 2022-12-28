@@ -19,8 +19,7 @@ public interface IAElfIndexerClientEntityRepository<TEntity, TData>
         Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
         Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
         Expression<Func<TEntity, object>> sortExp = null,
-        SortOrder sortType = SortOrder.Ascending,
-        string index = null);
+        SortOrder sortType = SortOrder.Ascending);
 
     Task<Tuple<long, List<TEntity>>> GetListAsync(
         Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
@@ -28,18 +27,15 @@ public interface IAElfIndexerClientEntityRepository<TEntity, TData>
         Expression<Func<TEntity, object>> sortExp = null,
         SortOrder sortType = SortOrder.Ascending,
         int limit = 1000,
-        int skip = 0,
-        string index = null);
+        int skip = 0);
 
     Task<Tuple<long, List<TEntity>>> GetSortListAsync(
         Func<QueryContainerDescriptor<TEntity>, QueryContainer> filterFunc = null,
         Func<SourceFilterDescriptor<TEntity>, ISourceFilter> includeFieldFunc = null,
         Func<SortDescriptor<TEntity>, IPromise<IList<ISort>>> sortFunc = null,
         int limit = 1000,
-        int skip = 0,
-        string index = null);
+        int skip = 0);
 
     Task<CountResponse> CountAsync(
-        Func<QueryContainerDescriptor<TEntity>, QueryContainer> query,
-        string indexPrefix = null);
+        Func<QueryContainerDescriptor<TEntity>, QueryContainer> query);
 }
