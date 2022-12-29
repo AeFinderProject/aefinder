@@ -42,6 +42,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             FilterType = BlockFilterType.Block
         }});
 
+        await clientGrain.SetTokenAsync(version);
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
         var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
@@ -90,20 +91,20 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
-        subscribedBlock.Count.ShouldBe(70);
-        subscribedBlock.Last().BlockHeight.ShouldBe(60);
+        subscribedBlock.Count.ShouldBe(55);
+        subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[49].First());
-        subscribedBlock.Count.ShouldBe(70);
-        subscribedBlock.Last().BlockHeight.ShouldBe(60);
+        subscribedBlock.Count.ShouldBe(55);
+        subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[51].First());
-        subscribedBlock.Count.ShouldBe(70);
-        subscribedBlock.Last().BlockHeight.ShouldBe(60);
+        subscribedBlock.Count.ShouldBe(56);
+        subscribedBlock.Last().BlockHeight.ShouldBe(51);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[53].First());
-        subscribedBlock.Count.ShouldBe(70);
-        subscribedBlock.Last().BlockHeight.ShouldBe(60);
+        subscribedBlock.Count.ShouldBe(61);
+        subscribedBlock.Last().BlockHeight.ShouldBe(53);
     }
 
     [Fact]
@@ -129,7 +130,8 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
                 FilterType = BlockFilterType.Block
             }
         });
-
+        await clientGrain.SetTokenAsync(version);
+        
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
         var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
@@ -188,6 +190,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             StartBlockNumber = 21,
             FilterType = BlockFilterType.Block
         }});
+        await clientGrain.SetTokenAsync(version);
 
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
@@ -253,6 +256,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             StartBlockNumber = 21,
             FilterType = BlockFilterType.Block
         }});
+        await clientGrain.SetTokenAsync(version);
 
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
@@ -321,6 +325,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
                 }
             }
         }});
+        await clientGrain.SetTokenAsync(version);
 
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
