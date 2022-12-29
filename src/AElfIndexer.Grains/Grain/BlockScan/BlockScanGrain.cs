@@ -74,9 +74,9 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     {
         try
         {
-            _logger.LogInformation($"{this.GetPrimaryKeyString()} pushing block: begin from {State.ScannedBlockHeight}");
-            
             await ReadStateAsync();
+            
+            _logger.LogInformation($"Pushing block [grain: {this.GetPrimaryKeyString()} token: {State.Token}]: begin from {State.ScannedBlockHeight}");
 
             var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
             var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
@@ -105,7 +105,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 if (State.ScannedConfirmedBlockHeight >=
                     chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold)
                 {
-                    _logger.LogInformation($"{this.GetPrimaryKeyString()} switch to new block mode.");
+                    _logger.LogInformation($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: switch to new block mode.");
                     await blockScanInfo.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
                     break;
                 }
@@ -160,13 +160,13 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 await WriteStateAsync();
 
                 chainStatus = await chainGrain.GetChainStatusAsync();
-                _logger.LogInformation($"{this.GetPrimaryKeyString()} pushing block: pushed historical block from {blocks.First().BlockHeight} to {blocks.Last().BlockHeight}");
+                _logger.LogInformation($"Pushing block [grain: {this.GetPrimaryKeyString()} token: {State.Token}]: pushed historical block from {blocks.First().BlockHeight} to {blocks.Last().BlockHeight}");
 
             }
         }
         catch (Exception e)
         {
-            _logger.LogError(e, $"{this.GetPrimaryKeyString()} HandleHistoricalBlock failed: {e.Message}");
+            _logger.LogError(e, $"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: HandleHistoricalBlock failed: {e.Message}");
             throw;
         }
     }
@@ -214,7 +214,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             || subscriptionInfo.OnlyConfirmedBlock
             || token != State.Token)
         {
-            _logger.LogWarning($"{this.GetPrimaryKeyString()} HandleNewBlock failed, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+            _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: HandleNewBlock failed, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
             return;
         }
 
@@ -239,14 +239,14 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else
         {
-            _logger.LogDebug($"{this.GetPrimaryKeyString()} Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, from height: {GetMinScannedBlockHeight()}");
+            _logger.LogDebug($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, from height: {GetMinScannedBlockHeight()}");
             blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, GetMinScannedBlockHeight(),
                 block.BlockHeight, false, null);
                 
             if (blocks.Count == 0)
             {
                 var message =
-                    $"{this.GetPrimaryKeyString()} Cannot get blocks: from {GetMinScannedBlockHeight()} to {block.BlockHeight}";
+                    $"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Cannot get blocks: from {GetMinScannedBlockHeight()} to {block.BlockHeight}";
                 _logger.LogError(message);
                 throw new ApplicationException(message);
             }
@@ -255,7 +255,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var unPushedBlock = await GetUnPushedBlocksAsync(blocks, blockFilterProvider, needCheckIncomplete);
         if (unPushedBlock.Count == 0)
         {
-            _logger.LogWarning($"{this.GetPrimaryKeyString()} HandleNewBlock failed, no unpushed block. block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+            _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: HandleNewBlock failed, no unpushed block. block height: {block.BlockHeight}, block hash: {block.BlockHash}");
             return;
         }
 
@@ -276,7 +276,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         });
 
         await WriteStateAsync();
-        _logger.LogInformation($"{this.GetPrimaryKeyString()} pushing block: pushed new block from {subscribedBlocks.First().BlockHeight} to {subscribedBlocks.Last().BlockHeight}");
+        _logger.LogInformation($"Pushing block [grain: {this.GetPrimaryKeyString()} token: {State.Token}]: pushed new block from {subscribedBlocks.First().BlockHeight} to {subscribedBlocks.Last().BlockHeight}");
     }
 
     public async Task HandleConfirmedBlockAsync(BlockWithTransactionDto block)
@@ -294,7 +294,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             || block.BlockHeight <= State.ScannedConfirmedBlockHeight
             || token != State.Token)
         {
-            _logger.LogWarning($"{this.GetPrimaryKeyString()} HandleConfirmedBlock failed, block height: {block.BlockHeight}");
+            _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: HandleConfirmedBlock failed, block height: {block.BlockHeight}");
             return;
         }
 
@@ -309,7 +309,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         else
         {
             _logger.LogDebug(
-                $"{this.GetPrimaryKeyString()} Not linked confirmed block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, current block height: {State.ScannedConfirmedBlockHeight}");
+                $"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Not linked confirmed block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, current block height: {State.ScannedConfirmedBlockHeight}");
             scannedBlocks.AddRange(await blockFilterProvider.GetBlocksAsync(State.ChainId,
                 State.ScannedConfirmedBlockHeight + 1, block.BlockHeight, true, null));
             
@@ -323,7 +323,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         if (scannedBlocks.Count == 0)
         {
             var message =
-                $"{this.GetPrimaryKeyString()} Cannot get confirmed blocks: from {State.ScannedConfirmedBlockHeight + 1} to {block.BlockHeight}";
+                $"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Cannot get confirmed blocks: from {State.ScannedConfirmedBlockHeight + 1} to {block.BlockHeight}";
             _logger.LogError(message);
             throw new ApplicationException(message);
         }
@@ -367,8 +367,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         State.ScannedConfirmedBlockHash = scannedBlocks.Last().BlockHash;
         await WriteStateAsync();
         
-        _logger.LogInformation($"{this.GetPrimaryKeyString()} pushing block: pushed confirmed block from {scannedBlocks.First().BlockHeight} to {scannedBlocks.Last().BlockHeight}");
-
+        _logger.LogInformation($"Pushing block [grain: {this.GetPrimaryKeyString()} token: {State.Token}]: pushed confirmed block from {scannedBlocks.First().BlockHeight} to {scannedBlocks.Last().BlockHeight}");
     }
 
     private async Task<List<BlockWithTransactionDto>> GetUnPushedBlocksAsync(List<BlockWithTransactionDto> blocks, IBlockFilterProvider blockFilterProvider, bool needCheckIncomplete)
@@ -381,7 +380,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 blocks = await blockFilterProvider.FilterIncompleteBlocksAsync(State.ChainId, blocks);
                 if (blocks.Count == 0)
                 {
-                    _logger.LogWarning($"{this.GetPrimaryKeyString()} Cannot filter incomplete blocks");
+                    _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Cannot filter incomplete blocks");
                     break;
                 }
             }
