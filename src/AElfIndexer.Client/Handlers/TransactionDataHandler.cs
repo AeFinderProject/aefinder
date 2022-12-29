@@ -9,11 +9,11 @@ namespace AElfIndexer.Client.Handlers;
 
 public abstract class TransactionDataHandler : BlockChainDataHandler<TransactionInfo>
 {
-    private readonly IEnumerable<IAElfLogEventProcessor> _processors;
+    private readonly IEnumerable<IAElfLogEventProcessor<TransactionInfo>> _processors;
 
     protected TransactionDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
         IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
-        IEnumerable<IAElfLogEventProcessor> processors, ILogger<TransactionDataHandler> logger) : base(clusterClient, objectMapper,
+        IEnumerable<IAElfLogEventProcessor<TransactionInfo>> processors, ILogger<TransactionDataHandler> logger) : base(clusterClient, objectMapper,
         aelfIndexerClientInfoProvider, logger)
     {
         _processors = processors;

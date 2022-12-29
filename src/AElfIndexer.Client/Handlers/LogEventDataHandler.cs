@@ -9,11 +9,11 @@ namespace AElfIndexer.Client.Handlers;
 
 public class LogEventDataHandler : BlockChainDataHandler<LogEventInfo>
 {
-    private readonly IEnumerable<IAElfLogEventProcessor> _processors;
+    private readonly IEnumerable<IAElfLogEventProcessor<LogEventInfo>> _processors;
 
     public LogEventDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
         IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
-        IEnumerable<IAElfLogEventProcessor> processors, ILogger<LogEventDataHandler> logger) : base(clusterClient,
+        IEnumerable<IAElfLogEventProcessor<LogEventInfo>> processors, ILogger<LogEventDataHandler> logger) : base(clusterClient,
         objectMapper, aelfIndexerClientInfoProvider, logger)
     {
         _processors = processors;
