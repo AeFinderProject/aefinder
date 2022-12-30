@@ -103,7 +103,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                 });
                 if (count != end - start + 1)
                 {
-                    Logger.LogDebug(
+                    Logger.LogWarning(
                         $"Wrong confirmed block count, ChainId: {chainId} StartBlockHeight: {start} EndBlockHeight: {end}");
                     return;
                 }
