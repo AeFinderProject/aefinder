@@ -88,8 +88,9 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                 return;
             }
 
-            if (chainStatus.ConfirmedBlockHash != confirmBlock.PreviousBlockHash ||
-                chainStatus.ConfirmedBlockHeight != confirmBlock.BlockHeight - 1)
+            if (chainStatus.ConfirmedBlockHeight != 0 &&
+                (chainStatus.ConfirmedBlockHash != confirmBlock.PreviousBlockHash ||
+                 chainStatus.ConfirmedBlockHeight != confirmBlock.BlockHeight - 1))
             {
                 var start = chainStatus.ConfirmedBlockHeight + 1;
                 var end = confirmBlock.BlockHeight - 1;
@@ -102,7 +103,8 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                 });
                 if (count != end - start + 1)
                 {
-                    Logger.LogDebug($"Wrong confirmed block count, ChainId: {chainId} StartBlockHeight: {start} EndBlockHeight: {end}");
+                    Logger.LogDebug(
+                        $"Wrong confirmed block count, ChainId: {chainId} StartBlockHeight: {start} EndBlockHeight: {end}");
                     return;
                 }
             }

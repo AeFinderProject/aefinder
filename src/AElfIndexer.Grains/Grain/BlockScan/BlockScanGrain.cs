@@ -105,7 +105,9 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 if (State.ScannedConfirmedBlockHeight >=
                     chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold)
                 {
-                    _logger.LogInformation($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: switch to new block mode.");
+                    _logger.LogInformation(
+                        $"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: switch to new block mode. ScannedConfirmedBlockHeight: {State.ScannedConfirmedBlockHeight}, ConfirmedBlockHeight: {chainStatus.ConfirmedBlockHeight}, ScanHistoryBlockThreshold: {_blockScanOptions.ScanHistoryBlockThreshold}");
+                    await blockScanInfo.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
                     await blockScanInfo.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
                     break;
                 }
