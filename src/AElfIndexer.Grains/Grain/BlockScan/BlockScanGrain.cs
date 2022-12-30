@@ -230,8 +230,9 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else if (State.ScannedBlocks.Count == 0)
         {
-            blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, State.ScannedBlockHeight + 1,
-                block.BlockHeight, false, null);
+            var startHeight = State.ScannedBlockHeight + 1;
+            blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, startHeight,
+                GetMaxTargetHeight(startHeight, block.BlockHeight), false, null);
         }
         else if (State.ScannedBlocks.TryGetValue(block.BlockHeight - 1, out var previousBlocks) &&
                  previousBlocks.Contains(block.PreviousBlockHash))
@@ -241,9 +242,10 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else
         {
-            _logger.LogDebug($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, from height: {GetMinScannedBlockHeight()}");
-            blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, GetMinScannedBlockHeight(),
-                block.BlockHeight, false, null);
+            var startHeight = GetMinScannedBlockHeight();
+            _logger.LogDebug($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, from height: {startHeight}");
+            blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, startHeight,
+                GetMaxTargetHeight(startHeight, block.BlockHeight), false, null);
                 
             if (blocks.Count == 0)
             {
@@ -312,8 +314,9 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         {
             _logger.LogDebug(
                 $"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Not linked confirmed block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, current block height: {State.ScannedConfirmedBlockHeight}");
+            var startHeight = State.ScannedConfirmedBlockHeight + 1;
             scannedBlocks.AddRange(await blockFilterProvider.GetBlocksAsync(State.ChainId,
-                State.ScannedConfirmedBlockHeight + 1, block.BlockHeight, true, null));
+                startHeight, GetMaxTargetHeight(startHeight, block.BlockHeight), true, null));
             
             scannedBlocks = await blockFilterProvider.FilterIncompleteConfirmedBlocksAsync(State.ChainId, scannedBlocks,
                 State.ScannedConfirmedBlockHash, State.ScannedConfirmedBlockHeight);
@@ -457,6 +460,11 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                 }
             }
         }
+    }
+
+    private long GetMaxTargetHeight(long startHeight, long endHeight)
+    {
+        return Math.Min(endHeight, startHeight + _blockScanOptions.BatchPushBlockCount - 1);
     }
 
     public override async Task OnActivateAsync()
