@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <RootNamespace>AElfIndexer.EntityEventHandler</RootNamespace>
     </PropertyGroup>
 
@@ -10,9 +10,9 @@
       <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
       <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
       <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
-      <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="6.0.0" />
-      <PackageReference Include="Volo.Abp.Autofac" Version="6.0.0" />
-      <PackageReference Include="Volo.Abp.EventBus.RabbitMQ" Version="6.0.0" />
+      <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="7.0.0-rc.5" />
+      <PackageReference Include="Volo.Abp.Autofac" Version="7.0.0-rc.5" />
+      <PackageReference Include="Volo.Abp.EventBus.RabbitMQ" Version="7.0.0-rc.5" />
     </ItemGroup>
 
     <ItemGroup>

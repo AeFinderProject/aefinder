@@ -1,9 +1,11 @@
-﻿using Volo.Abp.Modularity;
+﻿using AElfIndexer.MongoDB;
+using Volo.Abp.Modularity;
 using Volo.Abp.AutoMapper;
 
 namespace AElfIndexer;
 
 [DependsOn(typeof(AbpAutoMapperModule),
+    typeof(AElfIndexerMongoDbModule),
     typeof(AElfIndexerApplicationModule),
     typeof(AElfIndexerApplicationContractsModule))]
 public class AElfIndexerEntityEventHandlerCoreModule:AbpModule
