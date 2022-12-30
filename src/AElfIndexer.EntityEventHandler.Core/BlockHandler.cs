@@ -94,10 +94,13 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             }
             
             var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
-            foreach (var dto in blockDtos)
+            _ = Task.Run(async () =>
             {
-                _ = Task.Run(async () => { await _blockIndexHandler.ProcessNewBlockAsync(dto); });
-            }
+                foreach (var dto in blockDtos)
+                {
+                    await _blockIndexHandler.ProcessNewBlockAsync(dto);
+                }
+            });
         }
         catch (Exception e)
         {
