@@ -130,7 +130,7 @@ public class TransactionFilterProvider : IBlockFilterProvider
             if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
                 block.Transactions.Count != blockDto.TransactionIds.Count)
             {
-                _logger.LogError(
+                _logger.LogWarning(
                     $"Wrong Transactions: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}");
                 break;
             }
@@ -158,14 +158,14 @@ public class TransactionFilterProvider : IBlockFilterProvider
         {
             if (block.PreviousBlockHash != previousBlockHash && previousBlockHash!=null  || block.BlockHeight != previousBlockHeight + 1)
             {
-                _logger.LogError($"Wrong confirmed previousBlockHash or previousBlockHash: block hash {block.BlockHash}, block height {block.BlockHeight}");
+                _logger.LogWarning($"Wrong confirmed previousBlockHash or previousBlockHash: block hash {block.BlockHash}, block height {block.BlockHeight}");
                 break;
             }
 
             if (!blockDtos.TryGetValue(block.BlockHash, out var blockDto) ||
                 block.Transactions.Count != blockDto.TransactionIds.Count)
             {
-                _logger.LogError(
+                _logger.LogWarning(
                     $"Wrong confirmed Transactions: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}");
                 break;
             }
