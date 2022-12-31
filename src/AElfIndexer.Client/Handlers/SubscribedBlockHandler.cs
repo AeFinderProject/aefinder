@@ -30,7 +30,8 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
     {
         if (subscribedBlock.Blocks.Count == 0) return;
         if (subscribedBlock.ClientId != _clientId) return;
-
+        Logger.LogDebug(
+            $"Receive subscribedBlock: block height:{subscribedBlock.Blocks.First().BlockHeight}-{subscribedBlock.Blocks.Last().BlockHeight},FilterType: {subscribedBlock.FilterType}");
         var clientVersion = await _blockScanAppService.GetClientVersionAsync(subscribedBlock.ClientId);
         var clientToken =
             await _blockScanAppService.GetClientTokenAsync(subscribedBlock.ClientId, subscribedBlock.Version);
