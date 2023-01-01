@@ -34,6 +34,29 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
 
     public async Task AddOrUpdateAsync(TEntity entity)
     {
+        await OperationAsync(entity, AddOrUpdateForConfirmBlockAsync, AddToBlockStateSetAsync);
+    }
+    
+    public async Task DeleteAsync(TEntity entity)
+    {
+        await OperationAsync(entity, DeleteForConfirmBlockAsync, RemoveFromBlockStateSetAsync);
+    }
+
+    private async Task AddOrUpdateForConfirmBlockAsync(IDappDataGrain dataGrain, TEntity entity)
+    {
+        await _nestRepository.AddOrUpdateAsync(entity, _indexName);
+        await dataGrain.SetLIBValue(entity);
+    }
+    
+    private async Task DeleteForConfirmBlockAsync(IDappDataGrain dataGrain, TEntity entity)
+    {
+        await _nestRepository.DeleteAsync(entity, _indexName);
+        await dataGrain.SetLIBValue(null);
+    }
+
+    private async Task OperationAsync(TEntity entity, Func<IDappDataGrain, TEntity,Task> confirmBlockFunc,
+        Func<BlockStateSet<TData>, string, TEntity, IBlockStateSetsGrain<TData>,Task> unConfirmBlockFunc)
+    {
         if (!IsValidate(entity)) throw new Exception($"Invalid entity: {entity.ToJsonString()}");
         var entityKey = $"{_entityName}-{entity.Id}";
         
@@ -51,9 +74,8 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         if (blockStateSet.Confirmed)
         {
             if ((dataValue.LIBValue?.BlockHeight??0) >= blockStateSet.BlockHeight) return;
-            
-            await _nestRepository.AddOrUpdateAsync(entity, _indexName);
-            await dappGrain.SetLIBValue(entity);
+
+            await confirmBlockFunc(dappGrain, entity);
             return;
         }
         //Deal with fork
@@ -61,7 +83,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         // entity is on best chain
         if (longestChainHashes.ContainsKey(entity.BlockHash))
         {
-            await AddToBlockStateSetAsync(blockStateSet, entityKey, entity, blockStateSetsGrain);
+            await unConfirmBlockFunc(blockStateSet, entityKey, entity, blockStateSetsGrain);
         }
         else // entity is not on best chain.
         {
@@ -87,7 +109,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
             }
         }
     }
-    
+
     public async Task<TEntity> GetFromBlockStateSetAsync(string id, string chainId)
     {
         var entityKey = $"{_entityName}-{id}";
@@ -159,6 +181,15 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
 
         await _nestRepository.AddOrUpdateAsync(entity, _indexName);
+        await blockStateSetsGrain.SetBlockStateSet(blockStateSet);
+    }
+    
+    private async Task RemoveFromBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey,TEntity entity, IBlockStateSetsGrain<TData> blockStateSetsGrain)
+    {
+        if (blockStateSet.Changes.TryGetValue(entityKey, out _)) return;
+        blockStateSet.Changes.Remove(entityKey);
+
+        await _nestRepository.DeleteAsync(entity, _indexName);
         await blockStateSetsGrain.SetBlockStateSet(blockStateSet);
     }
     
