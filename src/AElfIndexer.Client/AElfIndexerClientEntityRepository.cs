@@ -186,7 +186,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     
     private async Task RemoveFromBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey,TEntity entity, IBlockStateSetsGrain<TData> blockStateSetsGrain)
     {
-        if (blockStateSet.Changes.TryGetValue(entityKey, out _)) return;
+        if (!blockStateSet.Changes.TryGetValue(entityKey, out _)) return;
         blockStateSet.Changes.Remove(entityKey);
 
         await _nestRepository.DeleteAsync(entity, _indexName);
