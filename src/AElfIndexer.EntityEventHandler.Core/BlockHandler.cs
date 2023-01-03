@@ -105,8 +105,8 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         catch (Exception e)
         {
             _logger.LogError(e,
-                $"Handle newBlocks add event error:{e.Message}，start BlockHeight: {eventData.NewBlocks.First().BlockHeight}, end BlockHeight: {eventData.NewBlocks.Last().BlockHeight}");
-            HandleEventAsync(eventData);
+                $"Handle newBlocks add event error:{e.Message}，start BlockHeight: {eventData.NewBlocks.First().BlockHeight}, end BlockHeight: {eventData.NewBlocks.Last().BlockHeight},retrying...");
+            await HandleEventAsync(eventData);
         }
     }
 
