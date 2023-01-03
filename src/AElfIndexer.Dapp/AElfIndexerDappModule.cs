@@ -7,6 +7,7 @@ using AElfIndexer.Client.Handlers;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
+using AElfIndexer.MongoDB;
 using GraphQL;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -24,6 +25,7 @@ using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
+using Volo.Abp.OpenIddict.Tokens;
 using Volo.Abp.Threading;
 
 namespace AElfIndexer.Dapp;
@@ -32,7 +34,8 @@ namespace AElfIndexer.Dapp;
     typeof(AElfIndexingElasticsearchModule),
     typeof(AElfIndexerApplicationModule),
     typeof(AbpAutoMapperModule),
-    typeof(AbpAspNetCoreSerilogModule))]
+    typeof(AbpAspNetCoreSerilogModule),
+    typeof(AElfIndexerMongoDbModule))]
 public class AElfIndexerDappModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -44,8 +47,10 @@ public class AElfIndexerDappModule : AbpModule
             .AddAutoClrMappings()
             .AddSystemTextJson()
             .AddErrorInfoProvider(e => e.ExposeExceptionDetails = true));
+
+        Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
-    
+
     private static void ConfigureOrleans(ServiceConfigurationContext context, IConfiguration configuration)
     {
         context.Services.AddSingleton<IClusterClient>(o =>
