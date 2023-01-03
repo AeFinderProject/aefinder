@@ -21,7 +21,7 @@
       <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
       <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="6.0.0" />
       <PackageReference Include="Volo.Abp.Autofac" Version="6.0.0" />
-       <PackageReference Include="Orleans.Streams.Kafka" Version="6.1.1" />
+      <PackageReference Include="AElf.Orleans.Streams.Kafka" Version="1.0.0" />
     </ItemGroup>
 
     <ItemGroup>

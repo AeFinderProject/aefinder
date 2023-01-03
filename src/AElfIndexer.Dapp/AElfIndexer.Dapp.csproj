@@ -14,7 +14,7 @@
         <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="7.1.1" />
         <PackageReference Include="AElf.Indexing.Elasticsearch" Version="0.0.12" />
         <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />
-        <PackageReference Include="Orleans.Streams.Kafka" Version="6.1.1" />
+        <PackageReference Include="AElf.Orleans.Streams.Kafka" Version="1.0.0" />
     </ItemGroup>
 
     <ItemGroup>
