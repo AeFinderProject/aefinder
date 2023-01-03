@@ -79,6 +79,7 @@ public class AElfIndexerDappModule : AbpModule
                     options.ConsumerGroupId = "AElfIndexer";
                     options.ConsumeMode = ConsumeMode.LastCommittedMessage;
                     options.AddTopic(AElfIndexerApplicationConsts.MessageStreamNamespace,new TopicCreationConfig { AutoCreate = true });
+                    options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
                 })
                 .AddJson()
                 .Build()

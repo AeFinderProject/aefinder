@@ -136,6 +136,7 @@ public static class OrleansHostExtensions
                     options.ConsumeMode = ConsumeMode.LastCommittedMessage;
                     options.AddTopic(AElfIndexerApplicationConsts.MessageStreamNamespace,
                         new TopicCreationConfig { AutoCreate = true });
+                    options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
                 })
                 .AddJson()
                 .AddLoggingTracker().Build();
