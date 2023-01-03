@@ -11,6 +11,7 @@ public interface IAElfIndexerClientEntityRepository<TEntity, TData>
     where TData : BlockChainDataBase
 {
     Task AddOrUpdateAsync(TEntity entity);
+    Task DeleteAsync(TEntity entity);
     Task<TEntity> GetFromBlockStateSetAsync(string id, string chainId);
 
     Task<TEntity> GetAsync(string id);
