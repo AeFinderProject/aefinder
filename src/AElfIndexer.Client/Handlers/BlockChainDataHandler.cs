@@ -74,6 +74,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
                     BlockHeight = blockDto.BlockHeight,
                     PreviousBlockHash = blockDto.PreviousBlockHash,
                     Changes = new Dictionary<string, string>(),
+                    Deletes = new Dictionary<string, string>(),
                     Confirmed = blockDto.Confirmed,
                     Data = GetData(blockDto)
                 };
@@ -156,6 +157,18 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
                 var value = await dappGrain.GetLIBValue<AElfIndexerClientEntity<string>>();
                 if (value != null && value.BlockHeight > blockDto.BlockHeight) return;
                 await dappGrain.SetLIBValue(change.Value);
+            }).Unwrap());
+        }
+        
+        foreach (var change in blockStateSet.Deletes)
+        {
+            tasks.Add(Task.Factory.StartNew(async () =>
+            {
+                var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
+                    GrainIdHelper.GenerateGrainId("DappData", _clientId, blockDto.ChainId, _version, change.Key));
+                var value = await dappGrain.GetLIBValue<AElfIndexerClientEntity<string>>();
+                if (value != null && value.BlockHeight > blockDto.BlockHeight) return;
+                await dappGrain.SetLIBValue(null);
             }).Unwrap());
         }
         await tasks.WhenAll();

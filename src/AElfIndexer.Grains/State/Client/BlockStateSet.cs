@@ -6,6 +6,7 @@ public class BlockStateSet<T>
     public string PreviousBlockHash { get; set; }
     public long BlockHeight { get; set; }
     public Dictionary<string, string> Changes { get; set; } = new ();
+    public Dictionary<string, string> Deletes { get; set; } = new ();
     
     public bool Confirmed { get; set; }
     

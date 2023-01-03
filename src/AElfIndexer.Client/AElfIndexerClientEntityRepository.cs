@@ -88,7 +88,8 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         else // entity is not on best chain.
         {
             //if block state set has entityKey, use it to set entity.
-            if (blockStateSet.Changes.TryGetValue(entityKey, out var value))
+            if (blockStateSet.Changes.TryGetValue(entityKey, out var value) ||
+                blockStateSet.Deletes.TryGetValue(entityKey, out value))
             {
                 entity = JsonConvert.DeserializeObject<TEntity>(value);
             }
@@ -177,8 +178,8 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
 
     private async Task AddToBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey, TEntity entity, IBlockStateSetsGrain<TData> blockStateSetsGrain)
     {
-        if (blockStateSet.Changes.TryGetValue(entityKey, out _)) return;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
+        blockStateSet.Deletes.Remove(entityKey);
 
         await _nestRepository.AddOrUpdateAsync(entity, _indexName);
         await blockStateSetsGrain.SetBlockStateSet(blockStateSet);
@@ -186,7 +187,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     
     private async Task RemoveFromBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey,TEntity entity, IBlockStateSetsGrain<TData> blockStateSetsGrain)
     {
-        if (!blockStateSet.Changes.TryGetValue(entityKey, out _)) return;
+        blockStateSet.Deletes[entityKey] = entity.ToJsonString();
         blockStateSet.Changes.Remove(entityKey);
 
         await _nestRepository.DeleteAsync(entity, _indexName);
@@ -200,6 +201,11 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
             if (blockStateSet.Changes.TryGetValue(entityKey, out var entity))
             {
                 return JsonConvert.DeserializeObject<TEntity>(entity);
+            }
+
+            if (blockStateSet.Deletes.TryGetValue(entityKey, out entity))
+            {
+                return null;
             }
 
             currentBlockHash = blockStateSet.PreviousBlockHash;
