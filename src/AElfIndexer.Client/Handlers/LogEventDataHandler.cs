@@ -31,7 +31,7 @@ public class LogEventDataHandler : BlockChainDataHandler<LogEventInfo>
         foreach (var logEvent in data)
         {
             var processor = _processors.FirstOrDefault(p =>
-                p.GetContractAddress() == logEvent.ContractAddress && p.GetEventName() == logEvent.EventName);
+                p.GetContractAddress(logEvent.ChainId) == logEvent.ContractAddress && p.GetEventName() == logEvent.EventName);
             if (processor == null) continue;
             await processor.HandleEventAsync(logEvent,new LogEventContext
             {

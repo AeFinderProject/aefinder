@@ -36,8 +36,8 @@ public abstract class AElfLogEventProcessorBase<TEvent,TData> : IAElfLogEventPro
     public string GetEventName(){
         return _eventName;
     }
- 
-    public abstract string GetContractAddress();
+
+    public abstract string GetContractAddress(string chainId = null);
     
     protected virtual Task HandleEventAsync(TEvent eventValue, LogEventContext context)
     {
