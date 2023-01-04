@@ -31,8 +31,10 @@ public class Program
 #endif
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .Enrich.FromLogContext()
-            .WriteTo.Async(c => c.File("Logs/logs.txt"))
+            .ReadFrom.Configuration(configuration)
+#if DEBUG
             .WriteTo.Async(c => c.Console())
+#endif
             .CreateLogger();
         
         try
