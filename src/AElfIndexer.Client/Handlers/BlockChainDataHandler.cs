@@ -80,6 +80,8 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
                 };
             }
             await blockStateSetsGrain.TryAddBlockStateSet(blockStateSet);
+            //TODO deal with process longestchain 中断
+            // TODO 如果longestchain 和 bestchain不一样则有中断
             if (longestChainBlockStateSet == null || blockDto.PreviousBlockHash == longestChainBlockStateSet.BlockHash)
             {
                 longestChain.Add(blockStateSet);
@@ -146,32 +148,41 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
     
     private async Task DealWithConfirmBlockAsync(BlockWithTransactionDto blockDto,BlockStateSet<TData> blockStateSet)
     {
-        var tasks = new List<Task>();
-        //Deal with confirmed block
-        foreach (var change in blockStateSet.Changes)
+        try
         {
-            tasks.Add(Task.Factory.StartNew(async () =>
+            var tasks = new List<Task>();
+            //Deal with confirmed block
+            foreach (var change in blockStateSet.Changes)
             {
-                var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
-                    GrainIdHelper.GenerateGrainId("DappData", _clientId, blockDto.ChainId, _version, change.Key));
-                var value = await dappGrain.GetLIBValue<AElfIndexerClientEntity<string>>();
-                if (value != null && value.BlockHeight > blockDto.BlockHeight) return;
-                await dappGrain.SetLIBValue(change.Value);
-            }).Unwrap());
+                tasks.Add(Task.Factory.StartNew(async () =>
+                {
+                    var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
+                        GrainIdHelper.GenerateGrainId("DappData", _clientId, blockDto.ChainId, _version, change.Key));
+                    var value = await dappGrain.GetLIBValue<AElfIndexerClientEntity<string>>();
+                    if (value != null && value.BlockHeight > blockDto.BlockHeight) return;
+                    await dappGrain.SetLIBValue(change.Value);
+                }).Unwrap());
+            }
+        
+            foreach (var change in blockStateSet.Deletes)
+            {
+                tasks.Add(Task.Factory.StartNew(async () =>
+                {
+                    var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
+                        GrainIdHelper.GenerateGrainId("DappData", _clientId, blockDto.ChainId, _version, change.Key));
+                    var value = await dappGrain.GetLIBValue<AElfIndexerClientEntity<string>>();
+                    if (value != null && value.BlockHeight > blockDto.BlockHeight) return;
+                    await dappGrain.SetLIBValue(null);
+                }).Unwrap());
+            }
+            await tasks.WhenAll();
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            throw;
         }
         
-        foreach (var change in blockStateSet.Deletes)
-        {
-            tasks.Add(Task.Factory.StartNew(async () =>
-            {
-                var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
-                    GrainIdHelper.GenerateGrainId("DappData", _clientId, blockDto.ChainId, _version, change.Key));
-                var value = await dappGrain.GetLIBValue<AElfIndexerClientEntity<string>>();
-                if (value != null && value.BlockHeight > blockDto.BlockHeight) return;
-                await dappGrain.SetLIBValue(null);
-            }).Unwrap());
-        }
-        await tasks.WhenAll();
     }
     private List<BlockStateSet<TData>> GetLongestChain(Dictionary<string,BlockStateSet<TData>> blockStateSets, string blockHash)
     {
