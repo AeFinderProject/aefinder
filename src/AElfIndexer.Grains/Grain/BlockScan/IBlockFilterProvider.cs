@@ -8,7 +8,7 @@ public interface IBlockFilterProvider
 {
     BlockFilterType FilterType { get; }
 
-    Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber, bool onlyConfirmed,
+    Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockHeight, long endBlockHeight, bool onlyConfirmed,
         List<FilterContractEventInput> filters);
     
     Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<FilterContractEventInput> filters);

@@ -8,32 +8,31 @@ using Volo.Abp.ObjectMapping;
 
 namespace AElfIndexer.Grains.Grain.BlockScan;
 
-public class BlockFilterProvider : IBlockFilterProvider
+public class BlockFilterProvider : BlockFilterProviderBase,IBlockFilterProvider
 {
-    private readonly IBlockAppService _blockAppService;
     private readonly ILogger<BlockFilterProvider> _logger;
 
     public BlockFilterType FilterType { get; } = BlockFilterType.Block;
 
     public BlockFilterProvider(IBlockAppService blockAppService, ILogger<BlockFilterProvider> logger)
+        : base(blockAppService)
     {
-        _blockAppService = blockAppService;
         _logger = logger;
     }
 
-    public async Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
+    public async Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockHeight, long endBlockHeight,
         bool onlyConfirmed, List<FilterContractEventInput> filters)
     {
-        var blocks = await _blockAppService.GetBlocksAsync(new GetBlocksInput
+        var blocks = await BlockAppService.GetBlocksAsync(new GetBlocksInput
         {
             ChainId = chainId,
             HasTransaction = true,
-            StartBlockHeight = startBlockNumber,
-            EndBlockHeight = endBlockNumber,
+            StartBlockHeight = startBlockHeight,
+            EndBlockHeight = endBlockHeight,
             IsOnlyConfirmed = onlyConfirmed
         });
-
-        return blocks.Select(block => new BlockWithTransactionDto
+        
+        var result = blocks.Select(block => new BlockWithTransactionDto
             {
                 Id = block.Id,
                 Signature = block.Signature,
@@ -47,6 +46,14 @@ public class BlockFilterProvider : IBlockFilterProvider
                 PreviousBlockHash = block.PreviousBlockHash
             })
             .ToList();
+
+        if (result.First().BlockHeight != startBlockHeight)
+        {
+            throw new ApplicationException(
+                $"Get Block filed, ChainId {chainId} StartBlockHeight {startBlockHeight} EndBlockHeight {endBlockHeight} OnlyConfirmed {onlyConfirmed}, Result first block height {result.First().BlockHeight}");
+        }
+
+        return result;
     }
 
     public async Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<FilterContractEventInput> filters)

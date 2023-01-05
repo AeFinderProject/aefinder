@@ -108,7 +108,6 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     _logger.LogInformation(
                         $"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: switch to new block mode. ScannedConfirmedBlockHeight: {State.ScannedConfirmedBlockHeight}, ConfirmedBlockHeight: {chainStatus.ConfirmedBlockHeight}, ScanHistoryBlockThreshold: {_blockScanOptions.ScanHistoryBlockThreshold}");
                     await blockScanInfo.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
-                    await blockScanInfo.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
                     break;
                 }
 
@@ -116,12 +115,9 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold);
 
 
-                var filteredBlocks = await _blockFilterProviders.First(o => o.FilterType == subscriptionInfo.FilterType)
+                var blocks = await _blockFilterProviders.First(o => o.FilterType == subscriptionInfo.FilterType)
                     .GetBlocksAsync(State.ChainId, State.ScannedConfirmedBlockHeight + 1, targetHeight, true,
                         subscriptionInfo.SubscribeEvents);
-
-                var blocks = await FillVacantBlockAsync(filteredBlocks, State.ScannedConfirmedBlockHeight + 1,
-                    targetHeight);
 
                 if (blocks.Count != targetHeight - State.ScannedConfirmedBlockHeight)
                 {
@@ -171,33 +167,6 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             _logger.LogError(e, $"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: HandleHistoricalBlock failed: {e.Message}");
             throw;
         }
-    }
-
-    private async Task<List<BlockWithTransactionDto>> FillVacantBlockAsync(List<BlockWithTransactionDto> filteredBlocks, long startHeight,
-        long endHeight)
-    {
-        if (filteredBlocks.Count == endHeight- startHeight + 1)
-        {
-            return filteredBlocks;
-        }
-
-        var result = new List<BlockWithTransactionDto>();
-        var allBlocks = await _blockFilterProviders.First(o => o.FilterType == BlockFilterType.Block)
-            .GetBlocksAsync(State.ChainId, startHeight, endHeight, true, null);
-        var filteredBlockDic = filteredBlocks.ToDictionary(o => o.BlockHeight, o => o);
-        foreach (var b in allBlocks)
-        {
-            if (filteredBlockDic.TryGetValue(b.BlockHeight, out var filteredBlock))
-            {
-                result.Add(filteredBlock);
-            }
-            else
-            {
-                result.Add(b);
-            }
-        }
-
-        return result;
     }
 
     public async Task HandleNewBlockAsync(BlockWithTransactionDto block)

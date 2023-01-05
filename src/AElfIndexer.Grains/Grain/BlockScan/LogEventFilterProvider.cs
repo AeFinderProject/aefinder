@@ -7,27 +7,26 @@ using Microsoft.Extensions.Logging;
 
 namespace AElfIndexer.Grains.Grain.BlockScan;
 
-public class LogEventFilterProvider : IBlockFilterProvider
+public class LogEventFilterProvider : BlockFilterProviderBase, IBlockFilterProvider
 {
-    private readonly IBlockAppService _blockAppService;
     private readonly ILogger<LogEventFilterProvider> _logger;
 
     public BlockFilterType FilterType { get; } = BlockFilterType.LogEvent;
 
     public LogEventFilterProvider(IBlockAppService blockAppService, ILogger<LogEventFilterProvider> logger)
+        : base(blockAppService)
     {
-        _blockAppService = blockAppService;
         _logger = logger;
     }
 
-    public async Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockNumber, long endBlockNumber,
+    public async Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockHeight, long endBlockHeight,
         bool onlyConfirmed, List<FilterContractEventInput> filters)
     {
-        var logEvents = await _blockAppService.GetLogEventsAsync(new GetLogEventsInput()
+        var logEvents = await BlockAppService.GetLogEventsAsync(new GetLogEventsInput()
         {
             ChainId = chainId,
-            StartBlockHeight = startBlockNumber,
-            EndBlockHeight = endBlockNumber,
+            StartBlockHeight = startBlockHeight,
+            EndBlockHeight = endBlockHeight,
             IsOnlyConfirmed = onlyConfirmed,
             Events = filters
         });
@@ -82,7 +81,16 @@ public class LogEventFilterProvider : IBlockFilterProvider
             }
         }
 
-        return blocks.Values.ToList();
+        var result = blocks.Values.ToList();
+        result = await FillVacantBlockAsync(chainId, result, startBlockHeight, endBlockHeight, onlyConfirmed);
+        
+        if (result.First().BlockHeight != startBlockHeight)
+        {
+            throw new ApplicationException(
+                $"Get LogEvent filed, ChainId {chainId} StartBlockHeight {startBlockHeight} EndBlockHeight {endBlockHeight} OnlyConfirmed {onlyConfirmed}, Result first block height {result.First().BlockHeight}");
+        }
+        
+        return result;
     }
 
     public async Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<FilterContractEventInput> filters)
@@ -161,7 +169,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
     public async Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks)
     {
         var filteredBlocks = new List<BlockWithTransactionDto>();
-        var blockDtos = (await _blockAppService.GetBlocksAsync(new GetBlocksInput
+        var blockDtos = (await BlockAppService.GetBlocksAsync(new GetBlocksInput
         {
             ChainId = chainId,
             IsOnlyConfirmed = false,
@@ -188,7 +196,7 @@ public class LogEventFilterProvider : IBlockFilterProvider
         List<BlockWithTransactionDto> blocks, string previousBlockHash, long previousBlockHeight)
     {
         var filteredBlocks = new List<BlockWithTransactionDto>();
-        var blockDtos = (await _blockAppService.GetBlocksAsync(new GetBlocksInput
+        var blockDtos = (await BlockAppService.GetBlocksAsync(new GetBlocksInput
         {
             ChainId = chainId,
             IsOnlyConfirmed = true,
