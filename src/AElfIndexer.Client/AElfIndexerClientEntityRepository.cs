@@ -34,11 +34,13 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
 
     public async Task AddOrUpdateAsync(TEntity entity)
     {
+        entity.IsDeleted = false;
         await OperationAsync(entity, AddOrUpdateForConfirmBlockAsync, AddToBlockStateSetAsync);
     }
     
     public async Task DeleteAsync(TEntity entity)
     {
+        entity.IsDeleted = true;
         await OperationAsync(entity, DeleteForConfirmBlockAsync, RemoveFromBlockStateSetAsync);
     }
 
@@ -51,7 +53,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     private async Task DeleteForConfirmBlockAsync(IDappDataGrain dataGrain, TEntity entity)
     {
         await _nestRepository.DeleteAsync(entity, _indexName);
-        await dataGrain.SetLIBValue(null);
+        await dataGrain.SetLIBValue(entity);
     }
 
     private async Task OperationAsync(TEntity entity, Func<IDappDataGrain, TEntity,Task> confirmBlockFunc,
@@ -88,8 +90,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         else // entity is not on best chain.
         {
             //if block state set has entityKey, use it to set entity.
-            if (blockStateSet.Changes.TryGetValue(entityKey, out var value) ||
-                blockStateSet.Deletes.TryGetValue(entityKey, out value))
+            if (blockStateSet.Changes.TryGetValue(entityKey, out var value))
             {
                 entity = JsonConvert.DeserializeObject<TEntity>(value);
             }
@@ -106,7 +107,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
             else
             {
                 await _nestRepository.DeleteAsync(entity, _indexName);
-                await dappGrain.SetLIBValue(null);
+                await dappGrain.SetLIBValue(entity);
             }
         }
     }
@@ -179,17 +180,13 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     private async Task AddToBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey, TEntity entity, IBlockStateSetsGrain<TData> blockStateSetsGrain)
     {
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
-        blockStateSet.Deletes.Remove(entityKey);
-
         await _nestRepository.AddOrUpdateAsync(entity, _indexName);
         await blockStateSetsGrain.SetBlockStateSet(blockStateSet);
     }
     
     private async Task RemoveFromBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey,TEntity entity, IBlockStateSetsGrain<TData> blockStateSetsGrain)
     {
-        blockStateSet.Deletes[entityKey] = entity.ToJsonString();
-        blockStateSet.Changes.Remove(entityKey);
-
+        blockStateSet.Changes[entityKey] = entity.ToJsonString();
         await _nestRepository.DeleteAsync(entity, _indexName);
         await blockStateSetsGrain.SetBlockStateSet(blockStateSet);
     }
@@ -198,14 +195,10 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     {
         while (blockStateSets.TryGetValue(currentBlockHash, out var blockStateSet))
         {
-            if (blockStateSet.Changes.TryGetValue(entityKey, out var entity))
+            if (blockStateSet.Changes.TryGetValue(entityKey, out var value))
             {
-                return JsonConvert.DeserializeObject<TEntity>(entity);
-            }
-
-            if (blockStateSet.Deletes.TryGetValue(entityKey, out entity))
-            {
-                return null;
+                var entity = JsonConvert.DeserializeObject<TEntity>(value);
+                return (entity?.IsDeleted ?? true) ? null : entity;
             }
 
             currentBlockHash = blockStateSet.PreviousBlockHash;

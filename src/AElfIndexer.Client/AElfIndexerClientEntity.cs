@@ -4,7 +4,7 @@ using Volo.Abp.Domain.Entities;
 
 namespace AElfIndexer.Client;
 
-public abstract class AElfIndexerClientEntity<TKey> : Entity, IEntity<TKey>
+public class AElfIndexerClientEntity<TKey> : Entity, IEntity<TKey>
 {
     public virtual TKey Id { get; set; }
     
@@ -16,6 +16,7 @@ public abstract class AElfIndexerClientEntity<TKey> : Entity, IEntity<TKey>
     
     [Keyword]public string PreviousBlockHash { get; set; }
     
+    public bool IsDeleted { get; set; }
 
     protected AElfIndexerClientEntity()
     {
