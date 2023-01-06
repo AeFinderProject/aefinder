@@ -24,6 +24,7 @@ using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
+using Volo.Abp.OpenIddict.Tokens;
 using Volo.Abp.Threading;
 
 namespace AElfIndexer.Dapp;
@@ -40,6 +41,7 @@ public class AElfIndexerDappModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         ConfigureCors(context, configuration);
         ConfigureOrleans(context, configuration);
+        ConfigureTokenCleanupService();
         context.Services.AddGraphQL(b => b
             .AddAutoClrMappings()
             .AddSystemTextJson()
@@ -107,6 +109,12 @@ public class AElfIndexerDappModule : AbpModule
                     .AllowCredentials();
             });
         });
+    }
+    
+    //Disable TokenCleanupService
+    private void ConfigureTokenCleanupService()
+    {
+        Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
 
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
