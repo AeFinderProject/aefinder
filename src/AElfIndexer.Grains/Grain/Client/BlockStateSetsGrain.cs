@@ -10,9 +10,16 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
         return Task.FromResult(State.LongestCainHashes);
     }
 
-    public async Task SetLongestChainHashes(Dictionary<string, string> longestCainHashes)
+    public async Task SetLongestChainHashes(Dictionary<string, string> longestCainHashes,bool isChangesReset = false)
     {
         State.LongestCainHashes = longestCainHashes;
+        if (isChangesReset)
+        {
+            foreach (var (blockHash,_) in longestCainHashes)
+            {
+                State.BlockStateSets[blockHash].Changes = new();
+            }
+        }
         await WriteStateAsync();
     }
 
