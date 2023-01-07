@@ -10,44 +10,25 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
         return Task.FromResult(State.LongestCainHashes);
     }
 
-    public async Task SetLongestChainHashes(Dictionary<string, string> longestCainHashes)
+    public async Task SetLongestChainHashes(Dictionary<string, string> longestCainHashes,bool isChangesReset = false)
     {
         State.LongestCainHashes = longestCainHashes;
+        if (isChangesReset)
+        {
+            foreach (var (blockHash,_) in longestCainHashes)
+            {
+                State.BlockStateSets[blockHash].Changes = new();
+            }
+        }
         await WriteStateAsync();
     }
 
-    public async Task<bool> TryAddBlockStateSet(BlockStateSet<T> blockStateSet)
+    public async Task AddBlockStateSet(BlockStateSet<T> blockStateSet)
     {
-        if (blockStateSet == null)
-        {
-            return false;
-        }
+        if (blockStateSet == null) return;
 
-        // BlockStateSet will not be added to State.BlockStateSets 
         State.BlockStateSets.TryAdd(blockStateSet.BlockHash, blockStateSet);
-        if (State.LongestCainBlockStateSet == null ||
-            State.LongestCainBlockStateSet.BlockHash == blockStateSet.PreviousBlockHash)
-        {
-            State.LongestCainBlockStateSet = blockStateSet;
-        }
-        else if (blockStateSet.BlockHeight > State.LongestCainBlockStateSet.BlockHeight)
-        {
-            if (!CheckLinked(blockStateSet.BlockHash)) return false;
-            State.LongestCainBlockStateSet = blockStateSet;
-        }
         await WriteStateAsync();
-        return false;
-    }
-
-    private bool CheckLinked(string blockHash)
-    {
-        BlockStateSet<T> blockStateSet;
-        while (State.BlockStateSets.TryGetValue(blockHash, out blockStateSet) && !blockStateSet.Processed)
-        {
-            blockHash = blockStateSet.PreviousBlockHash;
-        }
-
-        return blockStateSet != null && blockStateSet.Processed;
     }
 
     public async Task SetBlockStateSet(BlockStateSet<T> blockStateSet)
