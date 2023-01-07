@@ -9,7 +9,7 @@ public interface IBlockStateSetsGrain<T> : IGrainWithStringKey
     // Task<bool> TryGetBlockStateSet(string blockHash, out BlockStateSet<T> blockStateSet);
     Task<Dictionary<string, string>> GetLongestChainHashes();
     Task SetLongestChainHashes(Dictionary<string,string> bestChainHashes);
-    Task<bool> TryAddBlockStateSet(BlockStateSet<T> blockStateSet);
+    Task AddBlockStateSet(BlockStateSet<T> blockStateSet);
     Task SetBlockStateSet(BlockStateSet<T> blockStateSet);
     Task<BlockStateSet<T>> GetCurrentBlockStateSet();
     Task<BlockStateSet<T>> GetLongestChainBlockStateSet();
