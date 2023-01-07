@@ -6,7 +6,7 @@ public interface IAElfLogEventProcessor
 {
     Task HandleEventAsync(LogEventInfo logEventInfo, LogEventContext context = null);
     string GetEventName();
-    string GetContractAddress();
+    string GetContractAddress(string chainId = null);
 }
 
 public interface IAElfLogEventProcessor<TData> : IAElfLogEventProcessor where TData : BlockChainDataBase

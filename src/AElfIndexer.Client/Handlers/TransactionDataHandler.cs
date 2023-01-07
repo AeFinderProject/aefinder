@@ -48,7 +48,7 @@ public abstract class TransactionDataHandler : BlockChainDataHandler<Transaction
             foreach (var logEvent in transaction.LogEvents)
             {
                 var processor = _processors.FirstOrDefault(p =>
-                    p.GetContractAddress() == logEvent.ContractAddress && p.GetEventName() == logEvent.EventName);
+                    p.GetContractAddress(logEvent.ChainId) == logEvent.ContractAddress && p.GetEventName() == logEvent.EventName);
                 if (processor == null) continue;
                 await processor.HandleEventAsync(logEvent,
                     ObjectMapper.Map<TransactionInfo, LogEventContext>(transaction));
