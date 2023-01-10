@@ -7,15 +7,15 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
 {
     public Task<Dictionary<string, string>> GetLongestChainHashes()
     {
-        return Task.FromResult(State.LongestCainHashes);
+        return Task.FromResult(State.LongestChainHashes);
     }
 
-    public async Task SetLongestChainHashes(Dictionary<string, string> longestCainHashes,bool isChangesReset = false)
+    public async Task SetLongestChainHashes(Dictionary<string, string> longestChainHashes,bool isChangesReset = false)
     {
-        State.LongestCainHashes = longestCainHashes;
+        State.LongestChainHashes = longestChainHashes;
         if (isChangesReset)
         {
-            foreach (var (blockHash,_) in longestCainHashes)
+            foreach (var (blockHash,_) in longestChainHashes)
             {
                 State.BlockStateSets[blockHash].Changes = new();
             }
@@ -45,19 +45,19 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
 
     public Task<BlockStateSet<T>> GetLongestChainBlockStateSet()
     {
-        return Task.FromResult(State.LongestCainBlockStateSet);
+        return Task.FromResult(State.LongestChainBlockStateSet);
     }
 
     public Task<BlockStateSet<T>> GetBestChainBlockStateSet()
     {
-        return Task.FromResult(State.BestCainBlockStateSet);
+        return Task.FromResult(State.BestChainBlockStateSet);
     }
 
     public async Task SetBestChainBlockStateSet(string blockHash)
     {
         if (State.BlockStateSets.TryGetValue(blockHash, out var blockStateSet))
         {
-            State.BestCainBlockStateSet = blockStateSet;
+            State.BestChainBlockStateSet = blockStateSet;
             await WriteStateAsync();
         }
     }
@@ -75,7 +75,7 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
     {
         if (State.BlockStateSets.TryGetValue(blockHash, out var blockStateSet))
         {
-            State.LongestCainBlockStateSet = blockStateSet;
+            State.LongestChainBlockStateSet = blockStateSet;
             await WriteStateAsync();
         }
     }
