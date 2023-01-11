@@ -103,7 +103,12 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
                 }
             }
         }
-        
+
+        if (longestChain.Count == 0)
+        {
+            return;
+        }
+
         if (longestChain.All(b => b.BlockHash != longestChainBlockStateSet.BlockHash))
         {
             var bestChainBlockStateSet = await blockStateSetsGrain.GetBestChainBlockStateSet();
