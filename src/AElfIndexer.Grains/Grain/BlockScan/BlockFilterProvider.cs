@@ -47,7 +47,7 @@ public class BlockFilterProvider : BlockFilterProviderBase,IBlockFilterProvider
             })
             .ToList();
 
-        if (result.First().BlockHeight != startBlockHeight)
+        if (result.Count != 0 && result.First().BlockHeight != startBlockHeight)
         {
             throw new ApplicationException(
                 $"Get Block filed, ChainId {chainId} StartBlockHeight {startBlockHeight} EndBlockHeight {endBlockHeight} OnlyConfirmed {onlyConfirmed}, Result first block height {result.First().BlockHeight}");

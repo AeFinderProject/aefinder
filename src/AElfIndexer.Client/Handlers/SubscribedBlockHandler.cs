@@ -15,6 +15,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
     private readonly IClusterClient _clusterClient;
     public ILogger<SubscribedBlockHandler> Logger { get; set; }
     private readonly string _clientId;
+    private const long UpgradeVersionThreshold = 1000;
 
     public SubscribedBlockHandler(IEnumerable<IBlockChainDataHandler> handlers,
         IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, IBlockScanAppService blockScanAppService,
@@ -40,8 +41,8 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         }
 
         Logger.LogDebug(
-            "Receive subscribedBlock: FilterType: {FilterType},  block height:{FirstBlockHeight}-{LastBlockHeight},Confirmed: {Confirmed}",
-            subscribedBlock.FilterType, subscribedBlock.Blocks.First().BlockHeight,
+            "Receive subscribedBlock: FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
+            subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,
             subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
 
         var handler = _handlers.First(h => h.FilterType == subscribedBlock.FilterType);
@@ -52,7 +53,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         {
             var chainGrain = _clusterClient.GetGrain<IChainGrain>(subscribedBlock.ChainId);
             var chainStatus = await chainGrain.GetChainStatusAsync();
-            if (subscribedBlock.Blocks.Last().BlockHeight > chainStatus.BlockHeight - 100)
+            if (subscribedBlock.Blocks.Last().BlockHeight > chainStatus.BlockHeight - UpgradeVersionThreshold)
             {
                 await _blockScanAppService.UpgradeVersionAsync(subscribedBlock.ClientId);
             }
