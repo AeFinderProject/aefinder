@@ -107,6 +107,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
             else
             {
                 await _nestRepository.DeleteAsync(entity, _indexName);
+                entity.IsDeleted = true;
                 await dappGrain.SetLIBValue(entity);
             }
         }
@@ -179,6 +180,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
 
     private async Task AddToBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey, TEntity entity, IBlockStateSetsGrain<TData> blockStateSetsGrain)
     {
+        entity.IsDeleted = false;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
         await _nestRepository.AddOrUpdateAsync(entity, _indexName);
         await blockStateSetsGrain.SetBlockStateSet(blockStateSet);
@@ -186,6 +188,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     
     private async Task RemoveFromBlockStateSetAsync(BlockStateSet<TData> blockStateSet, string entityKey,TEntity entity, IBlockStateSetsGrain<TData> blockStateSetsGrain)
     {
+        entity.IsDeleted = true;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
         await _nestRepository.DeleteAsync(entity, _indexName);
         await blockStateSetsGrain.SetBlockStateSet(blockStateSet);

@@ -98,16 +98,16 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
                 if (targetLongestChain.Count > 0)
                 {
                     longestChain = targetLongestChain;
-                
-                    if (longestChain.All(b => b.BlockHash != longestChainBlockStateSet.BlockHash))
-                    {
-                        var bestChainBlockStateSet = await blockStateSetsGrain.GetBestChainBlockStateSet();
-                        forkBlockStateSets = GetForkBlockStateSets(blockStateSets, longestChain, bestChainBlockStateSet?.BlockHash);
-                    }
                     longestChainBlockStateSet = blockStateSet;
                     await blockStateSetsGrain.SetLongestChainBlockStateSet(blockStateSet.BlockHash);
                 }
             }
+        }
+        
+        if (longestChain.All(b => b.BlockHash != longestChainBlockStateSet.BlockHash))
+        {
+            var bestChainBlockStateSet = await blockStateSetsGrain.GetBestChainBlockStateSet();
+            forkBlockStateSets = GetForkBlockStateSets(blockStateSets, longestChain, bestChainBlockStateSet?.BlockHash);
         }
         await ProcessLongestChainAsync(longestChain, forkBlockStateSets, blockStateSetsGrain);
 
