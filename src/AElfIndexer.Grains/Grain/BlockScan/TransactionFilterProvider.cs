@@ -63,7 +63,7 @@ public class TransactionFilterProvider : BlockFilterProviderBase, IBlockFilterPr
             result = await FillVacantBlockAsync(chainId, result, startBlockHeight, endBlockHeight, onlyConfirmed);
         }
         
-        if (result.First().BlockHeight != startBlockHeight)
+        if (result.Count != 0 && result.First().BlockHeight != startBlockHeight)
         {
             throw new ApplicationException(
                 $"Get Transaction filed, ChainId {chainId} StartBlockHeight {startBlockHeight} EndBlockHeight {endBlockHeight} OnlyConfirmed {onlyConfirmed}, Result first block height {result.First().BlockHeight}");
