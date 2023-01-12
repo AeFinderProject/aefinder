@@ -89,12 +89,6 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         }
         else // entity is not on best chain.
         {
-            //if block state set has entityKey, use it to set entity.
-            if (blockStateSet.Changes.TryGetValue(entityKey, out var value))
-            {
-                entity = JsonConvert.DeserializeObject<TEntity>(value);
-            }
-                
             //if current block state is not on best chain, get the best chain block state set
             var longestChainBlockStateSet = await blockStateSetsGrain.GetLongestChainBlockStateSet();
             var entityFromBlockStateSet = GetEntityFromBlockStateSets(entityKey, blockStateSets, longestChainBlockStateSet.BlockHash,
@@ -106,6 +100,12 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
             }
             else
             {
+                //if block state set has entityKey, use it to set entity.
+                if (blockStateSet.Changes.TryGetValue(entityKey, out var value))
+                {
+                    entity = JsonConvert.DeserializeObject<TEntity>(value);
+                }
+                
                 await _nestRepository.DeleteAsync(entity, _indexName);
                 entity.IsDeleted = true;
                 await dappGrain.SetLIBValue(entity);
