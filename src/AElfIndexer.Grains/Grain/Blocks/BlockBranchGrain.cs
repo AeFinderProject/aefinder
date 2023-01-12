@@ -54,6 +54,11 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
 
         var libBlockList = GetLibBlockList(blockEventDataList);
         await ConfirmBlocksAsync(libBlockList);
+
+        foreach (var libBlockData in libBlockList)
+        {
+            State.Blocks[libBlockData.BlockHash].Confirmed = true;
+        }
         
         var libBlock = libBlockList.OrderBy(x => x.BlockHeight).LastOrDefault();
         if (libBlock != null)
@@ -181,7 +186,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
                 return libBlockList;
             }
             
-            State.Blocks[currentLibBlockHash].Confirmed = true;
+            // State.Blocks[currentLibBlockHash].Confirmed = true;
             libBlockList.Add(State.Blocks[currentLibBlockHash]);
             currentLibBlockHash = State.Blocks[currentLibBlockHash].PreviousBlockHash;
         }
