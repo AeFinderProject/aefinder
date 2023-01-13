@@ -30,7 +30,8 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
     private readonly IClusterClient _clusterClient;
     private readonly IObjectMapper _objectMapper;
     private readonly IBlockAppService _blockAppService;
-    
+    private const int MaxRequestBlockCount = 1000;
+
     public ILogger<BlockIndexHandler> Logger { get; set; }
 
     public BlockIndexHandler(IObjectMapper objectMapper, IClusterClient clusterClient, IBlockAppService blockAppService)
@@ -93,19 +94,40 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                  chainStatus.ConfirmedBlockHeight != confirmBlock.BlockHeight - 1))
             {
                 var start = chainStatus.ConfirmedBlockHeight + 1;
-                var end = confirmBlock.BlockHeight - 1;
-                var count = await _blockAppService.GetBlockCountAsync(new GetBlocksInput
+                var end = Math.Min(confirmBlock.BlockHeight - 1, start + MaxRequestBlockCount - 1);
+                while (true)
                 {
-                    ChainId = chainId,
-                    IsOnlyConfirmed = true,
-                    StartBlockHeight = start,
-                    EndBlockHeight = end
-                });
-                if (count != end - start + 1)
-                {
-                    Logger.LogWarning(
-                        $"Wrong confirmed block count, ChainId: {chainId} StartBlockHeight: {start} EndBlockHeight: {end}");
-                    return;
+                    var count = await _blockAppService.GetBlockCountAsync(new GetBlocksInput
+                    {
+                        ChainId = chainId,
+                        IsOnlyConfirmed = true,
+                        StartBlockHeight = start,
+                        EndBlockHeight = end
+                    });
+                    if (count != end - start + 1)
+                    {
+                        Logger.LogWarning(
+                            $"Wrong confirmed block count, ChainId: {chainId} StartBlockHeight: {start} EndBlockHeight: {end} Count: {count}");
+                        return;
+                    }
+
+                    if (end == confirmBlock.BlockHeight - 1)
+                    {
+                        break;
+                    }
+
+                    var blocks = await _blockAppService.GetBlocksAsync(new GetBlocksInput
+                    {
+                        ChainId = chainId,
+                        IsOnlyConfirmed = true,
+                        StartBlockHeight = end,
+                        EndBlockHeight = end
+                    });
+
+                    await chainGrain.SetLatestConfirmBlockAsync(blocks[0].BlockHash, blocks[0].BlockHeight);
+
+                    start = end + 1;
+                    end = Math.Min(confirmBlock.BlockHeight - 1, start + MaxRequestBlockCount - 1);
                 }
             }
 
