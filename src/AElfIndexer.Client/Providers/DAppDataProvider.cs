@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using AElfIndexer.Grains.Grain.Client;
 using Newtonsoft.Json;
+using Nito.AsyncEx;
 using Orleans;
 using Volo.Abp.DependencyInjection;
 
@@ -45,11 +46,12 @@ internal class DAppDataProvider : IDAppDataProvider, ISingletonDependency
 
     public async Task CommitAsync()
     {
-        foreach (var value in _toCommitLibValues)
+        var tasks = _toCommitLibValues.Select(async o =>
         {
-            var dappDataGrain = _clusterClient.GetGrain<IDappDataGrain>(value.Key);
-            await dappDataGrain.SetLIBValue(_libValues[value.Key]);
-        }
+            var dappDataGrain = _clusterClient.GetGrain<IDappDataGrain>(o.Key);
+            await dappDataGrain.SetLIBValue(_libValues[o.Key]);
+        });
+        await tasks.WhenAll();
         _toCommitLibValues.Clear();
     }
 }
