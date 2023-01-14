@@ -19,4 +19,5 @@ public interface IBlockStateSetsGrain<T> : IGrainWithStringKey
     Task SetBlockStateSetProcessed(string blockHash);
     Task SetCurrentBlockStateSet(BlockStateSet<T> blockStateSet);
     Task CleanBlockStateSets(long blockHeight,string blockHash);
+    Task SetBlockStateSets(Dictionary<string, BlockStateSet<T>> sets);
 }

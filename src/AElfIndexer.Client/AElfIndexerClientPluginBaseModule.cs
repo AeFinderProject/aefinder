@@ -34,7 +34,7 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         context.Services.AddTransient(typeof(IAElfIndexerClientEntityRepository<,>),
             typeof(AElfIndexerClientEntityRepository<,>));
         context.Services.AddSingleton(typeof(IBlockStateSetProvider<>), typeof(BlockStateSetProvider<>));
-        context.Services.AddSingleton<IDappDataProvider, DappDataProvider>();
+        context.Services.AddSingleton<IDAppDataProvider, DAppDataProvider>();
         
         ConfigureServices(context.Services);
         ConfigNodes(context.Services);

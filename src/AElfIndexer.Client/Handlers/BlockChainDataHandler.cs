@@ -14,17 +14,19 @@ namespace AElfIndexer.Client.Handlers;
 public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITransientDependency 
     where TData : BlockChainDataBase
 {
+    private readonly IClusterClient _clusterClient;
     protected readonly IObjectMapper ObjectMapper;
     private readonly string _version;
     private readonly string _clientId;
     protected readonly ILogger<BlockChainDataHandler<TData>> Logger;
     
     public IAbpLazyServiceProvider LazyServiceProvider { get; set; }
-    protected IDappDataProvider DappDataProvider => this.LazyServiceProvider.LazyGetRequiredService<IDappDataProvider>();
+    protected IDAppDataProvider DAppDataProvider => this.LazyServiceProvider.LazyGetRequiredService<IDAppDataProvider>();
     protected IBlockStateSetProvider<TData> BlockStateSetProvider => this.LazyServiceProvider.LazyGetRequiredService<IBlockStateSetProvider<TData>>();
 
     protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper, IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, ILogger<BlockChainDataHandler<TData>> logger)
     {
+        _clusterClient = clusterClient;
         ObjectMapper = objectMapper;
         Logger = logger;
         _version = aelfIndexerClientInfoProvider.GetVersion();
@@ -115,7 +117,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             await BlockStateSetProvider.CleanBlockStateSets(stateSetKey, confirmBlock.BlockHeight, confirmBlock.BlockHash);
             var blockStateSetInfoGrain =
                 _clusterClient.GetGrain<IBlockStateSetInfoGrain>(
-                    GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, chainId, _version));
+                    GrainIdHelper.GenerateGrainId("BlockStateSetInfo", _clientId, chainId, _version));
             await blockStateSetInfoGrain.SetConfirmedBlockHeight(FilterType, confirmBlock.BlockHeight);
         }
     }
@@ -149,27 +151,27 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             //Set BestChain
             await BlockStateSetProvider.SetBestChainBlockStateSet(blockStateSetKey, longestChainBlockStateSet.BlockHash);
         }
+
+        await DAppDataProvider.CommitAsync();
+        await BlockStateSetProvider.CommitAsync(blockStateSetKey);
     }
 
     private async Task DealWithConfirmBlockAsync(BlockWithTransactionDto blockDto,BlockStateSet<TData> blockStateSet)
     {
         try
         {
-            var tasks = new List<Task>();
             //Deal with confirmed block
             foreach (var change in blockStateSet.Changes)
             {
-                tasks.Add(Task.Factory.StartNew(async () =>
+                var dappDataKey = GrainIdHelper.GenerateGrainId("DAppData", _clientId, blockDto.ChainId, _version, change.Key);
+                var value = await DAppDataProvider.GetLibValueAsync<AElfIndexerClientEntity<string>>(dappDataKey);
+                if (value != null && value.BlockHeight > blockDto.BlockHeight)
                 {
-                    var dappGrain = _clusterClient.GetGrain<IDappDataGrain>(
-                        GrainIdHelper.GenerateGrainId("DappData", _clientId, blockDto.ChainId, _version, change.Key));
-                    var value = await dappGrain.GetLIBValue<AElfIndexerClientEntity<string>>();
-                    if (value != null && value.BlockHeight > blockDto.BlockHeight) return;
-                    await dappGrain.SetLIBValue(change.Value);
-                }).Unwrap());
+                    continue;
+                }
+
+                await DAppDataProvider.SetLibValueAsync(dappDataKey, change.Value);
             }
-            
-            await tasks.WhenAll();
         }
         catch (Exception e)
         {

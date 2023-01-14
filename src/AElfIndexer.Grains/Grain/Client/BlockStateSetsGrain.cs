@@ -90,6 +90,12 @@ public class BlockStateSetsGrain<T> : Grain<BlockStateSetsGrainState<T>>, IBlock
     {
         return Task.FromResult(State.BlockStateSets);
     }
+    
+    public async Task SetBlockStateSets(Dictionary<string, BlockStateSet<T>> sets)
+    {
+        State.BlockStateSets = sets;
+        await WriteStateAsync();
+    }
 
     // public Task<bool> TryGetBlockStateSet(string blockHash, out BlockStateSet<T> blockStateSet)
     // {

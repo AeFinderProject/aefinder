@@ -133,8 +133,7 @@ internal class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonD
     public async Task CommitAsync(string key)
     {
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetsGrain<T>>(key);
-        // TODO：Set all blocksets
-        //await blockStateSetsGrain.SetBlockStateSet()
+        await blockStateSetsGrain.SetBlockStateSets(_blockStateSets[key]);
         await blockStateSetsGrain.SetLongestChainBlockStateSet(_longestChainBlockStateSets[key].BlockHash);
         await blockStateSetsGrain.SetBestChainBlockStateSet(_bestChainBlockStateSets[key].BlockHash);
     }
