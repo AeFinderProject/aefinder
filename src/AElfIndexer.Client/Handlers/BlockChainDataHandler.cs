@@ -153,7 +153,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         }
 
         await DAppDataProvider.CommitAsync();
-        await BlockStateSetProvider.CommitAsync(blockStateSetKey);
+        //await BlockStateSetProvider.CommitAsync(blockStateSetKey);
     }
 
     private async Task DealWithConfirmBlockAsync(BlockWithTransactionDto blockDto,BlockStateSet<TData> blockStateSet)

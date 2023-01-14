@@ -23,7 +23,12 @@ internal class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonD
 
     public async Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSets(string key)
     {
-        _blockStateSets.TryGetValue(key, out var value);
+        if (!_blockStateSets.TryGetValue(key, out var value))
+        { 
+            value = new Dictionary<string, BlockStateSet<T>>();
+            _blockStateSets[key] = value;
+        }
+
         return value;
     }
 

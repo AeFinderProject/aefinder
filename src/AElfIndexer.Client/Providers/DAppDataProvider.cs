@@ -48,7 +48,7 @@ internal class DAppDataProvider : IDAppDataProvider, ISingletonDependency
         foreach (var value in _toCommitLibValues)
         {
             var dappDataGrain = _clusterClient.GetGrain<IDappDataGrain>(value.Key);
-            await dappDataGrain.SetLIBValue(_libValues[value.Value]);
+            await dappDataGrain.SetLIBValue(_libValues[value.Key]);
         }
         _toCommitLibValues.Clear();
     }
