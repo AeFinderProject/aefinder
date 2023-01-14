@@ -49,7 +49,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             if (longestChain.Count > 0)
             {
                 await ProcessLongestChainAsync(stateSetKey, longestChain, blockStateSets);
-                
+                await DAppDataProvider.CommitAsync();
                 blockStateSets = await BlockStateSetProvider.GetBlockStateSets(stateSetKey);
                 longestChain = new List<BlockStateSet<TData>>();
             }
@@ -103,12 +103,12 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             }
         }
 
-        if (longestChain.Count == 0)
+        if (longestChain.Count > 0)
         {
-            return;
+            await ProcessLongestChainAsync(stateSetKey, longestChain, blockStateSets);
         }
-        
-        await ProcessLongestChainAsync(stateSetKey, longestChain, blockStateSets);
+
+        await DAppDataProvider.CommitAsync();
 
         //Clean block state sets under latest lib block
         var confirmBlock = blockDtos.LastOrDefault(b => b.Confirmed);
@@ -152,7 +152,6 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             await BlockStateSetProvider.SetBestChainBlockStateSet(blockStateSetKey, longestChainBlockStateSet.BlockHash);
         }
 
-        await DAppDataProvider.CommitAsync();
         //await BlockStateSetProvider.CommitAsync(blockStateSetKey);
     }
 
