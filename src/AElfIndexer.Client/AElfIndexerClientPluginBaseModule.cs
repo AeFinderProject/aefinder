@@ -1,14 +1,17 @@
 using System.Reflection;
 using AElf.Indexing.Elasticsearch;
 using AElf.Indexing.Elasticsearch.Services;
+using AElf.Kernel;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Client.GraphQL;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
+using AElfIndexer.Grains.State.Client;
 using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using NUglify.Helpers;
+using Org.BouncyCastle.Asn1.X509.Qualified;
 using Orleans;
 using Orleans.Streams;
 using Volo.Abp;
@@ -35,7 +38,8 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
             typeof(AElfIndexerClientEntityRepository<,>));
         context.Services.AddSingleton(typeof(IBlockStateSetProvider<>), typeof(BlockStateSetProvider<>));
         context.Services.AddSingleton<IDAppDataProvider, DAppDataProvider>();
-        
+        context.Services.AddSingleton(typeof(IDAppDataIndexProvider<>), typeof(DAppDataIndexProvider<>));
+
         ConfigureServices(context.Services);
         ConfigNodes(context.Services);
         ConfigGraphQL(context.Services);

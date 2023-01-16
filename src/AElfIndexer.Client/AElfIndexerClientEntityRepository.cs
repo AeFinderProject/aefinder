@@ -23,8 +23,9 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     private readonly string _indexName; 
     
     public IAbpLazyServiceProvider LazyServiceProvider { get; set; }
-    protected IDAppDataProvider DAppDataProvider => this.LazyServiceProvider.LazyGetRequiredService<IDAppDataProvider>();
-    protected IBlockStateSetProvider<TData> BlockStateSetProvider => this.LazyServiceProvider.LazyGetRequiredService<IBlockStateSetProvider<TData>>();
+    private IDAppDataProvider DAppDataProvider => this.LazyServiceProvider.LazyGetRequiredService<IDAppDataProvider>();
+    private IBlockStateSetProvider<TData> BlockStateSetProvider => this.LazyServiceProvider.LazyGetRequiredService<IBlockStateSetProvider<TData>>();
+    private IDAppDataIndexProvider<TEntity> DAppDataIndexProvider => this.LazyServiceProvider.LazyGetRequiredService<IDAppDataIndexProvider<TEntity>>();
 
     public AElfIndexerClientEntityRepository(INESTRepository<TEntity, string> nestRepository,
         IClusterClient clusterClient, IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider)
@@ -51,13 +52,13 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
 
     private async Task AddOrUpdateForConfirmBlockAsync(string dappDataKey, TEntity entity)
     {
-        await _nestRepository.AddOrUpdateAsync(entity, _indexName);
+        await DAppDataIndexProvider.AddOrUpdateAsync(entity, _indexName);
         await DAppDataProvider.SetLibValueAsync(dappDataKey,entity);
     }
     
     private async Task DeleteForConfirmBlockAsync(string dappDataKey, TEntity entity)
     {
-        await _nestRepository.DeleteAsync(entity, _indexName);
+        await DAppDataIndexProvider.DeleteAsync(entity, _indexName);
         await DAppDataProvider.SetLibValueAsync(dappDataKey,entity);
     }
 
@@ -97,7 +98,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
                 longestChainBlockStateSet.BlockHeight, dataValue);
             if (entityFromBlockStateSet != null)
             {
-                await _nestRepository.AddOrUpdateAsync(entityFromBlockStateSet, _indexName);
+                await DAppDataIndexProvider.AddOrUpdateAsync(entityFromBlockStateSet, _indexName);
                 // await dappGrain.SetLatestValue(entityFromBlockStateSet);
             }
             else
@@ -108,14 +109,13 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
                     entity = JsonConvert.DeserializeObject<TEntity>(value);
                 }
                 
-                await _nestRepository.DeleteAsync(entity, _indexName);
+                await DAppDataIndexProvider.DeleteAsync(entity, _indexName);
                 entity.IsDeleted = true;
                 await DAppDataProvider.SetLibValueAsync<TEntity>(dappDataKey, entity);
             }
         }
     }
 
-    // TODO: Need it?
     public async Task<TEntity> GetFromBlockStateSetAsync(string id, string chainId)
     {
         var entityKey = $"{_entityName}-{id}";
@@ -182,7 +182,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     {
         entity.IsDeleted = false;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
-        await _nestRepository.AddOrUpdateAsync(entity, _indexName);
+        await DAppDataIndexProvider.AddOrUpdateAsync(entity, _indexName);
         await BlockStateSetProvider.SetBlockStateSet(blockStateSetKey,blockStateSet);
     }
     
@@ -190,7 +190,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     {
         entity.IsDeleted = true;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
-        await _nestRepository.DeleteAsync(entity, _indexName);
+        await DAppDataIndexProvider.DeleteAsync(entity, _indexName);
         await BlockStateSetProvider.SetBlockStateSet(blockStateSetKey, blockStateSet);
     }
     

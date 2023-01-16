@@ -23,6 +23,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
     public IAbpLazyServiceProvider LazyServiceProvider { get; set; }
     protected IDAppDataProvider DAppDataProvider => this.LazyServiceProvider.LazyGetRequiredService<IDAppDataProvider>();
     protected IBlockStateSetProvider<TData> BlockStateSetProvider => this.LazyServiceProvider.LazyGetRequiredService<IBlockStateSetProvider<TData>>();
+    protected IDAppDataIndexManagerProvider DAppDataIndexManagerProvider => this.LazyServiceProvider.LazyGetRequiredService<IDAppDataIndexManagerProvider>();
 
     protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper, IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, ILogger<BlockChainDataHandler<TData>> logger)
     {
@@ -38,6 +39,8 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
     public async Task HandleBlockChainDataAsync(string chainId, string clientId, List<BlockWithTransactionDto> blockDtos)
     {
         var stateSetKey = GetBlockStateSetKey(chainId);
+        var libHeight = 0l;
+        var libHash = string.Empty;
         
         var blockStateSets = await BlockStateSetProvider.GetBlockStateSets(stateSetKey);
         var longestChainBlockStateSet = await BlockStateSetProvider.GetLongestChainBlockStateSet(stateSetKey);
@@ -49,7 +52,6 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             if (longestChain.Count > 0)
             {
                 await ProcessLongestChainAsync(stateSetKey, longestChain, blockStateSets);
-                await DAppDataProvider.CommitAsync();
                 blockStateSets = await BlockStateSetProvider.GetBlockStateSets(stateSetKey);
                 longestChain = new List<BlockStateSet<TData>>();
             }
@@ -65,7 +67,9 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             if (blockStateSets.TryGetValue(blockDto.BlockHash, out var blockStateSet) && blockStateSet.Processed &&
                 blockDto.Confirmed)
             {
-                await DealWithConfirmBlockAsync(blockDto, blockStateSet);
+                await DealWithConfirmBlockAsync(stateSetKey, blockDto, blockStateSet);
+                libHeight = blockDto.BlockHeight;
+                libHash = blockDto.BlockHash;
                 continue;
             }
 
@@ -106,19 +110,23 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         if (longestChain.Count > 0)
         {
             await ProcessLongestChainAsync(stateSetKey, longestChain, blockStateSets);
+            
+            var confirmBlock = longestChain.LastOrDefault(b => b.Confirmed);
+            if (confirmBlock != null && confirmBlock.BlockHeight > libHeight)
+            {
+                libHeight = confirmBlock.BlockHeight;
+                libHash = confirmBlock.BlockHash;
+            }
         }
-
-        await DAppDataProvider.CommitAsync();
-
+        
         //Clean block state sets under latest lib block
-        var confirmBlock = blockDtos.LastOrDefault(b => b.Confirmed);
-        if (confirmBlock != null)
+        if (libHeight !=0)
         {
-            await BlockStateSetProvider.CleanBlockStateSets(stateSetKey, confirmBlock.BlockHeight, confirmBlock.BlockHash);
             var blockStateSetInfoGrain =
                 _clusterClient.GetGrain<IBlockStateSetInfoGrain>(
                     GrainIdHelper.GenerateGrainId("BlockStateSetInfo", _clientId, chainId, _version));
-            await blockStateSetInfoGrain.SetConfirmedBlockHeight(FilterType, confirmBlock.BlockHeight);
+            await blockStateSetInfoGrain.SetConfirmedBlockHeight(FilterType, libHeight);
+            await BlockStateSetProvider.CleanBlockStateSets(stateSetKey, libHeight, libHash);
         }
     }
 
@@ -152,10 +160,11 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             await BlockStateSetProvider.SetBestChainBlockStateSet(blockStateSetKey, longestChainBlockStateSet.BlockHash);
         }
 
-        //await BlockStateSetProvider.CommitAsync(blockStateSetKey);
+        await DAppDataProvider.CommitAsync();
+        await DAppDataIndexManagerProvider.SavaDataAsync();
     }
 
-    private async Task DealWithConfirmBlockAsync(BlockWithTransactionDto blockDto,BlockStateSet<TData> blockStateSet)
+    private async Task DealWithConfirmBlockAsync(string stateSetKey, BlockWithTransactionDto blockDto,BlockStateSet<TData> blockStateSet)
     {
         try
         {
