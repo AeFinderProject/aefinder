@@ -74,6 +74,31 @@ public class BlockHandlerTests : AElfIndexerClientTestBase
         blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash99");
         blockIndexes.Item2.Last().BlockHash.ShouldBe("BlockHash104");
     }
+    
+    [Fact]
+    public async Task Block_Fork_Branch_Test_2()
+    {
+        var chainId = "AELF";
+        var client = _clientInfoProvider.GetClientId();
+
+        var firstBlock = CreateBlock(99, 1, "BlockHash", chainId);
+        var blocks = CreateBlock(100, 5, "BlockHash", chainId, "BlockHash99");
+        var blocksForkBlock = CreateBlock(100, 2, "BlockForkHash", chainId, "BlockHash99");
+        firstBlock.AddRange(blocksForkBlock);
+        firstBlock.AddRange(blocks);
+        await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, firstBlock);
+
+        var blockIndexes = await _repository.GetListAsync();
+        blockIndexes.Item2.Count.ShouldBe(3);
+        blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash99");
+        blockIndexes.Item2.Last().BlockHash.ShouldBe("BlockForkHash101");
+        
+        blocks = CreateBlock(104, 5, "BlockHash", chainId);
+        await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
+        blockIndexes = await _repository.GetListAsync();
+        blockIndexes.Item2.Count.ShouldBe(10);
+        blockIndexes.Item2.Last().BlockHash.ShouldBe("BlockHash108");
+    }
 
     [Fact]
     public async Task Block_Set_Longest_Test()
