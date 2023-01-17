@@ -5,18 +5,18 @@ namespace AElfIndexer.Client.Providers;
 
 public interface IBlockStateSetProvider<T>
 {
-    Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSets(string key);
-    Task<Dictionary<string, string>> GetLongestChainHashes(string key);
-    Task SetLongestChainHashes(string key, Dictionary<string, string> longestChainHashes);
-    Task AddBlockStateSet(string key, BlockStateSet<T> blockStateSet);
-    Task SetBlockStateSet(string key, BlockStateSet<T> blockStateSet);
-    Task<BlockStateSet<T>> GetCurrentBlockStateSet(string key);
-    Task<BlockStateSet<T>> GetLongestChainBlockStateSet(string key);
-    Task<BlockStateSet<T>> GetBestChainBlockStateSet(string key);
-    Task SetBestChainBlockStateSet(string key, string blockHash);
-    Task SetLongestChainBlockStateSet(string key, string blockHash);
-    Task SetBlockStateSetProcessed(string key, string blockHash);
-    Task SetCurrentBlockStateSet(string key, BlockStateSet<T> blockStateSet);
-    Task CleanBlockStateSets(string key, long blockHeight,string blockHash);
-    Task CommitAsync(string key);
+    Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync(string key);
+    Task<Dictionary<string, string>> GetLongestChainHashesAsync(string key);
+    Task SetLongestChainHashesAsync(string key, Dictionary<string, string> longestChainHashes);
+    Task AddBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet);
+    Task SetBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet);
+    Task<BlockStateSet<T>> GetCurrentBlockStateSetAsync(string key);
+    Task<BlockStateSet<T>> GetLongestChainBlockStateSetAsync(string key);
+    Task<BlockStateSet<T>> GetBestChainBlockStateSetAsync(string key);
+    Task SetBestChainBlockStateSetAsync(string key, string blockHash);
+    Task SetLongestChainBlockStateSetAsync(string key, string blockHash);
+    Task SetBlockStateSetProcessedAsync(string key, string blockHash, bool processed);
+    Task SetCurrentBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet);
+    Task CleanBlockStateSetsAsync(string key, long blockHeight,string blockHash);
+    Task SaveDataAsync(string key);
 }

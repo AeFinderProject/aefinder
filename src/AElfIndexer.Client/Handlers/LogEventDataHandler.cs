@@ -12,9 +12,12 @@ public class LogEventDataHandler : BlockChainDataHandler<LogEventInfo>
     private readonly IEnumerable<IAElfLogEventProcessor<LogEventInfo>> _processors;
 
     public LogEventDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
-        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
-        IEnumerable<IAElfLogEventProcessor<LogEventInfo>> processors, ILogger<LogEventDataHandler> logger) : base(clusterClient,
-        objectMapper, aelfIndexerClientInfoProvider, logger)
+        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, IDAppDataProvider dAppDataProvider,
+        IBlockStateSetProvider<LogEventInfo> blockStateSetProvider,
+        IDAppDataIndexManagerProvider dAppDataIndexManagerProvider,
+        IEnumerable<IAElfLogEventProcessor<LogEventInfo>> processors, ILogger<LogEventDataHandler> logger)
+        : base(clusterClient, objectMapper, aelfIndexerClientInfoProvider, logger, dAppDataProvider,
+            blockStateSetProvider, dAppDataIndexManagerProvider)
     {
         _processors = processors;
     }

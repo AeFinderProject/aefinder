@@ -35,7 +35,7 @@ public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
         _deleteData.Clear();
     }
 
-    public async Task AddOrUpdateAsync(TEntity entity, string indexName)
+    public Task AddOrUpdateAsync(TEntity entity, string indexName)
     {
         Register();
         
@@ -45,9 +45,10 @@ public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
         }
         value.Add(entity);
         _addOrUpdateData[indexName] = value;
+        return Task.CompletedTask;
     }
 
-    public async Task DeleteAsync(TEntity entity, string indexName)
+    public Task DeleteAsync(TEntity entity, string indexName)
     {
         Register();
         
@@ -57,13 +58,17 @@ public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
         }
         value.Add(entity);
         _deleteData[indexName] = value;
+        return Task.CompletedTask;
     }
 
     private void Register()
     {
-        if (!_isRegister)
+        if (_isRegister)
         {
-            _dAppDataIndexManagerProvider.Register(this);
+            return;
         }
+
+        _dAppDataIndexManagerProvider.Register(this);
+        _isRegister = true;
     }
 }

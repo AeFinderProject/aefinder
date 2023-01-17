@@ -10,9 +10,12 @@ namespace AElfIndexer.Client.Handlers;
 public abstract class BlockDataHandler: BlockChainDataHandler<BlockInfo>
 {
     protected BlockDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
-        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
+        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, IDAppDataProvider dAppDataProvider,
+        IBlockStateSetProvider<BlockInfo> blockStateSetProvider,
+        IDAppDataIndexManagerProvider dAppDataIndexManagerProvider,
         ILogger<BlockDataHandler> logger) : base(clusterClient,
-        objectMapper, aelfIndexerClientInfoProvider, logger)
+        objectMapper, aelfIndexerClientInfoProvider, logger, dAppDataProvider,
+        blockStateSetProvider, dAppDataIndexManagerProvider)
     {
     }
 

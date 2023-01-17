@@ -12,9 +12,12 @@ public abstract class TransactionDataHandler : BlockChainDataHandler<Transaction
     private readonly IEnumerable<IAElfLogEventProcessor<TransactionInfo>> _processors;
 
     protected TransactionDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
-        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
-        IEnumerable<IAElfLogEventProcessor<TransactionInfo>> processors, ILogger<TransactionDataHandler> logger) : base(clusterClient, objectMapper,
-        aelfIndexerClientInfoProvider, logger)
+        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, IDAppDataProvider dAppDataProvider,
+        IBlockStateSetProvider<TransactionInfo> blockStateSetProvider,
+        IDAppDataIndexManagerProvider dAppDataIndexManagerProvider,
+        IEnumerable<IAElfLogEventProcessor<TransactionInfo>> processors, ILogger<TransactionDataHandler> logger)
+        : base(clusterClient, objectMapper, aelfIndexerClientInfoProvider, logger, dAppDataProvider,
+            blockStateSetProvider, dAppDataIndexManagerProvider)
     {
         _processors = processors;
     }

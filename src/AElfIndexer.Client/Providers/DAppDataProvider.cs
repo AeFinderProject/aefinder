@@ -23,33 +23,35 @@ internal class DAppDataProvider : IDAppDataProvider, ISingletonDependency
     {
         if (!_libValues.TryGetValue(key, out var value))
         {
-            var dappDataGrain = _clusterClient.GetGrain<IDappDataGrain>(key);
-            value = await dappDataGrain.GetLIBValue();
+            var dataGrain = _clusterClient.GetGrain<IDappDataGrain>(key);
+            value = await dataGrain.GetLIBValue();
             _libValues[key] = value;
         }
         
         return value != null ? JsonConvert.DeserializeObject<T>(value) : default;
     }
 
-    public async Task SetLibValueAsync<T>(string key, T value)
+    public Task SetLibValueAsync<T>(string key, T value)
     {
         var jsonValue = JsonConvert.SerializeObject(value);
         _toCommitLibValues[key] = jsonValue;
         _libValues[key] = jsonValue;
+        return Task.CompletedTask;
     }
     
-    public async Task SetLibValueAsync(string key, string value)
+    public Task SetLibValueAsync(string key, string value)
     {
         _toCommitLibValues[key] = value;
         _libValues[key] = value;
+        return Task.CompletedTask;
     }
 
-    public async Task CommitAsync()
+    public async Task SaveDataAsync()
     {
         var tasks = _toCommitLibValues.Select(async o =>
         {
-            var dappDataGrain = _clusterClient.GetGrain<IDappDataGrain>(o.Key);
-            await dappDataGrain.SetLIBValue(_libValues[o.Key]);
+            var dataGrain = _clusterClient.GetGrain<IDappDataGrain>(o.Key);
+            await dataGrain.SetLIBValue(_libValues[o.Key]);
         });
         await tasks.WhenAll();
         _toCommitLibValues.Clear();

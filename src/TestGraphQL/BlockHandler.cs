@@ -13,9 +13,13 @@ public class BlockHandler : BlockDataHandler
     private readonly IAElfIndexerClientEntityRepository<TestBlockIndex, BlockInfo> _repository;
 
     public BlockHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
-        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
+        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, IDAppDataProvider dAppDataProvider,
+        IBlockStateSetProvider<BlockInfo> blockStateSetProvider,
+        IDAppDataIndexManagerProvider dAppDataIndexManagerProvider,
         IAElfIndexerClientEntityRepository<TestBlockIndex, BlockInfo> repository,
-        ILogger<BlockHandler> logger) : base(clusterClient, objectMapper, aelfIndexerClientInfoProvider,logger)
+        ILogger<BlockHandler> logger) 
+        : base(clusterClient, objectMapper, aelfIndexerClientInfoProvider, dAppDataProvider,
+        blockStateSetProvider, dAppDataIndexManagerProvider,logger)
     {
         _repository = repository;
     }

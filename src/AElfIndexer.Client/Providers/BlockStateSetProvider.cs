@@ -8,11 +8,11 @@ namespace AElfIndexer.Client.Providers;
 
 internal class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDependency
 {
-    private ConcurrentDictionary<string, Dictionary<string, BlockStateSet<T>>> _blockStateSets = new();
-    private ConcurrentDictionary<string, BlockStateSet<T>> _longestChainBlockStateSets = new();
-    private ConcurrentDictionary<string, BlockStateSet<T>> _bestChainBlockStateSets= new();
-    private ConcurrentDictionary<string, BlockStateSet<T>> _currentBlockStateSets = new();
-    private ConcurrentDictionary<string, Dictionary<string, string>> _longestChainHashes = new();
+    private readonly ConcurrentDictionary<string, Dictionary<string, BlockStateSet<T>>> _blockStateSets = new();
+    private readonly ConcurrentDictionary<string, BlockStateSet<T>> _longestChainBlockStateSets = new();
+    private readonly ConcurrentDictionary<string, BlockStateSet<T>> _bestChainBlockStateSets= new();
+    private readonly ConcurrentDictionary<string, BlockStateSet<T>> _currentBlockStateSets = new();
+    private readonly ConcurrentDictionary<string, Dictionary<string, string>> _longestChainHashes = new();
     
     private readonly IClusterClient _clusterClient;
 
@@ -21,7 +21,7 @@ internal class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonD
         _clusterClient = clusterClient;
     }
 
-    public async Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSets(string key)
+    public Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync(string key)
     {
         if (!_blockStateSets.TryGetValue(key, out var value))
         { 
@@ -29,29 +29,31 @@ internal class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonD
             _blockStateSets[key] = value;
         }
 
-        return value;
+        return Task.FromResult(value);
     }
 
-    public async Task<Dictionary<string, string>> GetLongestChainHashes(string key)
+    public Task<Dictionary<string, string>> GetLongestChainHashesAsync(string key)
     {
         _longestChainHashes.TryGetValue(key, out var value);
-        return value;
+        return Task.FromResult(value);
     }
 
-    public async Task SetLongestChainHashes(string key, Dictionary<string, string> longestChainHashes)
+    public Task SetLongestChainHashesAsync(string key, Dictionary<string, string> longestChainHashes)
     {
         _longestChainHashes[key] = longestChainHashes;
         foreach (var (blockHash,_) in _longestChainHashes[key])
         {
             _blockStateSets[key][blockHash].Changes = new();
         }
+
+        return Task.CompletedTask;
     }
 
-    public async Task AddBlockStateSet(string key, BlockStateSet<T> blockStateSet)
+    public Task AddBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet)
     {
         if (blockStateSet == null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         if (!_blockStateSets.TryGetValue(key, out var sets))
@@ -61,13 +63,14 @@ internal class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonD
 
         sets.TryAdd(blockStateSet.BlockHash, blockStateSet);
         _blockStateSets[key] = sets;
+        return Task.CompletedTask;
     }
 
-    public async Task SetBlockStateSet(string key, BlockStateSet<T> blockStateSet)
+    public Task SetBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet)
     {
         if (blockStateSet == null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         if (!_blockStateSets.TryGetValue(key, out var sets))
@@ -77,65 +80,77 @@ internal class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonD
 
         sets[blockStateSet.BlockHash] = blockStateSet;
         _blockStateSets[key] = sets;
+        return Task.CompletedTask;
     }
 
-    public async Task<BlockStateSet<T>> GetCurrentBlockStateSet(string key)
+    public Task<BlockStateSet<T>> GetCurrentBlockStateSetAsync(string key)
     {
         _currentBlockStateSets.TryGetValue(key, out var value);
-        return value;
+        return Task.FromResult(value);
     }
 
-    public async Task<BlockStateSet<T>> GetLongestChainBlockStateSet(string key)
+    public Task<BlockStateSet<T>> GetLongestChainBlockStateSetAsync(string key)
     {
         _longestChainBlockStateSets.TryGetValue(key, out var value);
-        return value;
+        return Task.FromResult(value);
     }
 
-    public async Task<BlockStateSet<T>> GetBestChainBlockStateSet(string key)
+    public Task<BlockStateSet<T>> GetBestChainBlockStateSetAsync(string key)
     {
         _bestChainBlockStateSets.TryGetValue(key, out var value);
-        return value;
+        return Task.FromResult(value);
     }
 
-    public async Task SetBestChainBlockStateSet(string key, string blockHash)
+    public Task SetBestChainBlockStateSetAsync(string key, string blockHash)
     {
         if (_blockStateSets.TryGetValue(key, out var sets) && sets.TryGetValue(blockHash, out var set))
         {
             _bestChainBlockStateSets[key] = set;
         }
+
+        return Task.CompletedTask;
     }
 
-    public async Task SetLongestChainBlockStateSet(string key, string blockHash)
+    public Task SetLongestChainBlockStateSetAsync(string key, string blockHash)
     {
         if (_blockStateSets.TryGetValue(key, out var sets) && sets.TryGetValue(blockHash, out var set))
         {
             _longestChainBlockStateSets[key] = set;
         }
+
+        return Task.CompletedTask;
     }
 
-    public async Task SetBlockStateSetProcessed(string key, string blockHash)
+    public Task SetBlockStateSetProcessedAsync(string key, string blockHash, bool processed)
     {
-        if (_blockStateSets.TryGetValue(key, out var sets) && sets.TryGetValue(blockHash, out var set))
+        if (!_blockStateSets.TryGetValue(key, out var sets) || !sets.TryGetValue(blockHash, out var set))
         {
-            set.Processed = true;
+            return Task.CompletedTask;
         }
+
+        set.Processed = processed;
+
+        return Task.CompletedTask;
     }
 
-    public async Task SetCurrentBlockStateSet(string key, BlockStateSet<T> blockStateSet)
+    public Task SetCurrentBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet)
     {
         _currentBlockStateSets[key] = blockStateSet;
+        return Task.CompletedTask;
     }
 
-    public async Task CleanBlockStateSets(string key, long blockHeight, string blockHash)
+    public Task CleanBlockStateSetsAsync(string key, long blockHeight, string blockHash)
     {
         if (_blockStateSets.TryGetValue(key, out var sets))
         {
             sets.RemoveAll(set => set.Value.BlockHeight < blockHeight);
             sets.RemoveAll(set => set.Value.BlockHeight == blockHeight && set.Value.BlockHash != blockHash);
         }
+
+        return Task.CompletedTask;
     }
 
-    public async Task CommitAsync(string key)
+    public async Task SaveDataAsync(string key)
     {
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetsGrain<T>>(key);
         await blockStateSetsGrain.SetBlockStateSets(_blockStateSets[key]);
