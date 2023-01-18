@@ -154,7 +154,14 @@ internal class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonD
     {
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetsGrain<T>>(key);
         await blockStateSetsGrain.SetBlockStateSets(_blockStateSets[key]);
-        await blockStateSetsGrain.SetLongestChainBlockStateSet(_longestChainBlockStateSets[key].BlockHash);
-        await blockStateSetsGrain.SetBestChainBlockStateSet(_bestChainBlockStateSets[key].BlockHash);
+        if (_longestChainBlockStateSets.TryGetValue(key, out var longestChainSets))
+        {
+            await blockStateSetsGrain.SetLongestChainBlockStateSet(longestChainSets.BlockHash);
+        }
+
+        if (_bestChainBlockStateSets.TryGetValue(key, out var bestChainSets))
+        {
+            await blockStateSetsGrain.SetBestChainBlockStateSet(bestChainSets.BlockHash);
+        }
     }
 }
