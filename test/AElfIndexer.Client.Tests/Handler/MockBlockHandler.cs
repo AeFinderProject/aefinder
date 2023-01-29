@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AElfIndexer.AElf;
 using AElfIndexer.Client;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
@@ -10,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp.ObjectMapping;
 
-namespace AElfIndexer.Handlers;
+namespace AElfIndexer.Handler;
 
 public class MockBlockHandler : BlockDataHandler
 {
@@ -19,7 +18,7 @@ public class MockBlockHandler : BlockDataHandler
     public MockBlockHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
         IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
         IAElfIndexerClientEntityRepository<TestBlockIndex, BlockInfo> repository,
-        ILogger<MockBlockHandler> logger) : base(clusterClient, objectMapper, aelfIndexerClientInfoProvider,logger)
+        ILogger<MockBlockHandler> logger) : base(clusterClient, objectMapper, aelfIndexerClientInfoProvider, logger)
     {
         _repository = repository;
     }
@@ -32,7 +31,6 @@ public class MockBlockHandler : BlockDataHandler
             Logger.LogDebug(index.ToJsonString());
             await _repository.AddOrUpdateAsync(index);
         }
-        
     }
 
     protected override Task ProcessBlocksAsync(List<BlockInfo> data)

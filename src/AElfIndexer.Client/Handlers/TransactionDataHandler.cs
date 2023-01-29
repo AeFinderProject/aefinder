@@ -13,7 +13,8 @@ public abstract class TransactionDataHandler : BlockChainDataHandler<Transaction
 
     protected TransactionDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
         IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider,
-        IEnumerable<IAElfLogEventProcessor<TransactionInfo>> processors, ILogger<TransactionDataHandler> logger) : base(clusterClient, objectMapper,
+        IEnumerable<IAElfLogEventProcessor<TransactionInfo>> processors, ILogger<TransactionDataHandler> logger) : base(
+        clusterClient, objectMapper,
         aelfIndexerClientInfoProvider, logger)
     {
         _processors = processors;
@@ -40,6 +41,7 @@ public abstract class TransactionDataHandler : BlockChainDataHandler<Transaction
     }
 
     protected abstract Task ProcessTransactionsAsync(List<TransactionInfo> transactions);
+
     private async Task ProcessLogEventsAsync(List<TransactionInfo> transactions)
     {
         if (!_processors.Any()) return;
@@ -48,7 +50,8 @@ public abstract class TransactionDataHandler : BlockChainDataHandler<Transaction
             foreach (var logEvent in transaction.LogEvents)
             {
                 var processor = _processors.FirstOrDefault(p =>
-                    p.GetContractAddress(logEvent.ChainId) == logEvent.ContractAddress && p.GetEventName() == logEvent.EventName);
+                    p.GetContractAddress(logEvent.ChainId) == logEvent.ContractAddress &&
+                    p.GetEventName() == logEvent.EventName);
                 if (processor == null) continue;
                 await processor.HandleEventAsync(logEvent,
                     ObjectMapper.Map<TransactionInfo, LogEventContext>(transaction));

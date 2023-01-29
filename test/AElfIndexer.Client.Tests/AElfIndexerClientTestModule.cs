@@ -4,16 +4,12 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
-using AElf.Indexing.Elasticsearch.Options;
 using AElf.Indexing.Elasticsearch.Services;
 using AElfIndexer.Client;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
-using AElfIndexer.Handlers;
 using AElfIndexer.Orleans.TestBase;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using NSubstitute.Extensions;
 using Volo.Abp;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
@@ -25,12 +21,12 @@ namespace AElfIndexer;
     typeof(AElfIndexerClientModule),
     typeof(AElfIndexerDomainTestModule),
     typeof(AElfIndexerOrleansTestBaseModule)
-    )]
+)]
 public class AElfIndexerClientTestModule : AbpModule
 {
     private string ClientId { get; } = "TestClient";
     private string Version { get; } = "TestVersion";
-    
+
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AElfIndexerClientTestModule>(); });
@@ -39,10 +35,14 @@ public class AElfIndexerClientTestModule : AbpModule
         context.Services.AddTransient<IBlockChainDataHandler, LogEventDataHandler>();
         context.Services.AddTransient(typeof(IAElfIndexerClientEntityRepository<,>),
             typeof(AElfIndexerClientEntityRepository<,>));
-        
-        context.Services.AddTransient<IBlockChainDataHandler, MockBlockHandler>();
+        ConfigureServices(context.Services);
     }
-    
+
+    protected virtual void ConfigureServices(IServiceCollection serviceCollection)
+    {
+    }
+
+
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
     {
         var provider = context.ServiceProvider.GetRequiredService<IAElfIndexerClientInfoProvider>();
@@ -52,7 +52,7 @@ public class AElfIndexerClientTestModule : AbpModule
             await CreateIndexAsync(context.ServiceProvider)
         );
     }
-    
+
     private async Task CreateIndexAsync(IServiceProvider serviceProvider)
     {
         var types = GetTypesAssignableFrom<IIndexBuild>(typeof(AElfIndexerClientTestModule).Assembly);
@@ -63,12 +63,12 @@ public class AElfIndexerClientTestModule : AbpModule
             await elasticIndexService.CreateIndexAsync(indexName, t);
         }
     }
-    
+
     private async Task DeleteIndexAsync(IServiceProvider serviceProvider)
     {
         var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
         var types = GetTypesAssignableFrom<IIndexBuild>(typeof(AElfIndexerClientTestModule).Assembly);
-            
+
         foreach (var t in types)
         {
             var indexName = $"{ClientId}-{Version}.{t.Name}".ToLower();
@@ -84,7 +84,7 @@ public class AElfIndexerClientTestModule : AbpModule
                            !type.IsAbstract && type.IsClass && compareType != type)
             .Cast<Type>().ToList();
     }
-    
+
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
         AsyncHelper.RunSync(async () =>
