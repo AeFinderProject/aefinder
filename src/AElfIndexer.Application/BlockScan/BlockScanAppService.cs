@@ -108,7 +108,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(version.NewVersion))
+        if (!string.IsNullOrWhiteSpace(version.CurrentVersion))
         {
             var scanIds = await client.GetBlockScanIdsAsync(version.CurrentVersion);
             foreach (var scanId in scanIds)

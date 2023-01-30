@@ -67,7 +67,11 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
             return;
         }
 
-        State.VersionInfos.Remove(State.CurrentVersion);
+        if (!string.IsNullOrWhiteSpace(State.CurrentVersion))
+        {
+            State.VersionInfos.Remove(State.CurrentVersion);
+        }
+
         State.CurrentVersion = State.NewVersion;
         State.NewVersion = null;
         await WriteStateAsync();
