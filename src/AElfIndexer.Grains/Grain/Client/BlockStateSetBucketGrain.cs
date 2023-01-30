@@ -5,19 +5,36 @@ namespace AElfIndexer.Grains.Grain.Client;
 
 public class BlockStateSetBucketGrain<T> : Grain<BlockStateSetBucketState<T>>, IBlockStateSetBucketGrain<T>
 {
-    public async Task SetBlockStateSetsAsync(Dictionary<string, BlockStateSet<T>> sets)
+    public async Task SetBlockStateSetsAsync(string version, Dictionary<string, BlockStateSet<T>> sets)
     {
-        State.BlockStateSets = sets;
+        State.BlockStateSets[version] = sets;
         await WriteStateAsync();
     }
 
-    public Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync()
+    public async Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync(string version)
     {
-        return Task.FromResult(State.BlockStateSets);
+        if (State.BlockStateSets.TryGetValue(version, out var sets))
+        {
+            return sets;
+        }
+
+        return new Dictionary<string, BlockStateSet<T>>();
     }
-    public Task<BlockStateSet<T>> GetBlockStateSetAsync(string blockHash)
+
+    public async Task<BlockStateSet<T>> GetBlockStateSetAsync(string version, string blockHash)
     {
-        return Task.FromResult(State.BlockStateSets.TryGetValue(blockHash, out var set) ? set : null);
+        if (State.BlockStateSets.TryGetValue(version, out var sets) && sets.TryGetValue(blockHash, out var set))
+        {
+            return set;
+        }
+
+        return null;
+    }
+
+    public async Task CleanAsync(string version)
+    {
+        State.BlockStateSets.RemoveAll(o => o.Key != version);
+        await WriteStateAsync();
     }
 
     public override async Task OnActivateAsync()
