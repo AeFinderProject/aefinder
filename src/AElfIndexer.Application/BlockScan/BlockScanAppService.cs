@@ -108,11 +108,14 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             return;
         }
 
-        var scanIds = await client.GetBlockScanIdsAsync(version.CurrentVersion);
-        foreach (var scanId in scanIds)
+        if (!string.IsNullOrWhiteSpace(version.NewVersion))
         {
-            var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(scanId);
-            await blockScanInfoGrain.StopAsync();
+            var scanIds = await client.GetBlockScanIdsAsync(version.CurrentVersion);
+            foreach (var scanId in scanIds)
+            {
+                var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(scanId);
+                await blockScanInfoGrain.StopAsync();
+            }
         }
 
         await client.UpgradeVersionAsync();
