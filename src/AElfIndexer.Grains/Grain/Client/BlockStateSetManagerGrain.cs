@@ -20,7 +20,7 @@ public class BlockStateSetManagerGrain<T>: Grain<BlockStateSetManagerState<T>>, 
 
         for (var i = 0; i < maxIndex; i++)
         {
-            var key = GrainIdHelper.GenerateGrainId(this.GetPrimaryKey(), i.ToString());
+            var key = GrainIdHelper.GenerateGrainId(this.GetPrimaryKeyString(), i.ToString());
             var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
             var blockSets = sets.Select(o => o).Skip(_clientOptions.MaxCountPerBlockStateSetBucket * i)
                 .Take(_clientOptions.MaxCountPerBlockStateSetBucket).ToDictionary(o => o.Key, o => o.Value);

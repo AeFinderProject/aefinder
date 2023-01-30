@@ -35,7 +35,7 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
         var blockChainDataEto_h75 = MockDataHelper.MockBasicEtoData(75, blockChainDataEto_h70.Blocks[0].BlockHash);
         var blockChainDataEto_h80 = MockDataHelper.MockEtoDataWithLibFoundEvent(80, blockChainDataEto_h75.Blocks[0].BlockHash,65);
         
-        // await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h63);
+        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h63);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h64);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h65);
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h66);
@@ -51,10 +51,10 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
         await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h82);
         
         //Unit test 3
-        var blockChainDataEto_h64_fork = MockDataHelper.MockEtoDataWithTransactions(64, blockChainDataEto_h63.Blocks[0].BlockHash);
-        var blockChainDataEto_h65_fork = MockDataHelper.MockEtoDataWithTransactions(65, blockChainDataEto_h64.Blocks[0].BlockHash);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h64_fork);
-        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h65_fork);
+        var blockChainDataEto_h66_fork = MockDataHelper.MockEtoDataWithTransactions(66, blockChainDataEto_h65.Blocks[0].BlockHash);
+        var blockChainDataEto_h67_fork = MockDataHelper.MockEtoDataWithTransactions(67, blockChainDataEto_h66.Blocks[0].BlockHash);
+        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h66_fork);
+        await _blockChainDataEventHandler.HandleEventAsync(blockChainDataEto_h67_fork);
         
         //Unit test 4
         var blockChainDataEto_h83 = MockDataHelper.MockEtoDataWithTransactions(83, blockChainDataEto_h82.Blocks[0].BlockHash);
@@ -67,8 +67,8 @@ public sealed class BlockChainDataEventHandlerTests:AElfIndexerBlockChainEventHa
         
         blockDictionary.ShouldContainKey(blockChainDataEto_h81.Blocks[0].BlockHash);//Unit test 1
         blockDictionary.ShouldContainKey(blockChainDataEto_h82.Blocks[0].BlockHash);//Unit test 2
-        blockDictionary.ShouldNotContainKey(blockChainDataEto_h64_fork.Blocks[0].BlockHash);//Unit test 3
-        blockDictionary.ShouldNotContainKey(blockChainDataEto_h65_fork.Blocks[0].BlockHash);//Unit test 3
+        blockDictionary.ShouldContainKey(blockChainDataEto_h66_fork.Blocks[0].BlockHash);//Unit test 3
+        blockDictionary.ShouldContainKey(blockChainDataEto_h67_fork.Blocks[0].BlockHash);//Unit test 3
         blockDictionary.ShouldContainKey(blockChainDataEto_h84.Blocks[0].BlockHash);//Unit test 4
         
         blockDictionary.Values.ShouldContain(x => x.BlockHeight == 81);

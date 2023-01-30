@@ -7,7 +7,7 @@ using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.Client.Providers;
 
-internal class DAppDataProvider : IDAppDataProvider, ISingletonDependency
+public class DAppDataProvider : IDAppDataProvider, ISingletonDependency
 {
     private readonly IClusterClient _clusterClient;
 

@@ -54,6 +54,11 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
 
         var libBlockList = GetLibBlockList(blockEventDataList);
         await ConfirmBlocksAsync(libBlockList);
+
+        foreach (var libBlockData in libBlockList)
+        {
+            State.Blocks[libBlockData.BlockHash].Confirmed = true;
+        }
         
         var libBlock = libBlockList.OrderBy(x => x.BlockHeight).LastOrDefault();
         if (libBlock != null)
@@ -96,27 +101,27 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         if (State.Blocks.Count > 0)
         {
             // Ignore blocks with height less than LIB block in Dictionary
-            var dicLibBlock = State.Blocks.Where(b => b.Value.Confirmed)
-                .Select(x => x.Value)
-                .FirstOrDefault();
-            if (dicLibBlock != null)
-            {
-                if (dicLibBlock.BlockHeight >= blockEventDataList.OrderBy(x => x.BlockHeight).Last().BlockHeight)
-                {
-                    // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
-                    return null;
-                }
-
-                blockEventDataList = blockEventDataList.Where(b =>
-                        b.BlockHeight > dicLibBlock.BlockHeight &&
-                        !State.Blocks.ContainsKey(b.BlockHash))
-                    .ToList();
-                
-                if (blockEventDataList.Count == 0)
-                {
-                    return null;
-                }
-            }
+            // var dicLibBlock = State.Blocks.Where(b => b.Value.Confirmed)
+            //     .Select(x => x.Value)
+            //     .FirstOrDefault();
+            // if (dicLibBlock != null)
+            // {
+            //     if (dicLibBlock.BlockHeight >= blockEventDataList.OrderBy(x => x.BlockHeight).Last().BlockHeight)
+            //     {
+            //         // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
+            //         return null;
+            //     }
+            //
+            //     blockEventDataList = blockEventDataList.Where(b =>
+            //             b.BlockHeight > dicLibBlock.BlockHeight &&
+            //             !State.Blocks.ContainsKey(b.BlockHash))
+            //         .ToList();
+            //     
+            //     if (blockEventDataList.Count == 0)
+            //     {
+            //         return null;
+            //     }
+            // }
 
             //Ensure block continuity
             if (!State.Blocks.ContainsKey(blockEventDataList.First().PreviousBlockHash))
@@ -181,7 +186,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
                 return libBlockList;
             }
             
-            State.Blocks[currentLibBlockHash].Confirmed = true;
+            // State.Blocks[currentLibBlockHash].Confirmed = true;
             libBlockList.Add(State.Blocks[currentLibBlockHash]);
             currentLibBlockHash = State.Blocks[currentLibBlockHash].PreviousBlockHash;
         }

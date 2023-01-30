@@ -6,7 +6,7 @@ using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.Client.Providers;
 
-internal class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDependency
+public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDependency
 {
     private readonly ConcurrentDictionary<string, Dictionary<string, BlockStateSet<T>>> _blockStateSets = new();
     private readonly ConcurrentDictionary<string, BlockStateSet<T>> _longestChainBlockStateSets = new();

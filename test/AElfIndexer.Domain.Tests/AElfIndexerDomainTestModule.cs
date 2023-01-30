@@ -41,8 +41,6 @@ public class AElfIndexerDomainTestModule : AbpModule
             options.Refresh = Refresh.True;
             options.IndexPrefix = "AElfIndexer";
         });
-        
-        
     }
     
     public override void OnApplicationShutdown(ApplicationShutdownContext context)

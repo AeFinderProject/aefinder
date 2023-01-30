@@ -141,8 +141,9 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
                     GrainIdHelper.GenerateGrainId("BlockStateSetInfo", _clientId, chainId, _version));
             await blockStateSetInfoGrain.SetConfirmedBlockHeight(FilterType, libHeight);
             await _blockStateSetProvider.CleanBlockStateSetsAsync(stateSetKey, libHeight, libHash);
-            await _blockStateSetProvider.SaveDataAsync(stateSetKey);
         }
+        
+        await _blockStateSetProvider.SaveDataAsync(stateSetKey);
     }
 
     private async Task ProcessUnfinishedLongestChainAsync(string blockStateSetKey, BlockStateSet<TData> longestChainBlockStateSet)
