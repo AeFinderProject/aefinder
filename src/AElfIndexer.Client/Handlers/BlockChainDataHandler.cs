@@ -99,7 +99,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
                     Data = GetData(blockDto),
                     Changes = new ()
                 };
-                await _blockStateSetProvider.AddBlockStateSetAsync(stateSetKey, blockStateSet);
+                await _blockStateSetProvider.SetBlockStateSetAsync(stateSetKey, blockStateSet);
                 blockStateSets = await _blockStateSetProvider.GetBlockStateSetsAsync(stateSetKey);
             }
             if (longestChainBlockStateSet == null || blockDto.PreviousBlockHash == longestChainBlockStateSet.BlockHash)
@@ -210,10 +210,6 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
     private List<BlockStateSet<TData>> GetLongestChain(Dictionary<string,BlockStateSet<TData>> blockStateSets, string blockHash)
     {
         var longestChain = new List<BlockStateSet<TData>>();
-        if (blockStateSets.Count == 0 || blockHash == null)
-        {
-            return longestChain;
-        }
 
         BlockStateSet<TData> blockStateSet;
         while (blockStateSets.TryGetValue(blockHash,out blockStateSet) && !blockStateSet.Processed)
@@ -240,7 +236,6 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             return forkBlockSateSets;
         }
 
-        var longestChainStart = longestChain[0];
         var longestChainPreviousBlockHashes = new HashSet<string>();
         foreach (var l in longestChain)
         {
@@ -249,15 +244,6 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         while (!longestChainPreviousBlockHashes.Contains(blockHash) &&
                blockStateSets.TryGetValue(blockHash, out var blockStateSet))
         {
-            if (blockStateSet.BlockHeight == longestChainStart.BlockHeight - 1)
-            {
-                longestChainStart = blockStateSets[longestChainStart.PreviousBlockHash];
-                if (blockStateSet.BlockHash == longestChainStart.BlockHash)
-                {
-                    break;
-                }
-            }
-
             forkBlockSateSets.Add(blockStateSet);
             blockHash = blockStateSet.PreviousBlockHash;
         }

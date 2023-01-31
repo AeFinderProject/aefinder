@@ -8,7 +8,6 @@ public interface IBlockStateSetProvider<T>
     Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync(string key);
     Task<Dictionary<string, string>> GetLongestChainHashesAsync(string key);
     Task SetLongestChainHashesAsync(string key, Dictionary<string, string> longestChainHashes);
-    Task AddBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet);
     Task SetBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet);
     Task<BlockStateSet<T>> GetCurrentBlockStateSetAsync(string key);
     Task<BlockStateSet<T>> GetLongestChainBlockStateSetAsync(string key);

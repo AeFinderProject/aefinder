@@ -43,10 +43,4 @@ public class DappDataGrain : Grain<DappDataGrainState>, IDappDataGrain
         await ReadStateAsync();
         await base.OnActivateAsync();
     }
-
-    public override async Task OnDeactivateAsync()
-    {
-        await WriteStateAsync();
-        await base.OnDeactivateAsync();
-    }
 }

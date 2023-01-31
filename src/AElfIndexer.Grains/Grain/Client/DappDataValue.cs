@@ -6,10 +6,3 @@ public class DappDataValue
     
     public string LIBValue { get; set; }
 }
-
-public class DappDataValue<T>
-{
-    public T LatestValue { get; set; }
-    
-    public T LIBValue { get; set; }
-}

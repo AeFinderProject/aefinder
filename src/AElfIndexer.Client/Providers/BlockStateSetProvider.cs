@@ -49,30 +49,9 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
 
         return Task.CompletedTask;
     }
-
-    public Task AddBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet)
-    {
-        if (blockStateSet == null)
-        {
-            return Task.CompletedTask;
-        }
-
-        if (!_blockStateSets.TryGetValue(key, out var sets))
-        {
-            sets = new Dictionary<string, BlockStateSet<T>>();
-        }
-
-        sets.TryAdd(blockStateSet.BlockHash, blockStateSet);
-        _blockStateSets[key] = sets;
-        return Task.CompletedTask;
-    }
-
+    
     public Task SetBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet)
     {
-        if (blockStateSet == null)
-        {
-            return Task.CompletedTask;
-        }
 
         if (!_blockStateSets.TryGetValue(key, out var sets))
         {

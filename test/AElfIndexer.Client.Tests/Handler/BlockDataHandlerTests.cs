@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AElfIndexer.Block.Dtos;
 using AElfIndexer.Client;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
@@ -8,6 +10,7 @@ using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
 using Orleans;
 using Shouldly;
+using Volo.Abp.ObjectMapping;
 using Xunit;
 
 namespace AElfIndexer.Handler;
@@ -18,6 +21,8 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
     private readonly IAElfIndexerClientInfoProvider _clientInfoProvider;
     private readonly IAElfIndexerClientEntityRepository<TestBlockIndex, BlockInfo> _repository;
     private readonly IClusterClient _clusterClient;
+    private readonly IObjectMapper _objectMapper;
+    private readonly IBlockStateSetProvider<BlockInfo> _blockStateSetProvider;
 
     public BlockHandlerTests()
     {
@@ -25,6 +30,8 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         _clientInfoProvider = GetRequiredService<IAElfIndexerClientInfoProvider>();
         _repository = GetRequiredService<IAElfIndexerClientEntityRepository<TestBlockIndex, BlockInfo>>();
         _clusterClient = GetRequiredService<IClusterClient>();
+        _objectMapper = GetRequiredService<IObjectMapper>();
+        _blockStateSetProvider = GetRequiredService<IBlockStateSetProvider<BlockInfo>>();
     }
 
     [Fact]
@@ -242,5 +249,50 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         blockStateSet.Keys.Count.ShouldBe(20);
         blockStateSet.Keys.ShouldNotContain("BlockHash99");
         blockStateSet.Keys.ShouldNotContain("BlockForkHash100");
+    }
+
+    [Fact]
+    public async Task Unfinished_Longest_Chain_Test()
+    {
+        var chainId = "AELF";
+        var client = _clientInfoProvider.GetClientId();
+        var version = _clientInfoProvider.GetVersion();
+        var stateSetKey = GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, version);
+
+        var blocks = MockHandlerHelper.CreateBlock(100, 10, "BlockHash", chainId);
+        await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
+        
+        blocks = MockHandlerHelper.CreateBlock(110, 10, "BlockHash", chainId);
+        var sets = new List<BlockStateSet<BlockInfo>>();
+        foreach (var block in blocks)
+        {
+            var set = new BlockStateSet<BlockInfo>
+            {
+                BlockHash = block.BlockHash,
+                BlockHeight = block.BlockHeight,
+                PreviousBlockHash = block.PreviousBlockHash,
+                Confirmed = block.Confirmed,
+                Data = new List<BlockInfo> { _objectMapper.Map<BlockWithTransactionDto, BlockInfo>(block) },
+                Changes = new()
+            };
+            sets.Add(set);
+            await _blockStateSetProvider.SetBlockStateSetAsync(stateSetKey, set);
+        }
+
+        await _blockStateSetProvider.SetLongestChainBlockStateSetAsync(stateSetKey, sets.Last().BlockHash);
+        
+        await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
+
+        var blockIndexes = await _repository.GetListAsync();
+        blockIndexes.Item2.Count.ShouldBe(20);
+        blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash100");
+        blockIndexes.Item2.Last().BlockHash.ShouldBe("BlockHash119");
+
+        var grain = _clusterClient.GetGrain<IBlockStateSetGrain<BlockInfo>>(stateSetKey);
+        var bestChainBlockStateSet = await grain.GetBestChainBlockStateSetAsync();
+        bestChainBlockStateSet.BlockHash.ShouldBe("BlockHash119");
+        bestChainBlockStateSet.BlockHeight.ShouldBe(119);
+        bestChainBlockStateSet.Confirmed.ShouldBeFalse();
+        bestChainBlockStateSet.Processed.ShouldBeTrue();
     }
 }

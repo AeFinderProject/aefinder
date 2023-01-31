@@ -24,10 +24,4 @@ public class BlockStateSetInfoGrain : Grain<BlockStateSetInfoGrainState>, IBlock
         await ReadStateAsync();
         await base.OnActivateAsync();
     }
-
-    public override async Task OnDeactivateAsync()
-    {
-        await WriteStateAsync();
-        await base.OnDeactivateAsync();
-    }
 }

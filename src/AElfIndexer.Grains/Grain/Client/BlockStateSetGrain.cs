@@ -41,7 +41,7 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
         await CleanInvalidBlockStateSetAsync();
         
         var result = new Dictionary<string, BlockStateSet<T>>();
-        foreach (var (key, sets) in State.BlockStateSets)
+        foreach (var key in State.BlockStateSets.Keys)
         {
             var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
             var blockStateSets = await grain.GetBlockStateSetsAsync(State.BlockStateSetVersion);
@@ -56,7 +56,7 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
 
     public async Task SetLongestChainBlockHashAsync(string blockHash)
     {
-        foreach (var (key, sets) in State.BlockStateSets)
+        foreach (var sets in State.BlockStateSets.Values)
         {
             if (!sets.Contains(blockHash))
             {
@@ -90,7 +90,7 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
     
     public async Task SetBestChainBlockHashAsync(string blockHash)
     {
-        foreach (var (key, sets) in State.BlockStateSets)
+        foreach (var sets in State.BlockStateSets.Values)
         {
             if (!sets.Contains(blockHash))
             {
