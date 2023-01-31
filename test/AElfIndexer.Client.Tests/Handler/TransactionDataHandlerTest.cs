@@ -68,7 +68,7 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
         transactionIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId1");
 
         var grain =
-            _clusterClient.GetGrain<IBlockStateSetManagerGrain<TransactionInfo>>(
+            _clusterClient.GetGrain<IBlockStateSetGrain<TransactionInfo>>(
                 GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, version));
         var bestChainBlockStateSet = await grain.GetBestChainBlockStateSetAsync();
         bestChainBlockStateSet.Confirmed.ShouldBeFalse();

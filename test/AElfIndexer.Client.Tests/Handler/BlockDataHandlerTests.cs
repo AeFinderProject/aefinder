@@ -43,7 +43,7 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         blockIndexes.Item2.Last().BlockHash.ShouldBe("BlockHash109");
 
         var grain =
-            _clusterClient.GetGrain<IBlockStateSetManagerGrain<BlockInfo>>(
+            _clusterClient.GetGrain<IBlockStateSetGrain<BlockInfo>>(
                 GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, version));
         var bestChainBlockStateSet = await grain.GetBestChainBlockStateSetAsync();
         bestChainBlockStateSet.BlockHash.ShouldBe("BlockHash109");
@@ -149,7 +149,7 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         blockIndexes.Item2.Last().BlockHash.ShouldBe("BlockHash105");
 
         var grain =
-            _clusterClient.GetGrain<IBlockStateSetManagerGrain<BlockInfo>>(
+            _clusterClient.GetGrain<IBlockStateSetGrain<BlockInfo>>(
                 GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, version));
         var bestChainBlockStateSet = await grain.GetBestChainBlockStateSetAsync();
         bestChainBlockStateSet.Confirmed.ShouldBeFalse();

@@ -5,17 +5,19 @@ using Orleans;
 
 namespace AElfIndexer.Grains.Grain.Client;
 
-public class BlockStateSetManagerGrain<T>: Grain<BlockStateSetManagerState>, IBlockStateSetManagerGrain<T>
+public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGrain<T>
 {
     private readonly ClientOptions _clientOptions;
 
-    public BlockStateSetManagerGrain(IOptionsSnapshot<ClientOptions> clientOptions)
+    public BlockStateSetGrain(IOptionsSnapshot<ClientOptions> clientOptions)
     {
         _clientOptions = clientOptions.Value;
     }
 
     public async Task SetBlockStateSetsAsync(Dictionary<string, BlockStateSet<T>> sets)
     {
+        State.BlockStateSetVersion = GenerateNewBlockStateSetVersion();
+        
         var maxIndex = Math.Max((sets.Count - 1) / _clientOptions.MaxCountPerBlockStateSetBucket + 1,
             State.BlockStateSets.Count);
 
@@ -28,8 +30,9 @@ public class BlockStateSetManagerGrain<T>: Grain<BlockStateSetManagerState>, IBl
             await grain.SetBlockStateSetsAsync(State.BlockStateSetVersion, blockSets);
             State.BlockStateSets[key] = blockSets.Keys.ToHashSet();
         }
-
+        
         await WriteStateAsync();
+        
         await CleanInvalidBlockStateSetAsync();
     }
 
@@ -130,13 +133,18 @@ public class BlockStateSetManagerGrain<T>: Grain<BlockStateSetManagerState>, IBl
         await tasks.WhenAll();
     }
 
+    private string GenerateNewBlockStateSetVersion()
+    {
+        return Guid.NewGuid().ToString("N");
+    }
+
     public override async Task OnActivateAsync()
     {
         await ReadStateAsync();
 
         if (string.IsNullOrEmpty(State.BlockStateSetVersion))
         {
-            State.BlockStateSetVersion = Guid.NewGuid().ToString("N");
+            State.BlockStateSetVersion = GenerateNewBlockStateSetVersion();
             await WriteStateAsync();
         }
 

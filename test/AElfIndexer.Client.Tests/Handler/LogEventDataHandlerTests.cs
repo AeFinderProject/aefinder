@@ -52,7 +52,7 @@ public class LogEventDataHandlerTests : AElfIndexerClientLogEventHandlerTestBase
         transferredIndex.Item2.All(t => t.ToAccount.IsNullOrEmpty()).ShouldBeFalse();
 
         var grain =
-            _clusterClient.GetGrain<IBlockStateSetManagerGrain<LogEventInfo>>(
+            _clusterClient.GetGrain<IBlockStateSetGrain<LogEventInfo>>(
                 GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, version));
         var bestChainBlockStateSet = await grain.GetBestChainBlockStateSetAsync();
         bestChainBlockStateSet.Confirmed.ShouldBeFalse();
@@ -90,7 +90,7 @@ public class LogEventDataHandlerTests : AElfIndexerClientLogEventHandlerTestBase
         transferredIndex.Item2.All(t => t.ToAccount.IsNullOrEmpty()).ShouldBeFalse();
 
         var grain =
-            _clusterClient.GetGrain<IBlockStateSetManagerGrain<LogEventInfo>>(
+            _clusterClient.GetGrain<IBlockStateSetGrain<LogEventInfo>>(
                 GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, version));
         var bestChainBlockStateSet = await grain.GetBestChainBlockStateSetAsync();
         bestChainBlockStateSet.Confirmed.ShouldBeFalse();
@@ -127,7 +127,7 @@ public class LogEventDataHandlerTests : AElfIndexerClientLogEventHandlerTestBase
         transferredIndex.Item2.All(t => t.ToAccount.IsNullOrEmpty()).ShouldBeFalse();
 
         var grain =
-            _clusterClient.GetGrain<IBlockStateSetManagerGrain<LogEventInfo>>(
+            _clusterClient.GetGrain<IBlockStateSetGrain<LogEventInfo>>(
                 GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, version));
         var bestChainBlockStateSet = await grain.GetBestChainBlockStateSetAsync();
         bestChainBlockStateSet.Confirmed.ShouldBeFalse();

@@ -25,7 +25,7 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
     {
         if (!_blockStateSets.TryGetValue(key, out var value))
         { 
-            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetManagerGrain<T>>(key);
+            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
             value = await blockStateSetsGrain.GetBlockStateSetsAsync();
             _blockStateSets[key] = value;
         }
@@ -94,7 +94,7 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
     {
         if (!_longestChainBlockStateSets.TryGetValue(key, out var value))
         {
-            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetManagerGrain<T>>(key);
+            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
             value = await blockStateSetsGrain.GetLongestChainBlockStateSetAsync();
             _longestChainBlockStateSets[key] = value;
         }
@@ -106,7 +106,7 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
     {
         if (!_bestChainBlockStateSets.TryGetValue(key, out var value))
         {
-            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetManagerGrain<T>>(key);
+            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
             value = await blockStateSetsGrain.GetBestChainBlockStateSetAsync();
             _bestChainBlockStateSets[key] = value;
         }
@@ -165,7 +165,7 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
 
     public async Task SaveDataAsync(string key)
     {
-        var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetManagerGrain<T>>(key);
+        var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
         await blockStateSetsGrain.SetBlockStateSetsAsync(_blockStateSets[key]);
         if (_longestChainBlockStateSets.TryGetValue(key, out var longestChainSets) && longestChainSets != null)
         {

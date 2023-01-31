@@ -3,7 +3,7 @@ using Orleans;
 
 namespace AElfIndexer.Grains.Grain.Client;
 
-public interface IBlockStateSetManagerGrain<T> : IGrainWithStringKey
+public interface IBlockStateSetGrain<T> : IGrainWithStringKey
 {
     Task SetBlockStateSetsAsync(Dictionary<string, BlockStateSet<T>> sets);
     Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync();

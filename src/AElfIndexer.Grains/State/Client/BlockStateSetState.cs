@@ -1,6 +1,6 @@
 namespace AElfIndexer.Grains.State.Client;
 
-public class BlockStateSetManagerState
+public class BlockStateSetState
 {
     public string LongestChainBlockHash { get; set; }
     public string BestChainBlockHash { get; set; }
