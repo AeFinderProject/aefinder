@@ -170,6 +170,13 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         blockIndexes.Item2.Count.ShouldBe(10);
         blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash100");
         blockIndexes.Item2.Last().BlockHash.ShouldBe("BlockHash109");
+        
+        var blockStateSerGrain =
+            _clusterClient.GetGrain<IBlockStateSetGrain<BlockInfo>>(
+                GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, version));
+        var blockStateSet = await blockStateSerGrain.GetBlockStateSetsAsync();
+        blockStateSet.Count.ShouldBe(10);
+
 
         var confirmedBlock = MockHandlerHelper.CreateBlock(100, 5, "BlockHash", chainId, "BlockHash99", true);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, confirmedBlock);
@@ -179,6 +186,13 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
 
         var confirmedBlockHeight = await grain.GetConfirmedBlockHeight(BlockFilterType.Block);
         confirmedBlockHeight.ShouldBe(104);
+        
+        blockStateSet = await blockStateSerGrain.GetBlockStateSetsAsync();
+        blockStateSet.Count.ShouldBe(6);
+        blockStateSet.Keys.ShouldNotContain("BlockHash100");
+        blockStateSet.Keys.ShouldNotContain("BlockHash101");
+        blockStateSet.Keys.ShouldNotContain("BlockHash102");
+        blockStateSet.Keys.ShouldNotContain("BlockHash103");
     }
 
     [Fact]
@@ -198,6 +212,15 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash99");
         blockIndexes.Item2.Last().BlockHash.ShouldBe("BlockForkHash109");
 
+        var blockStateSerGrain =
+            _clusterClient.GetGrain<IBlockStateSetGrain<BlockInfo>>(
+                GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, version));
+        var blockStateSet = await blockStateSerGrain.GetBlockStateSetsAsync();
+        blockStateSet.Keys.Count.ShouldBe(11);
+        blockStateSet.Keys.ShouldContain("BlockHash99");
+        blockStateSet.Keys.ShouldContain("BlockForkHash100");
+
+        
         var confirmedBlock =
             MockHandlerHelper.CreateBlock(100, 1, "BlockHash", chainId, "BlockHash99", true);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, confirmedBlock);
@@ -214,5 +237,10 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
             GrainIdHelper.GenerateGrainId("BlockStateSetInfo", client, chainId, version));
         var confirmedBlockHeight = await grain.GetConfirmedBlockHeight(BlockFilterType.Block);
         confirmedBlockHeight.ShouldBe(100);
+        
+        blockStateSet = await blockStateSerGrain.GetBlockStateSetsAsync();
+        blockStateSet.Keys.Count.ShouldBe(20);
+        blockStateSet.Keys.ShouldNotContain("BlockHash99");
+        blockStateSet.Keys.ShouldNotContain("BlockForkHash100");
     }
 }
