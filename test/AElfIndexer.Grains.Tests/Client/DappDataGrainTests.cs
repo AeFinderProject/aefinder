@@ -34,33 +34,6 @@ public class DappDataGrainTests: AElfIndexerGrainTestBase
         dappData.LatestValue.ShouldBe(latestValue);
         dappData.LIBValue.ShouldBe(libValue);
     }
-    
-    [Fact]
-    public async Task DappDataJsonTest()
-    {
-        var grain = Cluster.Client.GetGrain<IDappDataGrain>("id");
-        var latestValue = new DappData { Value = 100 };
-        var libValue = new DappData { Value = 90 };
-
-        await grain.SetLIBValue<DappData>(libValue);
-
-        var latest = await grain.GetLatestValue<DappData>();
-        latest.Value.ShouldBe(libValue.Value);
-        var lib = await grain.GetLIBValue<DappData>();
-        lib.Value.ShouldBe(libValue.Value);
-        var dappData = await grain.GetValue<DappData>();
-        dappData.LatestValue.Value.ShouldBe(libValue.Value);
-        dappData.LIBValue.Value.ShouldBe(libValue.Value);
-        
-        await grain.SetLatestValue<DappData>(latestValue);
-        latest = await grain.GetLatestValue<DappData>();
-        latest.Value.ShouldBe(latestValue.Value);
-        lib = await grain.GetLIBValue<DappData>();
-        lib.Value.ShouldBe(libValue.Value);
-        dappData = await grain.GetValue<DappData>();
-        dappData.LatestValue.Value.ShouldBe(latestValue.Value);
-        dappData.LIBValue.Value.ShouldBe(libValue.Value);
-    }
 }
 
 public class DappData

@@ -2,6 +2,7 @@ using System;
 using AElfIndexer.Block;
 using AElfIndexer.Grains.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScan;
+using AElfIndexer.Grains.Grain.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
@@ -42,6 +43,10 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     {
                         o.BatchPushBlockCount = 10;
                         o.ScanHistoryBlockThreshold = 5;
+                    });
+                    services.Configure<ClientOptions>(o =>
+                    {
+                        o.MaxCountPerBlockStateSetBucket = 5;
                     });
                 })
                 .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)

@@ -31,7 +31,7 @@ public class SubscriptionController : AElfIndexerController
         _clusterClient = clusterClient;
     }
     
-    [HttpPut]
+    [HttpPost]
     [Authorize]
     public virtual Task<string> SubmitSubscriptionInfoAsync(List<SubscriptionInfo> subscriptionInfos)
     {
