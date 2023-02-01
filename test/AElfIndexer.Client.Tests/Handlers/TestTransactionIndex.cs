@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using AElf.Indexing.Elasticsearch;
-using AElfIndexer.Client;
 using AElfIndexer.Grains.State.Client;
 using Nest;
 
-namespace AElfIndexer.Handler;
+namespace AElfIndexer.Client.Handlers;
 
 public class TestTransactionIndex : AElfIndexerClientEntity<string>, IIndexBuild
 {

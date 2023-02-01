@@ -7,7 +7,7 @@ using AElf.CSharp.Core.Extension;
 using AElf.Types;
 using AElfIndexer.Block.Dtos;
 
-namespace AElfIndexer.Handler;
+namespace AElfIndexer.Client.Handlers;
 
 public static class MockHandlerHelper
 {

@@ -1,9 +1,8 @@
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Grains.State.Client;
-using AElfIndexer.Handler;
 using AutoMapper;
 
-namespace AElfIndexer;
+namespace AElfIndexer.Client;
 
 public class AElfIndexerClientTestAutoMapperProfile : Profile
 {
@@ -12,5 +11,6 @@ public class AElfIndexerClientTestAutoMapperProfile : Profile
         CreateMap<BlockInfo, TestBlockIndex>();
         CreateMap<TransactionInfo, TestTransactionIndex>();
         CreateMap<LogEventContext, TestTransferredIndex>();
+        CreateMap<BlockInfo, TestIndex>();
     }
 }

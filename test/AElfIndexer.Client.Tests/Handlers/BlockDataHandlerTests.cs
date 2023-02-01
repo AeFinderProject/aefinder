@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
-using AElfIndexer.Client;
-using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Client;
@@ -13,7 +11,7 @@ using Shouldly;
 using Volo.Abp.ObjectMapping;
 using Xunit;
 
-namespace AElfIndexer.Handler;
+namespace AElfIndexer.Client.Handlers;
 
 public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
 {

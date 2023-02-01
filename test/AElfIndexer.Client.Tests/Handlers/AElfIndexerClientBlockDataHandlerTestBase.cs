@@ -1,6 +1,6 @@
-﻿using AElfIndexer.Module;
+﻿using AElfIndexer.Client.Module;
 
-namespace AElfIndexer.Handler;
+namespace AElfIndexer.Client.Handlers;
 
 public abstract class
     AElfIndexerClientBlockDataHandlerTestBase : AElfIndexerTestBase<AElfIndexerClientBlockDataHandlerTestModule>

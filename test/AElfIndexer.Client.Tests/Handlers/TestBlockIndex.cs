@@ -1,9 +1,8 @@
 using System;
 using AElf.Indexing.Elasticsearch;
-using AElfIndexer.Client;
 using Nest;
 
-namespace AElfIndexer.Handler;
+namespace AElfIndexer.Client.Handlers;
 
 public class TestBlockIndex : AElfIndexerClientEntity<string>, IIndexBuild
 {

@@ -1,8 +1,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using AElfIndexer.Client;
-using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Client;
@@ -11,7 +9,7 @@ using Orleans;
 using Shouldly;
 using Xunit;
 
-namespace AElfIndexer.Handler;
+namespace AElfIndexer.Client.Handlers;
 
 public class LogEventDataHandlerTests : AElfIndexerClientLogEventHandlerTestBase
 {

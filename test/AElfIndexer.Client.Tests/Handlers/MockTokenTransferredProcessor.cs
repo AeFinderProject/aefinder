@@ -1,12 +1,10 @@
 using System.Threading.Tasks;
 using AElf.Contracts.MultiToken;
-using AElfIndexer.Client;
-using AElfIndexer.Client.Handlers;
 using AElfIndexer.Grains.State.Client;
-using Volo.Abp.ObjectMapping;
 using Microsoft.Extensions.Logging;
+using Volo.Abp.ObjectMapping;
 
-namespace AElfIndexer.Handler;
+namespace AElfIndexer.Client.Handlers;
 
 public class MockTokenTransferredProcessor : AElfLogEventProcessorBase<Transferred, LogEventInfo>
 {

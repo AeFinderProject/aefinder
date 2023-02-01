@@ -1,15 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AElfIndexer.Client;
-using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.State.Client;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp.ObjectMapping;
 
-namespace AElfIndexer.Handler;
+namespace AElfIndexer.Client.Handlers;
 
 public class MockBlockHandler : BlockDataHandler
 {

@@ -5,9 +5,9 @@ using System.Reflection;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
 using AElf.Indexing.Elasticsearch.Services;
-using AElfIndexer.Client;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
+using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Orleans.TestBase;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
@@ -15,7 +15,7 @@ using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 using Volo.Abp.Threading;
 
-namespace AElfIndexer;
+namespace AElfIndexer.Client;
 
 [DependsOn(
     typeof(AElfIndexerClientModule),
@@ -38,6 +38,11 @@ public class AElfIndexerClientTestModule : AbpModule
         context.Services.AddSingleton(typeof(IBlockStateSetProvider<>), typeof(BlockStateSetProvider<>));
         context.Services.AddSingleton<IDAppDataProvider, DAppDataProvider>();
         context.Services.AddSingleton(typeof(IDAppDataIndexProvider<>), typeof(DAppDataIndexProvider<>));
+        
+        context.Services.Configure<ClientOptions>(o =>
+        {
+            o.DAppDataCacheCount = 5;
+        });
     }
     
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
