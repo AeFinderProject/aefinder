@@ -38,10 +38,19 @@ public class AElfIndexerClientTestModule : AbpModule
         context.Services.AddSingleton(typeof(IBlockStateSetProvider<>), typeof(BlockStateSetProvider<>));
         context.Services.AddSingleton<IDAppDataProvider, DAppDataProvider>();
         context.Services.AddSingleton(typeof(IDAppDataIndexProvider<>), typeof(DAppDataIndexProvider<>));
+        context.Services.AddSingleton<IAElfClientProvider, AElfClientProvider>();
         
         context.Services.Configure<ClientOptions>(o =>
         {
             o.DAppDataCacheCount = 5;
+        });
+
+        context.Services.Configure<NodeOptions>(o =>
+        {
+            o.NodeConfigList = new List<NodeConfig>
+            {
+                new NodeConfig { ChainId = "AELF", Endpoint = "http://mainchain.io" }
+            };
         });
     }
     

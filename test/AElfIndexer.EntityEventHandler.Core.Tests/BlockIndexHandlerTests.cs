@@ -99,5 +99,17 @@ public class BlockIndexHandlerTests : EntityEventHandlerCoreBlockIndexTestBase
         chainStatus = await chainGrain.GetChainStatusAsync();
         chainStatus.ConfirmedBlockHash.ShouldBe("BlockHash112");
         chainStatus.ConfirmedBlockHeight.ShouldBe(112);
+        
+        await _blockIndexHandler.ProcessConfirmedBlocksAsync(new BlockWithTransactionDto
+        {
+            ChainId = "AELF",
+            BlockHeight = 2112,
+            BlockHash = "BlockHash2112",
+            PreviousBlockHash = "BlockHash2111"
+        });
+        
+        chainStatus = await chainGrain.GetChainStatusAsync();
+        chainStatus.ConfirmedBlockHash.ShouldBe("BlockHash2112");
+        chainStatus.ConfirmedBlockHeight.ShouldBe(2112);
     }
 }

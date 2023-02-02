@@ -29,6 +29,5 @@ public class AElfIndexerBlockChainEventHandlerCoreTestModule:AbpModule
         
         context.Services.AddTransient<IDistributedEventHandler<BlockChainDataEto>>(sp =>
             sp.GetService<BlockChainDataEventHandler>());
-        context.Services.AddSingleton<IBlockGrainProvider>(sp => sp.GetService<TestBlockGrainProvider>());
     }
 }

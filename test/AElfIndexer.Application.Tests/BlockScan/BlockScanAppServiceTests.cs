@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
+using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.BlockScan;
 using AElfIndexer.Grains.State.Client;
 using Orleans;
@@ -134,6 +135,8 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         allScanIds = await blockScanManagerGrain.GetAllBlockScanIdsAsync();
         allScanIds["AELF"].ShouldNotContain(subscriptionInfo1[0].ChainId + clientId + version1 + subscriptionInfo1[0].FilterType);
         
+        await _blockScanAppService.StartScanAsync(clientId, version3);
+
         await _blockScanAppService.StopAsync(clientId, version3);
         
         version = await _blockScanAppService.GetClientVersionAsync(clientId);
