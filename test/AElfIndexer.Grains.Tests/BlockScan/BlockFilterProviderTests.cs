@@ -22,7 +22,7 @@ public class BlockFilterProviderTests : AElfIndexerGrainTestBase
     }
 
     [Fact]
-    public async Task FilterBlocksTest()
+    public async Task FilterBlocks_Test()
     {
         var block = MockBlock();
         var filter = new List<FilterContractEventInput>
@@ -236,6 +236,18 @@ public class BlockFilterProviderTests : AElfIndexerGrainTestBase
             filteredBlock = await logEventFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
             filteredBlock.Count.ShouldBe(2);
         }
+    }
+
+    [Theory]
+    [InlineData(BlockFilterType.Block)]
+    [InlineData(BlockFilterType.Transaction)]
+    [InlineData(BlockFilterType.LogEvent)]
+    public async Task GetBlocks_MissingBlock_Test(BlockFilterType filterType)
+    {
+        var provider =
+            _blockFilterProviders.First(o => o.FilterType == filterType);
+        await Assert.ThrowsAsync<ApplicationException>(async () =>
+            await provider.GetBlocksAsync("AELF", 0, 10, false, null));
     }
 
     private BlockWithTransactionDto MockBlock()

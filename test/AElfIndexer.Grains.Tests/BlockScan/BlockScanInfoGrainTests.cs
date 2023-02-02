@@ -15,7 +15,7 @@ namespace AElfIndexer.Grains.BlockScan;
 public class BlockScanInfoGrainTests : AElfIndexerGrainTestBase
 {
     [Fact]
-    public async Task InitializeTest()
+    public async Task Initialize_Test()
     {
         var chainId = "AELF";
         var clientId = "DApp";

@@ -24,7 +24,7 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
         {
             if (!_blockDataProvider.Blocks.TryGetValue(i, out var block))
             {
-                break;
+                continue;
             }
 
             result.AddRange(_blockDataProvider.Blocks[i].Where(o => !input.IsOnlyConfirmed || o.Confirmed).Select(
@@ -59,14 +59,19 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
         var filter = GetFilter(input.Events);
         for (var i = input.StartBlockHeight; i <= input.EndBlockHeight; i++)
         {
-            foreach (var block in _blockDataProvider.Blocks[i])
+            if (_blockDataProvider.Blocks.TryGetValue(i, out var blocks))
             {
-                foreach (var transaction in block.Transactions.Where(transaction => transaction.LogEvents.Any(logEvent =>
-                             (filter.Item1.Count ==0 && filter.Item2.Count ==0 ||
-                              filter.Item1.Count !=0 && filter.Item1.Contains(logEvent.ContractAddress) ||
-                              filter.Item2.Count !=0 && filter.Item2.Contains(logEvent.ContractAddress + logEvent.EventName)))))
+                foreach (var block in blocks)
                 {
-                    result.Add(transaction);
+                    foreach (var transaction in block.Transactions.Where(transaction => transaction.LogEvents.Any(
+                                 logEvent =>
+                                     (filter.Item1.Count == 0 && filter.Item2.Count == 0 ||
+                                      filter.Item1.Count != 0 && filter.Item1.Contains(logEvent.ContractAddress) ||
+                                      filter.Item2.Count != 0 &&
+                                      filter.Item2.Contains(logEvent.ContractAddress + logEvent.EventName)))))
+                    {
+                        result.Add(transaction);
+                    }
                 }
             }
         }
@@ -80,13 +85,17 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
         var filter = GetFilter(input.Events);
         for (var i = input.StartBlockHeight; i <= input.EndBlockHeight; i++)
         {
-            foreach (var transaction in _blockDataProvider.Blocks[i].SelectMany(block => block.Transactions))
+            if (_blockDataProvider.Blocks.TryGetValue(i, out var blocks))
             {
-                result.AddRange((from logEvent in transaction.LogEvents
-                    where filter.Item1.Count ==0 && filter.Item2.Count ==0 ||
-                          filter.Item1.Count !=0 && filter.Item1.Contains(logEvent.ContractAddress) ||
-                          filter.Item2.Count !=0 && filter.Item2.Contains(logEvent.ContractAddress + logEvent.EventName)
-                    select logEvent).ToList());
+                foreach (var transaction in blocks.SelectMany(block => block.Transactions))
+                {
+                    result.AddRange((from logEvent in transaction.LogEvents
+                        where filter.Item1.Count == 0 && filter.Item2.Count == 0 ||
+                              filter.Item1.Count != 0 && filter.Item1.Contains(logEvent.ContractAddress) ||
+                              filter.Item2.Count != 0 &&
+                              filter.Item2.Contains(logEvent.ContractAddress + logEvent.EventName)
+                        select logEvent).ToList());
+                }
             }
         }
 

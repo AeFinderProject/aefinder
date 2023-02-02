@@ -192,6 +192,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == subscriptionInfo.FilterType);
         var blocks = new List<BlockWithTransactionDto>();
         var needCheckIncomplete = true;
+        var startHeight = State.ScannedBlockHeight + 1;
         if (block.BlockHeight == State.ScannedBlockHeight + 1 && block.PreviousBlockHash == State.ScannedBlockHash)
         {
             blocks.Add(block);
@@ -199,7 +200,6 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else if (State.ScannedBlocks.Count == 0)
         {
-            var startHeight = State.ScannedBlockHeight + 1;
             blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, startHeight,
                 GetMaxTargetHeight(startHeight, block.BlockHeight), false, null);
         }
@@ -211,18 +211,18 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         }
         else
         {
-            var startHeight = GetMinScannedBlockHeight();
+            startHeight = GetMinScannedBlockHeight();
             _logger.LogDebug($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, from height: {startHeight}");
             blocks = await blockFilterProvider.GetBlocksAsync(State.ChainId, startHeight,
                 GetMaxTargetHeight(startHeight, block.BlockHeight), false, null);
-                
-            if (blocks.Count == 0)
-            {
-                var message =
-                    $"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Cannot get blocks: from {GetMinScannedBlockHeight()} to {block.BlockHeight}";
-                _logger.LogError(message);
-                throw new ApplicationException(message);
-            }
+        }
+        
+        if (blocks.Count == 0)
+        {
+            var message =
+                $"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: Cannot get blocks: from {startHeight} to {block.BlockHeight}";
+            _logger.LogError(message);
+            throw new ApplicationException(message);
         }
 
         var unPushedBlock = await GetUnPushedBlocksAsync(blocks, blockFilterProvider, needCheckIncomplete);

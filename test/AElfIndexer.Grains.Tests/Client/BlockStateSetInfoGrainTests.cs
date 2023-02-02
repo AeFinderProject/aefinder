@@ -9,7 +9,7 @@ namespace AElfIndexer.Grains.Client;
 public class BlockStateSetInfoGrainTests: AElfIndexerGrainTestBase
 {
     [Fact]
-    public async Task GetConfirmedBlockHeightTest()
+    public async Task GetConfirmedBlockHeight_Test()
     {
         var grain = Cluster.Client.GetGrain<IBlockStateSetInfoGrain>("id");
         var height = await grain.GetConfirmedBlockHeight(BlockFilterType.Block);

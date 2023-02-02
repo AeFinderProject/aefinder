@@ -9,7 +9,7 @@ namespace AElfIndexer.Grains.Chains;
 public class ChainGrainTests : AElfIndexerGrainTestBase
 {
     [Fact]
-    public async Task SetLatestBlockTest()
+    public async Task SetLatestBlock_Test()
     {
         var chainId = "AELF";
         var blockHash = "blockHash";
@@ -30,7 +30,7 @@ public class ChainGrainTests : AElfIndexerGrainTestBase
     }
     
     [Fact]
-    public async Task SetLatestConfirmBlockTest()
+    public async Task SetLatestConfirmBlock_Test()
     {
         var chainId = "AELF";
         var confirmedBlockHash = "confirmedBlockHash";;

@@ -14,7 +14,7 @@ namespace AElfIndexer.Grains.BlockScan;
 public class ClientGrainTests : AElfIndexerGrainTestBase
 {
     [Fact]
-    public async Task ClientTest()
+    public async Task Client_Test()
     {
         var clientId = "client";
         var subscriptionInfo1 = new List<SubscriptionInfo>
@@ -83,7 +83,7 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
     }
 
     [Fact]
-    public async Task StopTest()
+    public async Task Stop_Test()
     {
         var clientId = "client";
         var subscriptionInfo1 = new List<SubscriptionInfo>
@@ -124,7 +124,7 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
     }
 
     [Fact]
-    public async Task RemoveVersionInfoTest()
+    public async Task RemoveVersionInfo_Test()
     {
         var clientId = "client";
         var subscriptionInfo1 = new List<SubscriptionInfo>

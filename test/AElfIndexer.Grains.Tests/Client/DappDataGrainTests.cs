@@ -9,7 +9,7 @@ namespace AElfIndexer.Grains.Client;
 public class DappDataGrainTests: AElfIndexerGrainTestBase
 {
     [Fact]
-    public async Task DappDataTest()
+    public async Task DappData_Test()
     {
         var grain = Cluster.Client.GetGrain<IDappDataGrain>("id");
         var latestValue = "latestValue";

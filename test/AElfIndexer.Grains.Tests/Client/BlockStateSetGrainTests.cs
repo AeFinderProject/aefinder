@@ -11,7 +11,7 @@ namespace AElfIndexer.Grains.Client;
 public class BlockStateSetGrainTests: AElfIndexerGrainTestBase
 {
     [Fact]
-    public async Task BlockStateSetsTest()
+    public async Task BlockStateSets_Test()
     {
         var blockStateSetGrain =
             Cluster.Client.GetGrain<IBlockStateSetGrain<int>>("id");
