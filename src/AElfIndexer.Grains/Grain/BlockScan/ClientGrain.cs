@@ -115,9 +115,14 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         await WriteStateAsync();
     }
 
-    public Task<string> GetTokenAsync(string version)
+    public async Task<string> GetTokenAsync(string version)
     {
-        return Task.FromResult(State.TokenInfos[version]);
+        if (State.TokenInfos.TryGetValue(version, out var token))
+        {
+            return token;
+        }
+
+        return null;;
     }
 
     public async Task StopAsync(string version)

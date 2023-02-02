@@ -19,11 +19,9 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     private readonly IDAppDataProvider _dAppDataProvider;
     private readonly IBlockStateSetProvider<TData> _blockStateSetProvider;
     private readonly IDAppDataIndexProvider<TEntity> _dAppDataIndexProvider;
+    private readonly IAElfIndexerClientInfoProvider _clientInfoProvider;
 
     private readonly string _entityName;
-    private readonly string _clientId;
-    private readonly string _version;
-    private readonly string _indexName;
 
     public AElfIndexerClientEntityRepository(INESTRepository<TEntity, string> nestRepository,
         IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, IDAppDataProvider dAppDataProvider,
@@ -33,11 +31,12 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         _dAppDataProvider = dAppDataProvider;
         _blockStateSetProvider = blockStateSetProvider;
         _dAppDataIndexProvider = dAppDataIndexProvider;
+        _clientInfoProvider = aelfIndexerClientInfoProvider;
 
         _entityName = typeof(TEntity).Name;
-        _clientId = aelfIndexerClientInfoProvider.GetClientId();
-        _version = aelfIndexerClientInfoProvider.GetVersion();
-        _indexName = $"{_clientId}-{_version}.{_entityName}".ToLower();
+        // _clientId = aelfIndexerClientInfoProvider.GetClientId();
+        // _version = aelfIndexerClientInfoProvider.GetVersion();
+        // _indexName = $"{_clientId}-{_version}.{_entityName}".ToLower();
     }
 
     public async Task AddOrUpdateAsync(TEntity entity)
@@ -54,13 +53,13 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
 
     private async Task AddOrUpdateForConfirmBlockAsync(string dataKey, TEntity entity)
     {
-        await _dAppDataIndexProvider.AddOrUpdateAsync(entity, _indexName);
+        await _dAppDataIndexProvider.AddOrUpdateAsync(entity, GetIndexName());
         await _dAppDataProvider.SetLibValueAsync(dataKey,entity);
     }
     
     private async Task DeleteForConfirmBlockAsync(string dataKey, TEntity entity)
     {
-        await _dAppDataIndexProvider.DeleteAsync(entity, _indexName);
+        await _dAppDataIndexProvider.DeleteAsync(entity, GetIndexName());
         await _dAppDataProvider.SetLibValueAsync(dataKey,entity);
     }
 
@@ -70,9 +69,8 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         if (!IsValidate(entity)) throw new Exception($"Invalid entity: {entity.ToJsonString()}");
         var entityKey = $"{_entityName}-{entity.Id}";
         
-        var blockStateSetsGrainKey =
-            GrainIdHelper.GenerateGrainId("BlockStateSets", _clientId, entity.ChainId, _version);
-        var dataKey = GrainIdHelper.GenerateGrainId("DAppData", _clientId, entity.ChainId, _version, entityKey);
+        var blockStateSetsGrainKey = GetBlockStateSetKey(entity.ChainId);
+        var dataKey = GetDAppDataKey(entity.ChainId, entityKey);
         
         var dataValue = await _dAppDataProvider.GetLibValueAsync<TEntity>(dataKey);
         var blockStateSets = await _blockStateSetProvider.GetBlockStateSetsAsync(blockStateSetsGrainKey);
@@ -103,7 +101,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
                 longestChainBlockStateSet.BlockHeight, dataValue);
             if (entityFromBlockStateSet != null)
             {
-                await _dAppDataIndexProvider.AddOrUpdateAsync(entityFromBlockStateSet, _indexName);
+                await _dAppDataIndexProvider.AddOrUpdateAsync(entityFromBlockStateSet, GetIndexName());
                 // await dappGrain.SetLatestValue(entityFromBlockStateSet);
             }
             else
@@ -114,7 +112,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
                     entity = JsonConvert.DeserializeObject<TEntity>(value);
                 }
                 
-                await _dAppDataIndexProvider.DeleteAsync(entity, _indexName);
+                await _dAppDataIndexProvider.DeleteAsync(entity, GetIndexName());
                 entity.IsDeleted = true;
                 await _dAppDataProvider.SetLibValueAsync<TEntity>(dataKey, entity);
             }
@@ -124,8 +122,8 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     public async Task<TEntity> GetFromBlockStateSetAsync(string id, string chainId)
     {
         var entityKey = $"{_entityName}-{id}";
-        var dateKey = GrainIdHelper.GenerateGrainId("DAppData", _clientId, chainId, _version, entityKey);
-        var blockStateSetsKey = GrainIdHelper.GenerateGrainId("BlockStateSets", _clientId, chainId, _version);
+        var dateKey = GetDAppDataKey(chainId, entityKey);
+        var blockStateSetsKey = GetBlockStateSetKey(chainId);
         
         var entity = await _dAppDataProvider.GetLibValueAsync<TEntity>(dateKey);
 
@@ -138,7 +136,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
 
     public async Task<TEntity> GetAsync(string id)
     {
-        return await _nestRepository.GetAsync(id,_indexName);
+        return await _nestRepository.GetAsync(id,GetIndexName());
     }
 
     public async Task<TEntity> GetAsync(
@@ -147,7 +145,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         Expression<Func<TEntity, object>> sortExp = null,
         SortOrder sortType = SortOrder.Ascending)
     {
-        return await _nestRepository.GetAsync(filterFunc, includeFieldFunc, sortExp, sortType, _indexName);
+        return await _nestRepository.GetAsync(filterFunc, includeFieldFunc, sortExp, sortType, GetIndexName());
     }
 
     public async Task<Tuple<long, List<TEntity>>> GetListAsync(
@@ -158,7 +156,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         int limit = 1000,
         int skip = 0)
     {
-        return await _nestRepository.GetListAsync(filterFunc, includeFieldFunc, sortExp, sortType, limit, skip, _indexName);
+        return await _nestRepository.GetListAsync(filterFunc, includeFieldFunc, sortExp, sortType, limit, skip, GetIndexName());
     }
 
     public async Task<Tuple<long, List<TEntity>>> GetSortListAsync(
@@ -168,13 +166,13 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         int limit = 1000,
         int skip = 0)
     {
-        return await _nestRepository.GetSortListAsync(filterFunc, includeFieldFunc, sortFunc, limit, skip, _indexName);
+        return await _nestRepository.GetSortListAsync(filterFunc, includeFieldFunc, sortFunc, limit, skip, GetIndexName());
     }
 
     public async Task<CountResponse> CountAsync(
         Func<QueryContainerDescriptor<TEntity>, QueryContainer> query)
     {
-        return await _nestRepository.CountAsync(query, _indexName);
+        return await _nestRepository.CountAsync(query, GetIndexName());
     }
     
     private bool IsValidate(TEntity entity)
@@ -187,7 +185,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     {
         entity.IsDeleted = false;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
-        await _dAppDataIndexProvider.AddOrUpdateAsync(entity, _indexName);
+        await _dAppDataIndexProvider.AddOrUpdateAsync(entity, GetIndexName());
         await _blockStateSetProvider.SetBlockStateSetAsync(blockStateSetKey,blockStateSet);
     }
     
@@ -195,7 +193,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     {
         entity.IsDeleted = true;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
-        await _dAppDataIndexProvider.DeleteAsync(entity, _indexName);
+        await _dAppDataIndexProvider.DeleteAsync(entity, GetIndexName());
         await _blockStateSetProvider.SetBlockStateSetAsync(blockStateSetKey, blockStateSet);
     }
     
@@ -216,5 +214,26 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         // if block state sets don't contain entity, return LIB value
         // lib value's block height should less than min block state set's block height.
         return libValue != null && libValue.BlockHeight < currentBlockHeight ? libValue : null;
+    }
+
+    private string GetIndexName()
+    {
+        var clientId = _clientInfoProvider.GetClientId();
+        var version = _clientInfoProvider.GetVersion();
+        return $"{clientId}-{version}.{_entityName}".ToLower();
+    }
+
+    private string GetDAppDataKey(string chainId, string entityKey)
+    {
+        var clientId = _clientInfoProvider.GetClientId();
+        var version = _clientInfoProvider.GetVersion();
+        return GrainIdHelper.GenerateGrainId("DAppData", clientId, chainId, version, entityKey);
+    }
+    
+    private string GetBlockStateSetKey(string chainId)
+    {
+        var clientId = _clientInfoProvider.GetClientId();
+        var version = _clientInfoProvider.GetVersion();
+        return GrainIdHelper.GenerateGrainId("BlockStateSets", clientId, chainId, version);
     }
 }

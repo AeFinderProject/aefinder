@@ -20,10 +20,11 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
     private readonly IDAppDataProvider _dAppDataProvider;
     private readonly IBlockStateSetProvider<TData> _blockStateSetProvider;
     private readonly IDAppDataIndexManagerProvider _dAppDataIndexManagerProvider;
+    private readonly IAElfIndexerClientInfoProvider _clientInfoProvider;
     protected readonly IObjectMapper ObjectMapper;
     
-    private readonly string _version;
-    private readonly string _clientId;
+    private string _version;
+    private string _clientId;
     protected readonly ILogger<BlockChainDataHandler<TData>> Logger;
     
     protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
@@ -37,15 +38,16 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         _dAppDataProvider = dAppDataProvider;
         _blockStateSetProvider = blockStateSetProvider;
         _dAppDataIndexManagerProvider = dAppDataIndexManagerProvider;
-        
-        _version = aelfIndexerClientInfoProvider.GetVersion();
-        _clientId = aelfIndexerClientInfoProvider.GetClientId();
+        _clientInfoProvider = aelfIndexerClientInfoProvider;
     }
 
     public abstract BlockFilterType FilterType { get; }
     
     public async Task HandleBlockChainDataAsync(string chainId, string clientId, List<BlockWithTransactionDto> blockDtos)
     {
+        _version = _clientInfoProvider.GetVersion();
+        _clientId = _clientInfoProvider.GetClientId();
+        
         var stateSetKey = GetBlockStateSetKey(chainId);
         var libHeight = 0L;
         var libHash = string.Empty;
