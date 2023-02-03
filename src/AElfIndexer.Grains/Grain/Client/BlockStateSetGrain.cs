@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AElfIndexer.Grains.State.Client;
 using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
@@ -16,30 +17,11 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
 
     public async Task SetBlockStateSetsAsync(Dictionary<string, BlockStateSet<T>> sets)
     {
-        State.BlockStateSetVersion = GenerateNewBlockStateSetVersion();
-        
-        var maxIndex = Math.Max((sets.Count - 1) / _clientOptions.MaxCountPerBlockStateSetBucket + 1,
-            State.BlockStateSets.Count);
-
-        for (var i = 0; i < maxIndex; i++)
-        {
-            var key = GrainIdHelper.GenerateGrainId(this.GetPrimaryKeyString(), i.ToString());
-            var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
-            var blockSets = sets.Select(o => o).Skip(_clientOptions.MaxCountPerBlockStateSetBucket * i)
-                .Take(_clientOptions.MaxCountPerBlockStateSetBucket).ToDictionary(o => o.Key, o => o.Value);
-            await grain.SetBlockStateSetsAsync(State.BlockStateSetVersion, blockSets);
-            State.BlockStateSets[key] = blockSets.Keys.ToHashSet();
-        }
-        
-        await WriteStateAsync();
-        
-        await CleanInvalidBlockStateSetAsync();
+        await SetBlockStateSetsAsync(0, sets);
     }
 
     public async Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync()
     {
-        await CleanInvalidBlockStateSetAsync();
-        
         var result = new Dictionary<string, BlockStateSet<T>>();
         foreach (var key in State.BlockStateSets.Keys)
         {
@@ -121,10 +103,45 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
 
         return null;
     }
+    
+    private async Task SetBlockStateSetsAsync(int startBucketNumber, Dictionary<string, BlockStateSet<T>> sets)
+    {
+        var maxIndex = Math.Max((sets.Count - 1) / _clientOptions.MaxCountPerBlockStateSetBucket + 1,
+            State.BlockStateSets.Count);
+
+        State.NewMaxBucketNumber = maxIndex + startBucketNumber - 1;
+        await WriteStateAsync();
+
+        State.BlockStateSetVersion = GenerateNewBlockStateSetVersion();
+        for (var i = 0; i < maxIndex; i++)
+        {
+            var key = GrainIdHelper.GenerateGrainId(this.GetPrimaryKeyString(), (startBucketNumber + i).ToString());
+            var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
+            var blockSets = sets.Select(o => o).Skip(_clientOptions.MaxCountPerBlockStateSetBucket * i)
+                .Take(_clientOptions.MaxCountPerBlockStateSetBucket).ToDictionary(o => o.Key, o => o.Value);
+            await grain.SetBlockStateSetsAsync(State.BlockStateSetVersion, blockSets);
+            State.BlockStateSets[key] = blockSets.Keys.ToHashSet();
+        }
+        
+        await WriteStateAsync();
+        
+        await CleanInvalidBlockStateSetAsync();
+
+        State.MaxBucketNumber = State.NewMaxBucketNumber;
+        await WriteStateAsync();
+    }
 
     private async Task CleanInvalidBlockStateSetAsync()
     {
-        var tasks = State.BlockStateSets.Keys.Select(async key =>
+        var max = Math.Max(State.MaxBucketNumber, State.NewMaxBucketNumber);
+
+        var keys = new List<string>();
+        for (var i = 0; i <= max; i++)
+        {
+            keys.Add(GrainIdHelper.GenerateGrainId(this.GetPrimaryKeyString(), i.ToString()));
+        }
+
+        var tasks = keys.Select(async key =>
         {
             var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
             await grain.CleanAsync(State.BlockStateSetVersion);
@@ -145,9 +162,21 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
         if (string.IsNullOrEmpty(State.BlockStateSetVersion))
         {
             State.BlockStateSetVersion = GenerateNewBlockStateSetVersion();
+            State.MaxCountPerBlockStateSetBucket = _clientOptions.MaxCountPerBlockStateSetBucket;
             await WriteStateAsync();
         }
-
+        
+        await CleanInvalidBlockStateSetAsync();
+        
+        if (_clientOptions.MaxCountPerBlockStateSetBucket != State.MaxCountPerBlockStateSetBucket)
+        {
+            var sets = await GetBlockStateSetsAsync();
+            await SetBlockStateSetsAsync(State.MaxBucketNumber, sets);
+            
+            State.MaxCountPerBlockStateSetBucket = _clientOptions.MaxCountPerBlockStateSetBucket;
+            await WriteStateAsync();
+        }
+        
         await base.OnActivateAsync();
     }
 }
