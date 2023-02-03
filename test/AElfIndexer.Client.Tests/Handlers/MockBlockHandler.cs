@@ -24,8 +24,8 @@ public class MockBlockHandler : BlockDataHandler
     {
         _repository = repository;
     }
-
-    protected override async Task ProcessDataAsync(List<BlockInfo> data)
+    
+    protected override async Task ProcessBlocksAsync(List<BlockInfo> data)
     {
         foreach (var block in data)
         {
@@ -33,10 +33,5 @@ public class MockBlockHandler : BlockDataHandler
             Logger.LogDebug(index.ToJsonString());
             await _repository.AddOrUpdateAsync(index);
         }
-    }
-
-    protected override Task ProcessBlocksAsync(List<BlockInfo> data)
-    {
-        throw new NotImplementedException();
     }
 }

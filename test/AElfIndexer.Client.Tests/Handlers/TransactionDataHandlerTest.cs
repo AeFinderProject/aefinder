@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Client.Providers;
@@ -16,6 +17,7 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
     private readonly IAElfIndexerClientInfoProvider _clientInfoProvider;
     private readonly IAElfIndexerClientEntityRepository<TestTransactionIndex, TransactionInfo> _repository;
     private readonly IAElfIndexerClientEntityRepository<TestBlockIndex, BlockInfo> _blockRepository;
+    private readonly IAElfIndexerClientEntityRepository<TestTransferredIndex, LogEventInfo> _transferredRepository;
     private readonly IClusterClient _clusterClient;
 
     public TransactionDataHandlerTest()
@@ -23,6 +25,8 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
         _blockChainDataHandler = GetRequiredService<IBlockChainDataHandler>();
         _clientInfoProvider = GetRequiredService<IAElfIndexerClientInfoProvider>();
         _repository = GetRequiredService<IAElfIndexerClientEntityRepository<TestTransactionIndex, TransactionInfo>>();
+        _transferredRepository =
+            GetRequiredService<IAElfIndexerClientEntityRepository<TestTransferredIndex, LogEventInfo>>();
         _clusterClient = GetRequiredService<IClusterClient>();
     }
 
@@ -41,6 +45,36 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
         transactionIndex.Item2.Count.ShouldBe(20);
         transactionIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId0");
         transactionIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId1");
+
+        var transferIndex = await _transferredRepository.GetListAsync();
+        ;
+    }
+
+    [Fact]
+    public async Task Transaction_Block_With_TransactionAndLogEvent_Test()
+    {
+        var chainId = "AELF";
+        var client = _clientInfoProvider.GetClientId();
+
+        var blocks = MockHandlerHelper.CreateBlockWithTransactionDtosAndTransferredLogEvent(
+            100, 10, "BlockHash", chainId, 1, "TransactionId",
+            TransactionStatus.Mined, 1);
+        await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
+
+        var transactionIndex = await _repository.GetListAsync();
+        transactionIndex.Item2.Count.ShouldBe(10);
+        transactionIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId0");
+        transactionIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId0");
+
+        var transferredIndex = await _transferredRepository.GetListAsync();
+        transferredIndex.Item2.Count.ShouldBe(10);
+        transferredIndex.Item2.First().Amount.ShouldBe(100);
+        transferredIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId00100");
+        transferredIndex.Item2.Last().Amount.ShouldBe(109);
+        transferredIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId00109");
+        transferredIndex.Item2.All(t => t.Symbol.Equals("TEST")).ShouldBeTrue();
+        transferredIndex.Item2.All(t => t.FromAccount.IsNullOrWhiteSpace()).ShouldBeFalse();
+        transferredIndex.Item2.All(t => t.ToAccount.IsNullOrWhiteSpace()).ShouldBeFalse();
     }
 
     [Fact]
