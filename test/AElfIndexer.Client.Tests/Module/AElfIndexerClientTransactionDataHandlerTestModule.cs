@@ -4,7 +4,7 @@ using Volo.Abp.Modularity;
 
 namespace AElfIndexer.Client.Module;
 
-[DependsOn(typeof(AElfIndexerClientTestModule))]
+[DependsOn(typeof(AElfIndexerClientLogEventDataHandlerTestModule))]
 public class AElfIndexerClientTransactionDataHandlerTestModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

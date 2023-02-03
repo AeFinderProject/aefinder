@@ -31,15 +31,17 @@ public class AElfIndexerClientEntityRepositoryTests : AElfIndexerClientTestBase
         _dAppDataProvider = GetRequiredService<IDAppDataProvider>();
     }
 
-    [Fact]
-    public async Task AddAndDelete_Test()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AddAndDelete_Test(bool isConfirmed)
     {
         var chainId = "AELF";
         var client = _clientInfoProvider.GetClientId();
         var version = _clientInfoProvider.GetVersion();
         var stateSetKey = GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, version);
 
-        var blocks = MockHandlerHelper.CreateBlock(100, 10, "BlockHash", chainId);
+        var blocks = MockHandlerHelper.CreateBlock(100, 10, "BlockHash", chainId, confirmed: isConfirmed);
         var sets = new List<BlockStateSet<BlockInfo>>();
         foreach (var block in blocks)
         {
@@ -87,7 +89,7 @@ public class AElfIndexerClientEntityRepositoryTests : AElfIndexerClientTestBase
         data = await _clientEntityRepository.GetFromBlockStateSetAsync(entity.Id, chainId);
         data.ShouldBeNull();
     }
-    
+
     [Fact]
     public async Task Add_Fork_Test()
     {

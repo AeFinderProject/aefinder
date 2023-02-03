@@ -78,7 +78,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         // Entity is confirmed,save it to es search directly
         if (blockStateSet.Confirmed)
         {
-            if ((dataValue?.BlockHeight??0) >= blockStateSet.BlockHeight)
+            if ((dataValue?.BlockHeight??0) > blockStateSet.BlockHeight)
             {
                 return;
             }
@@ -199,7 +199,8 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
     
     private TEntity GetEntityFromBlockStateSets(string entityKey, Dictionary<string, BlockStateSet<TData>> blockStateSets, string currentBlockHash, long currentBlockHeight, TEntity libValue)
     {
-        while (blockStateSets.TryGetValue(currentBlockHash, out var blockStateSet))
+        var blockHash = currentBlockHash;
+        while (blockStateSets.TryGetValue(blockHash, out var blockStateSet))
         {
             if (blockStateSet.Changes.TryGetValue(entityKey, out var value))
             {
@@ -207,13 +208,12 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
                 return (entity?.IsDeleted ?? true) ? null : entity;
             }
 
-            currentBlockHash = blockStateSet.PreviousBlockHash;
-            currentBlockHeight = blockStateSet.BlockHeight;
+            blockHash = blockStateSet.PreviousBlockHash;
         }
 
         // if block state sets don't contain entity, return LIB value
         // lib value's block height should less than min block state set's block height.
-        return libValue != null && libValue.BlockHeight < currentBlockHeight ? libValue : null;
+        return libValue != null && libValue.BlockHeight <= currentBlockHeight && !libValue.IsDeleted ? libValue : null;
     }
 
     private string GetIndexName()

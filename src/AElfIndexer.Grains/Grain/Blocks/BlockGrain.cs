@@ -41,11 +41,6 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
         // DelayDeactivation(TimeSpan.FromMinutes(1));
     }
 
-    public async Task<BlockData> GetBlockData()
-    {
-        return State.Block;
-    }
-
     public async Task SetBlockConfirmed()
     {
         State.Block.Confirmed = true;
@@ -55,10 +50,4 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
         DeactivateOnIdle();
         // DelayDeactivation(TimeSpan.FromSeconds(5));
     }
-
-    public async Task<bool> IsBlockConfirmed()
-    {
-        return State.Block.Confirmed;
-    }
-
 }
