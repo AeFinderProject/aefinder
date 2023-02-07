@@ -45,9 +45,6 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
         transactionIndex.Item2.Count.ShouldBe(20);
         transactionIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId0");
         transactionIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId1");
-
-        var transferIndex = await _transferredRepository.GetListAsync();
-        ;
     }
 
     [Fact]
