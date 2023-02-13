@@ -57,7 +57,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
 
         var list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockHeight,
-            sortType: SortOrder.Ascending, limit: int.MaxValue);
+            sortType: SortOrder.Ascending, limit: 10000);
         items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
 
         List<BlockDto> resultList = new List<BlockDto>();
@@ -159,7 +159,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
             Func<SortDescriptor<TransactionIndex>, IPromise<IList<ISort>>> sort = s =>
                 s.Ascending(a => a.BlockHeight).Ascending(d => d.Index);
             
-            var list = await _transactionIndexRepository.GetSortListAsync(Filter, sortFunc:sort,limit:int.MaxValue);
+            var list = await _transactionIndexRepository.GetSortListAsync(Filter, sortFunc:sort,limit:10000);
             resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list.Item2);
         }
         else
@@ -178,7 +178,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
             Func<SortDescriptor<TransactionIndex>, IPromise<IList<ISort>>> sort = s =>
                 s.Ascending(a => a.BlockHeight).Ascending(d => d.Index);
             
-            var list = await _transactionIndexRepository.GetSortListAsync(Filter,sortFunc:sort,limit:int.MaxValue);
+            var list = await _transactionIndexRepository.GetSortListAsync(Filter,sortFunc:sort,limit:10000);
 
             resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list.Item2);
         }
@@ -252,7 +252,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         Func<SortDescriptor<LogEventIndex>, IPromise<IList<ISort>>> sort = s =>
             s.Ascending(a => a.BlockHeight).Ascending(d => d.Index);
 
-        var list = await _logEventIndexRepository.GetSortListAsync(Filter, sortFunc: sort,limit:int.MaxValue);
+        var list = await _logEventIndexRepository.GetSortListAsync(Filter, sortFunc: sort,limit:10000);
 
         resultList = ObjectMapper.Map<List<LogEventIndex>, List<LogEventDto>>(list.Item2);
         
