@@ -58,6 +58,16 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
         var list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockHeight,
             sortType: SortOrder.Ascending, limit: 10000);
+        if (list.Item1 == 10000)
+        {
+            list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockHeight,
+                sortType: SortOrder.Ascending, limit: 20000);
+            if (list.Item1 == 20000)
+            {
+                list = await _blockIndexRepository.GetListAsync(Filter, sortExp: k => k.BlockHeight,
+                    sortType: SortOrder.Ascending, limit: int.MaxValue);
+            }
+        }
         items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list.Item2);
 
         List<BlockDto> resultList = new List<BlockDto>();
@@ -160,6 +170,15 @@ public class BlockAppService:ApplicationService,IBlockAppService
                 s.Ascending(a => a.BlockHeight).Ascending(d => d.Index);
             
             var list = await _transactionIndexRepository.GetSortListAsync(Filter, sortFunc:sort,limit:10000);
+            if (list.Item1 == 10000)
+            {
+                list = await _transactionIndexRepository.GetSortListAsync(Filter, sortFunc:sort,limit:20000);
+                if (list.Item1 == 20000)
+                {
+                    list = await _transactionIndexRepository.GetSortListAsync(Filter, sortFunc: sort,
+                        limit: int.MaxValue);
+                }
+            }
             resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list.Item2);
         }
         else
@@ -179,6 +198,15 @@ public class BlockAppService:ApplicationService,IBlockAppService
                 s.Ascending(a => a.BlockHeight).Ascending(d => d.Index);
             
             var list = await _transactionIndexRepository.GetSortListAsync(Filter,sortFunc:sort,limit:10000);
+            if (list.Item1 == 10000)
+            {
+                list = await _transactionIndexRepository.GetSortListAsync(Filter,sortFunc:sort,limit:20000);
+                if (list.Item1 == 20000)
+                {
+                    list = await _transactionIndexRepository.GetSortListAsync(Filter, sortFunc: sort,
+                        limit: int.MaxValue);
+                }
+            }
 
             resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list.Item2);
         }
@@ -253,7 +281,15 @@ public class BlockAppService:ApplicationService,IBlockAppService
             s.Ascending(a => a.BlockHeight).Ascending(d => d.Index);
 
         var list = await _logEventIndexRepository.GetSortListAsync(Filter, sortFunc: sort,limit:10000);
-
+        if (list.Item1 == 10000)
+        {
+            list = await _logEventIndexRepository.GetSortListAsync(Filter, sortFunc: sort,limit:20000);
+            if (list.Item1 == 20000)
+            {
+                list = await _logEventIndexRepository.GetSortListAsync(Filter, sortFunc: sort,limit:int.MaxValue);
+            }
+        }
+        
         resultList = ObjectMapper.Map<List<LogEventIndex>, List<LogEventDto>>(list.Item2);
         
         
