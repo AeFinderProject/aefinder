@@ -119,8 +119,17 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
             var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
             var blockSets = sets.Select(o => o).Skip(_clientOptions.MaxCountPerBlockStateSetBucket * i)
                 .Take(_clientOptions.MaxCountPerBlockStateSetBucket).ToDictionary(o => o.Key, o => o.Value);
+
             await grain.SetBlockStateSetsAsync(State.BlockStateSetVersion, blockSets);
-            State.BlockStateSets[key] = blockSets.Keys.ToHashSet();
+
+            if (blockSets.Count > 0)
+            {
+                State.BlockStateSets[key] = blockSets.Keys.ToHashSet();
+            }
+            else
+            {
+                State.BlockStateSets.Remove(key);
+            }
         }
         
         await WriteStateAsync();
