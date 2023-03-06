@@ -38,7 +38,7 @@ public abstract class TransactionDataHandler : BlockChainDataHandler<Transaction
         }
         catch (Exception e)
         {
-            Logger.LogError(e, e.Message);
+            Logger.LogError(e, "Process Client Transactions Error!" + e.Message);
         }
     }
 

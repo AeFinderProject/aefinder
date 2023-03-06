@@ -29,7 +29,7 @@ public abstract class AElfLogEventProcessorBase<TEvent,TData> : IAElfLogEventPro
         }
         catch (Exception e)
         {
-            _logger.LogError(e, e.Message);
+            _logger.LogError(e, "Handle Client LogEvent Error!" + e.Message);
         }
     }
 

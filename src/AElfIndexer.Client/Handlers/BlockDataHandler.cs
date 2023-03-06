@@ -29,7 +29,7 @@ public abstract class BlockDataHandler: BlockChainDataHandler<BlockInfo>
         }
         catch (Exception e)
         {
-            Logger.LogError(e, e.Message);
+            Logger.LogError(e, "Process Client Blocks Error!" + e.Message);
         }
     }
 
