@@ -21,5 +21,5 @@ public class BlockData
     public long LibBlockHeight { get; set; }
     
     public List<Transaction> Transactions {get;set;}
-    public bool ClearBlockStateDictionary { get; set; }
+    // public bool ClearBlockStateDictionary { get; set; }
 }
