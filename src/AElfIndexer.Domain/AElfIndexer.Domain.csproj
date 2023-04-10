@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <RootNamespace>AElfIndexer</RootNamespace>
+    <PackageId>AElfIndexer.Domain</PackageId>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AElfIndexer.Domain.Shared\AElfIndexer.Domain.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AElf.Indexing.Elasticsearch" Version="0.0.14" />
+    <PackageReference Include="Volo.Abp.Emailing" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.Identity.Domain" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.OpenIddict.Domain" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Domain.OpenIddict" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.BackgroundJobs.Domain" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.AuditLogging.Domain" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.TenantManagement.Domain" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.Domain" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.SettingManagement.Domain" Version="7.0.0-rc.5" />
+  </ItemGroup>
+
+</Project>

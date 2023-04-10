@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <RootNamespace>AElfIndexer.Client</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\AElfIndexer.Client\AElfIndexer.Client.csproj" />
+        <ProjectReference Include="..\AElfIndexer.Domain.Tests\AElfIndexer.Domain.Tests.csproj" />
+        <ProjectReference Include="..\AElfIndexer.Orleans.TestBase\AElfIndexer.Orleans.TestBase.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="3.2.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+    </ItemGroup>
+
+</Project>

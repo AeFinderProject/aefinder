@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <RootNamespace>AElfIndexer</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AElfIndexer.Application.Contracts\AElfIndexer.Application.Contracts.csproj" />
+    <ProjectReference Include="..\AElfIndexer.Grains\AElfIndexer.Grains.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Account.HttpApi" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.AspNetCore.SignalR" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.Identity.HttpApi" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.HttpApi" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.TenantManagement.HttpApi" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.HttpApi" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.SettingManagement.HttpApi" Version="7.0.0-rc.5" />
+  </ItemGroup>
+
+</Project>

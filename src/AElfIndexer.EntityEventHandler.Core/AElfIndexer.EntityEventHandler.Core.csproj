@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <RootNamespace>AElfIndexer.EntityEventHandler.Core</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AElfIndexer.Application\AElfIndexer.Application.csproj" />
+      <ProjectReference Include="..\AElfIndexer.Domain\AElfIndexer.Domain.csproj" />
+      <ProjectReference Include="..\AElfIndexer.MongoDB\AElfIndexer.MongoDB.csproj" />
+    </ItemGroup>
+
+</Project>

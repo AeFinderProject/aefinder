@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- File name extension must be .runsettings -->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>      
+       <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Exclude>[xunit.*]*,[*Tests]*</Exclude> <!-- [Assembly-Filter]Type-Filter -->
+          <ExcludeByFile>**/test/**/*.cs,**/src/AElfIndexer.Application.Contracts/Permissions/**/*.cs,**/src/AElfIndexer.BlockChainEventHandler/**/*.cs,**/src/AElfIndexer.BlockChainEventHandler.Core/Generated/*.cs,**/src/AElfIndexer.DbMigrator/**/*.cs,**/src/AElfIndexer.Domain/**/*.cs,**/src/AElfIndexer.Domain.Shared/**/*.cs,**/src/AElfIndexer.EntityEventHandler/**/*.cs,**/src/AElfIndexer.EntityFrameworkCore/**/*.cs,**/src/AElfIndexer.HttpApi.Host/**/*.cs,**/src/AElfIndexer.HttpApi.Client/**/*.cs,**/src/AElfIndexer.AuthServer/**/*.cs,**/src/AElfIndexer.MongoDB/**/*.cs,**/src/AElfIndexer.Client/GraphQL/**/*.cs,**/src/AElfIndexer.Client/AElfClientService.cs,**/src/AElfIndexer.Client/AElfIndexerClientPluginBaseModule.cs,**/src/AElfIndexer.Grains/Grain/BlockScan/BlockScanCheckGrain.cs</ExcludeByFile>
+          <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+          <SingleHit>false</SingleHit>
+        </Configuration>
+      </DataCollector>    
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
