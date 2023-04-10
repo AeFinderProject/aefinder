@@ -61,20 +61,11 @@ public class AElfIndexerClusterClientHostedService:IHostedService
     {
         _application.Initialize(_serviceProvider);
         return Task.CompletedTask;
-        
-        // _logger.LogInformation("before connect OrleansClient.IsInitialized:"+OrleansClient.IsInitialized);
-        // await OrleansClient.Connect();
-        // _logger.LogInformation("after connect OrleansClient.IsInitialized:"+OrleansClient.IsInitialized);
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
         _application.Shutdown();
         return Task.CompletedTask;
-        
-        // await OrleansClient.Close();
-        // OrleansClient.Dispose();
-        // _logger.LogInformation("OrleansClient Closed");
-        // _application.Shutdown();
     }
 }
