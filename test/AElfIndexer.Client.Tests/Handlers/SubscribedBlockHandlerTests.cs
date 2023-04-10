@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AElf.Client.Services;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Client.Providers;
@@ -19,12 +20,14 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
     private readonly ISubscribedBlockHandler _subscribedBlockHandler;
     private readonly IAElfIndexerClientInfoProvider _clientInfoProvider;
     private readonly IClusterClient _clusterClient;
+    private readonly IBlockScanAppService _blockScanAppService;
 
     public SubscribedBlockHandlerTests()
     {
         _subscribedBlockHandler = GetRequiredService<ISubscribedBlockHandler>();
         _clientInfoProvider = GetRequiredService<IAElfIndexerClientInfoProvider>();
         _clusterClient = GetRequiredService<IClusterClient>();
+        _blockScanAppService = GetRequiredService<IBlockScanAppService>();
     }
 
     [Fact]
@@ -129,7 +132,8 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         grain = _clusterClient.GetGrain<IBlockStateSetGrain<BlockInfo>>(key);
         bestChain = await grain.GetBestChainBlockStateSetAsync();
         bestChain.BlockHeight.ShouldBe(10009);
-        
+
+        await _blockScanAppService.UpgradeVersionAsync(client);
         versionInfo = await clientGrain.GetVersionAsync();
         versionInfo.CurrentVersion.ShouldBe(newVersion);
         versionInfo.NewVersion.ShouldBeNull();
