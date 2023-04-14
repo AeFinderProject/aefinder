@@ -72,12 +72,12 @@ public static class OrleansHostExtensions
                 })
                 .Configure<GrainCollectionOptions>(options =>
                 {
-                    // Set the value of CollectionAge to 10 minutes for all grain
-                    // options.CollectionAge = TimeSpan.FromMinutes(10);
-
-                    // Override the value of CollectionAge to 1 minutes for BlockGrain
-                    options.ClassSpecificCollectionAge[typeof(BlockGrain).FullName] =
-                        TimeSpan.FromSeconds(61);
+                    // Override the value of CollectionAge to
+                    var collection = configSection.GetSection("ClassSpecificCollectionAge").GetChildren();
+                    foreach (var item in collection)
+                    {
+                        options.ClassSpecificCollectionAge[item.Key] = TimeSpan.FromSeconds(int.Parse(item.Value));
+                    }
                 })
                 // .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
                 // {
