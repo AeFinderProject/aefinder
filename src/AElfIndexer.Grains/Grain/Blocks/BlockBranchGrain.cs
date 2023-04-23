@@ -61,7 +61,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
             State.Blocks.TryAdd(blockEventData.BlockHash, basicData);
         }
 
-        var libBlockList = await GetLibBlockList(blockEventDataList);
+        var libBlockList = await GetLibBlockListAsync(blockEventDataList);
         // await ConfirmBlocksAsync(libBlockList);
 
         foreach (var libBlockData in libBlockList)
@@ -146,7 +146,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         return blockEventDataList;
     }
 
-    private async Task<List<BlockData>> GetLibBlockList(List<BlockData> blockEventDataList)
+    private async Task<List<BlockData>> GetLibBlockListAsync(List<BlockData> blockEventDataList)
     {
         long maxLibBlockHeight = blockEventDataList.Max(b => b.LibBlockHeight);
         if (maxLibBlockHeight > 0)
@@ -157,7 +157,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
 
             if (currentLibBlockHash != null)
             {
-                return await GetLibBlockList(currentLibBlockHash);
+                return await GetLibBlockListAsync(currentLibBlockHash);
             }
         }
         return new List<BlockData>();
@@ -174,7 +174,6 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         {
             if (State.Blocks[blockHash].BlockHeight == libBlockHeight)
             {
-                // return State.Blocks[blockHash];
                 return blockHash;
             }
 
@@ -184,7 +183,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         return null;
     }
     
-    private async Task<List<BlockData>> GetLibBlockList(string currentLibBlockHash)
+    private async Task<List<BlockData>> GetLibBlockListAsync(string currentLibBlockHash)
     {
         var libBlockTaskList = new List<Task<BlockData>>();
         while (State.Blocks.ContainsKey(currentLibBlockHash))
@@ -197,7 +196,6 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
             var blockBasicItem = State.Blocks[currentLibBlockHash];
             var primaryKey = GrainIdHelper.GenerateGrainId(blockBasicItem.ChainId,AElfIndexerApplicationConsts.BlockGrainIdSuffix,blockBasicItem.BlockHash);
             var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
-            // libBlockTaskList.Add(blockGrain.GetBlock());
             libBlockTaskList.Add(blockGrain.ConfirmBlock());
             currentLibBlockHash = State.Blocks[currentLibBlockHash].PreviousBlockHash;
         }

@@ -32,9 +32,9 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
         await base.OnDeactivateAsync();
     }
     
-    public async Task<BlockData> GetBlock()
+    public Task<BlockData> GetBlock()
     {
-        return State.Block;
+        return Task.FromResult(State.Block);
     }
 
     public async Task SaveBlock(BlockData block)
