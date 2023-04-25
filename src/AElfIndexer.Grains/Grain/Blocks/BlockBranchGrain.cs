@@ -34,7 +34,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         await base.OnDeactivateAsync();
     }
 
-    public async Task<Dictionary<string, BlockData>> GetBlockDictionary()
+    public async Task<Dictionary<string, BlockBasicData>> GetBlockDictionary()
     {
         return this.State.Blocks;
     }
@@ -49,11 +49,20 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         
         foreach (var blockEventData in blockEventDataList)
         {
-            State.Blocks.TryAdd(blockEventData.BlockHash, blockEventData);
+            var basicData = new BlockBasicData()
+            {
+                ChainId = blockEventData.ChainId,
+                BlockHash = blockEventData.BlockHash,
+                BlockHeight = blockEventData.BlockHeight,
+                PreviousBlockHash = blockEventData.PreviousBlockHash,
+                BlockTime = blockEventData.BlockTime,
+                Confirmed = blockEventData.Confirmed
+            };
+            State.Blocks.TryAdd(blockEventData.BlockHash, basicData);
         }
 
-        var libBlockList = GetLibBlockList(blockEventDataList);
-        await ConfirmBlocksAsync(libBlockList);
+        var libBlockList = await GetLibBlockListAsync(blockEventDataList);
+        // await ConfirmBlocksAsync(libBlockList);
 
         foreach (var libBlockData in libBlockList)
         {
@@ -82,19 +91,19 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         await Task.WhenAll(grainTaskList.ToArray());
     }
 
-    private async Task ConfirmBlocksAsync(List<BlockData> confirmBlocks)
-    {
-        if (confirmBlocks.Count == 0) return;
-        var grainTaskList = new List<Task>();
-        foreach (var blockItem in confirmBlocks)
-        {
-            var primaryKey = GrainIdHelper.GenerateGrainId(blockItem.ChainId,
-                AElfIndexerApplicationConsts.BlockGrainIdSuffix, blockItem.BlockHash);
-            var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
-            grainTaskList.Add(blockGrain.SetBlockConfirmed());
-        }
-        await Task.WhenAll(grainTaskList.ToArray());
-    }
+    // private async Task ConfirmBlocksAsync(List<BlockData> confirmBlocks)
+    // {
+    //     if (confirmBlocks.Count == 0) return;
+    //     var grainTaskList = new List<Task>();
+    //     foreach (var blockItem in confirmBlocks)
+    //     {
+    //         var primaryKey = GrainIdHelper.GenerateGrainId(blockItem.ChainId,
+    //             AElfIndexerApplicationConsts.BlockGrainIdSuffix, blockItem.BlockHash);
+    //         var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
+    //         grainTaskList.Add(blockGrain.SetBlockConfirmed());
+    //     }
+    //     await Task.WhenAll(grainTaskList.ToArray());
+    // }
 
     public async Task<List<BlockData>> FilterBlockList(List<BlockData> blockEventDataList)
     {
@@ -137,24 +146,24 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         return blockEventDataList;
     }
 
-    private List<BlockData> GetLibBlockList(List<BlockData> blockEventDataList)
+    private async Task<List<BlockData>> GetLibBlockListAsync(List<BlockData> blockEventDataList)
     {
         long maxLibBlockHeight = blockEventDataList.Max(b => b.LibBlockHeight);
         if (maxLibBlockHeight > 0)
         {
             var blockWithLibEvent = blockEventDataList.First(b => b.LibBlockHeight == maxLibBlockHeight);
-            var currentLibBlock = FindLibBlock(blockWithLibEvent.PreviousBlockHash,
+            var currentLibBlockHash = FindLibBlock(blockWithLibEvent.PreviousBlockHash,
                 blockWithLibEvent.LibBlockHeight);
 
-            if (currentLibBlock != null)
+            if (currentLibBlockHash != null)
             {
-                return GetLibBlockList(currentLibBlock.BlockHash);
+                return await GetLibBlockListAsync(currentLibBlockHash);
             }
         }
         return new List<BlockData>();
     }
 
-    private BlockData FindLibBlock(string blockHash, long libBlockHeight)
+    private string FindLibBlock(string blockHash, long libBlockHeight)
     {
         if (libBlockHeight <= 0)
         {
@@ -165,32 +174,32 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         {
             if (State.Blocks[blockHash].BlockHeight == libBlockHeight)
             {
-                return State.Blocks[blockHash];
+                return blockHash;
             }
-    
+
             blockHash = State.Blocks[blockHash].PreviousBlockHash;
         }
     
         return null;
     }
     
-    private List<BlockData> GetLibBlockList(string currentLibBlockHash)
+    private async Task<List<BlockData>> GetLibBlockListAsync(string currentLibBlockHash)
     {
-        var libBlockList = new List<BlockData>();
+        var libBlockTaskList = new List<Task<BlockData>>();
         while (State.Blocks.ContainsKey(currentLibBlockHash))
         {
             if (State.Blocks[currentLibBlockHash].Confirmed)
             {
-                // libBlockList.Add(State.Blocks[currentLibBlockHash]);
-                return libBlockList;
+                break;
             }
             
-            // State.Blocks[currentLibBlockHash].Confirmed = true;
-            libBlockList.Add(State.Blocks[currentLibBlockHash]);
+            var blockBasicItem = State.Blocks[currentLibBlockHash];
+            var primaryKey = GrainIdHelper.GenerateGrainId(blockBasicItem.ChainId,AElfIndexerApplicationConsts.BlockGrainIdSuffix,blockBasicItem.BlockHash);
+            var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
+            libBlockTaskList.Add(blockGrain.ConfirmBlock());
             currentLibBlockHash = State.Blocks[currentLibBlockHash].PreviousBlockHash;
         }
-
-        return libBlockList;
+        return (await Task.WhenAll(libBlockTaskList)).ToList();
     }
 
     private void ClearDictionary(long libBlockHeight, string libBlockHash)

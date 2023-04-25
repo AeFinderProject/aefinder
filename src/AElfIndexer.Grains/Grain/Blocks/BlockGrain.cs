@@ -31,6 +31,11 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
         await WriteStateAsync();
         await base.OnDeactivateAsync();
     }
+    
+    public Task<BlockData> GetBlock()
+    {
+        return Task.FromResult(State.Block);
+    }
 
     public async Task SaveBlock(BlockData block)
     {
@@ -41,13 +46,15 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
         // DelayDeactivation(TimeSpan.FromMinutes(1));
     }
 
-    public async Task SetBlockConfirmed()
+    public async Task<BlockData> ConfirmBlock()
     {
         State.Block.Confirmed = true;
         _logger.LogInformation($"before write block {State.Block.BlockHeight} confirmed {State.Block.Confirmed} success");
         await WriteStateAsync();
         _logger.LogInformation($"after write block {State.Block.BlockHeight} confirmed {State.Block.Confirmed} success");
         DeactivateOnIdle();
+
+        return State.Block;
         // DelayDeactivation(TimeSpan.FromSeconds(5));
     }
 }

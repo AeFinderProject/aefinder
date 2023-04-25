@@ -6,9 +6,10 @@ namespace AElfIndexer.Grains.Grain.Blocks;
 
 public interface IBlockGrain : IGrainWithStringKey
 {
+    Task<BlockData> GetBlock();
     Task SaveBlock(BlockData block);
     
-    Task SetBlockConfirmed();
+    Task<BlockData> ConfirmBlock();
     
 }
 
