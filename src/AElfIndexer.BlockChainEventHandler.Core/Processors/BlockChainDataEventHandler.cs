@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AElf.Contracts.Consensus.AEDPoS;
 using AElfIndexer.DTOs;
@@ -80,7 +81,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         {
             // _logger.LogInformation("newBlockEtos count: " + newBlockEtos.Count);
             //publish new block event
-            await _distributedEventBus.PublishAsync(new NewBlocksEto()
+            await PublishNewBlocksEtoAsync(new NewBlocksEto()
                 { NewBlocks = newBlockEtos });
 
             if (libBlockList.Count > 0)
@@ -90,12 +91,60 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                 //publish confirm blocks event
                 var confirmBlockList =
                     _objectMapper.Map<List<BlockData>, List<ConfirmBlockEto>>(libBlockList);
-                await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
+                await PublishConfirmBlocksEtoAsync(new ConfirmBlocksEto()
                     { ConfirmBlocks = confirmBlockList });
             }
         }
 
 
+    }
+
+    private async Task PublishNewBlocksEtoAsync(NewBlocksEto eventData)
+    { 
+        var retryCount = 0;
+        while (retryCount < _blockChainEventHandlerOptions.RetryTimes)
+        {
+            try
+            {
+                await _distributedEventBus.PublishAsync(eventData);
+                break;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Publish new block event failed, retrying..." + retryCount);
+                retryCount++;
+                Thread.Sleep(_blockChainEventHandlerOptions.RetryInterval);
+            }
+        }
+        
+        if (retryCount >= _blockChainEventHandlerOptions.RetryTimes)
+        {
+            await _distributedEventBus.PublishAsync(eventData);
+        }
+    }
+
+    private async Task PublishConfirmBlocksEtoAsync(ConfirmBlocksEto eventData)
+    {
+        var retryCount = 0;
+        while (retryCount < _blockChainEventHandlerOptions.RetryTimes)
+        {
+            try
+            {
+                await _distributedEventBus.PublishAsync(eventData);
+                break;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Publish confirm block event failed, retrying..." + retryCount);
+                retryCount++;
+                Thread.Sleep(_blockChainEventHandlerOptions.RetryInterval);
+            }
+        }
+        
+        if (retryCount >= _blockChainEventHandlerOptions.RetryTimes)
+        {
+            await _distributedEventBus.PublishAsync(eventData);
+        }
     }
 
     // public async Task HandleEventAsync(BlockChainDataEto eventData)
