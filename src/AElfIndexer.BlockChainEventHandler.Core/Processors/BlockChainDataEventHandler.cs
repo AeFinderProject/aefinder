@@ -113,14 +113,15 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             {
                 _logger.LogError(e, "Publish new block event failed, retrying..." + retryCount);
                 retryCount++;
-                Thread.Sleep(_blockChainEventHandlerOptions.RetryInterval);
+                await Task.Delay(_blockChainEventHandlerOptions.RetryInterval);
+
+                if (retryCount >= _blockChainEventHandlerOptions.RetryTimes)
+                {
+                    throw e;
+                }
             }
         }
-        
-        if (retryCount >= _blockChainEventHandlerOptions.RetryTimes)
-        {
-            await _distributedEventBus.PublishAsync(eventData);
-        }
+
     }
 
     private async Task PublishConfirmBlocksEtoAsync(ConfirmBlocksEto eventData)
@@ -137,13 +138,13 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
             {
                 _logger.LogError(e, "Publish confirm block event failed, retrying..." + retryCount);
                 retryCount++;
-                Thread.Sleep(_blockChainEventHandlerOptions.RetryInterval);
+                await Task.Delay(_blockChainEventHandlerOptions.RetryInterval);
+                
+                if (retryCount >= _blockChainEventHandlerOptions.RetryTimes)
+                {
+                    throw e;
+                }
             }
-        }
-        
-        if (retryCount >= _blockChainEventHandlerOptions.RetryTimes)
-        {
-            await _distributedEventBus.PublishAsync(eventData);
         }
     }
 
