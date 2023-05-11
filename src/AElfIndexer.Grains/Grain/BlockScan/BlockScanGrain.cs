@@ -173,7 +173,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     {
         await ReadStateAsync();
 
-        if (block.BlockHeight < State.ScannedBlockHeight + _blockScanOptions.PushNewBlockCount)
+        if (block.BlockHeight < State.ScannedBlockHeight + _blockScanOptions.BatchPushNewBlockCount)
         {
             return;
         }
@@ -261,7 +261,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     {
         await ReadStateAsync();
         
-        if (block.BlockHeight < State.ScannedConfirmedBlockHeight + _blockScanOptions.PushNewBlockCount)
+        if (block.BlockHeight < State.ScannedConfirmedBlockHeight + _blockScanOptions.BatchPushNewBlockCount)
         {
             return;
         }
