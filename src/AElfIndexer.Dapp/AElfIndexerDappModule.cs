@@ -24,6 +24,7 @@ using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
+using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict.Tokens;
 using Volo.Abp.Threading;
@@ -35,6 +36,7 @@ namespace AElfIndexer.Dapp;
     typeof(AElfIndexerApplicationModule),
     typeof(AbpAutoMapperModule),
     typeof(AbpAspNetCoreSerilogModule),
+    typeof(AbpEventBusRabbitMqModule),
     typeof(AElfIndexerMongoDbModule))]
 public class AElfIndexerDappModule : AbpModule
 {
