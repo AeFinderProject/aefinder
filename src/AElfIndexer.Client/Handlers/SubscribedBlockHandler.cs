@@ -4,6 +4,7 @@ using AElfIndexer.Grains.Grain.Chains;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Streams;
+using Serilog;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 
@@ -44,6 +45,10 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
             return;
         }
 
+        Logger.LogInformation("Prepare transfer subscribedBlock: Version: {Version} FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
+            subscribedBlock.Version, subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId,
+            subscribedBlock.Blocks.First().BlockHeight,
+            subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
         // Logger.LogDebug(
         //     "Receive subscribedBlock: Version: {Version} FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
         //     subscribedBlock.Version,subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,
@@ -52,7 +57,27 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         // var handler = _handlers.First(h => h.FilterType == subscribedBlock.FilterType);
         // await handler.HandleBlockChainDataAsync(subscribedBlock.ChainId, subscribedBlock.ClientId, subscribedBlock.Blocks);
         
-        await _distributedEventBus.PublishAsync(subscribedBlock);
+        var retryCount = 0;
+        while (retryCount < 5)
+        {
+            try
+            {
+                await _distributedEventBus.PublishAsync(subscribedBlock);
+                break;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e, "Publish subscribedBlock event failed, retrying..." + retryCount);
+                retryCount++;
+                await Task.Delay(2000);
+
+                if (retryCount >= 5)
+                {
+                    throw e;
+                }
+            }
+        }
+        
         
         //TODO: This can only check one chain 
         // if (subscribedBlock.Version == clientVersion.NewVersion)
