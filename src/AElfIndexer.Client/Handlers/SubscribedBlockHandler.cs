@@ -42,6 +42,11 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         if (subscribedBlock.Version != clientVersion.CurrentVersion &&
             subscribedBlock.Version != clientVersion.NewVersion || subscribedBlock.Token != clientToken)
         {
+            Logger.LogInformation("Token not match! ClientId: {ClientId} Version: {Version} subscribedToken: {subscribedToken} clientToken: {clientToken} FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
+                subscribedBlock.ClientId, subscribedBlock.Version,subscribedBlock.Token,clientToken,
+                subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId,
+                subscribedBlock.Blocks.First().BlockHeight,
+                subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
             return;
         }
 
