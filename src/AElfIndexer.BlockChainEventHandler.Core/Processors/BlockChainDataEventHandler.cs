@@ -81,7 +81,9 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         {
             // _logger.LogInformation("newBlockEtos count: " + newBlockEtos.Count);
             //publish new block event
-            await PublishNewBlocksEtoAsync(new NewBlocksEto()
+            // await PublishNewBlocksEtoAsync(new NewBlocksEto()
+            //     { NewBlocks = newBlockEtos });
+            await _distributedEventBus.PublishAsync(new NewBlocksEto()
                 { NewBlocks = newBlockEtos });
 
             if (libBlockList.Count > 0)
@@ -91,7 +93,9 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                 //publish confirm blocks event
                 var confirmBlockList =
                     _objectMapper.Map<List<BlockData>, List<ConfirmBlockEto>>(libBlockList);
-                await PublishConfirmBlocksEtoAsync(new ConfirmBlocksEto()
+                // await PublishConfirmBlocksEtoAsync(new ConfirmBlocksEto()
+                //     { ConfirmBlocks = confirmBlockList });
+                await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                     { ConfirmBlocks = confirmBlockList });
             }
         }
@@ -99,54 +103,54 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
 
     }
 
-    private async Task PublishNewBlocksEtoAsync(NewBlocksEto eventData)
-    { 
-        var retryCount = 0;
-        while (retryCount < _blockChainEventHandlerOptions.RetryTimes)
-        {
-            try
-            {
-                await _distributedEventBus.PublishAsync(eventData);
-                break;
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Publish new block event failed, retrying..." + retryCount);
-                retryCount++;
-                await Task.Delay(_blockChainEventHandlerOptions.RetryInterval);
+    // private async Task PublishNewBlocksEtoAsync(NewBlocksEto eventData)
+    // { 
+    //     var retryCount = 0;
+    //     while (retryCount < _blockChainEventHandlerOptions.RetryTimes)
+    //     {
+    //         try
+    //         {
+    //             await _distributedEventBus.PublishAsync(eventData);
+    //             break;
+    //         }
+    //         catch (Exception e)
+    //         {
+    //             _logger.LogError(e, "Publish new block event failed, retrying..." + retryCount);
+    //             retryCount++;
+    //             await Task.Delay(_blockChainEventHandlerOptions.RetryInterval);
+    //
+    //             if (retryCount >= _blockChainEventHandlerOptions.RetryTimes)
+    //             {
+    //                 throw e;
+    //             }
+    //         }
+    //     }
+    //
+    // }
 
-                if (retryCount >= _blockChainEventHandlerOptions.RetryTimes)
-                {
-                    throw e;
-                }
-            }
-        }
-
-    }
-
-    private async Task PublishConfirmBlocksEtoAsync(ConfirmBlocksEto eventData)
-    {
-        var retryCount = 0;
-        while (retryCount < _blockChainEventHandlerOptions.RetryTimes)
-        {
-            try
-            {
-                await _distributedEventBus.PublishAsync(eventData);
-                break;
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Publish confirm block event failed, retrying..." + retryCount);
-                retryCount++;
-                await Task.Delay(_blockChainEventHandlerOptions.RetryInterval);
-                
-                if (retryCount >= _blockChainEventHandlerOptions.RetryTimes)
-                {
-                    throw e;
-                }
-            }
-        }
-    }
+    // private async Task PublishConfirmBlocksEtoAsync(ConfirmBlocksEto eventData)
+    // {
+    //     var retryCount = 0;
+    //     while (retryCount < _blockChainEventHandlerOptions.RetryTimes)
+    //     {
+    //         try
+    //         {
+    //             await _distributedEventBus.PublishAsync(eventData);
+    //             break;
+    //         }
+    //         catch (Exception e)
+    //         {
+    //             _logger.LogError(e, "Publish confirm block event failed, retrying..." + retryCount);
+    //             retryCount++;
+    //             await Task.Delay(_blockChainEventHandlerOptions.RetryInterval);
+    //             
+    //             if (retryCount >= _blockChainEventHandlerOptions.RetryTimes)
+    //             {
+    //                 throw e;
+    //             }
+    //         }
+    //     }
+    // }
 
     // public async Task HandleEventAsync(BlockChainDataEto eventData)
     // {
