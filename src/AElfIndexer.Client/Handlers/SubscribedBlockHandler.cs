@@ -34,6 +34,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
 
     public async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken token = null)
     {
+        Logger.LogInformation("HandleAsync subscribedBlock: {subscribedBlock}",subscribedBlock.ClientId+subscribedBlock.Version+subscribedBlock.Token+subscribedBlock.ChainId+subscribedBlock.Blocks.First().BlockHeight+subscribedBlock.Blocks.First().Confirmed);
         if (subscribedBlock.Blocks.Count == 0) return;
         if (subscribedBlock.ClientId != _clientId) return;
         var clientVersion = await _blockScanAppService.GetClientVersionAsync(subscribedBlock.ClientId);
