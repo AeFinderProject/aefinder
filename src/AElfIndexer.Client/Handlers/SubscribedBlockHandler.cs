@@ -2,6 +2,7 @@ using AElfIndexer.Client.Providers;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.Chains;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Streams;
 using Serilog;
@@ -16,6 +17,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IClusterClient _clusterClient;
     private readonly IDistributedEventBus _distributedEventBus;
+    private readonly SubscribedBlockHandlerOptions _subscribedBlockHandlerOptions;
     public ILogger<SubscribedBlockHandler> Logger { get; set; }
     private readonly string _clientId;
     private const long UpgradeVersionThreshold = 1000;
@@ -23,6 +25,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
     public SubscribedBlockHandler(IEnumerable<IBlockChainDataHandler> handlers,
         IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, IBlockScanAppService blockScanAppService,
         IDistributedEventBus distributedEventBus,
+        IOptionsSnapshot<SubscribedBlockHandlerOptions> subscribedBlockHandlerOptions,
         IClusterClient clusterClient)
     {
         _handlers = handlers;
@@ -30,11 +33,15 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         _blockScanAppService = blockScanAppService;
         _clusterClient = clusterClient;
         _distributedEventBus = distributedEventBus;
+        _subscribedBlockHandlerOptions = subscribedBlockHandlerOptions.Value;
     }
 
     public async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken token = null)
     {
-        Logger.LogInformation("HandleAsync subscribedBlock: {subscribedBlock}",subscribedBlock.ClientId+subscribedBlock.Version+subscribedBlock.Token+subscribedBlock.ChainId+subscribedBlock.Blocks.First().BlockHeight+subscribedBlock.Blocks.First().Confirmed);
+        Logger.LogInformation("HandleAsync subscribedBlock: {subscribedBlock}",
+            subscribedBlock.ClientId + subscribedBlock.Version + " " + subscribedBlock.Token + " " +
+            subscribedBlock.ChainId + " " + subscribedBlock.Blocks.First().BlockHeight + " " +
+            subscribedBlock.Blocks.First().Confirmed);
         if (subscribedBlock.Blocks.Count == 0) return;
         if (subscribedBlock.ClientId != _clientId) return;
         var clientVersion = await _blockScanAppService.GetClientVersionAsync(subscribedBlock.ClientId);
@@ -64,7 +71,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         // await handler.HandleBlockChainDataAsync(subscribedBlock.ChainId, subscribedBlock.ClientId, subscribedBlock.Blocks);
         
         var retryCount = 0;
-        while (retryCount < 5)
+        while (retryCount < _subscribedBlockHandlerOptions.RetryTimes)
         {
             try
             {
@@ -75,9 +82,9 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
             {
                 Logger.LogError(e, "Publish subscribedBlock event failed, retrying..." + retryCount);
                 retryCount++;
-                await Task.Delay(2000);
+                await Task.Delay(_subscribedBlockHandlerOptions.RetryInterval);
 
-                if (retryCount >= 5)
+                if (retryCount >= _subscribedBlockHandlerOptions.RetryTimes)
                 {
                     throw e;
                 }
