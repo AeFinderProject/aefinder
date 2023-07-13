@@ -38,10 +38,10 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
 
     public async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken token = null)
     {
-        Logger.LogDebug("HandleAsync subscribedBlock: {subscribedBlock}",
-            subscribedBlock.ClientId+" " + subscribedBlock.Version + " " + subscribedBlock.Token + " " +
-            subscribedBlock.ChainId + " " + subscribedBlock.Blocks.First().BlockHeight + " " +
-            subscribedBlock.Blocks.First().Confirmed);
+        // Logger.LogDebug("HandleAsync subscribedBlock: {subscribedBlock}",
+        //     subscribedBlock.ClientId+" " + subscribedBlock.Version + " " + subscribedBlock.Token + " " +
+        //     subscribedBlock.ChainId + " " + subscribedBlock.Blocks.First().BlockHeight + " " +
+        //     subscribedBlock.Blocks.First().Confirmed);
         if (subscribedBlock.Blocks.Count == 0) return;
         if (subscribedBlock.ClientId != _clientId) return;
         var clientVersion = await _blockScanAppService.GetClientVersionAsync(subscribedBlock.ClientId);
@@ -58,10 +58,10 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
             return;
         }
 
-        Logger.LogDebug("Prepare transfer subscribedBlock: Version: {Version} FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
-            subscribedBlock.Version, subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId,
-            subscribedBlock.Blocks.First().BlockHeight,
-            subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
+        // Logger.LogDebug("Prepare transfer subscribedBlock: Version: {Version} FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
+        //     subscribedBlock.Version, subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId,
+        //     subscribedBlock.Blocks.First().BlockHeight,
+        //     subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
         // Logger.LogDebug(
         //     "Receive subscribedBlock: Version: {Version} FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
         //     subscribedBlock.Version,subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,
