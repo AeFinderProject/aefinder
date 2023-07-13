@@ -7,8 +7,6 @@
     <RootNamespace>AElfIndexer</RootNamespace>
     <PackageId>AElfIndexer.Domain</PackageId>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.1.0</Version>
-    <PackageVersion>1.1.0</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
