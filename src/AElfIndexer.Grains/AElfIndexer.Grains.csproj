@@ -6,6 +6,7 @@
         <RootNamespace>AElfIndexer.Grains</RootNamespace>
         <PackageId>AElfIndexer.Grains</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageVersion>1.1.0</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>
