@@ -44,7 +44,7 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         ConfigNodes(context.Services);
         ConfigGraphQL(context.Services);
         
-        Configure<SubscribedBlockHandlerOptions>(context.Services.GetConfiguration().GetSection("SubscribedBlockHandler"));
+        Configure<DappMessageQueueOptions>(context.Services.GetConfiguration().GetSection("DappMessageQueue"));
     }
 
     protected virtual void ConfigureServices(IServiceCollection serviceCollection)

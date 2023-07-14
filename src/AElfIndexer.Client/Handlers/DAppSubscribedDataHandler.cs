@@ -31,8 +31,9 @@ public class DAppSubscribedDataHandler: IDistributedEventHandler<SubscribedBlock
             subscribedBlock.Version != clientVersion.NewVersion)
         {
             _logger.LogError(
-                "Version not match! ClientId: {ClientId} Version: {Version} FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
+                "DAppSubscribedDataHandler Version not match! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} clientCurrentVersion: {clientCurrentVersion} clientNewVersion: {clientNewVersion}  FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
                 subscribedBlock.ClientId, subscribedBlock.Version,
+                clientVersion.CurrentVersion, clientVersion.NewVersion,
                 subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId,
                 subscribedBlock.Blocks.First().BlockHeight,
                 subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
