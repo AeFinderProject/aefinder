@@ -72,6 +72,8 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
 
             if (blockStateSets.Count != 0 && !blockStateSets.ContainsKey(blockDto.PreviousBlockHash))
             {
+                Logger.LogWarning(
+                    $"Previous block {blockDto.PreviousBlockHash} not found. blockHeight: {blockDto.BlockHeight}, blockStateSets max block height: {blockStateSets.Max(b => b.Value.BlockHeight)}");
                 continue;
             }
 
@@ -118,6 +120,10 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
                     longestChain = targetLongestChain;
                     longestChainBlockStateSet = blockStateSet;
                     await _blockStateSetProvider.SetLongestChainBlockStateSetAsync(stateSetKey, blockStateSet.BlockHash);
+                }
+                else
+                {
+                    Logger.LogWarning("Longest chain not found.");
                 }
             }
         }

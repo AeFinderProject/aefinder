@@ -6,7 +6,6 @@
         <RootNamespace>AElfIndexer.Client</RootNamespace>
         <PackageId>AElfIndexer.Client</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-<!--        <Nullable>enable</Nullable>-->
     </PropertyGroup>
 
     <ItemGroup>

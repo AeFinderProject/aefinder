@@ -43,6 +43,8 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         ConfigureServices(context.Services);
         ConfigNodes(context.Services);
         ConfigGraphQL(context.Services);
+        
+        Configure<DappMessageQueueOptions>(context.Services.GetConfiguration().GetSection("DappMessageQueue"));
     }
 
     protected virtual void ConfigureServices(IServiceCollection serviceCollection)

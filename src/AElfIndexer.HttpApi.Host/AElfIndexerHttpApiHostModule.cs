@@ -125,18 +125,44 @@ public class AElfIndexerHttpApiHostModule : AbpModule
 
     private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
     {
-        context.Services.AddAbpSwaggerGenWithOAuth(
-            configuration["AuthServer:Authority"],
-            new Dictionary<string, string>
-            {
-                    {"AElfIndexer", "AElfIndexer API"}
-            },
-            options =>
+        context.Services.AddAbpSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "AElfIndexer API", Version = "v1" });
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
-            });
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Name = "Authorization",
+                    Scheme = "bearer",
+                    Description = "Specify the authorization token.",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                });
+
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                        },
+                        new string[] { }
+                    }
+                });
+            }
+        );
+        // context.Services.AddAbpSwaggerGenWithOAuth(
+        //     configuration["AuthServer:Authority"],
+        //     new Dictionary<string, string>
+        //     {
+        //             {"AElfIndexer", "AElfIndexer API"}
+        //     },
+        //     options =>
+        //     {
+        //         options.SwaggerDoc("v1", new OpenApiInfo { Title = "AElfIndexer API", Version = "v1" });
+        //         options.DocInclusionPredicate((docName, description) => true);
+        //         options.CustomSchemaIds(type => type.FullName);
+        //     });
     }
 
     private static void ConfigureOrleans(ServiceConfigurationContext context, IConfiguration configuration)
