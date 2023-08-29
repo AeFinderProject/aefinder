@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using AElf.Indexing.Elasticsearch;
-
+//using AElf.LinqToElasticSearch.Provider;
 namespace AElfIndexer.Client.Providers;
 
 public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
@@ -11,6 +11,7 @@ public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
     private bool _isRegister = false;
     
     private readonly INESTRepository<TEntity, string> _nestRepository;
+
     private readonly IDAppDataIndexManagerProvider _dAppDataIndexManagerProvider;
 
     public DAppDataIndexProvider(INESTRepository<TEntity, string> nestRepository,

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Client.Providers;
@@ -41,7 +42,6 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
 
         var blocks = MockHandlerHelper.CreateBlock(100, 10, "BlockHash", chainId);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-
         var blockIndexes = await _repository.GetListAsync();
         blockIndexes.Item2.Count.ShouldBe(10);
         blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash100");
@@ -68,7 +68,6 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         blocks.AddRange(blocksForkBlock);
 
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-
         var blockIndexes = await _repository.GetListAsync();
         blockIndexes.Item2.Count.ShouldBe(1);
         blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash98");
@@ -87,7 +86,6 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         firstBlock.AddRange(blocksForkBlock);
 
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, firstBlock);
-
         var blockIndexes = await _repository.GetListAsync();
         blockIndexes.Item2.Count.ShouldBe(6);
         blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash99");
@@ -106,7 +104,6 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         firstBlock.AddRange(blocksForkBlock);
         firstBlock.AddRange(blocks);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, firstBlock);
-
         var blockIndexes = await _repository.GetListAsync();
         blockIndexes.Item2.Count.ShouldBe(3);
         blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash99");
@@ -147,7 +144,6 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
 
         blocks = MockHandlerHelper.CreateBlock(103, 3, "BlockHash", chainId);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-
         blockIndexes = await _repository.GetListAsync();
         blockIndexes.Item2.Count.ShouldBe(7);
         blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash99");
@@ -185,7 +181,6 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
 
         var confirmedBlock = MockHandlerHelper.CreateBlock(100, 5, "BlockHash", chainId, "BlockHash99", true);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, confirmedBlock);
-
         var grain = _clusterClient.GetGrain<IBlockStateSetInfoGrain>(
             GrainIdHelper.GenerateGrainId("BlockStateSetInfo", client, chainId, version));
 
@@ -229,7 +224,6 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         var confirmedBlock =
             MockHandlerHelper.CreateBlock(100, 1, "BlockHash", chainId, "BlockHash99", true);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, confirmedBlock);
-
         var block =
             MockHandlerHelper.CreateBlock(101, 10, "BlockHash", chainId, "BlockHash100");
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, block);
@@ -259,7 +253,6 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
 
         var blocks = MockHandlerHelper.CreateBlock(100, 10, "BlockHash", chainId);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-        
         blocks = MockHandlerHelper.CreateBlock(110, 10, "BlockHash", chainId);
         var sets = new List<BlockStateSet<BlockInfo>>();
         foreach (var block in blocks)
@@ -280,7 +273,6 @@ public class BlockHandlerTests : AElfIndexerClientBlockDataHandlerTestBase
         await _blockStateSetProvider.SetLongestChainBlockStateSetAsync(stateSetKey, sets.Last().BlockHash);
         
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-
         var blockIndexes = await _repository.GetListAsync();
         blockIndexes.Item2.Count.ShouldBe(20);
         blockIndexes.Item2.First().BlockHash.ShouldBe("BlockHash100");

@@ -1,9 +1,10 @@
-using AElf.Indexing.Elasticsearch.Options;
+using AElf.EntityMapping.Options;
 using AElfIndexer;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting; 
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Configuration;
@@ -12,6 +13,8 @@ using Orleans.Providers.MongoDB.Configuration;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
+using Volo.Abp.Caching;
+using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict.Tokens;
@@ -23,7 +26,8 @@ namespace AElfIndexer;
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AElfIndexerEntityEventHandlerCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AbpEventBusRabbitMqModule))]
+    typeof(AbpEventBusRabbitMqModule),
+    typeof(AbpCachingStackExchangeRedisModule))]
 public class AElfIndexerEntityEventHandlerModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -32,7 +36,7 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
         ConfigureTokenCleanupService();
         ConfigureEsIndexCreation();
         context.Services.AddHostedService<AElfIndexerHostedService>();
-        
+        ConfigureCache(configuration);
         context.Services.AddSingleton<IClusterClient>(o =>
         {
             return new ClientBuilder()
@@ -79,10 +83,10 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
         AsyncHelper.RunSync(client.Close);
     }
 
-    //Create the ElasticSearch Index based on Domain Entity
+    //Create the ElasticSearch Index & Initialize field cache based on Domain Entity
     private void ConfigureEsIndexCreation()
     {
-        Configure<IndexCreateOption>(x => { x.AddModule(typeof(AElfIndexerDomainModule)); });
+        Configure<CollectionCreateOptions>(x => { x.AddModule(typeof(AElfIndexerDomainModule)); });
     }
     
     //Disable TokenCleanupService
@@ -90,4 +94,9 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
     {
         Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
+    private void ConfigureCache(IConfiguration configuration)
+    {
+        Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AElfIndexer:"; });
+    }
+    
 }

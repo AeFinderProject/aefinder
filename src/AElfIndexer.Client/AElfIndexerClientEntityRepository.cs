@@ -2,12 +2,9 @@ using System.Linq.Expressions;
 using AElf.Indexing.Elasticsearch;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
 using Nest;
 using Newtonsoft.Json;
-using Orleans;
-using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.Client;
 
@@ -32,7 +29,7 @@ public class AElfIndexerClientEntityRepository<TEntity,TData> : IAElfIndexerClie
         _blockStateSetProvider = blockStateSetProvider;
         _dAppDataIndexProvider = dAppDataIndexProvider;
         _clientInfoProvider = aelfIndexerClientInfoProvider;
-
+        
         _entityName = typeof(TEntity).Name;
         // _clientId = aelfIndexerClientInfoProvider.GetClientId();
         // _version = aelfIndexerClientInfoProvider.GetVersion();

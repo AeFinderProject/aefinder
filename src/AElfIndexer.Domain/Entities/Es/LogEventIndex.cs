@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using AElf.Indexing.Elasticsearch;
+using AElf.EntityMapping.Entities;
+using AElf.EntityMapping.Sharding;
 using AElfIndexer.Entities;
 using Nest;
 
 namespace AElfIndexer.Entities.Es;
 
-public class LogEventIndex:AElfIndexerEntity<string>,IIndexBuild,IBlockchainData
+public class LogEventIndex:AElfIndexerEntity<string>,IEntityMappingEntity,IBlockchainData
 {
     [Keyword]
     public override string Id
@@ -16,18 +17,25 @@ public class LogEventIndex:AElfIndexerEntity<string>,IIndexBuild,IBlockchainData
             return BlockHash + "_" + TransactionId + "_" + Index;
         }
     }
-    [Keyword]public string ChainId { get; set; }
-    [Keyword]public string BlockHash { get; set; }
+    [ShardPropertyAttributes("ChainId",1)]
+    [Keyword]
+    public string ChainId { get; set; }
+    
+    [CollectionRouteKey]
+    [Keyword]
+    public string BlockHash { get; set; }
+    
     [Keyword]public string PreviousBlockHash { get; set; }
     /// <summary>
     /// block height
     /// </summary>
+    [ShardPropertyAttributes("BlockHeight",2)]
     public long BlockHeight { get; set; }
-    
+    [CollectionRouteKey]
     [Keyword]public string TransactionId { get; set; }
     
     public DateTime BlockTime { get; set; }
-    
+    [CollectionRouteKey]
     [Keyword]public string ContractAddress { get; set; }
     
     [Keyword]public string EventName { get; set; }

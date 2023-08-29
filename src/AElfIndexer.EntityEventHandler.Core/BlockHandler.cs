@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using AElf.Indexing.Elasticsearch;
+using AElf.EntityMapping.Repositories;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
@@ -20,17 +21,17 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,
     ITransientDependency
 {
-    private readonly INESTRepository<BlockIndex, string> _blockIndexRepository;
+    private readonly IEntityMappingRepository<BlockIndex, string> _blockIndexRepository;
     private readonly ILogger<BlockHandler> _logger;
     private readonly IObjectMapper _objectMapper;
-    private readonly INESTRepository<TransactionIndex, string> _transactionIndexRepository;
-    private readonly INESTRepository<LogEventIndex, string> _logEventIndexRepository;
+    private readonly IEntityMappingRepository<TransactionIndex, string> _transactionIndexRepository;
+    private readonly IEntityMappingRepository<LogEventIndex, string> _logEventIndexRepository;
     private readonly IBlockIndexHandler _blockIndexHandler;
 
     public BlockHandler(
-        INESTRepository<BlockIndex,string> blockIndexRepository,
-        INESTRepository<TransactionIndex,string> transactionIndexRepository,
-        INESTRepository<LogEventIndex,string> logEventIndexRepository,
+        IEntityMappingRepository<BlockIndex,string> blockIndexRepository,
+        IEntityMappingRepository<TransactionIndex,string> transactionIndexRepository,
+        IEntityMappingRepository<LogEventIndex,string> logEventIndexRepository,
         ILogger<BlockHandler> logger,
         IObjectMapper objectMapper, IBlockIndexHandler blockIndexHandler)
     {
@@ -59,7 +60,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             }
 
             // var blockIndexList = _objectMapper.Map<List<NewBlockEto>, List<BlockIndex>>(eventData.NewBlocks);
-            await _blockIndexRepository.BulkAddOrUpdateAsync(blockIndexList);
+            await _blockIndexRepository.AddOrUpdateManyAsync(blockIndexList);
 
             List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
             List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
@@ -83,14 +84,14 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             {
                 _logger.LogDebug(
                     $"Transaction is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockHeight}, total transaction count:{transactionIndexList.Count}");
-                await _transactionIndexRepository.BulkAddOrUpdateAsync(transactionIndexList);
+                await _transactionIndexRepository.AddOrUpdateManyAsync(transactionIndexList);
             }
 
             if (logEventIndexList.Count > 0)
             {
                 _logger.LogDebug(
                     $"LogEvent is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockHeight}, total logevent count:{logEventIndexList.Count}");
-                await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
+                await _logEventIndexRepository.AddOrUpdateManyAsync(logEventIndexList);
             }
             
             var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
@@ -148,13 +149,10 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             }
 
             //find the same height blocks
-            var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
-            mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(confirmBlock.ChainId)));
-            mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockHeight).Value(confirmBlock.BlockHeight)));
-            QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
-
-            var forkBlockList = await _blockIndexRepository.GetListAsync(Filter);
-            if (forkBlockList.Item1 == 0)
+            var queryable = await _blockIndexRepository.GetQueryableAsync();
+            Expression<Func<BlockIndex, bool>> expression = p => p.ChainId == confirmBlock.ChainId && p.BlockHeight == confirmBlock.BlockHeight;
+            var forkBlockList = queryable.Where(expression).ToList();
+            if (forkBlockList.Count == 0)
             {
                 continue;
             }
@@ -163,7 +161,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             List<BlockIndex> forkBlockIndexList = new List<BlockIndex>();
             List<TransactionIndex> forkTransactionIndexList = new List<TransactionIndex>();
             List<LogEventIndex> forkLogEventIndexList = new List<LogEventIndex>();
-            foreach (var forkBlock in forkBlockList.Item2)
+            foreach (var forkBlock in forkBlockList)
             {
                 if (forkBlock.BlockHash == confirmBlock.BlockHash)
                 {
@@ -188,31 +186,31 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             if (forkBlockIndexList.Count > 0)
             {
                 _logger.LogDebug($"bulk delete blocks,total count {forkBlockIndexList.Count}");
-                await _blockIndexRepository.BulkDeleteAsync(forkBlockIndexList);
+                await _blockIndexRepository.DeleteManyAsync(forkBlockIndexList);
             }
             if (forkTransactionIndexList.Count > 0)
             {
                 _logger.LogDebug($"bulk delete transactions,total count {forkTransactionIndexList.Count}");
-                await _transactionIndexRepository.BulkDeleteAsync(forkTransactionIndexList);
+                await _transactionIndexRepository.DeleteManyAsync(forkTransactionIndexList);
             }
             if (forkLogEventIndexList.Count > 0)
             {
                 _logger.LogDebug($"bulk delete log events,total count {forkLogEventIndexList.Count}");
-                await _logEventIndexRepository.BulkDeleteAsync(forkLogEventIndexList);
+                await _logEventIndexRepository.DeleteManyAsync(forkLogEventIndexList);
             }
         }
 
         _logger.LogDebug($"blocks is confirming,start {confirmBlockIndexList.First().BlockHeight} end {confirmBlockIndexList.Last().BlockHeight},total confirm {confirmBlockIndexList.Count}");
-        await _blockIndexRepository.BulkAddOrUpdateAsync(confirmBlockIndexList);
+        await _blockIndexRepository.AddOrUpdateManyAsync(confirmBlockIndexList);
         if (confirmTransactionIndexList.Count > 0)
         {
             _logger.LogDebug($"transactions is confirming,start {confirmTransactionIndexList.First().BlockHeight} end {confirmTransactionIndexList.Last().BlockHeight},total confirm {confirmTransactionIndexList.Count}");
-            await _transactionIndexRepository.BulkAddOrUpdateAsync(confirmTransactionIndexList);
+            await _transactionIndexRepository.AddOrUpdateManyAsync(confirmTransactionIndexList);
         }
         if (confirmLogEventIndexList.Count > 0)
         {
             _logger.LogDebug($"log events is confirming,start {confirmLogEventIndexList.First().BlockHeight} end {confirmLogEventIndexList.Last().BlockHeight},total confirm {confirmLogEventIndexList.Count}");
-            await _logEventIndexRepository.BulkAddOrUpdateAsync(confirmLogEventIndexList);
+            await _logEventIndexRepository.AddOrUpdateManyAsync(confirmLogEventIndexList);
         }
         
         var blockDtos = _objectMapper.Map<List<ConfirmBlockEto>, List<BlockWithTransactionDto>>(eventData.ConfirmBlocks);
@@ -227,18 +225,15 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
 
     private async Task<List<TransactionIndex>> GetTransactionListAsync(string chainId,string blockHash)
     {
-        var mustQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
-        mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(chainId)));
-        mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockHash).Value(blockHash)));
-        QueryContainer Filter(QueryContainerDescriptor<TransactionIndex> f) => f.Bool(b => b.Must(mustQuery));
-
-        var forkTransactionList = await _transactionIndexRepository.GetListAsync(Filter);
-        if (forkTransactionList.Item1 == 0)
+        Expression<Func<TransactionIndex, bool>> expression = p => p.ChainId == chainId && p.BlockHash == blockHash;
+        var queryable = await _transactionIndexRepository.GetQueryableAsync();
+        var forkTransactionList =  queryable.Where(expression).ToList();
+        if (forkTransactionList.Count == 0)
         {
             return new List<TransactionIndex>();
         }
 
-        return forkTransactionList.Item2;
+        return forkTransactionList;
     }
 
 

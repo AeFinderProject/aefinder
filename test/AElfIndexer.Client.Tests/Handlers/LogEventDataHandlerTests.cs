@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains;
@@ -38,7 +39,6 @@ public class LogEventDataHandlerTests : AElfIndexerClientLogEventHandlerTestBase
             100, 10, "BlockHash", chainId, 1, "TransactionId",
             TransactionStatus.Mined, 1);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-
         var transferredIndex = await _repository.GetListAsync();
         transferredIndex.Item2.Count.ShouldBe(10);
         transferredIndex.Item2.First().Amount.ShouldBe(100);
@@ -76,7 +76,6 @@ public class LogEventDataHandlerTests : AElfIndexerClientLogEventHandlerTestBase
         blocks.AddRange(lastBlock);
 
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-
         var transferredIndex = await _repository.GetListAsync();
         transferredIndex.Item2.Count.ShouldBe(4);
         transferredIndex.Item2.First().Amount.ShouldBe(100);
@@ -113,7 +112,6 @@ public class LogEventDataHandlerTests : AElfIndexerClientLogEventHandlerTestBase
         blocks.AddRange(blocksWithoutTransaction);
 
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-
         var transferredIndex = await _repository.GetListAsync();
         transferredIndex.Item2.Count.ShouldBe(2);
         transferredIndex.Item2.First().Amount.ShouldBe(103);

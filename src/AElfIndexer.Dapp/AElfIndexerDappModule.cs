@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AElf.Client;
+using AElf.EntityMapping;
 using AElf.Indexing.Elasticsearch;
+//using AElf.LinqToElasticSearch;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Client;
@@ -33,6 +35,7 @@ namespace AElfIndexer.Dapp;
 
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AElfIndexingElasticsearchModule),
+    typeof(AElfEntityMappingModule),
     typeof(AElfIndexerApplicationModule),
     typeof(AbpAutoMapperModule),
     typeof(AbpAspNetCoreSerilogModule),

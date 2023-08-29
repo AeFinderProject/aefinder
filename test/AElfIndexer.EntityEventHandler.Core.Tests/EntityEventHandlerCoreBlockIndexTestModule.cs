@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using AElf.Indexing.Elasticsearch.Options;
 using AElfIndexer.Block;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains;

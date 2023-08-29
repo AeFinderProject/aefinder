@@ -39,4 +39,5 @@ public interface IAElfIndexerClientEntityRepository<TEntity, TData>
 
     Task<CountResponse> CountAsync(
         Func<QueryContainerDescriptor<TEntity>, QueryContainer> query);
+    
 }

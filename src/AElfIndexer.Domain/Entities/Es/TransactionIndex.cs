@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using AElf.Indexing.Elasticsearch;
+using AElf.EntityMapping.Entities;
+using AElf.EntityMapping.Sharding;
 using AElfIndexer.Entities;
 using Nest;
 
 namespace AElfIndexer.Entities.Es;
 
-public class TransactionIndex:AElfIndexerEntity<string>,IIndexBuild,IBlockchainData
+public class TransactionIndex:AElfIndexerEntity<string>,IEntityMappingEntity,IBlockchainData
 {
     [Keyword]
     public override string Id
@@ -16,22 +17,28 @@ public class TransactionIndex:AElfIndexerEntity<string>,IIndexBuild,IBlockchainD
             return BlockHash + "_" + TransactionId;
         }
     }
-    [Keyword]public string TransactionId { get; set; }
+    [CollectionRouteKey]
+    [Keyword]
+    public string TransactionId { get; set; }
     
-    [Keyword]public string ChainId { get; set; }
-    
+    [ShardPropertyAttributes("ChainId",1)]
+    [Keyword]
+    public string ChainId { get; set; }
+    [CollectionRouteKey]
     [Keyword]public string From { get; set; }
-    
+    [CollectionRouteKey]
     [Keyword]public string To { get; set; }
     
-    [Keyword]public string BlockHash { get; set; }
+    [CollectionRouteKey]
+    [Keyword]
+    public string BlockHash { get; set; }
     
     [Keyword]public string PreviousBlockHash { get; set; }
     
+    [ShardPropertyAttributes("BlockHeight",2)]
     public long BlockHeight { get; set; }
     
     public DateTime BlockTime { get; set; }
-    
     [Keyword]public string MethodName { get; set; }
     
     [Text(Index = false)]

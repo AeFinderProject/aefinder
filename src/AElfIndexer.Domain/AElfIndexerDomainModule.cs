@@ -1,4 +1,6 @@
-﻿using AElf.Indexing.Elasticsearch;
+﻿using AElf.EntityMapping;
+using AElf.EntityMapping.Elasticsearch;
+using AElf.EntityMapping.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using AElfIndexer.MultiTenancy;
@@ -31,7 +33,7 @@ namespace AElfIndexer;
     typeof(AbpSettingManagementDomainModule),
     typeof(AbpTenantManagementDomainModule),
     typeof(AbpEmailingModule),
-    typeof(AElfIndexingElasticsearchModule)
+    typeof(AElfEntityMappingElasticsearchModule)
 )]
 public class AElfIndexerDomainModule : AbpModule
 {
@@ -41,7 +43,7 @@ public class AElfIndexerDomainModule : AbpModule
         {
             options.IsEnabled = MultiTenancyConsts.IsEnabled;
         });
-
+        
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
 #endif
@@ -54,4 +56,5 @@ public class AElfIndexerDomainModule : AbpModule
         context.Services.Replace(new ServiceDescriptor(typeof(IOpenIddictAuthorizationStore<>)
             .MakeGenericType(authorizationStoreRootType.GenericTypeArguments[0]), typeof(AElfOpenIddictAuthorizationStore), ServiceLifetime.Scoped));
     }
+
 }

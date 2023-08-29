@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using AElf.EntityMapping.Elasticsearch.Linq;
 using Nest;
 
 namespace AElfIndexer.Entities.Es;
 
+[NestedAttributes("LogEvents")]
 public class LogEvent:IBlockchainData
 {
     [Keyword]public string ChainId { get; set; }

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains;
@@ -40,7 +41,6 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
         var blocks = MockHandlerHelper.CreateBlockWithTransactionDtos(
             100, 10, "BlockHash", chainId, 2, "TransactionId", TransactionStatus.Mined);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-
         var transactionIndex = await _repository.GetListAsync();
         transactionIndex.Item2.Count.ShouldBe(20);
         transactionIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId0");
@@ -57,7 +57,6 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
             100, 10, "BlockHash", chainId, 1, "TransactionId",
             TransactionStatus.Mined, 1);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-
         var transactionIndex = await _repository.GetListAsync();
         transactionIndex.Item2.Count.ShouldBe(10);
         transactionIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId0");
@@ -90,7 +89,6 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
         blocks.AddRange(blocksWithoutTransaction);
         blocks.AddRange(lastBlock);
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
-
         var transactionIndex = await _repository.GetListAsync();
         transactionIndex.Item2.Count.ShouldBe(4);
         transactionIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId0");

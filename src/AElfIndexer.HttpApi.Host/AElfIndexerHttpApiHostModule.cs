@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using AElf.EntityMapping.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -55,6 +56,7 @@ public class AElfIndexerHttpApiHostModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
+        // ConfigureEsIndexCreation();
         ConfigureConventionalControllers();
         ConfigureAuthentication(context, configuration);
         ConfigureLocalization();
@@ -79,6 +81,12 @@ public class AElfIndexerHttpApiHostModule : AbpModule
     {
         Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AElfIndexer:"; });
     }
+    
+    //Create the ElasticSearch Index & Initialize field cache based on Domain Entity
+    // private void ConfigureEsIndexCreation()
+    // {
+    //     Configure<CollectionCreateOptions>(x => { x.AddModule(typeof(AElfIndexerDomainModule)); });
+    // }
 
     private void ConfigureVirtualFileSystem(ServiceConfigurationContext context)
     {

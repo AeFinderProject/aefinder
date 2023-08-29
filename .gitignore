@@ -678,3 +678,4 @@ src/AElfIndexer.AuthServer/wwwroot/libs/toastr/toastr.js.map
 src/AElfIndexer.AuthServer/wwwroot/libs/toastr/toastr.min.css
 src/AElfIndexer.AuthServer/wwwroot/libs/toastr/toastr.min.js
 bootstrap-datepicker.en-CA.min.js
+.DS_Store

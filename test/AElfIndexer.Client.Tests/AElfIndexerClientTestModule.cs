@@ -4,11 +4,14 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
+using AElf.Indexing.Elasticsearch.Options;
+using AElf.Indexing.Elasticsearch.Provider;
 using AElf.Indexing.Elasticsearch.Services;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Orleans.TestBase;
+using Elasticsearch.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.AutoMapper;
@@ -40,11 +43,25 @@ public class AElfIndexerClientTestModule : AbpModule
         context.Services.AddSingleton(typeof(IDAppDataIndexProvider<>), typeof(DAppDataIndexProvider<>));
         context.Services.AddSingleton<IAElfClientProvider, AElfClientProvider>();
         
+        context.Services.AddSingleton<IEsClientProvider, DefaultEsClientProvider>();
+        context.Services.AddSingleton<IElasticIndexService, ElasticIndexService>();
+        context.Services.Configure<EsEndpointOption>(o => o.Uris = new List<string>{"http://localhost:9200"});
+        context.Services.AddSingleton<INESTRepository<TestBlockIndex,string>, NESTRepository<TestBlockIndex,string>>();
+        context.Services.AddSingleton<INESTRepository<TestTransactionIndex,string>, NESTRepository<TestTransactionIndex,string>>();
+        context.Services.AddSingleton<INESTRepository<TestTransferredIndex,string>, NESTRepository<TestTransferredIndex,string>>();
+        context.Services.AddSingleton<INESTRepository<TestIndex,string>, NESTRepository<TestIndex,string>>();
+        
         context.Services.Configure<ClientOptions>(o =>
         {
             o.DAppDataCacheCount = 5;
         });
-
+        context.Services.Configure<IndexSettingOptions>(options =>
+        {
+            options.NumberOfReplicas = 1;
+            options.NumberOfShards = 1;
+            options.Refresh = Refresh.True;
+            options.IndexPrefix = "AElfIndexer";
+        });
         context.Services.Configure<NodeOptions>(o =>
         {
             o.NodeConfigList = new List<NodeConfig>

@@ -1,3 +1,5 @@
+using AElf.EntityMapping;
+using AElf.EntityMapping.Elasticsearch;
 using AElfIndexer.Grains;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Account;
@@ -20,7 +22,9 @@ namespace AElfIndexer;
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
     typeof(AbpSettingManagementApplicationModule),
-    typeof(AElfIndexerGrainsModule)
+    typeof(AElfIndexerGrainsModule),
+    typeof(AElfEntityMappingModule),
+    typeof(AElfEntityMappingElasticsearchModule)
 )]
 public class AElfIndexerApplicationModule : AbpModule
 {
