@@ -1,4 +1,5 @@
 using System.Text;
+using AElf.Types;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains;
@@ -62,6 +63,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         var longestChain = new List<BlockStateSet<TData>>();
         
         var libBlockHeight = blockStateSets.Count != 0 ? blockStateSets.Min(b => b.Value.BlockHeight) : 0;
+        libBlockHeight = libBlockHeight == 1 ? 0 : libBlockHeight;
         foreach (var blockDto in blockDtos)
         {
             // Skip if block height less than lib block height
@@ -70,7 +72,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
                 continue;
             }
 
-            if (blockStateSets.Count != 0 && !blockStateSets.ContainsKey(blockDto.PreviousBlockHash))
+            if (blockStateSets.Count != 0 && !blockStateSets.ContainsKey(blockDto.PreviousBlockHash) && blockDto.PreviousBlockHash!= Hash.Empty.ToHex())
             {
                 Logger.LogWarning(
                     $"Previous block {blockDto.PreviousBlockHash} not found. blockHeight: {blockDto.BlockHeight}, blockStateSets max block height: {blockStateSets.Max(b => b.Value.BlockHeight)}");
