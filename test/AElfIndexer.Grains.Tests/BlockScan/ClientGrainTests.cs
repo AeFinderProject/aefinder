@@ -46,22 +46,20 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
         };
         
         var version2 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo2);
+        await clientGrain.SetTokenAsync(version1);
+        var token1 = await clientGrain.GetTokenAsync(version1);
+        await clientGrain.SetTokenAsync(version2);
+        var token2 = await clientGrain.GetTokenAsync(version2);
 
         var subscription2 = await clientGrain.GetSubscriptionInfoAsync(version2);
         subscription2.Count.ShouldBe(1);
         subscription2[0].ChainId.ShouldBe("AELF");
         subscription2[0].FilterType.ShouldBe(BlockFilterType.Transaction);
         
-        var isAvailable = await clientGrain.IsVersionAvailableAsync(version1);
-        isAvailable.ShouldBe(true);
-        isAvailable = await clientGrain.IsVersionAvailableAsync(version2);
-        isAvailable.ShouldBe(true);
-        isAvailable = await clientGrain.IsVersionAvailableAsync(Guid.NewGuid().ToString());
-        isAvailable.ShouldBe(false);
-        isAvailable = await clientGrain.IsVersionAvailableAsync(null);
-        isAvailable.ShouldBe(false);
-        isAvailable = await clientGrain.IsVersionAvailableAsync(string.Empty);
-        isAvailable.ShouldBe(false);
+        var isAvailable = await clientGrain.IsVersionRunningAsync(version1, token1);
+        isAvailable.ShouldBeFalse();
+        isAvailable = await clientGrain.IsVersionRunningAsync(version2, token2);
+        isAvailable.ShouldBeFalse();
 
         var version = await clientGrain.GetVersionAsync();
         version.CurrentVersion.ShouldBe(version1);
@@ -75,6 +73,20 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
         await clientGrain.StartAsync(version1);
         versionStatus = await clientGrain.GetVersionStatusAsync(version1);
         versionStatus.ShouldBe(VersionStatus.Started);
+        
+        isAvailable = await clientGrain.IsVersionRunningAsync(version1, token1);
+        isAvailable.ShouldBeTrue();
+        isAvailable = await clientGrain.IsVersionRunningAsync(Guid.NewGuid().ToString(), token1);
+        isAvailable.ShouldBeFalse();
+        isAvailable = await clientGrain.IsVersionRunningAsync(null, token1);
+        isAvailable.ShouldBeFalse();
+        isAvailable = await clientGrain.IsVersionRunningAsync(string.Empty, token1);
+        isAvailable.ShouldBeFalse();
+        isAvailable = await clientGrain.IsVersionRunningAsync(version1, token2);
+        isAvailable.ShouldBeFalse();
+        
+        isAvailable = await clientGrain.IsVersionRunningAsync(version2, token2);
+        isAvailable.ShouldBeFalse();
 
         await clientGrain.UpgradeVersionAsync();
         version = await clientGrain.GetVersionAsync();

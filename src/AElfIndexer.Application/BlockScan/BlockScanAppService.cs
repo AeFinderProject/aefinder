@@ -71,6 +71,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         var subscriptionInfos = await client.GetSubscriptionInfoAsync(version);
         var versionStatus = await client.GetVersionStatusAsync(version);
         await client.SetTokenAsync(version);
+        await client.StartAsync(version);
         foreach (var subscriptionInfo in subscriptionInfos)
         {
             var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.ChainId, clientId, version, subscriptionInfo.FilterType);
@@ -95,8 +96,6 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             Logger.LogDebug($"Start client: {clientId}, id: {id}");
             _ = Task.Run(scanGrain.HandleHistoricalBlockAsync);
         }
-        
-        await client.StartAsync(version);
     }
 
     public async Task UpgradeVersionAsync(string clientId)
@@ -164,6 +163,12 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         }
 
         return subscriptionInfos;
+    }
+
+    public async Task PauseAsync(string clientId, string version)
+    {
+        var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
+        await clientGrain.PauseAsync(version);
     }
 
     public async Task StopAsync(string clientId, string version)

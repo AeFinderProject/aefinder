@@ -21,7 +21,8 @@ public class ClientVersionInfo
 public enum VersionStatus
 {
     Initialized = 0,
-    Started = 1
+    Started = 1,
+    Paused = 2
 }
 
 public class ClientVersion

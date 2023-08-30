@@ -76,6 +76,12 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         AsyncHelper.RunSync(async () => await InitBlockScanAsync(context));
     }
 
+    public override void OnApplicationShutdown(ApplicationShutdownContext context)
+    {
+        var blockScanService = context.ServiceProvider.GetRequiredService<IBlockScanAppService>();
+        AsyncHelper.RunSync(async () => await blockScanService.PauseAsync(ClientId, Version));
+    }
+
     private async Task InitBlockScanAsync(ApplicationInitializationContext context)
     {
         var blockScanService = context.ServiceProvider.GetRequiredService<IBlockScanAppService>();

@@ -31,18 +31,24 @@ public abstract class TransactionDataHandler : BlockChainDataHandler<Transaction
 
     protected override async Task ProcessDataAsync(List<TransactionInfo> data)
     {
-        try
+        foreach (var transactionInfo in data)
         {
-            await ProcessTransactionsAsync(data);
-            await ProcessLogEventsAsync(data);
+            try
+            {
+                await ProcessTransactionAsync(transactionInfo);
+            }
+            catch (Exception e)
+            {
+                throw new DAppHandlingException(
+                    $"Handle Transaction Error! ChainId: {transactionInfo.ChainId} BlockHeight: {transactionInfo.BlockHeight} BlockHash: {transactionInfo.BlockHash} TransactionId: {transactionInfo.TransactionId}.",
+                    e);
+            }
         }
-        catch (Exception e)
-        {
-            Logger.LogError(e, "Process Client Transactions Error!" + e.Message);
-        }
+        
+        await ProcessLogEventsAsync(data);
     }
 
-    protected abstract Task ProcessTransactionsAsync(List<TransactionInfo> transactions);
+    protected abstract Task ProcessTransactionAsync(TransactionInfo transaction);
     private async Task ProcessLogEventsAsync(List<TransactionInfo> transactions)
     {
         if (!_processors.Any()) return;

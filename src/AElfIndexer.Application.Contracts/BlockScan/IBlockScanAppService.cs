@@ -15,4 +15,5 @@ public interface IBlockScanAppService
     Task<string> GetClientTokenAsync(string clientId, string version);
     Task StopAsync(string clientId, string version);
     Task<SubscriptionInfoDto> GetSubscriptionInfoAsync(string clientId);
+    Task PauseAsync(string clientId, string version);
 }

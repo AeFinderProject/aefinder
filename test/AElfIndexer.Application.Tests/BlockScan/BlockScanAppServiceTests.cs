@@ -94,7 +94,23 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         version.CurrentVersion.ShouldBe(version1);
         version.NewVersion.ShouldBe(version2);
         
+        await _blockScanAppService.PauseAsync(clientId, version1);
+        scanIds = await clientGrain.GetBlockScanIdsAsync(version1);
+        scanIds.Count.ShouldBe(1);
+        scanIds[0].ShouldBe(id);
+
+        versionStatus = await clientGrain.GetVersionStatusAsync(version1);
+        versionStatus.ShouldBe(VersionStatus.Paused);
+        
+        await _blockScanAppService.StartScanAsync(clientId, version1);
+        
+        versionStatus = await clientGrain.GetVersionStatusAsync(version1);
+        versionStatus.ShouldBe(VersionStatus.Started);
+
         await _blockScanAppService.StartScanAsync(clientId, version2);
+        
+        versionStatus = await clientGrain.GetVersionStatusAsync(version1);
+        versionStatus.ShouldBe(VersionStatus.Started);
         
         var subscriptionInfo3 = new List<SubscriptionInfo>
         {

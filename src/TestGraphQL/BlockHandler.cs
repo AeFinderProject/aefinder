@@ -35,7 +35,7 @@ public class BlockHandler : BlockDataHandler
         
     }
 
-    protected override Task ProcessBlocksAsync(List<BlockInfo> data)
+    protected override Task ProcessBlockAsync(BlockInfo data)
     {
         throw new NotImplementedException();
     }

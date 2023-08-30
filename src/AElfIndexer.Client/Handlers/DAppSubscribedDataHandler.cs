@@ -51,8 +51,14 @@ public class DAppSubscribedDataHandler: IDistributedEventHandler<SubscribedBlock
             subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
         
         var handler = _handlers.First(h => h.FilterType == subscribedBlock.FilterType);
-        await handler.HandleBlockChainDataAsync(subscribedBlock.ChainId, subscribedBlock.ClientId, subscribedBlock.Blocks);
-        
-        
+        try
+        {
+            await handler.HandleBlockChainDataAsync(subscribedBlock.ChainId, subscribedBlock.ClientId, subscribedBlock.Blocks);
+        }
+        catch (DAppHandlingException e)
+        {
+            _logger.LogError(e, "Handle DAppSubscribedData Error! ClientId: {clientId} Version: {version}", subscribedBlock.ClientId, subscribedBlock.Version);
+            await _blockScanAppService.PauseAsync(subscribedBlock.ClientId, subscribedBlock.Version);
+        }
     }
 }

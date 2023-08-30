@@ -24,14 +24,16 @@ public class MockBlockHandler : BlockDataHandler
     {
         _repository = repository;
     }
-    
-    protected override async Task ProcessBlocksAsync(List<BlockInfo> data)
+
+    protected override async Task ProcessBlockAsync(BlockInfo block)
     {
-        foreach (var block in data)
+        if (block.BlockHeight == 100000)
         {
-            var index = ObjectMapper.Map<BlockInfo, TestBlockIndex>(block);
-            Logger.LogDebug(index.ToJsonString());
-            await _repository.AddOrUpdateAsync(index);
+            throw new Exception();
         }
+
+        var index = ObjectMapper.Map<BlockInfo, TestBlockIndex>(block);
+        Logger.LogDebug(index.ToJsonString());
+        await _repository.AddOrUpdateAsync(index);
     }
 }

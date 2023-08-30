@@ -55,9 +55,12 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         return new List<string>();
     }
 
-    public async Task<bool> IsVersionAvailableAsync(string version)
+    public async Task<bool> IsVersionRunningAsync(string version, string token)
     {
-        return !string.IsNullOrWhiteSpace(version) && (version == State.NewVersion || version == State.CurrentVersion);
+        return !string.IsNullOrWhiteSpace(version) && 
+               (version == State.NewVersion || version == State.CurrentVersion) &&
+               State.VersionInfos[version].VersionStatus == VersionStatus.Started &&
+               State.TokenInfos[version] == token;
     }
 
     public async Task UpgradeVersionAsync()
@@ -96,6 +99,12 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
     public async Task StartAsync(string version)
     {
         State.VersionInfos[version].VersionStatus = VersionStatus.Started;
+        await WriteStateAsync();
+    }
+    
+    public async Task PauseAsync(string version)
+    {
+        State.VersionInfos[version].VersionStatus = VersionStatus.Paused;
         await WriteStateAsync();
     }
 
