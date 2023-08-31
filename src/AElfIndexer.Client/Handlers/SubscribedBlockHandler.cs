@@ -40,16 +40,13 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
     {
         if (subscribedBlock.Blocks.Count == 0) return;
         if (subscribedBlock.ClientId != _clientId) return;
-        var clientVersion = await _blockScanAppService.GetClientVersionAsync(subscribedBlock.ClientId);
-        var clientToken =
-            await _blockScanAppService.GetClientTokenAsync(subscribedBlock.ClientId, subscribedBlock.Version);
-        if (subscribedBlock.Version != clientVersion.CurrentVersion &&
-            subscribedBlock.Version != clientVersion.NewVersion || subscribedBlock.Token != clientToken)
+        var isRunning = await _blockScanAppService.IsVersionRunningAsync(subscribedBlock.ClientId,
+            subscribedBlock.Version, subscribedBlock.Token);
+        if (!isRunning)
         {
             Logger.LogInformation(
-                "SubscribedBlockHandler Version or Token not match! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} subscribedToken: {subscribedToken} clientId: {clientId} clientCurrentVersion: {clientCurrentVersion} clientNewVersion: {clientNewVersion} clientToken: {clientToken} FilterType: {FilterType}, ChainId: {ChainId}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
+                "SubscribedBlockHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} subscribedToken: {subscribedToken} clientId: {clientId} FilterType: {FilterType}, ChainId: {ChainId}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
                 subscribedBlock.ClientId, subscribedBlock.Version, subscribedBlock.Token,
-                _clientId, clientVersion.CurrentVersion, clientVersion.NewVersion, clientToken,
                 subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId,
                 subscribedBlock.Blocks.First().BlockHeight,
                 subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);

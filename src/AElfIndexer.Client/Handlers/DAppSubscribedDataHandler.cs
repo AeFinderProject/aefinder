@@ -23,28 +23,19 @@ public class DAppSubscribedDataHandler: IDistributedEventHandler<SubscribedBlock
 
     public async Task HandleEventAsync(SubscribedBlockDto subscribedBlock)
     {
-        var clientVersion = await _blockScanAppService.GetClientVersionAsync(subscribedBlock.ClientId);
-        var clientToken =
-            await _blockScanAppService.GetClientTokenAsync(subscribedBlock.ClientId, subscribedBlock.Version);
-        
-        if (subscribedBlock.Version != clientVersion.CurrentVersion &&
-            subscribedBlock.Version != clientVersion.NewVersion)
+        var isRunning = await _blockScanAppService.IsVersionRunningAsync(subscribedBlock.ClientId,
+            subscribedBlock.Version, subscribedBlock.Token);
+        if (!isRunning)
         {
             _logger.LogError(
-                "DAppSubscribedDataHandler Version not match! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} clientCurrentVersion: {clientCurrentVersion} clientNewVersion: {clientNewVersion}  FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
+                "DAppSubscribedDataHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion}  FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
                 subscribedBlock.ClientId, subscribedBlock.Version,
-                clientVersion.CurrentVersion, clientVersion.NewVersion,
                 subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId,
                 subscribedBlock.Blocks.First().BlockHeight,
                 subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
             return;
         }
-        
-        if (subscribedBlock.Token != clientToken)
-        {
-            return;
-        }
-        
+
         _logger.LogDebug(
             "Receive {ClientId} subscribedBlock: Version: {Version} FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
             subscribedBlock.ClientId,subscribedBlock.Version,subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,

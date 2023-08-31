@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,6 +29,11 @@ public class MockTransactionHandler : TransactionDataHandler
 
     protected override async Task ProcessTransactionAsync(TransactionInfo transaction)
     {
+        if (transaction.BlockHeight == 100000)
+        {
+            throw new Exception();
+        }
+        
         var indexId = transaction.TransactionId;
         var index = new TestTransactionIndex
         {
