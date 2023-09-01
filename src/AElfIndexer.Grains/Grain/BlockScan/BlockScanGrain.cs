@@ -92,7 +92,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
             while (true)
             {
-                if (!await clientGrain.IsVersionRunningAsync(State.Version, State.Token) ||
+                if (!await clientGrain.IsRunningAsync(State.Version, State.Token) ||
                     (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.HistoricalBlock)
                 {
                     break;
@@ -182,7 +182,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
         if (subscriptionInfo.OnlyConfirmedBlock
             || (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.NewBlock
-            || !await clientGrain.IsVersionRunningAsync(State.Version, State.Token))
+            || !await clientGrain.IsRunningAsync(State.Version, State.Token))
         {
             _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: HandleNewBlock failed, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
             return;
@@ -265,7 +265,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         
         if (block.BlockHeight <= State.ScannedConfirmedBlockHeight
             || (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.NewBlock
-            || !await clientGrain.IsVersionRunningAsync(State.Version, State.Token))
+            || !await clientGrain.IsRunningAsync(State.Version, State.Token))
         {
             _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: HandleConfirmedBlock failed, block height: {block.BlockHeight}");
             return;

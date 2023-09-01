@@ -56,9 +56,9 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
         subscription2[0].ChainId.ShouldBe("AELF");
         subscription2[0].FilterType.ShouldBe(BlockFilterType.Transaction);
         
-        var isAvailable = await clientGrain.IsVersionRunningAsync(version1, token1);
+        var isAvailable = await clientGrain.IsRunningAsync(version1, token1);
         isAvailable.ShouldBeFalse();
-        isAvailable = await clientGrain.IsVersionRunningAsync(version2, token2);
+        isAvailable = await clientGrain.IsRunningAsync(version2, token2);
         isAvailable.ShouldBeFalse();
 
         var version = await clientGrain.GetVersionAsync();
@@ -74,18 +74,18 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
         versionStatus = await clientGrain.GetVersionStatusAsync(version1);
         versionStatus.ShouldBe(VersionStatus.Started);
         
-        isAvailable = await clientGrain.IsVersionRunningAsync(version1, token1);
+        isAvailable = await clientGrain.IsRunningAsync(version1, token1);
         isAvailable.ShouldBeTrue();
-        isAvailable = await clientGrain.IsVersionRunningAsync(Guid.NewGuid().ToString(), token1);
+        isAvailable = await clientGrain.IsRunningAsync(Guid.NewGuid().ToString(), token1);
         isAvailable.ShouldBeFalse();
-        isAvailable = await clientGrain.IsVersionRunningAsync(null, token1);
+        isAvailable = await clientGrain.IsRunningAsync(null, token1);
         isAvailable.ShouldBeFalse();
-        isAvailable = await clientGrain.IsVersionRunningAsync(string.Empty, token1);
+        isAvailable = await clientGrain.IsRunningAsync(string.Empty, token1);
         isAvailable.ShouldBeFalse();
-        isAvailable = await clientGrain.IsVersionRunningAsync(version1, token2);
+        isAvailable = await clientGrain.IsRunningAsync(version1, token2);
         isAvailable.ShouldBeFalse();
         
-        isAvailable = await clientGrain.IsVersionRunningAsync(version2, token2);
+        isAvailable = await clientGrain.IsRunningAsync(version2, token2);
         isAvailable.ShouldBeFalse();
 
         await clientGrain.UpgradeVersionAsync();

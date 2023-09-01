@@ -10,7 +10,7 @@ public interface IClientGrain: IGrainWithStringKey
     Task<List<SubscriptionInfo>> GetSubscriptionInfoAsync(string version);
     Task AddBlockScanIdAsync(string version, string id);
     Task<List<string>> GetBlockScanIdsAsync(string version);
-    Task<bool> IsVersionRunningAsync(string version, string token);
+    Task<bool> IsRunningAsync(string version, string token);
     Task UpgradeVersionAsync();
     Task RemoveVersionInfoAsync(string version);
     Task<VersionStatus> GetVersionStatusAsync(string version);

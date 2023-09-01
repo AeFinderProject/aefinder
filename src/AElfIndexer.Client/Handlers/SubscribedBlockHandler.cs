@@ -40,7 +40,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
     {
         if (subscribedBlock.Blocks.Count == 0) return;
         if (subscribedBlock.ClientId != _clientId) return;
-        var isRunning = await _blockScanAppService.IsVersionRunningAsync(subscribedBlock.ClientId,
+        var isRunning = await _blockScanAppService.IsRunningAsync(subscribedBlock.ClientId,
             subscribedBlock.Version, subscribedBlock.Token);
         if (!isRunning)
         {

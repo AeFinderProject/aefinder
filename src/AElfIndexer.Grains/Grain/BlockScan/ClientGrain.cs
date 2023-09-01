@@ -55,7 +55,7 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         return new List<string>();
     }
 
-    public async Task<bool> IsVersionRunningAsync(string version, string token)
+    public async Task<bool> IsRunningAsync(string version, string token)
     {
         return !string.IsNullOrWhiteSpace(version) && 
                (version == State.NewVersion || version == State.CurrentVersion) &&

@@ -23,7 +23,7 @@ public class DAppSubscribedDataHandler: IDistributedEventHandler<SubscribedBlock
 
     public async Task HandleEventAsync(SubscribedBlockDto subscribedBlock)
     {
-        var isRunning = await _blockScanAppService.IsVersionRunningAsync(subscribedBlock.ClientId,
+        var isRunning = await _blockScanAppService.IsRunningAsync(subscribedBlock.ClientId,
             subscribedBlock.Version, subscribedBlock.Token);
         if (!isRunning)
         {

@@ -184,9 +184,9 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         await clientGrain.StopAsync(version);
     }
     
-    public async Task<bool> IsVersionRunningAsync(string clientId, string version, string token)
+    public async Task<bool> IsRunningAsync(string clientId, string version, string token)
     {
         var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
-        return await clientGrain.IsVersionRunningAsync(version, token);
+        return await clientGrain.IsRunningAsync(version, token);
     }
 }
