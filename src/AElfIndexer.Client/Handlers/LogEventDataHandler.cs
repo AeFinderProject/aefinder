@@ -29,7 +29,7 @@ public class LogEventDataHandler : BlockChainDataHandler<LogEventInfo>
         return ObjectMapper.Map<List<LogEventDto>, List<LogEventInfo>>(blockDto.Transactions.SelectMany(t => t.LogEvents).ToList());
     }
 
-    protected override async Task ProcessDataAsync(List<LogEventInfo> data)
+    protected override async Task ProcessDataAsync(string chainId, List<LogEventInfo> data)
     {
         foreach (var logEvent in data)
         {

@@ -29,7 +29,7 @@ public abstract class TransactionDataHandler : BlockChainDataHandler<Transaction
         return ObjectMapper.Map<List<TransactionDto>, List<TransactionInfo>>(blockDto.Transactions);
     }
 
-    protected override async Task ProcessDataAsync(List<TransactionInfo> data)
+    protected override async Task ProcessDataAsync(string chainId, List<TransactionInfo> data)
     {
         try
         {
