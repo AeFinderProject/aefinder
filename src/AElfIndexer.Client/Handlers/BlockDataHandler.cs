@@ -21,7 +21,7 @@ public abstract class BlockDataHandler: BlockChainDataHandler<BlockInfo>
 
     public override BlockFilterType FilterType => BlockFilterType.Block;
 
-    protected override async Task ProcessDataAsync(List<BlockInfo> data)
+    protected override async Task ProcessDataAsync(string chainId, List<BlockInfo> data)
     {
         foreach (var blockInfo in data)
         {
