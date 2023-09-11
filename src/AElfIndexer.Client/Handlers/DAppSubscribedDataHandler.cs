@@ -27,7 +27,7 @@ public class DAppSubscribedDataHandler: IDistributedEventHandler<SubscribedBlock
             subscribedBlock.Version, subscribedBlock.Token);
         if (!isRunning)
         {
-            _logger.LogError(
+            _logger.LogWarning(
                 "DAppSubscribedDataHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion}  FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
                 subscribedBlock.ClientId, subscribedBlock.Version,
                 subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId,
