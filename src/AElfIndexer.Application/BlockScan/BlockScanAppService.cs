@@ -68,6 +68,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         Logger.LogInformation($"Client: {clientId} start scan, version: {version}");
 
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
+        var scanManager = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
         var subscriptionInfos = await client.GetSubscriptionInfoAsync(version);
         var versionStatus = await client.GetVersionStatusAsync(version);
         await client.SetTokenAsync(version);
@@ -91,6 +92,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                 var blockHeight = await blockStateSetInfoGrain.GetConfirmedBlockHeight(subscriptionInfo.FilterType);
                 if (blockHeight == 0) blockHeight = subscriptionInfo.StartBlockNumber-1;
                 await scanGrain.ReScanAsync(blockHeight);
+                await scanManager.AddBlockScanAsync(subscriptionInfo.ChainId, id);
             }
 
             Logger.LogDebug($"Start client: {clientId}, id: {id}");
@@ -167,8 +169,16 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
 
     public async Task PauseAsync(string clientId, string version)
     {
-        var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
-        await clientGrain.PauseAsync(version);
+        var client = _clusterClient.GetGrain<IClientGrain>(clientId);
+        var scanManager = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
+        var subscriptionInfos = await client.GetSubscriptionInfoAsync(version);
+        await client.PauseAsync(version);
+        foreach (var subscriptionInfo in subscriptionInfos)
+        {
+            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.ChainId, clientId, version,
+                subscriptionInfo.FilterType);
+            await scanManager.RemoveBlockScanAsync(subscriptionInfo.ChainId, id);
+        }
     }
 
     public async Task StopAsync(string clientId, string version)
