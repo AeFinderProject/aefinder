@@ -9,8 +9,8 @@
         <ProjectReference Include="..\AElfIndexer.Application\AElfIndexer.Application.csproj" />
         <ProjectReference Include="..\AElfIndexer.Domain\AElfIndexer.Domain.csproj" />
         <ProjectReference Include="..\AElfIndexer.MongoDB\AElfIndexer.MongoDB.csproj" />
-        <PackageReference Include="AElf.EntityMapping" Version="1.0.0" />
-        <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0" />
+        <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc3" />
+        <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc3" />
     </ItemGroup>
     
 </Project>
