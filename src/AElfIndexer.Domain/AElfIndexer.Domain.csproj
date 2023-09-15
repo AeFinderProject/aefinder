@@ -15,9 +15,9 @@
 
   <ItemGroup>
 
-    <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc3" />
+    <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc4" />
 
-    <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc3" />
+    <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc4" />
 
     <PackageReference Include="AElf.Types" Version="1.6.0-alpha" />
 
