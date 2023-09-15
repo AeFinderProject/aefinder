@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AElf.EntityMapping.Repositories;
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.BlockSync;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
 using Microsoft.Extensions.Logging;
@@ -27,13 +28,14 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     private readonly IEntityMappingRepository<TransactionIndex, string> _transactionIndexRepository;
     private readonly IEntityMappingRepository<LogEventIndex, string> _logEventIndexRepository;
     private readonly IBlockIndexHandler _blockIndexHandler;
+    private readonly IBlockSyncAppService _blockSyncAppService;
 
     public BlockHandler(
-        IEntityMappingRepository<BlockIndex,string> blockIndexRepository,
-        IEntityMappingRepository<TransactionIndex,string> transactionIndexRepository,
-        IEntityMappingRepository<LogEventIndex,string> logEventIndexRepository,
+        IEntityMappingRepository<BlockIndex, string> blockIndexRepository,
+        IEntityMappingRepository<TransactionIndex, string> transactionIndexRepository,
+        IEntityMappingRepository<LogEventIndex, string> logEventIndexRepository,
         ILogger<BlockHandler> logger,
-        IObjectMapper objectMapper, IBlockIndexHandler blockIndexHandler)
+        IObjectMapper objectMapper, IBlockIndexHandler blockIndexHandler, IBlockSyncAppService blockSyncAppService)
     {
         _blockIndexRepository = blockIndexRepository;
         _logger = logger;
@@ -41,6 +43,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         _transactionIndexRepository = transactionIndexRepository;
         _logEventIndexRepository = logEventIndexRepository;
         _blockIndexHandler = blockIndexHandler;
+        _blockSyncAppService = blockSyncAppService;
     }
 
     public async Task HandleEventAsync(NewBlocksEto eventData)
@@ -117,7 +120,10 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         List<TransactionIndex> confirmTransactionIndexList = new List<TransactionIndex>();
         List<LogEventIndex> confirmLogEventIndexList = new List<LogEventIndex>(); 
         var indexes = new List<BlockIndex>();
-        _logger.LogInformation($"block:{eventData.ConfirmBlocks.First().BlockHeight}-{eventData.ConfirmBlocks.Last().BlockHeight} is confirming");
+        var lastBlock = eventData.ConfirmBlocks.Last();
+        var syncMode = await _blockSyncAppService.GetBlockSyncModeAsync(lastBlock.ChainId, lastBlock.BlockHeight);
+        _logger.LogInformation("block:{FirstBlockHeight}-{LastBlockHeight} is confirming. sync mode: {SyncMode}.",
+            eventData.ConfirmBlocks.First().BlockHeight, lastBlock.BlockHeight, syncMode);
         foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
             var blockIndex = _objectMapper.Map<ConfirmBlockEto, BlockIndex>(confirmBlock);
@@ -146,6 +152,11 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
                     logEventIndex.Confirmed = true;
                     confirmLogEventIndexList.Add(logEventIndex);
                 }
+            }
+
+            if (syncMode == BlockSyncMode.FastSyncMode)
+            {
+                continue;
             }
 
             //find the same height blocks
@@ -216,6 +227,14 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         var blockDtos = _objectMapper.Map<List<ConfirmBlockEto>, List<BlockWithTransactionDto>>(eventData.ConfirmBlocks);
         _ = Task.Run(async () =>
         {
+            if (syncMode == BlockSyncMode.FastSyncMode)
+            {
+                foreach (var dto in blockDtos)
+                {
+                    await _blockIndexHandler.ProcessNewBlockAsync(dto);
+                }
+            }
+
             foreach (var dto in blockDtos)
             {
                 await _blockIndexHandler.ProcessConfirmedBlocksAsync(dto);
