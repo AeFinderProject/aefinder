@@ -147,9 +147,10 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
 
     public async Task SaveDataAsync(string key)
     {
-        _logger.LogDebug("Saving BlockStateSets. Key: {key}", key);
+        var sets = _blockStateSets[key];
+        _logger.LogDebug("Saving BlockStateSets. Key: {key}, Count: {Count}", key, sets.Count);
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
-        await blockStateSetsGrain.SetBlockStateSetsAsync(_blockStateSets[key]);
+        await blockStateSetsGrain.SetBlockStateSetsAsync(sets);
         if (_longestChainBlockStateSets.TryGetValue(key, out var longestChainSets) && longestChainSets != null)
         {
             await blockStateSetsGrain.SetLongestChainBlockHashAsync(longestChainSets.BlockHash);
