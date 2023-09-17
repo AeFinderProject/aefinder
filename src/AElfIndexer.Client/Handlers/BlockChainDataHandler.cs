@@ -62,8 +62,11 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         var blockStateSets = await _blockStateSetProvider.GetBlockStateSetsAsync(stateSetKey);
         var longestChain = new List<BlockStateSet<TData>>();
         
-        Logger.LogDebug("Handle block data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}", chainId, _clientId, _version);
         var libBlockHeight = blockStateSets.Count != 0 ? blockStateSets.Min(b => b.Value.BlockHeight) : 0;
+        var longestHeight = blockStateSets.Count != 0 ? blockStateSets.Max(b => b.Value.BlockHeight) : 0;
+        Logger.LogDebug(
+            "Handle block data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}, Lib Height: {Lib}, Longest Chain Height: {LongestHeight}",
+            chainId, _clientId, _version, libBlockHeight, longestHeight);
         foreach (var blockDto in blockDtos)
         {
             // Skip if block height less than lib block height
