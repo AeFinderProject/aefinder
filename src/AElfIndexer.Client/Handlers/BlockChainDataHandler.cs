@@ -26,6 +26,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
     private string _version;
     private string _clientId;
     protected readonly ILogger<BlockChainDataHandler<TData>> Logger;
+    private const long MaxLongestChainKeepingThreshold = 2000;
     
     protected BlockChainDataHandler(IClusterClient clusterClient, IObjectMapper objectMapper,
         IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, ILogger<BlockChainDataHandler<TData>> logger,
@@ -67,6 +68,13 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         Logger.LogDebug(
             "Handle block data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}, Lib Height: {Lib}, Longest Chain Height: {LongestHeight}",
             chainId, _clientId, _version, libBlockHeight, longestHeight);
+        
+        var lastBlock = blockDtos.Last();
+        if (longestHeight > lastBlock.BlockHeight + MaxLongestChainKeepingThreshold && lastBlock.Confirmed == false)
+        {
+            await _blockStateSetProvider.CleanAsync(stateSetKey, lastBlock.BlockHeight + MaxLongestChainKeepingThreshold);
+        }
+
         foreach (var blockDto in blockDtos)
         {
             // Skip if block height less than lib block height
