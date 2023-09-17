@@ -55,12 +55,14 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         var longestChainBlockStateSet = await _blockStateSetProvider.GetLongestChainBlockStateSetAsync(stateSetKey);
         if (longestChainBlockStateSet != null && !longestChainBlockStateSet.Processed)
         {
+            Logger.LogDebug("Handle unfinished longest chain data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}", chainId, _clientId, _version);
             await ProcessUnfinishedLongestChainAsync(stateSetKey, longestChainBlockStateSet);
         }
 
         var blockStateSets = await _blockStateSetProvider.GetBlockStateSetsAsync(stateSetKey);
         var longestChain = new List<BlockStateSet<TData>>();
         
+        Logger.LogDebug("Handle block data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}", chainId, _clientId, _version);
         var libBlockHeight = blockStateSets.Count != 0 ? blockStateSets.Min(b => b.Value.BlockHeight) : 0;
         foreach (var blockDto in blockDtos)
         {
@@ -128,6 +130,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             }
         }
 
+        Logger.LogDebug("Handle longest chain data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}", chainId, _clientId, _version);
         if (longestChain.Count > 0)
         {
             await _blockStateSetProvider.SaveDataAsync(stateSetKey);
@@ -142,6 +145,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         }
         
         //Clean block state sets under latest lib block
+        Logger.LogDebug("Handle lib data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}", chainId, _clientId, _version);
         if (libHeight != 0)
         {
             var blockStateSetInfoGrain =

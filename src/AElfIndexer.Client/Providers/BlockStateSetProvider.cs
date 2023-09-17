@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp.DependencyInjection;
 
@@ -15,10 +16,12 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
     private readonly ConcurrentDictionary<string, Dictionary<string, string>> _longestChainHashes = new();
     
     private readonly IClusterClient _clusterClient;
+    private readonly ILogger<BlockStateSetProvider<T>> _logger;
 
-    public BlockStateSetProvider(IClusterClient clusterClient)
+    public BlockStateSetProvider(IClusterClient clusterClient, ILogger<BlockStateSetProvider<T>> logger)
     {
         _clusterClient = clusterClient;
+        _logger = logger;
     }
 
     public async Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync(string key)
@@ -144,6 +147,7 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
 
     public async Task SaveDataAsync(string key)
     {
+        _logger.LogDebug("Saving BlockStateSets. Key: {key}", key);
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
         await blockStateSetsGrain.SetBlockStateSetsAsync(_blockStateSets[key]);
         if (_longestChainBlockStateSets.TryGetValue(key, out var longestChainSets) && longestChainSets != null)
@@ -155,5 +159,6 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
         {
             await blockStateSetsGrain.SetBestChainBlockHashAsync(bestChainSets.BlockHash);
         }
+        _logger.LogDebug("Saved BlockStateSets. Key: {key}", key);
     }
 }

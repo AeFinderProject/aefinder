@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using AElfIndexer.Grains.Grain.Client;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Nito.AsyncEx;
@@ -16,10 +17,14 @@ public class DAppDataProvider : IDAppDataProvider, ISingletonDependency
     private readonly ConcurrentDictionary<string, string> _libValues = new();
     private readonly ConcurrentDictionary<string, string> _toCommitLibValues = new();
     private readonly ConcurrentQueue<string> _libValueKeys = new();
+    
+    private readonly ILogger<DAppDataProvider> _logger;
 
-    public DAppDataProvider(IClusterClient clusterClient,IOptionsSnapshot<ClientOptions> clientOptions)
+    public DAppDataProvider(IClusterClient clusterClient, IOptionsSnapshot<ClientOptions> clientOptions,
+        ILogger<DAppDataProvider> logger)
     {
         _clusterClient = clusterClient;
+        _logger = logger;
         _clientOptions = clientOptions.Value;
     }
 
@@ -70,6 +75,7 @@ public class DAppDataProvider : IDAppDataProvider, ISingletonDependency
 
     public async Task SaveDataAsync()
     {
+        _logger.LogDebug("Saving dapp data.");
         var tasks = _toCommitLibValues.Select(async o =>
         {
             var dataGrain = _clusterClient.GetGrain<IDappDataGrain>(o.Key);
@@ -77,5 +83,6 @@ public class DAppDataProvider : IDAppDataProvider, ISingletonDependency
         });
         await tasks.WhenAll();
         _toCommitLibValues.Clear();
+        _logger.LogDebug("Saved dapp data.");
     }
 }

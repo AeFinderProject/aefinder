@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using AElf.Indexing.Elasticsearch;
+using Microsoft.Extensions.Logging;
 
 namespace AElfIndexer.Client.Providers;
 
@@ -12,16 +13,19 @@ public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
     
     private readonly INESTRepository<TEntity, string> _nestRepository;
     private readonly IDAppDataIndexManagerProvider _dAppDataIndexManagerProvider;
+    private readonly ILogger<BlockStateSetProvider<TEntity>> _logger;
 
     public DAppDataIndexProvider(INESTRepository<TEntity, string> nestRepository,
-        IDAppDataIndexManagerProvider dAppDataIndexManagerProvider)
+        IDAppDataIndexManagerProvider dAppDataIndexManagerProvider, ILogger<BlockStateSetProvider<TEntity>> logger)
     {
         _nestRepository = nestRepository;
         _dAppDataIndexManagerProvider = dAppDataIndexManagerProvider;
+        _logger = logger;
     }
 
     public async Task SaveDataAsync()
     {
+        _logger.LogDebug("Saving dapp index.");
         foreach (var data in _addOrUpdateData)
         {
             await _nestRepository.BulkAddOrUpdateAsync(data.Value, data.Key);
@@ -33,6 +37,7 @@ public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
             await _nestRepository.BulkDeleteAsync(data.Value, data.Key);
         }
         _deleteData.Clear();
+        _logger.LogDebug("Saved dapp index.");
     }
 
     public Task AddOrUpdateAsync(TEntity entity, string indexName)
