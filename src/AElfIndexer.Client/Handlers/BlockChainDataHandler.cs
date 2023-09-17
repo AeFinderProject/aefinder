@@ -70,9 +70,11 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
             chainId, _clientId, _version, libBlockHeight, longestHeight);
         
         var lastBlock = blockDtos.Last();
-        if (longestHeight > lastBlock.BlockHeight + MaxLongestChainKeepingThreshold && lastBlock.Confirmed == false)
+        if (lastBlock.BlockHeight > libHeight &&
+            longestHeight > lastBlock.BlockHeight + MaxLongestChainKeepingThreshold && lastBlock.Confirmed == false)
         {
-            await _blockStateSetProvider.CleanAsync(stateSetKey, lastBlock.BlockHeight + MaxLongestChainKeepingThreshold);
+            await _blockStateSetProvider.CleanAsync(stateSetKey,
+                lastBlock.BlockHeight + MaxLongestChainKeepingThreshold);
         }
 
         foreach (var blockDto in blockDtos)
