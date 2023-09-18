@@ -157,7 +157,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         }
         
         //Clean block state sets under latest lib block
-        Logger.LogDebug("Handle lib data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}", chainId, _clientId, _version);
+        Logger.LogDebug("Handle lib data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}, Lib height: {LibHeight}", chainId, _clientId, _version, libHeight);
         if (libHeight != 0)
         {
             var blockStateSetInfoGrain =

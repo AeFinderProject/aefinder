@@ -124,6 +124,17 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                     throw new ApplicationException(
                         $"Cannot fill vacant blocks: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
                 }
+                
+                SetConfirmed(blocks, true);
+                await _stream.OnNextAsync(new SubscribedBlockDto
+                {
+                    ClientId = State.ClientId,
+                    ChainId = State.ChainId,
+                    Version = State.Version,
+                    FilterType = subscriptionInfo.FilterType,
+                    Blocks = blocks,
+                    Token = State.Token
+                });
 
                 if (!subscriptionInfo.OnlyConfirmedBlock)
                 {
@@ -138,17 +149,6 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
                         Token = State.Token
                     });
                 }
-
-                SetConfirmed(blocks, true);
-                await _stream.OnNextAsync(new SubscribedBlockDto
-                {
-                    ClientId = State.ClientId,
-                    ChainId = State.ChainId,
-                    Version = State.Version,
-                    FilterType = subscriptionInfo.FilterType,
-                    Blocks = blocks,
-                    Token = State.Token
-                });
 
                 State.ScannedBlockHeight = blocks.Last().BlockHeight;
                 State.ScannedBlockHash = blocks.Last().BlockHash;
