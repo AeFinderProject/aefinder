@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc5" />
-    <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc5" />
+    <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc6" />
+    <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc6" />
     <PackageReference Include="coverlet.collector" Version="3.2.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
