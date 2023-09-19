@@ -11,6 +11,7 @@ using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
 using Microsoft.Extensions.Logging;
 using Nest;
+using Nito.AsyncEx;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
@@ -62,8 +63,10 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
                 blockIndexList.Add(blockIndex);
             }
 
-            // var blockIndexList = _objectMapper.Map<List<NewBlockEto>, List<BlockIndex>>(eventData.NewBlocks);
-            await _blockIndexRepository.AddOrUpdateManyAsync(blockIndexList);
+            var tasks = new List<Task>
+            {
+                _blockIndexRepository.AddOrUpdateManyAsync(blockIndexList)
+            };
 
             List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
             List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
@@ -85,17 +88,15 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
 
             if (transactionIndexList.Count > 0)
             {
-                _logger.LogDebug(
-                    $"Transaction is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockHeight}, total transaction count:{transactionIndexList.Count}");
-                await _transactionIndexRepository.AddOrUpdateManyAsync(transactionIndexList);
+                tasks.Add(_transactionIndexRepository.AddOrUpdateManyAsync(transactionIndexList));
             }
 
             if (logEventIndexList.Count > 0)
             {
-                _logger.LogDebug(
-                    $"LogEvent is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockHeight}, total logevent count:{logEventIndexList.Count}");
-                await _logEventIndexRepository.AddOrUpdateManyAsync(logEventIndexList);
+                tasks.Add( _logEventIndexRepository.AddOrUpdateManyAsync(logEventIndexList));
             }
+
+            await tasks.WhenAll();
             
             var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
             _ = Task.Run(async () =>
@@ -211,18 +212,22 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             }
         }
 
-        _logger.LogDebug($"blocks is confirming,start {confirmBlockIndexList.First().BlockHeight} end {confirmBlockIndexList.Last().BlockHeight},total confirm {confirmBlockIndexList.Count}");
-        await _blockIndexRepository.AddOrUpdateManyAsync(confirmBlockIndexList);
+        _logger.LogDebug("blocks is confirming,start {FirstBlockHeight} end {LastBlockHeight},total confirm {Count}",
+            confirmBlockIndexList.First().BlockHeight, confirmBlockIndexList.Last().BlockHeight,
+            confirmBlockIndexList.Count);
+        var tasks = new List<Task>
+        {
+            _blockIndexRepository.AddOrUpdateManyAsync(confirmBlockIndexList)
+        };
         if (confirmTransactionIndexList.Count > 0)
         {
-            _logger.LogDebug($"transactions is confirming,start {confirmTransactionIndexList.First().BlockHeight} end {confirmTransactionIndexList.Last().BlockHeight},total confirm {confirmTransactionIndexList.Count}");
-            await _transactionIndexRepository.AddOrUpdateManyAsync(confirmTransactionIndexList);
+            tasks.Add(_transactionIndexRepository.AddOrUpdateManyAsync(confirmTransactionIndexList));
         }
         if (confirmLogEventIndexList.Count > 0)
         {
-            _logger.LogDebug($"log events is confirming,start {confirmLogEventIndexList.First().BlockHeight} end {confirmLogEventIndexList.Last().BlockHeight},total confirm {confirmLogEventIndexList.Count}");
-            await _logEventIndexRepository.AddOrUpdateManyAsync(confirmLogEventIndexList);
+            tasks.Add(_logEventIndexRepository.AddOrUpdateManyAsync(confirmLogEventIndexList));
         }
+        await tasks.WhenAll();
         
         var blockDtos = _objectMapper.Map<List<ConfirmBlockEto>, List<BlockWithTransactionDto>>(eventData.ConfirmBlocks);
         _ = Task.Run(async () =>
