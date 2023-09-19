@@ -22,7 +22,8 @@ namespace AElfIndexer;
     typeof(AElfIndexerGrainsModule),
     typeof(AElfIndexerBlockChainEventHandlerCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AbpEventBusRabbitMqModule))]
+    typeof(AbpEventBusRabbitMqModule),
+    typeof(AElfIndexerApplicationModule))]
 public class AElfIndexerBlockChainEventHandlerModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
