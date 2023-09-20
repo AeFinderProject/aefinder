@@ -23,6 +23,7 @@
     <ItemGroup>
       <ProjectReference Include="..\AElfIndexer.Application\AElfIndexer.Application.csproj" />
       <ProjectReference Include="..\AElfIndexer.BlockChainEventHandler.Core\AElfIndexer.BlockChainEventHandler.Core.csproj" />
+      <ProjectReference Include="..\AElfIndexer.MongoDB\AElfIndexer.MongoDB.csproj" />
     </ItemGroup>
 
     <ItemGroup>
