@@ -1,5 +1,6 @@
 using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
+using AElfIndexer.BlockSync;
 using AElfIndexer.Grains;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Account;
@@ -34,6 +35,7 @@ public class AElfIndexerApplicationModule : AbpModule
 
         var configuration = context.Services.GetConfiguration();
         Configure<ApiOptions>(configuration.GetSection("Api"));
+        Configure<BlockSyncOptions>(configuration.GetSection("BlockSync"));
     }
 }
 

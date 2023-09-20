@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AElf.Contracts.Consensus.AEDPoS;
+using AElfIndexer.BlockSync;
 using AElfIndexer.DTOs;
 using AElfIndexer.Etos;
 using AElfIndexer.Grains.EventData;
@@ -23,33 +24,33 @@ namespace AElfIndexer.Processors;
 
 public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDataEto>, ITransientDependency
 {
-    private readonly IClusterClient _clusterClient;
     private readonly ILogger<BlockChainDataEventHandler> _logger;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
     private readonly IBlockGrainProvider _blockGrainProvider;
-    private readonly BlockChainEventHandlerOptions _blockChainEventHandlerOptions;
+    private readonly IBlockSyncAppService _blockSyncAppService;
 
     public BlockChainDataEventHandler(
-        IClusterClient clusterClient,
         ILogger<BlockChainDataEventHandler> logger,
         IObjectMapper objectMapper,
         IBlockGrainProvider blockGrainProvider,
-        IOptionsSnapshot<BlockChainEventHandlerOptions> blockChainEventHandlerOptions,
-        IDistributedEventBus distributedEventBus)
+        IDistributedEventBus distributedEventBus, IBlockSyncAppService blockSyncAppService)
     {
-        _clusterClient = clusterClient;
         _logger = logger;
         _distributedEventBus = distributedEventBus;
+        _blockSyncAppService = blockSyncAppService;
         _objectMapper = objectMapper;
-        _blockChainEventHandlerOptions = blockChainEventHandlerOptions.Value;
         _blockGrainProvider = blockGrainProvider;
     }
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
+        var lastBlockHeight = eventData.Blocks.Last().BlockHeight;
+        var syncMode = await _blockSyncAppService.GetBlockSyncModeAsync(eventData.ChainId, lastBlockHeight);
+
         _logger.LogInformation(
-            $"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockHeight}, end block: {eventData.Blocks.Last().BlockHeight},");
+            "Received BlockChainDataEto form {ChainId}, start block: {StartBlockHeight}, end block: {EndBlockHeight}, sync mode: {SyncMode}",
+            eventData.ChainId, eventData.Blocks.First().BlockHeight, lastBlockHeight, syncMode);
 
         //prepare data
         List<Task<NewBlockTaskEntity>> prepareDataTaskList = new List<Task<NewBlockTaskEntity>>();
@@ -79,9 +80,11 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
 
         if (libBlockList != null)
         {
-            // _logger.LogInformation("newBlockEtos count: " + newBlockEtos.Count);
-            await _distributedEventBus.PublishAsync(new NewBlocksEto()
-                { NewBlocks = newBlockEtos });
+            if (syncMode == BlockSyncMode.NormalMode)
+            {
+                await _distributedEventBus.PublishAsync(new NewBlocksEto()
+                    { NewBlocks = newBlockEtos });
+            }
 
             if (libBlockList.Count > 0)
             {

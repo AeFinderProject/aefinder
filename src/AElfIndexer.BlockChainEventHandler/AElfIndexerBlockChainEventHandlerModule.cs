@@ -1,6 +1,8 @@
 using AElfIndexer.DTOs;
 using AElfIndexer.Grains;
+using AElfIndexer.MongoDB;
 using AElfIndexer.Providers;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -11,6 +13,8 @@ using Orleans.Providers.MongoDB.Configuration;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
+using Volo.Abp.Caching;
+using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
@@ -22,7 +26,10 @@ namespace AElfIndexer;
     typeof(AElfIndexerGrainsModule),
     typeof(AElfIndexerBlockChainEventHandlerCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AbpEventBusRabbitMqModule))]
+    typeof(AbpEventBusRabbitMqModule),
+    typeof(AElfIndexerMongoDbModule),
+    typeof(AElfIndexerApplicationModule),
+    typeof(AbpCachingStackExchangeRedisModule))]
 public class AElfIndexerBlockChainEventHandlerModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -31,6 +38,7 @@ public class AElfIndexerBlockChainEventHandlerModule:AbpModule
         Configure<BlockChainEventHandlerOptions>(configuration.GetSection("BlockChainEventHandler"));
         
         context.Services.AddHostedService<AElfIndexerClusterClientHostedService>();
+        ConfigureCache(configuration);
 
         // context.Services.AddSingleton<AElfIndexerClusterClientHostedService>();
         // context.Services.AddSingleton<IHostedService>(sp => sp.GetService<AElfIndexerClusterClientHostedService>());
@@ -63,6 +71,11 @@ public class AElfIndexerBlockChainEventHandlerModule:AbpModule
                 .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
                 .Build();
         });
+    }
+    
+    private void ConfigureCache(IConfiguration configuration)
+    {
+        Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AElfIndexer:"; });
     }
     
     public override void OnApplicationInitialization(ApplicationInitializationContext context)

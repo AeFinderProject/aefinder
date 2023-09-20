@@ -26,4 +26,5 @@
     <PackageReference Include="Volo.Abp.TenantManagement.Application.Contracts" Version="7.0.0" />
   </ItemGroup>
 
+
 </Project>
