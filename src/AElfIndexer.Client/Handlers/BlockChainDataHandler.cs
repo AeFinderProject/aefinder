@@ -77,7 +77,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
                 continue;
             }
 
-            if (!blockDto.Confirmed && blockDto.BlockHeight > libBlockHeight + MaxLongestChainKeepingThreshold)
+            if (libBlockHeight != 0 && !blockDto.Confirmed && blockDto.BlockHeight > libBlockHeight + MaxLongestChainKeepingThreshold)
             {
                 Logger.LogWarning("Block height too high. Block height: {BlockHeight}, Lib height: {LibHeight}",
                     blockDto.BlockHeight, libBlockHeight);
