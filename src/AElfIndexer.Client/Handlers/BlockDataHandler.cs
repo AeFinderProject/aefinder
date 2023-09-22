@@ -21,15 +21,20 @@ public abstract class BlockDataHandler: BlockChainDataHandler<BlockInfo>
 
     public override BlockFilterType FilterType => BlockFilterType.Block;
 
-    protected override async Task ProcessDataAsync(List<BlockInfo> data)
+    protected override async Task ProcessDataAsync(string chainId, List<BlockInfo> data)
     {
-        try
+        foreach (var blockInfo in data)
         {
-            await ProcessBlocksAsync(data);
-        }
-        catch (Exception e)
-        {
-            Logger.LogError(e, "Process Client Blocks Error!" + e.Message);
+            try
+            {
+                await ProcessBlockAsync(blockInfo);
+            }
+            catch (Exception e)
+            {
+                throw new DAppHandlingException(
+                    $"Handle Block Error! ChainId: {blockInfo.ChainId} BlockHeight: {blockInfo.BlockHeight} BlockHash: {blockInfo.BlockHash}.",
+                    e);
+            }
         }
     }
 
@@ -38,5 +43,5 @@ public abstract class BlockDataHandler: BlockChainDataHandler<BlockInfo>
         return new List<BlockInfo> { ObjectMapper.Map<BlockWithTransactionDto, BlockInfo>(blockDto) };
     }
 
-    protected abstract Task ProcessBlocksAsync(List<BlockInfo> data);
+    protected abstract Task ProcessBlockAsync(BlockInfo block);
 }

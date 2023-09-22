@@ -29,13 +29,17 @@ public class LogEventDataHandler : BlockChainDataHandler<LogEventInfo>
         return ObjectMapper.Map<List<LogEventDto>, List<LogEventInfo>>(blockDto.Transactions.SelectMany(t => t.LogEvents).ToList());
     }
 
-    protected override async Task ProcessDataAsync(List<LogEventInfo> data)
+    protected override async Task ProcessDataAsync(string chainId, List<LogEventInfo> data)
     {
         foreach (var logEvent in data)
         {
             var processor = _processors.FirstOrDefault(p =>
                 p.GetContractAddress(logEvent.ChainId) == logEvent.ContractAddress && p.GetEventName() == logEvent.EventName);
             if (processor == null) continue;
+            Logger.LogDebug(
+                "Processing log event. ChainId: {ChainId}, BlockHeight: {BlockHeight}, BlockHash: {BlockHash}, ContractAddress: {ContractAddress}, EventName: {EventName}",
+                logEvent.ChainId, logEvent.BlockHeight, logEvent.BlockHash, logEvent.ContractAddress,
+                logEvent.EventName);
             await processor.HandleEventAsync(logEvent,new LogEventContext
             {
                 ChainId = logEvent.ChainId,

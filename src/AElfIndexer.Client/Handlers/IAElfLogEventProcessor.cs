@@ -4,7 +4,7 @@ namespace AElfIndexer.Client.Handlers;
 
 public interface IAElfLogEventProcessor
 {
-    Task HandleEventAsync(LogEventInfo logEventInfo, LogEventContext context = null);
+    Task HandleEventAsync(LogEventInfo logEventInfo, LogEventContext context);
     string GetEventName();
     string GetContractAddress(string chainId);
 }

@@ -8,6 +8,7 @@ using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.Grain.Chains;
 using AElfIndexer.Grains.Grain.Client;
+using AElfIndexer.Grains.State.BlockScan;
 using AElfIndexer.Grains.State.Client;
 using Orleans;
 using Shouldly;
@@ -40,8 +41,8 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         var currentVersion = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>());
         var newVersion = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>());
         _clientInfoProvider.SetVersion(currentVersion);
-        
-        await clientGrain.SetTokenAsync(currentVersion);
+
+        await _blockScanAppService.StartScanAsync(client, currentVersion);
         await clientGrain.SetTokenAsync(newVersion);
         var currentVersionToken = await clientGrain.GetTokenAsync(currentVersion);
         var newVersionToken = await clientGrain.GetTokenAsync(newVersion);
@@ -118,7 +119,10 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         versionInfo.CurrentVersion.ShouldBe(currentVersion);
         versionInfo.NewVersion.ShouldBe(newVersion);
         
+        await _blockScanAppService.StartScanAsync(client, newVersion);
         _clientInfoProvider.SetVersion(newVersion);
+        newVersionToken = await clientGrain.GetTokenAsync(newVersion);
+        
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
             Blocks = blocks,
@@ -137,5 +141,37 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         versionInfo = await clientGrain.GetVersionAsync();
         versionInfo.CurrentVersion.ShouldBe(newVersion);
         versionInfo.NewVersion.ShouldBeNull();
+    }
+    
+    [Fact]
+    public async Task Handle_Block_Error_Test()
+    {
+        var chainId = "AELF";
+        var client = _clientInfoProvider.GetClientId();
+        var clientGrain = _clusterClient.GetGrain<IClientGrain>(client);
+        
+        var currentVersion = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>());
+        var newVersion = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>());
+        _clientInfoProvider.SetVersion(currentVersion);
+        
+        await clientGrain.SetTokenAsync(currentVersion);
+        await clientGrain.SetTokenAsync(newVersion);
+        await _blockScanAppService.StartScanAsync(client, currentVersion);
+        var currentVersionToken = await clientGrain.GetTokenAsync(currentVersion);
+
+        var blocks = MockHandlerHelper.CreateBlock(99999, 10, "BlockHash", chainId);
+
+        await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
+        {
+            Blocks = blocks,
+            Token = currentVersionToken,
+            Version = currentVersion,
+            ChainId = chainId,
+            ClientId = client,
+            FilterType = BlockFilterType.Block
+        });
+
+        var state = await clientGrain.GetVersionStatusAsync(currentVersion);
+        state.ShouldBe(VersionStatus.Paused);
     }
 }

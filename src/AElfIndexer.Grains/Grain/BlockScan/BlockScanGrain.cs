@@ -92,10 +92,8 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
             while (true)
             {
-                var clientInfo = await blockScanInfo.GetClientInfoAsync();
-                var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
-                var token = await clientGrain.GetTokenAsync(State.Version);
-                if (!isVersionAvailable || clientInfo.ScanModeInfo.ScanMode != ScanMode.HistoricalBlock || token != State.Token)
+                if (!await clientGrain.IsRunningAsync(State.Version, State.Token) ||
+                    (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.HistoricalBlock)
                 {
                     break;
                 }
@@ -180,15 +178,11 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
-        var clientInfo = await blockScanInfo.GetClientInfoAsync();
         var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
 
-        var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
-        var token = await clientGrain.GetTokenAsync(State.Version);
-        if (!isVersionAvailable
-            || clientInfo.ScanModeInfo.ScanMode != ScanMode.NewBlock
-            || subscriptionInfo.OnlyConfirmedBlock
-            || token != State.Token)
+        if (subscriptionInfo.OnlyConfirmedBlock
+            || (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.NewBlock
+            || !await clientGrain.IsRunningAsync(State.Version, State.Token))
         {
             _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: HandleNewBlock failed, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
             return;
@@ -268,14 +262,10 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
-        var clientInfo = await blockScanInfo.GetClientInfoAsync();
         
-        var isVersionAvailable = await clientGrain.IsVersionAvailableAsync(State.Version);
-        var token = await clientGrain.GetTokenAsync(State.Version);
-        if (!isVersionAvailable
-            || clientInfo.ScanModeInfo.ScanMode != ScanMode.NewBlock
-            || block.BlockHeight <= State.ScannedConfirmedBlockHeight
-            || token != State.Token)
+        if (block.BlockHeight <= State.ScannedConfirmedBlockHeight
+            || (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.NewBlock
+            || !await clientGrain.IsRunningAsync(State.Version, State.Token))
         {
             _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.Token}]: HandleConfirmedBlock failed, block height: {block.BlockHeight}");
             return;

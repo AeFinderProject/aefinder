@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using AElf.Contracts.MultiToken;
 using AElfIndexer.Grains.State.Client;
@@ -28,6 +29,11 @@ public class MockTokenTransferredProcessor : AElfLogEventProcessorBase<Transferr
 
     protected override async Task HandleEventAsync(Transferred eventValue, LogEventContext context)
     {
+        if (context.BlockHeight == 100000)
+        {
+            throw new Exception();
+        }
+        
         var index = new TestTransferredIndex
         {
             Id = context.TransactionId + context.Index + eventValue.Amount,

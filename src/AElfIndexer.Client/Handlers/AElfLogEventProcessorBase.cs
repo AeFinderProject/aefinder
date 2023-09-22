@@ -20,19 +20,18 @@ public abstract class AElfLogEventProcessorBase<TEvent,TData> : IAElfLogEventPro
         //_eventName = new TEvent().Descriptor.Name;
     }
 
-    public virtual async Task HandleEventAsync(LogEventInfo logEventInfo, LogEventContext context = null)
+    public virtual async Task HandleEventAsync(LogEventInfo logEventInfo, LogEventContext context)
     {
-        var value = AElfLogEventDeserializationHelper.DeserializeAElfLogEvent<TEvent>(logEventInfo);
         try
         {
+            var value = AElfLogEventDeserializationHelper.DeserializeAElfLogEvent<TEvent>(logEventInfo);
             await HandleEventAsync(value, context);
         }
         catch (Exception e)
         {
-            _logger.LogError(e,
-                "Handle Client LogEvent Error! ChainId: " + (context == null ? "Unknown" : context.ChainId) +
-                " BlockHeight: " + (context == null ? "Unknown" : context.BlockHeight) + " EventName: " + _eventName +
-                " ErrorMsg:" + e.Message);
+            throw new DAppHandlingException(
+                $"Handle LogEvent Error! ChainId: {context.ChainId} BlockHeight: {context.BlockHeight} BlockHash: {context.BlockHash} TransactionId: {context.TransactionId}  ContractAddress: {logEventInfo.ContractAddress} EventName: {logEventInfo.EventName}.",
+                e);
         }
     }
 

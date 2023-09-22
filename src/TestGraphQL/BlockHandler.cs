@@ -24,7 +24,7 @@ public class BlockHandler : BlockDataHandler
         _repository = repository;
     }
 
-    protected override async Task ProcessDataAsync(List<BlockInfo> data)
+    protected override async Task ProcessDataAsync(string chainId, List<BlockInfo> data)
     {
         foreach (var block in data)
         {
@@ -35,7 +35,7 @@ public class BlockHandler : BlockDataHandler
         
     }
 
-    protected override Task ProcessBlocksAsync(List<BlockInfo> data)
+    protected override Task ProcessBlockAsync(BlockInfo data)
     {
         throw new NotImplementedException();
     }

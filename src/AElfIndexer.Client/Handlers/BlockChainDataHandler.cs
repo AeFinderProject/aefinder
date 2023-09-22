@@ -56,7 +56,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         var longestChainBlockStateSet = await _blockStateSetProvider.GetLongestChainBlockStateSetAsync(stateSetKey);
         if (longestChainBlockStateSet != null && !longestChainBlockStateSet.Processed)
         {
-            await ProcessUnfinishedLongestChainAsync(stateSetKey, longestChainBlockStateSet);
+            await ProcessUnfinishedLongestChainAsync(chainId, stateSetKey, longestChainBlockStateSet);
         }
 
         var blockStateSets = await _blockStateSetProvider.GetBlockStateSetsAsync(stateSetKey);
@@ -133,7 +133,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         if (longestChain.Count > 0)
         {
             await _blockStateSetProvider.SaveDataAsync(stateSetKey);
-            await ProcessLongestChainAsync(stateSetKey, longestChain, blockStateSets);
+            await ProcessLongestChainAsync(chainId, stateSetKey, longestChain, blockStateSets);
             
             var confirmBlock = longestChain.LastOrDefault(b => b.Confirmed);
             if (confirmBlock != null && confirmBlock.BlockHeight > libHeight)
@@ -156,17 +156,17 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         await _blockStateSetProvider.SaveDataAsync(stateSetKey);
     }
 
-    private async Task ProcessUnfinishedLongestChainAsync(string blockStateSetKey, BlockStateSet<TData> longestChainBlockStateSet)
+    private async Task ProcessUnfinishedLongestChainAsync(string chainId, string blockStateSetKey, BlockStateSet<TData> longestChainBlockStateSet)
     {
         var blockStateSets = await _blockStateSetProvider.GetBlockStateSetsAsync(blockStateSetKey);
         var longestChain = GetLongestChain(blockStateSets, longestChainBlockStateSet.BlockHash);
         if (longestChain.Count > 0)
         {
-            await ProcessLongestChainAsync(blockStateSetKey, longestChain, blockStateSets);
+            await ProcessLongestChainAsync(chainId, blockStateSetKey, longestChain, blockStateSets);
         }
     }
 
-    private async Task ProcessLongestChainAsync(string blockStateSetKey, List<BlockStateSet<TData>> longestChain, 
+    private async Task ProcessLongestChainAsync(string chainId, string blockStateSetKey, List<BlockStateSet<TData>> longestChain, 
         Dictionary<string, BlockStateSet<TData>> blockStateSets)
     {
         var bestChainBlockStateSet = await _blockStateSetProvider.GetBestChainBlockStateSetAsync(blockStateSetKey);
@@ -178,7 +178,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         {
             //Set Current block state
             await _blockStateSetProvider.SetCurrentBlockStateSetAsync(blockStateSetKey, blockStateSet);
-            await ProcessDataAsync(blockStateSet.Data);
+            await ProcessDataAsync(chainId, blockStateSet.Data);
             await _blockStateSetProvider.SetBlockStateSetProcessedAsync(blockStateSetKey, blockStateSet.BlockHash, false);
         }
         
@@ -186,7 +186,7 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
         {
             //Set Current block state
             await _blockStateSetProvider.SetCurrentBlockStateSetAsync(blockStateSetKey, blockStateSet);
-            await ProcessDataAsync(blockStateSet.Data);
+            await ProcessDataAsync(chainId, blockStateSet.Data);
             await _blockStateSetProvider.SetBlockStateSetProcessedAsync(blockStateSetKey, blockStateSet.BlockHash, true);
         }
 
@@ -267,5 +267,5 @@ public abstract class BlockChainDataHandler<TData> : IBlockChainDataHandler, ITr
 
     protected abstract List<TData> GetData(BlockWithTransactionDto blockDto);
 
-    protected abstract Task ProcessDataAsync(List<TData> data);
+    protected abstract Task ProcessDataAsync(string chainId, List<TData> data);
 }

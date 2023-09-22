@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,31 +27,28 @@ public class MockTransactionHandler : TransactionDataHandler
         _repository = repository;
     }
 
-    protected override async Task ProcessTransactionsAsync(List<TransactionInfo> transactions)
+    protected override async Task ProcessTransactionAsync(TransactionInfo transaction)
     {
-        if (!transactions.Any())
+        if (transaction.BlockHeight == 100000)
         {
-            return;
+            throw new Exception();
         }
-
-        foreach (var transaction in transactions)
+        
+        var indexId = transaction.TransactionId;
+        var index = new TestTransactionIndex
         {
-            var indexId = transaction.TransactionId;
-            var index = new TestTransactionIndex
-            {
-                Id = indexId,
-                ChainId = transaction.ChainId,
-                MethodName = transaction.MethodName,
-                BlockTime = transaction.BlockTime,
-                BlockHash = transaction.BlockHash,
-                BlockHeight = transaction.BlockHeight,
-                PreviousBlockHash = transaction.PreviousBlockHash,
-                From = transaction.From,
-                To = transaction.To,
-                LogEventInfos = transaction.LogEvents,
-                Confirmed = transaction.Confirmed
-            };
-            await _repository.AddOrUpdateAsync(index);
-        }
+            Id = indexId,
+            ChainId = transaction.ChainId,
+            MethodName = transaction.MethodName,
+            BlockTime = transaction.BlockTime,
+            BlockHash = transaction.BlockHash,
+            BlockHeight = transaction.BlockHeight,
+            PreviousBlockHash = transaction.PreviousBlockHash,
+            From = transaction.From,
+            To = transaction.To,
+            LogEventInfos = transaction.LogEvents,
+            Confirmed = transaction.Confirmed
+        };
+        await _repository.AddOrUpdateAsync(index);
     }
 }
