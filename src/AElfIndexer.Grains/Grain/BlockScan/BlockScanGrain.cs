@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.Chains;
+using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.BlockScan;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -93,7 +94,9 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             while (true)
             {
                 if (!await clientGrain.IsRunningAsync(State.Version, State.Token) ||
-                    (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.HistoricalBlock)
+                    (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.HistoricalBlock ||
+                    await GetConfirmedBlockHeightAsync(subscriptionInfo.FilterType) <
+                    State.ScannedConfirmedBlockHeight - _blockScanOptions.MaxHistoricalBlockPushThreshold)
                 {
                     break;
                 }
@@ -180,6 +183,12 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
         var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
 
+        if (await GetConfirmedBlockHeightAsync(subscriptionInfo.FilterType) <
+            State.ScannedBlockHeight - _blockScanOptions.MaxNewBlockPushThreshold)
+        {
+            return;
+        }
+
         if (subscriptionInfo.OnlyConfirmedBlock
             || (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.NewBlock
             || !await clientGrain.IsRunningAsync(State.Version, State.Token))
@@ -262,6 +271,13 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         
         var clientGrain = GrainFactory.GetGrain<IClientGrain>(State.ClientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
+        var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
+        
+        if (await GetConfirmedBlockHeightAsync(subscriptionInfo.FilterType) <
+            State.ScannedConfirmedBlockHeight - _blockScanOptions.MaxNewBlockPushThreshold)
+        {
+            return;
+        }
         
         if (block.BlockHeight <= State.ScannedConfirmedBlockHeight
             || (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.NewBlock
@@ -271,7 +287,6 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             return;
         }
 
-        var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
         var blockFilterProvider = _blockFilterProviders.First(o => o.FilterType == subscriptionInfo.FilterType);
 
         var scannedBlocks = new List<BlockWithTransactionDto>();
@@ -434,6 +449,13 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     private long GetMaxTargetHeight(long startHeight, long endHeight)
     {
         return Math.Min(endHeight, startHeight + _blockScanOptions.BatchPushBlockCount - 1);
+    }
+
+    private async Task<long> GetConfirmedBlockHeightAsync(BlockFilterType filterType)
+    {
+        var blockStateSetInfoGrain = GrainFactory.GetGrain<IBlockStateSetInfoGrain>(
+            GrainIdHelper.GenerateGrainId("BlockStateSetInfo", State.ClientId, State.ChainId, State.Version));
+        return await blockStateSetInfoGrain.GetConfirmedBlockHeight(filterType);
     }
 
     public override async Task OnActivateAsync()
