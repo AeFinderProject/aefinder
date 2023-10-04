@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc6" />
-    <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc6" />
+    <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc7" />
+    <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc7" />
     <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
