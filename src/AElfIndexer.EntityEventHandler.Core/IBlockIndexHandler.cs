@@ -81,6 +81,9 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
             var chainStatus = await chainGrain.GetChainStatusAsync();
             if (chainStatus.ConfirmedBlockHeight >= confirmBlock.BlockHeight)
             {
+                Logger.LogDebug(
+                    "Drop old block, ChainId: {chainId} ConfirmedBlockHeight: {ConfirmedBlockHeight} BlockHeight: {BlockHeight}",
+                    chainId, chainStatus.ConfirmedBlockHeight, confirmBlock.BlockHeight);
                 return;
             }
 

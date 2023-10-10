@@ -232,16 +232,13 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         var blockDtos = _objectMapper.Map<List<ConfirmBlockEto>, List<BlockWithTransactionDto>>(eventData.ConfirmBlocks);
         _ = Task.Run(async () =>
         {
-            if (syncMode == BlockSyncMode.FastSyncMode)
+            foreach (var dto in blockDtos)
             {
-                foreach (var dto in blockDtos)
+                if (syncMode == BlockSyncMode.FastSyncMode)
                 {
                     await _blockIndexHandler.ProcessNewBlockAsync(dto);
                 }
-            }
 
-            foreach (var dto in blockDtos)
-            {
                 await _blockIndexHandler.ProcessConfirmedBlocksAsync(dto);
             }
         });
