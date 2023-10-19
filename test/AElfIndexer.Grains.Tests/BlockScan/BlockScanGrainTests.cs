@@ -6,6 +6,7 @@ using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.Grain.Chains;
+using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.BlockScan;
 using Orleans.Streams;
 using Shouldly;
@@ -450,5 +451,70 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
                 }
             }
         }
+    }
+
+    [Fact]
+    public async Task Block_BlockPushThreshold_Test()
+    {
+        var chainId = "AELF";
+        var clientId = "DApp";
+        
+        var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
+        await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockHeight);
+        await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockHeight);
+        
+        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
+        var version = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>{new SubscriptionInfo
+        {
+            ChainId = chainId,
+            OnlyConfirmedBlock = true,
+            StartBlockNumber = 21,
+            FilterType = BlockFilterType.Block
+        }});
+
+        await clientGrain.SetTokenAsync(version);
+        await clientGrain.StartAsync(version);
+        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
+
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
+        {
+            ChainId = chainId,
+            OnlyConfirmedBlock = false,
+            StartBlockNumber = 21
+        });
+
+        var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
+        var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
+        var stream =
+            Cluster.Client
+                .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
+                .GetStream<SubscribedBlockDto>(streamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
+
+        var subscribedBlock = new List<BlockDto>();
+        await stream.SubscribeAsync((v, t) =>
+            {
+                v.ChainId.ShouldBe(chainId);
+                v.ClientId.ShouldBe(clientId);
+                v.Version.ShouldBe(version);
+                v.FilterType.ShouldBe(BlockFilterType.Block);
+                subscribedBlock.AddRange(v.Blocks);
+           return Task.CompletedTask;
+        });
+        
+        var blockStateSetInfoGrain = Cluster.Client.GetGrain<IBlockStateSetInfoGrain>(
+            GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, chainId, version));
+        await blockStateSetInfoGrain.SetConfirmedBlockHeight(BlockFilterType.Block, 9);
+        
+        await scanGrain.HandleHistoricalBlockAsync();
+        subscribedBlock.Count.ShouldBe(0);
+        
+        await blockScanInfoGrain.SetScanNewBlockStartHeightAsync(9);
+        
+        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
+        subscribedBlock.Count.ShouldBe(0);
+        
+        await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[50].First());
+        subscribedBlock.Count.ShouldBe(0);
     }
 }
