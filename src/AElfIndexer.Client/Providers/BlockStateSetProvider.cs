@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Client;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp.DependencyInjection;
 
@@ -15,10 +16,12 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
     private readonly ConcurrentDictionary<string, Dictionary<string, string>> _longestChainHashes = new();
     
     private readonly IClusterClient _clusterClient;
+    private readonly ILogger<BlockStateSetProvider<T>> _logger;
 
-    public BlockStateSetProvider(IClusterClient clusterClient)
+    public BlockStateSetProvider(IClusterClient clusterClient, ILogger<BlockStateSetProvider<T>> logger)
     {
         _clusterClient = clusterClient;
+        _logger = logger;
     }
 
     public async Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync(string key)
@@ -141,11 +144,23 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
 
         return Task.CompletedTask;
     }
+    
+    public Task CleanAsync(string key, long blockHeight)
+    {
+        if (_blockStateSets.TryGetValue(key, out var sets))
+        {
+            sets.RemoveAll(set => set.Value.BlockHeight > blockHeight);
+        }
+
+        return Task.CompletedTask;
+    }
 
     public async Task SaveDataAsync(string key)
     {
+        var sets = _blockStateSets[key];
+        _logger.LogDebug("Saving BlockStateSets. Key: {key}, Count: {Count}", key, sets.Count);
         var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
-        await blockStateSetsGrain.SetBlockStateSetsAsync(_blockStateSets[key]);
+        await blockStateSetsGrain.SetBlockStateSetsAsync(sets);
         if (_longestChainBlockStateSets.TryGetValue(key, out var longestChainSets) && longestChainSets != null)
         {
             await blockStateSetsGrain.SetLongestChainBlockHashAsync(longestChainSets.BlockHash);
@@ -155,5 +170,6 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
         {
             await blockStateSetsGrain.SetBestChainBlockHashAsync(bestChainSets.BlockHash);
         }
+        _logger.LogDebug("Saved BlockStateSets. Key: {key}", key);
     }
 }
