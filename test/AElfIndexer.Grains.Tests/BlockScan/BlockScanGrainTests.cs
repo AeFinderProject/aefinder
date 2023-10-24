@@ -468,7 +468,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         {
             ChainId = chainId,
             OnlyConfirmedBlock = true,
-            StartBlockNumber = 21,
+            StartBlockNumber = 1,
             FilterType = BlockFilterType.Block
         }});
 
@@ -481,7 +481,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         {
             ChainId = chainId,
             OnlyConfirmedBlock = false,
-            StartBlockNumber = 21
+            StartBlockNumber = 1
         });
 
         var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
@@ -504,17 +504,22 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         
         var blockStateSetInfoGrain = Cluster.Client.GetGrain<IBlockStateSetInfoGrain>(
             GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, chainId, version));
-        await blockStateSetInfoGrain.SetConfirmedBlockHeight(BlockFilterType.Block, 9);
+        await blockStateSetInfoGrain.SetConfirmedBlockHeight(BlockFilterType.Block, 0);
         
         await scanGrain.HandleHistoricalBlockAsync();
-        subscribedBlock.Count.ShouldBe(0);
+        subscribedBlock.Count.ShouldBe(80);
+        
+        await blockStateSetInfoGrain.SetConfirmedBlockHeight(BlockFilterType.Block, 10);
+        
+        await scanGrain.HandleHistoricalBlockAsync();
+        subscribedBlock.Count.ShouldBe(90);
         
         await blockScanInfoGrain.SetScanNewBlockStartHeightAsync(9);
         
         await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
-        subscribedBlock.Count.ShouldBe(0);
+        subscribedBlock.Count.ShouldBe(90);
         
         await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[50].First());
-        subscribedBlock.Count.ShouldBe(0);
+        subscribedBlock.Count.ShouldBe(90);
     }
 }

@@ -95,7 +95,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
             {
                 if (!await clientGrain.IsRunningAsync(State.Version, State.Token) ||
                     (await blockScanInfo.GetClientInfoAsync()).ScanModeInfo.ScanMode != ScanMode.HistoricalBlock ||
-                    !await CheckPushThresholdAsync(subscriptionInfo.FilterType, State.ScannedConfirmedBlockHeight,
+                    !await CheckPushThresholdAsync(subscriptionInfo.FilterType, subscriptionInfo.StartBlockNumber, State.ScannedConfirmedBlockHeight,
                         _blockScanOptions.MaxHistoricalBlockPushThreshold))
                 {
                     break;
@@ -183,7 +183,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
         var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
 
-        if (!await CheckPushThresholdAsync(subscriptionInfo.FilterType, State.ScannedBlockHeight,
+        if (!await CheckPushThresholdAsync(subscriptionInfo.FilterType, subscriptionInfo.StartBlockNumber, State.ScannedBlockHeight,
                 _blockScanOptions.MaxNewBlockPushThreshold))
         {
             return;
@@ -273,7 +273,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanInfoGrain>(this.GetPrimaryKeyString());
         var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
         
-        if (!await CheckPushThresholdAsync(subscriptionInfo.FilterType, State.ScannedConfirmedBlockHeight,
+        if (!await CheckPushThresholdAsync(subscriptionInfo.FilterType, subscriptionInfo.StartBlockNumber, State.ScannedConfirmedBlockHeight,
                 _blockScanOptions.MaxNewBlockPushThreshold))
         {
             return;
@@ -458,11 +458,16 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         return await blockStateSetInfoGrain.GetConfirmedBlockHeight(filterType);
     }
 
-    private async Task<bool> CheckPushThresholdAsync(BlockFilterType filterType, long scannedHeight,
+    private async Task<bool> CheckPushThresholdAsync(BlockFilterType filterType, long startHeight, long scannedHeight,
         int maxPushThreshold)
     {
+        if (scannedHeight - startHeight <= maxPushThreshold)
+        {
+            return true;
+        }
+
         var clientConfirmedHeight = await GetConfirmedBlockHeightAsync(filterType);
-        return clientConfirmedHeight == 0 || clientConfirmedHeight >= scannedHeight - maxPushThreshold;
+        return clientConfirmedHeight >= scannedHeight - maxPushThreshold;
     }
 
     public override async Task OnActivateAsync()
