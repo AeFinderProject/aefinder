@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.State.BlockScan;
@@ -80,6 +81,84 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
         version = await clientGrain.GetVersionAsync();
         version.CurrentVersion.ShouldBe(version2);
         version.NewVersion.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task UpdateSubscriptionInfo_Test()
+    {
+        var clientId = "client-id01";
+        var subscriptionInfo1 = new List<SubscriptionInfo>
+        {
+            new SubscriptionInfo
+            {
+                ChainId = "tDVV",
+                FilterType = BlockFilterType.Transaction,
+                OnlyConfirmedBlock = false,
+                StartBlockNumber = 1009,
+                SubscribeEvents = new List<FilterContractEventInput>()
+                {
+                    new FilterContractEventInput()
+                    {
+                        ContractAddress = "7RzVGiuVWkvL4VfVHdZfQF2Tri3sgLe9U991bohHFfSRZXuGX",
+                        EventNames = new List<string>(){"Transfer"}
+                    }
+                }
+            }
+        };
+        
+        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
+        var version1 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo1);
+        
+        var subscription1 = await clientGrain.GetSubscriptionInfoAsync(version1);
+        subscription1.Count.ShouldBe(1);
+        subscription1[0].ChainId.ShouldBe("tDVV");
+        subscription1[0].FilterType.ShouldBe(BlockFilterType.Transaction);
+        subscription1[0].OnlyConfirmedBlock.ShouldBe(false);
+        subscription1[0].StartBlockNumber.ShouldBe(1009);
+        subscription1[0].SubscribeEvents.Count.ShouldBe(1);
+        subscription1[0].SubscribeEvents[0].ContractAddress.ShouldBe("7RzVGiuVWkvL4VfVHdZfQF2Tri3sgLe9U991bohHFfSRZXuGX");
+        subscription1[0].SubscribeEvents[0].EventNames.Count.ShouldBe(1);
+        
+        var subscriptionInfo2 = new List<SubscriptionInfo>
+        {
+            new SubscriptionInfo
+            {
+                ChainId = "tDVV",
+                FilterType = BlockFilterType.Transaction,
+                OnlyConfirmedBlock = false,
+                StartBlockNumber = 1009,
+                SubscribeEvents = new List<FilterContractEventInput>()
+                {
+                    new FilterContractEventInput()
+                    {
+                        ContractAddress = "UYdd84gLMsVdHrgkr3ogqe1ukhKwen8oj32Ks4J1dg6KH9PYC",
+                        EventNames = new List<string>(){"Transfer","ManagerApproved"}
+                    }
+                }
+            },
+            new SubscriptionInfo()
+            {
+                ChainId = "AELF",
+                FilterType = BlockFilterType.Block,
+                OnlyConfirmedBlock = true,
+                StartBlockNumber = 999
+            }
+        };
+        await clientGrain.UpdateSubscriptionInfoAsync(version1, subscriptionInfo2);
+        
+        var subscription2 = await clientGrain.GetSubscriptionInfoAsync(version1);
+        subscription2.Count.ShouldBe(2);
+        subscription2[0].ChainId.ShouldBe("tDVV");
+        subscription2[0].FilterType.ShouldBe(BlockFilterType.Transaction);
+        subscription2[0].OnlyConfirmedBlock.ShouldBe(false);
+        subscription2[0].StartBlockNumber.ShouldBe(1009);
+        subscription2[0].SubscribeEvents.Count.ShouldBe(1);
+        subscription2[0].SubscribeEvents[0].ContractAddress.ShouldBe("UYdd84gLMsVdHrgkr3ogqe1ukhKwen8oj32Ks4J1dg6KH9PYC");
+        subscription2[0].SubscribeEvents[0].EventNames.Count.ShouldBe(2);
+        subscription2[1].ChainId.ShouldBe("AELF");
+        subscription2[1].FilterType.ShouldBe(BlockFilterType.Block);
+        subscription2[1].OnlyConfirmedBlock.ShouldBe(true);
+        subscription2[1].StartBlockNumber.ShouldBe(999);
     }
 
     [Fact]
