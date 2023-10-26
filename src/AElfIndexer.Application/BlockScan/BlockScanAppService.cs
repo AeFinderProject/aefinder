@@ -45,6 +45,14 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         var version = await client.AddSubscriptionInfoAsync(subscriptionInfos);
         return version;
     }
+    
+    public async Task UpdateSubscriptionInfoAsync(string clientId, string version, List<SubscriptionInfo> subscriptionInfos)
+    {
+        Logger.LogInformation($"Client: {clientId} update subscribe: {JsonSerializer.Serialize(subscriptionInfos)}");
+
+        var client = _clusterClient.GetGrain<IClientGrain>(clientId);
+        await client.UpdateSubscriptionInfoAsync(version, subscriptionInfos);
+    }
 
     public async Task<List<Guid>> GetMessageStreamIdsAsync(string clientId, string version)
     {
