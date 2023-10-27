@@ -37,6 +37,7 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         }
 
         State.VersionInfos[version].SubscriptionInfos = subscriptionInfos;
+        State.VersionInfos[version].VersionStatus = VersionStatus.Initialized;
         await WriteStateAsync();
     }
 

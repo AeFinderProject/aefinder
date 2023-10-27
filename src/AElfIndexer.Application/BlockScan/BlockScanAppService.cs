@@ -52,6 +52,13 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
 
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
         await client.UpdateSubscriptionInfoAsync(version, subscriptionInfos);
+
+        foreach (var subscriptionInfo in subscriptionInfos)
+        {
+            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.ChainId, clientId, version, subscriptionInfo.FilterType);
+            var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
+            await blockScanInfoGrain.UpdateSubscriptionInfoAsync(subscriptionInfo);
+        }
     }
 
     public async Task<List<Guid>> GetMessageStreamIdsAsync(string clientId, string version)
