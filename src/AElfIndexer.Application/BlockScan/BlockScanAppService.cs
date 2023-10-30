@@ -138,7 +138,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             if (subscriptionInfoForCheck == null)
             {
                 var errorMessage =
-                    $"Missing subscribe information in chain {subscriptionInfoForCheck.ChainId} filterType {subscriptionInfoForCheck.FilterType}";
+                    $"Missing subscribe information in chain {currentSubscriptionInfo.ChainId} filterType {currentSubscriptionInfo.FilterType}";
                 throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
 
