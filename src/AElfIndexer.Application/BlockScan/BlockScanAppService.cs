@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AElfIndexer.Grains;
@@ -49,8 +50,100 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
     public async Task UpdateSubscriptionInfoAsync(string clientId, string version, List<SubscriptionInfo> subscriptionInfos)
     {
         Logger.LogInformation($"Client: {clientId} update subscribe: {JsonSerializer.Serialize(subscriptionInfos)}");
-
+        
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
+        
+        //Check if the subscription info is valid
+        var currentSubscriptionInfos = await client.GetSubscriptionInfoAsync(version);
+        
+        foreach (var subscriptionInfo in subscriptionInfos)
+        {
+            var subscriptionInfoForCheckChainId = currentSubscriptionInfos.FirstOrDefault(i =>
+                (i.ChainId == subscriptionInfo.ChainId));
+            if (subscriptionInfoForCheckChainId == null)
+            {
+                var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add new chain";
+                throw new ArgumentException(errorMessage);
+            }
+
+            var subscriptionInfoForCheckFilterType = currentSubscriptionInfos.FirstOrDefault(i =>
+                (i.ChainId == subscriptionInfo.ChainId && i.FilterType == subscriptionInfo.FilterType));
+            if (subscriptionInfoForCheckFilterType == null)
+            {
+                continue;
+            }
+            
+            var subscriptionInfoForCheckStartBlockNumber = currentSubscriptionInfos.FirstOrDefault(i =>
+                (i.ChainId == subscriptionInfo.ChainId && i.StartBlockNumber == subscriptionInfo.StartBlockNumber &&
+                 i.FilterType == subscriptionInfo.FilterType));
+            if (subscriptionInfoForCheckStartBlockNumber == null)
+            {
+                var errorMessage =
+                    $"Invalid start block number {subscriptionInfo.StartBlockNumber}, can not update start block number in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
+                throw new ArgumentException(errorMessage);
+            }
+
+            var subscriptionInfoForCheckIsOnlyConfirmed = currentSubscriptionInfos.FirstOrDefault(i =>
+                (i.ChainId == subscriptionInfo.ChainId && i.StartBlockNumber == subscriptionInfo.StartBlockNumber &&
+                 i.FilterType == subscriptionInfo.FilterType && i.OnlyConfirmedBlock == subscriptionInfo.OnlyConfirmedBlock));
+            if (subscriptionInfoForCheckIsOnlyConfirmed == null)
+            {
+                var errorMessage=
+                    $"Invalid only confirmed block {subscriptionInfo.OnlyConfirmedBlock}, can not update only confirmed block in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
+                throw new ArgumentException(errorMessage);
+            }
+
+            var subscriptionInfoForCheckContract = currentSubscriptionInfos.FirstOrDefault(i =>
+                (i.ChainId == subscriptionInfo.ChainId && i.StartBlockNumber == subscriptionInfo.StartBlockNumber &&
+                 i.FilterType == subscriptionInfo.FilterType && i.OnlyConfirmedBlock == subscriptionInfo.OnlyConfirmedBlock));
+            if (subscriptionInfo.SubscribeEvents == null || subscriptionInfo.SubscribeEvents.Count== 0)
+            {
+                if (subscriptionInfoForCheckContract.SubscribeEvents != null &&
+                    subscriptionInfoForCheckContract.SubscribeEvents.Count > 0)
+                {
+                    var errorMessage=
+                        $"Invalid subscriptionInfo, can not empty subscribe contracts in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
+                    throw new ArgumentException(errorMessage);
+                }
+            }
+            else
+            {
+                if (subscriptionInfoForCheckContract.SubscribeEvents == null ||
+                    subscriptionInfoForCheckContract.SubscribeEvents.Count == 0)
+                {
+                    var errorMessage =
+                        $"Invalid subscriptionInfo, can not add subscribe contracts in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
+                    throw new ArgumentException(errorMessage);
+                }
+
+                foreach (var filterContractEventInput in subscriptionInfo.SubscribeEvents)
+                {
+                    var checkSubscriptionInfoContractEvent = subscriptionInfoForCheckContract.SubscribeEvents.FirstOrDefault(i =>
+                        (i.ContractAddress == filterContractEventInput.ContractAddress));
+                    if (checkSubscriptionInfoContractEvent == null)
+                    {
+                        var errorMessage =
+                            $"Invalid subscriptionInfo, can not add new subscribe contract {filterContractEventInput.ContractAddress} in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
+                        throw new ArgumentException(errorMessage);
+                    }
+                }
+            }
+        }
+
+        foreach (var currentSubscriptionInfo in currentSubscriptionInfos)
+        {
+            var subscriptionInfoForCheck = subscriptionInfos.FirstOrDefault(i =>
+                (i.ChainId == currentSubscriptionInfo.ChainId && i.StartBlockNumber == currentSubscriptionInfo.StartBlockNumber &&
+                 i.FilterType == currentSubscriptionInfo.FilterType && i.OnlyConfirmedBlock == currentSubscriptionInfo.OnlyConfirmedBlock));
+            if (subscriptionInfoForCheck == null)
+            {
+                var errorMessage =
+                    $"Invalid subscriptionInfo, missing subscribe information in chain {subscriptionInfoForCheck.ChainId} filterType {subscriptionInfoForCheck.FilterType}";
+                throw new ArgumentException(errorMessage);
+            }
+        }
+        
+        //Update subscription info
         await client.UpdateSubscriptionInfoAsync(version, subscriptionInfos);
 
         foreach (var subscriptionInfo in subscriptionInfos)
