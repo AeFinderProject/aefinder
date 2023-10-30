@@ -118,9 +118,9 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
 
                 foreach (var filterContractEventInput in subscriptionInfo.SubscribeEvents)
                 {
-                    var checkSubscriptionInfoContractEvent = subscriptionInfoForCheckContract.SubscribeEvents.FirstOrDefault(i =>
+                    var subscriptionInfoForCheckContractEvent = subscriptionInfoForCheckContract.SubscribeEvents.FirstOrDefault(i =>
                         (i.ContractAddress == filterContractEventInput.ContractAddress));
-                    if (checkSubscriptionInfoContractEvent == null)
+                    if (subscriptionInfoForCheckContractEvent == null)
                     {
                         var errorMessage =
                             $"Can not add new subscribe contract {filterContractEventInput.ContractAddress} in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
@@ -140,6 +140,21 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                 var errorMessage =
                     $"Missing subscribe information in chain {subscriptionInfoForCheck.ChainId} filterType {subscriptionInfoForCheck.FilterType}";
                 throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+
+            if (currentSubscriptionInfo.SubscribeEvents != null && currentSubscriptionInfo.SubscribeEvents.Count > 0)
+            {
+                foreach (var currentSubscribeContract in currentSubscriptionInfo.SubscribeEvents)
+                {
+                    var subscriptionInfoForCheckContractEvent = subscriptionInfoForCheck.SubscribeEvents.FirstOrDefault(i =>
+                        (i.ContractAddress == currentSubscribeContract.ContractAddress));
+                    if (subscriptionInfoForCheckContractEvent == null)
+                    {
+                        var errorMessage =
+                            $"Can not remove subscribe contract {currentSubscribeContract.ContractAddress} in chain {currentSubscriptionInfo.ChainId} filterType {currentSubscriptionInfo.FilterType}";
+                        throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+                    }
+                }
             }
         }
         
