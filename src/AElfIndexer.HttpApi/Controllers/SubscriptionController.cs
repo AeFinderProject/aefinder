@@ -44,7 +44,7 @@ public class SubscriptionController : AElfIndexerController
     {
         if (Version.IsNullOrEmpty())
         {
-            throw new UserFriendlyException("Version is required.");
+            throw new AbpException("Version is required.");
         }
         return _blockScanAppService.UpdateSubscriptionInfoAsync(ClientId, Version, subscriptionInfos);
     }
