@@ -63,7 +63,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             if (subscriptionInfoForCheckChainId == null)
             {
                 var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add new chain";
-                throw new AbpException(errorMessage);
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
 
             var subscriptionInfoForCheckFilterType = currentSubscriptionInfos.FirstOrDefault(i =>
@@ -80,7 +80,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             {
                 var errorMessage =
                     $"Invalid start block number {subscriptionInfo.StartBlockNumber}, can not update start block number in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
-                throw new AbpException(errorMessage);
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
 
             var subscriptionInfoForCheckIsOnlyConfirmed = currentSubscriptionInfos.FirstOrDefault(i =>
@@ -90,7 +90,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             {
                 var errorMessage=
                     $"Invalid only confirmed block {subscriptionInfo.OnlyConfirmedBlock}, can not update only confirmed block in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
-                throw new AbpException(errorMessage);
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
 
             var subscriptionInfoForCheckContract = currentSubscriptionInfos.FirstOrDefault(i =>
@@ -102,8 +102,8 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                     subscriptionInfoForCheckContract.SubscribeEvents.Count > 0)
                 {
                     var errorMessage=
-                        $"Invalid subscriptionInfo, can not empty subscribe contracts in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
-                    throw new AbpException(errorMessage);
+                        $"Can not empty subscribe contracts in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
+                    throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
                 }
             }
             else
@@ -112,8 +112,8 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                     subscriptionInfoForCheckContract.SubscribeEvents.Count == 0)
                 {
                     var errorMessage =
-                        $"Invalid subscriptionInfo, can not add subscribe contracts in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
-                    throw new AbpException(errorMessage);
+                        $"Can not add subscribe contracts in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
+                    throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
                 }
 
                 foreach (var filterContractEventInput in subscriptionInfo.SubscribeEvents)
@@ -123,8 +123,8 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                     if (checkSubscriptionInfoContractEvent == null)
                     {
                         var errorMessage =
-                            $"Invalid subscriptionInfo, can not add new subscribe contract {filterContractEventInput.ContractAddress} in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
-                        throw new AbpException(errorMessage);
+                            $"Can not add new subscribe contract {filterContractEventInput.ContractAddress} in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
+                        throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
                     }
                 }
             }
@@ -138,8 +138,8 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             if (subscriptionInfoForCheck == null)
             {
                 var errorMessage =
-                    $"Invalid subscriptionInfo, missing subscribe information in chain {subscriptionInfoForCheck.ChainId} filterType {subscriptionInfoForCheck.FilterType}";
-                throw new AbpException(errorMessage);
+                    $"Missing subscribe information in chain {subscriptionInfoForCheck.ChainId} filterType {subscriptionInfoForCheck.FilterType}";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
         }
         
