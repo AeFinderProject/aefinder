@@ -45,6 +45,7 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         ConfigGraphQL(context.Services);
         
         Configure<DappMessageQueueOptions>(context.Services.GetConfiguration().GetSection("DappMessageQueue"));
+        Configure<AElfIndexerClientOptions>(context.Services.GetConfiguration().GetSection("AElfIndexerClient"));
     }
 
     protected virtual void ConfigureServices(IServiceCollection serviceCollection)
@@ -72,8 +73,12 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
                 GraphQLEndPoint = "../graphql",
                 SubscriptionsEndPoint = "../graphql",
             });
-
-        AsyncHelper.RunSync(async () => await InitBlockScanAsync(context));
+        
+        var clientOptions = context.ServiceProvider.GetRequiredService<AElfIndexerClientOptions>();
+        if (clientOptions.ClientType == AElfIndexerClientType.Full)
+        {
+            AsyncHelper.RunSync(async () => await InitBlockScanAsync(context));
+        }
     }
 
     private async Task InitBlockScanAsync(ApplicationInitializationContext context)
