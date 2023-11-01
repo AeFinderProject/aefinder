@@ -58,44 +58,40 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         
         foreach (var subscriptionInfo in subscriptionInfos)
         {
-            var subscriptionInfoForCheckChainId = currentSubscriptionInfos.FirstOrDefault(i =>
+            var subscriptionInfoForCheckChainId = currentSubscriptionInfos.FindAll(i =>
                 (i.ChainId == subscriptionInfo.ChainId));
-            if (subscriptionInfoForCheckChainId == null)
+            if (subscriptionInfoForCheckChainId ==  null || subscriptionInfoForCheckChainId.Count == 0)
             {
                 var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add new chain";
                 throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
 
-            var subscriptionInfoForCheckFilterType = currentSubscriptionInfos.FirstOrDefault(i =>
-                (i.ChainId == subscriptionInfo.ChainId && i.FilterType == subscriptionInfo.FilterType));
-            if (subscriptionInfoForCheckFilterType == null)
+            var subscriptionInfoForCheckFilterType = subscriptionInfoForCheckChainId.FindAll(i =>
+                i.FilterType == subscriptionInfo.FilterType);
+            if (subscriptionInfoForCheckFilterType == null || subscriptionInfoForCheckFilterType.Count == 0)
             {
                 continue;
             }
             
-            var subscriptionInfoForCheckStartBlockNumber = currentSubscriptionInfos.FirstOrDefault(i =>
-                (i.ChainId == subscriptionInfo.ChainId && i.StartBlockNumber == subscriptionInfo.StartBlockNumber &&
-                 i.FilterType == subscriptionInfo.FilterType));
-            if (subscriptionInfoForCheckStartBlockNumber == null)
+            var subscriptionInfoForCheckStartBlockNumber = subscriptionInfoForCheckFilterType.FindAll(i =>
+                i.StartBlockNumber == subscriptionInfo.StartBlockNumber);
+            if (subscriptionInfoForCheckStartBlockNumber == null || subscriptionInfoForCheckStartBlockNumber.Count == 0)
             {
                 var errorMessage =
                     $"Invalid start block number {subscriptionInfo.StartBlockNumber}, can not update start block number in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
                 throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
 
-            var subscriptionInfoForCheckIsOnlyConfirmed = currentSubscriptionInfos.FirstOrDefault(i =>
-                (i.ChainId == subscriptionInfo.ChainId && i.StartBlockNumber == subscriptionInfo.StartBlockNumber &&
-                 i.FilterType == subscriptionInfo.FilterType && i.OnlyConfirmedBlock == subscriptionInfo.OnlyConfirmedBlock));
-            if (subscriptionInfoForCheckIsOnlyConfirmed == null)
+            var subscriptionInfoForCheckIsOnlyConfirmed = subscriptionInfoForCheckStartBlockNumber.FindAll(i =>
+                 i.OnlyConfirmedBlock == subscriptionInfo.OnlyConfirmedBlock);
+            if (subscriptionInfoForCheckIsOnlyConfirmed == null || subscriptionInfoForCheckIsOnlyConfirmed.Count == 0)
             {
                 var errorMessage=
                     $"Invalid only confirmed block {subscriptionInfo.OnlyConfirmedBlock}, can not update only confirmed block in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
                 throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
 
-            var subscriptionInfoForCheckContract = currentSubscriptionInfos.FirstOrDefault(i =>
-                (i.ChainId == subscriptionInfo.ChainId && i.StartBlockNumber == subscriptionInfo.StartBlockNumber &&
-                 i.FilterType == subscriptionInfo.FilterType && i.OnlyConfirmedBlock == subscriptionInfo.OnlyConfirmedBlock));
+            var subscriptionInfoForCheckContract = subscriptionInfoForCheckIsOnlyConfirmed.FirstOrDefault();
             if (subscriptionInfo.SubscribeEvents == null || subscriptionInfo.SubscribeEvents.Count== 0)
             {
                 if (subscriptionInfoForCheckContract.SubscribeEvents != null &&
@@ -132,9 +128,17 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
 
         foreach (var currentSubscriptionInfo in currentSubscriptionInfos)
         {
-            var subscriptionInfoForCheck = subscriptionInfos.FirstOrDefault(i =>
-                (i.ChainId == currentSubscriptionInfo.ChainId && i.StartBlockNumber == currentSubscriptionInfo.StartBlockNumber &&
-                 i.FilterType == currentSubscriptionInfo.FilterType && i.OnlyConfirmedBlock == currentSubscriptionInfo.OnlyConfirmedBlock));
+            var subscriptionInfoForCheckDuplicate= subscriptionInfos.FindAll(i =>
+                (i.ChainId == currentSubscriptionInfo.ChainId && i.FilterType == currentSubscriptionInfo.FilterType));
+            if (subscriptionInfoForCheckDuplicate != null && subscriptionInfoForCheckDuplicate.Count > 1)
+            {
+                var errorMessage =
+                    $"Duplicate subscribe information in chain {currentSubscriptionInfo.ChainId} filterType {currentSubscriptionInfo.FilterType}";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+            
+            var subscriptionInfoForCheck = subscriptionInfoForCheckDuplicate.FirstOrDefault(i =>
+                (i.StartBlockNumber == currentSubscriptionInfo.StartBlockNumber && i.OnlyConfirmedBlock == currentSubscriptionInfo.OnlyConfirmedBlock));
             if (subscriptionInfoForCheck == null)
             {
                 var errorMessage =
