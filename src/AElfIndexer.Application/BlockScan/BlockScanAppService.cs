@@ -55,12 +55,30 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         
         //Check if the subscription info is valid
         var currentSubscriptionInfos = await client.GetSubscriptionInfoAsync(version);
+
+        await CheckInputSubscriptionInfoIsValid(subscriptionInfos, currentSubscriptionInfos);
+
+        await CheckInputSubscriptionInfoIsDuplicateOrMissing(subscriptionInfos, currentSubscriptionInfos);
         
+        //Update subscription info
+        await client.UpdateSubscriptionInfoAsync(version, subscriptionInfos);
+
+        foreach (var subscriptionInfo in subscriptionInfos)
+        {
+            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.ChainId, clientId, version, subscriptionInfo.FilterType);
+            var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
+            await blockScanInfoGrain.UpdateSubscriptionInfoAsync(subscriptionInfo);
+        }
+    }
+
+    private async Task CheckInputSubscriptionInfoIsValid(List<SubscriptionInfo> subscriptionInfos,
+        List<SubscriptionInfo> currentSubscriptionInfos)
+    {
         foreach (var subscriptionInfo in subscriptionInfos)
         {
             var subscriptionInfoForCheckChainId = currentSubscriptionInfos.FindAll(i =>
                 (i.ChainId == subscriptionInfo.ChainId));
-            if (subscriptionInfoForCheckChainId ==  null || subscriptionInfoForCheckChainId.Count == 0)
+            if (subscriptionInfoForCheckChainId == null || subscriptionInfoForCheckChainId.Count == 0)
             {
                 var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add new chain";
                 throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
@@ -72,7 +90,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             {
                 continue;
             }
-            
+
             var subscriptionInfoForCheckStartBlockNumber = subscriptionInfoForCheckFilterType.FindAll(i =>
                 i.StartBlockNumber == subscriptionInfo.StartBlockNumber);
             if (subscriptionInfoForCheckStartBlockNumber == null || subscriptionInfoForCheckStartBlockNumber.Count == 0)
@@ -83,21 +101,21 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             }
 
             var subscriptionInfoForCheckIsOnlyConfirmed = subscriptionInfoForCheckStartBlockNumber.FindAll(i =>
-                 i.OnlyConfirmedBlock == subscriptionInfo.OnlyConfirmedBlock);
+                i.OnlyConfirmedBlock == subscriptionInfo.OnlyConfirmedBlock);
             if (subscriptionInfoForCheckIsOnlyConfirmed == null || subscriptionInfoForCheckIsOnlyConfirmed.Count == 0)
             {
-                var errorMessage=
+                var errorMessage =
                     $"Invalid only confirmed block {subscriptionInfo.OnlyConfirmedBlock}, can not update only confirmed block in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
                 throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
 
             var subscriptionInfoForCheckContract = subscriptionInfoForCheckIsOnlyConfirmed.FirstOrDefault();
-            if (subscriptionInfo.SubscribeEvents == null || subscriptionInfo.SubscribeEvents.Count== 0)
+            if (subscriptionInfo.SubscribeEvents == null || subscriptionInfo.SubscribeEvents.Count == 0)
             {
                 if (subscriptionInfoForCheckContract.SubscribeEvents != null &&
                     subscriptionInfoForCheckContract.SubscribeEvents.Count > 0)
                 {
-                    var errorMessage=
+                    var errorMessage =
                         $"Can not empty subscribe contracts in chain {subscriptionInfo.ChainId} filterType {subscriptionInfo.FilterType}";
                     throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
                 }
@@ -114,8 +132,9 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
 
                 foreach (var filterContractEventInput in subscriptionInfo.SubscribeEvents)
                 {
-                    var subscriptionInfoForCheckContractEvent = subscriptionInfoForCheckContract.SubscribeEvents.FirstOrDefault(i =>
-                        (i.ContractAddress == filterContractEventInput.ContractAddress));
+                    var subscriptionInfoForCheckContractEvent =
+                        subscriptionInfoForCheckContract.SubscribeEvents.FirstOrDefault(i =>
+                            (i.ContractAddress == filterContractEventInput.ContractAddress));
                     if (subscriptionInfoForCheckContractEvent == null)
                     {
                         var errorMessage =
@@ -125,7 +144,11 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                 }
             }
         }
+    }
 
+    private async Task CheckInputSubscriptionInfoIsDuplicateOrMissing(List<SubscriptionInfo> subscriptionInfos,
+        List<SubscriptionInfo> currentSubscriptionInfos)
+    {
         foreach (var currentSubscriptionInfo in currentSubscriptionInfos)
         {
             var subscriptionInfoForCheckDuplicate= subscriptionInfos.FindAll(i =>
@@ -161,18 +184,8 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                 }
             }
         }
-        
-        //Update subscription info
-        await client.UpdateSubscriptionInfoAsync(version, subscriptionInfos);
-
-        foreach (var subscriptionInfo in subscriptionInfos)
-        {
-            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.ChainId, clientId, version, subscriptionInfo.FilterType);
-            var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
-            await blockScanInfoGrain.UpdateSubscriptionInfoAsync(subscriptionInfo);
-        }
     }
-
+    
     public async Task<List<Guid>> GetMessageStreamIdsAsync(string clientId, string version)
     {
         var client = _clusterClient.GetGrain<IClientGrain>(clientId);
