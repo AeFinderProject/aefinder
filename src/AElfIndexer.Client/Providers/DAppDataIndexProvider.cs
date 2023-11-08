@@ -7,8 +7,7 @@ namespace AElfIndexer.Client.Providers;
 public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
     where TEntity : AElfIndexerClientEntity<string>, IIndexBuild, new()
 {
-    private readonly ConcurrentDictionary<string, List<TEntity>> _addOrUpdateData = new();
-    private readonly ConcurrentDictionary<string, List<TEntity>> _deleteData = new();
+    private readonly ConcurrentQueue<IndexData<TEntity>> _indexDataQueue = new();
     private bool _isRegister = false;
     
     private readonly INESTRepository<TEntity, string> _nestRepository;
@@ -26,30 +25,42 @@ public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
     public async Task SaveDataAsync()
     {
         _logger.LogDebug("Saving dapp index.");
-        foreach (var data in _addOrUpdateData)
-        {
-            await _nestRepository.BulkAddOrUpdateAsync(data.Value, data.Key);
-        }
-        _addOrUpdateData.Clear();
         
-        foreach (var data in _deleteData)
+        var indexName= string.Empty;
+        IndexOperationType operationType = IndexOperationType.AddOrUpdate;
+        var toCommitData = new List<TEntity>();
+
+        while (_indexDataQueue.TryDequeue(out var data))
         {
-            await _nestRepository.BulkDeleteAsync(data.Value, data.Key);
+            if (toCommitData.Count > 0 && (indexName != data.IndexName || operationType != data.OperationType))
+            {
+                await SaveIndexAsync(indexName,operationType, toCommitData);
+            }
+            
+            indexName = data.IndexName;
+            operationType = data.OperationType;
+            toCommitData.Add(data.Entity);
         }
-        _deleteData.Clear();
+        
+        if (toCommitData.Count > 0)
+        {
+            await SaveIndexAsync(indexName,operationType, toCommitData);
+        }
+        
         _logger.LogDebug("Saved dapp index.");
     }
 
     public Task AddOrUpdateAsync(TEntity entity, string indexName)
     {
         Register();
-        
-        if (!_addOrUpdateData.TryGetValue(indexName, out var value))
+
+        _indexDataQueue.Enqueue(new IndexData<TEntity>
         {
-            value = new List<TEntity>();
-        }
-        value.Add(entity);
-        _addOrUpdateData[indexName] = value;
+            IndexName = indexName,
+            OperationType = IndexOperationType.AddOrUpdate,
+            Entity = entity
+        });
+        
         return Task.CompletedTask;
     }
 
@@ -57,13 +68,28 @@ public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
     {
         Register();
         
-        if (!_deleteData.TryGetValue(indexName, out var value))
+        _indexDataQueue.Enqueue(new IndexData<TEntity>
         {
-            value = new List<TEntity>();
-        }
-        value.Add(entity);
-        _deleteData[indexName] = value;
+            IndexName = indexName,
+            OperationType = IndexOperationType.Delete,
+            Entity = entity
+        });
         return Task.CompletedTask;
+    }
+
+    private async Task SaveIndexAsync(string indexName, IndexOperationType operationType, List<TEntity> toCommitData)
+    {
+        switch (operationType)
+        {
+            case IndexOperationType.AddOrUpdate:
+                await _nestRepository.BulkAddOrUpdateAsync(toCommitData, indexName);
+                toCommitData.Clear();
+                break;
+            case IndexOperationType.Delete:
+                await _nestRepository.BulkDeleteAsync(toCommitData, indexName);
+                toCommitData.Clear();
+                break;
+        }
     }
 
     private void Register()
@@ -76,4 +102,17 @@ public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
         _dAppDataIndexManagerProvider.Register(this);
         _isRegister = true;
     }
+}
+
+public class IndexData<TEntity>
+{
+    public string IndexName { get; set; }
+    public IndexOperationType OperationType { get; set; }
+    public TEntity Entity { get; set; }
+}
+
+public enum IndexOperationType
+{
+    AddOrUpdate,
+    Delete
 }
