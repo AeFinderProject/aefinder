@@ -51,7 +51,7 @@ public class Program
             }
             else if (clientOptions.ClientType == AElfIndexerClientType.Query)
             {
-                await builder.AddApplicationAsync<AElfIndexerDappQueryModule>(options =>
+                await builder.AddApplicationAsync<AElfIndexerDappBaseModule>(options =>
                 {
                     options.PlugInSources.AddFolder(builder.Configuration.GetSection("PlugIns")["Path"]);
                 });

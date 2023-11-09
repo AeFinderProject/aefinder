@@ -31,7 +31,7 @@ namespace AElfIndexer.Dapp;
     typeof(AbpAutoMapperModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AElfIndexerMongoDbModule))]
-public class AElfIndexerDappQueryModule : AbpModule
+public class AElfIndexerDappBaseModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
