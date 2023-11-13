@@ -9,6 +9,7 @@ using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.State.Client;
 using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NUglify.Helpers;
 using Org.BouncyCastle.Asn1.X509.Qualified;
@@ -74,7 +75,8 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
                 SubscriptionsEndPoint = "../graphql",
             });
         
-        var clientOptions = context.ServiceProvider.GetRequiredService<AElfIndexerClientOptions>();
+        var clientOptions = new AElfIndexerClientOptions();
+        context.GetConfiguration().GetSection("AElfIndexerClient").Bind(clientOptions);
         if (clientOptions.ClientType == AElfIndexerClientType.Full)
         {
             AsyncHelper.RunSync(async () => await InitBlockScanAsync(context));
