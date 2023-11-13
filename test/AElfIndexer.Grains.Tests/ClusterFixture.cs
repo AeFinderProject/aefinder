@@ -44,6 +44,8 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                         o.BatchPushBlockCount = 10;
                         o.ScanHistoryBlockThreshold = 5;
                         o.BatchPushNewBlockCount = 2;
+                        o.MaxHistoricalBlockPushThreshold = 30;
+                        o.MaxNewBlockPushThreshold = 30;
                     });
                     services.Configure<ClientOptions>(o =>
                     {
