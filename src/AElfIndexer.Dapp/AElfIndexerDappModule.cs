@@ -31,8 +31,9 @@ using Volo.Abp.Threading;
 
 namespace AElfIndexer.Dapp;
 
-[DependsOn(typeof(AbpEventBusRabbitMqModule))]
-public class AElfIndexerDappModule : AElfIndexerDappBaseModule
+[DependsOn(typeof(AbpEventBusRabbitMqModule),
+    typeof(AElfIndexerDappBaseModule))]
+public class AElfIndexerDappModule : AbpModule
 {
     
 }

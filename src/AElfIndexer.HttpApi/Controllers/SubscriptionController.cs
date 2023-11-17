@@ -42,10 +42,6 @@ public class SubscriptionController : AElfIndexerController
     [Authorize]
     public virtual Task UpdateSubscriptionInfoAsync(string Version, [FromBody]List<SubscriptionInfo> subscriptionInfos)
     {
-        if (Version.IsNullOrEmpty())
-        {
-            throw new UserFriendlyException("Version is required.");
-        }
         return _blockScanAppService.UpdateSubscriptionInfoAsync(ClientId, Version, subscriptionInfos);
     }
 
