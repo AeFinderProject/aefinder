@@ -56,9 +56,9 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         //Check if the subscription info is valid
         var currentSubscriptionInfos = await client.GetSubscriptionInfoAsync(version);
 
-        await CheckInputSubscriptionInfoIsValid(subscriptionInfos, currentSubscriptionInfos);
+        CheckInputSubscriptionInfoIsValid(subscriptionInfos, currentSubscriptionInfos);
 
-        await CheckInputSubscriptionInfoIsDuplicateOrMissing(subscriptionInfos, currentSubscriptionInfos);
+        CheckInputSubscriptionInfoIsDuplicateOrMissing(subscriptionInfos, currentSubscriptionInfos);
         
         //Update subscription info
         await client.UpdateSubscriptionInfoAsync(version, subscriptionInfos);
@@ -71,7 +71,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         }
     }
 
-    private async Task CheckInputSubscriptionInfoIsValid(List<SubscriptionInfo> subscriptionInfos,
+    private void CheckInputSubscriptionInfoIsValid(List<SubscriptionInfo> subscriptionInfos,
         List<SubscriptionInfo> currentSubscriptionInfos)
     {
         foreach (var subscriptionInfo in subscriptionInfos)
@@ -146,7 +146,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         }
     }
 
-    private async Task CheckInputSubscriptionInfoIsDuplicateOrMissing(List<SubscriptionInfo> subscriptionInfos,
+    private void CheckInputSubscriptionInfoIsDuplicateOrMissing(List<SubscriptionInfo> subscriptionInfos,
         List<SubscriptionInfo> currentSubscriptionInfos)
     {
         foreach (var currentSubscriptionInfo in currentSubscriptionInfos)
