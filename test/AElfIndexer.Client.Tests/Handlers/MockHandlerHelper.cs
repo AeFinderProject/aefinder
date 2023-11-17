@@ -20,7 +20,7 @@ public static class MockHandlerHelper
             var perBlockHash = i == startBlock && perHash != "" ? perHash : blockHash + (i - 1);
             var blockWithTransactionDto = new BlockWithTransactionDto
             {
-                Id = blockHash + i,
+                Id = i.ToString(),
                 Confirmed = confirmed,
                 BlockHash = blockHash + i,
                 BlockHeight = i,
@@ -53,7 +53,7 @@ public static class MockHandlerHelper
 
             var blockWithTransactionDto = new BlockWithTransactionDto
             {
-                Id = blockHash + i,
+                Id = i.ToString(),
                 Confirmed = confirmed,
                 BlockHash = hash,
                 BlockHeight = i,
@@ -89,7 +89,7 @@ public static class MockHandlerHelper
 
             var blockWithTransactionDto = new BlockWithTransactionDto
             {
-                Id = blockHash + i,
+                Id = i.ToString(),
                 Confirmed = confirmed,
                 BlockHash = hash,
                 BlockHeight = i,
@@ -114,7 +114,7 @@ public static class MockHandlerHelper
         var transactions = new List<TransactionDto>();
         for (var i = 0; i < transactionCount; i++)
         {
-            var id = blockHash + transactionId + i;
+            var id = blockHeight+transactionId + i;
             var logEvents = logEventCount > 0
                 ? CreateTransferLogEvent(logEventCount, id,
                     blockHash, blockHeight, blockTime, chainId, perHash, confirmed)
