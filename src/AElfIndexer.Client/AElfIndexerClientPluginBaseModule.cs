@@ -9,6 +9,7 @@ using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.State.Client;
 using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NUglify.Helpers;
 using Org.BouncyCastle.Asn1.X509.Qualified;
@@ -43,6 +44,9 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         ConfigureServices(context.Services);
         ConfigNodes(context.Services);
         ConfigGraphQL(context.Services);
+        
+        Configure<DappMessageQueueOptions>(context.Services.GetConfiguration().GetSection("DappMessageQueue"));
+        Configure<AElfIndexerClientOptions>(context.Services.GetConfiguration().GetSection("AElfIndexerClient"));
     }
 
     protected virtual void ConfigureServices(IServiceCollection serviceCollection)
@@ -70,8 +74,13 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
                 GraphQLEndPoint = "../graphql",
                 SubscriptionsEndPoint = "../graphql",
             });
-
-        AsyncHelper.RunSync(async () => await InitBlockScanAsync(context));
+        
+        var clientOptions = new AElfIndexerClientOptions();
+        context.GetConfiguration().GetSection("AElfIndexerClient").Bind(clientOptions);
+        if (clientOptions.ClientType == AElfIndexerClientType.Full)
+        {
+            AsyncHelper.RunSync(async () => await InitBlockScanAsync(context));
+        }
     }
 
     private async Task InitBlockScanAsync(ApplicationInitializationContext context)

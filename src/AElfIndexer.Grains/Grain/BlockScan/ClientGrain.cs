@@ -28,6 +28,17 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         await WriteStateAsync();
         return newVersion;
     }
+    
+    public async Task UpdateSubscriptionInfoAsync(string version, List<SubscriptionInfo> subscriptionInfos)
+    {
+        if (version != State.NewVersion && version != State.CurrentVersion)
+        {
+            return;
+        }
+
+        State.VersionInfos[version].SubscriptionInfos = subscriptionInfos;
+        await WriteStateAsync();
+    }
 
     public async Task<List<SubscriptionInfo>> GetSubscriptionInfoAsync(string version)
     {

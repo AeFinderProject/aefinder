@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AElfIndexer.Block.Dtos;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.Grain.Client;
@@ -145,5 +146,67 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         
         allScanIds = await blockScanManagerGrain.GetAllBlockScanIdsAsync();
         allScanIds["AELF"].ShouldNotContain(subscriptionInfo3[0].ChainId + clientId + version3 + subscriptionInfo3[0].FilterType);
+    }
+
+    [Fact]
+    public async Task UpdateSubscriptionTest()
+    {
+        var clientId = "ClientTest";
+        var subscriptionInfo1 = new List<SubscriptionInfo>
+        {
+            new SubscriptionInfo
+            {
+                ChainId = "AELF",
+                FilterType = BlockFilterType.Transaction,
+                OnlyConfirmedBlock = true,
+                StartBlockNumber = 999,
+                SubscribeEvents = new List<FilterContractEventInput>()
+                {
+                    new FilterContractEventInput()
+                    {
+                        ContractAddress = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
+                        EventNames = new List<string>()
+                        {
+                            "Transfer"
+                        }
+                    }
+                }
+            }
+        };
+        var version1 = await _blockScanAppService.SubmitSubscriptionInfoAsync(clientId, subscriptionInfo1);
+        
+        var subscription = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
+        subscription.CurrentVersion.Version.ShouldBe(version1);
+        subscription.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
+        subscription.NewVersion.ShouldBeNull();
+        
+        var subscriptionInfo2 = new List<SubscriptionInfo>
+        {
+            new SubscriptionInfo
+            {
+                ChainId = "AELF",
+                FilterType = BlockFilterType.Transaction,
+                OnlyConfirmedBlock = true,
+                StartBlockNumber = 999,
+                SubscribeEvents = new List<FilterContractEventInput>()
+                {
+                    new FilterContractEventInput()
+                    {
+                        ContractAddress = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
+                        EventNames = new List<string>()
+                        {
+                            "Transfer",
+                            "SetNumbered"
+                        }
+                    }
+                }
+            }
+        };
+        await _blockScanAppService.UpdateSubscriptionInfoAsync(clientId, version1, subscriptionInfo2);
+        var subscription2 = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
+        subscription2.CurrentVersion.Version.ShouldBe(version1);
+        subscription2.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
+        subscription2.CurrentVersion.SubscriptionInfos[0].SubscribeEvents.Count.ShouldBe(1);
+        subscription2.CurrentVersion.SubscriptionInfos[0].SubscribeEvents[0].EventNames.Count.ShouldBe(2);
     }
 }

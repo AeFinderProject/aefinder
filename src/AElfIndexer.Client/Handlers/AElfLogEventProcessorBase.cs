@@ -29,7 +29,10 @@ public abstract class AElfLogEventProcessorBase<TEvent,TData> : IAElfLogEventPro
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Handle Client LogEvent Error!" + e.Message);
+            _logger.LogError(e,
+                "Handle Client LogEvent Error! ChainId: " + (context == null ? "Unknown" : context.ChainId) +
+                " BlockHeight: " + (context == null ? "Unknown" : context.BlockHeight) + " EventName: " + _eventName +
+                " ErrorMsg:" + e.Message);
         }
     }
 
