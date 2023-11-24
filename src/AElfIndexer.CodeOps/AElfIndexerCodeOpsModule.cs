@@ -8,5 +8,6 @@ public class AElfIndexerCodeOpsModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        
     }
 }

@@ -12,7 +12,7 @@ public class Whitelist
         (IReadOnlyDictionary<string, NamespaceRule>)_namespaces;
 
 
-    public Whitelist Assembly(Assembly assembly, Trust trustLevel)
+    public Whitelist Assembly(System.Reflection.Assembly assembly, Trust trustLevel)
     {
         _assemblies.Add(assembly.GetName().Name, trustLevel);
 

@@ -26,18 +26,18 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
     private void WhitelistAssemblies(Whitelist whitelist)
     {
         whitelist
-            .Assembly(Assembly.Load("netstandard"), Trust.Partial)
-            .Assembly(Assembly.Load("System.Runtime"), Trust.Partial)
-            .Assembly(Assembly.Load("System.Runtime.Extensions"), Trust.Partial)
-            .Assembly(Assembly.Load("System.Private.CoreLib"), Trust.Partial)
-            .Assembly(Assembly.Load("System.ObjectModel"), Trust.Partial)
-            .Assembly(Assembly.Load("System.Linq"), Trust.Full)
-            .Assembly(Assembly.Load("System.Linq.Expressions"), Trust.Full)
-            .Assembly(Assembly.Load("System.Collections"), Trust.Full)
-            .Assembly(Assembly.Load("Google.Protobuf"), Trust.Full)
-            .Assembly(Assembly.Load("GraphQL"), Trust.Partial)
-            .Assembly(Assembly.Load("AutoMapper"), Trust.Partial)
-            .Assembly(Assembly.Load("Volo.Abp.ObjectMapping"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("netstandard"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("System.Runtime"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("System.Runtime.Extensions"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("System.Private.CoreLib"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("System.ObjectModel"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("System.Linq"), Trust.Full)
+            .Assembly(System.Reflection.Assembly.Load("System.Linq.Expressions"), Trust.Full)
+            .Assembly(System.Reflection.Assembly.Load("System.Collections"), Trust.Full)
+            .Assembly(System.Reflection.Assembly.Load("Google.Protobuf"), Trust.Full)
+            .Assembly(System.Reflection.Assembly.Load("GraphQL"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("AutoMapper"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("Volo.Abp.ObjectMapping"), Trust.Partial)
             .Assembly(typeof(IndexerEntity).Assembly, Trust.Full) // AElfIndexer.Sdk
             .Assembly(typeof(Address).Assembly, Trust.Full) // AElf.Types
             ;

@@ -10,7 +10,7 @@ public interface IPolicy
     List<IPatcher<T>> GetPatchers<T>();
 }
 
-public class DefaultPolicy : IPolicy, ISingletonDependency
+public class DefaultPolicy : IPolicy, ITransientDependency
 {
     private readonly List<IPatcher> _patchers;
 

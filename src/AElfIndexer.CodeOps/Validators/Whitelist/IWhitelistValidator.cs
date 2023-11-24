@@ -9,8 +9,6 @@ public class WhitelistValidator : WhitelistValidatorBase, ITransientDependency
     public WhitelistValidator(IWhitelistProvider whitelistProvider) : base(whitelistProvider)
     {
     }
-
-    public override bool SystemContactIgnored => true;
 }
     
 public abstract class WhitelistValidatorBase : IValidator<ModuleDefinition>
@@ -21,8 +19,6 @@ public abstract class WhitelistValidatorBase : IValidator<ModuleDefinition>
     {
         _whitelistProvider = whitelistProvider;
     }
-
-    public abstract bool SystemContactIgnored { get; }
 
     public IEnumerable<ValidationResult> Validate(ModuleDefinition module, CancellationToken ct)
     {

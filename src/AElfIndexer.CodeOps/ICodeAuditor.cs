@@ -13,7 +13,7 @@ public interface ICodeAuditor
     void Audit(byte[] code);
 }
 
-public class CodeAuditor : ICodeAuditor, ISingletonDependency
+public class CodeAuditor : ICodeAuditor, ITransientDependency
 {
     private readonly IPolicy _policy;
     private readonly CodeOpsOptions _codeOpsOptions;
@@ -33,7 +33,7 @@ public class CodeAuditor : ICodeAuditor, ISingletonDependency
         // Run module validators
         findings.AddRange(Validate(modDef, cts.Token));
 
-        // Run assembly validators (run after module validators since we invoke BindService method below)
+        // Run assembly validators
         findings.AddRange(Validate(asm, cts.Token));
 
         // Run method validators
