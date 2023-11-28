@@ -1,3 +1,5 @@
+using AElfIndexer.CodeOps.Patchers.Module;
+using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
 namespace AElfIndexer.CodeOps.Tests;
@@ -7,5 +9,8 @@ namespace AElfIndexer.CodeOps.Tests;
 )]
 public class AElfIndexerCodeOpsTestModule : AbpModule
 {
-    
+    public override void ConfigureServices(ServiceConfigurationContext context)
+    {
+        context.Services.AddTransient<EntityIndexingPatcher>();
+    }
 }
