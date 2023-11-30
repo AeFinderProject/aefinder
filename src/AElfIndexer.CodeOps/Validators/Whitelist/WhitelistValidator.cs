@@ -1,21 +1,13 @@
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.CodeOps.Validators.Whitelist;
 
-public class WhitelistValidator : WhitelistValidatorBase, ITransientDependency
-{
-    public WhitelistValidator(IWhitelistProvider whitelistProvider) : base(whitelistProvider)
-    {
-    }
-}
-    
-public abstract class WhitelistValidatorBase : IValidator<ModuleDefinition>
+public class WhitelistValidator : IValidator<ModuleDefinition>
 {
     private readonly IWhitelistProvider _whitelistProvider;
 
-    public WhitelistValidatorBase(IWhitelistProvider whitelistProvider)
+    public WhitelistValidator(IWhitelistProvider whitelistProvider)
     {
         _whitelistProvider = whitelistProvider;
     }

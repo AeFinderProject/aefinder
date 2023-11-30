@@ -1,11 +1,10 @@
 using AElfIndexer.Sdk;
 using Mono.Cecil;
 using Nest;
-using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.CodeOps.Patchers.Module;
 
-public class EntityIndexingPatcher : IPatcher<ModuleDefinition>, ITransientDependency
+public class EntityIndexingPatcher : IPatcher<ModuleDefinition>
 {
     public void Patch(ModuleDefinition module)
     {

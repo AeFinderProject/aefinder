@@ -4,11 +4,6 @@ using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.CodeOps.Validators.Assembly;
 
-public interface IIndexerEntityValidator
-{
-    IEnumerable<ValidationResult> Validate(System.Reflection.Assembly assembly);   
-}
-
 public class IndexerEntityValidator : IValidator<System.Reflection.Assembly>, ITransientDependency
 {
     private readonly CodeOpsOptions _codeOpsOptions;
@@ -18,12 +13,10 @@ public class IndexerEntityValidator : IValidator<System.Reflection.Assembly>, IT
         _codeOpsOptions = codeOpsOptions.Value;
     }
 
-    public IEnumerable<ValidationResult> Validate(System.Reflection.Assembly item, CancellationToken ct)
-    {
-        var compareType = typeof(IIndexerEntity);
-        var count = item.DefinedTypes.Count(type =>
-            compareType.IsAssignableFrom(type) && !compareType.IsAssignableFrom(type.BaseType) && !type.IsAbstract &&
-            type.IsClass && compareType != type);
+    public IEnumerable<ValidationResult> Validate(System.Reflection.Assembly assembly, CancellationToken ct)
+     {
+        var count = assembly.DefinedTypes.Count(type =>
+            typeof(IIndexerEntity).IsAssignableFrom(type) && typeof(IndexerEntity).IsAssignableFrom(type) && !typeof(IIndexerEntity).IsAssignableFrom(type.BaseType) && !type.IsAbstract && type.IsClass);
 
         if (count > _codeOpsOptions.MaxEntityCount)
         {

@@ -2,7 +2,9 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using AElf.Types;
 using AElfIndexer.Sdk;
+using GraphQL;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Modularity;
 
 namespace AElfIndexer.CodeOps.Validators.Whitelist;
 
@@ -34,10 +36,12 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Assembly(System.Reflection.Assembly.Load("System.Linq"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("System.Linq.Expressions"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("System.Collections"), Trust.Full)
+            .Assembly(System.Reflection.Assembly.Load("System.ComponentModel"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("Google.Protobuf"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("GraphQL"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("AutoMapper"), Trust.Partial)
-            .Assembly(System.Reflection.Assembly.Load("Volo.Abp.ObjectMapping"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("Volo.Abp.ObjectMapping"), Trust.Full)
+            .Assembly(System.Reflection.Assembly.Load("Volo.Abp.Core"), Trust.Partial)
             .Assembly(typeof(IndexerEntity).Assembly, Trust.Full) // AElfIndexer.Sdk
             .Assembly(typeof(Address).Assembly, Trust.Full) // AElf.Types
             ;
@@ -115,11 +119,25 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type(nameof(RuntimeHelpers), Permission.Denied, member => member
                     .Member(nameof(RuntimeHelpers.InitializeArray), Permission.Allowed))
                 .Type(nameof(DefaultInterpolatedStringHandler), Permission.Allowed)
+                .Type("AsyncTaskMethodBuilder", Permission.Allowed)
+                .Type("AsyncTaskMethodBuilder`1", Permission.Allowed)
+                .Type("TaskAwaiter", Permission.Allowed)
+                .Type("TaskAwaiter`1", Permission.Allowed)
             )
             .Namespace("System.Text", Permission.Allowed)
             .Namespace("System.Numerics", Permission.Allowed)
             .Namespace("System.Guid", Permission.Allowed)
             .Namespace("System.HashCode", Permission.Allowed)
+            .Namespace("System.Threading.Tasks", Permission.Denied, type => type
+                .Type(nameof(Task), Permission.Allowed)
+                .Type("Task`1", Permission.Allowed)
+            )
+            .Namespace("GraphQL", Permission.Denied, type => type
+                        .Type(nameof(FromServicesAttribute), Permission.Allowed)
+            )
+            .Namespace("Volo.Abp.Modularity", Permission.Denied, type => type
+                .Type(nameof(AbpModule), Permission.Allowed)
+            )
             ;
     }
 

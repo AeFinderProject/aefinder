@@ -28,6 +28,10 @@ public class EntityIndexingPatcherTests:AElfIndexerCodeOpsTestBase
             public string BaseStringValue { get; set; }
             [Fulltext(Index = true)]
             public string BaseTextString { get; set; }
+
+            public MyEntityBase(string id) : base(id)
+            {
+            }
         }
 
         public class MyEntity : MyEntityBase, IIndexerEntity
@@ -46,6 +50,10 @@ public class EntityIndexingPatcherTests:AElfIndexerCodeOpsTestBase
             private string _privateString;
 
             public string OnlyGet { get; }
+
+            public MyEntity(string id) : base(id)
+            {
+            }
         }
 
         public class Detail
@@ -91,6 +99,10 @@ public class EntityIndexingPatcherTests:AElfIndexerCodeOpsTestBase
             public string TextString2 { get; set; }
             [Keyword]
             public string OnlyGet { get; }
+
+            public MyEntity(string id) : base(id)
+            {
+            }
         }
         ";
         
@@ -110,6 +122,10 @@ public class EntityIndexingPatcherTests:AElfIndexerCodeOpsTestBase
             public string BaseStringValue { get; set; }
             [Text(Index = true)]
             public string BaseTextString { get; set; }
+
+            public MyEntityBase(string id) : base(id)
+            {
+            }
         }
         ";
         
