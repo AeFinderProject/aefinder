@@ -18,5 +18,4 @@ public interface IBlockStateSetProvider<T>
     Task SetCurrentBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet);
     Task CleanBlockStateSetsAsync(string key, long blockHeight,string blockHash);
     Task SaveDataAsync(string key);
-    Task CleanAsync(string key, long blockHeight);
 }
