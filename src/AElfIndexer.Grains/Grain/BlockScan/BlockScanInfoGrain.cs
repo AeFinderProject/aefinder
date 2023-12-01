@@ -65,6 +65,12 @@ public class BlockScanInfoGrain : Grain<BlockScanInfoState>, IBlockScanInfoGrain
         await WriteStateAsync();
     }
 
+    public async Task UpdateSubscriptionInfoAsync(SubscriptionInfo info)
+    {
+        State.SubscriptionInfo = info;
+        await WriteStateAsync();
+    }
+
     public async Task StopAsync()
     {
         var blockScanManager = GrainFactory.GetGrain<IBlockScanManagerGrain>(0);

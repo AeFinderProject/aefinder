@@ -35,8 +35,8 @@ public class DAppSubscribedDataHandler: IDistributedEventHandler<SubscribedBlock
                 subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
             return;
         }
-
-        _logger.LogDebug(
+        
+        _logger.LogInformation(
             "Receive {ClientId} subscribedBlock: Version: {Version} FilterType: {FilterType}, ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
             subscribedBlock.ClientId,subscribedBlock.Version,subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,
             subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);

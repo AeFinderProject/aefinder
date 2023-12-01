@@ -43,8 +43,8 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
         var transactionIndex = await _repository.GetListAsync();
         transactionIndex.Item2.Count.ShouldBe(20);
-        transactionIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId0");
-        transactionIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId1");
+        transactionIndex.Item2.First().Id.ShouldBe("100TransactionId0");
+        transactionIndex.Item2.Last().Id.ShouldBe("109TransactionId1");
     }
 
     [Fact]
@@ -59,15 +59,15 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
         var transactionIndex = await _repository.GetListAsync();
         transactionIndex.Item2.Count.ShouldBe(10);
-        transactionIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId0");
-        transactionIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId0");
+        transactionIndex.Item2.First().Id.ShouldBe("100TransactionId0");
+        transactionIndex.Item2.Last().Id.ShouldBe("109TransactionId0");
 
         var transferredIndex = await _transferredRepository.GetListAsync();
         transferredIndex.Item2.Count.ShouldBe(10);
         transferredIndex.Item2.First().Amount.ShouldBe(100);
-        transferredIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId00100");
+        transferredIndex.Item2.First().Id.ShouldBe("100TransactionId00100");
         transferredIndex.Item2.Last().Amount.ShouldBe(109);
-        transferredIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId00109");
+        transferredIndex.Item2.Last().Id.ShouldBe("109TransactionId00109");
         transferredIndex.Item2.All(t => t.Symbol.Equals("TEST")).ShouldBeTrue();
         transferredIndex.Item2.All(t => t.FromAccount.IsNullOrWhiteSpace()).ShouldBeFalse();
         transferredIndex.Item2.All(t => t.ToAccount.IsNullOrWhiteSpace()).ShouldBeFalse();
@@ -91,8 +91,8 @@ public class TransactionDataHandlerTest : AElfIndexerClientTransactionDataHandle
         await _blockChainDataHandler.HandleBlockChainDataAsync(chainId, client, blocks);
         var transactionIndex = await _repository.GetListAsync();
         transactionIndex.Item2.Count.ShouldBe(4);
-        transactionIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId0");
-        transactionIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId1");
+        transactionIndex.Item2.First().Id.ShouldBe("100TransactionId0");
+        transactionIndex.Item2.Last().Id.ShouldBe("109TransactionId1");
 
         var grain =
             _clusterClient.GetGrain<IBlockStateSetGrain<TransactionInfo>>(

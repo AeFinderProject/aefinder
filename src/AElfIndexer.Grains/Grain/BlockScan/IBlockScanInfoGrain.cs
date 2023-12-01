@@ -14,6 +14,7 @@ public interface IBlockScanInfoGrain : IGrainWithStringKey
     Task SetHandleHistoricalBlockTimeAsync(DateTime time);
     Task SetHistoricalBlockScanModeAsync();
     Task InitializeAsync(string chainId, string clientId, string version, SubscriptionInfo info);
+    Task UpdateSubscriptionInfoAsync(SubscriptionInfo info);
     Task StopAsync();
     Task<Guid> GetMessageStreamIdAsync();
 }
