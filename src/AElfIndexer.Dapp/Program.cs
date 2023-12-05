@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using AElfIndexer.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,10 +40,22 @@ public class Program
             builder.Host.AddAppSettingsSecretsJson()
                 .UseAutofac()
                 .UseSerilog();
-            await builder.AddApplicationAsync<AElfIndexerDappModule>(options =>
+            var clientOptions = new AElfIndexerClientOptions();
+            configuration.GetSection("AElfIndexerClient").Bind(clientOptions);
+            if (clientOptions.ClientType == AElfIndexerClientType.Full)
             {
-                options.PlugInSources.AddFolder(builder.Configuration.GetSection("PlugIns")["Path"]);
-            });
+                await builder.AddApplicationAsync<AElfIndexerDappModule>(options =>
+                {
+                    options.PlugInSources.AddFolder(builder.Configuration.GetSection("PlugIns")["Path"]);
+                });
+            }
+            else if (clientOptions.ClientType == AElfIndexerClientType.Query)
+            {
+                await builder.AddApplicationAsync<AElfIndexerDappQueryModule>(options =>
+                {
+                    options.PlugInSources.AddFolder(builder.Configuration.GetSection("PlugIns")["Path"]);
+                });
+            }
             var app = builder.Build();
             await app.InitializeApplicationAsync();
             await app.RunAsync();

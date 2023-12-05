@@ -42,9 +42,9 @@ public class LogEventDataHandlerTests : AElfIndexerClientLogEventHandlerTestBase
         var transferredIndex = await _repository.GetListAsync();
         transferredIndex.Item2.Count.ShouldBe(10);
         transferredIndex.Item2.First().Amount.ShouldBe(100);
-        transferredIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId00100");
+        transferredIndex.Item2.First().Id.ShouldBe("100TransactionId00100");
         transferredIndex.Item2.Last().Amount.ShouldBe(109);
-        transferredIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId00109");
+        transferredIndex.Item2.Last().Id.ShouldBe("109TransactionId00109");
         transferredIndex.Item2.All(t => t.Symbol.Equals("TEST")).ShouldBeTrue();
         transferredIndex.Item2.All(t => t.FromAccount.IsNullOrEmpty()).ShouldBeFalse();
         transferredIndex.Item2.All(t => t.ToAccount.IsNullOrEmpty()).ShouldBeFalse();
@@ -79,9 +79,9 @@ public class LogEventDataHandlerTests : AElfIndexerClientLogEventHandlerTestBase
         var transferredIndex = await _repository.GetListAsync();
         transferredIndex.Item2.Count.ShouldBe(4);
         transferredIndex.Item2.First().Amount.ShouldBe(100);
-        transferredIndex.Item2.First().Id.ShouldBe("BlockHash100TransactionId00100");
+        transferredIndex.Item2.First().Id.ShouldBe("100TransactionId00100");
         transferredIndex.Item2.Last().Amount.ShouldBe(109);
-        transferredIndex.Item2.Last().Id.ShouldBe("BlockHash109TransactionId10109");
+        transferredIndex.Item2.Last().Id.ShouldBe("109TransactionId10109");
         transferredIndex.Item2.All(t => t.Symbol.Equals("TEST")).ShouldBeTrue();
         transferredIndex.Item2.All(t => t.FromAccount.IsNullOrEmpty()).ShouldBeFalse();
         transferredIndex.Item2.All(t => t.ToAccount.IsNullOrEmpty()).ShouldBeFalse();
@@ -115,9 +115,9 @@ public class LogEventDataHandlerTests : AElfIndexerClientLogEventHandlerTestBase
         var transferredIndex = await _repository.GetListAsync();
         transferredIndex.Item2.Count.ShouldBe(2);
         transferredIndex.Item2.First().Amount.ShouldBe(103);
-        transferredIndex.Item2.First().Id.ShouldBe("BlockHash103TransactionId00103");
+        transferredIndex.Item2.First().Id.ShouldBe("103TransactionId00103");
         transferredIndex.Item2.Last().Amount.ShouldBe(104);
-        transferredIndex.Item2.Last().Id.ShouldBe("BlockHash103TransactionId00104");
+        transferredIndex.Item2.Last().Id.ShouldBe("103TransactionId00104");
         transferredIndex.Item2.All(t => t.Symbol.Equals("TEST")).ShouldBeTrue();
         transferredIndex.Item2.All(t => t.FromAccount.IsNullOrEmpty()).ShouldBeFalse();
         transferredIndex.Item2.All(t => t.ToAccount.IsNullOrEmpty()).ShouldBeFalse();
