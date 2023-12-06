@@ -65,6 +65,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.MongoDB.Tests",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.Client.Tests", "test\AElfIndexer.Client.Tests\AElfIndexer.Client.Tests.csproj", "{FD4AA222-E717-4B78-A7F4-46CADF9A1BD1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.Sdk", "src\AElfIndexer.Sdk\AElfIndexer.Sdk.csproj", "{B35484F1-8253-4CBD-98EC-6F18DA11691A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -187,6 +189,10 @@ Global
 		{FD4AA222-E717-4B78-A7F4-46CADF9A1BD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FD4AA222-E717-4B78-A7F4-46CADF9A1BD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD4AA222-E717-4B78-A7F4-46CADF9A1BD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B35484F1-8253-4CBD-98EC-6F18DA11691A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B35484F1-8253-4CBD-98EC-6F18DA11691A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B35484F1-8253-4CBD-98EC-6F18DA11691A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B35484F1-8253-4CBD-98EC-6F18DA11691A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -221,6 +227,7 @@ Global
 		{DC7E4FA3-72C0-4A3F-A80D-120305FAE130} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{2E2A03D2-8A33-44AA-B125-063F37E94F6E} = {04DBDB01-70F4-4E06-B468-8F87850B22BE}
 		{FD4AA222-E717-4B78-A7F4-46CADF9A1BD1} = {04DBDB01-70F4-4E06-B468-8F87850B22BE}
+		{B35484F1-8253-4CBD-98EC-6F18DA11691A} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {28315BFD-90E7-4E14-A2EA-F3D23AF4126F}
