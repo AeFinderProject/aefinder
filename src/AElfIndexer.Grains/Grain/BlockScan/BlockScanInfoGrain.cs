@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.State.BlockScan;
 using Orleans;
@@ -19,9 +17,9 @@ public class BlockScanInfoGrain : Grain<BlockScanInfoState>, IBlockScanInfoGrain
         return Task.FromResult(State.ClientInfo);
     }
 
-    public Task<SubscriptionInfo> GetSubscriptionInfoAsync()
+    public Task<SubscriptionItem> GetSubscriptionInfoAsync()
     {
-        return Task.FromResult(State.SubscriptionInfo);
+        return Task.FromResult(State.SubscriptionItem);
     }
 
     public async Task SetScanNewBlockStartHeightAsync(long height)
@@ -44,7 +42,7 @@ public class BlockScanInfoGrain : Grain<BlockScanInfoState>, IBlockScanInfoGrain
         await WriteStateAsync();
     }
 
-    public async Task InitializeAsync(string chainId, string clientId, string version, SubscriptionInfo info)
+    public async Task InitializeAsync(string chainId, string clientId, string version, SubscriptionItem item)
     {
         var blockScanManager = GrainFactory.GetGrain<IBlockScanManagerGrain>(0);
         await blockScanManager.AddBlockScanAsync(chainId, this.GetPrimaryKeyString());
@@ -61,13 +59,13 @@ public class BlockScanInfoGrain : Grain<BlockScanInfoState>, IBlockScanInfoGrain
                 ScanNewBlockStartHeight = 0
             }
         };
-        State.SubscriptionInfo = info;
+        State.SubscriptionItem = item;
         await WriteStateAsync();
     }
 
-    public async Task UpdateSubscriptionInfoAsync(SubscriptionInfo info)
+    public async Task UpdateSubscriptionInfoAsync(SubscriptionItem item)
     {
-        State.SubscriptionInfo = info;
+        State.SubscriptionItem = item;
         await WriteStateAsync();
     }
 

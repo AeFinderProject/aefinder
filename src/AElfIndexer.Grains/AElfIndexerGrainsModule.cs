@@ -17,9 +17,5 @@ public class AElfIndexerGrainsModule : AbpModule
         Configure<ClientOptions>(configuration.GetSection("Client"));
 
         context.Services.AddSingleton<IBlockGrain, BlockGrain>();
-
-        context.Services.AddTransient<IBlockFilterProvider, BlockFilterProvider>();
-        context.Services.AddTransient<IBlockFilterProvider, TransactionFilterProvider>();
-        context.Services.AddTransient<IBlockFilterProvider, LogEventFilterProvider>();
     }
 }

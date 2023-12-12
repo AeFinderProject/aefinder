@@ -10,6 +10,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Auditing;
 using AElf.EntityMapping.Repositories;
+using AutoMapper.Internal;
 
 namespace AElfIndexer.Block;
 
@@ -249,5 +250,102 @@ public class BlockAppService:ApplicationService,IBlockAppService
         
         return resultList;
     }
-    
+
+     public async Task<List<TransactionDto>> GetSubscriptionTransactionsAsync(GetSubscriptionTransactionsInput input)
+     {
+         if ((input.EndBlockHeight - input.StartBlockHeight + 1) > _apiOptions.TransactionQueryHeightInterval)
+        {
+            input.EndBlockHeight = input.StartBlockHeight + _apiOptions.TransactionQueryHeightInterval - 1;
+        }
+        var queryable = await _transactionIndexRepository.GetQueryableAsync();
+
+        var resultList = new List<TransactionDto>();
+        Expression<Func<TransactionIndex, bool>> query = q => q.ChainId == input.ChainId && q.BlockHeight >= input.StartBlockHeight && q.BlockHeight <= input.EndBlockHeight && q.Confirmed == input.IsOnlyConfirmed;
+        
+        Expression<Func<TransactionIndex, bool>> transactionQuery = null;
+        if (input.TransactionFilters != null && input.TransactionFilters.Count > 0)
+        {
+            foreach (var transactionInput in input.TransactionFilters)
+            {
+                Expression<Func<TransactionIndex, bool>> shouldMustQuery = null;
+                if (!string.IsNullOrEmpty(transactionInput.To))
+                {
+                    shouldMustQuery = q => q.To == transactionInput.To;
+                    
+                    Expression<Func<TransactionIndex, bool>> ShouldMustShouldQuery = null;
+                    foreach (var methodName in transactionInput.MethodNames)
+                    {
+                        if (!string.IsNullOrEmpty(methodName))
+                        {
+                            ShouldMustShouldQuery = ShouldMustShouldQuery is null
+                                ? q => q.MethodName == methodName
+                                : ShouldMustShouldQuery.Or(p => p.MethodName == methodName);
+                        }
+                    }
+                    
+                    if (ShouldMustShouldQuery != null)
+                    {
+                        shouldMustQuery = shouldMustQuery.And(ShouldMustShouldQuery);
+                    }
+
+                    transactionQuery = transactionQuery is null ? shouldMustQuery : transactionQuery.Or(shouldMustQuery);
+                }
+            }
+        }
+
+        Expression<Func<TransactionIndex, bool>> logEventQuery = null;
+        if (input.LogEventFilters != null && input.LogEventFilters.Count>0)
+        {
+            foreach (var eventInput in input.LogEventFilters)
+            {
+                Expression<Func<TransactionIndex, bool>> shouldMustQuery = null;
+                if (!string.IsNullOrEmpty(eventInput.ContractAddress))
+                {
+                    shouldMustQuery = q => q.LogEvents.Any(i => i.ContractAddress == eventInput.ContractAddress);
+
+                    Expression<Func<TransactionIndex, bool>> ShouldMustShouldQuery = null;
+                    foreach (var eventName in eventInput.EventNames)
+                    {
+                        if (!string.IsNullOrEmpty(eventName))
+                        {
+                            ShouldMustShouldQuery = ShouldMustShouldQuery is null
+                                ? q => q.LogEvents.Any(i => i.EventName == eventName)
+                                : ShouldMustShouldQuery.Or(p => p.LogEvents.Any(i => i.EventName == eventName));
+                        }
+                    }
+
+                    if (ShouldMustShouldQuery != null)
+                    {
+                        shouldMustQuery = shouldMustQuery.And(ShouldMustShouldQuery);
+                    }
+
+                    logEventQuery = logEventQuery is null ? shouldMustQuery : logEventQuery.Or(shouldMustQuery);
+                }
+
+            }
+        }
+
+        if (transactionQuery != null && logEventQuery != null)
+        {
+            query = query.And(transactionQuery.Or(logEventQuery));
+        }
+        else
+        {
+            query = query.And(transactionQuery ?? logEventQuery);
+        }
+
+        var list = queryable.Where(query).OrderBy(p => p.BlockHeight).OrderBy(p => p.Index).Skip(0).Take(10000).ToList();
+        if (list.Count == 10000)
+        {
+            list = queryable.Where(query).OrderBy(p => p.BlockHeight).OrderBy(p => p.Index).Skip(0).Take(20000).ToList();
+            if (list.Count == 20000)
+            {
+                list = queryable.Where(query).OrderBy(p => p.BlockHeight).OrderBy(p => p.Index).Skip(0).Take(int.MaxValue).ToList();
+            }
+        }
+        resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list);
+        
+
+        return resultList;
+     }
 }

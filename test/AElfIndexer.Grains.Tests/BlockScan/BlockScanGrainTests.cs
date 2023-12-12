@@ -73,7 +73,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
            return Task.CompletedTask;
         });
 
-        await scanGrain.HandleNewBlockAsync(new BlockWithTransactionDto());
+        await scanGrain.HandleBlockAsync(new BlockWithTransactionDto());
         subscribedBlock.Count.ShouldBe(0);
 
         await scanGrain.HandleHistoricalBlockAsync();
@@ -88,23 +88,23 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         await scanGrain.HandleHistoricalBlockAsync();
         subscribedBlock.Count.ShouldBe(50);
         
-        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
+        await scanGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
-        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
+        await scanGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
-        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[49].First());
+        await scanGrain.HandleBlockAsync(_blockDataProvider.Blocks[49].First());
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
-        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[51].First());
+        await scanGrain.HandleBlockAsync(_blockDataProvider.Blocks[51].First());
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
-        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[53].First());
+        await scanGrain.HandleBlockAsync(_blockDataProvider.Blocks[53].First());
         subscribedBlock.Count.ShouldBe(61);
         subscribedBlock.Last().BlockHeight.ShouldBe(53);
     }
@@ -162,7 +162,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             return Task.CompletedTask;
         });
 
-        await scanGrain.HandleNewBlockAsync(new BlockWithTransactionDto());
+        await scanGrain.HandleBlockAsync(new BlockWithTransactionDto());
         subscribedBlock.Count.ShouldBe(0);
 
         await clientGrain.StopAsync(version);
@@ -214,7 +214,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         await scanGrain.ReScanAsync(180);
         await blockScanInfoGrain.SetScanNewBlockStartHeightAsync(180);
         
-        await Assert.ThrowsAsync<ApplicationException>(async () => await scanGrain.HandleNewBlockAsync(new BlockWithTransactionDto
+        await Assert.ThrowsAsync<ApplicationException>(async () => await scanGrain.HandleBlockAsync(new BlockWithTransactionDto
         {
             BlockHash = "BlockHash200",
             BlockHeight = 200
@@ -428,7 +428,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         subscribedBlock.Count.ShouldBe(50);
         subscribedBlock.Last().BlockHeight.ShouldBe(45);
 
-        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
+        await scanGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
 
@@ -516,7 +516,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         
         await blockScanInfoGrain.SetScanNewBlockStartHeightAsync(9);
         
-        await scanGrain.HandleNewBlockAsync(_blockDataProvider.Blocks[50].First());
+        await scanGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(90);
         
         await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[50].First());

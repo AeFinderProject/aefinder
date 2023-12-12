@@ -37,7 +37,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     services.AddSingleton<IBlockAppService, MockBlockAppService>();
                     services.AddSingleton<IBlockDataProvider, BlockDataProvider>();
                     services.AddTransient<IBlockFilterProvider, BlockFilterProvider>();
-                    services.AddTransient<IBlockFilterProvider, TransactionFilterProvider>();
+                    services.AddTransient<IBlockFilterProvider, BlockFilterProvider>();
                     services.AddTransient<IBlockFilterProvider, LogEventFilterProvider>();
                     services.Configure<BlockScanOptions>(o =>
                     {

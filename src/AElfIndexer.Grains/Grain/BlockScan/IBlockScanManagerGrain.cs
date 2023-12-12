@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Orleans;
 
 namespace AElfIndexer.Grains.Grain.BlockScan;

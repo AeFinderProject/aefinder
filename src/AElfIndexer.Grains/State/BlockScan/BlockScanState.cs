@@ -4,9 +4,9 @@ namespace AElfIndexer.Grains.State.BlockScan;
 
 public class BlockScanState
 {
-    public string Version { get; set; }
-    public string ChainId { get; set; }
-    public string ClientId { get; set; }
+    // public string Version { get; set; }
+    // public string ChainId { get; set; }
+    // public string ClientId { get; set; }
     public Guid MessageStreamId { get; set; } 
     public long ScannedBlockHeight { get; set; }
     public string ScannedBlockHash { get; set; }

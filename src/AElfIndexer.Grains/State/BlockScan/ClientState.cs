@@ -14,7 +14,7 @@ public class ClientState
 public class ClientVersionInfo
 {
     public HashSet<string> BlockScanIds { get; set; }= new();
-    public List<SubscriptionInfo> SubscriptionInfos { get; set; }= new();
+    public Subscription Subscription { get; set; }= new();
     public VersionStatus VersionStatus { get; set; }
 }
 

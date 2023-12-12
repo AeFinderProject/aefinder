@@ -58,7 +58,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                 {
                     Logger.LogDebug($"HandleNewBlock: {block.ChainId} Client: {clientId} BlockHeight: {block.BlockHeight} BlockHash: {block.BlockHash}");
                     var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(clientId);
-                    await blockScanGrain.HandleNewBlockAsync(block);
+                    await blockScanGrain.HandleBlockAsync(block);
                 }
             });
 

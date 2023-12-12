@@ -1,17 +1,12 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 
 namespace AElfIndexer.Grains.Grain.BlockScan;
 
 public interface IBlockFilterProvider
 {
-    BlockFilterType FilterType { get; }
-
-    Task<List<BlockWithTransactionDto>> GetBlocksAsync(string chainId, long startBlockHeight, long endBlockHeight, bool onlyConfirmed,
-        List<FilterContractEventInput> filters);
+    Task<List<BlockWithTransactionDto>> GetBlocksAsync(GetSubscriptionTransactionsInput input);
     
-    Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<FilterContractEventInput> filters);
+    Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<TransactionFilter> transactionFilters, List<LogEventFilter> logEventFilters);
 
     Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId,
         List<BlockWithTransactionDto> blocks);
