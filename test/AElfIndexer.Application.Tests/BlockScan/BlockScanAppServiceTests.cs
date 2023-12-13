@@ -59,7 +59,7 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         var streamIds = await _blockScanAppService.GetMessageStreamIdsAsync(clientId, version1);
         var id = GrainIdHelper.GenerateGrainId(subscriptionInfo1[0].ChainId, clientId, version1,
             subscriptionInfo1[0].FilterType);
-        var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(id);
+        var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
         var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
         streamIds.Count.ShouldBe(1);
         streamIds[0].ShouldBe(streamId);

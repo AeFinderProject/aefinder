@@ -40,14 +40,14 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
     {
         if (subscribedBlock.Blocks.Count == 0) return;
         if (subscribedBlock.ClientId != _clientId) return;
-        var isRunning = await _blockScanAppService.IsRunningAsync(subscribedBlock.ClientId,
+        var isRunning = await _blockScanAppService.IsRunningAsync(subscribedBlock.ChainId, subscribedBlock.ClientId,
             subscribedBlock.Version, subscribedBlock.Token);
         if (!isRunning)
         {
             Logger.LogWarning(
-                "SubscribedBlockHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} subscribedToken: {subscribedToken} clientId: {clientId} FilterType: {FilterType}, ChainId: {ChainId}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
+                "SubscribedBlockHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} subscribedToken: {subscribedToken} clientId: {clientId} , ChainId: {ChainId}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
                 subscribedBlock.ClientId, subscribedBlock.Version, subscribedBlock.Token,_clientId,
-                subscribedBlock.FilterType, subscribedBlock.Blocks.First().ChainId,
+                subscribedBlock.Blocks.First().ChainId,
                 subscribedBlock.Blocks.First().BlockHeight,
                 subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
             return;

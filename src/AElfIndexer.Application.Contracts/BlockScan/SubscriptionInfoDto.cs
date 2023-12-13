@@ -12,5 +12,5 @@ public class SubscriptionInfoDto
 public class SubscriptionInfoDetailDto
 {
     public string Version { get; set; }
-    public List<SubscriptionInfo> SubscriptionInfos { get; set; }
+    public Subscription SubscriptionInfos { get; set; }
 }

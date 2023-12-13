@@ -7,12 +7,6 @@ namespace AElfIndexer.Grains.Grain.BlockScan;
 public class BlockScanCheckGrain : global::Orleans.Grain, IBlockScanCheckGrain
 {
     private IGrainReminder _reminder = null;
-    private readonly BlockScanOptions _blockScanOptions;
-
-    public BlockScanCheckGrain(IOptionsSnapshot<BlockScanOptions> blockScanOptions)
-    {
-        _blockScanOptions = blockScanOptions.Value;
-    }
 
     public async Task ReceiveReminder(string reminderName, TickStatus status)
     {
@@ -25,17 +19,14 @@ public class BlockScanCheckGrain : global::Orleans.Grain, IBlockScanCheckGrain
         {
             foreach (var clientId in clientIds)
             {
-                var clientGrain = GrainFactory.GetGrain<IBlockScanInfoGrain>(clientId);
-                var clientInfo = await clientGrain.GetClientInfoAsync();
-                if (clientInfo.ScanModeInfo.ScanMode != ScanMode.HistoricalBlock ||
-                    clientInfo.LastHandleHistoricalBlockTime >=
-                    DateTime.UtcNow.AddMinutes(-_blockScanOptions.HistoricalPushRecoveryThreshold))
+                var clientGrain = GrainFactory.GetGrain<IBlockScanGrain>(clientId);
+                if (!await clientGrain.IsNeedRecoverAsync())
                 {
                     continue;
                 }
 
-                var blockScanGrain = GrainFactory.GetGrain<IBlockScanGrain>(clientId);
-                Task.Run(blockScanGrain.HandleHistoricalBlockAsync);
+                var blockScanGrain = GrainFactory.GetGrain<IBlockScanExecutorGrain>(clientId);
+                _ = Task.Run(blockScanGrain.HandleHistoricalBlockAsync);
             }
         }
     }

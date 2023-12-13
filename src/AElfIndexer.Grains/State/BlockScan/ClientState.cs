@@ -6,14 +6,11 @@ public class ClientState
 {
     public string CurrentVersion { get;set; }
     public string NewVersion { get; set; }
-    public Dictionary<string, ClientVersionInfo> VersionInfos { get; set; } = new();
-
-    public Dictionary<string, string> TokenInfos { get; set; } = new();
+    public Dictionary<string, VersionSubscription> VersionSubscriptions { get; set; } = new();
 }
 
-public class ClientVersionInfo
+public class VersionSubscription
 {
-    public HashSet<string> BlockScanIds { get; set; }= new();
     public Subscription Subscription { get; set; }= new();
     public VersionStatus VersionStatus { get; set; }
 }
@@ -23,10 +20,4 @@ public enum VersionStatus
     Initialized = 0,
     Started = 1,
     Paused = 2
-}
-
-public class ClientVersion
-{
-    public string CurrentVersion { get;set; }
-    public string NewVersion { get; set; }
 }

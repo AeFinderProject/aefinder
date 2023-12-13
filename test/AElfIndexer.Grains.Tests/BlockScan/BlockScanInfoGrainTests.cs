@@ -35,7 +35,7 @@ public class BlockScanInfoGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var clientGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(clientId);
+        var clientGrain = Cluster.Client.GetGrain<IBlockScanGrain>(clientId);
         await clientGrain.InitializeAsync(chainId, clientId,  version,subscriptionInfo);
         var clientInfo = await clientGrain.GetClientInfoAsync();
         clientInfo.ChainId.ShouldBe(chainId);

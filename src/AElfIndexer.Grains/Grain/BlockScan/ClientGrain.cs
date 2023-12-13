@@ -9,26 +9,36 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
     public async Task<string> AddSubscriptionInfoAsync(Subscription subscription)
     {
         var newVersion = Guid.NewGuid().ToString("N");
-        State.VersionInfos[newVersion] = new ClientVersionInfo
+        State.VersionSubscriptions[newVersion] = new VersionSubscription
         {
             Subscription = subscription,
-            BlockScanIds = new HashSet<string>(),
             VersionStatus = VersionStatus.Initialized
         };
-        
+
         if (string.IsNullOrWhiteSpace(State.CurrentVersion))
         {
             State.CurrentVersion = newVersion;
         }
         else
         {
+            if (!string.IsNullOrWhiteSpace(State.NewVersion))
+            {
+                foreach (var item in State.VersionSubscriptions[State.NewVersion].Subscription.Items)
+                {
+                    var id = GrainIdHelper.GenerateGrainId(item.Key, this.GetPrimaryKeyString(), State.NewVersion);
+                    await GrainFactory.GetGrain<IBlockScanGrain>(id).StopAsync();
+                }
+
+                State.VersionSubscriptions.Remove(State.NewVersion);
+            }
+
             State.NewVersion = newVersion;
         }
 
         await WriteStateAsync();
         return newVersion;
     }
-    
+
     public async Task UpdateSubscriptionInfoAsync(string version, Subscription subscription)
     {
         if (version != State.NewVersion && version != State.CurrentVersion)
@@ -36,42 +46,47 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
             return;
         }
 
-        State.VersionInfos[version].Subscription = subscription;
+        State.VersionSubscriptions[version].Subscription = subscription;
         await WriteStateAsync();
     }
 
     public async Task<Subscription> GetSubscriptionAsync(string version)
     {
-        return State.VersionInfos[version].Subscription;
+        return State.VersionSubscriptions[version].Subscription;
     }
 
-    public async Task AddBlockScanIdAsync(string version, string id)
+    public async Task<SubscriptionInfoDto> GetAllSubscriptionAsync()
     {
-        if (version != State.NewVersion && version != State.CurrentVersion)
+        var result = new SubscriptionInfoDto();
+        if (!string.IsNullOrWhiteSpace(State.CurrentVersion))
         {
-            return;
+            result.CurrentVersion = new SubscriptionInfoDetailDto
+            {
+                Version = State.CurrentVersion,
+                SubscriptionInfos = State.VersionSubscriptions[State.CurrentVersion].Subscription
+            };
+        }
+        
+        if (!string.IsNullOrWhiteSpace(State.NewVersion))
+        {
+            result.NewVersion = new SubscriptionInfoDetailDto
+            {
+                Version = State.NewVersion,
+                SubscriptionInfos = State.VersionSubscriptions[State.NewVersion].Subscription
+            };
         }
 
-        State.VersionInfos[version].BlockScanIds.Add(id);
-        await WriteStateAsync();
+        return result;
     }
 
-    public async Task<List<string>> GetBlockScanIdsAsync(string version)
+    public async Task<bool> IsRunningAsync(string version, string chainId, string scanToken)
     {
-        if (State.VersionInfos.TryGetValue(version, out var clientVersionInfo))
-        {
-            return clientVersionInfo.BlockScanIds.ToList();
-        }
-
-        return new List<string>();
-    }
-
-    public async Task<bool> IsRunningAsync(string version, string token)
-    {
-        return !string.IsNullOrWhiteSpace(version) && 
+        return !string.IsNullOrWhiteSpace(version) &&
                (version == State.NewVersion || version == State.CurrentVersion) &&
-               State.VersionInfos[version].VersionStatus == VersionStatus.Started &&
-               State.TokenInfos[version] == token;
+               State.VersionSubscriptions[version].VersionStatus == VersionStatus.Started &&
+               await GrainFactory
+                   .GetGrain<IBlockScanGrain>(GrainIdHelper.GenerateGrainId(chainId, this.GetPrimaryKeyString(),
+                       version)).IsRunningAsync(scanToken);
     }
 
     public async Task UpgradeVersionAsync()
@@ -83,71 +98,40 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
 
         if (!string.IsNullOrWhiteSpace(State.CurrentVersion))
         {
-            State.VersionInfos.Remove(State.CurrentVersion);
+            foreach (var item in State.VersionSubscriptions[State.CurrentVersion].Subscription.Items)
+            {
+                var id = GrainIdHelper.GenerateGrainId(item.Key, this.GetPrimaryKeyString(), State.NewVersion);
+                await GrainFactory.GetGrain<IBlockScanGrain>(id).StopAsync();
+            }
+            
+            State.VersionSubscriptions.Remove(State.CurrentVersion);
         }
 
         State.CurrentVersion = State.NewVersion;
         State.NewVersion = null;
         await WriteStateAsync();
     }
-    
-    public async Task RemoveVersionInfoAsync(string version)
-    {
-        if (State.CurrentVersion == version)
-        {
-            return;
-        }
-
-        State.VersionInfos.Remove(version);
-        await WriteStateAsync();
-    }
 
     public async Task<VersionStatus> GetVersionStatusAsync(string version)
     {
-        return State.VersionInfos[version].VersionStatus;
+        return State.VersionSubscriptions[version].VersionStatus;
     }
 
     public async Task StartAsync(string version)
     {
-        State.VersionInfos[version].VersionStatus = VersionStatus.Started;
+        State.VersionSubscriptions[version].VersionStatus = VersionStatus.Started;
         await WriteStateAsync();
     }
     
     public async Task PauseAsync(string version)
     {
-        State.VersionInfos[version].VersionStatus = VersionStatus.Paused;
+        State.VersionSubscriptions[version].VersionStatus = VersionStatus.Paused;
         await WriteStateAsync();
-    }
-
-    public async Task<ClientVersion> GetVersionAsync()
-    {
-        return new ClientVersion
-        {
-            CurrentVersion = State.CurrentVersion,
-            NewVersion = State.NewVersion
-        };
-    }
-
-    public async Task SetTokenAsync(string version)
-    {
-        var token = Guid.NewGuid().ToString("N");
-        State.TokenInfos[version] = token;
-        await WriteStateAsync();
-    }
-
-    public async Task<string> GetTokenAsync(string version)
-    {
-        if (State.TokenInfos.TryGetValue(version, out var token))
-        {
-            return token;
-        }
-
-        return null;;
     }
 
     public async Task StopAsync(string version)
     {
-        State.VersionInfos.Remove(version);
+        State.VersionSubscriptions.Remove(version);
         if (State.CurrentVersion == version)
         {
             State.CurrentVersion = null;
@@ -156,6 +140,12 @@ public class ClientGrain : Grain<ClientState>, IClientGrain
         if (State.NewVersion == version)
         {
             State.NewVersion = null;
+        }
+        
+        foreach (var item in State.VersionSubscriptions[version].Subscription.Items)
+        {
+            var id = GrainIdHelper.GenerateGrainId(item.Key, this.GetPrimaryKeyString(), State.NewVersion);
+            await GrainFactory.GetGrain<IBlockScanGrain>(id).StopAsync();
         }
         
         await WriteStateAsync();

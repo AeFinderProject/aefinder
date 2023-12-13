@@ -1,19 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using AElfIndexer.Block;
-using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
-using AElfIndexer.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using NUglify.Helpers;
 using Orleans;
-using Orleans.Streams;
 using Volo.Abp;
-using Volo.Abp.AspNetCore.Mvc;
 
 namespace AElfIndexer.Controllers;
 
@@ -33,17 +23,17 @@ public class SubscriptionController : AElfIndexerController
     
     [HttpPost]
     [Authorize]
-    public virtual Task<string> SubmitSubscriptionInfoAsync(List<SubscriptionInfo> subscriptionInfos)
+    public virtual Task<string> SubmitSubscriptionInfoAsync(Subscription subscriptionInfos)
     {
         return _blockScanAppService.SubmitSubscriptionInfoAsync(ClientId,subscriptionInfos);
     }
 
-    [HttpPut("{Version}")]
-    [Authorize]
-    public virtual Task UpdateSubscriptionInfoAsync(string Version, [FromBody]List<SubscriptionInfo> subscriptionInfos)
-    {
-        return _blockScanAppService.UpdateSubscriptionInfoAsync(ClientId, Version, subscriptionInfos);
-    }
+    // [HttpPut("{Version}")]
+    // [Authorize]
+    // public virtual Task UpdateSubscriptionInfoAsync(string Version, [FromBody]List<SubscriptionInfo> subscriptionInfos)
+    // {
+    //     return _blockScanAppService.UpdateSubscriptionInfoAsync(ClientId, Version, subscriptionInfos);
+    // }
 
     [HttpGet]
     [Authorize]

@@ -47,7 +47,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         await clientGrain.StartAsync(version);
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
-        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
         {
             ChainId = chainId,
@@ -55,7 +55,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             StartBlockNumber = 21
         });
 
-        var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
+        var scanGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
         var stream =
             Cluster.Client
@@ -136,7 +136,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
-        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
         {
             ChainId = chainId,
@@ -144,7 +144,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             StartBlockNumber = 21
         });
 
-        var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
+        var scanGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
         var stream =
             Cluster.Client
@@ -198,7 +198,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         await clientGrain.StartAsync(version);
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
-        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
         {
             ChainId = chainId,
@@ -206,7 +206,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             StartBlockNumber = 200
         });
 
-        var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
+        var scanGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await scanGrain.InitializeAsync(chainId, clientId, version);
 
         await Assert.ThrowsAsync<ApplicationException>(async () => await scanGrain.HandleHistoricalBlockAsync());
@@ -252,7 +252,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
 
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
-        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
         {
             ChainId = chainId,
@@ -261,7 +261,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             FilterType = BlockFilterType.Block
         });
 
-        var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
+        var scanGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
         var stream =
             Cluster.Client
@@ -319,7 +319,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
 
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
-        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
         {
             ChainId = chainId,
@@ -327,7 +327,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             StartBlockNumber = 21
         });
 
-        var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
+        var scanGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
         var stream =
             Cluster.Client
@@ -389,7 +389,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
 
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
-        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
         {
             ChainId = chainId,
@@ -406,7 +406,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             }
         });
 
-        var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
+        var scanGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
         var stream =
             Cluster.Client
@@ -476,7 +476,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         await clientGrain.StartAsync(version);
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
 
-        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanInfoGrain>(id);
+        var blockScanInfoGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
         await blockScanInfoGrain.InitializeAsync(chainId, clientId, version, new SubscriptionInfo
         {
             ChainId = chainId,
@@ -484,7 +484,7 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
             StartBlockNumber = 1
         });
 
-        var scanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
+        var scanGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         var streamId = await scanGrain.InitializeAsync(chainId, clientId, version);
         var stream =
             Cluster.Client

@@ -1,17 +1,14 @@
-using System.Collections.Generic;
+using System;
+using AElfIndexer.BlockScan;
 
 namespace AElfIndexer.Grains.State.BlockScan;
 
 public class BlockScanState
 {
-    // public string Version { get; set; }
-    // public string ChainId { get; set; }
-    // public string ClientId { get; set; }
-    public Guid MessageStreamId { get; set; } 
-    public long ScannedBlockHeight { get; set; }
-    public string ScannedBlockHash { get; set; }
-    public long ScannedConfirmedBlockHeight { get; set; }
-    public string ScannedConfirmedBlockHash { get; set; }
-    public SortedDictionary<long, HashSet<string>> ScannedBlocks = new();
-    public string Token { get; set; }
+    public ScanInfo ScanInfo { get; set; } = new();
+    public SubscriptionItem SubscriptionItem {get;set;}= new();
+    public Guid MessageStreamId { get; set; }
+    public ScanMode ScanMode { get; set; }
+    public long ScanNewBlockStartHeight {get;set;}
+    public DateTime LastHandleHistoricalBlockTime { get; set; }
 }
