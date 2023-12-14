@@ -1,6 +1,6 @@
 using AElfIndexer.Block.Dtos;
 
-namespace AElfIndexer.Grains.Grain.BlockScan;
+namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
 public interface IBlockFilterProvider
 {

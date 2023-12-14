@@ -1,6 +1,4 @@
-using System.Collections.Generic;
-
-namespace AElfIndexer.Grains.State.BlockScan;
+namespace AElfIndexer.Grains.State.BlockScanExecution;
 
 public class ClientManagerState
 {

@@ -1,9 +1,9 @@
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.State.BlockScan;
+using AElfIndexer.Grains.State.BlockScanExecution;
 using Microsoft.Extensions.Options;
 using Orleans;
 
-namespace AElfIndexer.Grains.Grain.BlockScan;
+namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
 public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 {

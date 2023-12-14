@@ -4,8 +4,8 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.Grain.BlockScan;
-using AElfIndexer.Grains.State.BlockScan;
+using AElfIndexer.Grains.Grain.ScanApps;
+using AElfIndexer.Grains.State.ScanApps;
 using Shouldly;
 using Xunit;
 
@@ -27,8 +27,8 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
-        var version1 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo1);
+        var clientGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var version1 = await clientGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         await clientGrain.UpgradeVersionAsync();
 
@@ -46,7 +46,7 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var version2 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo2);
+        var version2 = await clientGrain.AddSubscriptionAsync(subscriptionInfo2);
         await clientGrain.SetTokenAsync(version1);
         var token1 = await clientGrain.GetTokenAsync(version1);
         await clientGrain.SetTokenAsync(version2);
@@ -118,8 +118,8 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
-        var version1 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo1);
+        var clientGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var version1 = await clientGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         var subscription1 = await clientGrain.GetSubscriptionInfoAsync(version1);
         subscription1.Count.ShouldBe(1);
@@ -156,7 +156,7 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
                 StartBlockNumber = 999
             }
         };
-        await clientGrain.UpdateSubscriptionInfoAsync(version1, subscriptionInfo2);
+        await clientGrain.UpdateSubscriptionAsync(version1, subscriptionInfo2);
         
         var subscription2 = await clientGrain.GetSubscriptionInfoAsync(version1);
         subscription2.Count.ShouldBe(2);
@@ -186,8 +186,8 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
-        var version1 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo1);
+        var clientGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var version1 = await clientGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         var subscription1 = await clientGrain.GetSubscriptionInfoAsync(version1);
         subscription1.Count.ShouldBe(1);
@@ -203,7 +203,7 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var version2 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo2);
+        var version2 = await clientGrain.AddSubscriptionAsync(subscriptionInfo2);
 
         await clientGrain.StopAsync(version1);
         var version = await clientGrain.GetVersionAsync();
@@ -227,8 +227,8 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var clientGrain = Cluster.Client.GetGrain<IClientGrain>(clientId);
-        var version1 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo1);
+        var clientGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var version1 = await clientGrain.AddSubscriptionAsync(subscriptionInfo1);
 
         var subscriptionInfo2 = new List<SubscriptionInfo>
         {
@@ -239,7 +239,7 @@ public class ClientGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var version2 = await clientGrain.AddSubscriptionInfoAsync(subscriptionInfo2);
+        var version2 = await clientGrain.AddSubscriptionAsync(subscriptionInfo2);
 
         await clientGrain.AddBlockScanIdAsync(version1, "id1");
         await clientGrain.AddBlockScanIdAsync(version2, "id2");

@@ -1,8 +1,7 @@
-using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Runtime;
 
-namespace AElfIndexer.Grains.Grain.BlockScan;
+namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
 public class BlockScanCheckGrain : global::Orleans.Grain, IBlockScanCheckGrain
 {

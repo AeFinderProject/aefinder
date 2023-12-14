@@ -1,8 +1,8 @@
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.State.BlockScan;
+using AElfIndexer.Grains.State.BlockScanExecution;
 using Orleans;
 
-namespace AElfIndexer.Grains.Grain.BlockScan;
+namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
 public interface IBlockScanGrain : IGrainWithStringKey
 {

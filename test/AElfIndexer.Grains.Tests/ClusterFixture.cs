@@ -1,7 +1,7 @@
 using System;
 using AElfIndexer.Block;
 using AElfIndexer.Grains.BlockScan;
-using AElfIndexer.Grains.Grain.BlockScan;
+using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

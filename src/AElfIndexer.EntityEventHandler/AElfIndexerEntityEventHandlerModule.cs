@@ -1,7 +1,7 @@
 using AElf.EntityMapping.Options;
 using AElfIndexer;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.BlockScan;
+using AElfIndexer.Grains.Grain.BlockScanExecution;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting; 

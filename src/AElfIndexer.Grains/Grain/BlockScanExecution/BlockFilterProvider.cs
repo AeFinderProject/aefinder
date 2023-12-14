@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
-namespace AElfIndexer.Grains.Grain.BlockScan;
+namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
 public class BlockFilterProvider : IBlockFilterProvider, ITransientDependency
 {

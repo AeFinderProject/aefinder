@@ -1,5 +1,5 @@
 ﻿using AElfIndexer.Grains.Grain.Blocks;
-using AElfIndexer.Grains.Grain.BlockScan;
+using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;

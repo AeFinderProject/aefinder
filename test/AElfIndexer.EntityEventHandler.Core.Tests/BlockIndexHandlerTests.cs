@@ -1,5 +1,5 @@
 using AElfIndexer.Block.Dtos;
-using AElfIndexer.Grains.Grain.BlockScan;
+using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.Chains;
 using AElfIndexer.Orleans.TestBase;
 using Orleans;

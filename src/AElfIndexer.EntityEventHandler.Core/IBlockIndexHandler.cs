@@ -3,7 +3,7 @@ using System.Linq;
 using AElfIndexer.Block;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
-using AElfIndexer.Grains.Grain.BlockScan;
+using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.Chains;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

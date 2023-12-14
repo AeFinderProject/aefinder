@@ -1,7 +1,7 @@
 using AElfIndexer.Block.Dtos;
 using Orleans;
 
-namespace AElfIndexer.Grains.Grain.BlockScan;
+namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
 public interface IBlockScanExecutorGrain : IGrainWithStringKey
 {

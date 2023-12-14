@@ -1,6 +1,4 @@
-using System;
-
-namespace AElfIndexer.Grains.State.BlockScan;
+namespace AElfIndexer.Grains.State.BlockScanExecution;
 
 public class ScanInfo
 {

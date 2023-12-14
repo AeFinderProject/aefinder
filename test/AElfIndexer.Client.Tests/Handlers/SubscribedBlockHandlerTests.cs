@@ -5,11 +5,11 @@ using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.BlockScan;
 using AElfIndexer.Grains.Grain.Chains;
 using AElfIndexer.Grains.Grain.Client;
-using AElfIndexer.Grains.State.BlockScan;
+using AElfIndexer.Grains.Grain.ScanApps;
 using AElfIndexer.Grains.State.Client;
+using AElfIndexer.Grains.State.ScanApps;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -36,10 +36,10 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
     {
         var chainId = "AELF";
         var client = _clientInfoProvider.GetClientId();
-        var clientGrain = _clusterClient.GetGrain<IClientGrain>(client);
+        var clientGrain = _clusterClient.GetGrain<IScanAppGrain>(client);
         
-        var currentVersion = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>());
-        var newVersion = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>());
+        var currentVersion = await clientGrain.AddSubscriptionAsync(new List<SubscriptionInfo>());
+        var newVersion = await clientGrain.AddSubscriptionAsync(new List<SubscriptionInfo>());
         _clientInfoProvider.SetVersion(currentVersion);
 
         await _blockScanAppService.StartScanAsync(client, currentVersion);
@@ -148,10 +148,10 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
     {
         var chainId = "AELF";
         var client = _clientInfoProvider.GetClientId();
-        var clientGrain = _clusterClient.GetGrain<IClientGrain>(client);
+        var clientGrain = _clusterClient.GetGrain<IScanAppGrain>(client);
         
-        var currentVersion = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>());
-        var newVersion = await clientGrain.AddSubscriptionInfoAsync(new List<SubscriptionInfo>());
+        var currentVersion = await clientGrain.AddSubscriptionAsync(new List<SubscriptionInfo>());
+        var newVersion = await clientGrain.AddSubscriptionAsync(new List<SubscriptionInfo>());
         _clientInfoProvider.SetVersion(currentVersion);
         
         await clientGrain.SetTokenAsync(currentVersion);

@@ -5,10 +5,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.BlockScan;
+using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.Client;
-using AElfIndexer.Grains.State.BlockScan;
+using AElfIndexer.Grains.Grain.ScanApps;
 using AElfIndexer.Grains.State.Client;
+using AElfIndexer.Grains.State.ScanApps;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -66,7 +67,7 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
 
         await _blockScanAppService.StartScanAsync(clientId, version1);
         
-        var clientGrain = _clusterClient.GetGrain<IClientGrain>(clientId);
+        var clientGrain = _clusterClient.GetGrain<IScanAppGrain>(clientId);
         var scanIds = await clientGrain.GetBlockScanIdsAsync(version1);
         scanIds.Count.ShouldBe(1);
         scanIds[0].ShouldBe(id);

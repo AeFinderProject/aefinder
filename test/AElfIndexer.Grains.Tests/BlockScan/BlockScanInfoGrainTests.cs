@@ -4,8 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.Grain.BlockScan;
-using AElfIndexer.Grains.State.BlockScan;
+using AElfIndexer.Grains.Grain.BlockScanExecution;
 using Shouldly;
 using Xunit;
 

@@ -1,4 +1,4 @@
-namespace AElfIndexer.Grains.Grain.BlockScan;
+namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
 public class BlockScanOptions
 {

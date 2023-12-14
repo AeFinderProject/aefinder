@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.State.BlockScan;
 using Volo.Abp.Account;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.IdentityModel;

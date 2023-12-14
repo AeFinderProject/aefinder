@@ -1,6 +1,6 @@
 using Orleans;
 
-namespace AElfIndexer.Grains.Grain.BlockScan;
+namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
 public interface IBlockScanCheckGrain : IGrainWithStringKey, IRemindable
 {

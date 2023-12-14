@@ -1,7 +1,6 @@
-using System;
 using AElfIndexer.BlockScan;
 
-namespace AElfIndexer.Grains.State.BlockScan;
+namespace AElfIndexer.Grains.State.BlockScanExecution;
 
 public class BlockScanState
 {

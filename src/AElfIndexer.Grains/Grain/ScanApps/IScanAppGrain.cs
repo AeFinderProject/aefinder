@@ -1,15 +1,15 @@
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.State.BlockScan;
+using AElfIndexer.Grains.State.ScanApps;
 using Orleans;
 
-namespace AElfIndexer.Grains.Grain.BlockScan;
+namespace AElfIndexer.Grains.Grain.ScanApps;
 
-public interface IClientGrain: IGrainWithStringKey
+public interface IScanAppGrain: IGrainWithStringKey
 {
-    Task<string> AddSubscriptionInfoAsync(Subscription subscription);
-    Task UpdateSubscriptionInfoAsync(string version, Subscription subscription);
+    Task<string> AddSubscriptionAsync(Subscription subscription);
+    Task UpdateSubscriptionAsync(string version, Subscription subscription);
     Task<Subscription> GetSubscriptionAsync(string version);
-    Task<SubscriptionInfoDto> GetAllSubscriptionAsync();
+    Task<SubscriptionInfoDto> GetAllSubscriptionsAsync();
     Task<bool> IsRunningAsync(string version, string chainId, string scanToken);
     Task UpgradeVersionAsync();
     Task<VersionStatus> GetVersionStatusAsync(string version);

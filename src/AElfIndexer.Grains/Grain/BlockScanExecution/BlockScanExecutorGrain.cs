@@ -1,19 +1,20 @@
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.Chains;
-using AElfIndexer.Grains.State.BlockScan;
+using AElfIndexer.Grains.Grain.ScanApps;
+using AElfIndexer.Grains.State.BlockScanExecution;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Streams;
 
-namespace AElfIndexer.Grains.Grain.BlockScan;
+namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
-public class BlockScanExecutorExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanExecutorGrain
+public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanExecutorGrain
 {
     private readonly IBlockFilterProvider _blockFilterProvider;
     private readonly BlockScanOptions _blockScanOptions;
-    private readonly ILogger<BlockScanExecutorExecutorGrain> _logger;
+    private readonly ILogger<BlockScanExecutorGrain> _logger;
 
     private IAsyncStream<SubscribedBlockDto> _stream = null!;
 
@@ -21,8 +22,8 @@ public class BlockScanExecutorExecutorGrain : Grain<BlockScanExecutorState>, IBl
     private string _clientId;
     private string _subscriptionVersion;
 
-    public BlockScanExecutorExecutorGrain(IOptionsSnapshot<BlockScanOptions> blockScanOptions,
-        IBlockFilterProvider blockFilterProvider, ILogger<BlockScanExecutorExecutorGrain> logger)
+    public BlockScanExecutorGrain(IOptionsSnapshot<BlockScanOptions> blockScanOptions,
+        IBlockFilterProvider blockFilterProvider, ILogger<BlockScanExecutorGrain> logger)
     {
         _blockFilterProvider = blockFilterProvider;
         _logger = logger;
@@ -50,7 +51,7 @@ public class BlockScanExecutorExecutorGrain : Grain<BlockScanExecutorState>, IBl
             _logger.LogInformation($"Pushing block [grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: begin from {State.ScannedBlockHeight}");
 
             var blockScanInfo = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
-            var clientGrain = GrainFactory.GetGrain<IClientGrain>(_clientId);
+            var clientGrain = GrainFactory.GetGrain<IScanAppGrain>(_clientId);
             var chainGrain = GrainFactory.GetGrain<IChainGrain>(_chainId);
             var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
             var chainStatus = await chainGrain.GetChainStatusAsync();
@@ -146,7 +147,7 @@ public class BlockScanExecutorExecutorGrain : Grain<BlockScanExecutorState>, IBl
             return;
         }
 
-        var clientGrain = GrainFactory.GetGrain<IClientGrain>(_clientId);
+        var clientGrain = GrainFactory.GetGrain<IScanAppGrain>(_clientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
         var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
 
@@ -244,7 +245,7 @@ public class BlockScanExecutorExecutorGrain : Grain<BlockScanExecutorState>, IBl
             return;
         }
         
-        var clientGrain = GrainFactory.GetGrain<IClientGrain>(_clientId);
+        var clientGrain = GrainFactory.GetGrain<IScanAppGrain>(_clientId);
         var blockScanInfo = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
         var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
         
