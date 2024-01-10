@@ -1,5 +1,6 @@
 using AElfIndexer.Block;
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.BlockScan;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
@@ -59,41 +60,47 @@ public class BlockFilterProvider : IBlockFilterProvider, ITransientDependency
     public async Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks,
         List<TransactionFilter> transactionFilters, List<LogEventFilter> logEventFilters)
     {
-        if (transactionFilters.Count == 0 && logEventFilters.Count == 0)
+        if (transactionFilters.IsNullOrEmpty() && logEventFilters.IsNullOrEmpty())
         {
             return blocks;
         }
 
         var transactionToFilter = new HashSet<string>();
         var transactionMethodFilter = new HashSet<string>();
-        foreach (var filter in transactionFilters)
+        if (transactionFilters != null)
         {
-            if (filter.MethodNames.Count == 0)
+            foreach (var filter in transactionFilters)
             {
-                transactionToFilter.Add(filter.To);
-            }
-            else
-            {
-                foreach (var methodName in filter.MethodNames)
+                if (filter.MethodNames.Count == 0)
                 {
-                    transactionMethodFilter.Add(filter.To + methodName);
+                    transactionToFilter.Add(filter.To);
+                }
+                else
+                {
+                    foreach (var methodName in filter.MethodNames)
+                    {
+                        transactionMethodFilter.Add(filter.To + methodName);
+                    }
                 }
             }
         }
 
         var contractAddressFilter = new HashSet<string>();
         var logEventFilter = new HashSet<string>();
-        foreach (var filter in logEventFilters)
+        if (logEventFilters != null)
         {
-            if (filter.EventNames.Count == 0)
+            foreach (var filter in logEventFilters)
             {
-                contractAddressFilter.Add(filter.ContractAddress);
-            }
-            else
-            {
-                foreach (var eventName in filter.EventNames)
+                if (filter.EventNames.Count == 0)
                 {
-                    logEventFilter.Add(filter.ContractAddress + eventName);
+                    contractAddressFilter.Add(filter.ContractAddress);
+                }
+                else
+                {
+                    foreach (var eventName in filter.EventNames)
+                    {
+                        logEventFilter.Add(filter.ContractAddress + eventName);
+                    }
                 }
             }
         }

@@ -41,4 +41,9 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
     {
         throw new NotImplementedException();
     }
+
+    public Task<List<TransactionDto>> GetSubscriptionTransactionsAsync(GetSubscriptionTransactionsInput input)
+    {
+        throw new NotImplementedException();
+    }
 }

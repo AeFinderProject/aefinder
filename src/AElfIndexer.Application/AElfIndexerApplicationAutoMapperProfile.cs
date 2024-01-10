@@ -1,4 +1,5 @@
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.BlockScan;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
 using AutoMapper;
@@ -20,6 +21,9 @@ public class AElfIndexerApplicationAutoMapperProfile:Profile
         CreateMap<BlockDto,BlockWithTransactionDto>();
         CreateMap<NewBlockEto,BlockWithTransactionDto>();
         CreateMap<ConfirmBlockEto,BlockWithTransactionDto>();
+        
+        CreateMap<TransactionFilter,FilterTransactionInput>();
+        CreateMap<LogEventFilter,FilterContractEventInput>();
     }
     
 }

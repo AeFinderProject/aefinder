@@ -14,20 +14,16 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         _blockScanOptions = blockScanOptions.Value;
     }
 
-    public override async Task OnActivateAsync()
+    public async Task<ScanInfo> GetClientInfoAsync()
     {
-        await this.ReadStateAsync();
-        await base.OnActivateAsync();
+        await ReadStateAsync();
+        return State.ScanInfo;
     }
 
-    public Task<ScanInfo> GetClientInfoAsync()
+    public async Task<SubscriptionItem> GetSubscriptionInfoAsync()
     {
-        return Task.FromResult(State.ScanInfo);
-    }
-
-    public Task<SubscriptionItem> GetSubscriptionInfoAsync()
-    {
-        return Task.FromResult(State.SubscriptionItem);
+        await ReadStateAsync();
+        return State.SubscriptionItem;
     }
 
     public async Task SetScanNewBlockStartHeightAsync(long height)
@@ -94,6 +90,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task<bool> IsScanBlockAsync(long blockHeight, bool isConfirmedBlock)
     {
+        await ReadStateAsync();
         return State.ScanMode == ScanMode.NewBlock &&
                State.ScanNewBlockStartHeight <= blockHeight &&
                (isConfirmedBlock || !State.SubscriptionItem.OnlyConfirmed);
@@ -101,17 +98,26 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
 
     public async Task<ScanMode> GetScanModeAsync()
     {
+        await ReadStateAsync();
         return State.ScanMode;
     }
     
     public async Task<bool> IsNeedRecoverAsync()
     {
+        await ReadStateAsync();
         return State.ScanMode == ScanMode.HistoricalBlock && State.LastHandleHistoricalBlockTime >=
             DateTime.UtcNow.AddMinutes(-_blockScanOptions.HistoricalPushRecoveryThreshold);
     }
 
     public async Task<bool> IsRunningAsync(string token)
     {
+        await ReadStateAsync();
         return State.ScanInfo.ScanToken == token;
+    }
+    
+    public async Task<string> GetScanTokenAsync()
+    {
+        await ReadStateAsync();
+        return State.ScanInfo.ScanToken;
     }
 }

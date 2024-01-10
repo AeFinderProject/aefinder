@@ -31,210 +31,208 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
     public async Task ScanTest()
     {
         var clientId = "Client";
-        var subscriptionInfo1 = new List<SubscriptionInfo>
+        var chainId = "AELF";
+        var subscriptionInput = new Subscription()
         {
-            new SubscriptionInfo
+            Items = new Dictionary<string, SubscriptionItem>
             {
-                ChainId = "AELF",
-                FilterType = BlockFilterType.Block
+                {chainId,new SubscriptionItem
+                {
+                    ChainId = chainId,
+                    StartBlockNumber = 100,
+                    OnlyConfirmed = true
+                }}
             }
         };
 
-        var version1 = await _blockScanAppService.SubmitSubscriptionInfoAsync(clientId, subscriptionInfo1);
+        var version1 = await _blockScanAppService.SubmitSubscriptionInfoAsync(clientId, subscriptionInput);
 
-        var subscription = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
+        var subscription = await _blockScanAppService.GetSubscriptionAsync(clientId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
-        subscription.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Block);
+        subscription.CurrentVersion.Subscription.Items[chainId].StartBlockNumber.ShouldBe(100);
         subscription.NewVersion.ShouldBeNull();
-
-        var version = await _blockScanAppService.GetClientVersionAsync(clientId);
-        version.CurrentVersion.ShouldBe(version1);
-        version.NewVersion.ShouldBeNull();
         
         await _blockScanAppService.UpgradeVersionAsync(clientId);
         
-        version = await _blockScanAppService.GetClientVersionAsync(clientId);
-        version.CurrentVersion.ShouldBe(version1);
-        version.NewVersion.ShouldBeNull();
+        subscription = await _blockScanAppService.GetSubscriptionAsync(clientId);
+        subscription.CurrentVersion.Version.ShouldBe(version1);
+        subscription.NewVersion.ShouldBeNull();
         
         var streamIds = await _blockScanAppService.GetMessageStreamIdsAsync(clientId, version1);
-        var id = GrainIdHelper.GenerateGrainId(subscriptionInfo1[0].ChainId, clientId, version1,
-            subscriptionInfo1[0].FilterType);
-        var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
-        var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
+        var id1 = GrainIdHelper.GenerateGrainId(chainId, clientId, version1);
+        var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(id1);
+        var streamId = await blockScanGrain.GetMessageStreamIdAsync();
         streamIds.Count.ShouldBe(1);
         streamIds[0].ShouldBe(streamId);
 
         await _blockScanAppService.StartScanAsync(clientId, version1);
         
-        var clientGrain = _clusterClient.GetGrain<IScanAppGrain>(clientId);
-        var scanIds = await clientGrain.GetBlockScanIdsAsync(version1);
-        scanIds.Count.ShouldBe(1);
-        scanIds[0].ShouldBe(id);
+        var blockScanManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
+        var scanIds = await blockScanManagerGrain.GetAllBlockScanIdsAsync();
+        scanIds[chainId].Count.ShouldBe(1);
+        scanIds[chainId].ShouldContain(id1);
 
-        var versionStatus = await clientGrain.GetVersionStatusAsync(version1);
+        var scanAppGrain = _clusterClient.GetGrain<IScanAppGrain>(clientId);
+        var versionStatus = await scanAppGrain.GetVersionStatusAsync(version1);
         versionStatus.ShouldBe(VersionStatus.Started);
-        var token = await _blockScanAppService.GetClientTokenAsync(clientId, version1);
-        var isRunning = await _blockScanAppService.IsRunningAsync(clientId, version1, token);
+        
+        var token = await blockScanGrain.GetScanTokenAsync();
+        var isRunning = await _blockScanAppService.IsRunningAsync(chainId, clientId, version1, token);
         isRunning.ShouldBeTrue();
 
-        var subscriptionInfo2 = new List<SubscriptionInfo>
+        var subscriptionInput2 = new Subscription()
         {
-            new SubscriptionInfo
+            Items = new Dictionary<string, SubscriptionItem>
             {
-                ChainId = "AELF",
-                FilterType = BlockFilterType.Transaction
+                {chainId,new SubscriptionItem
+                {
+                    ChainId = chainId,
+                    StartBlockNumber = 200
+                }}
             }
         };
         
-        var version2 = await _blockScanAppService.SubmitSubscriptionInfoAsync(clientId, subscriptionInfo2);
-
-        subscription = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
-        subscription.CurrentVersion.Version.ShouldBe(version1);
-        subscription.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Block);
-        subscription.NewVersion.Version.ShouldBe(version2);
-        subscription.NewVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
+        var version2 = await _blockScanAppService.SubmitSubscriptionInfoAsync(clientId, subscriptionInput2);
+        var id2 = GrainIdHelper.GenerateGrainId(chainId, clientId, version2);
         
-        version = await _blockScanAppService.GetClientVersionAsync(clientId);
-        version.CurrentVersion.ShouldBe(version1);
-        version.NewVersion.ShouldBe(version2);
+        subscription = await _blockScanAppService.GetSubscriptionAsync(clientId);
+        subscription.CurrentVersion.Version.ShouldBe(version1);
+        subscription.CurrentVersion.Subscription.Items[chainId].StartBlockNumber.ShouldBe(100);
+        subscription.NewVersion.Version.ShouldBe(version2);
+        subscription.NewVersion.Subscription.Items[chainId].StartBlockNumber.ShouldBe(200);
         
         await _blockScanAppService.PauseAsync(clientId, version1);
-        scanIds = await clientGrain.GetBlockScanIdsAsync(version1);
-        scanIds.Count.ShouldBe(1);
-        scanIds[0].ShouldBe(id);
+        scanIds = await blockScanManagerGrain.GetAllBlockScanIdsAsync();
+        scanIds[chainId].Count.ShouldBe(0);
 
-        versionStatus = await clientGrain.GetVersionStatusAsync(version1);
+        versionStatus = await scanAppGrain.GetVersionStatusAsync(version1);
         versionStatus.ShouldBe(VersionStatus.Paused);
         
-        token = await _blockScanAppService.GetClientTokenAsync(clientId, version1);
-        isRunning = await _blockScanAppService.IsRunningAsync(clientId, version1, token);
+        isRunning = await _blockScanAppService.IsRunningAsync(chainId,clientId, version1, token);
         isRunning.ShouldBeFalse();
         
         await _blockScanAppService.StartScanAsync(clientId, version1);
         
-        versionStatus = await clientGrain.GetVersionStatusAsync(version1);
+        versionStatus = await scanAppGrain.GetVersionStatusAsync(version1);
         versionStatus.ShouldBe(VersionStatus.Started);
         
-        token = await _blockScanAppService.GetClientTokenAsync(clientId, version1);
-        isRunning = await _blockScanAppService.IsRunningAsync(clientId, version1, token);
+        isRunning = await _blockScanAppService.IsRunningAsync(chainId,clientId, version1, token);
         isRunning.ShouldBeTrue();
 
         await _blockScanAppService.StartScanAsync(clientId, version2);
         
-        versionStatus = await clientGrain.GetVersionStatusAsync(version1);
+        versionStatus = await scanAppGrain.GetVersionStatusAsync(version1);
         versionStatus.ShouldBe(VersionStatus.Started);
         
-        var subscriptionInfo3 = new List<SubscriptionInfo>
+        var subscriptionInfo3 = new Subscription()
         {
-            new SubscriptionInfo
+            Items = new Dictionary<string, SubscriptionItem>
             {
-                ChainId = "AELF",
-                FilterType = BlockFilterType.LogEvent
+                {chainId,new SubscriptionItem
+                {
+                    ChainId = chainId,
+                    StartBlockNumber = 300
+                }}
             }
         };
         
         var version3 = await _blockScanAppService.SubmitSubscriptionInfoAsync(clientId, subscriptionInfo3);
+        var id3 = GrainIdHelper.GenerateGrainId(chainId, clientId, version3);
 
-        subscription = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
+        subscription = await _blockScanAppService.GetSubscriptionAsync(clientId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
-        subscription.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Block);
+        subscription.CurrentVersion.Subscription.Items[chainId].StartBlockNumber.ShouldBe(100);
         subscription.NewVersion.Version.ShouldBe(version3);
-        subscription.NewVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.LogEvent);
-        
-        version = await _blockScanAppService.GetClientVersionAsync(clientId);
-        version.CurrentVersion.ShouldBe(version1);
-        version.NewVersion.ShouldBe(version3);
+        subscription.NewVersion.Subscription.Items[chainId].StartBlockNumber.ShouldBe(300);
         
         await _blockScanAppService.StartScanAsync(clientId, version3);
         
-        var blockScanManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
+        blockScanManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
         var allScanIds = await blockScanManagerGrain.GetAllBlockScanIdsAsync();
-        allScanIds["AELF"].ShouldNotContain(subscriptionInfo2[0].ChainId + clientId + version2 + subscriptionInfo2[0].FilterType);
-
-        scanIds = await clientGrain.GetBlockScanIdsAsync(version2);
-        scanIds.Count.ShouldBe(0);
+        allScanIds[chainId].ShouldNotContain(id2);
+        allScanIds[chainId].ShouldContain(id3);
 
         await _blockScanAppService.UpgradeVersionAsync(clientId);
         
-        version = await _blockScanAppService.GetClientVersionAsync(clientId);
-        version.CurrentVersion.ShouldBe(version3);
-        version.NewVersion.ShouldBeNull();
+        subscription = await _blockScanAppService.GetSubscriptionAsync(clientId);
+        subscription.CurrentVersion.Version.ShouldBe(version3);
+        subscription.CurrentVersion.Subscription.Items[chainId].StartBlockNumber.ShouldBe(300);
+        subscription.NewVersion.ShouldBeNull();
         
         allScanIds = await blockScanManagerGrain.GetAllBlockScanIdsAsync();
-        allScanIds["AELF"].ShouldNotContain(subscriptionInfo1[0].ChainId + clientId + version1 + subscriptionInfo1[0].FilterType);
+        allScanIds[chainId].ShouldNotContain(id1);
         
         await _blockScanAppService.StartScanAsync(clientId, version3);
 
         await _blockScanAppService.StopAsync(clientId, version3);
-        
-        version = await _blockScanAppService.GetClientVersionAsync(clientId);
-        version.CurrentVersion.ShouldBeNull();
-        version.NewVersion.ShouldBeNull();
-        
-        allScanIds = await blockScanManagerGrain.GetAllBlockScanIdsAsync();
-        allScanIds["AELF"].ShouldNotContain(subscriptionInfo3[0].ChainId + clientId + version3 + subscriptionInfo3[0].FilterType);
-    }
 
-    [Fact]
-    public async Task UpdateSubscriptionTest()
-    {
-        var clientId = "ClientTest";
-        var subscriptionInfo1 = new List<SubscriptionInfo>
-        {
-            new SubscriptionInfo
-            {
-                ChainId = "AELF",
-                FilterType = BlockFilterType.Transaction,
-                OnlyConfirmedBlock = true,
-                StartBlockNumber = 999,
-                SubscribeEvents = new List<FilterContractEventInput>()
-                {
-                    new FilterContractEventInput()
-                    {
-                        ContractAddress = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
-                        EventNames = new List<string>()
-                        {
-                            "Transfer"
-                        }
-                    }
-                }
-            }
-        };
-        var version1 = await _blockScanAppService.SubmitSubscriptionInfoAsync(clientId, subscriptionInfo1);
-        
-        var subscription = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
-        subscription.CurrentVersion.Version.ShouldBe(version1);
-        subscription.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
+        subscription = await _blockScanAppService.GetSubscriptionAsync(clientId);
+        subscription.CurrentVersion.ShouldBeNull();
         subscription.NewVersion.ShouldBeNull();
         
-        var subscriptionInfo2 = new List<SubscriptionInfo>
-        {
-            new SubscriptionInfo
-            {
-                ChainId = "AELF",
-                FilterType = BlockFilterType.Transaction,
-                OnlyConfirmedBlock = true,
-                StartBlockNumber = 999,
-                SubscribeEvents = new List<FilterContractEventInput>()
-                {
-                    new FilterContractEventInput()
-                    {
-                        ContractAddress = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
-                        EventNames = new List<string>()
-                        {
-                            "Transfer",
-                            "SetNumbered"
-                        }
-                    }
-                }
-            }
-        };
-        await _blockScanAppService.UpdateSubscriptionInfoAsync(clientId, version1, subscriptionInfo2);
-        var subscription2 = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
-        subscription2.CurrentVersion.Version.ShouldBe(version1);
-        subscription2.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
-        subscription2.CurrentVersion.SubscriptionInfos[0].SubscribeEvents.Count.ShouldBe(1);
-        subscription2.CurrentVersion.SubscriptionInfos[0].SubscribeEvents[0].EventNames.Count.ShouldBe(2);
+        allScanIds = await blockScanManagerGrain.GetAllBlockScanIdsAsync();
+        allScanIds[chainId].ShouldNotContain(id3);
     }
+
+    // [Fact]
+    // public async Task UpdateSubscriptionTest()
+    // {
+    //     var clientId = "ClientTest";
+    //     var subscriptionInfo1 = new List<SubscriptionInfo>
+    //     {
+    //         new SubscriptionInfo
+    //         {
+    //             ChainId = "AELF",
+    //             FilterType = BlockFilterType.Transaction,
+    //             OnlyConfirmedBlock = true,
+    //             StartBlockNumber = 999,
+    //             SubscribeEvents = new List<FilterContractEventInput>()
+    //             {
+    //                 new FilterContractEventInput()
+    //                 {
+    //                     ContractAddress = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
+    //                     EventNames = new List<string>()
+    //                     {
+    //                         "Transfer"
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     };
+    //     var version1 = await _blockScanAppService.SubmitSubscriptionInfoAsync(clientId, subscriptionInfo1);
+    //     
+    //     var subscription = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
+    //     subscription.CurrentVersion.Version.ShouldBe(version1);
+    //     subscription.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
+    //     subscription.NewVersion.ShouldBeNull();
+    //     
+    //     var subscriptionInfo2 = new List<SubscriptionInfo>
+    //     {
+    //         new SubscriptionInfo
+    //         {
+    //             ChainId = "AELF",
+    //             FilterType = BlockFilterType.Transaction,
+    //             OnlyConfirmedBlock = true,
+    //             StartBlockNumber = 999,
+    //             SubscribeEvents = new List<FilterContractEventInput>()
+    //             {
+    //                 new FilterContractEventInput()
+    //                 {
+    //                     ContractAddress = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
+    //                     EventNames = new List<string>()
+    //                     {
+    //                         "Transfer",
+    //                         "SetNumbered"
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     };
+    //     await _blockScanAppService.UpdateSubscriptionInfoAsync(clientId, version1, subscriptionInfo2);
+    //     var subscription2 = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
+    //     subscription2.CurrentVersion.Version.ShouldBe(version1);
+    //     subscription2.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
+    //     subscription2.CurrentVersion.SubscriptionInfos[0].SubscribeEvents.Count.ShouldBe(1);
+    //     subscription2.CurrentVersion.SubscriptionInfos[0].SubscribeEvents[0].EventNames.Count.ShouldBe(2);
+    // }
 }

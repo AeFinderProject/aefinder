@@ -22,9 +22,4 @@ public class SubscriptionGrain : Grain<SubscriptionState>, ISubscriptionGrain
     {
         await ClearStateAsync();
     }
-    
-    public override async Task OnActivateAsync()
-    {
-        await ReadStateAsync();
-    }
 }

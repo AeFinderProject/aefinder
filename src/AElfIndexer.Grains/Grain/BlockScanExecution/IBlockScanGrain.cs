@@ -19,4 +19,5 @@ public interface IBlockScanGrain : IGrainWithStringKey
     Task<ScanMode> GetScanModeAsync();
     Task<bool> IsNeedRecoverAsync();
     Task<bool> IsRunningAsync(string token);
+    Task<string> GetScanTokenAsync();
 }

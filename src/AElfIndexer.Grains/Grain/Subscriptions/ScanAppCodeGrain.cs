@@ -21,9 +21,4 @@ public class ScanAppCodeGrain : Grain<ScanAppCodeState>, IScanAppCodeGrain
     {
         await ClearStateAsync();
     }
-    
-    public override async Task OnActivateAsync()
-    {
-        await ReadStateAsync();
-    }
 }

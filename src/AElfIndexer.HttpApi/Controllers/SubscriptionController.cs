@@ -37,8 +37,8 @@ public class SubscriptionController : AElfIndexerController
 
     [HttpGet]
     [Authorize]
-    public virtual Task<SubscriptionInfoDto> GetSubscriptionInfoAsync()
+    public virtual Task<AllSubscriptionDto> GetSubscriptionInfoAsync()
     {
-        return _blockScanAppService.GetSubscriptionInfoAsync(ClientId);
+        return _blockScanAppService.GetSubscriptionAsync(ClientId);
     }
 }

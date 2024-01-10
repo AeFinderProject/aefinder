@@ -25,7 +25,7 @@ public class ScanAppGrain : Grain<ScanAppState>, IScanAppGrain
             if (!string.IsNullOrWhiteSpace(State.NewVersion))
             {
                 toRemoveSubscriptionId = GetSubscriptionId(State.NewVersion);
-                await StopBlockScanAsync(toRemoveSubscriptionId);
+                await StopBlockScanAsync(toRemoveSubscriptionId, State.NewVersion);
                 State.VersionStatus.Remove(State.NewVersion);
             }
             State.NewVersion = newVersion;
@@ -55,24 +55,24 @@ public class ScanAppGrain : Grain<ScanAppState>, IScanAppGrain
         return await GrainFactory.GetGrain<ISubscriptionGrain>(subscriptionId).GetSubscriptionAsync();
     }
 
-    public async Task<SubscriptionInfoDto> GetAllSubscriptionsAsync()
+    public async Task<AllSubscriptionDto> GetAllSubscriptionsAsync()
     {
-        var result = new SubscriptionInfoDto();
+        var result = new AllSubscriptionDto();
         if (!string.IsNullOrWhiteSpace(State.CurrentVersion))
         {
-            result.CurrentVersion = new SubscriptionInfoDetailDto
+            result.CurrentVersion = new AllSubscriptionDetailDto
             {
                 Version = State.CurrentVersion,
-                SubscriptionInfos = await GrainFactory.GetGrain<ISubscriptionGrain>(GetSubscriptionId(State.CurrentVersion)).GetSubscriptionAsync()
+                Subscription = await GrainFactory.GetGrain<ISubscriptionGrain>(GetSubscriptionId(State.CurrentVersion)).GetSubscriptionAsync()
             };
         }
         
         if (!string.IsNullOrWhiteSpace(State.NewVersion))
         {
-            result.NewVersion = new SubscriptionInfoDetailDto
+            result.NewVersion = new AllSubscriptionDetailDto
             {
                 Version = State.NewVersion,
-                SubscriptionInfos = await GrainFactory.GetGrain<ISubscriptionGrain>(GetSubscriptionId(State.NewVersion)).GetSubscriptionAsync()
+                Subscription = await GrainFactory.GetGrain<ISubscriptionGrain>(GetSubscriptionId(State.NewVersion)).GetSubscriptionAsync()
             };
         }
 
@@ -100,7 +100,7 @@ public class ScanAppGrain : Grain<ScanAppState>, IScanAppGrain
         if (!string.IsNullOrWhiteSpace(State.CurrentVersion))
         {
             toRemoveSubscriptionId = GetSubscriptionId(State.CurrentVersion);
-            await StopBlockScanAsync(toRemoveSubscriptionId);
+            await StopBlockScanAsync(toRemoveSubscriptionId, State.CurrentVersion);
             State.VersionStatus.Remove(State.CurrentVersion);
         }
 
@@ -146,7 +146,7 @@ public class ScanAppGrain : Grain<ScanAppState>, IScanAppGrain
         State.VersionStatus.Remove(version);
 
         var toRemoveSubscriptionId = GetSubscriptionId(version);;
-        await StopBlockScanAsync(toRemoveSubscriptionId);
+        await StopBlockScanAsync(toRemoveSubscriptionId, version);
 
         await WriteStateAsync();
         
@@ -163,13 +163,13 @@ public class ScanAppGrain : Grain<ScanAppState>, IScanAppGrain
         return GrainIdHelper.GenerateGrainId(this.GetPrimaryKeyString(), version);
     }
     
-    private async Task StopBlockScanAsync(string subscriptionId)
+    private async Task StopBlockScanAsync(string subscriptionId, string version)
     {
         var subscriptionGrain = GrainFactory.GetGrain<ISubscriptionGrain>(subscriptionId);
         var subscription = await subscriptionGrain.GetSubscriptionAsync();
         foreach (var item in subscription.Items)
         {
-            var id = GrainIdHelper.GenerateGrainId(item.Key, this.GetPrimaryKeyString(), State.NewVersion);
+            var id = GrainIdHelper.GenerateGrainId(item.Key, this.GetPrimaryKeyString(), version);
             await GrainFactory.GetGrain<IBlockScanGrain>(id).StopAsync();
         }
     }
