@@ -4,15 +4,12 @@ namespace AElfIndexer.Grains.State.ScanApps;
 
 public class ScanAppState
 {
-    public string CurrentVersion { get;set; }
-    public string NewVersion { get; set; }
-    //public Dictionary<string, VersionSubscription> VersionSubscriptions { get; set; } = new();
-    public Dictionary<string, VersionStatus> VersionStatus { get; set; } = new();
+    public ScanAppVersion CurrentVersion { get;set; }
+    public ScanAppVersion NewVersion { get; set; }
 }
 
-public enum VersionStatus
+public class ScanAppVersion
 {
-    Initialized = 0,
-    Started = 1,
-    Paused = 2
+    public string Version { get; set; }
+    public SubscriptionStatus Status { get; set; }
 }

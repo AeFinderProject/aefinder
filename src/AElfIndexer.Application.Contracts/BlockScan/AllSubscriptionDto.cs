@@ -12,5 +12,6 @@ public class AllSubscriptionDto
 public class AllSubscriptionDetailDto
 {
     public string Version { get; set; }
-    public Subscription Subscription { get; set; }
+    public SubscriptionStatus Status { get; set; }
+    public SubscriptionDto Subscription { get; set; }
 }

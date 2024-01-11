@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScanExecution;
+using AElfIndexer.Grains.State.Subscriptions;
 using Shouldly;
 using Xunit;
 
@@ -21,31 +22,29 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         var version = "Version";
         var subscription = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
+                    ChainId = chainId,
+                    OnlyConfirmed = true,
+                    StartBlockNumber = 100,
+                    LogEventConditions = new List<LogEventCondition>
                     {
-                        ChainId = chainId,
-                        OnlyConfirmed = true,
-                        StartBlockNumber = 100,
-                        LogEventFilters = new List<LogEventFilter>
+                        new()
                         {
-                            new LogEventFilter
-                            {
-                                ContractAddress = "ContractAddress",
-                                EventNames = new List<string>{"EventName"}
-                            }
+                            ContractAddress = "ContractAddress",
+                            EventNames = new List<string> { "EventName" }
                         }
-                            
                     }
+
                 }
             }
         };
         
         var scanToken = Guid.NewGuid().ToString("N");
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(clientId);
-        await blockScanGrain.InitializeAsync(scanToken, chainId, clientId, version, subscription.Items[chainId]);
+        await blockScanGrain.InitializeAsync(scanToken, chainId, clientId, version, subscription.SubscriptionItems[0]);
         var clientInfo = await blockScanGrain.GetClientInfoAsync();
         clientInfo.ChainId.ShouldBe(chainId);
         clientInfo.ClientId.ShouldBe(clientId);
@@ -53,13 +52,13 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         scanMode.ShouldBe(ScanMode.HistoricalBlock);
 
         var subscribe = await blockScanGrain.GetSubscriptionInfoAsync();
-        subscribe.ChainId.ShouldBe(subscription.Items[chainId].ChainId);
-        subscribe.OnlyConfirmed.ShouldBe(subscription.Items[chainId].OnlyConfirmed);
-        subscribe.StartBlockNumber.ShouldBe(subscription.Items[chainId].StartBlockNumber);
-        subscribe.LogEventFilters.Count.ShouldBe(1);
-        subscribe.LogEventFilters[0].ContractAddress.ShouldBe(subscription.Items[chainId].LogEventFilters[0].ContractAddress);
-        subscribe.LogEventFilters[0].EventNames.Count.ShouldBe(1);
-        subscribe.LogEventFilters[0].EventNames[0].ShouldBe(subscription.Items[chainId].LogEventFilters[0].EventNames[0]);
+        subscribe.ChainId.ShouldBe(subscription.SubscriptionItems[0].ChainId);
+        subscribe.OnlyConfirmed.ShouldBe(subscription.SubscriptionItems[0].OnlyConfirmed);
+        subscribe.StartBlockNumber.ShouldBe(subscription.SubscriptionItems[0].StartBlockNumber);
+        subscribe.LogEventConditions.Count.ShouldBe(1);
+        subscribe.LogEventConditions[0].ContractAddress.ShouldBe(subscription.SubscriptionItems[0].LogEventConditions[0].ContractAddress);
+        subscribe.LogEventConditions[0].EventNames.Count.ShouldBe(1);
+        subscribe.LogEventConditions[0].EventNames[0].ShouldBe(subscription.SubscriptionItems[0].LogEventConditions[0].EventNames[0]);
 
         var clientManagerGrain = Cluster.Client.GetGrain<IBlockScanManagerGrain>(0);
         var clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync("AELF");

@@ -113,7 +113,7 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
             {
                 foreach (var block in blocks)
                 {
-                    if (input.IsOnlyConfirmed && block.Confirmed)
+                    if (input.IsOnlyConfirmed && !block.Confirmed)
                     {
                         continue;
                     }

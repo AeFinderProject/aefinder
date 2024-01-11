@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using AElfIndexer.BlockScan;
+using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Orleans;
@@ -23,9 +24,9 @@ public class SubscriptionController : AElfIndexerController
     
     [HttpPost]
     [Authorize]
-    public virtual Task<string> SubmitSubscriptionInfoAsync(Subscription subscriptionInfos)
+    public virtual Task<string> SubmitSubscriptionInfoAsync(SubscriptionDto input)
     {
-        return _blockScanAppService.SubmitSubscriptionInfoAsync(ClientId,subscriptionInfos);
+        return _blockScanAppService.AddSubscriptionAsync(ClientId, input);
     }
 
     // [HttpPut("{Version}")]

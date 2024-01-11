@@ -8,6 +8,7 @@ using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.Chains;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.Grain.ScanApps;
+using AElfIndexer.Grains.State.Subscriptions;
 using Orleans.Streams;
 using Shouldly;
 using Xunit;
@@ -37,15 +38,13 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
         var subscription = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
-                    {
-                        ChainId = chainId,
-                        OnlyConfirmed = false,
-                        StartBlockNumber = 21
-                    }
+                    ChainId = chainId,
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 21
                 }
             }
         };
@@ -56,7 +55,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.Items[chainId]);
+        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
@@ -127,15 +126,13 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var clientGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
         var subscription = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
-                    {
-                        ChainId = chainId,
-                        OnlyConfirmed = true,
-                        StartBlockNumber = 21
-                    }
+                    ChainId = chainId,
+                    OnlyConfirmed = true,
+                    StartBlockNumber = 21
                 }
             }
         };
@@ -147,7 +144,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.Items[chainId]);
+        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
@@ -191,15 +188,13 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
         var subscription = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
-                    {
-                        ChainId = chainId,
-                        OnlyConfirmed = false,
-                        StartBlockNumber = 200
-                    }
+                    ChainId = chainId,
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 200
                 }
             }
         };
@@ -210,7 +205,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.Items[chainId]);
+        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
         
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 200);
@@ -248,15 +243,13 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
         var subscription = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
-                    {
-                        ChainId = chainId,
-                        OnlyConfirmed = true,
-                        StartBlockNumber = 21
-                    }
+                    ChainId = chainId,
+                    OnlyConfirmed = true,
+                    StartBlockNumber = 21
                 }
             }
         };
@@ -268,7 +261,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.Items[chainId]);
+        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
@@ -319,15 +312,13 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
         var subscription = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
-                    {
-                        ChainId = chainId,
-                        OnlyConfirmed = false,
-                        StartBlockNumber = 21
-                    }
+                    ChainId = chainId,
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 21
                 }
             }
         };
@@ -338,7 +329,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.Items[chainId]);
+        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
 
         var scanGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await scanGrain.InitializeAsync(scanToken, 21);
@@ -382,21 +373,19 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
         var subscription = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
+                    ChainId = chainId,
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 21,
+                    LogEventConditions = new List<LogEventCondition>
                     {
-                        ChainId = chainId,
-                        OnlyConfirmed = false,
-                        StartBlockNumber = 21,
-                        LogEventFilters = new List<LogEventFilter>
+                        new()
                         {
-                            new LogEventFilter
-                            {
-                                ContractAddress = "ContractAddress0",
-                                EventNames = new List<string> { "EventName30", "EventName50" }
-                            }
+                            ContractAddress = "ContractAddress0",
+                            EventNames = new List<string> { "EventName30", "EventName50" }
                         }
                     }
                 }
@@ -410,7 +399,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.Items[chainId]);
+        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
@@ -457,15 +446,13 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
         var subscription = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
-                    {
-                        ChainId = chainId,
-                        OnlyConfirmed = false,
-                        StartBlockNumber = 1
-                    }
+                    ChainId = chainId,
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 1
                 }
             }
         };
@@ -476,7 +463,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.Items[chainId]);
+        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 1);

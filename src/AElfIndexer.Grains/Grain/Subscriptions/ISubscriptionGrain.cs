@@ -1,4 +1,5 @@
 using AElfIndexer.BlockScan;
+using AElfIndexer.Grains.State.Subscriptions;
 using Orleans;
 
 namespace AElfIndexer.Grains.Grain.Subscriptions;

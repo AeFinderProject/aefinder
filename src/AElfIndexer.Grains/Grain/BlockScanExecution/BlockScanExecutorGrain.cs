@@ -3,6 +3,7 @@ using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.Chains;
 using AElfIndexer.Grains.Grain.ScanApps;
 using AElfIndexer.Grains.State.BlockScanExecution;
+using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -92,8 +93,8 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
                     StartBlockHeight = State.ScannedConfirmedBlockHeight + 1,
                     EndBlockHeight = targetHeight,
                     IsOnlyConfirmed = true,
-                    TransactionFilters = _objectMapper.Map<List<TransactionFilter>, List<FilterTransactionInput>>(subscriptionInfo.TransactionFilters),
-                    LogEventFilters = _objectMapper.Map<List<LogEventFilter>, List<FilterContractEventInput>>(subscriptionInfo.LogEventFilters)
+                    TransactionFilters = _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(subscriptionInfo.TransactionConditions),
+                    LogEventFilters = _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(subscriptionInfo.LogEventConditions)
                 });
 
                 if (blocks.Count != targetHeight - State.ScannedConfirmedBlockHeight)
@@ -225,8 +226,8 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         State.ScannedBlockHeight = unPushedBlock.Last().BlockHeight;
         State.ScannedBlockHash = unPushedBlock.Last().BlockHash;
 
-        var subscribedBlocks = await _blockFilterProvider.FilterBlocksAsync(unPushedBlock, subscriptionInfo.TransactionFilters,
-            subscriptionInfo.LogEventFilters);
+        var subscribedBlocks = await _blockFilterProvider.FilterBlocksAsync(unPushedBlock, subscriptionInfo.TransactionConditions,
+            subscriptionInfo.LogEventConditions);
         
         SetConfirmed(subscribedBlocks, false);
         await _stream.OnNextAsync(new SubscribedBlockDto
@@ -275,8 +276,17 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         }
         else
         {
-            _logger.LogDebug(
-                $"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: Not linked confirmed block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, current block height: {State.ScannedConfirmedBlockHeight}");
+            try
+            {
+                _logger.LogDebug(
+                    $"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: Not linked confirmed block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, current block height: {State.ScannedConfirmedBlockHeight}");
+            }
+            catch (Exception e)
+            {
+                ;
+                throw;
+            }
+            
             var startHeight = State.ScannedConfirmedBlockHeight + 1;
             scannedBlocks.AddRange(await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
@@ -291,7 +301,7 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         }
         
         scannedBlocks =
-            await _blockFilterProvider.FilterBlocksAsync(scannedBlocks, subscriptionInfo.TransactionFilters,subscriptionInfo.LogEventFilters);
+            await _blockFilterProvider.FilterBlocksAsync(scannedBlocks, subscriptionInfo.TransactionConditions,subscriptionInfo.LogEventConditions);
 
         if (scannedBlocks.Count == 0)
         {

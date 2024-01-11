@@ -7,6 +7,7 @@ using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.ScanApps;
 using AElfIndexer.Grains.State.ScanApps;
+using AElfIndexer.Grains.State.Subscriptions;
 using Shouldly;
 using Xunit;
 
@@ -22,15 +23,13 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         var chainId = "AELF";
         var subscriptionInfo1 = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
-                    {
-                        ChainId = chainId,
-                        OnlyConfirmed = true,
-                        StartBlockNumber = 21
-                    }
+                    ChainId = chainId,
+                    OnlyConfirmed = true,
+                    StartBlockNumber = 21
                 }
             }
         };
@@ -41,20 +40,18 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         await scanAppGrain.UpgradeVersionAsync();
 
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
-        subscription1.Items[chainId].ChainId.ShouldBe(chainId);
-        subscription1.Items[chainId].StartBlockNumber.ShouldBe(21);
-        
+        subscription1.SubscriptionItems[0].ChainId.ShouldBe(chainId);
+        subscription1.SubscriptionItems[0].StartBlockNumber.ShouldBe(21);
+
         var subscriptionInfo2 = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
-                    {
-                        ChainId = chainId,
-                        OnlyConfirmed = true,
-                        StartBlockNumber = 22
-                    }
+                    ChainId = chainId,
+                    OnlyConfirmed = true,
+                    StartBlockNumber = 22
                 }
             }
         };
@@ -63,35 +60,35 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         var id1 = GrainIdHelper.GenerateGrainId(chainId, clientId, version1);
         var blockScanGrain1 = Cluster.Client.GetGrain<IBlockScanGrain>(id1);
         var scanToken1 = Guid.NewGuid().ToString("N");
-        await blockScanGrain1.InitializeAsync(scanToken1,chainId, clientId, version1, subscriptionInfo1.Items[chainId]);
+        await blockScanGrain1.InitializeAsync(scanToken1,chainId, clientId, version1, subscriptionInfo1.SubscriptionItems[0]);
         
         var id2 = GrainIdHelper.GenerateGrainId(chainId, clientId, version2);
         var blockScanGrain2 = Cluster.Client.GetGrain<IBlockScanGrain>(id2);
         var scanToken2 = Guid.NewGuid().ToString("N");
-        await blockScanGrain2.InitializeAsync(scanToken2,chainId, clientId, version2, subscriptionInfo1.Items[chainId]);
+        await blockScanGrain2.InitializeAsync(scanToken2,chainId, clientId, version2, subscriptionInfo1.SubscriptionItems[0]);
 
         
         var subscription2 = await scanAppGrain.GetSubscriptionAsync(version2);
-        subscription2.Items[chainId].ChainId.ShouldBe(chainId);
-        subscription2.Items[chainId].StartBlockNumber.ShouldBe(22);
+        subscription2.SubscriptionItems[0].ChainId.ShouldBe(chainId);
+        subscription2.SubscriptionItems[0].StartBlockNumber.ShouldBe(22);
         
         var isAvailable = await scanAppGrain.IsRunningAsync(version1, chainId,scanToken1);
         isAvailable.ShouldBeFalse();
         isAvailable = await scanAppGrain.IsRunningAsync(version2, chainId,scanToken2);
         isAvailable.ShouldBeFalse();
 
-        var allSubscriptionsAsync = await scanAppGrain.GetAllSubscriptionsAsync();
+        var allSubscriptionsAsync = await scanAppGrain.GetAllSubscriptionAsync();
         allSubscriptionsAsync.CurrentVersion.Version.ShouldBe(version1);
         allSubscriptionsAsync.NewVersion.Version.ShouldBe(version2);
 
-        var versionStatus = await scanAppGrain.GetVersionStatusAsync(version1);
-        versionStatus.ShouldBe(VersionStatus.Initialized);
-        versionStatus = await scanAppGrain.GetVersionStatusAsync(version2);
-        versionStatus.ShouldBe(VersionStatus.Initialized);
+        var versionStatus = await scanAppGrain.GetSubscriptionStatusAsync(version1);
+        versionStatus.ShouldBe(SubscriptionStatus.Initialized);
+        versionStatus = await scanAppGrain.GetSubscriptionStatusAsync(version2);
+        versionStatus.ShouldBe(SubscriptionStatus.Initialized);
 
         await scanAppGrain.StartAsync(version1);
-        versionStatus = await scanAppGrain.GetVersionStatusAsync(version1);
-        versionStatus.ShouldBe(VersionStatus.Started);
+        versionStatus = await scanAppGrain.GetSubscriptionStatusAsync(version1);
+        versionStatus.ShouldBe(SubscriptionStatus.Started);
         
         isAvailable = await scanAppGrain.IsRunningAsync(version1, chainId, scanToken1);
         isAvailable.ShouldBeTrue();
@@ -108,7 +105,7 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         isAvailable.ShouldBeFalse();
 
         await scanAppGrain.UpgradeVersionAsync();
-        allSubscriptionsAsync = await scanAppGrain.GetAllSubscriptionsAsync();
+        allSubscriptionsAsync = await scanAppGrain.GetAllSubscriptionAsync();
         allSubscriptionsAsync.CurrentVersion.Version.ShouldBe(version2);
         allSubscriptionsAsync.NewVersion.ShouldBeNull();
     }
@@ -119,21 +116,19 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         var clientId = "client-id01";
         var subscriptionInfo1 = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    "tDVV", new SubscriptionItem
+                    ChainId = "tDVV",
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 1009,
+                    LogEventConditions = new List<LogEventCondition>
                     {
-                        ChainId = "tDVV",
-                        OnlyConfirmed = false,
-                        StartBlockNumber = 1009,
-                        LogEventFilters = new List<LogEventFilter>
+                        new()
                         {
-                            new LogEventFilter
-                            {
-                                ContractAddress = "7RzVGiuVWkvL4VfVHdZfQF2Tri3sgLe9U991bohHFfSRZXuGX",
-                                EventNames = new List<string>{"Transfer"}
-                            }
+                            ContractAddress = "7RzVGiuVWkvL4VfVHdZfQF2Tri3sgLe9U991bohHFfSRZXuGX",
+                            EventNames = new List<string> { "Transfer" }
                         }
                     }
                 }
@@ -144,40 +139,36 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
-        subscription1.Items["tDVV"].ChainId.ShouldBe("tDVV");
-        subscription1.Items["tDVV"].OnlyConfirmed.ShouldBe(false);
-        subscription1.Items["tDVV"].StartBlockNumber.ShouldBe(1009);
-        subscription1.Items["tDVV"].LogEventFilters.Count.ShouldBe(1);
-        subscription1.Items["tDVV"].LogEventFilters[0].ContractAddress.ShouldBe("7RzVGiuVWkvL4VfVHdZfQF2Tri3sgLe9U991bohHFfSRZXuGX");
-        subscription1.Items["tDVV"].LogEventFilters[0].EventNames.Count.ShouldBe(1);
-        
+        subscription1.SubscriptionItems[0].ChainId.ShouldBe("tDVV");
+        subscription1.SubscriptionItems[0].OnlyConfirmed.ShouldBe(false);
+        subscription1.SubscriptionItems[0].StartBlockNumber.ShouldBe(1009);
+        subscription1.SubscriptionItems[0].LogEventConditions.Count.ShouldBe(1);
+        subscription1.SubscriptionItems[0].LogEventConditions[0].ContractAddress.ShouldBe("7RzVGiuVWkvL4VfVHdZfQF2Tri3sgLe9U991bohHFfSRZXuGX");
+        subscription1.SubscriptionItems[0].LogEventConditions[0].EventNames.Count.ShouldBe(1);
+
         var subscriptionInfo2 = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    "tDVV", new SubscriptionItem
+                    ChainId = "tDVV",
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 1009,
+                    LogEventConditions = new List<LogEventCondition>()
                     {
-                        ChainId = "tDVV",
-                        OnlyConfirmed = false,
-                        StartBlockNumber = 1009,
-                        LogEventFilters = new List<LogEventFilter>()
+                        new LogEventCondition()
                         {
-                            new LogEventFilter()
-                            {
-                                ContractAddress = "UYdd84gLMsVdHrgkr3ogqe1ukhKwen8oj32Ks4J1dg6KH9PYC",
-                                EventNames = new List<string>(){"Transfer","ManagerApproved"}
-                            }
+                            ContractAddress = "UYdd84gLMsVdHrgkr3ogqe1ukhKwen8oj32Ks4J1dg6KH9PYC",
+                            EventNames = new List<string>() { "Transfer", "ManagerApproved" }
                         }
                     }
                 },
+                new()
                 {
-                    "AELF", new SubscriptionItem
-                    {
-                        ChainId = "AELF",
-                        OnlyConfirmed = true,
-                        StartBlockNumber = 999
-                    }
+                    ChainId = "AELF",
+                    OnlyConfirmed = true,
+                    StartBlockNumber = 999
                 }
             }
         };
@@ -185,16 +176,16 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         await scanAppGrain.UpdateSubscriptionAsync(version1, subscriptionInfo2);
         
         var subscription2 = await scanAppGrain.GetSubscriptionAsync(version1);
-        subscription2.Items.Count.ShouldBe(2);
-        subscription2.Items["tDVV"].ChainId.ShouldBe("tDVV");
-        subscription2.Items["tDVV"].OnlyConfirmed.ShouldBe(false);
-        subscription2.Items["tDVV"].StartBlockNumber.ShouldBe(1009);
-        subscription2.Items["tDVV"].LogEventFilters.Count.ShouldBe(1);
-        subscription2.Items["tDVV"].LogEventFilters[0].ContractAddress.ShouldBe("UYdd84gLMsVdHrgkr3ogqe1ukhKwen8oj32Ks4J1dg6KH9PYC");
-        subscription2.Items["tDVV"].LogEventFilters[0].EventNames.Count.ShouldBe(2);
-        subscription2.Items["AELF"].ChainId.ShouldBe("AELF");
-        subscription2.Items["AELF"].OnlyConfirmed.ShouldBe(true);
-        subscription2.Items["AELF"].StartBlockNumber.ShouldBe(999);
+        subscription2.SubscriptionItems.Count.ShouldBe(2);
+        subscription2.SubscriptionItems[0].ChainId.ShouldBe("tDVV");
+        subscription2.SubscriptionItems[0].OnlyConfirmed.ShouldBe(false);
+        subscription2.SubscriptionItems[0].StartBlockNumber.ShouldBe(1009);
+        subscription2.SubscriptionItems[0].LogEventConditions.Count.ShouldBe(1);
+        subscription2.SubscriptionItems[0].LogEventConditions[0].ContractAddress.ShouldBe("UYdd84gLMsVdHrgkr3ogqe1ukhKwen8oj32Ks4J1dg6KH9PYC");
+        subscription2.SubscriptionItems[0].LogEventConditions[0].EventNames.Count.ShouldBe(2);
+        subscription2.SubscriptionItems[1].ChainId.ShouldBe("AELF");
+        subscription2.SubscriptionItems[1].OnlyConfirmed.ShouldBe(true);
+        subscription2.SubscriptionItems[1].StartBlockNumber.ShouldBe(999);
     }
 
     [Fact]
@@ -204,15 +195,13 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         var chainId = "AELF";
         var subscriptionInfo1 = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
-                    {
-                        ChainId = chainId,
-                        OnlyConfirmed = true,
-                        StartBlockNumber = 21
-                    }
+                    ChainId = chainId,
+                    OnlyConfirmed = true,
+                    StartBlockNumber = 21
                 }
             }
         };
@@ -221,21 +210,19 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
-        subscription1.Items.Count.ShouldBe(1);
-        subscription1.Items[chainId].ChainId.ShouldBe(chainId);
-        subscription1.Items[chainId].StartBlockNumber.ShouldBe(21);
-        
+        subscription1.SubscriptionItems.Count.ShouldBe(1);
+        subscription1.SubscriptionItems[0].ChainId.ShouldBe(chainId);
+        subscription1.SubscriptionItems[0].StartBlockNumber.ShouldBe(21);
+
         var subscriptionInfo2 = new Subscription
         {
-            Items = new Dictionary<string, SubscriptionItem>
+            SubscriptionItems = new List<SubscriptionItem>()
             {
+                new()
                 {
-                    chainId, new SubscriptionItem
-                    {
-                        ChainId = chainId,
-                        OnlyConfirmed = true,
-                        StartBlockNumber = 22
-                    }
+                    ChainId = chainId,
+                    OnlyConfirmed = true,
+                    StartBlockNumber = 22
                 }
             }
         };
@@ -245,19 +232,19 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         var id1 = GrainIdHelper.GenerateGrainId(chainId, clientId, version1);
         var blockScanGrain1 = Cluster.Client.GetGrain<IBlockScanGrain>(id1);
         var scanToken1 = Guid.NewGuid().ToString("N");
-        await blockScanGrain1.InitializeAsync(scanToken1,chainId, clientId, version1, subscriptionInfo1.Items[chainId]);
+        await blockScanGrain1.InitializeAsync(scanToken1,chainId, clientId, version1, subscriptionInfo1.SubscriptionItems[0]);
         
         var id2 = GrainIdHelper.GenerateGrainId(chainId, clientId, version2);
         var blockScanGrain2 = Cluster.Client.GetGrain<IBlockScanGrain>(id2);
         var scanToken2 = Guid.NewGuid().ToString("N");
-        await blockScanGrain2.InitializeAsync(scanToken2,chainId, clientId, version2, subscriptionInfo2.Items[chainId]);
+        await blockScanGrain2.InitializeAsync(scanToken2,chainId, clientId, version2, subscriptionInfo2.SubscriptionItems[0]);
 
         await scanAppGrain.StopAsync(version1);
-        var version = await scanAppGrain.GetAllSubscriptionsAsync();
+        var version = await scanAppGrain.GetAllSubscriptionAsync();
         version.CurrentVersion.ShouldBeNull();
         
         await scanAppGrain.StopAsync(version2);
-        version = await scanAppGrain.GetAllSubscriptionsAsync();
+        version = await scanAppGrain.GetAllSubscriptionAsync();
         version.NewVersion.ShouldBeNull();
     }
 }

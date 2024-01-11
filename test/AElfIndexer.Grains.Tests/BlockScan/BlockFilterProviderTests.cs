@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScanExecution;
+using AElfIndexer.Grains.State.Subscriptions;
 using Force.DeepCloner;
 using Shouldly;
 using Xunit;
@@ -26,26 +27,26 @@ public class BlockFilterProviderTests : AElfIndexerGrainTestBase
     public async Task FilterBlocks_Test()
     {
         var block = MockBlock();
-        var filter = new List<LogEventFilter>
+        var filter = new List<LogEventCondition>
         {
-            new LogEventFilter
+            new LogEventCondition
             {
                 ContractAddress = "ContractAddress",
                 EventNames = new List<string> { "EventName" }
             }
         };
 
-        var filterOnlyContractAddress = new List<LogEventFilter>
+        var filterOnlyContractAddress = new List<LogEventCondition>
         {
-            new LogEventFilter
+            new LogEventCondition
             {
                 ContractAddress = "ContractAddress2"
             }
         };
 
-        var filterNotExist = new List<LogEventFilter>
+        var filterNotExist = new List<LogEventCondition>
         {
-            new LogEventFilter
+            new LogEventCondition
             {
                 ContractAddress = "ContractAddress2",
                 EventNames = new List<string> { "EventName" }
@@ -57,7 +58,7 @@ public class BlockFilterProviderTests : AElfIndexerGrainTestBase
         filteredBlock.Count.ShouldBe(1);
 
         filteredBlock = await _blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block },
-            new List<TransactionFilter>(), new List<LogEventFilter>());
+            new List<TransactionCondition>(), new List<LogEventCondition>());
         filteredBlock.Count.ShouldBe(1);
 
         filteredBlock =

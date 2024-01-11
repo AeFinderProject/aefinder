@@ -8,6 +8,7 @@ using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.Grain.ScanApps;
 using AElfIndexer.Grains.State.ScanApps;
+using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp;
@@ -26,10 +27,11 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         _clusterClient = clusterClient;
     }
 
-    public async Task<string> SubmitSubscriptionInfoAsync(string clientId, Subscription subscription)
+    public async Task<string> AddSubscriptionAsync(string clientId, SubscriptionDto dto)
     {
-        Logger.LogInformation($"Client: {clientId} submit subscribe: {JsonSerializer.Serialize(subscription)}");
+        Logger.LogInformation($"Client: {clientId} submit subscribe: {JsonSerializer.Serialize(dto)}");
 
+        var subscription = ObjectMapper.Map<SubscriptionDto,Subscription>(dto);
         var client = _clusterClient.GetGrain<IScanAppGrain>(clientId);
         var version = await client.AddSubscriptionAsync(subscription);
         return version;
@@ -179,9 +181,9 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         var client = _clusterClient.GetGrain<IScanAppGrain>(clientId);
         var subscriptionInfos = await client.GetSubscriptionAsync(version);
         var streamIds = new List<Guid>();
-        foreach (var subscriptionInfo in subscriptionInfos.Items)
+        foreach (var subscriptionInfo in subscriptionInfos.SubscriptionItems)
         {
-            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.Key, clientId, version);
+            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.ChainId, clientId, version);
             var blockScanInfoGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
             var streamId = await blockScanInfoGrain.GetMessageStreamIdAsync();
             streamIds.Add(streamId);
@@ -195,27 +197,27 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
         Logger.LogInformation($"Client: {clientId} start scan, version: {version}");
 
         var client = _clusterClient.GetGrain<IScanAppGrain>(clientId);
-        var subscriptionInfos = await client.GetSubscriptionAsync(version);
-        var versionStatus = await client.GetVersionStatusAsync(version);
+        var subscription = await client.GetSubscriptionAsync(version);
+        var versionStatus = await client.GetSubscriptionStatusAsync(version);
         var scanToken = Guid.NewGuid().ToString("N");
         await client.StartAsync(version);
-        foreach (var subscriptionInfo in subscriptionInfos.Items)
+        foreach (var subscriptionItem in subscription.SubscriptionItems)
         {
-            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.Key, clientId, version);
+            var id = GrainIdHelper.GenerateGrainId(subscriptionItem.ChainId, clientId, version);
             var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
             var blockScanExecutorGrain = _clusterClient.GetGrain<IBlockScanExecutorGrain>(id);
 
-            var startBlockHeight = subscriptionInfo.Value.StartBlockNumber;
+            var startBlockHeight = subscriptionItem.StartBlockNumber;
             
-            if (versionStatus != VersionStatus.Initialized)
+            if (versionStatus != SubscriptionStatus.Initialized)
             {
                 var blockStateSetInfoGrain = _clusterClient.GetGrain<IBlockStateSetInfoGrain>(
-                    GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, subscriptionInfo.Key, version));
+                    GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, subscriptionItem.ChainId, version));
                 // TODO: This is not correct, we should get the confirmed block height from the chain grain.
                 startBlockHeight = await blockStateSetInfoGrain.GetConfirmedBlockHeight(BlockFilterType.Block);
                 if (startBlockHeight == 0)
                 {
-                    startBlockHeight = subscriptionInfo.Value.StartBlockNumber;
+                    startBlockHeight = subscriptionItem.StartBlockNumber;
                 }
                 else
                 {
@@ -223,7 +225,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
                 }
             }
             
-            await blockScanGrain.InitializeAsync(scanToken, subscriptionInfo.Key, clientId, version, subscriptionInfo.Value);
+            await blockScanGrain.InitializeAsync(scanToken, subscriptionItem.ChainId, clientId, version, subscriptionItem);
             await blockScanExecutorGrain.InitializeAsync(scanToken, startBlockHeight);
 
             Logger.LogDebug($"Start client: {clientId}, id: {id}");
@@ -240,19 +242,20 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
     public async Task<AllSubscriptionDto> GetSubscriptionAsync(string clientId)
     {
         var clientGrain = _clusterClient.GetGrain<IScanAppGrain>(clientId);
-        return await clientGrain.GetAllSubscriptionsAsync();
+        var allSubscription = await clientGrain.GetAllSubscriptionAsync();
+        return ObjectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
     }
 
     public async Task PauseAsync(string clientId, string version)
     {
         var client = _clusterClient.GetGrain<IScanAppGrain>(clientId);
         var scanManager = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
-        var subscriptionInfos = await client.GetSubscriptionAsync(version);
+        var subscription = await client.GetSubscriptionAsync(version);
         await client.PauseAsync(version);
-        foreach (var subscriptionInfo in subscriptionInfos.Items)
+        foreach (var subscriptionItem in subscription.SubscriptionItems)
         {
-            var id = GrainIdHelper.GenerateGrainId(subscriptionInfo.Key, clientId, version);
-            await scanManager.RemoveBlockScanAsync(subscriptionInfo.Key, id);
+            var id = GrainIdHelper.GenerateGrainId(subscriptionItem.ChainId, clientId, version);
+            await scanManager.RemoveBlockScanAsync(subscriptionItem.ChainId, id);
         }
     }
 

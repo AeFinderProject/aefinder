@@ -1,6 +1,7 @@
 using AElfIndexer.Block;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
+using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
@@ -58,28 +59,28 @@ public class BlockFilterProvider : IBlockFilterProvider, ITransientDependency
     }
 
     public async Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks,
-        List<TransactionFilter> transactionFilters, List<LogEventFilter> logEventFilters)
+        List<TransactionCondition> transactionConditions, List<LogEventCondition> logEventConditions)
     {
-        if (transactionFilters.IsNullOrEmpty() && logEventFilters.IsNullOrEmpty())
+        if (transactionConditions.IsNullOrEmpty() && logEventConditions.IsNullOrEmpty())
         {
             return blocks;
         }
 
         var transactionToFilter = new HashSet<string>();
         var transactionMethodFilter = new HashSet<string>();
-        if (transactionFilters != null)
+        if (transactionConditions != null)
         {
-            foreach (var filter in transactionFilters)
+            foreach (var condition in transactionConditions)
             {
-                if (filter.MethodNames.Count == 0)
+                if (condition.MethodNames.Count == 0)
                 {
-                    transactionToFilter.Add(filter.To);
+                    transactionToFilter.Add(condition.To);
                 }
                 else
                 {
-                    foreach (var methodName in filter.MethodNames)
+                    foreach (var methodName in condition.MethodNames)
                     {
-                        transactionMethodFilter.Add(filter.To + methodName);
+                        transactionMethodFilter.Add(condition.To + methodName);
                     }
                 }
             }
@@ -87,19 +88,19 @@ public class BlockFilterProvider : IBlockFilterProvider, ITransientDependency
 
         var contractAddressFilter = new HashSet<string>();
         var logEventFilter = new HashSet<string>();
-        if (logEventFilters != null)
+        if (logEventConditions != null)
         {
-            foreach (var filter in logEventFilters)
+            foreach (var condition in logEventConditions)
             {
-                if (filter.EventNames.Count == 0)
+                if (condition.EventNames.Count == 0)
                 {
-                    contractAddressFilter.Add(filter.ContractAddress);
+                    contractAddressFilter.Add(condition.ContractAddress);
                 }
                 else
                 {
-                    foreach (var eventName in filter.EventNames)
+                    foreach (var eventName in condition.EventNames)
                     {
-                        logEventFilter.Add(filter.ContractAddress + eventName);
+                        logEventFilter.Add(condition.ContractAddress + eventName);
                     }
                 }
             }

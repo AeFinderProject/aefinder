@@ -1,5 +1,6 @@
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.State.BlockScanExecution;
+using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.Extensions.Options;
 using Orleans;
 

@@ -1,5 +1,6 @@
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
+using AElfIndexer.Grains.State.Subscriptions;
 
 namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
@@ -7,7 +8,7 @@ public interface IBlockFilterProvider
 {
     Task<List<BlockWithTransactionDto>> GetBlocksAsync(GetSubscriptionTransactionsInput input);
     
-    Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<TransactionFilter> transactionFilters, List<LogEventFilter> logEventFilters);
+    Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<TransactionCondition> transactionConditions, List<LogEventCondition> logEventConditions);
 
     Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId,
         List<BlockWithTransactionDto> blocks);
