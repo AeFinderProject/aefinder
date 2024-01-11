@@ -43,7 +43,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
                     chainId, new SubscriptionItem
                     {
                         ChainId = chainId,
-                        OnlyConfirmed = true,
+                        OnlyConfirmed = false,
                         StartBlockNumber = 21
                     }
                 }
@@ -197,7 +197,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
                     chainId, new SubscriptionItem
                     {
                         ChainId = chainId,
-                        OnlyConfirmed = true,
+                        OnlyConfirmed = false,
                         StartBlockNumber = 200
                     }
                 }
@@ -207,12 +207,11 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
 
         var scanToken = Guid.NewGuid().ToString("N");
         await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version, BlockFilterType.Block);
+        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
         await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.Items[chainId]);
-
-
+        
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 200);
 
@@ -464,8 +463,8 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
                     chainId, new SubscriptionItem
                     {
                         ChainId = chainId,
-                        OnlyConfirmed = true,
-                        StartBlockNumber = 21
+                        OnlyConfirmed = false,
+                        StartBlockNumber = 1
                     }
                 }
             }
@@ -480,7 +479,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.Items[chainId]);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
-        await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
+        await blockScanExecutorGrain.InitializeAsync(scanToken, 1);
         var streamId = await blockScanGrain.GetMessageStreamIdAsync();
         var stream =
             Cluster.Client

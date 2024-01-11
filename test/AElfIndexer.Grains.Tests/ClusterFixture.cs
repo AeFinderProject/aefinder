@@ -3,12 +3,16 @@ using AElfIndexer.Block;
 using AElfIndexer.Grains.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.Client;
+using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Orleans.Hosting;
 using Orleans.TestingHost;
+using Volo.Abp.AutoMapper;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.ObjectMapping;
+using Volo.Abp.Reflection;
 
 namespace AElfIndexer.Grains;
 
@@ -49,6 +53,32 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     {
                         o.MaxCountPerBlockStateSetBucket = 5;
                     });
+                    services.AddAutoMapper(typeof(AElfIndexerApplicationModule).Assembly);
+                    services.OnExposing(onServiceExposingContext =>
+                    {
+                        //Register types for IObjectMapper<TSource, TDestination> if implements
+                        onServiceExposingContext.ExposedTypes.AddRange(
+                            ReflectionHelper.GetImplementedGenericTypes(
+                                onServiceExposingContext.ImplementationType,
+                                typeof(IObjectMapper<,>)
+                            )
+                        );
+                    });
+                    services.AddTransient(
+                        typeof(IObjectMapper<>),
+                        typeof(DefaultObjectMapper<>)
+                    );
+                    services.AddTransient(
+                        typeof(IObjectMapper),
+                        typeof(DefaultObjectMapper)
+                    );
+                    services.AddTransient(typeof(IAutoObjectMappingProvider),
+                        typeof(AutoMapperAutoObjectMappingProvider));
+                    services.AddTransient(sp => new MapperAccessor()
+                    {
+                        Mapper = sp.GetRequiredService<IMapper>()
+                    });
+                    services.AddTransient<IMapperAccessor>(provider => provider.GetRequiredService<MapperAccessor>());
                 })
                 .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
@@ -61,4 +91,9 @@ public class ClusterFixture:IDisposable,ISingletonDependency
         public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) => clientBuilder
             .AddSimpleMessageStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
     }
+}
+
+public class MapperAccessor : IMapperAccessor
+{
+    public IMapper Mapper { get; set; }
 }

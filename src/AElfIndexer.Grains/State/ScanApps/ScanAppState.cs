@@ -10,12 +10,6 @@ public class ScanAppState
     public Dictionary<string, VersionStatus> VersionStatus { get; set; } = new();
 }
 
-public class VersionSubscription
-{
-    public Subscription Subscription { get; set; }= new();
-    public VersionStatus VersionStatus { get; set; }
-}
-
 public enum VersionStatus
 {
     Initialized = 0,

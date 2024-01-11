@@ -41,6 +41,9 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         State.ScannedConfirmedBlockHash = null;
         State.ScannedBlocks = new SortedDictionary<long, HashSet<string>>();
         State.ScanToken = scanToken;
+        
+        var blockScanInfo = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
+        await blockScanInfo.SetHistoricalBlockScanModeAsync();
 
         await WriteStateAsync();
     }

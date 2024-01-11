@@ -108,6 +108,7 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         versionStatus = await scanAppGrain.GetVersionStatusAsync(version1);
         versionStatus.ShouldBe(VersionStatus.Paused);
         
+        token = await blockScanGrain.GetScanTokenAsync();
         isRunning = await _blockScanAppService.IsRunningAsync(chainId,clientId, version1, token);
         isRunning.ShouldBeFalse();
         
@@ -116,6 +117,7 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         versionStatus = await scanAppGrain.GetVersionStatusAsync(version1);
         versionStatus.ShouldBe(VersionStatus.Started);
         
+        token = await blockScanGrain.GetScanTokenAsync();
         isRunning = await _blockScanAppService.IsRunningAsync(chainId,clientId, version1, token);
         isRunning.ShouldBeTrue();
 

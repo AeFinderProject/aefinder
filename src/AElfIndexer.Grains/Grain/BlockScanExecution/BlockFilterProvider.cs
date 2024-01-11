@@ -28,7 +28,7 @@ public class BlockFilterProvider : IBlockFilterProvider, ITransientDependency
             ChainId = input.ChainId,
             StartBlockHeight = input.StartBlockHeight,
             EndBlockHeight = input.EndBlockHeight,
-            IsOnlyConfirmed = input.IsOnlyConfirmed,
+            IsOnlyConfirmed = input.IsOnlyConfirmed
         });
 
         if (blocks.Count == 0)
