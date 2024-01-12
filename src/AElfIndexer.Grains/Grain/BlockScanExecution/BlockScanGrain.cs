@@ -1,4 +1,3 @@
-using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.State.BlockScanExecution;
 using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.Extensions.Options;
@@ -15,13 +14,13 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         _blockScanOptions = blockScanOptions.Value;
     }
 
-    public async Task<ScanInfo> GetClientInfoAsync()
+    public async Task<ScanInfo> GetScanInfoAsync()
     {
         await ReadStateAsync();
         return State.ScanInfo;
     }
 
-    public async Task<SubscriptionItem> GetSubscriptionInfoAsync()
+    public async Task<SubscriptionItem> GetSubscriptionAsync()
     {
         await ReadStateAsync();
         return State.SubscriptionItem;
@@ -47,15 +46,14 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
         await WriteStateAsync();
     }
 
-    public async Task InitializeAsync(string scanToken, string chainId, string clientId, string version, SubscriptionItem item)
+    public async Task InitializeAsync(string clientId, string version, SubscriptionItem item, string scanToken)
     {
         var blockScanManager = GrainFactory.GetGrain<IBlockScanManagerGrain>(0);
-        await blockScanManager.AddBlockScanAsync(chainId, this.GetPrimaryKeyString());
+        await blockScanManager.AddBlockScanAsync(item.ChainId, this.GetPrimaryKeyString());
 
         State.ScanInfo = new ScanInfo
         {
-            ChainId = chainId,
-            ClientId = clientId,
+            ScanAppId = clientId,
             Version = version,
             ScanToken = scanToken
         };
@@ -75,7 +73,7 @@ public class BlockScanGrain : Grain<BlockScanState>, IBlockScanGrain
     public async Task StopAsync()
     {
         var blockScanManager = GrainFactory.GetGrain<IBlockScanManagerGrain>(0);
-        await blockScanManager.RemoveBlockScanAsync(State.ScanInfo.ChainId, this.GetPrimaryKeyString());
+        await blockScanManager.RemoveBlockScanAsync(State.SubscriptionItem.ChainId, this.GetPrimaryKeyString());
     }
     
     public async Task<Guid> GetMessageStreamIdAsync()

@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AElfIndexer.Grains.EventData;
 using AElfIndexer.Grains.State.Blocks;
 using Microsoft.Extensions.Logging;
 using Orleans.Providers;
 using Orleans;
-using Volo.Abp.Threading;
 
 namespace AElfIndexer.Grains.Grain.Blocks;
 

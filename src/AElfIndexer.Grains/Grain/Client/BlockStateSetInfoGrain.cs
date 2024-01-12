@@ -1,4 +1,3 @@
-using System.Xml;
 using AElfIndexer.Grains.State.Client;
 using Orleans;
 

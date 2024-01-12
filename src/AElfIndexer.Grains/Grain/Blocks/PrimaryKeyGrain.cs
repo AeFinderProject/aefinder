@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using AElfIndexer.Grains.State.Blocks;
 using Microsoft.Extensions.Options;
 

@@ -34,7 +34,7 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         await scanAppGrain.UpgradeVersionAsync();
@@ -57,15 +57,15 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         };
         
         var version2 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo2);
-        var id1 = GrainIdHelper.GenerateGrainId(chainId, clientId, version1);
+        var id1 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version1, chainId);
         var blockScanGrain1 = Cluster.Client.GetGrain<IBlockScanGrain>(id1);
         var scanToken1 = Guid.NewGuid().ToString("N");
-        await blockScanGrain1.InitializeAsync(scanToken1,chainId, clientId, version1, subscriptionInfo1.SubscriptionItems[0]);
-        
-        var id2 = GrainIdHelper.GenerateGrainId(chainId, clientId, version2);
+        await blockScanGrain1.InitializeAsync(clientId, version1, subscriptionInfo1.SubscriptionItems[0], scanToken1);
+
+        var id2 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version2, chainId);
         var blockScanGrain2 = Cluster.Client.GetGrain<IBlockScanGrain>(id2);
         var scanToken2 = Guid.NewGuid().ToString("N");
-        await blockScanGrain2.InitializeAsync(scanToken2,chainId, clientId, version2, subscriptionInfo1.SubscriptionItems[0]);
+        await blockScanGrain2.InitializeAsync(clientId, version2, subscriptionInfo1.SubscriptionItems[0], scanToken2);
 
         
         var subscription2 = await scanAppGrain.GetSubscriptionAsync(version2);
@@ -135,7 +135,7 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
@@ -206,7 +206,7 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
@@ -228,16 +228,16 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         };
         
         var version2 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo2);
-        
-        var id1 = GrainIdHelper.GenerateGrainId(chainId, clientId, version1);
+
+        var id1 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version1, chainId);
         var blockScanGrain1 = Cluster.Client.GetGrain<IBlockScanGrain>(id1);
         var scanToken1 = Guid.NewGuid().ToString("N");
-        await blockScanGrain1.InitializeAsync(scanToken1,chainId, clientId, version1, subscriptionInfo1.SubscriptionItems[0]);
-        
-        var id2 = GrainIdHelper.GenerateGrainId(chainId, clientId, version2);
+        await blockScanGrain1.InitializeAsync(clientId, version1, subscriptionInfo1.SubscriptionItems[0], scanToken1);
+
+        var id2 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version2, chainId);
         var blockScanGrain2 = Cluster.Client.GetGrain<IBlockScanGrain>(id2);
         var scanToken2 = Guid.NewGuid().ToString("N");
-        await blockScanGrain2.InitializeAsync(scanToken2,chainId, clientId, version2, subscriptionInfo2.SubscriptionItems[0]);
+        await blockScanGrain2.InitializeAsync(clientId, version2, subscriptionInfo2.SubscriptionItems[0], scanToken2);
 
         await scanAppGrain.StopAsync(version1);
         var version = await scanAppGrain.GetAllSubscriptionAsync();

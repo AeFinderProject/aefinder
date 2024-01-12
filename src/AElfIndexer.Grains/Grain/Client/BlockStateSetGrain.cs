@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using AElfIndexer.Grains.State.Client;
 using Microsoft.Extensions.Options;
 using Nito.AsyncEx;

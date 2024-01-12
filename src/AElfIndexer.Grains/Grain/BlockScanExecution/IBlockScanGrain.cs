@@ -1,4 +1,3 @@
-using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.State.BlockScanExecution;
 using AElfIndexer.Grains.State.Subscriptions;
 using Orleans;
@@ -7,12 +6,12 @@ namespace AElfIndexer.Grains.Grain.BlockScanExecution;
 
 public interface IBlockScanGrain : IGrainWithStringKey
 {
-    Task<ScanInfo> GetClientInfoAsync();
-    Task<SubscriptionItem> GetSubscriptionInfoAsync();
+    Task<ScanInfo> GetScanInfoAsync();
+    Task<SubscriptionItem> GetSubscriptionAsync();
     Task SetScanNewBlockStartHeightAsync(long height);
     Task SetHandleHistoricalBlockTimeAsync(DateTime time);
     Task SetHistoricalBlockScanModeAsync();
-    Task InitializeAsync(string scanToken, string chainId, string clientId, string version, SubscriptionItem item);
+    Task InitializeAsync(string scanAppId, string version, SubscriptionItem item, string scanToken);
     Task UpdateSubscriptionInfoAsync(SubscriptionItem info);
     Task StopAsync();
     Task<Guid> GetMessageStreamIdAsync();

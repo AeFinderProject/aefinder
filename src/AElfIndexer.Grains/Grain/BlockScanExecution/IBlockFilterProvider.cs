@@ -1,5 +1,4 @@
 using AElfIndexer.Block.Dtos;
-using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.State.Subscriptions;
 
 namespace AElfIndexer.Grains.Grain.BlockScanExecution;

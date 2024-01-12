@@ -1,5 +1,3 @@
-using AElfIndexer.BlockScan;
-
 namespace AElfIndexer.Grains.State.ScanApps;
 
 public class ScanAppState

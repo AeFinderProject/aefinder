@@ -1,4 +1,3 @@
-using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.Subscriptions;
 using AElfIndexer.Grains.State.ScanApps;
@@ -102,9 +101,11 @@ public class ScanAppGrain : Grain<ScanAppState>, IScanAppGrain
         {
             return false;
         }
+
         if (!await GrainFactory
-                .GetGrain<IBlockScanGrain>(GrainIdHelper.GenerateGrainId(chainId, this.GetPrimaryKeyString(),
-                    version)).IsRunningAsync(scanToken))
+                .GetGrain<IBlockScanGrain>(
+                    GrainIdHelper.GenerateBlockScanGrainId(this.GetPrimaryKeyString(), version, chainId))
+                .IsRunningAsync(scanToken))
         {
             return false;
         }
@@ -186,7 +187,7 @@ public class ScanAppGrain : Grain<ScanAppState>, IScanAppGrain
     
     private string GetSubscriptionId(string version)
     {
-        return GrainIdHelper.GenerateGrainId(this.GetPrimaryKeyString(), version);
+        return GrainIdHelper.GenerateSubscriptionGrainId(this.GetPrimaryKeyString(), version);
     }
     
     private async Task StopBlockScanAsync(string subscriptionId, string version)
@@ -195,7 +196,7 @@ public class ScanAppGrain : Grain<ScanAppState>, IScanAppGrain
         var subscription = await subscriptionGrain.GetSubscriptionAsync();
         foreach (var item in subscription.SubscriptionItems)
         {
-            var id = GrainIdHelper.GenerateGrainId(item.ChainId, this.GetPrimaryKeyString(), version);
+            var id = GrainIdHelper.GenerateBlockScanGrainId(this.GetPrimaryKeyString(), version, item.ChainId);
             await GrainFactory.GetGrain<IBlockScanGrain>(id).StopAsync();
         }
     }

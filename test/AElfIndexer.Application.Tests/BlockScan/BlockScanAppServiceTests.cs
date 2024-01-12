@@ -60,7 +60,7 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         subscription.NewVersion.ShouldBeNull();
         
         var streamIds = await _blockScanAppService.GetMessageStreamIdsAsync(clientId, version1);
-        var id1 = GrainIdHelper.GenerateGrainId(chainId, clientId, version1);
+        var id1 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version1, chainId);
         var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(id1);
         var streamId = await blockScanGrain.GetMessageStreamIdAsync();
         streamIds.Count.ShouldBe(1);
@@ -68,12 +68,12 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
 
         await _blockScanAppService.StartScanAsync(clientId, version1);
         
-        var blockScanManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
+        var blockScanManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(GrainIdHelper.GenerateBlockScanManagerGrainId());
         var scanIds = await blockScanManagerGrain.GetAllBlockScanIdsAsync();
         scanIds[chainId].Count.ShouldBe(1);
         scanIds[chainId].ShouldContain(id1);
 
-        var scanAppGrain = _clusterClient.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = _clusterClient.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var versionStatus = await scanAppGrain.GetSubscriptionStatusAsync(version1);
         versionStatus.ShouldBe(SubscriptionStatus.Started);
         
@@ -94,7 +94,7 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         };
         
         var version2 = await _blockScanAppService.AddSubscriptionAsync(clientId, subscriptionInput2);
-        var id2 = GrainIdHelper.GenerateGrainId(chainId, clientId, version2);
+        var id2 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version2, chainId);
         
         subscription = await _blockScanAppService.GetSubscriptionAsync(clientId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
@@ -140,7 +140,7 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         };
         
         var version3 = await _blockScanAppService.AddSubscriptionAsync(clientId, subscriptionInfo3);
-        var id3 = GrainIdHelper.GenerateGrainId(chainId, clientId, version3);
+        var id3 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version3, chainId);
 
         subscription = await _blockScanAppService.GetSubscriptionAsync(clientId);
         subscription.CurrentVersion.Version.ShouldBe(version1);

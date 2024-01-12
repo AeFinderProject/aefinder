@@ -35,7 +35,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var subscription = new Subscription
         {
             SubscriptionItems = new List<SubscriptionItem>()
@@ -52,10 +52,10 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         
         var scanToken = Guid.NewGuid().ToString("N");
         await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
+        var id = GrainIdHelper.GenerateBlockScanGrainId(clientId, version, chainId);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
+        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
@@ -123,7 +123,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
 
-        var clientGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var clientGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var subscription = new Subscription
         {
             SubscriptionItems = new List<SubscriptionItem>()
@@ -139,12 +139,12 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var version = await clientGrain.AddSubscriptionAsync(subscription);
         
         var scanToken = Guid.NewGuid().ToString("N");
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
+        var id = GrainIdHelper.GenerateBlockScanGrainId(clientId, version, chainId);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
+        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
@@ -185,7 +185,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestBlockAsync("BlockHash1000", 1000);
         await chainGrain.SetLatestConfirmBlockAsync("BlockHash1000", 1000);
 
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var subscription = new Subscription
         {
             SubscriptionItems = new List<SubscriptionItem>()
@@ -202,10 +202,10 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
 
         var scanToken = Guid.NewGuid().ToString("N");
         await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
+        var id = GrainIdHelper.GenerateBlockScanGrainId(clientId, version, chainId);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
+        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
         
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 200);
@@ -240,7 +240,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
 
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var subscription = new Subscription
         {
             SubscriptionItems = new List<SubscriptionItem>()
@@ -258,10 +258,10 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         var scanToken = Guid.NewGuid().ToString("N");
         await scanAppGrain.StartAsync(version);
 
-        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
+        var id = GrainIdHelper.GenerateBlockScanGrainId(clientId, version, chainId);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
+        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
@@ -309,7 +309,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var subscription = new Subscription
         {
             SubscriptionItems = new List<SubscriptionItem>()
@@ -326,10 +326,10 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         
         var scanToken = Guid.NewGuid().ToString("N");
         await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
+        var id = GrainIdHelper.GenerateBlockScanGrainId(clientId, version, chainId);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
+        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
 
         var scanGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await scanGrain.InitializeAsync(scanToken, 21);
@@ -370,7 +370,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var subscription = new Subscription
         {
             SubscriptionItems = new List<SubscriptionItem>()
@@ -396,10 +396,10 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
 
         var scanToken = Guid.NewGuid().ToString("N");
         await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
+        var id = GrainIdHelper.GenerateBlockScanGrainId(clientId, version, chainId);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
+        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
@@ -443,7 +443,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(clientId);
+        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
         var subscription = new Subscription
         {
             SubscriptionItems = new List<SubscriptionItem>()
@@ -460,10 +460,10 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
 
         var scanToken = Guid.NewGuid().ToString("N");
         await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateGrainId(chainId, clientId, version);
+        var id = GrainIdHelper.GenerateBlockScanGrainId(clientId, version, chainId);
 
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(id);
-        await blockScanGrain.InitializeAsync(scanToken,chainId, clientId, version, subscription.SubscriptionItems[0]);
+        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
 
         var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockScanExecutorGrain>(id);
         await blockScanExecutorGrain.InitializeAsync(scanToken, 1);

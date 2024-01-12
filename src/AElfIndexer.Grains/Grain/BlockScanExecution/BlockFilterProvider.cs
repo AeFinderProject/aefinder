@@ -1,6 +1,5 @@
 using AElfIndexer.Block;
 using AElfIndexer.Block.Dtos;
-using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
@@ -148,7 +147,8 @@ public class BlockFilterProvider : IBlockFilterProvider, ITransientDependency
             if (block.Transactions.Count != block.TransactionIds.Count)
             {
                 _logger.LogWarning(
-                    $"Wrong Transactions: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}");
+                    "Wrong Transactions: block hash {BlockHash}, block height {BlockHeight}, transaction count {TransactionCount}",
+                    block.BlockHash, block.BlockHeight, block.Transactions.Count);
                 break;
             }
 
@@ -169,14 +169,16 @@ public class BlockFilterProvider : IBlockFilterProvider, ITransientDependency
                 block.BlockHeight != previousBlockHeight + 1)
             {
                 _logger.LogWarning(
-                    $"Wrong confirmed previousBlockHash or previousBlockHash: block hash {block.BlockHash}, block height {block.BlockHeight}");
+                    "Wrong confirmed previousBlockHash or previousBlockHash: block hash {BlockHash}, block height {BlockHeight}",
+                    block.BlockHash, block.BlockHeight);
                 break;
             }
 
             if (block.Transactions.Count != block.TransactionIds.Count)
             {
                 _logger.LogWarning(
-                    $"Wrong confirmed Transactions: block hash {block.BlockHash}, block height {block.BlockHeight}, transaction count {block.Transactions.Count}");
+                    "Wrong confirmed Transactions: block hash {BlockHash}, block height {BlockHeight}, transaction count {TransactionCount}",
+                    block.BlockHash, block.BlockHeight, block.Transactions.Count);
                 break;
             }
 

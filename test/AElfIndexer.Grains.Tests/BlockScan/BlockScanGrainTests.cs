@@ -44,14 +44,13 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         
         var scanToken = Guid.NewGuid().ToString("N");
         var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(clientId);
-        await blockScanGrain.InitializeAsync(scanToken, chainId, clientId, version, subscription.SubscriptionItems[0]);
-        var clientInfo = await blockScanGrain.GetClientInfoAsync();
-        clientInfo.ChainId.ShouldBe(chainId);
-        clientInfo.ClientId.ShouldBe(clientId);
+        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
+        var clientInfo = await blockScanGrain.GetScanInfoAsync();
+        clientInfo.ScanAppId.ShouldBe(clientId);
         var scanMode = await blockScanGrain.GetScanModeAsync();
         scanMode.ShouldBe(ScanMode.HistoricalBlock);
 
-        var subscribe = await blockScanGrain.GetSubscriptionInfoAsync();
+        var subscribe = await blockScanGrain.GetSubscriptionAsync();
         subscribe.ChainId.ShouldBe(subscription.SubscriptionItems[0].ChainId);
         subscribe.OnlyConfirmed.ShouldBe(subscription.SubscriptionItems[0].OnlyConfirmed);
         subscribe.StartBlockNumber.ShouldBe(subscription.SubscriptionItems[0].StartBlockNumber);

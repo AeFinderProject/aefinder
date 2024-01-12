@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using AElfIndexer.Grains.EventData;
 using AElfIndexer.Grains.State.Blocks;
 using Microsoft.Extensions.Logging;

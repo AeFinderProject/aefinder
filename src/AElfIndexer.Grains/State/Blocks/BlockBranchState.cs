@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using AElfIndexer.Grains.EventData;
 
 namespace AElfIndexer.Grains.State.Blocks;

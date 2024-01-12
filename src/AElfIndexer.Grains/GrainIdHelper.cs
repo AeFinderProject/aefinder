@@ -6,4 +6,24 @@ public static class GrainIdHelper
     {
         return ids.JoinAsString("-");
     }
+
+    public static string GenerateScanAppGrainId(string scanAppId)
+    {
+        return GenerateGrainId(scanAppId);
+    }
+    
+    public static string GenerateBlockScanGrainId(string scanAppId, string version, string chainId)
+    {
+        return GenerateGrainId(scanAppId, version, chainId);
+    }
+    
+    public static int GenerateBlockScanManagerGrainId()
+    {
+        return 0;
+    }
+    
+    public static string GenerateSubscriptionGrainId(string scanAppId, string version)
+    {
+        return GenerateGrainId(scanAppId, version);
+    }
 }

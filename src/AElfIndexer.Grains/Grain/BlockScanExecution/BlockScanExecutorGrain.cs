@@ -21,9 +21,9 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
 
     private IAsyncStream<SubscribedBlockDto> _stream = null!;
 
-    private string _chainId;
-    private string _clientId;
+    private string _scanAppId;
     private string _subscriptionVersion;
+    private SubscriptionItem _subscription;
 
     public BlockScanExecutorGrain(IOptionsSnapshot<BlockScanOptions> blockScanOptions,
         IBlockFilterProvider blockFilterProvider, ILogger<BlockScanExecutorGrain> logger, IObjectMapper objectMapper)
@@ -43,8 +43,13 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         State.ScannedBlocks = new SortedDictionary<long, HashSet<string>>();
         State.ScanToken = scanToken;
         
-        var blockScanInfo = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
-        await blockScanInfo.SetHistoricalBlockScanModeAsync();
+        var blockScanGrain = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
+        await blockScanGrain.SetHistoricalBlockScanModeAsync();
+        
+        var scanInfo = await blockScanGrain.GetScanInfoAsync();
+        _scanAppId = scanInfo.ScanAppId;
+        _subscriptionVersion = scanInfo.Version;
+        _subscription = await blockScanGrain.GetSubscriptionAsync();
 
         await WriteStateAsync();
     }
@@ -54,32 +59,34 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         try
         {
             await ReadStateAsync();
-            
-            _logger.LogInformation($"Pushing block [grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: begin from {State.ScannedBlockHeight}");
 
-            var blockScanInfo = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
-            var clientGrain = GrainFactory.GetGrain<IScanAppGrain>(_clientId);
-            var chainGrain = GrainFactory.GetGrain<IChainGrain>(_chainId);
-            var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
+            _logger.LogInformation("Grain: {GrainId} token: {ScanToken} pushing block begin from {ScannedBlockHeight}",
+                this.GetPrimaryKeyString(), State.ScanToken, State.ScannedBlockHeight);
+
+            var blockScanGrain = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
+            var scanAppGrain = GrainFactory.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(_scanAppId));
+            var chainGrain = GrainFactory.GetGrain<IChainGrain>(_subscription.ChainId);
             var chainStatus = await chainGrain.GetChainStatusAsync();
 
             while (true)
             {
-                if (!await clientGrain.IsRunningAsync(_subscriptionVersion, _chainId, State.ScanToken) ||
-                    await blockScanInfo.GetScanModeAsync() != ScanMode.HistoricalBlock ||
-                    !await CheckPushThresholdAsync(subscriptionInfo.StartBlockNumber, State.ScannedConfirmedBlockHeight, _blockScanOptions.MaxHistoricalBlockPushThreshold))
+                if (!await scanAppGrain.IsRunningAsync(_subscriptionVersion, _subscription.ChainId, State.ScanToken) ||
+                    await blockScanGrain.GetScanModeAsync() != ScanMode.HistoricalBlock ||
+                    !await CheckPushThresholdAsync(_subscription.StartBlockNumber, State.ScannedConfirmedBlockHeight, _blockScanOptions.MaxHistoricalBlockPushThreshold))
                 {
                     break;
                 }
 
-                await blockScanInfo.SetHandleHistoricalBlockTimeAsync(DateTime.UtcNow);
+                await blockScanGrain.SetHandleHistoricalBlockTimeAsync(DateTime.UtcNow);
 
                 if (State.ScannedConfirmedBlockHeight >=
                     chainStatus.ConfirmedBlockHeight - _blockScanOptions.ScanHistoryBlockThreshold)
                 {
                     _logger.LogInformation(
-                        $"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: switch to new block mode. ScannedConfirmedBlockHeight: {State.ScannedConfirmedBlockHeight}, ConfirmedBlockHeight: {chainStatus.ConfirmedBlockHeight}, ScanHistoryBlockThreshold: {_blockScanOptions.ScanHistoryBlockThreshold}");
-                    await blockScanInfo.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
+                        "Grain: {GrainId} token: {ScanToken} switch to new block mode. ScannedConfirmedBlockHeight: {ScannedConfirmedBlockHeight}, ConfirmedBlockHeight: {ConfirmedBlockHeight}, ScanHistoryBlockThreshold: {ScanHistoryBlockThreshold}",
+                        this.GetPrimaryKeyString(), State.ScanToken, State.ScannedConfirmedBlockHeight,
+                        chainStatus.ConfirmedBlockHeight, _blockScanOptions.ScanHistoryBlockThreshold);
+                    await blockScanGrain.SetScanNewBlockStartHeightAsync(State.ScannedConfirmedBlockHeight + 1);
                     break;
                 }
 
@@ -89,12 +96,12 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
 
                 var blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
                 {
-                    ChainId = _chainId,
+                    ChainId = _subscription.ChainId,
                     StartBlockHeight = State.ScannedConfirmedBlockHeight + 1,
                     EndBlockHeight = targetHeight,
                     IsOnlyConfirmed = true,
-                    TransactionFilters = _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(subscriptionInfo.TransactionConditions),
-                    LogEventFilters = _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(subscriptionInfo.LogEventConditions)
+                    TransactionFilters = _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(_subscription.TransactionConditions),
+                    LogEventFilters = _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(_subscription.LogEventConditions)
                 });
 
                 if (blocks.Count != targetHeight - State.ScannedConfirmedBlockHeight)
@@ -103,13 +110,13 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
                         $"Cannot fill vacant blocks: from {State.ScannedConfirmedBlockHeight + 1} to {targetHeight}");
                 }
 
-                if (!subscriptionInfo.OnlyConfirmed)
+                if (!_subscription.OnlyConfirmed)
                 {
                     SetConfirmed(blocks, false);
                     await _stream.OnNextAsync(new SubscribedBlockDto
                     {
-                        ClientId = _clientId,
-                        ChainId = _chainId,
+                        ClientId = _scanAppId,
+                        ChainId = _subscription.ChainId,
                         Version = _subscriptionVersion,
                         Blocks = blocks,
                         Token = State.ScanToken
@@ -119,8 +126,8 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
                 SetConfirmed(blocks, true);
                 await _stream.OnNextAsync(new SubscribedBlockDto
                 {
-                    ClientId = _clientId,
-                    ChainId = _chainId,
+                    ClientId = _scanAppId,
+                    ChainId = _subscription.ChainId,
                     Version = _subscriptionVersion,
                     Blocks = blocks,
                     Token = State.ScanToken
@@ -134,13 +141,16 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
                 await WriteStateAsync();
 
                 chainStatus = await chainGrain.GetChainStatusAsync();
-                _logger.LogInformation($"Pushing block [grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: pushed historical block from {blocks.First().BlockHeight} to {blocks.Last().BlockHeight}");
+                _logger.LogInformation(
+                    "Grain: {GrainId} token: {ScanToken} pushed historical block from {BeginBlockHeight} to {EndBlockHeight}",
+                    this.GetPrimaryKeyString(), State.ScanToken, blocks.First().BlockHeight, blocks.Last().BlockHeight);
 
             }
         }
         catch (Exception e)
         {
-            _logger.LogError(e, $"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: HandleHistoricalBlock failed: {e.Message}");
+            _logger.LogError(e, "Grain: {GrainId} token: {ScanToken} handle historical block failed: {Message}",
+                this.GetPrimaryKeyString(), State.ScanToken, e.Message);
             throw;
         }
     }
@@ -154,20 +164,21 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
             return;
         }
 
-        var clientGrain = GrainFactory.GetGrain<IScanAppGrain>(_clientId);
-        var blockScanInfo = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
-        var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
+        var scanAppGrain = GrainFactory.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(_scanAppId));
+        var scanInfo = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
 
-        if (!await CheckPushThresholdAsync(subscriptionInfo.StartBlockNumber, State.ScannedBlockHeight, _blockScanOptions.MaxNewBlockPushThreshold))
+        if (!await CheckPushThresholdAsync(_subscription.StartBlockNumber, State.ScannedBlockHeight, _blockScanOptions.MaxNewBlockPushThreshold))
         {
             return;
         }
 
-        if (subscriptionInfo.OnlyConfirmed
-            || await blockScanInfo.GetScanModeAsync() != ScanMode.NewBlock
-            || !await clientGrain.IsRunningAsync(_subscriptionVersion, _chainId, State.ScanToken))
+        if (_subscription.OnlyConfirmed
+            || await scanInfo.GetScanModeAsync() != ScanMode.NewBlock
+            || !await scanAppGrain.IsRunningAsync(_subscriptionVersion, _subscription.ChainId, State.ScanToken))
         {
-            _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: HandleNewBlock failed, block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+            _logger.LogWarning(
+                "Grain: {GrainId} token: {ScanToken} handle block failed, block height: {BlockHeight}, block hash: {BlockHash}",
+                this.GetPrimaryKeyString(), State.ScanToken, block.BlockHeight, block.BlockHash);
             return;
         }
 
@@ -183,7 +194,7 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         {
             blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
-                ChainId = _chainId,
+                ChainId = _subscription.ChainId,
                 StartBlockHeight = startHeight,
                 EndBlockHeight = GetMaxTargetHeight(startHeight, block.BlockHeight),
                 IsOnlyConfirmed = false
@@ -198,10 +209,12 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         else
         {
             startHeight = GetMinScannedBlockHeight();
-            _logger.LogDebug($"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: Not linked new block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, from height: {startHeight}");
+            _logger.LogDebug(
+                "Grain: {GrainId} token: {ScanToken} found not linked block, block height: {BlockHeight}, block hash: {BlockHash}, from height: {startHeight}",
+                this.GetPrimaryKeyString(), State.ScanToken, block.BlockHeight, block.BlockHash, startHeight);
             blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
-                ChainId = _chainId,
+                ChainId = _subscription.ChainId,
                 StartBlockHeight = startHeight,
                 EndBlockHeight = GetMaxTargetHeight(startHeight, block.BlockHeight),
                 IsOnlyConfirmed = false
@@ -211,7 +224,7 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         if (blocks.Count == 0)
         {
             var message =
-                $"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: Cannot get blocks: from {startHeight} to {block.BlockHeight}";
+                $"Grain: {this.GetPrimaryKeyString()} token: {State.ScanToken} cannot get blocks: from {startHeight} to {block.BlockHeight}";
             _logger.LogError(message);
             throw new ApplicationException(message);
         }
@@ -219,28 +232,32 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         var unPushedBlock = await GetUnPushedBlocksAsync(blocks, needCheckIncomplete);
         if (unPushedBlock.Count == 0)
         {
-            _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: HandleNewBlock failed, no unpushed block. block height: {block.BlockHeight}, block hash: {block.BlockHash}");
+            _logger.LogWarning(
+                "Grain: {GrainId} token: {ScanToken} handle block failed, no unpushed block. block height: {BlockHeight}, block hash: {BlockHash}",
+                this.GetPrimaryKeyString(), State.ScanToken, block.BlockHeight, block.BlockHash);
             return;
         }
 
         State.ScannedBlockHeight = unPushedBlock.Last().BlockHeight;
         State.ScannedBlockHash = unPushedBlock.Last().BlockHash;
 
-        var subscribedBlocks = await _blockFilterProvider.FilterBlocksAsync(unPushedBlock, subscriptionInfo.TransactionConditions,
-            subscriptionInfo.LogEventConditions);
+        var subscribedBlocks = await _blockFilterProvider.FilterBlocksAsync(unPushedBlock, _subscription.TransactionConditions,
+            _subscription.LogEventConditions);
         
         SetConfirmed(subscribedBlocks, false);
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
-            ClientId = _clientId,
-            ChainId = _chainId,
+            ClientId = _scanAppId,
+            ChainId = _subscription.ChainId,
             Version = _subscriptionVersion,
             Blocks = subscribedBlocks,
             Token = State.ScanToken
         });
 
         await WriteStateAsync();
-        _logger.LogInformation($"Pushing block [grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: pushed new block from {subscribedBlocks.First().BlockHeight} to {subscribedBlocks.Last().BlockHeight}");
+        _logger.LogInformation("Grain: {GrainId} token: {ScanToken} pushed block from {First} to {Last}",
+            this.GetPrimaryKeyString(), State.ScanToken, subscribedBlocks.First().BlockHeight,
+            subscribedBlocks.Last().BlockHeight);
     }
 
     public async Task HandleConfirmedBlockAsync(BlockWithTransactionDto block)
@@ -252,20 +269,21 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
             return;
         }
         
-        var clientGrain = GrainFactory.GetGrain<IScanAppGrain>(_clientId);
-        var blockScanInfo = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
-        var subscriptionInfo = await blockScanInfo.GetSubscriptionInfoAsync();
+        var scanAppGrain = GrainFactory.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(_scanAppId));
+        var scanInfo = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
         
-        if (!await CheckPushThresholdAsync(subscriptionInfo.StartBlockNumber, State.ScannedConfirmedBlockHeight, _blockScanOptions.MaxNewBlockPushThreshold))
+        if (!await CheckPushThresholdAsync(_subscription.StartBlockNumber, State.ScannedConfirmedBlockHeight, _blockScanOptions.MaxNewBlockPushThreshold))
         {
             return;
         }
         
         if (block.BlockHeight <= State.ScannedConfirmedBlockHeight
-            || await blockScanInfo.GetScanModeAsync() != ScanMode.NewBlock
-            || !await clientGrain.IsRunningAsync(_subscriptionVersion, _chainId, State.ScanToken))
+            || await scanInfo.GetScanModeAsync() != ScanMode.NewBlock
+            || !await scanAppGrain.IsRunningAsync(_subscriptionVersion, _subscription.ChainId, State.ScanToken))
         {
-            _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: HandleConfirmedBlock failed, block height: {block.BlockHeight}");
+            _logger.LogWarning(
+                "Grain: {GrainId} token: {ScanToken} handle confirmed block failed, block height: {BlockHeight}",
+                this.GetPrimaryKeyString(), State.ScanToken, block.BlockHeight);
             return;
         }
         
@@ -276,42 +294,37 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         }
         else
         {
-            try
-            {
-                _logger.LogDebug(
-                    $"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: Not linked confirmed block, block height: {block.BlockHeight}, block hash: {block.BlockHash}, current block height: {State.ScannedConfirmedBlockHeight}");
-            }
-            catch (Exception e)
-            {
-                ;
-                throw;
-            }
-            
+            _logger.LogDebug(
+                "Grain: {GrainId} token: {ScanToken} found not linked confirmed block, block height: {BlockHeight}, block hash: {BlockHash}, current block height: {ScannedConfirmedBlockHeight}",
+                this.GetPrimaryKeyString(), State.ScanToken, block.BlockHeight, block.BlockHash,
+                State.ScannedConfirmedBlockHeight);
+
             var startHeight = State.ScannedConfirmedBlockHeight + 1;
             scannedBlocks.AddRange(await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
-                ChainId = _chainId,
+                ChainId = _subscription.ChainId,
                 StartBlockHeight = startHeight,
                 EndBlockHeight = GetMaxTargetHeight(startHeight, block.BlockHeight),
                 IsOnlyConfirmed = true
             }));
-            
-            scannedBlocks = await _blockFilterProvider.FilterIncompleteConfirmedBlocksAsync(_chainId, scannedBlocks,
+
+            scannedBlocks = await _blockFilterProvider.FilterIncompleteConfirmedBlocksAsync(_subscription.ChainId,
+                scannedBlocks,
                 State.ScannedConfirmedBlockHash, State.ScannedConfirmedBlockHeight);
         }
-        
+
         scannedBlocks =
-            await _blockFilterProvider.FilterBlocksAsync(scannedBlocks, subscriptionInfo.TransactionConditions,subscriptionInfo.LogEventConditions);
+            await _blockFilterProvider.FilterBlocksAsync(scannedBlocks, _subscription.TransactionConditions,_subscription.LogEventConditions);
 
         if (scannedBlocks.Count == 0)
         {
             var message =
-                $"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: Cannot get confirmed blocks: from {State.ScannedConfirmedBlockHeight + 1} to {block.BlockHeight}";
+                $"Grain: {this.GetPrimaryKeyString()} token: {State.ScanToken} cannot get confirmed blocks: from {State.ScannedConfirmedBlockHeight + 1} to {block.BlockHeight}";
             _logger.LogError(message);
             throw new ApplicationException(message);
         }
 
-        if (!subscriptionInfo.OnlyConfirmed)
+        if (!_subscription.OnlyConfirmed)
         {
             foreach (var b in scannedBlocks)
             {
@@ -338,8 +351,8 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         SetConfirmed(scannedBlocks, true);
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
-            ClientId = _clientId,
-            ChainId = _chainId,
+            ClientId = _scanAppId,
+            ChainId = _subscription.ChainId,
             Version = _subscriptionVersion,
             Blocks = scannedBlocks,
             Token = State.ScanToken
@@ -348,8 +361,11 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         State.ScannedConfirmedBlockHeight = scannedBlocks.Last().BlockHeight;
         State.ScannedConfirmedBlockHash = scannedBlocks.Last().BlockHash;
         await WriteStateAsync();
-        
-        _logger.LogInformation($"Pushing block [grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: pushed confirmed block from {scannedBlocks.First().BlockHeight} to {scannedBlocks.Last().BlockHeight}");
+
+        _logger.LogInformation(
+            "Grain: {GrainId} token: {ScanToken} pushed confirmed block from {FromBlockHeight} to {ToBlockHeight}",
+            this.GetPrimaryKeyString(), State.ScanToken, scannedBlocks.First().BlockHeight,
+            scannedBlocks.Last().BlockHeight);
     }
 
     private async Task<List<BlockWithTransactionDto>> GetUnPushedBlocksAsync(List<BlockWithTransactionDto> blocks, bool needCheckIncomplete)
@@ -359,10 +375,12 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         {
             if (needCheckIncomplete)
             {
-                blocks = await _blockFilterProvider.FilterIncompleteBlocksAsync(_chainId, blocks);
+                blocks = await _blockFilterProvider.FilterIncompleteBlocksAsync(_subscription.ChainId, blocks);
                 if (blocks.Count == 0)
                 {
-                    _logger.LogWarning($"[grain: {this.GetPrimaryKeyString()} token: {State.ScanToken}]: Cannot filter incomplete blocks");
+                    _logger.LogWarning(
+                        $"Grain: {this.GetPrimaryKeyString()} token: {State.ScanToken} no block filtered",
+                        this.GetPrimaryKeyString(), State.ScanToken);
                     break;
                 }
             }
@@ -404,7 +422,7 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
             var startBlockHeight = blocks.Last().BlockHeight + 1;
             blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
-                ChainId = _chainId,
+                ChainId = _subscription.ChainId,
                 StartBlockHeight = startBlockHeight,
                 EndBlockHeight = startBlockHeight + _blockScanOptions.BatchPushBlockCount - 1,
                 IsOnlyConfirmed = false
@@ -474,12 +492,6 @@ public class BlockScanExecutorGrain : Grain<BlockScanExecutorState>, IBlockScanE
         await ReadStateAsync();
 
         var blockScanGrain = GrainFactory.GetGrain<IBlockScanGrain>(this.GetPrimaryKeyString());
-        
-        var client = await blockScanGrain.GetClientInfoAsync();
-        _clientId = client.ClientId;
-        _chainId = client.ChainId; 
-        _subscriptionVersion = client.Version;
-        
         var streamId = await blockScanGrain.GetMessageStreamIdAsync();
         var streamProvider = GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName);
         _stream = streamProvider.GetStream<SubscribedBlockDto>(
