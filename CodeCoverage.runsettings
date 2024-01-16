@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- File name extension must be .runsettings -->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>      
+       <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Exclude>[xunit.*]*,[*Tests]*</Exclude> <!-- [Assembly-Filter]Type-Filter -->
+          <ExcludeByFile>**/test/**/*.cs,**/src/AeFinder.Application.Contracts/Permissions/**/*.cs,**/src/AeFinder.BlockChainEventHandler/**/*.cs,**/src/AeFinder.BlockChainEventHandler.Core/Generated/*.cs,**/src/AeFinder.DbMigrator/**/*.cs,**/src/AeFinder.Domain/**/*.cs,**/src/AeFinder.Domain.Shared/**/*.cs,**/src/AeFinder.EntityEventHandler/**/*.cs,**/src/AeFinder.EntityFrameworkCore/**/*.cs,**/src/AeFinder.HttpApi.Host/**/*.cs,**/src/AeFinder.HttpApi.Client/**/*.cs,**/src/AeFinder.AuthServer/**/*.cs,**/src/AeFinder.MongoDB/**/*.cs,**/src/AeFinder.Client/GraphQL/**/*.cs,**/src/AeFinder.Client/AElfClientService.cs,**/src/AeFinder.Client/AeFinderClientPluginBaseModule.cs,**/src/AeFinder.Grains/Grain/BlockScan/BlockScanCheckGrain.cs</ExcludeByFile>
+          <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+          <SingleHit>false</SingleHit>
+        </Configuration>
+      </DataCollector>    
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

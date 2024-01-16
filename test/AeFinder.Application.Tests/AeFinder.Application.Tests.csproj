@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <RootNamespace>AeFinder</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\AeFinder.Application\AeFinder.Application.csproj" />
+    <ProjectReference Include="..\..\src\AeFinder.Domain.Shared\AeFinder.Domain.Shared.csproj" />
+    <ProjectReference Include="..\..\src\AeFinder.Domain\AeFinder.Domain.csproj" />
+    <ProjectReference Include="..\..\src\AeFinder.Grains\AeFinder.Grains.csproj" />
+    <ProjectReference Include="..\AeFinder.Domain.Tests\AeFinder.Domain.Tests.csproj" />
+    <ProjectReference Include="..\AeFinder.Orleans.TestBase\AeFinder.Orleans.TestBase.csproj" />
+    <ProjectReference Include="..\AeFinder.TestBase\AeFinder.TestBase.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="3.2.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+  </ItemGroup>
+
+</Project>
