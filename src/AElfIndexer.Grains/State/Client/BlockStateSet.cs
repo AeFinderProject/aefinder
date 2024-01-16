@@ -1,3 +1,5 @@
+using AElfIndexer.Block.Dtos;
+
 namespace AElfIndexer.Grains.State.Client;
 
 public class BlockStateSet<T>
@@ -11,4 +13,11 @@ public class BlockStateSet<T>
     public bool Processed { get; set; }
     
     public List<T> Data { get; set; } = new();
+}
+
+public class AppBlockStateSet
+{
+    public BlockWithTransactionDto Block { get; set; }
+    public Dictionary<string, string> Changes { get; set; } = new ();
+    public bool Processed { get; set; }
 }

@@ -1,4 +1,4 @@
-namespace AElfIndexer.Sdk.Processor;
+namespace AElfIndexer.Sdk;
 
 public interface IBlockProcessor
 {

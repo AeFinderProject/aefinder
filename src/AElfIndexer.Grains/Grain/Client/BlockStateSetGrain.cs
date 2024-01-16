@@ -5,7 +5,7 @@ using Orleans;
 
 namespace AElfIndexer.Grains.Grain.Client;
 
-public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGrain<T>
+public class BlockStateSetGrain: Grain<BlockStateSetState>, IBlockStateSetGrain
 {
     private readonly ClientOptions _clientOptions;
 
@@ -14,17 +14,17 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
         _clientOptions = clientOptions.Value;
     }
 
-    public async Task SetBlockStateSetsAsync(Dictionary<string, BlockStateSet<T>> sets)
+    public async Task SetBlockStateSetsAsync(Dictionary<string, AppBlockStateSet> sets)
     {
         await SetBlockStateSetsAsync(0, sets);
     }
 
-    public async Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync()
+    public async Task<Dictionary<string, AppBlockStateSet>> GetBlockStateSetsAsync()
     {
-        var result = new Dictionary<string, BlockStateSet<T>>();
+        var result = new Dictionary<string, AppBlockStateSet>();
         foreach (var key in State.BlockStateSets.Keys)
         {
-            var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
+            var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain>(key);
             var blockStateSets = await grain.GetBlockStateSetsAsync(State.BlockStateSetVersion);
             foreach (var set in blockStateSets)
             {
@@ -50,7 +50,7 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
         }
     }
     
-    public async Task<BlockStateSet<T>> GetLongestChainBlockStateSetAsync()
+    public async Task<AppBlockStateSet> GetLongestChainBlockStateSetAsync()
     {
         if (string.IsNullOrWhiteSpace(State.LongestChainBlockHash))
         {
@@ -61,7 +61,7 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
         {
             if (sets.Contains(State.LongestChainBlockHash))
             {
-                var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
+                var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain>(key);
                 return await grain.GetBlockStateSetAsync(State.BlockStateSetVersion, State.LongestChainBlockHash);
             }
         }
@@ -84,7 +84,7 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
         }
     }
     
-    public async Task<BlockStateSet<T>> GetBestChainBlockStateSetAsync()
+    public async Task<AppBlockStateSet> GetBestChainBlockStateSetAsync()
     {
         if (string.IsNullOrWhiteSpace(State.BestChainBlockHash))
         {
@@ -95,7 +95,7 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
         {
             if (sets.Contains(State.BestChainBlockHash))
             {
-                var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
+                var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain>(key);
                 return await grain.GetBlockStateSetAsync(State.BlockStateSetVersion, State.BestChainBlockHash);
             }
         }
@@ -103,7 +103,7 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
         return null;
     }
     
-    private async Task SetBlockStateSetsAsync(int startBucketNumber, Dictionary<string, BlockStateSet<T>> sets)
+    private async Task SetBlockStateSetsAsync(int startBucketNumber, Dictionary<string, AppBlockStateSet> sets)
     {
         var maxIndex = Math.Max((sets.Count - 1) / _clientOptions.MaxCountPerBlockStateSetBucket + 1,
             State.BlockStateSets.Count);
@@ -115,7 +115,7 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
         for (var i = 0; i < maxIndex; i++)
         {
             var key = GrainIdHelper.GenerateGrainId(this.GetPrimaryKeyString(), (startBucketNumber + i).ToString());
-            var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
+            var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain>(key);
             var blockSets = sets.Select(o => o).Skip(_clientOptions.MaxCountPerBlockStateSetBucket * i)
                 .Take(_clientOptions.MaxCountPerBlockStateSetBucket).ToDictionary(o => o.Key, o => o.Value);
 
@@ -151,7 +151,7 @@ public class BlockStateSetGrain<T>: Grain<BlockStateSetState>, IBlockStateSetGra
 
         var tasks = keys.Select(async key =>
         {
-            var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain<T>>(key);
+            var grain = GrainFactory.GetGrain<IBlockStateSetBucketGrain>(key);
             await grain.CleanAsync(State.BlockStateSetVersion);
         });
 

@@ -7,28 +7,28 @@ using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.Client.Providers;
 
-public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDependency
+public class BlockStateSetProvider : IBlockStateSetProvider, ISingletonDependency
 {
-    private readonly ConcurrentDictionary<string, Dictionary<string, BlockStateSet<T>>> _blockStateSets = new();
-    private readonly ConcurrentDictionary<string, BlockStateSet<T>> _longestChainBlockStateSets = new();
-    private readonly ConcurrentDictionary<string, BlockStateSet<T>> _bestChainBlockStateSets= new();
-    private readonly ConcurrentDictionary<string, BlockStateSet<T>> _currentBlockStateSets = new();
+    private readonly ConcurrentDictionary<string, Dictionary<string, AppBlockStateSet>> _blockStateSets = new();
+    private readonly ConcurrentDictionary<string, AppBlockStateSet> _longestChainBlockStateSets = new();
+    private readonly ConcurrentDictionary<string, AppBlockStateSet> _bestChainBlockStateSets= new();
+    private readonly ConcurrentDictionary<string, AppBlockStateSet> _currentBlockStateSets = new();
     private readonly ConcurrentDictionary<string, Dictionary<string, string>> _longestChainHashes = new();
     
     private readonly IClusterClient _clusterClient;
-    private readonly ILogger<BlockStateSetProvider<T>> _logger;
+    private readonly ILogger<BlockStateSetProvider> _logger;
 
-    public BlockStateSetProvider(IClusterClient clusterClient, ILogger<BlockStateSetProvider<T>> logger)
+    public BlockStateSetProvider(IClusterClient clusterClient, ILogger<BlockStateSetProvider> logger)
     {
         _clusterClient = clusterClient;
         _logger = logger;
     }
 
-    public async Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync(string key)
+    public async Task<Dictionary<string, AppBlockStateSet>> GetBlockStateSetsAsync(string key)
     {
         if (!_blockStateSets.TryGetValue(key, out var value))
         { 
-            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
+            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain>(key);
             value = await blockStateSetsGrain.GetBlockStateSetsAsync();
             _blockStateSets[key] = value;
         }
@@ -53,30 +53,30 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
         return Task.CompletedTask;
     }
     
-    public Task SetBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet)
+    public Task SetBlockStateSetAsync(string key, AppBlockStateSet blockStateSet)
     {
 
         if (!_blockStateSets.TryGetValue(key, out var sets))
         {
-            sets = new Dictionary<string, BlockStateSet<T>>();
+            sets = new Dictionary<string, AppBlockStateSet>();
         }
 
-        sets[blockStateSet.BlockHash] = blockStateSet;
+        sets[blockStateSet.Block.BlockHash] = blockStateSet;
         _blockStateSets[key] = sets;
         return Task.CompletedTask;
     }
 
-    public Task<BlockStateSet<T>> GetCurrentBlockStateSetAsync(string key)
+    public Task<AppBlockStateSet> GetCurrentBlockStateSetAsync(string key)
     {
         _currentBlockStateSets.TryGetValue(key, out var value);
         return Task.FromResult(value);
     }
 
-    public async Task<BlockStateSet<T>> GetLongestChainBlockStateSetAsync(string key)
+    public async Task<AppBlockStateSet> GetLongestChainBlockStateSetAsync(string key)
     {
         if (!_longestChainBlockStateSets.TryGetValue(key, out var value))
         {
-            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
+            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain>(key);
             value = await blockStateSetsGrain.GetLongestChainBlockStateSetAsync();
             _longestChainBlockStateSets[key] = value;
         }
@@ -84,11 +84,11 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
         return value;
     }
 
-    public async Task<BlockStateSet<T>> GetBestChainBlockStateSetAsync(string key)
+    public async Task<AppBlockStateSet> GetBestChainBlockStateSetAsync(string key)
     {
         if (!_bestChainBlockStateSets.TryGetValue(key, out var value))
         {
-            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
+            var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain>(key);
             value = await blockStateSetsGrain.GetBestChainBlockStateSetAsync();
             _bestChainBlockStateSets[key] = value;
         }
@@ -128,7 +128,7 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
         return Task.CompletedTask;
     }
 
-    public Task SetCurrentBlockStateSetAsync(string key, BlockStateSet<T> blockStateSet)
+    public Task SetCurrentBlockStateSetAsync(string key, AppBlockStateSet blockStateSet)
     {
         _currentBlockStateSets[key] = blockStateSet;
         return Task.CompletedTask;
@@ -138,8 +138,8 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
     {
         if (_blockStateSets.TryGetValue(key, out var sets))
         {
-            sets.RemoveAll(set => set.Value.BlockHeight < blockHeight);
-            sets.RemoveAll(set => set.Value.BlockHeight == blockHeight && set.Value.BlockHash != blockHash);
+            sets.RemoveAll(set => set.Value.Block.BlockHeight < blockHeight);
+            sets.RemoveAll(set => set.Value.Block.BlockHeight == blockHeight && set.Value.Block.BlockHash != blockHash);
         }
 
         return Task.CompletedTask;
@@ -149,16 +149,16 @@ public class BlockStateSetProvider<T> : IBlockStateSetProvider<T>, ISingletonDep
     {
         var sets = _blockStateSets[key];
         _logger.LogDebug("Saving BlockStateSets. Key: {key}, Count: {Count}", key, sets.Count);
-        var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain<T>>(key);
+        var blockStateSetsGrain = _clusterClient.GetGrain<IBlockStateSetGrain>(key);
         await blockStateSetsGrain.SetBlockStateSetsAsync(sets);
         if (_longestChainBlockStateSets.TryGetValue(key, out var longestChainSets) && longestChainSets != null)
         {
-            await blockStateSetsGrain.SetLongestChainBlockHashAsync(longestChainSets.BlockHash);
+            await blockStateSetsGrain.SetLongestChainBlockHashAsync(longestChainSets.Block.BlockHash);
         }
 
         if (_bestChainBlockStateSets.TryGetValue(key, out var bestChainSets) && bestChainSets != null)
         {
-            await blockStateSetsGrain.SetBestChainBlockHashAsync(bestChainSets.BlockHash);
+            await blockStateSetsGrain.SetBestChainBlockHashAsync(bestChainSets.Block.BlockHash);
         }
         _logger.LogDebug("Saved BlockStateSets. Key: {key}", key);
     }

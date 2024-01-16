@@ -1,6 +1,15 @@
-namespace AElfIndexer.Sdk.Processor;
+using AElf.CSharp.Core;
 
-public interface ILogEventProcessor<T>
+namespace AElfIndexer.Sdk;
+
+public interface ILogEventProcessor
 {
-    Task ProcessAsync(T logEvent, LogEventContext context);
+    string GetContractAddress(string chainId);
+    string GetEventName();
+    Task ProcessAsync(LogEventContext context);
+}
+
+public interface ILogEventProcessor<TEvent> : ILogEventProcessor
+{
+    Task ProcessAsync(TEvent logEvent, LogEventContext context);
 }

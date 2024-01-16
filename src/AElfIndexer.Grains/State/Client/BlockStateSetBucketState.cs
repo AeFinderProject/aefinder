@@ -1,6 +1,6 @@
 namespace AElfIndexer.Grains.State.Client;
 
-public class BlockStateSetBucketState<T>
+public class BlockStateSetBucketState
 {
-    public Dictionary<string, Dictionary<string, BlockStateSet<T>>> BlockStateSets { get; set; }= new ();
+    public Dictionary<string, Dictionary<string, AppBlockStateSet>> BlockStateSets { get; set; }= new ();
 }

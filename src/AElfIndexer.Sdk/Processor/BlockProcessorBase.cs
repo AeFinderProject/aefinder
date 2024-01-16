@@ -1,4 +1,4 @@
-namespace AElfIndexer.Sdk.Processor;
+namespace AElfIndexer.Sdk;
 
 public abstract class BlockProcessorBase : BlockDataProcessorBase, IBlockProcessor
 {

@@ -1,59 +1,54 @@
-namespace AElfIndexer.Sdk.Processor;
+namespace AElfIndexer.Sdk;
 
 public class ContextBase
 {
-    public string ChainId { get; } 
-}
-
-public class BlockContext : ContextBase
-{
+    public string ChainId { get; set; } 
 }
 
 public class LogEventContext : ContextBase
 {
-    public LightBlock Block { get; }
-    public Transaction Transaction { get; }
-    public LogEvent LogEvent { get; }
+    public LightBlock Block { get; set; } 
+    public Transaction Transaction { get; set; } 
+    public LogEvent LogEvent { get; set; } 
 }
 
 public class TransactionContext : ContextBase
 {
-    public LightBlock Block { get; }
+    public LightBlock Block { get; set; } 
 }
 
 public class LightBlock
 {
-    public string BlockHash { get; }
-    public long BlockHeight { get; }
-    public string PreviousBlockHash { get; }
-    public DateTime BlockTime { get; }
-    public bool Confirmed{ get; }
+    public string BlockHash { get; set; } 
+    public long BlockHeight { get; set; } 
+    public string PreviousBlockHash { get; set; } 
+    public DateTime BlockTime { get; set; } 
 }
 
 public class Block : LightBlock
 {
-    public string SignerPubkey { get; }
-    public Dictionary<string, string> ExtraProperties { get; }
+    public string SignerPubkey { get; set; } 
+    public Dictionary<string, string> ExtraProperties { get; set; } 
 }
 
 public class Transaction
 {
-    public string TransactionId { get; }
-    public string From { get; }
-    public string To { get; }
-    public string MethodName { get; }
-    public string Params { get; }
-    public int Index { get; }
-    public TransactionStatus Status { get; }
-    public Dictionary<string, string> ExtraProperties { get; }
+    public string TransactionId { get; set; } 
+    public string From { get; set; } 
+    public string To { get; set; } 
+    public string MethodName { get; set; } 
+    public string Params { get; set; } 
+    public int Index { get; set; } 
+    public TransactionStatus Status { get; set; } 
+    public Dictionary<string, string> ExtraProperties { get; set; } 
 }
 
 public class LogEvent
 {
-    public string ContractAddress { get; }
-    public string EventName { get; }
-    public Dictionary<string, string> ExtraProperties { get; }
-    public int Index { get; }
+    public string ContractAddress { get; set; } 
+    public string EventName { get; set; } 
+    public Dictionary<string, string> ExtraProperties { get; set; } 
+    public int Index { get; set; } 
 }
 
 public enum TransactionStatus

@@ -3,12 +3,12 @@ using Orleans;
 
 namespace AElfIndexer.Grains.Grain.Client;
 
-public interface IBlockStateSetGrain<T> : IGrainWithStringKey
+public interface IBlockStateSetGrain : IGrainWithStringKey
 {
-    Task SetBlockStateSetsAsync(Dictionary<string, BlockStateSet<T>> sets);
-    Task<Dictionary<string, BlockStateSet<T>>> GetBlockStateSetsAsync();
+    Task SetBlockStateSetsAsync(Dictionary<string, AppBlockStateSet> sets);
+    Task<Dictionary<string, AppBlockStateSet>> GetBlockStateSetsAsync();
     Task SetLongestChainBlockHashAsync(string blockHash);
-    Task<BlockStateSet<T>> GetLongestChainBlockStateSetAsync();
+    Task<AppBlockStateSet> GetLongestChainBlockStateSetAsync();
     Task SetBestChainBlockHashAsync(string blockHash);
-    Task<BlockStateSet<T>> GetBestChainBlockStateSetAsync();
+    Task<AppBlockStateSet> GetBestChainBlockStateSetAsync();
 }

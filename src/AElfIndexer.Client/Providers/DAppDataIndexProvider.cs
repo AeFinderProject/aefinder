@@ -13,10 +13,10 @@ public class DAppDataIndexProvider<TEntity> : IDAppDataIndexProvider<TEntity>
     private readonly INESTRepository<TEntity, string> _nestRepository;
 
     private readonly IDAppDataIndexManagerProvider _dAppDataIndexManagerProvider;
-    private readonly ILogger<BlockStateSetProvider<TEntity>> _logger;
+    private readonly ILogger<DAppDataIndexProvider<TEntity>> _logger;
 
     public DAppDataIndexProvider(INESTRepository<TEntity, string> nestRepository,
-        IDAppDataIndexManagerProvider dAppDataIndexManagerProvider, ILogger<BlockStateSetProvider<TEntity>> logger)
+        IDAppDataIndexManagerProvider dAppDataIndexManagerProvider, ILogger<DAppDataIndexProvider<TEntity>> logger)
     {
         _nestRepository = nestRepository;
         _dAppDataIndexManagerProvider = dAppDataIndexManagerProvider;

@@ -1,4 +1,5 @@
 using Nest;
+using Newtonsoft.Json;
 using Volo.Abp.Domain.Entities;
 
 namespace AElfIndexer.Sdk;
@@ -11,8 +12,14 @@ public abstract class IndexerEntity : Entity<string>
 {
     [Keyword] public string Id { get; protected set; }
     public Metadata Metadata { get; set; }
+    public bool IsDeleted { get; set; }
 
     protected IndexerEntity(string id) => this.Id = id;
+    
+    public string ToJsonString()
+    {
+        return JsonConvert.SerializeObject(this);
+    }
 }
 
 public class Metadata

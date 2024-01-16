@@ -26,4 +26,14 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(scanAppId, version);
     }
+    
+    public static string GenerateAppDataGrainId(string scanAppId, string version, string chainId, string entityKey)
+    {
+        return GenerateGrainId(scanAppId, version, chainId, entityKey);
+    }
+    
+    public static string GenerateAppBlockStateSetGrainId(string scanAppId, string version, string chainId)
+    {
+        return GenerateGrainId(scanAppId, version, chainId);
+    }
 }

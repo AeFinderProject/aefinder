@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.DependencyInjection;
 
-namespace AElfIndexer.Sdk.Processor;
+namespace AElfIndexer.Sdk;
 
 public abstract class BlockDataProcessorBase
 {
@@ -9,13 +9,13 @@ public abstract class BlockDataProcessorBase
 
     protected async Task<TEntity> GetEntityAsync<TEntity>(string id)
     {
-        var service = LazyServiceProvider.GetRequiredService<IDAppEntityProvider<TEntity>>();
+        var service = LazyServiceProvider.GetRequiredService<IAppEntityProvider<TEntity>>();
         return await service.GetAsync(id);
     }
     
     protected async Task SaveEntityAsync<TEntity>(TEntity entity)
     {
-        var service = LazyServiceProvider.GetRequiredService<IDAppEntityProvider<TEntity>>();
+        var service = LazyServiceProvider.GetRequiredService<IAppEntityProvider<TEntity>>();
         await service.AddOrUpdateAsync(entity);
     }
 }

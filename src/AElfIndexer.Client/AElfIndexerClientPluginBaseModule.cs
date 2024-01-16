@@ -34,10 +34,6 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<TModule>(); });
         context.Services.AddSingleton<IAElfIndexerClientInfoProvider, AElfIndexerClientInfoProvider>();
         context.Services.AddSingleton<ISubscribedBlockHandler, SubscribedBlockHandler>();
-        context.Services.AddTransient<IBlockChainDataHandler, LogEventDataHandler>();
-        context.Services.AddTransient(typeof(IAElfIndexerClientEntityRepository<,>),
-            typeof(AElfIndexerClientEntityRepository<,>));
-        context.Services.AddSingleton(typeof(IBlockStateSetProvider<>), typeof(BlockStateSetProvider<>));
         context.Services.AddSingleton<IDAppDataProvider, DAppDataProvider>();
         context.Services.AddSingleton(typeof(IDAppDataIndexProvider<>), typeof(DAppDataIndexProvider<>));
 
