@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <RootNamespace>AeFinder</RootNamespace>
+    <PackageId>AeFinder.Application</PackageId>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AeFinder.Domain.Shared\AeFinder.Domain.Shared.csproj" />
+    <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
+    <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
+    <ProjectReference Include="..\AeFinder.Grains\AeFinder.Grains.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.6.5" />
+    <PackageReference Include="NUglify" Version="1.20.0" />
+    <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />
+    <PackageReference Include="Volo.Abp.Account.Application" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.Identity.Application" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Application" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.TenantManagement.Application" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.Application" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="7.0.0-rc.5" />
+  </ItemGroup>
+
+</Project>
