@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScanExecution;
+using AElfIndexer.Grains.Grain.BlockStates;
 using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.Grain.ScanApps;
 using AElfIndexer.Grains.State.ScanApps;
@@ -212,10 +213,10 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             
             if (versionStatus != SubscriptionStatus.Initialized)
             {
-                var blockStateSetInfoGrain = _clusterClient.GetGrain<IBlockStateSetInfoGrain>(
-                    GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, subscriptionItem.ChainId, version));
+                var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
+                    GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(clientId, version, subscriptionItem.ChainId));
                 // TODO: This is not correct, we should get the confirmed block height from the chain grain.
-                startBlockHeight = await blockStateSetInfoGrain.GetConfirmedBlockHeight(BlockFilterType.Block);
+                startBlockHeight = (await appBlockStateSetStatusGrain.GetBlockStateSetStatusAsync()).LastIrreversibleBlockHeight;
                 if (startBlockHeight == 0)
                 {
                     startBlockHeight = subscriptionItem.StartBlockNumber;

@@ -1,32 +1,24 @@
 using AElf.Client;
 using Microsoft.Extensions.Options;
+using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.Client.Providers;
 
-public class AElfClientProvider : IAElfClientProvider
+public class AElfClientProvider : IAElfClientProvider, ISingletonDependency
 {
-    private Dictionary<string, AElfClient> _clients = new();
-    public AElfClientProvider(IOptionsSnapshot<NodeOptions> nodeOptions)
+    private readonly Dictionary<string, AElfClient> _clients = new();
+
+    public AElfClientProvider(IOptionsSnapshot<ChainNodeOptions> nodeOptions)
     {
         var clientBuilder = new AElfClientBuilder();
-        foreach (var config in nodeOptions.Value.NodeConfigList)
+        foreach (var node in nodeOptions.Value.ChainNodes)
         {
-            _clients[config.ChainId] = clientBuilder.UseEndpoint(config.Endpoint).Build();
+            _clients[node.Key] = clientBuilder.UseEndpoint(node.Value).Build();
         }
     }
 
     public AElfClient GetClient(string chainId)
     {
         return _clients[chainId];
-    }
-
-    public bool TryAddClient(string chainId, string endpoint)
-    {
-        return _clients.TryAdd(chainId, new AElfClient(endpoint));
-    }
-
-    public void RemoveClient(string chainId)
-    {
-        _clients.Remove(chainId);
     }
 }

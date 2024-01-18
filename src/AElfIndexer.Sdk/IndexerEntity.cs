@@ -10,10 +10,9 @@ public interface IIndexerEntity
 
 public abstract class IndexerEntity : Entity<string>
 {
-    [Keyword] public string Id { get; protected set; }
-    public Metadata Metadata { get; set; }
-    public bool IsDeleted { get; set; }
-
+    [Keyword] public string Id { get; set; }
+    public Metadata Metadata { get; set; } = new Metadata();
+    
     protected IndexerEntity(string id) => this.Id = id;
     
     public string ToJsonString()
@@ -24,13 +23,14 @@ public abstract class IndexerEntity : Entity<string>
 
 public class Metadata
 {
+    [Keyword]
+    public string ChainId { get; set; }
     public BlockMetadata Block { get; set; }
+    public bool IsDeleted { get; set; }
 }
 
 public class BlockMetadata
 {
-    [Keyword]
-    public string ChainId { get; set; }
     [Keyword]
     public string BlockHash { get; set; }
     public long BlockHeight { get; set; }

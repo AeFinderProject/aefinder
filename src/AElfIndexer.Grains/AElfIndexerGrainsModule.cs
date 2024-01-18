@@ -1,6 +1,5 @@
 ﻿using AElfIndexer.Grains.Grain.Blocks;
 using AElfIndexer.Grains.Grain.BlockScanExecution;
-using AElfIndexer.Grains.Grain.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
@@ -14,7 +13,6 @@ public class AElfIndexerGrainsModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<BlockScanOptions>(configuration.GetSection("BlockScan"));
         Configure<PrimaryKeyOptions>(configuration.GetSection("GrainPrimaryKey"));
-        Configure<ClientOptions>(configuration.GetSection("Client"));
 
         context.Services.AddSingleton<IBlockGrain, BlockGrain>();
     }

@@ -49,10 +49,6 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                         o.MaxHistoricalBlockPushThreshold = 30;
                         o.MaxNewBlockPushThreshold = 30;
                     });
-                    services.Configure<ClientOptions>(o =>
-                    {
-                        o.MaxCountPerBlockStateSetBucket = 5;
-                    });
                     services.AddAutoMapper(typeof(AElfIndexerApplicationModule).Assembly);
                     services.OnExposing(onServiceExposingContext =>
                     {

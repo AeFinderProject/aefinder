@@ -27,8 +27,12 @@ public class LightBlock
 
 public class Block : LightBlock
 {
-    public string SignerPubkey { get; set; } 
-    public Dictionary<string, string> ExtraProperties { get; set; } 
+    public string SignerPubkey { get; set; }
+    public string Miner { get; set; }
+    public string Signature { get; set; }
+    public Dictionary<string,string> ExtraProperties {get;set;}
+    public List<string> TransactionIds { get; set; } = new();
+    public int LogEventCount { get; set; }
 }
 
 public class Transaction

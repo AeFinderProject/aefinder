@@ -1,18 +1,15 @@
 using System.Reflection;
 using AElf.Indexing.Elasticsearch;
 using AElf.Indexing.Elasticsearch.Services;
-using AElf.Kernel;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Client.GraphQL;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
-using AElfIndexer.Grains.State.Client;
 using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NUglify.Helpers;
-using Org.BouncyCastle.Asn1.X509.Qualified;
 using Orleans;
 using Orleans.Streams;
 using Volo.Abp;
@@ -26,23 +23,18 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
     where TModule : AElfIndexerClientPluginBaseModule<TModule,TSchema,TQuery>
     where TSchema : AElfIndexerClientSchema<TQuery>
 {
-    protected abstract string ClientId { get; }
-    protected abstract string Version { get; }
-    
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<TModule>(); });
-        context.Services.AddSingleton<IAElfIndexerClientInfoProvider, AElfIndexerClientInfoProvider>();
         context.Services.AddSingleton<ISubscribedBlockHandler, SubscribedBlockHandler>();
-        context.Services.AddSingleton<IDAppDataProvider, DAppDataProvider>();
-        context.Services.AddSingleton(typeof(IDAppDataIndexProvider<>), typeof(DAppDataIndexProvider<>));
+        context.Services.AddSingleton<IAppStateProvider, AppStateProvider>();
+        context.Services.AddSingleton(typeof(IAppDataIndexProvider<>), typeof(AppDataIndexProvider<>));
 
         ConfigureServices(context.Services);
         ConfigNodes(context.Services);
         ConfigGraphQL(context.Services);
         
-        Configure<DappMessageQueueOptions>(context.Services.GetConfiguration().GetSection("DappMessageQueue"));
-        Configure<AElfIndexerClientOptions>(context.Services.GetConfiguration().GetSection("AElfIndexerClient"));
+        Configure<AppInfoOptions>(context.Services.GetConfiguration().GetSection("AppInfo"));
     }
 
     protected virtual void ConfigureServices(IServiceCollection serviceCollection)
@@ -50,42 +42,36 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         
     }
 
-    public override async Task OnPreApplicationInitializationAsync(ApplicationInitializationContext context)
-    {
-        var provider = context.ServiceProvider.GetRequiredService<IAElfIndexerClientInfoProvider>();
-        provider.SetClientId(ClientId);
-        provider.SetVersion(Version);
-        await CreateIndexAsync(context.ServiceProvider);
-    }
-
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
-    {
+    {        
+        var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
+        AsyncHelper.RunSync(async () => await CreateIndexAsync(context.ServiceProvider, appInfoOptions.ScanAppId, appInfoOptions.Version));
+
         var app = context.GetApplicationBuilder();
         //TODO check clientId in db or ClientGrain
-        app.UseGraphQL<TSchema>($"/{ClientId}/{typeof(TSchema).Name}/graphql");
+        app.UseGraphQL<TSchema>($"/{appInfoOptions.ScanAppId}/{typeof(TSchema).Name}/graphql");
         app.UseGraphQLPlayground(
-            $"/{ClientId}/{typeof(TSchema).Name}/ui/playground",
+            $"/{appInfoOptions.ScanAppId}/{typeof(TSchema).Name}/ui/playground",
             new PlaygroundOptions
             {
                 GraphQLEndPoint = "../graphql",
                 SubscriptionsEndPoint = "../graphql",
             });
         
-        var clientOptions = new AElfIndexerClientOptions();
-        context.GetConfiguration().GetSection("AElfIndexerClient").Bind(clientOptions);
-        if (clientOptions.ClientType == AElfIndexerClientType.Full)
+        var clientOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<ClientOptions>>().Value;
+        if (clientOptions.ClientType == ClientType.Full)
         {
-            AsyncHelper.RunSync(async () => await InitBlockScanAsync(context));
+            AsyncHelper.RunSync(async () => await InitBlockScanAsync(context, appInfoOptions.ScanAppId, appInfoOptions.Version));
         }
     }
 
-    private async Task InitBlockScanAsync(ApplicationInitializationContext context)
+    private async Task InitBlockScanAsync(ApplicationInitializationContext context, string scanAppId, string version)
     {
         var blockScanService = context.ServiceProvider.GetRequiredService<IBlockScanAppService>();
         var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
         // TODO: Is correct?
         var subscribedBlockHandler = context.ServiceProvider.GetRequiredService<ISubscribedBlockHandler>();
-        var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(ClientId, Version);
+        var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(scanAppId, version);
         foreach (var streamId in messageStreamIds)
         {
             var stream =
@@ -105,14 +91,12 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
             }
         }
 
-        await blockScanService.StartScanAsync(ClientId, Version);
+        await blockScanService.StartScanAsync(scanAppId, version);
     }
 
     private void ConfigNodes(IServiceCollection serviceCollection)
     {
-        serviceCollection.AddTransient<IAElfClientService, AElfClientService>();
-        serviceCollection.AddSingleton<IAElfClientProvider, AElfClientProvider>();
-        Configure<NodeOptions>(serviceCollection.GetConfiguration().GetSection("Node"));
+        Configure<ChainNodeOptions>(serviceCollection.GetConfiguration().GetSection("ChainNode"));
     }
 
     private void ConfigGraphQL(IServiceCollection serviceCollection)
@@ -120,13 +104,13 @@ public abstract class AElfIndexerClientPluginBaseModule<TModule, TSchema, TQuery
         serviceCollection.AddSingleton<TSchema>();
     }
     
-    private async Task CreateIndexAsync(IServiceProvider serviceProvider)
+    private async Task CreateIndexAsync(IServiceProvider serviceProvider,string scanAppId, string version)
     {
         var types = GetTypesAssignableFrom<IIndexBuild>(typeof(TModule).Assembly);
         var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
         foreach (var t in types)
         {
-            var indexName = $"{ClientId}-{Version}.{t.Name}".ToLower();
+            var indexName = $"{scanAppId}-{version}.{t.Name}".ToLower();
             //TODO Need to confirm shard and numberOfReplicas
             await elasticIndexService.CreateIndexAsync(indexName, t, 5,1);
         }

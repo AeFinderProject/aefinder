@@ -27,13 +27,18 @@ public static class GrainIdHelper
         return GenerateGrainId(scanAppId, version);
     }
     
-    public static string GenerateAppDataGrainId(string scanAppId, string version, string chainId, string entityKey)
+    public static string GenerateAppStateGrainId(string scanAppId, string version, string chainId, string key)
     {
-        return GenerateGrainId(scanAppId, version, chainId, entityKey);
+        return GenerateGrainId(scanAppId, version, chainId, key);
     }
     
-    public static string GenerateAppBlockStateSetGrainId(string scanAppId, string version, string chainId)
+    public static string GenerateAppBlockStateSetStatusGrainId(string scanAppId, string version, string chainId)
     {
         return GenerateGrainId(scanAppId, version, chainId);
+    }
+    
+    public static string GenerateAppBlockStateSetGrainId(string scanAppId, string version, string chainId, string blockHash)
+    {
+        return GenerateGrainId(scanAppId, version, chainId, blockHash);
     }
 }

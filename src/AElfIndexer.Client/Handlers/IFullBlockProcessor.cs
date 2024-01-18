@@ -7,7 +7,7 @@ namespace AElfIndexer.Client.Handlers;
 
 public interface IFullBlockProcessor
 {
-    Task ProcessAsync(BlockWithTransactionDto block);
+    Task ProcessAsync(BlockWithTransactionDto block, bool isRollback);
 }
 
 public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
@@ -27,12 +27,15 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         _objectMapper = objectMapper;
     }
 
-    public async Task ProcessAsync(BlockWithTransactionDto block)
+    public async Task ProcessAsync(BlockWithTransactionDto block, bool isRollback)
     {
+        var processingContext = new BlockDataProcessingContext(block.ChainId, block.BlockHash, block.BlockHeight,
+            block.PreviousBlockHash, block.BlockTime, isRollback);
         var blockProcessor = _blockProcessors.FirstOrDefault();
         if (blockProcessor != null)
         {
-            await blockProcessor.ProcessAsync(new Sdk.Block());
+            blockProcessor.SetProcessingContext(processingContext);
+            await blockProcessor.ProcessAsync(_objectMapper.Map<BlockWithTransactionDto, Sdk.Block>(block));
         }
 
         foreach (var transaction in block.Transactions)
@@ -43,6 +46,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                  p.GetMethodName(block.ChainId) == transaction.MethodName));
             if (transactionProcessor != null)
             {
+                transactionProcessor.SetProcessingContext(processingContext);
                 await transactionProcessor.ProcessAsync(_objectMapper.Map<TransactionDto, Sdk.Transaction>(transaction),
                     new Sdk.TransactionContext
                     {
@@ -58,6 +62,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                     p.GetEventName() == logEvent.EventName);
                 if (logEventProcessor != null)
                 {
+                    logEventProcessor.SetProcessingContext(processingContext);
                     await logEventProcessor.ProcessAsync(new Sdk.LogEventContext
                     {
                         ChainId = block.ChainId,

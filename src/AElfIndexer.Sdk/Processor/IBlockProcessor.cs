@@ -1,6 +1,6 @@
 namespace AElfIndexer.Sdk;
 
-public interface IBlockProcessor
+public interface IBlockProcessor : IBlockDataProcessor
 {
     Task ProcessAsync(Block block);
 }

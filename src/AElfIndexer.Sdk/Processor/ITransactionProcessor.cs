@@ -1,6 +1,6 @@
 namespace AElfIndexer.Sdk;
 
-public interface ITransactionProcessor
+public interface ITransactionProcessor : IBlockDataProcessor
 {
     string GetToAddress(string chainId);
     string GetMethodName(string chainId);

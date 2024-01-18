@@ -3,19 +3,36 @@ using Volo.Abp.DependencyInjection;
 
 namespace AElfIndexer.Sdk;
 
-public abstract class BlockDataProcessorBase
+public abstract class BlockDataProcessorBase: IBlockDataProcessor
 {
     public IAbpLazyServiceProvider LazyServiceProvider { get; set; }
-
+    
+    private BlockDataProcessingContext _context;
     protected async Task<TEntity> GetEntityAsync<TEntity>(string id)
+        where TEntity : IndexerEntity
     {
-        var service = LazyServiceProvider.GetRequiredService<IAppEntityProvider<TEntity>>();
-        return await service.GetAsync(id);
+        var provider = LazyServiceProvider.GetRequiredService<IEntityRepository<TEntity>>();
+        return await provider.GetAsync(_context.ChainId, new BlockIndex(_context.BlockHash, _context.BlockHeight),
+            id);
     }
     
     protected async Task SaveEntityAsync<TEntity>(TEntity entity)
+        where TEntity : IndexerEntity
     {
-        var service = LazyServiceProvider.GetRequiredService<IAppEntityProvider<TEntity>>();
-        await service.AddOrUpdateAsync(entity);
+        var provider = LazyServiceProvider.GetRequiredService<IEntityRepository<TEntity>>();
+        entity.Metadata.ChainId = _context.ChainId;
+        entity.Metadata.Block = new BlockMetadata
+        {
+            BlockHash = _context.BlockHash,
+            BlockHeight = _context.BlockHeight,
+            BlockTime = _context.BlockTime,
+            PreviousBlockHash = _context.PreviousBlockHash
+        };
+        await provider.AddOrUpdateAsync(entity, _context.IsRollback);
+    }
+
+    public void SetProcessingContext(BlockDataProcessingContext context)
+    {
+        _context = context;
     }
 }

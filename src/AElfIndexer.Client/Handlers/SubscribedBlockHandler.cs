@@ -1,11 +1,7 @@
-using AElfIndexer.Client.Providers;
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.Grain.Chains;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Orleans.Streams;
-using Serilog;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 
@@ -13,40 +9,35 @@ namespace AElfIndexer.Client.Handlers;
 
 public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDependency
 {
-    private readonly IEnumerable<IBlockChainDataHandler> _handlers;
     private readonly IBlockScanAppService _blockScanAppService;
-    private readonly IClusterClient _clusterClient;
     private readonly IDistributedEventBus _distributedEventBus;
-    private readonly DappMessageQueueOptions _dappMessageQueueOptions;
+    private readonly ClientOptions _clientOptions;
+    private readonly AppInfoOptions _appInfoOptions;
     public ILogger<SubscribedBlockHandler> Logger { get; set; }
-    private readonly string _clientId;
     private const long UpgradeVersionThreshold = 1000;
 
-    public SubscribedBlockHandler(IEnumerable<IBlockChainDataHandler> handlers,
-        IAElfIndexerClientInfoProvider aelfIndexerClientInfoProvider, IBlockScanAppService blockScanAppService,
+    public SubscribedBlockHandler(IBlockScanAppService blockScanAppService,
         IDistributedEventBus distributedEventBus,
-        IOptionsSnapshot<DappMessageQueueOptions> dappMessageQueueOptions,
-        IClusterClient clusterClient)
+        IOptionsSnapshot<ClientOptions> clientOptions,
+        IOptionsSnapshot<AppInfoOptions> appInfoOptions)
     {
-        _handlers = handlers;
-        _clientId = aelfIndexerClientInfoProvider.GetClientId();
         _blockScanAppService = blockScanAppService;
-        _clusterClient = clusterClient;
         _distributedEventBus = distributedEventBus;
-        _dappMessageQueueOptions = dappMessageQueueOptions.Value;
+        _clientOptions = clientOptions.Value;
+        _appInfoOptions = appInfoOptions.Value;
     }
 
     public async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken token = null)
     {
         if (subscribedBlock.Blocks.Count == 0) return;
-        if (subscribedBlock.ClientId != _clientId) return;
+        if (subscribedBlock.ClientId != _appInfoOptions.ScanAppId) return;
         var isRunning = await _blockScanAppService.IsRunningAsync(subscribedBlock.ChainId, subscribedBlock.ClientId,
             subscribedBlock.Version, subscribedBlock.Token);
         if (!isRunning)
         {
             Logger.LogWarning(
                 "SubscribedBlockHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} subscribedToken: {subscribedToken} clientId: {clientId} , ChainId: {ChainId}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
-                subscribedBlock.ClientId, subscribedBlock.Version, subscribedBlock.Token,_clientId,
+                subscribedBlock.ClientId, subscribedBlock.Version, subscribedBlock.Token,_appInfoOptions.ScanAppId,
                 subscribedBlock.Blocks.First().ChainId,
                 subscribedBlock.Blocks.First().BlockHeight,
                 subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
@@ -71,7 +62,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
     private async Task PublishMessageAsync(SubscribedBlockDto subscribedBlock)
     {
         var retryCount = 0;
-        while (retryCount < _dappMessageQueueOptions.RetryTimes)
+        while (retryCount < _clientOptions.MessageQueue.RetryTimes)
         {
             try
             {
@@ -82,9 +73,9 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
             {
                 Logger.LogError(e, "Publish subscribedBlock event failed, retrying..." + retryCount);
                 retryCount++;
-                await Task.Delay(_dappMessageQueueOptions.RetryInterval);
+                await Task.Delay(_clientOptions.MessageQueue.RetryInterval);
 
-                if (retryCount >= _dappMessageQueueOptions.RetryTimes)
+                if (retryCount >= _clientOptions.MessageQueue.RetryTimes)
                 {
                     throw e;
                 }

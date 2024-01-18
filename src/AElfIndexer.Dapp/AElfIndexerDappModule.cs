@@ -6,8 +6,6 @@ using AElf.EntityMapping;
 using AElf.Indexing.Elasticsearch;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.Client;
-using AElfIndexer.Grains.State.Client;
 using AElfIndexer.MongoDB;
 using GraphQL;
 using Microsoft.AspNetCore.Builder;

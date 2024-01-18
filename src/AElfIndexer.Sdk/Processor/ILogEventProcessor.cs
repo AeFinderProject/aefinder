@@ -1,8 +1,6 @@
-using AElf.CSharp.Core;
-
 namespace AElfIndexer.Sdk;
 
-public interface ILogEventProcessor
+public interface ILogEventProcessor : IBlockDataProcessor
 {
     string GetContractAddress(string chainId);
     string GetEventName();
