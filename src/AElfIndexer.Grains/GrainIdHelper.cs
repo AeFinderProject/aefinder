@@ -27,6 +27,11 @@ public static class GrainIdHelper
         return GenerateGrainId(scanAppId, version);
     }
     
+    public static string GenerateGetScanAppCodeGrainId(string scanAppId, string version)
+    {
+        return GenerateGrainId(scanAppId, version);
+    }
+    
     public static string GenerateAppStateGrainId(string scanAppId, string version, string chainId, string key)
     {
         return GenerateGrainId(scanAppId, version, chainId, key);

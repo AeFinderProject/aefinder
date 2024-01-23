@@ -10,7 +10,6 @@
 
     <ItemGroup>
         <PackageReference Include="AElf.CSharp.Core" Version="1.2.1" />
-        <PackageReference Include="AElf.Indexing.Elasticsearch" Version="0.0.14" />
         <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="7.1.1" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Volo.Abp.AspNetCore.Mvc" Version="7.0.0" />

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Grains.Grain.BlockStates;
-using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.Grain.ScanApps;
 using AElfIndexer.Grains.State.ScanApps;
 using AElfIndexer.Grains.State.Subscriptions;

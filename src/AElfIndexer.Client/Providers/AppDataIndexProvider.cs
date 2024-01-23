@@ -1,27 +1,26 @@
 using System.Collections.Concurrent;
-using AElf.Indexing.Elasticsearch;
+using AElf.EntityMapping.Repositories;
 using AElfIndexer.Sdk;
 using Microsoft.Extensions.Logging;
 
 namespace AElfIndexer.Client.Providers;
 
 public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
-    where TEntity : IndexerEntity, IIndexBuild, new()
+    where TEntity : IndexerEntity, new()
 {
     private readonly ConcurrentQueue<IndexData<TEntity>> _indexDataQueue = new();
     private bool _isRegister = false;
     
-    private readonly INESTRepository<TEntity, string> _nestRepository;
+    private readonly IEntityMappingRepository<TEntity, string> _entityMappingRepository;
 
     private readonly IAppDataIndexManagerProvider _appDataIndexManagerProvider;
     private readonly ILogger<AppDataIndexProvider<TEntity>> _logger;
 
-    public AppDataIndexProvider(INESTRepository<TEntity, string> nestRepository,
-        IAppDataIndexManagerProvider appDataIndexManagerProvider, ILogger<AppDataIndexProvider<TEntity>> logger)
+    public AppDataIndexProvider(IAppDataIndexManagerProvider appDataIndexManagerProvider, ILogger<AppDataIndexProvider<TEntity>> logger, IEntityMappingRepository<TEntity, string> entityMappingRepository)
     {
-        _nestRepository = nestRepository;
         _appDataIndexManagerProvider = appDataIndexManagerProvider;
         _logger = logger;
+        _entityMappingRepository = entityMappingRepository;
     }
 
     public async Task SaveDataAsync()
@@ -84,11 +83,11 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
         switch (operationType)
         {
             case DataOperationType.AddOrUpdate:
-                await _nestRepository.BulkAddOrUpdateAsync(toCommitData, indexName);
+                await _entityMappingRepository.AddOrUpdateManyAsync(toCommitData, indexName);
                 toCommitData.Clear();
                 break;
             case DataOperationType.Delete:
-                await _nestRepository.BulkDeleteAsync(toCommitData, indexName);
+                await _entityMappingRepository.DeleteManyAsync(toCommitData, indexName);
                 toCommitData.Clear();
                 break;
         }

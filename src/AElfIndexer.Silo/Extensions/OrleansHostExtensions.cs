@@ -127,8 +127,8 @@ public static class OrleansHostExtensions
                     options.CounterUpdateIntervalMs = configSection.GetValue<int>("DashboardCounterUpdateIntervalMs");
                 })
                 .UseLinuxEnvironmentStatistics()
-                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); })
-                .AddKafka(AElfIndexerApplicationConsts.MessageStreamName)
+                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); });
+                /*.AddKafka(AElfIndexerApplicationConsts.MessageStreamName)
                 .WithOptions(options =>
                 {
                     options.BrokerList = configuration.GetSection("Kafka:Brokers").Get<List<string>>();
@@ -138,8 +138,9 @@ public static class OrleansHostExtensions
                         new TopicCreationConfig { AutoCreate = true });
                     options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
                 })
-                .AddJson()
-                .AddLoggingTracker().Build();
+                .AddJson()*/
+                //.AddLoggingTracker()
+                //.Build();
         });
     }
 }

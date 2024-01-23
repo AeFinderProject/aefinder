@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
-using AElfIndexer.Client;
-using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
-using Volo.Abp.Modularity.PlugIns;
 
 namespace AElfIndexer.Dapp;
 
@@ -36,29 +33,7 @@ public class Program
         try
         {
             Log.Information("Starting AElfIndexer.Dapp.");
-            var builder = WebApplication.CreateBuilder(args);
-            builder.Host.AddAppSettingsSecretsJson()
-                .UseAutofac()
-                .UseSerilog();
-            var clientOptions = new AElfIndexerClientOptions();
-            configuration.GetSection("AElfIndexerClient").Bind(clientOptions);
-            if (clientOptions.ClientType == AElfIndexerClientType.Full)
-            {
-                await builder.AddApplicationAsync<AElfIndexerDappModule>(options =>
-                {
-                    options.PlugInSources.AddFolder(builder.Configuration.GetSection("PlugIns")["Path"]);
-                });
-            }
-            else if (clientOptions.ClientType == AElfIndexerClientType.Query)
-            {
-                await builder.AddApplicationAsync<AElfIndexerDappQueryModule>(options =>
-                {
-                    options.PlugInSources.AddFolder(builder.Configuration.GetSection("PlugIns")["Path"]);
-                });
-            }
-            var app = builder.Build();
-            await app.InitializeApplicationAsync();
-            await app.RunAsync();
+            CreateHostBuilder(args).Build().Run();
             return 0;
         }
         catch (Exception ex)
@@ -70,5 +45,13 @@ public class Program
         {
             Log.CloseAndFlush();
         }
+    }
+    
+    private static IHostBuilder CreateHostBuilder(string[] args)
+    {
+        return Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); })
+            .UseAutofac()
+            .UseSerilog();
     }
 }

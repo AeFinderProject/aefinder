@@ -1,6 +1,17 @@
+using AElfIndexer.BlockScan;
+using AElfIndexer.Client.Handlers;
+using AElfIndexer.Client.Providers;
+using GraphQL.Server.Ui.Playground;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using NUglify.Helpers;
+using Orleans;
+using Orleans.Streams;
+using Volo.Abp;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
+using Volo.Abp.Threading;
 
 namespace AElfIndexer.Client;
 
@@ -12,5 +23,58 @@ public class AElfIndexerClientModule : AbpModule
         
         var configuration = context.Services.GetConfiguration();
         Configure<ClientOptions>(configuration.GetSection("Client"));
+        Configure<ChainNodeOptions>(configuration.GetSection("ChainNode"));
+        Configure<AppInfoOptions>(configuration.GetSection("AppInfo"));
+
+        context.Services.AddSingleton(typeof(IAppDataIndexProvider<>), typeof(AppDataIndexProvider<>));
+    }
+    
+    public override void OnApplicationInitialization(ApplicationInitializationContext context)
+    {        
+        var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
+
+        var app = context.GetApplicationBuilder();
+        app.UseGraphQL($"/{appInfoOptions.ScanAppId}/{appInfoOptions.Version}/graphql");
+        // app.UseGraphQLPlayground(
+        //     $"/{appInfoOptions.ScanAppId}/{typeof(TSchema).Name}/ui/playground",
+        //     new PlaygroundOptions
+        //     {
+        //         GraphQLEndPoint = "../graphql",
+        //         SubscriptionsEndPoint = "../graphql",
+        //     });
+        
+        var clientOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<ClientOptions>>().Value;
+        if (clientOptions.ClientType == ClientType.Full)
+        {
+            AsyncHelper.RunSync(async () => await InitBlockScanAsync(context, appInfoOptions.ScanAppId, appInfoOptions.Version));
+        }
+    }
+    
+    private async Task InitBlockScanAsync(ApplicationInitializationContext context, string scanAppId, string version)
+    {
+        var blockScanService = context.ServiceProvider.GetRequiredService<IBlockScanAppService>();
+        var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        var subscribedBlockHandler = context.ServiceProvider.GetRequiredService<ISubscribedBlockHandler>();
+        var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(scanAppId, version);
+        foreach (var streamId in messageStreamIds)
+        {
+            var stream =
+                clusterClient
+                    .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
+                    .GetStream<SubscribedBlockDto>(streamId, AElfIndexerApplicationConsts.MessageStreamNamespace);
+
+            var subscriptionHandles = await stream.GetAllSubscriptionHandles();
+            if (!subscriptionHandles.IsNullOrEmpty())
+            {
+                subscriptionHandles.ForEach(async x =>
+                    await x.ResumeAsync(subscribedBlockHandler.HandleAsync));
+            }
+            else
+            {
+                await stream.SubscribeAsync(subscribedBlockHandler.HandleAsync);
+            }
+        }
+
+        await blockScanService.StartScanAsync(scanAppId, version);
     }
 }

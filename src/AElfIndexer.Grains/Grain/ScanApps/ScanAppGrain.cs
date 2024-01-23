@@ -90,6 +90,12 @@ public class ScanAppGrain : Grain<ScanAppState>, IScanAppGrain
         return result;
     }
 
+    public async Task<byte[]> GetCodeAsync(string version)
+    {
+        var codeId = GetScanAppCodeId(version);
+        return await GrainFactory.GetGrain<IScanAppCodeGrain>(codeId).GetCodeAsync();
+    }
+
     public async Task<bool> IsRunningAsync(string version, string chainId, string scanToken)
     {
         var scanAppVersion = GetScanAppVersion(version);
@@ -188,6 +194,11 @@ public class ScanAppGrain : Grain<ScanAppState>, IScanAppGrain
     private string GetSubscriptionId(string version)
     {
         return GrainIdHelper.GenerateSubscriptionGrainId(this.GetPrimaryKeyString(), version);
+    }
+    
+    private string GetScanAppCodeId(string version)
+    {
+        return GrainIdHelper.GenerateGetScanAppCodeGrainId(this.GetPrimaryKeyString(), version);
     }
     
     private async Task StopBlockScanAsync(string subscriptionId, string version)

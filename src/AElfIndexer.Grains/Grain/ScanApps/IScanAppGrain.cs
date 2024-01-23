@@ -9,6 +9,7 @@ public interface IScanAppGrain: IGrainWithStringKey
     Task UpdateSubscriptionAsync(string version, Subscription subscription);
     Task<Subscription> GetSubscriptionAsync(string version);
     Task<AllSubscription> GetAllSubscriptionAsync();
+    Task<byte[]> GetCodeAsync(string version);
     Task<bool> IsRunningAsync(string version, string chainId, string scanToken);
     Task UpgradeVersionAsync();
     Task<SubscriptionStatus> GetSubscriptionStatusAsync(string version);
