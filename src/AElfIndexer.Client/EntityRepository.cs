@@ -13,15 +13,18 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IAppDataIndexProvider<TEntity> _appDataIndexProvider;
     private readonly AppInfoOptions _appInfoOptions;
+    private readonly IEntityOperationLimitProvider _entityOperationLimitProvider;
 
     private readonly string _entityName;
 
     public EntityRepository(IAppStateProvider appStateProvider, IAppBlockStateSetProvider appBlockStateSetProvider,
-        IAppDataIndexProvider<TEntity> appDataIndexProvider, IOptionsSnapshot<AppInfoOptions> appInfoOptions)
+        IAppDataIndexProvider<TEntity> appDataIndexProvider, IOptionsSnapshot<AppInfoOptions> appInfoOptions,
+        IEntityOperationLimitProvider entityOperationLimitProvider)
     {
         _appStateProvider = appStateProvider;
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _appDataIndexProvider = appDataIndexProvider;
+        _entityOperationLimitProvider = entityOperationLimitProvider;
         _appInfoOptions = appInfoOptions.Value;
         _entityName = typeof(TEntity).Name;
     }
@@ -34,6 +37,7 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
 
     public async Task AddOrUpdateAsync(TEntity entity, bool isRollback)
     {
+        _entityOperationLimitProvider.Check(entity);
         entity.Metadata.IsDeleted = false;
         await OperationAsync(entity, AddOrUpdateForConfirmBlockAsync, AddToBlockStateSetAsync, isRollback);
     }

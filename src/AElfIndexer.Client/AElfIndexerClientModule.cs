@@ -9,12 +9,15 @@ using NUglify.Helpers;
 using Orleans;
 using Orleans.Streams;
 using Volo.Abp;
+using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
+using Volo.Abp.Serialization;
 using Volo.Abp.Threading;
 
 namespace AElfIndexer.Client;
 
+[DependsOn(typeof(AbpSerializationModule))]
 public class AElfIndexerClientModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -27,6 +30,20 @@ public class AElfIndexerClientModule : AbpModule
         Configure<AppInfoOptions>(configuration.GetSection("AppInfo"));
 
         context.Services.AddSingleton(typeof(IAppDataIndexProvider<>), typeof(AppDataIndexProvider<>));
+    }
+    
+    public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
+    {
+        var operationLimitManager = context.ServiceProvider.GetRequiredService<IOperationLimitManager>();
+        
+        var entityOperationLimitProvider = context.ServiceProvider.GetRequiredService<IEntityOperationLimitProvider>();
+        operationLimitManager.Add(entityOperationLimitProvider);
+        
+        var logOperationLimitProvider = context.ServiceProvider.GetRequiredService<ILogOperationLimitProvider>();
+        operationLimitManager.Add(logOperationLimitProvider);
+        
+        var contractOperationLimitProvider = context.ServiceProvider.GetRequiredService<IContractOperationLimitProvider>();
+        operationLimitManager.Add(contractOperationLimitProvider);
     }
     
     public override void OnApplicationInitialization(ApplicationInitializationContext context)

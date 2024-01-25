@@ -16,6 +16,9 @@ public class Program
             .AddJsonFile("appsettings.json")
             .Build();
         
+        var scanAppId = configuration["AppInfo:ScanAppId"];
+        var varsion = configuration["AppInfo:Version"];
+        
         Log.Logger = new LoggerConfiguration()
 #if DEBUG
             .MinimumLevel.Debug()
@@ -24,6 +27,8 @@ public class Program
 #endif
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .Enrich.FromLogContext()
+            .Enrich.WithProperty("scanAppId", scanAppId)
+            .Enrich.WithProperty("version", varsion)
             .ReadFrom.Configuration(configuration)
 #if DEBUG
             .WriteTo.Async(c => c.Console())

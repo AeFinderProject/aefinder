@@ -1,4 +1,5 @@
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.Client.Providers;
 using AElfIndexer.Sdk;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
@@ -16,19 +17,24 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
     private readonly IEnumerable<ITransactionProcessor> _transactionProcessors;
     private readonly IEnumerable<ILogEventProcessor> _logEventProcessors;
     private readonly IObjectMapper _objectMapper;
+    private readonly IOperationLimitManager _operationLimitManager;
 
     public FullBlockProcessor(IEnumerable<IBlockProcessor> blockProcessors,
         IEnumerable<ITransactionProcessor> transactionProcessors,
-        IEnumerable<ILogEventProcessor> logEventProcessors, IObjectMapper objectMapper)
+        IEnumerable<ILogEventProcessor> logEventProcessors, IObjectMapper objectMapper,
+        IOperationLimitManager operationLimitManager)
     {
         _blockProcessors = blockProcessors;
         _transactionProcessors = transactionProcessors;
         _logEventProcessors = logEventProcessors;
         _objectMapper = objectMapper;
+        _operationLimitManager = operationLimitManager;
     }
 
     public async Task ProcessAsync(BlockWithTransactionDto block, bool isRollback)
     {
+        _operationLimitManager.ResetAll();
+        
         var processingContext = new BlockDataProcessingContext(block.ChainId, block.BlockHash, block.BlockHeight,
             block.PreviousBlockHash, block.BlockTime, isRollback);
         var blockProcessor = _blockProcessors.FirstOrDefault();

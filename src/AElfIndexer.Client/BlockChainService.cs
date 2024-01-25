@@ -12,15 +12,19 @@ namespace AElfIndexer.Client;
 public class BlockChainService : IBlockChainService, ITransientDependency
 {
     private readonly IAElfClientProvider _clientProvider;
+    private readonly IContractOperationLimitProvider _contractOperationLimitProvider;
 
-    public BlockChainService(IAElfClientProvider clientProvider)
+    public BlockChainService(IAElfClientProvider clientProvider,
+        IContractOperationLimitProvider contractOperationLimitProvider)
     {
         _clientProvider = clientProvider;
+        _contractOperationLimitProvider = contractOperationLimitProvider;
     }
 
     public async Task<T> ViewContractAsync<T>(string chainId, string contractAddress, string methodName,
         IMessage parameter) where T : IMessage<T>, new()
     {
+        _contractOperationLimitProvider.CheckCallCount();   
         var client = _clientProvider.GetClient(chainId);
         var tx = new TransactionBuilder(client)
             .UseContract(contractAddress)
