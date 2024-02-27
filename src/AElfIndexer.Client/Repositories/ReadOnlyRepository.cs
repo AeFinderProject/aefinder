@@ -1,7 +1,7 @@
 using AElf.EntityMapping.Repositories;
 using AElfIndexer.Sdk;
 
-namespace AElfIndexer.Client;
+namespace AElfIndexer.Client.Repositories;
 
 public class ReadOnlyRepository<TEntity> : IReadOnlyRepository<TEntity> 
     where TEntity : IndexerEntity

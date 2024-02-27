@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using Volo.Abp.DependencyInjection;
 
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.BlockState;
 
 public interface IAppDataIndexManagerProvider
 {

@@ -1,10 +1,11 @@
-using AElfIndexer.Client.Providers;
+using AElfIndexer.Client.BlockState;
+using AElfIndexer.Client.OperationLimits;
 using AElfIndexer.Grains.Grain.BlockStates;
 using AElfIndexer.Sdk;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
-namespace AElfIndexer.Client;
+namespace AElfIndexer.Client.Repositories;
 
 public class EntityRepository<TEntity> : IEntityRepository<TEntity>
     where TEntity : IndexerEntity, IIndexerEntity

@@ -1,6 +1,8 @@
 using AElfIndexer.BlockScan;
-using AElfIndexer.Client.Handlers;
-using AElfIndexer.Client.Providers;
+using AElfIndexer.Client.BlockChain;
+using AElfIndexer.Client.BlockHandlers;
+using AElfIndexer.Client.BlockState;
+using AElfIndexer.Client.OperationLimits;
 using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;

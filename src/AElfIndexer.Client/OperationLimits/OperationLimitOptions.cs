@@ -1,4 +1,4 @@
-namespace AElfIndexer.Client;
+namespace AElfIndexer.Client.OperationLimits;
 
 public class OperationLimitOptions
 {

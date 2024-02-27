@@ -2,7 +2,7 @@ using AElf.Client;
 using Microsoft.Extensions.Options;
 using Volo.Abp.DependencyInjection;
 
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.BlockChain;
 
 public class AElfClientProvider : IAElfClientProvider, ISingletonDependency
 {

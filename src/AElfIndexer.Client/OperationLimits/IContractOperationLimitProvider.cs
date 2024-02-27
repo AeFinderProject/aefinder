@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using Volo.Abp.DependencyInjection;
 
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.OperationLimits;
 
 public interface IContractOperationLimitProvider: IOperationLimitProvider
 {

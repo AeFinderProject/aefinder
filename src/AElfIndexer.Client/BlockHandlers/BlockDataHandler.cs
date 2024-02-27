@@ -1,6 +1,6 @@
 using AElf.Types;
 using AElfIndexer.Block.Dtos;
-using AElfIndexer.Client.Providers;
+using AElfIndexer.Client.BlockState;
 using AElfIndexer.Grains.Grain.BlockStates;
 using AElfIndexer.Sdk;
 using Microsoft.Extensions.Logging;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
-namespace AElfIndexer.Client.Handlers;
+namespace AElfIndexer.Client.BlockHandlers;
 
 public class BlockDataHandler : IBlockDataHandler, ITransientDependency 
 {
@@ -35,7 +35,7 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         _appInfoOptions = appInfoOptions.Value;
     }
     
-    public async Task HandleBlockChainDataAsync(string chainId, string clientId, List<BlockWithTransactionDto> blockDtos)
+    public async Task HandleBlockChainDataAsync(string chainId, List<BlockWithTransactionDto> blockDtos)
     {
         var libHeight = 0L;
         var libHash = string.Empty;

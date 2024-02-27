@@ -1,7 +1,7 @@
 using AElfIndexer.BlockScan;
 using Orleans.Streams;
 
-namespace AElfIndexer.Client.Handlers;
+namespace AElfIndexer.Client.BlockHandlers;
 
 public interface ISubscribedBlockHandler
 {

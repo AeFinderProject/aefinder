@@ -5,7 +5,7 @@ using Orleans.Streams;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 
-namespace AElfIndexer.Client.Handlers;
+namespace AElfIndexer.Client.BlockHandlers;
 
 public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDependency
 {

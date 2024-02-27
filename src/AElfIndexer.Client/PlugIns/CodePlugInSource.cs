@@ -18,19 +18,12 @@ public class CodePlugInSource : IPlugInSource
     {
         var source = new List<Type>();
         var assembly = AssemblyLoadContext.Default.LoadFromStream(new MemoryStream(Code));
-        try
+        foreach (var type in assembly.GetTypes())
         {
-            foreach (var type in assembly.GetTypes())
+            if (AbpModule.IsAbpModule(type))
             {
-                if (AbpModule.IsAbpModule(type))
-                {
-                    source.AddIfNotContains<Type>(type);
-                }
+                source.AddIfNotContains<Type>(type);
             }
-        }
-        catch (Exception ex)
-        {
-            throw new AbpException("Could not get module types from assembly: " + assembly.FullName, ex);
         }
 
         return source.ToArray();

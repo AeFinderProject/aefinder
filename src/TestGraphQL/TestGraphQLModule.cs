@@ -1,7 +1,5 @@
 using AElfIndexer;
 using AElfIndexer.Client;
-using AElfIndexer.Client.Handlers;
-using AElfIndexer.Client.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Modularity;

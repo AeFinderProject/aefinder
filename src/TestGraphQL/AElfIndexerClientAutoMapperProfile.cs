@@ -1,5 +1,4 @@
 using AElfIndexer.Block.Dtos;
-using AElfIndexer.Client.Handlers;
 using AElfIndexer.Grains.State.Client;
 using AutoMapper;
 

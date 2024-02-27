@@ -3,7 +3,7 @@ using AElf.EntityMapping.Repositories;
 using AElfIndexer.Sdk;
 using Microsoft.Extensions.Logging;
 
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.BlockState;
 
 public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
     where TEntity : IndexerEntity, new()

@@ -1,5 +1,5 @@
 
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.BlockState;
 
 public interface IAppStateProvider
 {

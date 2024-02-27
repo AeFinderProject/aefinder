@@ -1,6 +1,6 @@
 using AElfIndexer.Grains.Grain.BlockStates;
 
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.BlockState;
 
 public interface IAppBlockStateSetProvider
 {

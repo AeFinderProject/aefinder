@@ -1,6 +1,4 @@
-using Volo.Abp.DependencyInjection;
-
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.OperationLimits;
 
 public class CallCountOperationLimitProvider : IOperationLimitProvider
 {

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AElf.Client.Services;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
+using AElfIndexer.Client.BlockHandlers;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Chains;

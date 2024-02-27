@@ -2,7 +2,7 @@ using Microsoft.Extensions.Options;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Serialization;
 
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.OperationLimits;
 
 public interface IEntityOperationLimitProvider: IOperationLimitProvider
 {

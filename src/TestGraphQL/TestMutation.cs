@@ -1,5 +1,4 @@
 using AElf.Indexing.Elasticsearch;
-using AElfIndexer.Client.Providers;
 
 namespace GraphQL;
 

@@ -1,10 +1,10 @@
 using AElfIndexer.Block.Dtos;
-using AElfIndexer.Client.Providers;
+using AElfIndexer.Client.OperationLimits;
 using AElfIndexer.Sdk;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
-namespace AElfIndexer.Client.Handlers;
+namespace AElfIndexer.Client.BlockHandlers;
 
 public interface IFullBlockProcessor
 {

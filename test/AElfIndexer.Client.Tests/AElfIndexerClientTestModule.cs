@@ -7,6 +7,8 @@ using AElf.Indexing.Elasticsearch;
 using AElf.Indexing.Elasticsearch.Options;
 using AElf.Indexing.Elasticsearch.Provider;
 using AElf.Indexing.Elasticsearch.Services;
+using AElfIndexer.Client.BlockChain;
+using AElfIndexer.Client.BlockHandlers;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.Grain.Client;

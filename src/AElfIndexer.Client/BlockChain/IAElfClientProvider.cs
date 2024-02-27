@@ -1,6 +1,6 @@
 using AElf.Client;
 
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.BlockChain;
 
 public interface IAElfClientProvider
 {

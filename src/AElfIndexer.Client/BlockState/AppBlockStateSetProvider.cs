@@ -7,7 +7,7 @@ using Nito.AsyncEx;
 using Orleans;
 using Volo.Abp.DependencyInjection;
 
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.BlockState;
 
 public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDependency
 {

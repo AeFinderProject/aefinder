@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 
-namespace AElfIndexer.Client.Handlers;
+namespace AElfIndexer.Client.BlockHandlers;
 
 public class LocalSubscribedBlockHandler: IDistributedEventHandler<SubscribedBlockDto>, ITransientDependency
 {
@@ -41,9 +41,9 @@ public class LocalSubscribedBlockHandler: IDistributedEventHandler<SubscribedBlo
 
         try
         {
-            await _blockDataHandler.HandleBlockChainDataAsync(subscribedBlock.ChainId, subscribedBlock.ClientId, subscribedBlock.Blocks);
+            await _blockDataHandler.HandleBlockChainDataAsync(subscribedBlock.ChainId, subscribedBlock.Blocks);
         }
-        catch (AppHandlingException e)
+        catch (Exception e)
         {
             _logger.LogError(e, "Handle DAppSubscribedData Error! ClientId: {clientId} Version: {version}", subscribedBlock.ClientId, subscribedBlock.Version);
             await _blockScanAppService.PauseAsync(subscribedBlock.ClientId, subscribedBlock.Version);

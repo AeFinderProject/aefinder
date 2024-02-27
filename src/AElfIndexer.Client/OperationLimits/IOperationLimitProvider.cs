@@ -1,4 +1,4 @@
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.Client.OperationLimits;
 
 public interface IOperationLimitProvider
 {

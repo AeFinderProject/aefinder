@@ -1,13 +1,13 @@
 using AElf;
 using AElf.Client;
 using AElf.Client.Dto;
-using AElfIndexer.Client.Providers;
+using AElfIndexer.Client.OperationLimits;
 using AElfIndexer.Sdk;
 using Google.Protobuf;
 using Volo.Abp.DependencyInjection;
 using Transaction = AElf.Types.Transaction;
 
-namespace AElfIndexer.Client;
+namespace AElfIndexer.Client.BlockChain;
 
 public class BlockChainService : IBlockChainService, ITransientDependency
 {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AElfIndexer.Client.BlockHandlers;
 using AElfIndexer.Client.Providers;
 using AElfIndexer.Grains.State.Client;
 using Microsoft.Extensions.Logging;

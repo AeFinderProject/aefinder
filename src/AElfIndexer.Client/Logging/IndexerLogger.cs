@@ -1,9 +1,9 @@
-using AElfIndexer.Client.Providers;
+using AElfIndexer.Client.OperationLimits;
 using AElfIndexer.Sdk.Logging;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 
-namespace AElfIndexer.Client;
+namespace AElfIndexer.Client.Logging;
 
 public class IndexerLogger : IIndexerLogger, ISingletonDependency
 {
