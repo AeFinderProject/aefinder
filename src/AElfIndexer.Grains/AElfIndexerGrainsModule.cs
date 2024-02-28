@@ -1,5 +1,5 @@
-﻿using AElfIndexer.Grains.Grain.Blocks;
-using AElfIndexer.Grains.Grain.BlockScanExecution;
+﻿using AElfIndexer.Grains.Grain.BlockPush;
+using AElfIndexer.Grains.Grain.Blocks;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
@@ -11,7 +11,7 @@ public class AElfIndexerGrainsModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
-        Configure<BlockScanOptions>(configuration.GetSection("BlockScan"));
+        Configure<BlockPushOptions>(configuration.GetSection("BlockScan"));
         Configure<PrimaryKeyOptions>(configuration.GetSection("GrainPrimaryKey"));
 
         context.Services.AddSingleton<IBlockGrain, BlockGrain>();

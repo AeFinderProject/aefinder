@@ -1,10 +1,11 @@
 
+using AElfIndexer.Grains.Grain.BlockState;
+
 namespace AElfIndexer.Client.BlockState;
 
 public interface IAppStateProvider
 {
     Task<T> GetLastIrreversibleStateAsync<T>(string chainId, string key);
-    Task SetLastIrreversibleStateAsync<T>(string chainId, string key, T value);
     Task SetLastIrreversibleStateAsync(string chainId, string key, string value);
-    Task SaveDataAsync();
+    Task MergeStateAsync(string chainId, List<BlockStateSet> blockStateSets);
 }

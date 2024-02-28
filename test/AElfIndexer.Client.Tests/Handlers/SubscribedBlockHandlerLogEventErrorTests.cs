@@ -3,8 +3,7 @@ using System.Threading.Tasks;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Client.BlockHandlers;
 using AElfIndexer.Client.Providers;
-using AElfIndexer.Grains.Grain.ScanApps;
-using AElfIndexer.Grains.State.ScanApps;
+using AElfIndexer.Grains.Grain.Apps;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -31,7 +30,7 @@ public class SubscribedBlockHandlerLogEventErrorTests : AElfIndexerClientLogEven
     {
         var chainId = "AELF";
         var client = _clientInfoProvider.GetClientId();
-        var clientGrain = _clusterClient.GetGrain<IScanAppGrain>(client);
+        var clientGrain = _clusterClient.GetGrain<IAppGrain>(client);
         
         var currentVersion = await clientGrain.AddSubscriptionAsync(new List<SubscriptionInfo>());
         var newVersion = await clientGrain.AddSubscriptionAsync(new List<SubscriptionInfo>());

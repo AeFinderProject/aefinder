@@ -4,7 +4,7 @@ using AElfIndexer.Block;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.BlockScanExecution;
+using AElfIndexer.Grains.Grain.BlockPush;
 using AElfIndexer.Grains.Grain.Chains;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -46,18 +46,18 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
             var chainGrain = _clusterClient.GetGrain<IChainGrain>(block.ChainId);
             await chainGrain.SetLatestBlockAsync(block.BlockHash, block.BlockHeight);
             
-            var clientManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(GrainIdHelper.GenerateBlockScanManagerGrainId());
-            var ids = await clientManagerGrain.GetBlockScanIdsByChainAsync(block.ChainId);
+            var clientManagerGrain = _clusterClient.GetGrain<IBlockPusherManagerGrain>(GrainIdHelper.GenerateBlockPusherManagerGrainId());
+            var ids = await clientManagerGrain.GetBlockPusherIdsByChainAsync(block.ChainId);
             var tasks = ids.Select(async id =>
             {
-                var clientGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
-                if (await clientGrain.IsScanBlockAsync(block.BlockHeight,false))
+                var clientGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(id);
+                if (await clientGrain.IsPushBlockAsync(block.BlockHeight,false))
                 {
                     Logger.LogDebug(
                         "HandleBlock: {ChainId} Client: {id} BlockHeight: {BlockHeight} BlockHash: {BlockHash}",
                         block.ChainId, id, block.BlockHeight, block.BlockHash);
-                    var blockScanGrain = _clusterClient.GetGrain<IBlockScanExecutorGrain>(id);
-                    await blockScanGrain.HandleBlockAsync(block);
+                    var blockPusherGrain = _clusterClient.GetGrain<IBlockPusherGrain>(id);
+                    await blockPusherGrain.HandleBlockAsync(block);
                 }
             });
 
@@ -122,25 +122,25 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                         EndBlockHeight = end
                     });
 
-                    await chainGrain.SetLatestConfirmBlockAsync(blocks[0].BlockHash, blocks[0].BlockHeight);
+                    await chainGrain.SetLatestConfirmedBlockAsync(blocks[0].BlockHash, blocks[0].BlockHeight);
 
                     start = end + 1;
                     end = Math.Min(confirmBlock.BlockHeight - 1, start + MaxRequestBlockCount - 1);
                 }
             }
 
-            await chainGrain.SetLatestConfirmBlockAsync(confirmBlock.BlockHash, confirmBlock.BlockHeight);
+            await chainGrain.SetLatestConfirmedBlockAsync(confirmBlock.BlockHash, confirmBlock.BlockHeight);
 
-            var clientManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(GrainIdHelper.GenerateBlockScanManagerGrainId());
-            var ids = await clientManagerGrain.GetBlockScanIdsByChainAsync(chainId);
+            var clientManagerGrain = _clusterClient.GetGrain<IBlockPusherManagerGrain>(GrainIdHelper.GenerateBlockPusherManagerGrainId());
+            var ids = await clientManagerGrain.GetBlockPusherIdsByChainAsync(chainId);
             var tasks = ids.Select(async id =>
             {
-                var clientGrain = _clusterClient.GetGrain<IBlockScanGrain>(id);
-                if (await clientGrain.IsScanBlockAsync(confirmBlock.BlockHeight,true))
+                var clientGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(id);
+                if (await clientGrain.IsPushBlockAsync(confirmBlock.BlockHeight,true))
                 {
                     Logger.LogDebug("HandleConfirmedBlock: {chainId} Client: {id} BlockHeight: {BlockHeight}", chainId,
                         id, confirmBlock.BlockHeight);
-                    var blockScanGrain = _clusterClient.GetGrain<IBlockScanExecutorGrain>(id);
+                    var blockScanGrain = _clusterClient.GetGrain<IBlockPusherGrain>(id);
                     await blockScanGrain.HandleConfirmedBlockAsync(confirmBlock);
                 }
             });

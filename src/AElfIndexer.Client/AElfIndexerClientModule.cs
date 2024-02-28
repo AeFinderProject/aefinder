@@ -53,7 +53,7 @@ public class AElfIndexerClientModule : AbpModule
         var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
 
         var app = context.GetApplicationBuilder();
-        app.UseGraphQL($"/{appInfoOptions.ScanAppId}/{appInfoOptions.Version}/graphql");
+        app.UseGraphQL($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/graphql");
         // app.UseGraphQLPlayground(
         //     $"/{appInfoOptions.ScanAppId}/{typeof(TSchema).Name}/ui/playground",
         //     new PlaygroundOptions
@@ -65,7 +65,7 @@ public class AElfIndexerClientModule : AbpModule
         var clientOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<ClientOptions>>().Value;
         if (clientOptions.ClientType == ClientType.Full)
         {
-            AsyncHelper.RunSync(async () => await InitBlockScanAsync(context, appInfoOptions.ScanAppId, appInfoOptions.Version));
+            AsyncHelper.RunSync(async () => await InitBlockScanAsync(context, appInfoOptions.AppId, appInfoOptions.Version));
         }
     }
     

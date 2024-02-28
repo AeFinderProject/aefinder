@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.BlockStates;
+using AElfIndexer.Grains.Grain.BlockState;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -40,20 +40,11 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
             {
                 var dataGrain = _clusterClient.GetGrain<IAppStateGrain>(stateKey);
                 value = await dataGrain.GetLastIrreversibleStateAsync();
-                SetLibValueCache(stateKey, value);
+                SetLibValueCache(stateKey, value, true);
             }
         }
 
         return value != null ? JsonConvert.DeserializeObject<T>(value) : default;
-    }
-
-    public Task SetLastIrreversibleStateAsync<T>(string chainId, string key, T value)
-    {
-        var stateKey = GetAppDataKey(chainId, key);
-        var jsonValue = JsonConvert.SerializeObject(value);
-        _toCommitLibValues[stateKey] = jsonValue;
-        SetLibValueCache(stateKey, jsonValue);
-        return Task.CompletedTask;
     }
     
     public Task SetLastIrreversibleStateAsync(string chainId, string key, string value)
@@ -64,7 +55,20 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         return Task.CompletedTask;
     }
 
-    public async Task SaveDataAsync()
+    public async Task MergeStateAsync(string chainId, List<BlockStateSet> blockStateSets)
+    {
+        foreach (var set in blockStateSets)
+        {
+            foreach (var change in set.Changes)
+            {
+                await SetLastIrreversibleStateAsync(chainId, change.Key, change.Value);
+            }
+        }
+
+        await SaveDataAsync();
+    }
+
+    private async Task SaveDataAsync()
     {
         _logger.LogDebug("Saving dapp data.");
         var tasks = _toCommitLibValues.Select(async o =>
@@ -77,8 +81,13 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         _logger.LogDebug("Saved dapp data.");
     }
     
-    private void SetLibValueCache(string key, string value)
+    private void SetLibValueCache(string key, string value, bool isForce = false)
     {
+        if (!isForce && !_libValues.ContainsKey(key))
+        {
+            return;
+        }
+        
         if (_libValues.Count >= _clientOptions.AppDataCacheCount)
         {
             if (_libValueKeys.TryPeek(out var oldKey))
@@ -94,6 +103,6 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
     
     private string GetAppDataKey(string chainId, string key)
     {
-        return GrainIdHelper.GenerateAppStateGrainId(_appInfoOptions.ScanAppId, _appInfoOptions.Version, chainId, key);
+        return GrainIdHelper.GenerateAppStateGrainId(_appInfoOptions.AppId, _appInfoOptions.Version, chainId, key);
     }
 }

@@ -30,14 +30,14 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
     public async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken token = null)
     {
         if (subscribedBlock.Blocks.Count == 0) return;
-        if (subscribedBlock.ClientId != _appInfoOptions.ScanAppId) return;
+        if (subscribedBlock.ClientId != _appInfoOptions.AppId) return;
         var isRunning = await _blockScanAppService.IsRunningAsync(subscribedBlock.ChainId, subscribedBlock.ClientId,
             subscribedBlock.Version, subscribedBlock.Token);
         if (!isRunning)
         {
             Logger.LogWarning(
                 "SubscribedBlockHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} subscribedToken: {subscribedToken} clientId: {clientId} , ChainId: {ChainId}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
-                subscribedBlock.ClientId, subscribedBlock.Version, subscribedBlock.Token,_appInfoOptions.ScanAppId,
+                subscribedBlock.ClientId, subscribedBlock.Version, subscribedBlock.Token,_appInfoOptions.AppId,
                 subscribedBlock.Blocks.First().ChainId,
                 subscribedBlock.Blocks.First().BlockHeight,
                 subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);

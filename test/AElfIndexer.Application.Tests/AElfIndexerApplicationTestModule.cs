@@ -3,7 +3,6 @@ using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
 using AElf.EntityMapping.Options;
 using AElf.EntityMapping.Sharding;
-using AElfIndexer.Grains.Grain.BlockScanExecution;
 using AElfIndexer.Orleans.TestBase;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute.Extensions;

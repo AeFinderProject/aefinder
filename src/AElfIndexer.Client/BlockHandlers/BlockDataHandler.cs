@@ -1,11 +1,12 @@
 using AElf.Types;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Client.BlockState;
-using AElfIndexer.Grains.Grain.BlockStates;
+using AElfIndexer.Grains.Grain.BlockState;
 using AElfIndexer.Sdk;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.EventBus.Local;
 using Volo.Abp.ObjectMapping;
 
 namespace AElfIndexer.Client.BlockHandlers;
@@ -20,6 +21,8 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
     private readonly AppInfoOptions _appInfoOptions;
     
     protected readonly ILogger<BlockDataHandler> Logger;
+    
+    public ILocalEventBus LocalEventBus { get; set; }
     
     protected BlockDataHandler(IObjectMapper objectMapper,
         ILogger<BlockDataHandler> logger,
@@ -45,19 +48,19 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         var longestChainBlockStateSet = await _appBlockStateSetProvider.GetLongestChainBlockStateSetAsync(chainId);
         if (longestChainBlockStateSet != null && !longestChainBlockStateSet.Processed)
         {
-            Logger.LogDebug("Handle unfinished longest chain data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}", chainId, _appInfoOptions.ScanAppId, _appInfoOptions.Version);
+            Logger.LogDebug("Handle unfinished longest chain data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}", chainId, _appInfoOptions.AppId, _appInfoOptions.Version);
             await ProcessUnfinishedLongestChainAsync(chainId, longestChainBlockStateSet);
         }
 
         var blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(chainId);
-        var longestChain = new List<AppBlockStateSet>();
+        var longestChain = new List<BlockStateSet>();
         
         var libBlockHeight = blockStateSets.Count != 0 ? blockStateSets.Min(b => b.Value.Block.BlockHeight) : 0;
         libBlockHeight = libBlockHeight == 1 ? 0 : libBlockHeight;
         var longestHeight = blockStateSets.Count != 0 ? blockStateSets.Max(b => b.Value.Block.BlockHeight) : 0;
         Logger.LogDebug(
             "Handle block data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}, Lib Height: {Lib}, Longest Chain Height: {LongestHeight}",
-            chainId, _appInfoOptions.ScanAppId, _appInfoOptions.Version, libBlockHeight, longestHeight);
+            chainId, _appInfoOptions.AppId, _appInfoOptions.Version, libBlockHeight, longestHeight);
 
         foreach (var blockDto in blockDtos)
         {
@@ -91,7 +94,7 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
 
             if (blockStateSet == null)
             {
-                blockStateSet = new AppBlockStateSet
+                blockStateSet = new BlockStateSet
                 {
                     Block = blockDto,
                     Changes = new(),
@@ -121,7 +124,7 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
             }
         }
 
-        Logger.LogDebug("Handle longest chain data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}", chainId, _appInfoOptions.ScanAppId, _appInfoOptions.Version);
+        Logger.LogDebug("Handle longest chain data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}", chainId, _appInfoOptions.AppId, _appInfoOptions.Version);
         if (longestChain.Count > 0)
         {
             await _appBlockStateSetProvider.SaveDataAsync(chainId);
@@ -136,16 +139,26 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         }
         
         //Clean block state sets under latest lib block
-        Logger.LogDebug("Handle lib data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}, Lib height: {LibHeight}", chainId, _appInfoOptions.ScanAppId, _appInfoOptions.Version, libHeight);
+        Logger.LogDebug("Handle lib data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}, Lib height: {LibHeight}", chainId, _appInfoOptions.AppId, _appInfoOptions.Version, libHeight);
         if (libHeight != 0)
         {
             await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(chainId, libHash);
         }
         
         await _appBlockStateSetProvider.SaveDataAsync(chainId);
+        
+        if (libHeight != 0)
+        {
+            await LocalEventBus.PublishAsync(new NewIrreversibleBlockFoundEventData
+            {
+                ChainId = chainId,
+                BlockHash = libHash,
+                BlockHeight = libHeight
+            });
+        }
     }
 
-    private async Task ProcessUnfinishedLongestChainAsync(string chainId, AppBlockStateSet longestChainBlockStateSet)
+    private async Task ProcessUnfinishedLongestChainAsync(string chainId, BlockStateSet longestChainBlockStateSet)
     {
         var blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(chainId);
         var longestChain = GetLongestChain(blockStateSets, longestChainBlockStateSet.Block.BlockHash);
@@ -155,8 +168,8 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         }
     }
 
-    private async Task ProcessLongestChainAsync(string chainId, List<AppBlockStateSet> longestChain, 
-        Dictionary<string, AppBlockStateSet> blockStateSets)
+    private async Task ProcessLongestChainAsync(string chainId, List<BlockStateSet> longestChain, 
+        Dictionary<string, BlockStateSet> blockStateSets)
     {
         var bestChainBlockStateSet = await _appBlockStateSetProvider.GetBestChainBlockStateSetAsync(chainId);
         var forkBlockStateSets = GetForkBlockStateSets(blockStateSets, longestChain, bestChainBlockStateSet?.Block.BlockHash);
@@ -176,15 +189,13 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         var longestChainBlockStateSet = longestChain.LastOrDefault();
         if (longestChainBlockStateSet != null)
         {
-            //Set BestChain
             await _appBlockStateSetProvider.SetBestChainBlockStateSetAsync(chainId, longestChainBlockStateSet.Block.BlockHash);
         }
 
-        await _appStateProvider.SaveDataAsync();
         await _appDataIndexManagerProvider.SavaDataAsync();
     }
 
-    private async Task DealWithConfirmBlockAsync(BlockWithTransactionDto blockDto, AppBlockStateSet blockStateSet)
+    private async Task DealWithConfirmBlockAsync(BlockWithTransactionDto blockDto, BlockStateSet blockStateSet)
     {
         //Deal with confirmed block
         foreach (var change in blockStateSet.Changes)
@@ -199,11 +210,11 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         }
     }
 
-    private List<AppBlockStateSet> GetLongestChain(Dictionary<string,AppBlockStateSet> blockStateSets, string blockHash)
+    private List<BlockStateSet> GetLongestChain(Dictionary<string,BlockStateSet> blockStateSets, string blockHash)
     {
-        var longestChain = new List<AppBlockStateSet>();
+        var longestChain = new List<BlockStateSet>();
 
-        AppBlockStateSet blockStateSet;
+        BlockStateSet blockStateSet;
         while (blockStateSets.TryGetValue(blockHash,out blockStateSet) && !blockStateSet.Processed)
         {
             longestChain.Add(blockStateSet);
@@ -213,16 +224,16 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         if (blockStateSet == null && blockHash != "0000000000000000000000000000000000000000000000000000000000000000")
         {
             Logger.LogWarning($"Invalid block hash:{blockHash}");
-            return new List<AppBlockStateSet>();
+            return new List<BlockStateSet>();
         }
 
         return longestChain.OrderBy(b => b.Block.BlockHeight).ToList();
     }
 
-    private List<AppBlockStateSet> GetForkBlockStateSets(Dictionary<string, AppBlockStateSet> blockStateSets,
-        List<AppBlockStateSet> longestChain, string blockHash)
+    private List<BlockStateSet> GetForkBlockStateSets(Dictionary<string, BlockStateSet> blockStateSets,
+        List<BlockStateSet> longestChain, string blockHash)
     {
-        var forkBlockSateSets = new List<AppBlockStateSet>();
+        var forkBlockSateSets = new List<BlockStateSet>();
         if (blockHash == null || longestChain.Count == 0)
         {
             return forkBlockSateSets;
@@ -242,7 +253,7 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         return forkBlockSateSets.OrderBy(b => b.Block.BlockHeight).ToList();
     }
 
-    private async Task SetBlockStateSetProcessedAsync(string chainId, AppBlockStateSet blockStateSet, bool processed)
+    private async Task SetBlockStateSetProcessedAsync(string chainId, BlockStateSet blockStateSet, bool processed)
     {
         blockStateSet.Processed = processed;
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);

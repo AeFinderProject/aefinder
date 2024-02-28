@@ -2,7 +2,7 @@ using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
-using AElfIndexer.Grains.Grain.ScanApps;
+using AElfIndexer.Grains.Grain.Apps;
 using AElfIndexer.Grains.State.Subscriptions;
 using AutoMapper;
 using Volo.Abp.AutoMapper;
@@ -27,13 +27,13 @@ public class AElfIndexerApplicationAutoMapperProfile:Profile
         CreateMap<TransactionCondition, FilterTransactionInput>();
         CreateMap<LogEventCondition, FilterContractEventInput>();
 
-        CreateMap<SubscriptionDto, Subscription>();
-        CreateMap<Subscription, SubscriptionDto>();
-        CreateMap<SubscriptionItemDto, SubscriptionItem>();
+        CreateMap<SubscriptionDto, SubscriptionManifest>();
+        CreateMap<SubscriptionManifest, SubscriptionDto>();
+        CreateMap<SubscriptionItemDto, Subscription>();
         CreateMap<TransactionConditionDto, TransactionCondition>();
         CreateMap<LogEventConditionDto, LogEventCondition>();
 
-        CreateMap<SubscriptionItem, SubscriptionItemDto>();
+        CreateMap<Subscription, SubscriptionItemDto>();
         CreateMap<TransactionCondition, TransactionConditionDto>();
         CreateMap<LogEventCondition, LogEventConditionDto>();
         

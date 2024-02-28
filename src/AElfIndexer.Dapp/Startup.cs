@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using AElfIndexer.Client;
 using AElfIndexer.Client.PlugIns;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.ScanApps;
+using AElfIndexer.Grains.Grain.Apps;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -66,7 +66,7 @@ public class Startup
         
         var client = OrleansClusterClientFactory.GetClusterClient(_configuration);
         await client.Connect();
-        var scanAppGrain = client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(scanAppId));
+        var scanAppGrain = client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(scanAppId));
         return await scanAppGrain.GetCodeAsync(version);
     }
 }

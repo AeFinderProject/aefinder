@@ -1,8 +1,8 @@
-using AElfIndexer.Grains.Grain.BlockStates;
+using AElfIndexer.Grains.Grain.BlockState;
 
 namespace AElfIndexer.Grains.State.BlockState;
 
 public class AppBlockStateSetState
 {
-    public AppBlockStateSet BlockStateSet { get; set; }
+    public BlockStateSet BlockStateSet { get; set; }
 }

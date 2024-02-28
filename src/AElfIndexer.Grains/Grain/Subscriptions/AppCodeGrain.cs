@@ -1,0 +1,25 @@
+using AElfIndexer.Grains.State.Subscriptions;
+using Orleans;
+
+namespace AElfIndexer.Grains.Grain.Subscriptions;
+
+public class AppCodeGrain : Grain<AppCodeState>, IAppCodeGrain
+{
+    public async Task SetCodeAsync(byte[] code)
+    {
+        State.Code = code;
+        await WriteStateAsync();
+    }
+
+    public async Task<byte[]> GetCodeAsync()
+    {
+        await ReadStateAsync();
+        return State.Code;
+    }
+
+    public async Task RemoveAsync()
+    {
+        await ClearStateAsync();
+        DeactivateOnIdle();
+    }
+}

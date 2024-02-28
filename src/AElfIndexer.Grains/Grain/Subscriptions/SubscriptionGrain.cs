@@ -5,20 +5,21 @@ namespace AElfIndexer.Grains.Grain.Subscriptions;
 
 public class SubscriptionGrain : Grain<SubscriptionState>, ISubscriptionGrain
 {
-    public async Task SetSubscriptionAsync(Subscription subscription)
+    public async Task SetSubscriptionAsync(SubscriptionManifest subscriptionManifest)
     {
-        State.Subscription = subscription;
+        State.SubscriptionManifest = subscriptionManifest;
         await WriteStateAsync();
     }
 
-    public async Task<Subscription> GetSubscriptionAsync()
+    public async Task<SubscriptionManifest> GetSubscriptionAsync()
     {
         await ReadStateAsync();
-        return State.Subscription;
+        return State.SubscriptionManifest;
     }
 
     public async Task RemoveAsync()
     {
         await ClearStateAsync();
+        DeactivateOnIdle();
     }
 }

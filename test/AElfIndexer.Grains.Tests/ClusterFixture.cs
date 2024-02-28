@@ -1,7 +1,7 @@
 using System;
 using AElfIndexer.Block;
 using AElfIndexer.Grains.BlockScan;
-using AElfIndexer.Grains.Grain.BlockScanExecution;
+using AElfIndexer.Grains.Grain.BlockPush;
 using AElfIndexer.Grains.Grain.Client;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
@@ -41,10 +41,10 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     services.AddSingleton<IBlockAppService, MockBlockAppService>();
                     services.AddSingleton<IBlockDataProvider, BlockDataProvider>();
                     services.AddTransient<IBlockFilterProvider, BlockFilterProvider>();
-                    services.Configure<BlockScanOptions>(o =>
+                    services.Configure<BlockPushOptions>(o =>
                     {
                         o.BatchPushBlockCount = 10;
-                        o.ScanHistoryBlockThreshold = 5;
+                        o.PushHistoryBlockThreshold = 5;
                         o.BatchPushNewBlockCount = 2;
                         o.MaxHistoricalBlockPushThreshold = 30;
                         o.MaxNewBlockPushThreshold = 30;

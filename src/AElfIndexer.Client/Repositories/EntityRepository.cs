@@ -1,6 +1,6 @@
 using AElfIndexer.Client.BlockState;
 using AElfIndexer.Client.OperationLimits;
-using AElfIndexer.Grains.Grain.BlockStates;
+using AElfIndexer.Grains.Grain.BlockState;
 using AElfIndexer.Sdk;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -40,13 +40,14 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
     {
         _entityOperationLimitProvider.Check(entity);
         entity.Metadata.IsDeleted = false;
-        await OperationAsync(entity, AddOrUpdateForConfirmBlockAsync, AddToBlockStateSetAsync, isRollback);
+        await OperationAsync(entity, AddToBlockStateSetAsync, isRollback);
     }
-
-    private async Task AddOrUpdateForConfirmBlockAsync(string chainId, string entityKey, TEntity entity)
+    
+    public async Task DeleteAsync(TEntity entity, bool isRollback)
     {
-        await _appDataIndexProvider.AddOrUpdateAsync(entity, GetIndexName());
-        await _appStateProvider.SetLastIrreversibleStateAsync(chainId, entityKey, entity);
+        _entityOperationLimitProvider.Check(entity);
+        entity.Metadata.IsDeleted = true;
+        await OperationAsync(entity, RemoveFromBlockStateSetAsync, isRollback);
     }
 
     private async Task<TEntity> GetEntityFromBlockStateSetsAsync(string chainId, string entityKey,
@@ -76,8 +77,7 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
             : null;
     }
 
-    private async Task OperationAsync(TEntity entity, Func<string, string, TEntity, Task> confirmBlockFunc,
-        Func<string, TEntity, AppBlockStateSet, Task> unConfirmBlockFunc, bool isRollback)
+    private async Task OperationAsync(TEntity entity, Func<string, TEntity, BlockStateSet, Task> operationFunc, bool isRollback)
     {
         if (!IsValidate(entity))
         {
@@ -88,19 +88,6 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
 
         var blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(entity.Metadata.ChainId);
         var blockStateSet = blockStateSets[entity.Metadata.Block.BlockHash];
-        // Entity is confirmed,save it to es search directly
-        if (blockStateSet.Block.Confirmed)
-        {
-            var lastIrreversibleState =
-                await _appStateProvider.GetLastIrreversibleStateAsync<TEntity>(entity.Metadata.ChainId, entityKey);
-            if ((lastIrreversibleState?.Metadata.Block.BlockHeight ?? 0) > blockStateSet.Block.BlockHeight)
-            {
-                return;
-            }
-
-            await confirmBlockFunc(entity.Metadata.ChainId, entityKey, entity);
-            return;
-        }
 
         if (isRollback)
         {
@@ -116,22 +103,13 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
             }
             else
             {
-                //if block state set has entityKey, use it to set entity.
-                if (blockStateSet.Changes.TryGetValue(entityKey, out var value))
-                {
-                    entity = JsonConvert.DeserializeObject<TEntity>(value);
-                }
-
                 await _appDataIndexProvider.DeleteAsync(entity, GetIndexName());
-                entity.Metadata.IsDeleted = true;
-                await _appStateProvider.SetLastIrreversibleStateAsync<TEntity>(entity.Metadata.ChainId, entityKey,
-                    entity);
             }
         }
         else
         {
             // entity is on best chain
-            await unConfirmBlockFunc(entityKey, entity, blockStateSet);
+            await operationFunc(entityKey, entity, blockStateSet);
         }
     }
 
@@ -143,7 +121,7 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
                !string.IsNullOrWhiteSpace(entity.Metadata.Block.PreviousBlockHash);
     }
 
-    private async Task AddToBlockStateSetAsync(string entityKey, TEntity entity, AppBlockStateSet blockStateSet)
+    private async Task AddToBlockStateSetAsync(string entityKey, TEntity entity, BlockStateSet blockStateSet)
     {
         entity.Metadata.IsDeleted = false;
         blockStateSet.Changes[entityKey] = entity.ToJsonString();
@@ -151,16 +129,16 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(entity.Metadata.ChainId, blockStateSet);
     }
 
-    // private async Task RemoveFromBlockStateSetAsync(string entityKey,TEntity entity, AppBlockStateSet blockStateSet)
-    // {
-    //     entity.Metadata.IsDeleted = true;
-    //     blockStateSet.Changes[entityKey] = entity.ToJsonString();
-    //     await _dAppDataIndexProvider.DeleteAsync(entity, GetIndexName());
-    //     await _blockStateSetProvider.UpdateBlockStateSetAsync(entity.Metadata.ChainId, blockStateSet);
-    // }
+    private async Task RemoveFromBlockStateSetAsync(string entityKey,TEntity entity, BlockStateSet blockStateSet)
+    {
+        entity.Metadata.IsDeleted = true;
+        blockStateSet.Changes[entityKey] = entity.ToJsonString();
+        await _appDataIndexProvider.DeleteAsync(entity, GetIndexName());
+        await _appBlockStateSetProvider.UpdateBlockStateSetAsync(entity.Metadata.ChainId, blockStateSet);
+    }
 
     private string GetIndexName()
     {
-        return $"{_appInfoOptions.ScanAppId}-{_appInfoOptions.Version}.{_entityName}".ToLower();
+        return $"{_appInfoOptions.AppId}-{_appInfoOptions.Version}.{_entityName}".ToLower();
     }
 }

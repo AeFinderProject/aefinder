@@ -2,48 +2,55 @@ namespace AElfIndexer.Grains;
 
 public static class GrainIdHelper
 {
+    private static string BlockPushCheckGrainId => "BlockPushCheck";
+    
     public static string GenerateGrainId(params object[] ids)
     {
         return ids.JoinAsString("-");
     }
 
-    public static string GenerateScanAppGrainId(string scanAppId)
+    public static string GenerateAppGrainId(string appId)
     {
-        return GenerateGrainId(scanAppId);
+        return GenerateGrainId(appId);
     }
     
-    public static string GenerateBlockScanGrainId(string scanAppId, string version, string chainId)
+    public static string GenerateBlockPusherGrainId(string appId, string version, string chainId)
     {
-        return GenerateGrainId(scanAppId, version, chainId);
+        return GenerateGrainId(appId, version, chainId);
     }
     
-    public static int GenerateBlockScanManagerGrainId()
+    public static int GenerateBlockPusherManagerGrainId()
     {
         return 0;
     }
     
-    public static string GenerateSubscriptionGrainId(string scanAppId, string version)
+    public static string GenerateSubscriptionGrainId(string appId, string version)
     {
-        return GenerateGrainId(scanAppId, version);
+        return GenerateGrainId(appId, version);
     }
     
-    public static string GenerateGetScanAppCodeGrainId(string scanAppId, string version)
+    public static string GenerateGetAppCodeGrainId(string appId, string version)
     {
-        return GenerateGrainId(scanAppId, version);
+        return GenerateGrainId(appId, version);
     }
     
-    public static string GenerateAppStateGrainId(string scanAppId, string version, string chainId, string key)
+    public static string GenerateAppStateGrainId(string appId, string version, string chainId, string key)
     {
-        return GenerateGrainId(scanAppId, version, chainId, key);
+        return GenerateGrainId(appId, version, chainId, key);
     }
     
-    public static string GenerateAppBlockStateSetStatusGrainId(string scanAppId, string version, string chainId)
+    public static string GenerateAppBlockStateSetStatusGrainId(string appId, string version, string chainId)
     {
-        return GenerateGrainId(scanAppId, version, chainId);
+        return GenerateGrainId(appId, version, chainId);
     }
     
-    public static string GenerateAppBlockStateSetGrainId(string scanAppId, string version, string chainId, string blockHash)
+    public static string GenerateAppBlockStateSetGrainId(string appId, string version, string chainId, string blockHash)
     {
-        return GenerateGrainId(scanAppId, version, chainId, blockHash);
+        return GenerateGrainId(appId, version, chainId, blockHash);
+    }
+    
+    public static string GenerateBlockPushCheckGrainId()
+    {
+        return GenerateGrainId(BlockPushCheckGrainId);
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.Grain.BlockScanExecution;
+using AElfIndexer.Grains.Grain.BlockPush;
 using AElfIndexer.Grains.State.Subscriptions;
 using Shouldly;
 using Xunit;
@@ -20,9 +20,9 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         var chainId = "AELF";
         var clientId = "DApp";
         var version = "Version";
-        var subscription = new Subscription
+        var subscription = new SubscriptionManifest
         {
-            SubscriptionItems = new List<SubscriptionItem>()
+            SubscriptionItems = new List<Subscription>()
             {
                 new()
                 {
@@ -43,12 +43,12 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         };
         
         var scanToken = Guid.NewGuid().ToString("N");
-        var blockScanGrain = Cluster.Client.GetGrain<IBlockScanGrain>(clientId);
+        var blockScanGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(clientId);
         await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
-        var clientInfo = await blockScanGrain.GetScanInfoAsync();
-        clientInfo.ScanAppId.ShouldBe(clientId);
-        var scanMode = await blockScanGrain.GetScanModeAsync();
-        scanMode.ShouldBe(ScanMode.HistoricalBlock);
+        var clientInfo = await blockScanGrain.GetPushInfoAsync();
+        clientInfo.AppId.ShouldBe(clientId);
+        var scanMode = await blockScanGrain.GetPushModeAsync();
+        scanMode.ShouldBe(BlockPushMode.HistoricalBlock);
 
         var subscribe = await blockScanGrain.GetSubscriptionAsync();
         subscribe.ChainId.ShouldBe(subscription.SubscriptionItems[0].ChainId);
@@ -59,39 +59,39 @@ public class BlockScanGrainTests : AElfIndexerGrainTestBase
         subscribe.LogEventConditions[0].EventNames.Count.ShouldBe(1);
         subscribe.LogEventConditions[0].EventNames[0].ShouldBe(subscription.SubscriptionItems[0].LogEventConditions[0].EventNames[0]);
 
-        var clientManagerGrain = Cluster.Client.GetGrain<IBlockScanManagerGrain>(0);
-        var clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync("AELF");
+        var clientManagerGrain = Cluster.Client.GetGrain<IBlockPusherManagerGrain>(0);
+        var clientIds = await clientManagerGrain.GetBlockPusherIdsByChainAsync("AELF");
         clientIds.Count.ShouldBe(1);
         clientIds[0].ShouldBe(clientId);
 
-        var allClientIds = await clientManagerGrain.GetAllBlockScanIdsAsync();
+        var allClientIds = await clientManagerGrain.GetAllBlockPusherIdsAsync();
         allClientIds.Keys.Count.ShouldBe(1);
         allClientIds["AELF"].Count.ShouldBe(1);
         allClientIds["AELF"].First().ShouldBe(clientId);
 
-        await blockScanGrain.SetScanNewBlockStartHeightAsync(80);
-        scanMode = await blockScanGrain.GetScanModeAsync();
-        scanMode.ShouldBe(ScanMode.NewBlock);
+        await blockScanGrain.SetNewBlockStartHeightAsync(80);
+        scanMode = await blockScanGrain.GetPushModeAsync();
+        scanMode.ShouldBe(BlockPushMode.NewBlock);
 
-        clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync("AELF");
+        clientIds = await clientManagerGrain.GetBlockPusherIdsByChainAsync("AELF");
         clientIds.Count.ShouldBe(1);
         clientIds[0].ShouldBe(clientId);
         
-        allClientIds = await clientManagerGrain.GetAllBlockScanIdsAsync();
+        allClientIds = await clientManagerGrain.GetAllBlockPusherIdsAsync();
         allClientIds.Keys.Count.ShouldBe(1);
         allClientIds["AELF"].Count.ShouldBe(1);
         allClientIds["AELF"].First().ShouldBe(clientId);
         
         await blockScanGrain.StopAsync();
 
-        clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync("AELF");
+        clientIds = await clientManagerGrain.GetBlockPusherIdsByChainAsync("AELF");
         clientIds.Count.ShouldBe(0);
         
-        allClientIds = await clientManagerGrain.GetAllBlockScanIdsAsync();
+        allClientIds = await clientManagerGrain.GetAllBlockPusherIdsAsync();
         allClientIds.Keys.Count.ShouldBe(1);
         allClientIds["AELF"].Count.ShouldBe(0);
         
-        clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync("tDVV");
+        clientIds = await clientManagerGrain.GetBlockPusherIdsByChainAsync("tDVV");
         clientIds.Count.ShouldBe(0);
     }
 }

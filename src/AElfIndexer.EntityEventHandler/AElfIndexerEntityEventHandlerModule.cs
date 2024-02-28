@@ -1,7 +1,7 @@
 using AElf.EntityMapping.Options;
 using AElfIndexer;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.BlockScanExecution;
+using AElfIndexer.Grains.Grain.BlockPush;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting; 
@@ -72,7 +72,7 @@ public class AElfIndexerEntityEventHandlerModule : AbpModule
         
         AsyncHelper.RunSync(async () =>
         {
-            var grain = client.GetGrain<IBlockScanCheckGrain>(AElfIndexerApplicationConsts.BlockScanCheckGrainId);
+            var grain = client.GetGrain<IBlockPushCheckGrain>(GrainIdHelper.GenerateBlockPushCheckGrainId());
             await grain.Start();
         });
     }

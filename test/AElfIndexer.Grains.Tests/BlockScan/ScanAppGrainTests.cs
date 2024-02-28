@@ -4,9 +4,8 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.Grain.BlockScanExecution;
-using AElfIndexer.Grains.Grain.ScanApps;
-using AElfIndexer.Grains.State.ScanApps;
+using AElfIndexer.Grains.Grain.Apps;
+using AElfIndexer.Grains.Grain.BlockPush;
 using AElfIndexer.Grains.State.Subscriptions;
 using Shouldly;
 using Xunit;
@@ -21,9 +20,9 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
     {
         var clientId = "client";
         var chainId = "AELF";
-        var subscriptionInfo1 = new Subscription
+        var subscriptionInfo1 = new SubscriptionManifest
         {
-            SubscriptionItems = new List<SubscriptionItem>()
+            SubscriptionItems = new List<Subscription>()
             {
                 new()
                 {
@@ -34,7 +33,7 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
+        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         await scanAppGrain.UpgradeVersionAsync();
@@ -43,9 +42,9 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         subscription1.SubscriptionItems[0].ChainId.ShouldBe(chainId);
         subscription1.SubscriptionItems[0].StartBlockNumber.ShouldBe(21);
 
-        var subscriptionInfo2 = new Subscription
+        var subscriptionInfo2 = new SubscriptionManifest
         {
-            SubscriptionItems = new List<SubscriptionItem>()
+            SubscriptionItems = new List<Subscription>()
             {
                 new()
                 {
@@ -57,13 +56,13 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         };
         
         var version2 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo2);
-        var id1 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version1, chainId);
-        var blockScanGrain1 = Cluster.Client.GetGrain<IBlockScanGrain>(id1);
+        var id1 = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version1, chainId);
+        var blockScanGrain1 = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id1);
         var scanToken1 = Guid.NewGuid().ToString("N");
         await blockScanGrain1.InitializeAsync(clientId, version1, subscriptionInfo1.SubscriptionItems[0], scanToken1);
 
-        var id2 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version2, chainId);
-        var blockScanGrain2 = Cluster.Client.GetGrain<IBlockScanGrain>(id2);
+        var id2 = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version2, chainId);
+        var blockScanGrain2 = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id2);
         var scanToken2 = Guid.NewGuid().ToString("N");
         await blockScanGrain2.InitializeAsync(clientId, version2, subscriptionInfo1.SubscriptionItems[0], scanToken2);
 
@@ -114,9 +113,9 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
     public async Task UpdateSubscriptionInfo_Test()
     {
         var clientId = "client-id01";
-        var subscriptionInfo1 = new Subscription
+        var subscriptionInfo1 = new SubscriptionManifest
         {
-            SubscriptionItems = new List<SubscriptionItem>()
+            SubscriptionItems = new List<Subscription>()
             {
                 new()
                 {
@@ -135,7 +134,7 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
+        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
@@ -146,9 +145,9 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         subscription1.SubscriptionItems[0].LogEventConditions[0].ContractAddress.ShouldBe("7RzVGiuVWkvL4VfVHdZfQF2Tri3sgLe9U991bohHFfSRZXuGX");
         subscription1.SubscriptionItems[0].LogEventConditions[0].EventNames.Count.ShouldBe(1);
 
-        var subscriptionInfo2 = new Subscription
+        var subscriptionInfo2 = new SubscriptionManifest
         {
-            SubscriptionItems = new List<SubscriptionItem>()
+            SubscriptionItems = new List<Subscription>()
             {
                 new()
                 {
@@ -193,9 +192,9 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
     {
         var clientId = "client";
         var chainId = "AELF";
-        var subscriptionInfo1 = new Subscription
+        var subscriptionInfo1 = new SubscriptionManifest
         {
-            SubscriptionItems = new List<SubscriptionItem>()
+            SubscriptionItems = new List<Subscription>()
             {
                 new()
                 {
@@ -206,7 +205,7 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IScanAppGrain>(GrainIdHelper.GenerateScanAppGrainId(clientId));
+        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
         
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
@@ -214,9 +213,9 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         subscription1.SubscriptionItems[0].ChainId.ShouldBe(chainId);
         subscription1.SubscriptionItems[0].StartBlockNumber.ShouldBe(21);
 
-        var subscriptionInfo2 = new Subscription
+        var subscriptionInfo2 = new SubscriptionManifest
         {
-            SubscriptionItems = new List<SubscriptionItem>()
+            SubscriptionItems = new List<Subscription>()
             {
                 new()
                 {
@@ -229,13 +228,13 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         
         var version2 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo2);
 
-        var id1 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version1, chainId);
-        var blockScanGrain1 = Cluster.Client.GetGrain<IBlockScanGrain>(id1);
+        var id1 = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version1, chainId);
+        var blockScanGrain1 = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id1);
         var scanToken1 = Guid.NewGuid().ToString("N");
         await blockScanGrain1.InitializeAsync(clientId, version1, subscriptionInfo1.SubscriptionItems[0], scanToken1);
 
-        var id2 = GrainIdHelper.GenerateBlockScanGrainId(clientId, version2, chainId);
-        var blockScanGrain2 = Cluster.Client.GetGrain<IBlockScanGrain>(id2);
+        var id2 = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version2, chainId);
+        var blockScanGrain2 = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id2);
         var scanToken2 = Guid.NewGuid().ToString("N");
         await blockScanGrain2.InitializeAsync(clientId, version2, subscriptionInfo2.SubscriptionItems[0], scanToken2);
 

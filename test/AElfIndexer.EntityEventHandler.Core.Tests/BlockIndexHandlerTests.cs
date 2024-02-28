@@ -1,5 +1,5 @@
 using AElfIndexer.Block.Dtos;
-using AElfIndexer.Grains.Grain.BlockScanExecution;
+using AElfIndexer.Grains.Grain.BlockPush;
 using AElfIndexer.Grains.Grain.Chains;
 using AElfIndexer.Orleans.TestBase;
 using Orleans;
@@ -25,8 +25,8 @@ public class BlockIndexHandlerTests : EntityEventHandlerCoreBlockIndexTestBase
         var chainId = "AELF";
         var scanId = "ScanId";
         
-        var clientManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
-        await clientManagerGrain.AddBlockScanAsync(chainId, scanId);
+        var clientManagerGrain = _clusterClient.GetGrain<IBlockPusherManagerGrain>(0);
+        await clientManagerGrain.AddBlockPusherAsync(chainId, scanId);
 
         await _blockIndexHandler.ProcessNewBlockAsync(new BlockWithTransactionDto
         {
@@ -47,11 +47,11 @@ public class BlockIndexHandlerTests : EntityEventHandlerCoreBlockIndexTestBase
         var chainId = "AELF";
         var scanId = "ScanId";
         
-        var clientManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
-        await clientManagerGrain.AddBlockScanAsync(chainId, scanId);
+        var clientManagerGrain = _clusterClient.GetGrain<IBlockPusherManagerGrain>(0);
+        await clientManagerGrain.AddBlockPusherAsync(chainId, scanId);
         
         var chainGrain = _clusterClient.GetGrain<IChainGrain>("AELF");
-        await chainGrain.SetLatestConfirmBlockAsync("BlockHash100", 100);
+        await chainGrain.SetLatestConfirmedBlockAsync("BlockHash100", 100);
 
         await _blockIndexHandler.ProcessConfirmedBlocksAsync(new BlockWithTransactionDto
         {
