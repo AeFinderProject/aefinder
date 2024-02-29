@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.BlockState;
+using AElfIndexer.Grains.Grain.BlockStates;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;

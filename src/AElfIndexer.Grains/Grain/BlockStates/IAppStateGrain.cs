@@ -1,6 +1,6 @@
 using Orleans;
 
-namespace AElfIndexer.Grains.Grain.BlockState;
+namespace AElfIndexer.Grains.Grain.BlockStates;
 
 public interface IAppStateGrain : IGrainWithStringKey
 {

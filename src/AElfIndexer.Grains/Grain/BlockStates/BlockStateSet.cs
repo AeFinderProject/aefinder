@@ -1,6 +1,6 @@
 using AElfIndexer.Block.Dtos;
 
-namespace AElfIndexer.Grains.Grain.BlockState;
+namespace AElfIndexer.Grains.Grain.BlockStates;
 
 public class BlockStateSet
 {

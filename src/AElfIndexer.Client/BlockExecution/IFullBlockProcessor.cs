@@ -4,7 +4,7 @@ using AElfIndexer.Sdk;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
-namespace AElfIndexer.Client.BlockHandlers;
+namespace AElfIndexer.Client.BlockExecution;
 
 public interface IFullBlockProcessor
 {

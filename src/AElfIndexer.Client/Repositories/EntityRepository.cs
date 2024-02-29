@@ -1,6 +1,6 @@
 using AElfIndexer.Client.BlockState;
 using AElfIndexer.Client.OperationLimits;
-using AElfIndexer.Grains.Grain.BlockState;
+using AElfIndexer.Grains.Grain.BlockStates;
 using AElfIndexer.Sdk;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;

@@ -1,23 +1,24 @@
-using AElfIndexer.Grains.Grain.BlockState;
+using AElfIndexer.Client.BlockState;
+using AElfIndexer.Grains.Grain.BlockStates;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus;
 
-namespace AElfIndexer.Client.BlockState;
+namespace AElfIndexer.Client.Handlers;
 
-public class NewIrreversibleBlockFoundHandler : ILocalEventHandler<NewIrreversibleBlockFoundEventData>,
+public class LastIrreversibleBlockStateSetFoundHandler : ILocalEventHandler<LastIrreversibleBlockStateSetFoundEventData>,
     ITransientDependency
 {
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IAppStateProvider _appStateProvider;
 
-    public NewIrreversibleBlockFoundHandler(IAppBlockStateSetProvider appBlockStateSetProvider,
+    public LastIrreversibleBlockStateSetFoundHandler(IAppBlockStateSetProvider appBlockStateSetProvider,
         IAppStateProvider appStateProvider)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _appStateProvider = appStateProvider;
     }
 
-    public async Task HandleEventAsync(NewIrreversibleBlockFoundEventData eventData)
+    public async Task HandleEventAsync(LastIrreversibleBlockStateSetFoundEventData eventData)
     {
         
         var blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(eventData.ChainId);
@@ -35,9 +36,12 @@ public class NewIrreversibleBlockFoundHandler : ILocalEventHandler<NewIrreversib
                 break;
             }
         }
-
+        
         toMergeBlockStateSets = toMergeBlockStateSets.OrderBy(o => o.Block.BlockHeight).ToList();
 
         await _appStateProvider.MergeStateAsync(eventData.ChainId, toMergeBlockStateSets);
+        
+        _appBlockStateSetProvider.CleanBlockStateSets(eventData.ChainId, eventData.BlockHeight,
+            eventData.BlockHash);
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Apps;
 using AElfIndexer.Grains.Grain.BlockPush;
-using AElfIndexer.Grains.Grain.BlockState;
+using AElfIndexer.Grains.Grain.BlockStates;
 using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.Extensions.Logging;
 using Orleans;

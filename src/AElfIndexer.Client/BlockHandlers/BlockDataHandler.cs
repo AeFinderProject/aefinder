@@ -1,8 +1,9 @@
 using AElf.Types;
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.Client.BlockExecution;
 using AElfIndexer.Client.BlockState;
-using AElfIndexer.Grains.Grain.BlockState;
-using AElfIndexer.Sdk;
+using AElfIndexer.Client.Handlers;
+using AElfIndexer.Grains.Grain.BlockStates;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Volo.Abp.DependencyInjection;
@@ -13,7 +14,6 @@ namespace AElfIndexer.Client.BlockHandlers;
 
 public class BlockDataHandler : IBlockDataHandler, ITransientDependency 
 {
-    private readonly IAppStateProvider _appStateProvider;
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IAppDataIndexManagerProvider _appDataIndexManagerProvider;
     protected readonly IObjectMapper ObjectMapper;
@@ -23,21 +23,21 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
     protected readonly ILogger<BlockDataHandler> Logger;
     
     public ILocalEventBus LocalEventBus { get; set; }
-    
+
     protected BlockDataHandler(IObjectMapper objectMapper,
         ILogger<BlockDataHandler> logger,
-        IAppStateProvider appStateProvider, IAppBlockStateSetProvider appBlockStateSetProvider,
-        IAppDataIndexManagerProvider appDataIndexManagerProvider, IFullBlockProcessor fullBlockProcessor, IOptionsSnapshot<AppInfoOptions> appInfoOptions)
+        IAppBlockStateSetProvider appBlockStateSetProvider,
+        IAppDataIndexManagerProvider appDataIndexManagerProvider, IFullBlockProcessor fullBlockProcessor,
+        IOptionsSnapshot<AppInfoOptions> appInfoOptions)
     {
         ObjectMapper = objectMapper;
         Logger = logger;
-        _appStateProvider = appStateProvider;
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _appDataIndexManagerProvider = appDataIndexManagerProvider;
         _fullBlockProcessor = fullBlockProcessor;
         _appInfoOptions = appInfoOptions.Value;
     }
-    
+
     public async Task HandleBlockChainDataAsync(string chainId, List<BlockWithTransactionDto> blockDtos)
     {
         var libHeight = 0L;
@@ -55,17 +55,16 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         var blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(chainId);
         var longestChain = new List<BlockStateSet>();
         
-        var libBlockHeight = blockStateSets.Count != 0 ? blockStateSets.Min(b => b.Value.Block.BlockHeight) : 0;
-        libBlockHeight = libBlockHeight == 1 ? 0 : libBlockHeight;
-        var longestHeight = blockStateSets.Count != 0 ? blockStateSets.Max(b => b.Value.Block.BlockHeight) : 0;
+        var lastIrreversibleBlockStateSet = await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
+        var lastIrreversibleBlockHeight = lastIrreversibleBlockStateSet?.Block.BlockHeight ?? 0;
+        
         Logger.LogDebug(
-            "Handle block data. ChainId: {ChainId}, ClientId: {ClientId}, Version: {Version}, Lib Height: {Lib}, Longest Chain Height: {LongestHeight}",
-            chainId, _appInfoOptions.AppId, _appInfoOptions.Version, libBlockHeight, longestHeight);
+            "Handle block data. ChainId: {ChainId}, AppId: {AppId}, Version: {Version}, Lib Height: {Lib}", chainId, _appInfoOptions.AppId, _appInfoOptions.Version, lastIrreversibleBlockHeight);
 
         foreach (var blockDto in blockDtos)
         {
             // Skip if block height less than lib block height
-            if(blockDto.BlockHeight <= libBlockHeight)
+            if(blockDto.BlockHeight <= lastIrreversibleBlockHeight)
             {
                 continue;
             }
@@ -76,19 +75,38 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
                     $"Previous block {blockDto.PreviousBlockHash} not found. blockHeight: {blockDto.BlockHeight}, blockStateSets max block height: {blockStateSets.Max(b => b.Value.Block.BlockHeight)}");
                 continue;
             }
-
-            if (blockStateSets.TryGetValue(blockDto.BlockHash, out var blockStateSet) && blockStateSet.Processed &&
-                blockDto.Confirmed)
+            
+            if(blockDto.Confirmed)
             {
-                await DealWithConfirmBlockAsync(blockDto, blockStateSet);
-                libHeight = blockDto.BlockHeight;
-                libHash = blockDto.BlockHash;
-                continue;
+                if (lastIrreversibleBlockHeight == 0)
+                {
+                    lastIrreversibleBlockHeight = blockDto.BlockHeight;
+                }
+                else
+                {
+                    if (blockDto.BlockHeight != lastIrreversibleBlockHeight + 1 && blockStateSets.TryGetValue(blockDto.PreviousBlockHash, out var previousBlockStateSet) && !previousBlockStateSet.Block.Confirmed)
+                    {
+                        Logger.LogWarning(
+                            $"Missing previous confirmed block. Confirmed block height: {blockDto.BlockHeight}, lib block height: {lastIrreversibleBlockHeight}");
+                        continue;
+                    }
+
+                    lastIrreversibleBlockHeight++;
+                }
             }
-
-            // Skip if blockStateSets contain block and processed
-            if (blockStateSets.TryGetValue(blockDto.BlockHash, out blockStateSet) && blockStateSet.Processed)
+            
+            if (blockStateSets.TryGetValue(blockDto.BlockHash, out var blockStateSet) && blockStateSet.Processed)
             {
+                if (blockDto.Confirmed)
+                {
+                    blockStateSet.Block.Confirmed = blockDto.Confirmed;
+                    await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);
+                    blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(chainId);
+                    
+                    libHeight = blockDto.BlockHeight;
+                    libHash = blockDto.BlockHash;
+                }
+
                 continue;
             }
 
@@ -102,6 +120,13 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
                 await _appBlockStateSetProvider.AddBlockStateSetAsync(chainId, blockStateSet);
                 blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(chainId);
             }
+            else if (blockDto.Confirmed)
+            {
+                blockStateSet.Block.Confirmed = blockDto.Confirmed;
+                await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);
+                blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(chainId);
+            }
+            
             if (longestChainBlockStateSet == null || blockDto.PreviousBlockHash == longestChainBlockStateSet.Block.BlockHash)
             {
                 longestChain.Add(blockStateSet);
@@ -149,7 +174,7 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         
         if (libHeight != 0)
         {
-            await LocalEventBus.PublishAsync(new NewIrreversibleBlockFoundEventData
+            await LocalEventBus.PublishAsync(new LastIrreversibleBlockStateSetFoundEventData
             {
                 ChainId = chainId,
                 BlockHash = libHash,
@@ -193,21 +218,6 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
         }
 
         await _appDataIndexManagerProvider.SavaDataAsync();
-    }
-
-    private async Task DealWithConfirmBlockAsync(BlockWithTransactionDto blockDto, BlockStateSet blockStateSet)
-    {
-        //Deal with confirmed block
-        foreach (var change in blockStateSet.Changes)
-        {
-            var value = await _appStateProvider.GetLastIrreversibleStateAsync<IndexerEntity>(blockDto.ChainId,change.Key);
-            if (value != null && value.Metadata.Block.BlockHeight > blockDto.BlockHeight)
-            {
-                continue;
-            }
-
-            await _appStateProvider.SetLastIrreversibleStateAsync(blockDto.ChainId,change.Key, change.Value);
-        }
     }
 
     private List<BlockStateSet> GetLongestChain(Dictionary<string,BlockStateSet> blockStateSets, string blockHash)
@@ -257,5 +267,42 @@ public class BlockDataHandler : IBlockDataHandler, ITransientDependency
     {
         blockStateSet.Processed = processed;
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);
+    }
+    
+    private async Task<bool> IsProcessLongestChainAsync(string chainId, string stateSetKey,
+        List<BlockStateSet<TData>> longestChain)
+    {
+        if (longestChain.Count == 0)
+        {
+            return false;
+        }
+
+        // Check the last block is confirmed or not is determined to be compatible with the previous version data, which did not fully record the  BlockStateSet confirmed status.
+        return longestChain.Last().Confirmed || await IsInLibBranchAsync(chainId, stateSetKey, longestChain.First().BlockHash);
+    }
+    
+    private async Task<bool> IsInLibBranchAsync(string chainId, string stateSetKey, string blockHash)
+    {
+        var blockStateSets = await _blockStateSetProvider.GetBlockStateSetsAsync(stateSetKey);
+        var libHeight =
+            await BlockStateSetInfoProvider.GetConfirmedBlockHeight(_clientId, _version, chainId, FilterType);
+        if (libHeight == 0)
+        {
+            return true;
+        }
+
+        while (true)
+        {
+            if (!blockStateSets.TryGetValue(blockHash, out var blockStateSet) || blockStateSet.BlockHeight < libHeight)
+            {
+                return false;
+            }
+
+            if (blockStateSet.Confirmed)
+            {
+                return true;
+            }
+            blockHash = blockStateSet.PreviousBlockHash;
+        }
     }
 }

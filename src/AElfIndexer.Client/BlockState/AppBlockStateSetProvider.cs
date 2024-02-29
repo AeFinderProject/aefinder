@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
+using AElf.Types;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.BlockState;
+using AElfIndexer.Grains.Grain.BlockStates;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
@@ -174,6 +175,26 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
                 AddChangedBlockStateSet(chainId, item.Value, DataOperationType.Delete);
             }
         }
+    }
+    
+    public Task<BlockStateSet> GetBlockStateSetAsync(string chainId, string blockHash)
+    {
+        if (_blockStateSets.TryGetValue(chainId, out var sets) && sets.TryGetValue(blockHash, out var set))
+        {
+            return Task.FromResult(set);
+        }
+
+        return Task.FromResult<BlockStateSet>(null);
+    }
+    
+    public Task<int> GetBlockStateSetCountAsync(string chainId)
+    {
+        if (_blockStateSets.TryGetValue(chainId, out var sets))
+        {
+            return Task.FromResult(sets.Count);
+        }
+
+        return Task.FromResult<int>(0);
     }
 
     public async Task SaveDataAsync(string chainId)

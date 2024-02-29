@@ -1,7 +1,7 @@
-using AElfIndexer.Grains.State.BlockState;
+using AElfIndexer.Grains.State.BlockStates;
 using Orleans;
 
-namespace AElfIndexer.Grains.Grain.BlockState;
+namespace AElfIndexer.Grains.Grain.BlockStates;
 
 public class AppBlockStateSetStatusGrainGrain : Grain<AppBlockStateSetStatusState>, IAppBlockStateSetStatusGrain
 {

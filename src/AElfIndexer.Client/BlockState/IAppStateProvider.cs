@@ -1,5 +1,5 @@
 
-using AElfIndexer.Grains.Grain.BlockState;
+using AElfIndexer.Grains.Grain.BlockStates;
 
 namespace AElfIndexer.Client.BlockState;
 

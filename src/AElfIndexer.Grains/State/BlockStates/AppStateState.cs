@@ -1,4 +1,4 @@
-namespace AElfIndexer.Grains.State.BlockState;
+namespace AElfIndexer.Grains.State.BlockStates;
 
 public class AppStateState
 {

@@ -1,6 +1,6 @@
-namespace AElfIndexer.Client.BlockState;
+namespace AElfIndexer.Client.Handlers;
 
-public class NewIrreversibleBlockFoundEventData
+public class LastIrreversibleBlockStateSetFoundEventData
 {
     public string ChainId { get; set; }
     public string BlockHash { get; set; }
