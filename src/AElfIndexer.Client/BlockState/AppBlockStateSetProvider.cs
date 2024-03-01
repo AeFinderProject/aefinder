@@ -81,12 +81,6 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
         }
     }
 
-    public Task<Dictionary<string, BlockStateSet>> GetBlockStateSetsAsync(string chainId)
-    {
-        _blockStateSets.TryGetValue(chainId, out var value);
-        return Task.FromResult(value.ToDictionary(o => o.Key, o => o.Value));
-    }
-
     public Task AddBlockStateSetAsync(string chainId, BlockStateSet blockStateSet)
     {
         if (!_blockStateSets.TryGetValue(chainId, out var sets))

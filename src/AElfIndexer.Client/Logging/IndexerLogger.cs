@@ -19,6 +19,6 @@ public class IndexerLogger : IIndexerLogger, ISingletonDependency
     public void Log(LogLevel logLevel, Exception exception, string message, params object[] args)
     {
         _logOperationLimitProvider.CheckLog(exception, message, args);
-        _logger.Log(logLevel,1, exception, message, args);
+        _logger.Log(logLevel,AElfIndexerApplicationConsts.AppLogEventId, exception, message, args);
     }
 }

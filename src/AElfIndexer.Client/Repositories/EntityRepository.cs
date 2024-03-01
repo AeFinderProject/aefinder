@@ -32,8 +32,7 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
 
     public async Task<TEntity> GetAsync(string chainId, IBlockIndex blockIndex, string id)
     {
-        var entityKey = $"{_entityName}-{id}";
-        return await GetEntityFromBlockStateSetsAsync(chainId, entityKey, blockIndex);
+        return await GetEntityFromBlockStateSetsAsync(chainId, GetEntityKey(chainId,id), blockIndex);
     }
 
     public async Task AddOrUpdateAsync(TEntity entity, bool isRollback)
@@ -53,9 +52,8 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
     private async Task<TEntity> GetEntityFromBlockStateSetsAsync(string chainId, string entityKey,
         IBlockIndex branchBlockIndex)
     {
-        var blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(chainId);
-        var blockHash = branchBlockIndex.BlockHash;
-        while (blockStateSets.TryGetValue(blockHash, out var blockStateSet))
+        var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId,branchBlockIndex.BlockHash);
+        while (blockStateSet != null)
         {
             if (blockStateSet.Changes.TryGetValue(entityKey, out var value))
             {
@@ -63,7 +61,8 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
                 return (entity?.Metadata.IsDeleted ?? true) ? null : entity;
             }
 
-            blockHash = blockStateSet.Block.PreviousBlockHash;
+            blockStateSet =
+                await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, blockStateSet.Block.PreviousBlockHash);
         }
 
         // if block state sets don't contain entity, return LIB value
@@ -84,15 +83,14 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
             throw new Exception($"Invalid entity: {entity.ToJsonString()}");
         }
 
-        var entityKey = $"{_entityName}-{entity.Id}";
+        var entityKey = GetEntityKey(entity.Metadata.ChainId, entity.Id);
 
-        var blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(entity.Metadata.ChainId);
-        var blockStateSet = blockStateSets[entity.Metadata.Block.BlockHash];
+        var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(entity.Metadata.ChainId,entity.Metadata.Block.BlockHash);
 
         if (isRollback)
         {
             // entity is not on best chain.
-            //if current block state is not on best chain, get the best chain block state set
+            // if current block state is not on best chain, get the best chain block state set
             var longestChainBlockStateSet =
                 await _appBlockStateSetProvider.GetLongestChainBlockStateSetAsync(entity.Metadata.ChainId);
             var entityFromBlockStateSet = await GetEntityFromBlockStateSetsAsync(entity.Metadata.ChainId, entityKey,
@@ -140,5 +138,10 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
     private string GetIndexName()
     {
         return $"{_appInfoOptions.AppId}-{_appInfoOptions.Version}.{_entityName}".ToLower();
+    }
+    
+    private string GetEntityKey(string chainId, string id)
+    {
+        return $"{_entityName}-{chainId}-{id}";
     }
 }

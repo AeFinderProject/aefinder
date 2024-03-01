@@ -10,8 +10,8 @@ public class IndexerJsonFormatter : ITextFormatter
 {
   private readonly JsonValueFormatter _valueFormatter;
   
-  private static string _scanAppIdKey = "scanAppId";
-  private static string _versionKey = "version";
+  private static string _appIdKey = "AppId";
+  private static string _versionKey = "Version";
   private static string _eventIdKey = "EventId";
   
   /// <summary>
@@ -61,9 +61,9 @@ public class IndexerJsonFormatter : ITextFormatter
       output);
     
     output.Write(',');
-    JsonValueFormatter.WriteQuotedJsonString(_scanAppIdKey, output);
+    JsonValueFormatter.WriteQuotedJsonString(_appIdKey, output);
     output.Write(':');
-    if (logEvent.Properties.TryGetValue(_scanAppIdKey, out var scanAppId))
+    if (logEvent.Properties.TryGetValue(_appIdKey, out var scanAppId))
     {
       valueFormatter.Format(scanAppId, output);
     }

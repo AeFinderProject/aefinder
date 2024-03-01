@@ -1,6 +1,8 @@
 using AElfIndexer.Client.BlockState;
+using AElfIndexer.Client.Handlers;
 using AElfIndexer.Grains.Grain.BlockStates;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.EventBus.Local;
 
 namespace AElfIndexer.Client.BlockExecution;
 
@@ -14,6 +16,8 @@ public class BlockExecutionService : IBlockExecutionService, ITransientDependenc
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IFullBlockProcessor _fullBlockProcessor;
     private readonly IAppDataIndexManagerProvider _appDataIndexManagerProvider;
+    
+    public ILocalEventBus LocalEventBus { get; set; }
 
     public BlockExecutionService(IAppBlockStateSetProvider appBlockStateSetProvider,
         IFullBlockProcessor fullBlockProcessor, IAppDataIndexManagerProvider appDataIndexManagerProvider)
@@ -44,14 +48,26 @@ public class BlockExecutionService : IBlockExecutionService, ITransientDependenc
             await _fullBlockProcessor.ProcessAsync(blockStateSet.Block, false);
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, true);
         }
-
+        
+        await _appDataIndexManagerProvider.SavaDataAsync();
+        
         var longestChainBlockStateSet = blockStateSets.LastOrDefault();
         if (longestChainBlockStateSet != null)
         {
             await _appBlockStateSetProvider.SetBestChainBlockStateSetAsync(chainId, longestChainBlockStateSet.Block.BlockHash);
+            
+            if (longestChainBlockStateSet.Block.Confirmed)
+            {
+                await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(chainId, longestChainBlockStateSet.Block.BlockHash);
+                await _appBlockStateSetProvider.SaveDataAsync(chainId);
+                await LocalEventBus.PublishAsync(new LastIrreversibleBlockStateSetFoundEventData
+                {
+                    ChainId = chainId,
+                    BlockHash = longestChainBlockStateSet.Block.BlockHash,
+                    BlockHeight = longestChainBlockStateSet.Block.BlockHeight
+                });
+            }
         }
-
-        await _appDataIndexManagerProvider.SavaDataAsync();
     }
     
     private async Task<List<BlockStateSet>> GetUnProcessedBlockStateSetsAsync(string chainId, string branchBlockHash)

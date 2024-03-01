@@ -20,16 +20,14 @@ public class LastIrreversibleBlockStateSetFoundHandler : ILocalEventHandler<Last
 
     public async Task HandleEventAsync(LastIrreversibleBlockStateSetFoundEventData eventData)
     {
-        
-        var blockStateSets = await _appBlockStateSetProvider.GetBlockStateSetsAsync(eventData.ChainId);
         var toMergeBlockStateSets = new List<BlockStateSet>();
-        var blockHash = eventData.BlockHash;
+        var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(eventData.ChainId, eventData.BlockHash);
         while (true)
         {
-            if(blockStateSets.TryGetValue(blockHash, out var blockStateSet))
+            if(blockStateSet != null)
             {
                 toMergeBlockStateSets.Add(blockStateSet);
-                blockHash = blockStateSet.Block.PreviousBlockHash;
+                blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(eventData.ChainId, blockStateSet.Block.PreviousBlockHash);
             }
             else
             {

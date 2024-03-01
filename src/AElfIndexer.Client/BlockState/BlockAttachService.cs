@@ -46,7 +46,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
             if (currentBlockStateSetCount != 0 && previousBlockStateSet ==null && block.PreviousBlockHash!= Hash.Empty.ToHex())
             {
                 _logger.LogWarning(
-                    $"Previous block {block.PreviousBlockHash} not found. blockHeight: {block.BlockHeight}, blockStateSets max block height: {blockStateSets.Max(b => b.Value.Block.BlockHeight)}");
+                    $"Previous block {block.PreviousBlockHash} not found. BlockHeight: {block.BlockHeight}, BlockHash: {block.BlockHash}");
                 continue;
             }
             

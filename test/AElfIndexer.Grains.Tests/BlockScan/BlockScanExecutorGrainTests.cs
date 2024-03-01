@@ -69,9 +69,9 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
             {
                 v.ChainId.ShouldBe(chainId);
-                v.ClientId.ShouldBe(clientId);
+                v.AppId.ShouldBe(clientId);
                 v.Version.ShouldBe(version);
-                v.Token.ShouldBe(scanToken);
+                v.PushToken.ShouldBe(scanToken);
                 subscribedBlock.AddRange(v.Blocks);
            return Task.CompletedTask;
         });
@@ -158,9 +158,9 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
-            v.ClientId.ShouldBe(clientId);
+            v.AppId.ShouldBe(clientId);
             v.Version.ShouldBe(version);
-            v.Token.ShouldBe(scanToken);
+            v.PushToken.ShouldBe(scanToken);
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
@@ -275,9 +275,9 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
-            v.ClientId.ShouldBe(clientId);
+            v.AppId.ShouldBe(clientId);
             v.Version.ShouldBe(version);
-            v.Token.ShouldBe(scanToken);
+            v.PushToken.ShouldBe(scanToken);
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
@@ -343,9 +343,9 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
-            v.ClientId.ShouldBe(clientId);
+            v.AppId.ShouldBe(clientId);
             v.Version.ShouldBe(version);
-            v.Token.ShouldBe(scanToken);
+            v.PushToken.ShouldBe(scanToken);
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
@@ -413,9 +413,9 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
-            v.ClientId.ShouldBe(clientId);
+            v.AppId.ShouldBe(clientId);
             v.Version.ShouldBe(version);
-            v.Token.ShouldBe(scanToken);
+            v.PushToken.ShouldBe(scanToken);
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
@@ -477,9 +477,9 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
             {
                 v.ChainId.ShouldBe(chainId);
-                v.ClientId.ShouldBe(clientId);
+                v.AppId.ShouldBe(clientId);
                 v.Version.ShouldBe(version);
-                v.Token.ShouldBe(scanToken);
+                v.PushToken.ShouldBe(scanToken);
                 subscribedBlock.AddRange(v.Blocks);
            return Task.CompletedTask;
         });

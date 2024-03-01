@@ -5,7 +5,6 @@ namespace AElfIndexer.Client.BlockState;
 public interface IAppBlockStateSetProvider
 {
     Task InitializeAsync(string chainId);
-    Task<Dictionary<string, BlockStateSet>> GetBlockStateSetsAsync(string chainId);
     Task AddBlockStateSetAsync(string chainId, BlockStateSet blockStateSet);
     Task UpdateBlockStateSetAsync(string chainId, BlockStateSet blockStateSet);
     Task<BlockStateSet> GetLongestChainBlockStateSetAsync(string chainId);

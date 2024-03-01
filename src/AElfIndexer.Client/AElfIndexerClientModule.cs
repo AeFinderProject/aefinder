@@ -1,9 +1,8 @@
 using AElfIndexer.BlockScan;
 using AElfIndexer.Client.BlockChain;
-using AElfIndexer.Client.BlockHandlers;
 using AElfIndexer.Client.BlockState;
+using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.OperationLimits;
-using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -11,7 +10,6 @@ using NUglify.Helpers;
 using Orleans;
 using Orleans.Streams;
 using Volo.Abp;
-using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 using Volo.Abp.Serialization;
@@ -27,9 +25,11 @@ public class AElfIndexerClientModule : AbpModule
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AElfIndexerClientModule>(); });
         
         var configuration = context.Services.GetConfiguration();
-        Configure<ClientOptions>(configuration.GetSection("Client"));
+        Configure<MessageQueueOptions>(configuration.GetSection("MessageQueue"));
         Configure<ChainNodeOptions>(configuration.GetSection("ChainNode"));
         Configure<AppInfoOptions>(configuration.GetSection("AppInfo"));
+        Configure<AppStateOptions>(configuration.GetSection("AppState"));
+        Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
 
         context.Services.AddSingleton(typeof(IAppDataIndexProvider<>), typeof(AppDataIndexProvider<>));
     }
@@ -62,7 +62,7 @@ public class AElfIndexerClientModule : AbpModule
         //         SubscriptionsEndPoint = "../graphql",
         //     });
         
-        var clientOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<ClientOptions>>().Value;
+        var clientOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
         if (clientOptions.ClientType == ClientType.Full)
         {
             AsyncHelper.RunSync(async () => await InitBlockScanAsync(context, appInfoOptions.AppId, appInfoOptions.Version));

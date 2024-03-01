@@ -115,22 +115,22 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                     SetConfirmed(blocks, false);
                     await _stream.OnNextAsync(new SubscribedBlockDto
                     {
-                        ClientId = _appId,
+                        AppId = _appId,
                         ChainId = _subscription.ChainId,
                         Version = _subscriptionVersion,
                         Blocks = blocks,
-                        Token = State.PushToken
+                        PushToken = State.PushToken
                     });
                 }
 
                 SetConfirmed(blocks, true);
                 await _stream.OnNextAsync(new SubscribedBlockDto
                 {
-                    ClientId = _appId,
+                    AppId = _appId,
                     ChainId = _subscription.ChainId,
                     Version = _subscriptionVersion,
                     Blocks = blocks,
-                    Token = State.PushToken
+                    PushToken = State.PushToken
                 });
 
                 State.PushedBlockHeight = blocks.Last().BlockHeight;
@@ -247,11 +247,11 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         SetConfirmed(subscribedBlocks, false);
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
-            ClientId = _appId,
+            AppId = _appId,
             ChainId = _subscription.ChainId,
             Version = _subscriptionVersion,
             Blocks = subscribedBlocks,
-            Token = State.PushToken
+            PushToken = State.PushToken
         });
 
         await WriteStateAsync();
@@ -351,11 +351,11 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         SetConfirmed(pushedBlocks, true);
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
-            ClientId = _appId,
+            AppId = _appId,
             ChainId = _subscription.ChainId,
             Version = _subscriptionVersion,
             Blocks = pushedBlocks,
-            Token = State.PushToken
+            PushToken = State.PushToken
         });
 
         State.PushedConfirmedBlockHeight = pushedBlocks.Last().BlockHeight;

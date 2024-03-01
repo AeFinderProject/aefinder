@@ -13,7 +13,7 @@ namespace AElfIndexer.Client.BlockState;
 public class AppStateProvider : IAppStateProvider, ISingletonDependency
 {
     private readonly IClusterClient _clusterClient;
-    private readonly ClientOptions _clientOptions;
+    private readonly AppStateOptions _appStateOptions;
     private readonly AppInfoOptions _appInfoOptions;
 
     private readonly ConcurrentDictionary<string, string> _libValues = new();
@@ -22,13 +22,13 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
     
     private readonly ILogger<AppStateProvider> _logger;
 
-    public AppStateProvider(IClusterClient clusterClient, IOptionsSnapshot<ClientOptions> clientOptions,
+    public AppStateProvider(IClusterClient clusterClient, IOptionsSnapshot<AppStateOptions> appStateOptions,
         ILogger<AppStateProvider> logger, IOptionsSnapshot<AppInfoOptions> appInfoOptions)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _appInfoOptions = appInfoOptions.Value;
-        _clientOptions = clientOptions.Value;
+        _appStateOptions = appStateOptions.Value;
     }
 
     public async Task<T> GetLastIrreversibleStateAsync<T>(string chainId, string key)
@@ -88,7 +88,7 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
             return;
         }
         
-        if (_libValues.Count >= _clientOptions.AppDataCacheCount)
+        if (_libValues.Count >= _appStateOptions.AppDataCacheCount)
         {
             if (_libValueKeys.TryPeek(out var oldKey))
             {

@@ -48,10 +48,10 @@ public class SubscribedBlockHandlerLogEventErrorTests : AElfIndexerClientLogEven
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
             Blocks = blocks,
-            Token = currentVersionToken,
+            PushToken = currentVersionToken,
             Version = currentVersion,
             ChainId = chainId,
-            ClientId = client,
+            AppId = client,
             FilterType = BlockFilterType.LogEvent
         });
 

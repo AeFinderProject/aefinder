@@ -53,10 +53,10 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
             Blocks = new List<BlockWithTransactionDto>(),
-            Token = currentVersionToken,
+            PushToken = currentVersionToken,
             Version = currentVersion,
             ChainId = chainId,
-            ClientId = client,
+            AppId = client,
             FilterType = BlockFilterType.Block
         });
         var bestChain = await grain.GetBestChainBlockStateSetAsync();
@@ -67,10 +67,10 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
             Blocks = blocks,
-            Token = currentVersionToken,
+            PushToken = currentVersionToken,
             Version = currentVersion,
             ChainId = chainId,
-            ClientId = "WrongClient",
+            AppId = "WrongClient",
             FilterType = BlockFilterType.Block
         });
         bestChain = await grain.GetBestChainBlockStateSetAsync();
@@ -79,10 +79,10 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
             Blocks = blocks,
-            Token = currentVersionToken,
+            PushToken = currentVersionToken,
             Version = "WrongVersion",
             ChainId = chainId,
-            ClientId = client,
+            AppId = client,
             FilterType = BlockFilterType.Block
         });
         bestChain = await grain.GetBestChainBlockStateSetAsync();
@@ -91,10 +91,10 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
             Blocks = blocks,
-            Token = "WrongToken",
+            PushToken = "WrongToken",
             Version = currentVersion,
             ChainId = chainId,
-            ClientId = client,
+            AppId = client,
             FilterType = BlockFilterType.Block
         });
         bestChain = await grain.GetBestChainBlockStateSetAsync();
@@ -106,10 +106,10 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
             Blocks = blocks,
-            Token = currentVersionToken,
+            PushToken = currentVersionToken,
             Version = currentVersion,
             ChainId = chainId,
-            ClientId = client,
+            AppId = client,
             FilterType = BlockFilterType.Block
         });
         bestChain = await grain.GetBestChainBlockStateSetAsync();
@@ -126,10 +126,10 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
             Blocks = blocks,
-            Token = newVersionToken,
+            PushToken = newVersionToken,
             Version = newVersion,
             ChainId = chainId,
-            ClientId = client,
+            AppId = client,
             FilterType = BlockFilterType.Block
         });
         key = GrainIdHelper.GenerateGrainId("BlockStateSets", client, chainId, newVersion);
@@ -164,10 +164,10 @@ public class SubscribedBlockHandlerTests : AElfIndexerClientBlockDataHandlerTest
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
             Blocks = blocks,
-            Token = currentVersionToken,
+            PushToken = currentVersionToken,
             Version = currentVersion,
             ChainId = chainId,
-            ClientId = client,
+            AppId = client,
             FilterType = BlockFilterType.Block
         });
 
