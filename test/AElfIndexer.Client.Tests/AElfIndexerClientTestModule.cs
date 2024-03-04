@@ -7,7 +7,9 @@ using AElf.Indexing.Elasticsearch;
 using AElf.Indexing.Elasticsearch.Options;
 using AElf.Indexing.Elasticsearch.Provider;
 using AElf.Indexing.Elasticsearch.Services;
-using AElfIndexer.Client.BlockChain;
+using AElfIndexer.App;
+using AElfIndexer.App.BlockChain;
+using AElfIndexer.App.Handlers;
 using AElfIndexer.Client.BlockHandlers;
 using AElfIndexer.Client.Handlers;
 using AElfIndexer.Client.Providers;
@@ -23,7 +25,7 @@ using Volo.Abp.Threading;
 namespace AElfIndexer.Client;
 
 [DependsOn(
-    typeof(AElfIndexerClientModule),
+    typeof(AElfIndexerAppModule),
     typeof(AElfIndexerDomainTestModule),
     typeof(AElfIndexerOrleansTestBaseModule)
 )]

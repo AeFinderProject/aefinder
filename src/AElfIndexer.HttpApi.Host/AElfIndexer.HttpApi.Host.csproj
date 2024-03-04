@@ -27,7 +27,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AElfIndexer.Application\AElfIndexer.Application.csproj" />
     <ProjectReference Include="..\AElfIndexer.HttpApi\AElfIndexer.HttpApi.csproj" />
-    <ProjectReference Include="..\AElfIndexer.Client\AElfIndexer.Client.csproj" />
+    <ProjectReference Include="..\AElfIndexer.App\AElfIndexer.App.csproj" />
     <ProjectReference Include="..\AElfIndexer.MongoDB\AElfIndexer.MongoDB.csproj" />
   </ItemGroup>
 

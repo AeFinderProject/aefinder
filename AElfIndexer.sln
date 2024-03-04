@@ -53,11 +53,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.Grains.Tests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.Orleans.TestBase", "test\AElfIndexer.Orleans.TestBase\AElfIndexer.Orleans.TestBase.csproj", "{916C22E5-5CF6-42A1-9FA7-C7EDE233D813}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.Client", "src\AElfIndexer.Client\AElfIndexer.Client.csproj", "{707B0CC7-7D52-41F3-B877-E8B7FEF4C59D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.App", "src\AElfIndexer.App\AElfIndexer.App.csproj", "{707B0CC7-7D52-41F3-B877-E8B7FEF4C59D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestGraphQL", "src\TestGraphQL\TestGraphQL.csproj", "{3AEF3A83-62EA-494F-B1D9-C7DD25DE3C58}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.Dapp", "src\AElfIndexer.Dapp\AElfIndexer.Dapp.csproj", "{FB6D0664-A328-46CB-B019-0B05DEB23DC2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.App.Host", "src\AElfIndexer.App.Host\AElfIndexer.App.Host.csproj", "{FB6D0664-A328-46CB-B019-0B05DEB23DC2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.MongoDB", "src\AElfIndexer.MongoDB\AElfIndexer.MongoDB.csproj", "{DC7E4FA3-72C0-4A3F-A80D-120305FAE130}"
 EndProject

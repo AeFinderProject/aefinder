@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AElfIndexer.Client.BlockChain;
+using AElfIndexer.App.BlockChain;
 using Shouldly;
 using Xunit;
 

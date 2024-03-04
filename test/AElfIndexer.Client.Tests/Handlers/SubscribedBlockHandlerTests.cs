@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Client.Services;
+using AElfIndexer.App.Handlers;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Client.BlockHandlers;

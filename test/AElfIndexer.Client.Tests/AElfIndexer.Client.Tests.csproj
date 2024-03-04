@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\AElfIndexer.Client\AElfIndexer.Client.csproj" />
+        <ProjectReference Include="..\..\src\AElfIndexer.App\AElfIndexer.App.csproj" />
         <ProjectReference Include="..\AElfIndexer.Domain.Tests\AElfIndexer.Domain.Tests.csproj" />
         <ProjectReference Include="..\AElfIndexer.Orleans.TestBase\AElfIndexer.Orleans.TestBase.csproj" />
     </ItemGroup>
