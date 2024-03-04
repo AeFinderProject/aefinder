@@ -34,7 +34,5 @@ public class BlockMetadata
     [Keyword]
     public string BlockHash { get; set; }
     public long BlockHeight { get; set; }
-    [Keyword]
-    public string PreviousBlockHash { get; set; }
     public DateTime BlockTime { get; set; }
 }

@@ -39,7 +39,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         _operationLimitManager.ResetAll();
         
         var processingContext = new BlockDataProcessingContext(block.ChainId, block.BlockHash, block.BlockHeight,
-            block.PreviousBlockHash, block.BlockTime, isRollback);
+            block.BlockTime, isRollback);
         var blockProcessor = _blockProcessors.FirstOrDefault();
         if (blockProcessor != null)
         {

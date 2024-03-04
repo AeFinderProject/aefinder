@@ -115,8 +115,7 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
     {
         return !string.IsNullOrWhiteSpace(entity.Metadata.Block.BlockHash) && entity.Metadata.Block.BlockHeight != 0 &&
                entity.Id != null &&
-               !string.IsNullOrWhiteSpace(entity.Metadata.ChainId) &&
-               !string.IsNullOrWhiteSpace(entity.Metadata.Block.PreviousBlockHash);
+               !string.IsNullOrWhiteSpace(entity.Metadata.ChainId);
     }
 
     private async Task AddToBlockStateSetAsync(string entityKey, TEntity entity, BlockStateSet blockStateSet)

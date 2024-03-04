@@ -2,9 +2,9 @@ using GraphQL.Types;
 
 namespace AElfIndexer.Sdk;
 
-public class ClientSchema<TQuery>: Schema
+public class AppSchema<TQuery>: Schema
 {
-    protected ClientSchema(IServiceProvider serviceProvider)
+    protected AppSchema(IServiceProvider serviceProvider)
         : base(serviceProvider)
     {
         this.Query = (IObjectGraphType) new AutoRegisteringObjectGraphType<TQuery>();
