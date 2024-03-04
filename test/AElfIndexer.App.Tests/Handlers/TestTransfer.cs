@@ -1,14 +1,17 @@
-using AElf.Indexing.Elasticsearch;
+using AElfIndexer.Sdk;
+using JetBrains.Annotations;
 using Nest;
 
-namespace AElfIndexer.Client.Handlers;
+namespace AElfIndexer.App.Handlers;
 
-public class TestTransferredIndex : AElfIndexerClientEntity<string>, IIndexBuild
+public class TestTransfer : IndexerEntity, IIndexerEntity
 {
-    [Keyword] public override string Id { get; set; }
-
     [Keyword] public string Symbol { get; set; }
     [Keyword] public string FromAccount { get; set; }
     [Keyword] public string ToAccount { get; set; }
     [Keyword] public long Amount { get; set; }
+
+    public TestTransfer([NotNull] string id) : base(id)
+    {
+    }
 }

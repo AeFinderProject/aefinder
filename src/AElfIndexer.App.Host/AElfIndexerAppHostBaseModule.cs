@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
@@ -84,6 +85,16 @@ public class AElfIndexerAppHostBaseModule : AbpModule
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         var app = context.GetApplicationBuilder();
+        var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
+        app.UseGraphQL($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/graphql");
+        // app.UseGraphQLPlayground(
+        //     $"/{appInfoOptions.ScanAppId}/{typeof(TSchema).Name}/ui/playground",
+        //     new PlaygroundOptions
+        //     {
+        //         GraphQLEndPoint = "../graphql",
+        //         SubscriptionsEndPoint = "../graphql",
+        //     });
+        
         app.UseRouting();
         app.UseCors();
         app.UseConfiguredEndpoints();

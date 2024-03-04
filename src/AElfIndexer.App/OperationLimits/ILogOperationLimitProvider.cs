@@ -19,7 +19,7 @@ public class LogOperationLimitProvider : CallCountOperationLimitProvider, ILogOp
     
     public void CheckLog(Exception exception, string message, params object[] args)
     {
-        if (CallCount > _options.MaxLogCallCount)
+        if (CallCount >= _options.MaxLogCallCount)
         {
             throw new ApplicationException("Too many calls");
         }

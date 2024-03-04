@@ -4,7 +4,7 @@
 
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
-        <RootNamespace>AElfIndexer.Client</RootNamespace>
+        <RootNamespace>AElfIndexer.App</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,5 +20,7 @@
         </PackageReference>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
     </ItemGroup>
+
+
 
 </Project>

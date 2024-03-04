@@ -1,17 +1,15 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AElfIndexer.App.BlockChain;
 using Shouldly;
 using Xunit;
 
-namespace AElfIndexer.Client.Providers;
+namespace AElfIndexer.App.BlockChain;
 
-public class AElfClientProviderTests : AElfIndexerClientTestBase
+public class AElfAppProviderTests : AElfIndexerAppTestBase
 {
     private readonly IAElfClientProvider _clientProvider;
 
-    public AElfClientProviderTests()
+    public AElfAppProviderTests()
     {
         _clientProvider = GetRequiredService<IAElfClientProvider>();
     }
@@ -22,13 +20,9 @@ public class AElfClientProviderTests : AElfIndexerClientTestBase
         var client = _clientProvider.GetClient("AELF");
         client.ShouldNotBeNull();
 
-        var addResult = _clientProvider.TryAddClient("tDVV", "http://sidechain.io");
-        addResult.ShouldBeTrue();
-        
         client = _clientProvider.GetClient("tDVV");
         client.ShouldNotBeNull();
         
-        _clientProvider.RemoveClient("tDVV");
-        Assert.Throws<KeyNotFoundException>(()=>_clientProvider.GetClient("tDVV"));
+        Assert.Throws<KeyNotFoundException>(()=>_clientProvider.GetClient("tDVW"));
     }
 }

@@ -10,6 +10,7 @@ using NUglify.Helpers;
 using Orleans;
 using Orleans.Streams;
 using Volo.Abp;
+using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 using Volo.Abp.Serialization;
@@ -17,7 +18,9 @@ using Volo.Abp.Threading;
 
 namespace AElfIndexer.App;
 
-[DependsOn(typeof(AbpSerializationModule))]
+[DependsOn(typeof(AbpSerializationModule),
+    typeof(AbpAutoMapperModule),
+    typeof(AbpAutofacModule))]
 public class AElfIndexerAppModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -51,16 +54,6 @@ public class AElfIndexerAppModule : AbpModule
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {        
         var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
-
-        var app = context.GetApplicationBuilder();
-        app.UseGraphQL($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/graphql");
-        // app.UseGraphQLPlayground(
-        //     $"/{appInfoOptions.ScanAppId}/{typeof(TSchema).Name}/ui/playground",
-        //     new PlaygroundOptions
-        //     {
-        //         GraphQLEndPoint = "../graphql",
-        //         SubscriptionsEndPoint = "../graphql",
-        //     });
         
         var clientOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
         if (clientOptions.ClientType == ClientType.Full)

@@ -1,0 +1,97 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using AElf.EntityMapping.Elasticsearch;
+using AElf.EntityMapping.Elasticsearch.Services;
+using AElfIndexer.App.BlockChain;
+using AElfIndexer.App.BlockState;
+using AElfIndexer.App.OperationLimits;
+using AElfIndexer.App.Repositories;
+using AElfIndexer.Orleans.TestBase;
+using AElfIndexer.Sdk;
+using Microsoft.Extensions.DependencyInjection;
+using Volo.Abp;
+using Volo.Abp.AutoMapper;
+using Volo.Abp.Modularity;
+using Volo.Abp.Threading;
+
+namespace AElfIndexer.App;
+
+[DependsOn(
+    typeof(AElfIndexerAppModule),
+    typeof(AElfIndexerDomainTestModule),
+    typeof(AElfIndexerOrleansTestBaseModule),
+    typeof(AElfEntityMappingElasticsearchModule)
+)]
+public class AElfIndexerAppTestModule : AbpModule
+{
+    private string ClientId { get; } = "TestClient";
+    private string Version { get; } = "TestVersion";
+
+    public override void ConfigureServices(ServiceConfigurationContext context)
+    {
+        Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AElfIndexerAppTestModule>(); });
+        context.Services.AddTransient(typeof(IEntityRepository<>), typeof(EntityRepository<>));
+        context.Services.AddTransient(typeof(IReadOnlyRepository<>), typeof(ReadOnlyRepository<>));
+        
+        context.Services.Configure<AppStateOptions>(o =>
+        {
+            o.AppDataCacheCount = 5;
+        });
+        context.Services.Configure<ChainNodeOptions>(o =>
+        {
+            o.ChainNodes = new Dictionary<string, string>()
+            {
+                { "AELF", "http://mainchain.io" },
+                { "tDVV", "http://sidechain.io" }
+            };
+        });
+        context.Services.Configure<AppInfoOptions>(o =>
+        {
+            o.ClientType = ClientType.Query;
+        });
+        context.Services.Configure<OperationLimitOptions>(o =>
+        {
+            o.MaxContractCallCount = 3;
+            o.MaxEntitySize = 10000;
+            o.MaxEntityCallCount = 10;
+            o.MaxLogSize = 10;
+            o.MaxLogCallCount = 3;
+        });
+
+    }
+    
+    public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
+    {
+        AsyncHelper.RunSync(async () =>
+            await CreateIndexAsync(context.ServiceProvider)
+        );
+    }
+
+    private async Task CreateIndexAsync(IServiceProvider serviceProvider)
+    {
+        var types = GetTypesAssignableFrom<IIndexerEntity>(typeof(AElfIndexerAppTestModule).Assembly);
+        var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
+        foreach (var t in types)
+        {
+            var indexName = $"{ClientId}-{Version}.{t.Name}".ToLower();
+            await elasticIndexService.CreateIndexAsync(indexName, t);
+        }
+    }
+
+    private List<Type> GetTypesAssignableFrom<T>(Assembly assembly)
+    {
+        var compareType = typeof(T);
+        return assembly.DefinedTypes
+            .Where(type => compareType.IsAssignableFrom(type) && !compareType.IsAssignableFrom(type.BaseType) &&
+                           !type.IsAbstract && type.IsClass && compareType != type)
+            .Cast<Type>().ToList();
+    }
+
+    public override void OnApplicationShutdown(ApplicationShutdownContext context)
+    {
+
+    }
+}

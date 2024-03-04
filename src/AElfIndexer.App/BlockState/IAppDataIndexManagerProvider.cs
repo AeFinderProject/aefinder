@@ -12,18 +12,16 @@ public interface IAppDataIndexManagerProvider
 
 public class AppDataIndexManagerProvider : IAppDataIndexManagerProvider, ISingletonDependency
 {
-    private readonly ConcurrentDictionary<IAppDataIndexProvider, string> _dAppDataProviders = new();
+    private readonly ConcurrentDictionary<IAppDataIndexProvider, string> _appDataProviders = new();
     
     public void Register(IAppDataIndexProvider provider)
     {
-        _dAppDataProviders.TryAdd(provider, string.Empty);
+        _appDataProviders.TryAdd(provider, string.Empty);
     }
 
     public async Task SavaDataAsync()
     {
-        foreach (var provider in _dAppDataProviders.Keys)
-        {
-            await provider.SaveDataAsync();
-        }
+        var tasks = _appDataProviders.Keys.Select(p => p.SaveDataAsync());
+        await Task.WhenAll(tasks);
     }
 }

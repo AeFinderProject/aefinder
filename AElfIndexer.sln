@@ -63,7 +63,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.MongoDB", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.MongoDB.Tests", "test\AElfIndexer.MongoDB.Tests\AElfIndexer.MongoDB.Tests.csproj", "{2E2A03D2-8A33-44AA-B125-063F37E94F6E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.Client.Tests", "test\AElfIndexer.Client.Tests\AElfIndexer.Client.Tests.csproj", "{FD4AA222-E717-4B78-A7F4-46CADF9A1BD1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.App.Tests", "test\AElfIndexer.App.Tests\AElfIndexer.App.Tests.csproj", "{FD4AA222-E717-4B78-A7F4-46CADF9A1BD1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElfIndexer.Sdk", "src\AElfIndexer.Sdk\AElfIndexer.Sdk.csproj", "{B35484F1-8253-4CBD-98EC-6F18DA11691A}"
 EndProject
