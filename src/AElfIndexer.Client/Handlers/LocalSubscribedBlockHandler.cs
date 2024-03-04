@@ -1,5 +1,5 @@
 using AElfIndexer.BlockScan;
-using AElfIndexer.Client.BlockExecution;
+using AElfIndexer.Client.BlockProcessing;
 using AElfIndexer.Client.BlockState;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
@@ -7,7 +7,7 @@ using Volo.Abp.EventBus.Distributed;
 
 namespace AElfIndexer.Client.Handlers;
 
-public class LocalSubscribedBlockHandler: IDistributedEventHandler<SubscribedBlockDto>, ITransientDependency
+public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBlockDto>, ITransientDependency
 {
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IProcessingStatusProvider _processingStatusProvider;
@@ -57,18 +57,15 @@ public class LocalSubscribedBlockHandler: IDistributedEventHandler<SubscribedBlo
         }
         catch (AppProcessingException e)
         {
-            HandleException(subscribedBlock.ChainId, "Data processing error!", e,
-                AElfIndexerApplicationConsts.AppLogEventId);
+            _logger.LogError(AElfIndexerApplicationConsts.AppLogEventId, e, "Data processing failed!");
+            _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.Failed);
         }
         catch (Exception e)
         {
-            HandleException(subscribedBlock.ChainId, "Data processing error, please contact the AeFinder!", e);
+            _logger.LogError(e, "Data processing failed!");
+            _logger.LogError(AElfIndexerApplicationConsts.AppLogEventId, null,
+                "Data processing failed, please contact the AeFinder!");
+            _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.Failed);
         }
-    }
-
-    private void HandleException(string chainId, string message, Exception e = null, int eventId = 0)
-    {
-        _logger.LogError(eventId, e, message);
-        _processingStatusProvider.SetStatus(chainId, ProcessingStatus.Failed);
     }
 }

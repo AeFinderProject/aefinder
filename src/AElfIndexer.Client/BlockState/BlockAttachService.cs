@@ -11,9 +11,9 @@ namespace AElfIndexer.Client.BlockState;
 public class BlockAttachService : IBlockAttachService, ITransientDependency
 {
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
-    
+
     private readonly ILogger<BlockAttachService> _logger;
-    
+
     public ILocalEventBus LocalEventBus { get; set; }
 
     public BlockAttachService(IAppBlockStateSetProvider appBlockStateSetProvider,
@@ -26,31 +26,35 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
     public async Task AttachBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks)
     {
         await _appBlockStateSetProvider.InitializeAsync(chainId);
-        
+
         var longestChainBlockStateSet = await _appBlockStateSetProvider.GetLongestChainBlockStateSetAsync(chainId);
-        var lastIrreversibleBlockStateSet = await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
+        var lastIrreversibleBlockStateSet =
+            await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
         var lastIrreversibleBlockHeight = lastIrreversibleBlockStateSet?.Block.BlockHeight ?? 0;
         var currentBlockStateSetCount = await _appBlockStateSetProvider.GetBlockStateSetCountAsync(chainId);
 
         var newLastIrreversibleBlockStateSet = lastIrreversibleBlockStateSet;
         var newLongestChainBlockStateSet = longestChainBlockStateSet;
-        
+
         foreach (var block in blocks)
         {
-            if(block.BlockHeight <= lastIrreversibleBlockHeight)
+            if (block.BlockHeight <= lastIrreversibleBlockHeight)
             {
                 continue;
             }
 
-            var previousBlockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, block.PreviousBlockHash);
-            if (currentBlockStateSetCount != 0 && previousBlockStateSet ==null && block.PreviousBlockHash!= Hash.Empty.ToHex())
+            var previousBlockStateSet =
+                await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, block.PreviousBlockHash);
+            if (currentBlockStateSetCount != 0 && previousBlockStateSet == null &&
+                block.PreviousBlockHash != Hash.Empty.ToHex())
             {
                 _logger.LogWarning(
-                    $"Previous block {block.PreviousBlockHash} not found. BlockHeight: {block.BlockHeight}, BlockHash: {block.BlockHash}");
+                    "Previous block {PreviousBlockHash} not found. BlockHeight: {BlockHeight}, BlockHash: {BlockHash}.",
+                    block.PreviousBlockHash, block.BlockHeight, block.BlockHash);
                 continue;
             }
-            
-            if(block.Confirmed)
+
+            if (block.Confirmed)
             {
                 if (lastIrreversibleBlockHeight == 0)
                 {
@@ -58,17 +62,19 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 }
                 else
                 {
-                    if (block.BlockHeight != lastIrreversibleBlockHeight + 1 && previousBlockStateSet!= null && !previousBlockStateSet.Block.Confirmed)
+                    if (block.BlockHeight != lastIrreversibleBlockHeight + 1 && previousBlockStateSet != null &&
+                        !previousBlockStateSet.Block.Confirmed)
                     {
                         _logger.LogWarning(
-                            $"Missing previous confirmed block. Confirmed block height: {block.BlockHeight}, lib block height: {lastIrreversibleBlockHeight}");
+                            "Missing previous confirmed block. Confirmed block height: {BlockHeight}, lib block height: {lastIrreversibleBlockHeight}.",
+                            block.BlockHeight, lastIrreversibleBlockHeight);
                         continue;
                     }
 
                     lastIrreversibleBlockHeight++;
                 }
             }
-            
+
             var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, block.PreviousBlockHash);
             if (blockStateSet == null)
             {
@@ -79,7 +85,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 };
                 await _appBlockStateSetProvider.AddBlockStateSetAsync(chainId, blockStateSet);
             }
-            else 
+            else
             {
                 if (newLongestChainBlockStateSet == null ||
                     blockStateSet.Block.BlockHeight > newLongestChainBlockStateSet.Block.BlockHeight)
@@ -91,8 +97,8 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 {
                     blockStateSet.Block.Confirmed = block.Confirmed;
                     await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);
-                    
-                    if(blockStateSet.Processed)
+
+                    if (blockStateSet.Processed)
                     {
                         newLastIrreversibleBlockStateSet = blockStateSet;
                     }
@@ -103,7 +109,8 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         if (newLastIrreversibleBlockStateSet != null &&
             newLastIrreversibleBlockStateSet.Block.BlockHeight > lastIrreversibleBlockHeight)
         {
-            await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(chainId, newLastIrreversibleBlockStateSet.Block.BlockHash);
+            await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(chainId,
+                newLastIrreversibleBlockStateSet.Block.BlockHash);
             await _appBlockStateSetProvider.SaveDataAsync(chainId);
             await LocalEventBus.PublishAsync(new LastIrreversibleBlockStateSetFoundEventData
             {
@@ -117,7 +124,8 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
             newLongestChainBlockStateSet != null &&
             newLongestChainBlockStateSet.Block.BlockHeight > lastIrreversibleBlockHeight)
         {
-            await _appBlockStateSetProvider.SetLongestChainBlockStateSetAsync(chainId, newLongestChainBlockStateSet.Block.BlockHash);
+            await _appBlockStateSetProvider.SetLongestChainBlockStateSetAsync(chainId,
+                newLongestChainBlockStateSet.Block.BlockHash);
             await _appBlockStateSetProvider.SaveDataAsync(chainId);
             await LocalEventBus.PublishAsync(new LastIrreversibleBlockStateSetFoundEventData
             {

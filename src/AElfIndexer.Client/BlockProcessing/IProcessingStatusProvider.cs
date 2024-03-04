@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using Volo.Abp.DependencyInjection;
 
-namespace AElfIndexer.Client.BlockExecution;
+namespace AElfIndexer.Client.BlockProcessing;
 
 public interface IProcessingStatusProvider
 {

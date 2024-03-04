@@ -4,14 +4,14 @@ using AElfIndexer.Grains.Grain.BlockStates;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Local;
 
-namespace AElfIndexer.Client.BlockExecution;
+namespace AElfIndexer.Client.BlockProcessing;
 
-public interface IBlockExecutionService
+public interface IBlockProcessingService
 {
-    Task ExecuteAsync(string chainId, string branchBlockHash);
+    Task ProcessAsync(string chainId, string branchBlockHash);
 }
 
-public class BlockExecutionService : IBlockExecutionService, ITransientDependency
+public class BlockProcessingService : IBlockProcessingService, ITransientDependency
 {
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IFullBlockProcessor _fullBlockProcessor;
@@ -19,7 +19,7 @@ public class BlockExecutionService : IBlockExecutionService, ITransientDependenc
     
     public ILocalEventBus LocalEventBus { get; set; }
 
-    public BlockExecutionService(IAppBlockStateSetProvider appBlockStateSetProvider,
+    public BlockProcessingService(IAppBlockStateSetProvider appBlockStateSetProvider,
         IFullBlockProcessor fullBlockProcessor, IAppDataIndexManagerProvider appDataIndexManagerProvider)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
@@ -27,7 +27,7 @@ public class BlockExecutionService : IBlockExecutionService, ITransientDependenc
         _appDataIndexManagerProvider = appDataIndexManagerProvider;
     }
 
-    public async Task ExecuteAsync(string chainId, string branchBlockHash)
+    public async Task ProcessAsync(string chainId, string branchBlockHash)
     {
         var blockStateSets = await GetUnProcessedBlockStateSetsAsync(chainId, branchBlockHash);
         if (!await IsProcessAsync(chainId, blockStateSets))
@@ -156,5 +156,4 @@ public class BlockExecutionService : IBlockExecutionService, ITransientDependenc
         blockStateSet.Processed = processed;
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);
     }
-    
 }
