@@ -2,10 +2,11 @@ using System;
 using System.Threading.Tasks;
 using AElf.Contracts.MultiToken;
 using AElfIndexer.Sdk;
+using Volo.Abp.DependencyInjection;
 
-namespace AElfIndexer.App.Handlers;
+namespace AElfIndexer.App;
 
-public class MockTokenTransferredProcessor : LogEventProcessorBase<Transferred>
+public class MockTokenTransferredProcessor : LogEventProcessorBase<Transferred>, ITransientDependency
 {
     public override string GetContractAddress(string chainId)
     {
@@ -19,8 +20,9 @@ public class MockTokenTransferredProcessor : LogEventProcessorBase<Transferred>
             throw new Exception();
         }
 
-        var transfer = new TestTransfer(context.Transaction.TransactionId + context.LogEvent.Index + logEvent.Amount)
+        var transfer = new TestTransferEntity
         {
+            Id = context.Transaction.TransactionId + context.LogEvent.Index + logEvent.Amount,
             FromAccount = logEvent.From.ToBase58(),
             ToAccount = logEvent.To.ToBase58(),
             Symbol = logEvent.Symbol,

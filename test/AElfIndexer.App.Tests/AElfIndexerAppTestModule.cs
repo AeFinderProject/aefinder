@@ -12,6 +12,7 @@ using AElfIndexer.App.Repositories;
 using AElfIndexer.Orleans.TestBase;
 using AElfIndexer.Sdk;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Volo.Abp;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
@@ -22,19 +23,14 @@ namespace AElfIndexer.App;
 [DependsOn(
     typeof(AElfIndexerAppModule),
     typeof(AElfIndexerDomainTestModule),
-    typeof(AElfIndexerOrleansTestBaseModule),
-    typeof(AElfEntityMappingElasticsearchModule)
+    typeof(AElfIndexerOrleansTestBaseModule)
 )]
 public class AElfIndexerAppTestModule : AbpModule
 {
-    private string ClientId { get; } = "TestClient";
-    private string Version { get; } = "TestVersion";
-
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AElfIndexerAppTestModule>(); });
-        context.Services.AddTransient(typeof(IEntityRepository<>), typeof(EntityRepository<>));
-        context.Services.AddTransient(typeof(IReadOnlyRepository<>), typeof(ReadOnlyRepository<>));
+        
         
         context.Services.Configure<AppStateOptions>(o =>
         {
@@ -50,6 +46,8 @@ public class AElfIndexerAppTestModule : AbpModule
         });
         context.Services.Configure<AppInfoOptions>(o =>
         {
+            o.AppId = "TestAppId";
+            o.Version= "TestVersion";
             o.ClientType = ClientType.Query;
         });
         context.Services.Configure<OperationLimitOptions>(o =>
@@ -60,7 +58,6 @@ public class AElfIndexerAppTestModule : AbpModule
             o.MaxLogSize = 10;
             o.MaxLogCallCount = 3;
         });
-
     }
     
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
@@ -72,11 +69,12 @@ public class AElfIndexerAppTestModule : AbpModule
 
     private async Task CreateIndexAsync(IServiceProvider serviceProvider)
     {
+        var appInfoOptions = serviceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
         var types = GetTypesAssignableFrom<IIndexerEntity>(typeof(AElfIndexerAppTestModule).Assembly);
         var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
         foreach (var t in types)
         {
-            var indexName = $"{ClientId}-{Version}.{t.Name}".ToLower();
+            var indexName = $"{appInfoOptions.AppId}-{appInfoOptions.Version}.{t.Name}".ToLower();
             await elasticIndexService.CreateIndexAsync(indexName, t);
         }
     }
@@ -89,9 +87,14 @@ public class AElfIndexerAppTestModule : AbpModule
                            !type.IsAbstract && type.IsClass && compareType != type)
             .Cast<Type>().ToList();
     }
-
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-
+        var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
+        var clientProvider = context.ServiceProvider.GetRequiredService<IElasticsearchClientProvider>();
+        var client = clientProvider.GetClient();
+        var prefix = $"{appInfoOptions.AppId}-{appInfoOptions.Version}".ToLower();
+        
+        client.Indices.Delete(prefix+"*");
+        client.Indices.DeleteTemplate(prefix + "*");
     }
 }

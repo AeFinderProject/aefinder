@@ -19,14 +19,14 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
     private readonly ConcurrentDictionary<string, Dictionary<string, ChangedBlockStateSet>> _changedBlockStateSets = new();
     
     private readonly IClusterClient _clusterClient;
-    private readonly AppInfoOptions _appInfoOptions;
+    private readonly IAppInfoProvider _appInfoProvider;
     private readonly ILogger<AppBlockStateSetProvider> _logger;
 
-    public AppBlockStateSetProvider(IClusterClient clusterClient, ILogger<AppBlockStateSetProvider> logger, IOptionsSnapshot<AppInfoOptions> appInfoOptions)
+    public AppBlockStateSetProvider(IClusterClient clusterClient, ILogger<AppBlockStateSetProvider> logger, IAppInfoProvider appInfoProvider)
     {
         _clusterClient = clusterClient;
         _logger = logger;
-        _appInfoOptions = appInfoOptions.Value;
+        _appInfoProvider = appInfoProvider;
     }
 
     public async Task InitializeAsync(string chainId)
@@ -275,13 +275,13 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
     
     private string GetBlockStateSetKey(string chainId, string blockHash)
     {
-        return GrainIdHelper.GenerateAppBlockStateSetGrainId(_appInfoOptions.AppId, _appInfoOptions.Version,
+        return GrainIdHelper.GenerateAppBlockStateSetGrainId(_appInfoProvider.AppId, _appInfoProvider.Version,
             chainId, blockHash);
     }
     
     private string GetBlockStateSetStatusKey(string chainId)
     {
-        return GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoOptions.AppId, _appInfoOptions.Version, chainId);
+        return GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoProvider.AppId, _appInfoProvider.Version, chainId);
     }
 }
 

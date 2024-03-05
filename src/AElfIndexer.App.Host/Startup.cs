@@ -61,12 +61,12 @@ public class Startup
     
     private async Task<byte[]> GetPluginCodeAsync()
     {
-        var scanAppId = _configuration["AppInfo:ScanAppId"];
+        var appId = _configuration["AppInfo:AppId"];
         var version = _configuration["AppInfo:Version"];
         
         var client = OrleansClusterClientFactory.GetClusterClient(_configuration);
         await client.Connect();
-        var scanAppGrain = client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(scanAppId));
+        var scanAppGrain = client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         return await scanAppGrain.GetCodeAsync(version);
     }
 }

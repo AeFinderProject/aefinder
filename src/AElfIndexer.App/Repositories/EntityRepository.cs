@@ -14,22 +14,22 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
     private readonly IAppStateProvider _appStateProvider;
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IAppDataIndexProvider<TEntity> _appDataIndexProvider;
-    private readonly AppInfoOptions _appInfoOptions;
+    private readonly IAppInfoProvider _appInfoProvider;
     private readonly IEntityOperationLimitProvider _entityOperationLimitProvider;
     private readonly IBlockProcessingContext _blockProcessingContext;
 
     private readonly string _entityName;
 
     public EntityRepository(IAppStateProvider appStateProvider, IAppBlockStateSetProvider appBlockStateSetProvider,
-        IAppDataIndexProvider<TEntity> appDataIndexProvider, IOptionsSnapshot<AppInfoOptions> appInfoOptions,
-        IEntityOperationLimitProvider entityOperationLimitProvider, IBlockProcessingContext blockProcessingContext)
+        IAppDataIndexProvider<TEntity> appDataIndexProvider, 
+        IEntityOperationLimitProvider entityOperationLimitProvider, IBlockProcessingContext blockProcessingContext, IAppInfoProvider appInfoProvider)
     {
         _appStateProvider = appStateProvider;
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _appDataIndexProvider = appDataIndexProvider;
         _entityOperationLimitProvider = entityOperationLimitProvider;
         _blockProcessingContext = blockProcessingContext;
-        _appInfoOptions = appInfoOptions.Value;
+        _appInfoProvider = appInfoProvider;
         _entityName = typeof(TEntity).Name;
     }
 
@@ -85,7 +85,7 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
     {
         if (!IsValidate(entity))
         {
-            throw new Exception($"Invalid entity: {entity.ToJsonString()}");
+            throw new Exception($"Invalid entity: {JsonConvert.SerializeObject(entity)}");
         }
 
         var entityKey = GetEntityKey(entity.Metadata.ChainId, entity.Id);
@@ -126,7 +126,7 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
     private async Task AddToBlockStateSetAsync(string entityKey, TEntity entity, BlockStateSet blockStateSet)
     {
         entity.Metadata.IsDeleted = false;
-        blockStateSet.Changes[entityKey] = entity.ToJsonString();
+        blockStateSet.Changes[entityKey] = JsonConvert.SerializeObject(entity);
         await _appDataIndexProvider.AddOrUpdateAsync(entity, GetIndexName());
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(entity.Metadata.ChainId, blockStateSet);
     }
@@ -134,14 +134,14 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
     private async Task RemoveFromBlockStateSetAsync(string entityKey,TEntity entity, BlockStateSet blockStateSet)
     {
         entity.Metadata.IsDeleted = true;
-        blockStateSet.Changes[entityKey] = entity.ToJsonString();
+        blockStateSet.Changes[entityKey] = JsonConvert.SerializeObject(entity);
         await _appDataIndexProvider.DeleteAsync(entity, GetIndexName());
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(entity.Metadata.ChainId, blockStateSet);
     }
 
     private string GetIndexName()
     {
-        return $"{_appInfoOptions.AppId}-{_appInfoOptions.Version}.{_entityName}".ToLower();
+        return $"{_appInfoProvider.AppId}-{_appInfoProvider.Version}.{_entityName}".ToLower();
     }
     
     private string GetEntityKey(string chainId, string id)

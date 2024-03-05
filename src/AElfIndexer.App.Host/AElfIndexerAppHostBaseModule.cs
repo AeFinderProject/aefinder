@@ -1,7 +1,5 @@
 using System;
 using System.Linq;
-using AElf.Indexing.Elasticsearch;
-using AElfIndexer.App;
 using AElfIndexer.MongoDB;
 using GraphQL;
 using Microsoft.AspNetCore.Builder;
@@ -21,7 +19,6 @@ using Volo.Abp.Threading;
 namespace AElfIndexer.App.Host;
 
 [DependsOn(typeof(AbpAutofacModule),
-    typeof(AElfIndexingElasticsearchModule),
     typeof(AElfIndexerApplicationModule),
     typeof(AbpAutoMapperModule),
     typeof(AbpAspNetCoreSerilogModule),

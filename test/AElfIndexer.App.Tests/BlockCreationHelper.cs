@@ -7,9 +7,9 @@ using AElf.CSharp.Core.Extension;
 using AElf.Types;
 using AElfIndexer.Block.Dtos;
 
-namespace AElfIndexer.App.Handlers;
+namespace AElfIndexer.App;
 
-public static class MockHandlerHelper
+public static class BlockCreationHelper
 {
     public static List<BlockWithTransactionDto> CreateBlock(long startBlock, long blockCount, string blockHash,
         string chainId, string perHash = "", bool confirmed = false)

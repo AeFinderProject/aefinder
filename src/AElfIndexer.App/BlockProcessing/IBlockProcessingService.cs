@@ -59,7 +59,12 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
             if (longestChainBlockStateSet.Block.Confirmed)
             {
                 await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(chainId, longestChainBlockStateSet.Block.BlockHash);
-                await _appBlockStateSetProvider.SaveDataAsync(chainId);
+            }
+            
+            await _appBlockStateSetProvider.SaveDataAsync(chainId);
+            
+            if (longestChainBlockStateSet.Block.Confirmed)
+            {
                 await LocalEventBus.PublishAsync(new LastIrreversibleBlockStateSetFoundEventData
                 {
                     ChainId = chainId,

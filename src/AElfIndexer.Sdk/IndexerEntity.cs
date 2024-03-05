@@ -1,6 +1,6 @@
+using AElf.EntityMapping.Entities;
+using AElfIndexer.Entities;
 using Nest;
-using Newtonsoft.Json;
-using Volo.Abp.Domain.Entities;
 
 namespace AElfIndexer.Sdk;
 
@@ -8,17 +8,10 @@ public interface IIndexerEntity
 {
 }
 
-public abstract class IndexerEntity : Entity<string>
+public abstract class IndexerEntity : AElfIndexerEntity<string>, IEntityMappingEntity
 {
-    [Keyword] public string Id { get; set; }
-    public Metadata Metadata { get; set; } = new Metadata();
-    
-    protected IndexerEntity(string id) => this.Id = id;
-    
-    public string ToJsonString()
-    {
-        return JsonConvert.SerializeObject(this);
-    }
+    [Keyword]public override string Id { get; set; }
+    public Metadata Metadata { get; set; } = new ();
 }
 
 public class Metadata

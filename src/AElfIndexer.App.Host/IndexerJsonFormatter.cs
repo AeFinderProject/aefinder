@@ -63,9 +63,9 @@ public class IndexerJsonFormatter : ITextFormatter
     output.Write(',');
     JsonValueFormatter.WriteQuotedJsonString(_appIdKey, output);
     output.Write(':');
-    if (logEvent.Properties.TryGetValue(_appIdKey, out var scanAppId))
+    if (logEvent.Properties.TryGetValue(_appIdKey, out var appId))
     {
-      valueFormatter.Format(scanAppId, output);
+      valueFormatter.Format(appId, output);
     }
     else
     {

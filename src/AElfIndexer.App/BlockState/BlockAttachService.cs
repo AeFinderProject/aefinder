@@ -75,7 +75,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 }
             }
 
-            var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, block.PreviousBlockHash);
+            var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, block.BlockHash);
             if (blockStateSet == null)
             {
                 blockStateSet = new BlockStateSet
@@ -85,24 +85,21 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 };
                 await _appBlockStateSetProvider.AddBlockStateSetAsync(chainId, blockStateSet);
             }
-            else
+            else if (block.Confirmed)
             {
-                if (newLongestChainBlockStateSet == null ||
-                    blockStateSet.Block.BlockHeight > newLongestChainBlockStateSet.Block.BlockHeight)
-                {
-                    newLongestChainBlockStateSet = blockStateSet;
-                }
+                blockStateSet.Block.Confirmed = block.Confirmed;
+                await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);
 
-                if (block.Confirmed)
+                if (blockStateSet.Processed)
                 {
-                    blockStateSet.Block.Confirmed = block.Confirmed;
-                    await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);
-
-                    if (blockStateSet.Processed)
-                    {
-                        newLastIrreversibleBlockStateSet = blockStateSet;
-                    }
+                    newLastIrreversibleBlockStateSet = blockStateSet;
                 }
+            }
+
+            if (newLongestChainBlockStateSet == null ||
+                blockStateSet.Block.BlockHeight > newLongestChainBlockStateSet.Block.BlockHeight)
+            {
+                newLongestChainBlockStateSet = blockStateSet;
             }
         }
 
@@ -127,7 +124,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
             await _appBlockStateSetProvider.SetLongestChainBlockStateSetAsync(chainId,
                 newLongestChainBlockStateSet.Block.BlockHash);
             await _appBlockStateSetProvider.SaveDataAsync(chainId);
-            await LocalEventBus.PublishAsync(new LastIrreversibleBlockStateSetFoundEventData
+            await LocalEventBus.PublishAsync(new LongestChainFoundEventData()
             {
                 ChainId = chainId,
                 BlockHash = newLongestChainBlockStateSet.Block.BlockHash,

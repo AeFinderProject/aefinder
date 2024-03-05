@@ -8,7 +8,7 @@ public class AElfIndexerAppTestAutoMapperProfile : Profile
 {
     public AElfIndexerAppTestAutoMapperProfile()
     {
-        CreateMap<Sdk.Block, TestBlockIndex>();
-        CreateMap<Transaction, TestTransactionIndex>();
+        CreateMap<Sdk.Block, TestBlockEntity>();
+        CreateMap<Transaction, TestTransactionEntity>();
     }
 }

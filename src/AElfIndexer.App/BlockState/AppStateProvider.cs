@@ -14,7 +14,7 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
 {
     private readonly IClusterClient _clusterClient;
     private readonly AppStateOptions _appStateOptions;
-    private readonly AppInfoOptions _appInfoOptions;
+    private readonly IAppInfoProvider _appInfoProvider;
 
     private readonly ConcurrentDictionary<string, string> _libValues = new();
     private readonly ConcurrentDictionary<string, string> _toCommitLibValues = new();
@@ -23,11 +23,11 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
     private readonly ILogger<AppStateProvider> _logger;
 
     public AppStateProvider(IClusterClient clusterClient, IOptionsSnapshot<AppStateOptions> appStateOptions,
-        ILogger<AppStateProvider> logger, IOptionsSnapshot<AppInfoOptions> appInfoOptions)
+        ILogger<AppStateProvider> logger, IAppInfoProvider appInfoProvider)
     {
         _clusterClient = clusterClient;
         _logger = logger;
-        _appInfoOptions = appInfoOptions.Value;
+        _appInfoProvider = appInfoProvider;
         _appStateOptions = appStateOptions.Value;
     }
 
@@ -103,6 +103,6 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
     
     private string GetAppDataKey(string chainId, string key)
     {
-        return GrainIdHelper.GenerateAppStateGrainId(_appInfoOptions.AppId, _appInfoOptions.Version, chainId, key);
+        return GrainIdHelper.GenerateAppStateGrainId(_appInfoProvider.AppId, _appInfoProvider.Version, chainId, key);
     }
 }

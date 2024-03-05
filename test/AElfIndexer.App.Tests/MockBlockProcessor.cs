@@ -1,15 +1,16 @@
 using System;
 using System.Threading.Tasks;
 using AElfIndexer.Sdk;
+using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
-namespace AElfIndexer.App.Handlers;
+namespace AElfIndexer.App;
 
-public class MockBlockHandler : BlockProcessorBase
+public class MockBlockProcessor : BlockProcessorBase, ITransientDependency
 {
     private readonly IObjectMapper _objectMapper;
 
-    public MockBlockHandler(IObjectMapper objectMapper)
+    public MockBlockProcessor(IObjectMapper objectMapper)
     {
         _objectMapper = objectMapper;
     }
@@ -21,7 +22,8 @@ public class MockBlockHandler : BlockProcessorBase
             throw new Exception();
         }
 
-        var entity = _objectMapper.Map<Sdk.Block, TestBlockIndex>(block);
+        var entity = _objectMapper.Map<Sdk.Block, TestBlockEntity>(block);
+        entity.Id = block.BlockHash;
         await SaveEntityAsync(entity);
     }
 }
