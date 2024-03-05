@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using AElfIndexer.Entities.Es;
-using AElfIndexer.Etos;
 
 namespace AElfIndexer.Block;
 

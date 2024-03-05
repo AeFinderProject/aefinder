@@ -1,14 +1,8 @@
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using AElfIndexer.Block.Dtos;
 using AElfIndexer.Grains;
 using AElfIndexer.Grains.Grain.Apps;
 using AElfIndexer.Grains.Grain.BlockPush;
-using AElfIndexer.Grains.Grain.Client;
-using AElfIndexer.Grains.State.Subscriptions;
 using Orleans;
 using Shouldly;
 using Xunit;

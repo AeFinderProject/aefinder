@@ -1,11 +1,6 @@
-﻿using System.Collections.Generic;
-using AElf.EntityMapping;
-using AElf.EntityMapping.Elasticsearch;
-using AElf.EntityMapping.Options;
-using AElf.EntityMapping.Sharding;
+﻿using AElf.EntityMapping.Elasticsearch;
 using AElfIndexer.Orleans.TestBase;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute.Extensions;
 using Volo.Abp.Modularity;
 
 namespace AElfIndexer;

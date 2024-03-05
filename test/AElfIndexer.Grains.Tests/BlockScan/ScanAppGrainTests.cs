@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using AElfIndexer.Block.Dtos;
-using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.Apps;
 using AElfIndexer.Grains.Grain.BlockPush;
 using AElfIndexer.Grains.State.Subscriptions;

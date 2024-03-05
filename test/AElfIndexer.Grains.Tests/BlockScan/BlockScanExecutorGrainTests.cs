@@ -6,8 +6,8 @@ using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains.Grain.Apps;
 using AElfIndexer.Grains.Grain.BlockPush;
+using AElfIndexer.Grains.Grain.BlockStates;
 using AElfIndexer.Grains.Grain.Chains;
-using AElfIndexer.Grains.Grain.Client;
 using AElfIndexer.Grains.State.Subscriptions;
 using Orleans.Streams;
 using Shouldly;
@@ -484,14 +484,20 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
            return Task.CompletedTask;
         });
         
-        var blockStateSetInfoGrain = Cluster.Client.GetGrain<IBlockStateSetInfoGrain>(
+        var blockStateSetInfoGrain = Cluster.Client.GetGrain<IAppBlockStateSetStatusGrain>(
             GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, chainId, version));
-        await blockStateSetInfoGrain.SetConfirmedBlockHeight(BlockFilterType.Block, 0);
+        await blockStateSetInfoGrain.SetBlockStateSetStatusAsync(new BlockStateSetStatus
+        {
+            LastIrreversibleBlockHeight = 0,
+        });
         
         await blockScanExecutorGrain.HandleHistoricalBlockAsync();
         subscribedBlock.Count.ShouldBe(80);
         
-        await blockStateSetInfoGrain.SetConfirmedBlockHeight(BlockFilterType.Block, 10);
+        await blockStateSetInfoGrain.SetBlockStateSetStatusAsync(new BlockStateSetStatus
+        {
+            LastIrreversibleBlockHeight = 10,
+        });
         
         await blockScanExecutorGrain.HandleHistoricalBlockAsync();
         subscribedBlock.Count.ShouldBe(90);

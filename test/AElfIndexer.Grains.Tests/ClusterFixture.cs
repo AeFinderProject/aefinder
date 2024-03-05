@@ -2,7 +2,6 @@ using System;
 using AElfIndexer.Block;
 using AElfIndexer.Grains.BlockScan;
 using AElfIndexer.Grains.Grain.BlockPush;
-using AElfIndexer.Grains.Grain.Client;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -4,12 +4,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using AElf.EntityMapping.Elasticsearch.Services;
 using AElf.EntityMapping.Repositories;
 using AElfIndexer.Block;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Entities.Es;
-using NUnit.Framework;
 using Shouldly;
 using Xunit;
 

@@ -15,6 +15,7 @@ public interface IFullBlockProcessor
 public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
 {
     private readonly IEnumerable<IBlockProcessor> _blockProcessors;
+    private readonly IBlockProcessingContext _blockProcessingContext;
     private readonly IEnumerable<ITransactionProcessor> _transactionProcessors;
     private readonly IEnumerable<ILogEventProcessor> _logEventProcessors;
     private readonly IObjectMapper _objectMapper;
@@ -24,7 +25,8 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
     public FullBlockProcessor(IEnumerable<IBlockProcessor> blockProcessors,
         IEnumerable<ITransactionProcessor> transactionProcessors,
         IEnumerable<ILogEventProcessor> logEventProcessors, IObjectMapper objectMapper,
-        IOperationLimitManager operationLimitManager, ILogger<FullBlockProcessor> logger)
+        IOperationLimitManager operationLimitManager, ILogger<FullBlockProcessor> logger,
+        IBlockProcessingContext blockProcessingContext)
     {
         _blockProcessors = blockProcessors;
         _transactionProcessors = transactionProcessors;
@@ -32,21 +34,20 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         _objectMapper = objectMapper;
         _operationLimitManager = operationLimitManager;
         _logger = logger;
+        _blockProcessingContext = blockProcessingContext;
     }
 
     public async Task ProcessAsync(BlockWithTransactionDto block, bool isRollback)
     {
         _operationLimitManager.ResetAll();
-        
-        var processingContext = new BlockDataProcessingContext(block.ChainId, block.BlockHash, block.BlockHeight,
+        _blockProcessingContext.SetContext(block.ChainId, block.BlockHash, block.BlockHeight,
             block.BlockTime, isRollback);
+        
         var blockProcessor = _blockProcessors.FirstOrDefault();
         if (blockProcessor != null)
         {
             _logger.LogInformation(
                 "Processing block. ChainId: {ChainId}, BlockHash: {BlockHash}.", block.ChainId, block.BlockHash);
-            
-            blockProcessor.SetProcessingContext(processingContext);
             try
             {
                 await blockProcessor.ProcessAsync(_objectMapper.Map<BlockWithTransactionDto, Sdk.Block>(block));
@@ -60,16 +61,16 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         foreach (var transaction in block.Transactions)
         {
             var transactionProcessor = _transactionProcessors.FirstOrDefault(p =>
-                p.GetToAddress(block.ChainId) == transaction.To &&
+                (p.GetToAddress(block.ChainId).IsNullOrWhiteSpace() ||
+                 p.GetToAddress(block.ChainId) == transaction.To) &&
                 (p.GetMethodName(block.ChainId).IsNullOrWhiteSpace() ||
                  p.GetMethodName(block.ChainId) == transaction.MethodName));
+            
             if (transactionProcessor != null)
             {
                 _logger.LogInformation(
                     "Processing transaction. ChainId: {ChainId}, BlockHash: {BlockHash}, TransactionHash: {TransactionHash}.",
                     transaction.ChainId, transaction.BlockHash, transaction.TransactionId);
-                
-                transactionProcessor.SetProcessingContext(processingContext);
                 try
                 {
                     await transactionProcessor.ProcessAsync(
@@ -91,15 +92,13 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                 var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>
                     p.GetContractAddress(logEvent.ChainId) == logEvent.ContractAddress &&
                     p.GetEventName() == logEvent.EventName);
+                
                 if (logEventProcessor != null)
                 {
                     _logger.LogInformation(
                         "Processing log event. ChainId: {ChainId}, BlockHash: {BlockHash}, TransactionHash: {TransactionHash}, ContractAddress: {ContractAddress}, EventName: {EventName}.",
                         logEvent.ChainId, logEvent.BlockHash, transaction.TransactionId, logEvent.ContractAddress,
                         logEvent.EventName);
-                    
-                    logEventProcessor.SetProcessingContext(processingContext);
-
                     try
                     {
                         await logEventProcessor.ProcessAsync(new Sdk.LogEventContext
