@@ -7,6 +7,7 @@ using AElf.EntityMapping.Elasticsearch;
 using AElf.EntityMapping.Elasticsearch.Services;
 using AElfIndexer.App.BlockChain;
 using AElfIndexer.App.BlockState;
+using AElfIndexer.App.MockPlugin;
 using AElfIndexer.App.OperationLimits;
 using AElfIndexer.App.Repositories;
 using AElfIndexer.Orleans.TestBase;
@@ -54,10 +55,12 @@ public class AElfIndexerAppTestModule : AbpModule
         {
             o.MaxContractCallCount = 3;
             o.MaxEntitySize = 10000;
-            o.MaxEntityCallCount = 10;
+            o.MaxEntityCallCount = 100;
             o.MaxLogSize = 10;
             o.MaxLogCallCount = 3;
         });
+        
+        context.Services.AddTransient<ILogEventProcessor, TokenTransferredProcessor>();
     }
     
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)

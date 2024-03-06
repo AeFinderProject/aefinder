@@ -1,4 +1,5 @@
 using AElf.Types;
+using AElfIndexer.App.BlockState;
 using AElfIndexer.App.Handlers;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.Grains.Grain.BlockStates;
@@ -6,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Local;
 
-namespace AElfIndexer.App.BlockState;
+namespace AElfIndexer.App.BlockProcessing;
 
 public class BlockAttachService : IBlockAttachService, ITransientDependency
 {
@@ -35,10 +36,11 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
 
         var newLastIrreversibleBlockStateSet = lastIrreversibleBlockStateSet;
         var newLongestChainBlockStateSet = longestChainBlockStateSet;
+        var newLibHeight = lastIrreversibleBlockHeight;
 
         foreach (var block in blocks)
         {
-            if (block.BlockHeight <= lastIrreversibleBlockHeight)
+            if (block.BlockHeight <= newLibHeight)
             {
                 continue;
             }
@@ -56,22 +58,22 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
 
             if (block.Confirmed)
             {
-                if (lastIrreversibleBlockHeight == 0)
+                if (newLibHeight == 0)
                 {
-                    lastIrreversibleBlockHeight = block.BlockHeight;
+                    newLibHeight = block.BlockHeight;
                 }
                 else
                 {
-                    if (block.BlockHeight != lastIrreversibleBlockHeight + 1 && previousBlockStateSet != null &&
+                    if (block.BlockHeight != newLibHeight + 1 && previousBlockStateSet != null &&
                         !previousBlockStateSet.Block.Confirmed)
                     {
                         _logger.LogWarning(
                             "Missing previous confirmed block. Confirmed block height: {BlockHeight}, lib block height: {lastIrreversibleBlockHeight}.",
-                            block.BlockHeight, lastIrreversibleBlockHeight);
+                            block.BlockHeight, newLibHeight);
                         continue;
                     }
 
-                    lastIrreversibleBlockHeight++;
+                    newLibHeight++;
                 }
             }
 
@@ -119,7 +121,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
 
         if (longestChainBlockStateSet == null && newLongestChainBlockStateSet != null ||
             newLongestChainBlockStateSet != null &&
-            newLongestChainBlockStateSet.Block.BlockHeight > lastIrreversibleBlockHeight)
+            newLongestChainBlockStateSet.Block.BlockHeight > longestChainBlockStateSet.Block.BlockHeight)
         {
             await _appBlockStateSetProvider.SetLongestChainBlockStateSetAsync(chainId,
                 newLongestChainBlockStateSet.Block.BlockHash);

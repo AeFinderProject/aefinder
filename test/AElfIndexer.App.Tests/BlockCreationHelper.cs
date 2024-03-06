@@ -34,7 +34,7 @@ public static class BlockCreationHelper
         return blocks;
     }
 
-    public static List<BlockWithTransactionDto> CreateBlockWithTransactionDtos(
+    public static List<BlockWithTransactionDto> CreateBlockWithTransactions(
         long startBlock, long blockCount, string blockHash, string chainId,
         long transactionCount, string transactionId, TransactionStatus status,
         string perHash = "", bool confirmed = false)
@@ -69,7 +69,7 @@ public static class BlockCreationHelper
         return blocks;
     }
 
-    public static List<BlockWithTransactionDto> CreateBlockWithTransactionDtosAndTransferredLogEvent(
+    public static List<BlockWithTransactionDto> CreateBlockWithTransactionAndTransferredLogEvents(
         long startBlock, long blockCount, string blockHash, string chainId,
         long transactionCount, string transactionId, TransactionStatus status,
         long logEventCount, string perHash = "", bool confirmed = false)
@@ -114,7 +114,7 @@ public static class BlockCreationHelper
         var transactions = new List<TransactionDto>();
         for (var i = 0; i < transactionCount; i++)
         {
-            var id = blockHeight+transactionId + i;
+            var id = blockHash + transactionId + i;
             var logEvents = logEventCount > 0
                 ? CreateTransferLogEvent(logEventCount, id,
                     blockHash, blockHeight, blockTime, chainId, perHash, confirmed)
@@ -149,7 +149,7 @@ public static class BlockCreationHelper
             {
                 Amount = blockHeight.Add(i),
                 From = Address.FromBase58("2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e"),
-                To = Address.FromBase58("2pL7foxBhMC1RVZMUEtkvYK4pWWaiLHBAQcXFdzfD5oZjYSr3e"),
+                To = Address.FromBase58("xZ4UWtQEUzGgmjByxf6248sJuqgiXWVK36EGtzyp9Xtp4B2h4"),
                 Symbol = "TEST"
             };
             var transferredToLogEvent = transferred.ToLogEvent();

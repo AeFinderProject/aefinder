@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using AElfIndexer.Sdk;
 using Volo.Abp.DependencyInjection;
 
-namespace AElfIndexer.App;
+namespace AElfIndexer.App.MockPlugin;
 
-public class MockTransactionProcessor : TransactionProcessorBase, ITransientDependency
+public class TransactionProcessor : TransactionProcessorBase, ITransientDependency
 {
     public override string GetToAddress(string chainId)
     {
@@ -25,7 +25,7 @@ public class MockTransactionProcessor : TransactionProcessorBase, ITransientDepe
         }
         
         var indexId = transaction.TransactionId;
-        var index = new TestTransactionEntity
+        var index = new TransactionEntity
         {
             Id = indexId,
             MethodName = transaction.MethodName,

@@ -4,13 +4,13 @@ using AElfIndexer.Sdk;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
-namespace AElfIndexer.App;
+namespace AElfIndexer.App.MockPlugin;
 
-public class MockBlockProcessor : BlockProcessorBase, ITransientDependency
+public class BlockProcessor : BlockProcessorBase, ITransientDependency
 {
     private readonly IObjectMapper _objectMapper;
 
-    public MockBlockProcessor(IObjectMapper objectMapper)
+    public BlockProcessor(IObjectMapper objectMapper)
     {
         _objectMapper = objectMapper;
     }
@@ -22,7 +22,7 @@ public class MockBlockProcessor : BlockProcessorBase, ITransientDependency
             throw new Exception();
         }
 
-        var entity = _objectMapper.Map<Sdk.Block, TestBlockEntity>(block);
+        var entity = _objectMapper.Map<Sdk.Block, BlockEntity>(block);
         entity.Id = block.BlockHash;
         await SaveEntityAsync(entity);
     }

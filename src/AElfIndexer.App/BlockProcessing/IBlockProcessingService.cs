@@ -29,53 +29,53 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
 
     public async Task ProcessAsync(string chainId, string branchBlockHash)
     {
-        var blockStateSets = await GetUnProcessedBlockStateSetsAsync(chainId, branchBlockHash);
+        var blockStateSets = await GetToBeProcessedBlockStateSetsAsync(chainId, branchBlockHash);
         if (!await IsProcessAsync(chainId, blockStateSets))
         {
             return;
         }
-        
+
         var rollbackBlockStateSets = await GetToBeRollbackBlockStateSetsAsync(chainId, blockStateSets);
-        
+
         foreach (var blockStateSet in rollbackBlockStateSets)
         {
             await _fullBlockProcessor.ProcessAsync(blockStateSet.Block, true);
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, false);
         }
-        
+
         foreach (var blockStateSet in blockStateSets)
         {
             await _fullBlockProcessor.ProcessAsync(blockStateSet.Block, false);
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, true);
         }
-        
+
         await _appDataIndexManagerProvider.SavaDataAsync();
-        
-        var longestChainBlockStateSet = blockStateSets.LastOrDefault();
-        if (longestChainBlockStateSet != null)
+
+        var longestChainBlockStateSet = blockStateSets.Last();
+
+        await _appBlockStateSetProvider.SetBestChainBlockStateSetAsync(chainId,
+            longestChainBlockStateSet.Block.BlockHash);
+
+        if (longestChainBlockStateSet.Block.Confirmed)
         {
-            await _appBlockStateSetProvider.SetBestChainBlockStateSetAsync(chainId, longestChainBlockStateSet.Block.BlockHash);
-            
-            if (longestChainBlockStateSet.Block.Confirmed)
+            await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(chainId,
+                longestChainBlockStateSet.Block.BlockHash);
+        }
+
+        await _appBlockStateSetProvider.SaveDataAsync(chainId);
+
+        if (longestChainBlockStateSet.Block.Confirmed)
+        {
+            await LocalEventBus.PublishAsync(new LastIrreversibleBlockStateSetFoundEventData
             {
-                await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(chainId, longestChainBlockStateSet.Block.BlockHash);
-            }
-            
-            await _appBlockStateSetProvider.SaveDataAsync(chainId);
-            
-            if (longestChainBlockStateSet.Block.Confirmed)
-            {
-                await LocalEventBus.PublishAsync(new LastIrreversibleBlockStateSetFoundEventData
-                {
-                    ChainId = chainId,
-                    BlockHash = longestChainBlockStateSet.Block.BlockHash,
-                    BlockHeight = longestChainBlockStateSet.Block.BlockHeight
-                });
-            }
+                ChainId = chainId,
+                BlockHash = longestChainBlockStateSet.Block.BlockHash,
+                BlockHeight = longestChainBlockStateSet.Block.BlockHeight
+            });
         }
     }
-    
-    private async Task<List<BlockStateSet>> GetUnProcessedBlockStateSetsAsync(string chainId, string branchBlockHash)
+
+    private async Task<List<BlockStateSet>> GetToBeProcessedBlockStateSetsAsync(string chainId, string branchBlockHash)
     {
         var blockStateSets = new List<BlockStateSet>();
 

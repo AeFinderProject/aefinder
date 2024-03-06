@@ -18,7 +18,7 @@ public class EntityOperationLimitProviderTests : AElfIndexerAppTestBase
     public void CheckCallCountTest()
     {
         var entity = new {Name = "Test"};
-        for (var i = 0; i < 10; i++)
+        for (var i = 0; i < 100; i++)
         {
             _entityOperationLimitProvider.Check(entity);
         }

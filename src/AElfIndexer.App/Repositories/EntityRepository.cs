@@ -3,18 +3,16 @@ using AElfIndexer.App.BlockState;
 using AElfIndexer.App.OperationLimits;
 using AElfIndexer.Grains.Grain.BlockStates;
 using AElfIndexer.Sdk;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace AElfIndexer.App.Repositories;
 
-public class EntityRepository<TEntity> : IEntityRepository<TEntity>
+public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityRepository<TEntity>
     where TEntity : IndexerEntity, IIndexerEntity
 {
     private readonly IAppStateProvider _appStateProvider;
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IAppDataIndexProvider<TEntity> _appDataIndexProvider;
-    private readonly IAppInfoProvider _appInfoProvider;
     private readonly IEntityOperationLimitProvider _entityOperationLimitProvider;
     private readonly IBlockProcessingContext _blockProcessingContext;
 
@@ -22,14 +20,13 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
 
     public EntityRepository(IAppStateProvider appStateProvider, IAppBlockStateSetProvider appBlockStateSetProvider,
         IAppDataIndexProvider<TEntity> appDataIndexProvider, 
-        IEntityOperationLimitProvider entityOperationLimitProvider, IBlockProcessingContext blockProcessingContext, IAppInfoProvider appInfoProvider)
+        IEntityOperationLimitProvider entityOperationLimitProvider, IBlockProcessingContext blockProcessingContext)
     {
         _appStateProvider = appStateProvider;
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _appDataIndexProvider = appDataIndexProvider;
         _entityOperationLimitProvider = entityOperationLimitProvider;
         _blockProcessingContext = blockProcessingContext;
-        _appInfoProvider = appInfoProvider;
         _entityName = typeof(TEntity).Name;
     }
 
@@ -137,11 +134,6 @@ public class EntityRepository<TEntity> : IEntityRepository<TEntity>
         blockStateSet.Changes[entityKey] = JsonConvert.SerializeObject(entity);
         await _appDataIndexProvider.DeleteAsync(entity, GetIndexName());
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(entity.Metadata.ChainId, blockStateSet);
-    }
-
-    private string GetIndexName()
-    {
-        return $"{_appInfoProvider.AppId}-{_appInfoProvider.Version}.{_entityName}".ToLower();
     }
     
     private string GetEntityKey(string chainId, string id)

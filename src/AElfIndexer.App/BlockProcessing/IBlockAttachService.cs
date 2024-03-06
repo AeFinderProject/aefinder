@@ -1,6 +1,6 @@
 using AElfIndexer.Block.Dtos;
 
-namespace AElfIndexer.App.BlockState;
+namespace AElfIndexer.App.BlockProcessing;
 
 public interface IBlockAttachService
 {

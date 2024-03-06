@@ -1,9 +1,9 @@
 using AElfIndexer.Sdk;
 using Nest;
 
-namespace AElfIndexer.App;
+namespace AElfIndexer.App.MockPlugin;
 
-public class TestTransferEntity : IndexerEntity, IIndexerEntity
+public class TransferEntity : IndexerEntity, IIndexerEntity
 {
     [Keyword] public string Symbol { get; set; }
     [Keyword] public string FromAccount { get; set; }
