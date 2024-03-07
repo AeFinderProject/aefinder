@@ -159,6 +159,11 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
     private async Task SetBlockStateSetProcessedAsync(string chainId, BlockStateSet blockStateSet, bool processed)
     {
         blockStateSet.Processed = processed;
+        if (!processed)
+        {
+            blockStateSet.Changes.Clear();
+        }
+
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);
     }
 }

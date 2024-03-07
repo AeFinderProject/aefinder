@@ -21,6 +21,13 @@ public abstract class BlockDataProcessorBase: IBlockDataProcessor
         await repository.AddOrUpdateAsync(entity);
     }
     
+    protected async Task DeleteEntityAsync<TEntity>(string id)
+        where TEntity : IndexerEntity
+    {
+        var repository = LazyServiceProvider.GetRequiredService<IEntityRepository<TEntity>>();
+        await repository.DeleteAsync(id);
+    }
+    
     protected async Task DeleteEntityAsync<TEntity>(TEntity entity)
         where TEntity : IndexerEntity
     {

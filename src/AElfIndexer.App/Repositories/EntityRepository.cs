@@ -34,7 +34,7 @@ public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityR
     {
         var chainId = _blockProcessingContext.ChainId;
         var blockIndex = new BlockIndex(_blockProcessingContext.BlockHash, _blockProcessingContext.BlockHeight);
-        return await GetEntityFromBlockStateSetsAsync(chainId, GetEntityKey(chainId,id), blockIndex);
+        return await GetEntityFromBlockStateSetsAsync(chainId, GetStateKey(id), blockIndex);
     }
 
     public async Task AddOrUpdateAsync(TEntity entity)
@@ -44,6 +44,12 @@ public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityR
         await OperationAsync(entity, AddToBlockStateSetAsync, _blockProcessingContext.IsRollback);
     }
     
+    public async Task DeleteAsync(string id)
+    {
+        var entity = await GetAsync(id);
+        await DeleteAsync(entity);
+    }
+    
     public async Task DeleteAsync(TEntity entity)
     {
         _entityOperationLimitProvider.Check(entity);
@@ -51,13 +57,13 @@ public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityR
         await OperationAsync(entity, RemoveFromBlockStateSetAsync, _blockProcessingContext.IsRollback);
     }
 
-    private async Task<TEntity> GetEntityFromBlockStateSetsAsync(string chainId, string entityKey,
+    private async Task<TEntity> GetEntityFromBlockStateSetsAsync(string chainId, string stateKey,
         IBlockIndex branchBlockIndex)
     {
         var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId,branchBlockIndex.BlockHash);
         while (blockStateSet != null)
         {
-            if (blockStateSet.Changes.TryGetValue(entityKey, out var value))
+            if (blockStateSet.Changes.TryGetValue(stateKey, out var value))
             {
                 var entity = JsonConvert.DeserializeObject<TEntity>(value);
                 return (entity?.Metadata.IsDeleted ?? true) ? null : entity;
@@ -70,7 +76,7 @@ public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityR
         // if block state sets don't contain entity, return LIB value
         // lib value's block height should less than min block state set's block height.
         var lastIrreversibleState =
-            await _appStateProvider.GetLastIrreversibleStateAsync<TEntity>(chainId, entityKey);
+            await _appStateProvider.GetLastIrreversibleStateAsync<TEntity>(chainId, stateKey);
         return lastIrreversibleState != null &&
                lastIrreversibleState.Metadata.Block.BlockHeight <= branchBlockIndex.BlockHeight &&
                !lastIrreversibleState.Metadata.IsDeleted
@@ -85,7 +91,7 @@ public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityR
             throw new Exception($"Invalid entity: {JsonConvert.SerializeObject(entity)}");
         }
 
-        var entityKey = GetEntityKey(entity.Metadata.ChainId, entity.Id);
+        var stateKey = GetStateKey(entity.Id);
 
         var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(entity.Metadata.ChainId,entity.Metadata.Block.BlockHash);
 
@@ -95,7 +101,7 @@ public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityR
             // if current block state is not on best chain, get the best chain block state set
             var longestChainBlockStateSet =
                 await _appBlockStateSetProvider.GetLongestChainBlockStateSetAsync(entity.Metadata.ChainId);
-            var entityFromBlockStateSet = await GetEntityFromBlockStateSetsAsync(entity.Metadata.ChainId, entityKey,
+            var entityFromBlockStateSet = await GetEntityFromBlockStateSetsAsync(entity.Metadata.ChainId, stateKey,
                 new BlockIndex(longestChainBlockStateSet.Block.BlockHash, longestChainBlockStateSet.Block.BlockHeight));
             if (entityFromBlockStateSet != null)
             {
@@ -109,7 +115,7 @@ public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityR
         else
         {
             // entity is on best chain
-            await operationFunc(entityKey, entity, blockStateSet);
+            await operationFunc(stateKey, entity, blockStateSet);
         }
     }
 
@@ -120,25 +126,25 @@ public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityR
                !string.IsNullOrWhiteSpace(entity.Metadata.ChainId);
     }
 
-    private async Task AddToBlockStateSetAsync(string entityKey, TEntity entity, BlockStateSet blockStateSet)
+    private async Task AddToBlockStateSetAsync(string stateKey, TEntity entity, BlockStateSet blockStateSet)
     {
         entity.Metadata.IsDeleted = false;
-        blockStateSet.Changes[entityKey] = JsonConvert.SerializeObject(entity);
+        blockStateSet.Changes[stateKey] = JsonConvert.SerializeObject(entity);
         await _appDataIndexProvider.AddOrUpdateAsync(entity, GetIndexName());
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(entity.Metadata.ChainId, blockStateSet);
     }
 
-    private async Task RemoveFromBlockStateSetAsync(string entityKey,TEntity entity, BlockStateSet blockStateSet)
+    private async Task RemoveFromBlockStateSetAsync(string stateKey,TEntity entity, BlockStateSet blockStateSet)
     {
         entity.Metadata.IsDeleted = true;
-        blockStateSet.Changes[entityKey] = JsonConvert.SerializeObject(entity);
+        blockStateSet.Changes[stateKey] = JsonConvert.SerializeObject(entity);
         await _appDataIndexProvider.DeleteAsync(entity, GetIndexName());
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(entity.Metadata.ChainId, blockStateSet);
     }
     
-    private string GetEntityKey(string chainId, string id)
+    private string GetStateKey(string id)
     {
-        return $"{_entityName}-{chainId}-{id}";
+        return $"{_entityName}-{id}";
     }
     
     private void SetMetadata(TEntity entity, bool isDelete)

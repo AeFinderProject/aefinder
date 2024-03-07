@@ -30,7 +30,19 @@ public class TokenTransferredProcessor : LogEventProcessorBase<Transferred>, ITr
         };
         await SaveEntityAsync(transfer);
         
-        await ChangeBalanceAsync(logEvent.From.ToBase58(), logEvent.Symbol, -logEvent.Amount);
+        
+        if(context.Block.BlockHash == "BlockHashA109")
+        {
+            var account = await GetEntityAsync<AccountBalanceEntity>(logEvent.From.ToBase58());
+            if(account != null)
+            {
+                await DeleteEntityAsync(account);
+            }
+        }
+        else
+        {
+            await ChangeBalanceAsync(logEvent.From.ToBase58(), logEvent.Symbol, -logEvent.Amount);
+        }
         await ChangeBalanceAsync(logEvent.To.ToBase58(), logEvent.Symbol, logEvent.Amount);
     }
     

@@ -83,7 +83,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 blockStateSet = new BlockStateSet
                 {
                     Block = block,
-                    Changes = new(),
+                    Changes = new()
                 };
                 await _appBlockStateSetProvider.AddBlockStateSetAsync(chainId, blockStateSet);
             }
