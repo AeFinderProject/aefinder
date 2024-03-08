@@ -2,7 +2,6 @@ using System.Reflection;
 using AElfIndexer.CodeOps.Policies;
 using AElfIndexer.CodeOps.Validators;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic;
 using Volo.Abp.DependencyInjection;
 using Mono.Cecil;
 

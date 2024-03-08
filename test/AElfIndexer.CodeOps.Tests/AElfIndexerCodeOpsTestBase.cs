@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using AElfIndexer.Entities;
 using AElfIndexer.Sdk;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
@@ -158,6 +159,7 @@ public class AElfIndexerCodeOpsTestBase : AElfIndexerTestBase<AElfIndexerCodeOps
     {
         AddAssembly(typeof(IIndexerEntity).Assembly.Location);
         AddAssembly(typeof(Entity).Assembly.Location);
+        AddAssembly(typeof(AElfIndexerEntity<>).Assembly.Location);
     }
     
     public static string FormatCode(string originalCode)

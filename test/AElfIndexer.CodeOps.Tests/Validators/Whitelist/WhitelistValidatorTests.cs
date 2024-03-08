@@ -1,4 +1,3 @@
-using System.Net;
 using AElfIndexer.CodeOps.Validators.Whitelist;
 using GraphQL;
 using Nest;
@@ -23,7 +22,6 @@ public class WhitelistValidatorTests : AElfIndexerCodeOpsTestBase
     {
         var sourceCode = @"
         using AElfIndexer.Sdk;
-        using AElfIndexer.Sdk.Processor;
         using GraphQL;
         using Volo.Abp.Modularity;
         using Volo.Abp.ObjectMapping;
@@ -31,17 +29,17 @@ public class WhitelistValidatorTests : AElfIndexerCodeOpsTestBase
         using System.Threading.Tasks;
         using System.Linq;
         using System.Collections.Generic;
+        using Nest;
 
         namespace Plugin;
 
         public class PluginEntity : IndexerEntity, IIndexerEntity
         {
             public int IntValue { get; set; }
+            [Keyword]
             public string StringValue { get; set; }
-
-            public PluginEntity(string id) : base(id)
-            {
-            }
+            [Text]
+            public string StringValue2 { get; set; }
         }
         
         public class PluginEntityDto
@@ -52,7 +50,7 @@ public class WhitelistValidatorTests : AElfIndexerCodeOpsTestBase
         public class Query
         {
             public static async Task<List<PluginEntityDto>> TokenInfo(
-                [FromServices] IIndexerReadOnlyRepository<PluginEntity> repository,
+                [FromServices] IReadOnlyRepository<PluginEntity> repository,
                 [FromServices] IObjectMapper objectMapper, string chainId)
             {
                 var query = await repository.GetQueryableAsync();
@@ -62,9 +60,9 @@ public class WhitelistValidatorTests : AElfIndexerCodeOpsTestBase
             }
         }
 
-        public class PluginClientSchema : ClientSchema<Query>
+        public class PluginAppSchema : AppSchema<Query>
         {
-            protected PluginClientSchema(IServiceProvider serviceProvider) : base(serviceProvider)
+            protected PluginAppSchema(IServiceProvider serviceProvider) : base(serviceProvider)
             {
             }
         }
@@ -85,7 +83,7 @@ public class WhitelistValidatorTests : AElfIndexerCodeOpsTestBase
         }
         ";
         AddAssemblies(typeof(FromServicesAttribute).Assembly.Location, typeof(IObjectMapper).Assembly.Location,
-            typeof(AbpModule).Assembly.Location);
+            typeof(AbpModule).Assembly.Location, typeof(KeywordAttribute).Assembly.Location);
         var assemblyDefinition = CompileToAssemblyDefinition(sourceCode);
 
         var validationResult = _whitelistValidator.Validate(assemblyDefinition.MainModule, CancellationToken.None);
@@ -107,10 +105,6 @@ public class WhitelistValidatorTests : AElfIndexerCodeOpsTestBase
             public int IntValue { get; set; }
             [Keyword]
             public string StringValue { get; set; }
-
-            public PluginEntity(string id) : base(id)
-            {
-            }
         }
 
         public class Client
@@ -127,7 +121,6 @@ public class WhitelistValidatorTests : AElfIndexerCodeOpsTestBase
         var validationResults = _whitelistValidator.Validate(assemblyDefinition.MainModule, CancellationToken.None)
             .ToList();
         validationResults.Count.ShouldBeGreaterThan(0);
-        validationResults.ShouldContain(v => v.Message == "Assembly Nest is not allowed.");
         validationResults.ShouldContain(v => v.Message == "Assembly System.Net.Http is not allowed.");
         validationResults.ShouldContain(v => v.Message == "System.Net.Http is not allowed.");
     }

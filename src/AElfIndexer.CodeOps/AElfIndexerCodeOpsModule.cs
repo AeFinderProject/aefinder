@@ -1,5 +1,3 @@
-using AElfIndexer.CodeOps.Patchers;
-using AElfIndexer.CodeOps.Patchers.Module;
 using AElfIndexer.CodeOps.Validators;
 using AElfIndexer.CodeOps.Validators.Assembly;
 using AElfIndexer.CodeOps.Validators.Whitelist;
@@ -12,8 +10,6 @@ public class AElfIndexerCodeOpsModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.AddTransient<IPatcher, EntityIndexingPatcher>();
-
         context.Services.AddTransient<IValidator, IndexerEntityValidator>();
         context.Services.AddTransient<IValidator, WhitelistValidator>();
     }

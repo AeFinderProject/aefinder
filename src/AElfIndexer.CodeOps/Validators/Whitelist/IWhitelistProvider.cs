@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using AElf.Types;
 using AElfIndexer.Sdk;
 using GraphQL;
+using Nest;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Modularity;
 
@@ -39,6 +40,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Assembly(System.Reflection.Assembly.Load("System.ComponentModel"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("Google.Protobuf"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("GraphQL"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("Nest"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("AutoMapper"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.ObjectMapping"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.Core"), Trust.Partial)
@@ -114,7 +116,6 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
     {
         whitelist
             .Namespace("System.Globalization", Permission.Allowed)
-            // Used for initializing large arrays hardcoded in the code, array validator will take care of the size
             .Namespace("System.Runtime.CompilerServices", Permission.Denied, type => type
                 .Type(nameof(RuntimeHelpers), Permission.Denied, member => member
                     .Member(nameof(RuntimeHelpers.InitializeArray), Permission.Allowed))
@@ -137,6 +138,10 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             )
             .Namespace("Volo.Abp.Modularity", Permission.Denied, type => type
                 .Type(nameof(AbpModule), Permission.Allowed)
+            )
+            .Namespace("Nest", Permission.Denied, type => type
+                .Type(nameof(KeywordAttribute), Permission.Allowed)
+                .Type(nameof(TextAttribute), Permission.Allowed)
             )
             ;
     }

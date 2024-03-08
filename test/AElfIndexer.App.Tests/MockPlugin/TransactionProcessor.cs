@@ -7,16 +7,6 @@ namespace AElfIndexer.App.MockPlugin;
 
 public class TransactionProcessor : TransactionProcessorBase, ITransientDependency
 {
-    public override string GetToAddress(string chainId)
-    {
-        return null;
-    }
-
-    public override string GetMethodName(string chainId)
-    {
-        return null;
-    }
-
     public override async Task ProcessAsync(Transaction transaction, TransactionContext context)
     {
         if (context.Block.BlockHeight == 100000)

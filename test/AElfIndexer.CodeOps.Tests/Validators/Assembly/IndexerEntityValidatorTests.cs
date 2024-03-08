@@ -25,30 +25,18 @@ public class IndexerEntityValidatorTests : AElfIndexerCodeOpsTestBase
         {
             public int IntValue { get; set; }
             public string StringValue { get; set; }
-
-            public MyEntity1(string id) : base(id)
-            {
-            }
         }
 
         public class MyEntity2 : IndexerEntity, IIndexerEntity
         {
             public int IntValue { get; set; }
             public string StringValue { get; set; }
-
-            public MyEntity2(string id) : base(id)
-            {
-            }
         }
 
         public class MyEntity3 : IndexerEntity
         {
             public int IntValue { get; set; }
             public string StringValue { get; set; }
-
-            public MyEntity3(string id) : base(id)
-            {
-            }
         }
 
         public class MyEntity4 : IIndexerEntity
@@ -61,10 +49,6 @@ public class IndexerEntityValidatorTests : AElfIndexerCodeOpsTestBase
         {
             public int IntValue2 { get; set; }
             public string StringValue2 { get; set; }
-
-            public MyEntity5(string id) : base(id)
-            {
-            }
         }
         ";
         
@@ -89,50 +73,30 @@ public class IndexerEntityValidatorTests : AElfIndexerCodeOpsTestBase
         {
             public int IntValue { get; set; }
             public string StringValue { get; set; }
-
-            public MyEntity1(string id) : base(id)
-            {
-            }
         }
 
         public class MyEntity2 : IndexerEntity, IIndexerEntity
         {
             public int IntValue { get; set; }
             public string StringValue { get; set; }
-
-            public MyEntity2(string id) : base(id)
-            {
-            }
         }
 
         public class MyEntity3 : IndexerEntity, IIndexerEntity
         {
             public int IntValue2 { get; set; }
             public string StringValue2 { get; set; }
-
-            public MyEntity3(string id) : base(id)
-            {
-            }
         }
 
         public class MyEntity4 : IndexerEntity, IIndexerEntity
         {
             public int IntValue { get; set; }
             public string StringValue { get; set; }
-
-            public MyEntity4(string id) : base(id)
-            {
-            }
         }
 
         public class MyEntity5 : MyEntity4
         {
             public int IntValue2 { get; set; }
             public string StringValue2 { get; set; }
-
-            public MyEntity5(string id) : base(id)
-            {
-            }
         }
         ";
         

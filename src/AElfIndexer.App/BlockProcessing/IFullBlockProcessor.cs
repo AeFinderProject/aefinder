@@ -58,14 +58,9 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
             }
         }
 
+        var transactionProcessor = _transactionProcessors.FirstOrDefault();
         foreach (var transaction in block.Transactions)
         {
-            var transactionProcessor = _transactionProcessors.FirstOrDefault(p =>
-                (p.GetToAddress(block.ChainId).IsNullOrWhiteSpace() ||
-                 p.GetToAddress(block.ChainId) == transaction.To) &&
-                (p.GetMethodName(block.ChainId).IsNullOrWhiteSpace() ||
-                 p.GetMethodName(block.ChainId) == transaction.MethodName));
-            
             if (transactionProcessor != null)
             {
                 _logger.LogInformation(
