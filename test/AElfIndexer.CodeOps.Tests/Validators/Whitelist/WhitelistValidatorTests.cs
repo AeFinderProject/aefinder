@@ -1,5 +1,6 @@
 using AElfIndexer.CodeOps.Validators.Whitelist;
 using GraphQL;
+using Microsoft.Extensions.Logging;
 using Nest;
 using Shouldly;
 using Volo.Abp.Modularity;
@@ -97,6 +98,9 @@ public class WhitelistValidatorTests : AElfIndexerCodeOpsTestBase
         using AElfIndexer.Sdk;
         using Nest;
         using System.Net.Http;
+        using Microsoft.Extensions.Logging;
+        using System.Threading.Tasks;
+        using System;
 
         namespace Plugin;
 
@@ -114,14 +118,26 @@ public class WhitelistValidatorTests : AElfIndexerCodeOpsTestBase
                 return new HttpClient();
             }
         }
+
+        public class PluginBlockProcessor : BlockProcessorBase
+        {
+            private readonly ILogger<PluginBlockProcessor> _logger;
+
+            public override async Task ProcessAsync(Block block)
+            {
+                throw new NotImplementedException();
+            }
+        }
         ";
-        AddAssemblies(typeof(KeywordAttribute).Assembly.Location);
+        AddAssemblies(typeof(FromServicesAttribute).Assembly.Location, typeof(IObjectMapper).Assembly.Location,
+            typeof(AbpModule).Assembly.Location, typeof(KeywordAttribute).Assembly.Location, typeof(ILogger).Assembly.Location);
         var assemblyDefinition = CompileToAssemblyDefinition(sourceCode);
 
         var validationResults = _whitelistValidator.Validate(assemblyDefinition.MainModule, CancellationToken.None)
             .ToList();
         validationResults.Count.ShouldBeGreaterThan(0);
         validationResults.ShouldContain(v => v.Message == "Assembly System.Net.Http is not allowed.");
+        validationResults.ShouldContain(v => v.Message == "Assembly Microsoft.Extensions.Logging.Abstractions is not allowed.");
         validationResults.ShouldContain(v => v.Message == "System.Net.Http is not allowed.");
     }
 }
