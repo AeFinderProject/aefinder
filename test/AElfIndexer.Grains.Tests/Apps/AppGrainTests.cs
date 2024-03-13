@@ -7,17 +7,17 @@ using AElfIndexer.Grains.State.Subscriptions;
 using Shouldly;
 using Xunit;
 
-namespace AElfIndexer.Grains.BlockScan;
+namespace AElfIndexer.Grains.Apps;
 
 [Collection(ClusterCollection.Name)]
-public class ScanAppGrainTests : AElfIndexerGrainTestBase
+public class AppGrainTests : AElfIndexerGrainTestBase
 {
     [Fact]
-    public async Task Client_Test()
+    public async Task App_Test()
     {
-        var clientId = "client";
+        var appId = "AppId";
         var chainId = "AELF";
-        var subscriptionInfo1 = new SubscriptionManifest
+        var subscriptionManifest1 = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
             {
@@ -30,16 +30,16 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
-        var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
+        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var version1 = await appGrain.AddSubscriptionAsync(subscriptionManifest1);
         
-        await scanAppGrain.UpgradeVersionAsync();
+        await appGrain.UpgradeVersionAsync();
 
-        var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
+        var subscription1 = await appGrain.GetSubscriptionAsync(version1);
         subscription1.SubscriptionItems[0].ChainId.ShouldBe(chainId);
         subscription1.SubscriptionItems[0].StartBlockNumber.ShouldBe(21);
 
-        var subscriptionInfo2 = new SubscriptionManifest
+        var subscriptionManifest2 = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
             {
@@ -52,65 +52,65 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var version2 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo2);
-        var id1 = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version1, chainId);
-        var blockScanGrain1 = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id1);
+        var version2 = await appGrain.AddSubscriptionAsync(subscriptionManifest2);
+        var id1 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version1, chainId);
+        var pusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id1);
         var scanToken1 = Guid.NewGuid().ToString("N");
-        await blockScanGrain1.InitializeAsync(clientId, version1, subscriptionInfo1.SubscriptionItems[0], scanToken1);
+        await pusherInfoGrain.InitializeAsync(appId, version1, subscriptionManifest1.SubscriptionItems[0], scanToken1);
 
-        var id2 = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version2, chainId);
+        var id2 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version2, chainId);
         var blockScanGrain2 = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id2);
         var scanToken2 = Guid.NewGuid().ToString("N");
-        await blockScanGrain2.InitializeAsync(clientId, version2, subscriptionInfo1.SubscriptionItems[0], scanToken2);
+        await blockScanGrain2.InitializeAsync(appId, version2, subscriptionManifest1.SubscriptionItems[0], scanToken2);
 
         
-        var subscription2 = await scanAppGrain.GetSubscriptionAsync(version2);
+        var subscription2 = await appGrain.GetSubscriptionAsync(version2);
         subscription2.SubscriptionItems[0].ChainId.ShouldBe(chainId);
         subscription2.SubscriptionItems[0].StartBlockNumber.ShouldBe(22);
         
-        var isAvailable = await scanAppGrain.IsRunningAsync(version1, chainId,scanToken1);
+        var isAvailable = await appGrain.IsRunningAsync(version1, chainId,scanToken1);
         isAvailable.ShouldBeFalse();
-        isAvailable = await scanAppGrain.IsRunningAsync(version2, chainId,scanToken2);
+        isAvailable = await appGrain.IsRunningAsync(version2, chainId,scanToken2);
         isAvailable.ShouldBeFalse();
 
-        var allSubscriptionsAsync = await scanAppGrain.GetAllSubscriptionAsync();
+        var allSubscriptionsAsync = await appGrain.GetAllSubscriptionAsync();
         allSubscriptionsAsync.CurrentVersion.Version.ShouldBe(version1);
         allSubscriptionsAsync.NewVersion.Version.ShouldBe(version2);
 
-        var versionStatus = await scanAppGrain.GetSubscriptionStatusAsync(version1);
+        var versionStatus = await appGrain.GetSubscriptionStatusAsync(version1);
         versionStatus.ShouldBe(SubscriptionStatus.Initialized);
-        versionStatus = await scanAppGrain.GetSubscriptionStatusAsync(version2);
+        versionStatus = await appGrain.GetSubscriptionStatusAsync(version2);
         versionStatus.ShouldBe(SubscriptionStatus.Initialized);
 
-        await scanAppGrain.StartAsync(version1);
-        versionStatus = await scanAppGrain.GetSubscriptionStatusAsync(version1);
+        await appGrain.StartAsync(version1);
+        versionStatus = await appGrain.GetSubscriptionStatusAsync(version1);
         versionStatus.ShouldBe(SubscriptionStatus.Started);
         
-        isAvailable = await scanAppGrain.IsRunningAsync(version1, chainId, scanToken1);
+        isAvailable = await appGrain.IsRunningAsync(version1, chainId, scanToken1);
         isAvailable.ShouldBeTrue();
-        isAvailable = await scanAppGrain.IsRunningAsync(Guid.NewGuid().ToString(), chainId, scanToken1);
+        isAvailable = await appGrain.IsRunningAsync(Guid.NewGuid().ToString(), chainId, scanToken1);
         isAvailable.ShouldBeFalse();
-        isAvailable = await scanAppGrain.IsRunningAsync(null, chainId, scanToken1);
+        isAvailable = await appGrain.IsRunningAsync(null, chainId, scanToken1);
         isAvailable.ShouldBeFalse();
-        isAvailable = await scanAppGrain.IsRunningAsync(string.Empty, chainId, scanToken1);
+        isAvailable = await appGrain.IsRunningAsync(string.Empty, chainId, scanToken1);
         isAvailable.ShouldBeFalse();
-        isAvailable = await scanAppGrain.IsRunningAsync(version1, chainId, scanToken2);
+        isAvailable = await appGrain.IsRunningAsync(version1, chainId, scanToken2);
         isAvailable.ShouldBeFalse();
         
-        isAvailable = await scanAppGrain.IsRunningAsync(version2, chainId, scanToken2);
+        isAvailable = await appGrain.IsRunningAsync(version2, chainId, scanToken2);
         isAvailable.ShouldBeFalse();
 
-        await scanAppGrain.UpgradeVersionAsync();
-        allSubscriptionsAsync = await scanAppGrain.GetAllSubscriptionAsync();
+        await appGrain.UpgradeVersionAsync();
+        allSubscriptionsAsync = await appGrain.GetAllSubscriptionAsync();
         allSubscriptionsAsync.CurrentVersion.Version.ShouldBe(version2);
         allSubscriptionsAsync.NewVersion.ShouldBeNull();
     }
 
     [Fact]
-    public async Task UpdateSubscriptionInfo_Test()
+    public async Task UpdateSubscriptionTest()
     {
-        var clientId = "client-id01";
-        var subscriptionInfo1 = new SubscriptionManifest
+        var appId = "AppId";
+        var subscriptionManifest1 = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
             {
@@ -131,10 +131,10 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
-        var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
+        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var version1 = await appGrain.AddSubscriptionAsync(subscriptionManifest1);
         
-        var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
+        var subscription1 = await appGrain.GetSubscriptionAsync(version1);
         subscription1.SubscriptionItems[0].ChainId.ShouldBe("tDVV");
         subscription1.SubscriptionItems[0].OnlyConfirmed.ShouldBe(false);
         subscription1.SubscriptionItems[0].StartBlockNumber.ShouldBe(1009);
@@ -142,7 +142,7 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
         subscription1.SubscriptionItems[0].LogEventConditions[0].ContractAddress.ShouldBe("7RzVGiuVWkvL4VfVHdZfQF2Tri3sgLe9U991bohHFfSRZXuGX");
         subscription1.SubscriptionItems[0].LogEventConditions[0].EventNames.Count.ShouldBe(1);
 
-        var subscriptionInfo2 = new SubscriptionManifest
+        var subscriptionManifest2 = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
             {
@@ -169,9 +169,9 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
 
-        await scanAppGrain.UpdateSubscriptionAsync(version1, subscriptionInfo2);
+        await appGrain.UpdateSubscriptionAsync(version1, subscriptionManifest2);
         
-        var subscription2 = await scanAppGrain.GetSubscriptionAsync(version1);
+        var subscription2 = await appGrain.GetSubscriptionAsync(version1);
         subscription2.SubscriptionItems.Count.ShouldBe(2);
         subscription2.SubscriptionItems[0].ChainId.ShouldBe("tDVV");
         subscription2.SubscriptionItems[0].OnlyConfirmed.ShouldBe(false);
@@ -187,9 +187,9 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
     [Fact]
     public async Task Stop_Test()
     {
-        var clientId = "client";
+        var appId = "AppId";
         var chainId = "AELF";
-        var subscriptionInfo1 = new SubscriptionManifest
+        var subscriptionManifest = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
             {
@@ -202,15 +202,15 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
-        var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo1);
+        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionManifest);
         
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
         subscription1.SubscriptionItems.Count.ShouldBe(1);
         subscription1.SubscriptionItems[0].ChainId.ShouldBe(chainId);
         subscription1.SubscriptionItems[0].StartBlockNumber.ShouldBe(21);
 
-        var subscriptionInfo2 = new SubscriptionManifest
+        var subscriptionManifest2 = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
             {
@@ -223,17 +223,17 @@ public class ScanAppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var version2 = await scanAppGrain.AddSubscriptionAsync(subscriptionInfo2);
+        var version2 = await scanAppGrain.AddSubscriptionAsync(subscriptionManifest2);
 
-        var id1 = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version1, chainId);
+        var id1 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version1, chainId);
         var blockScanGrain1 = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id1);
         var scanToken1 = Guid.NewGuid().ToString("N");
-        await blockScanGrain1.InitializeAsync(clientId, version1, subscriptionInfo1.SubscriptionItems[0], scanToken1);
+        await blockScanGrain1.InitializeAsync(appId, version1, subscriptionManifest.SubscriptionItems[0], scanToken1);
 
-        var id2 = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version2, chainId);
+        var id2 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version2, chainId);
         var blockScanGrain2 = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id2);
         var scanToken2 = Guid.NewGuid().ToString("N");
-        await blockScanGrain2.InitializeAsync(clientId, version2, subscriptionInfo2.SubscriptionItems[0], scanToken2);
+        await blockScanGrain2.InitializeAsync(appId, version2, subscriptionManifest2.SubscriptionItems[0], scanToken2);
 
         await scanAppGrain.StopAsync(version1);
         var version = await scanAppGrain.GetAllSubscriptionAsync();

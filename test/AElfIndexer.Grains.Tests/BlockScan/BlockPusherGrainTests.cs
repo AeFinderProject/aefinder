@@ -16,26 +16,26 @@ using Xunit;
 namespace AElfIndexer.Grains.BlockScan;
 
 [Collection(ClusterCollection.Name)]
-public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
+public class BlockPusherGrainTests : AElfIndexerGrainTestBase
 {
     private readonly IBlockDataProvider _blockDataProvider;
 
-    public BlockScanExecutorGrainTests()
+    public BlockPusherGrainTests()
     {
         _blockDataProvider = GetRequiredService<IBlockDataProvider>();
     }
 
     [Fact]
-    public async Task BlockTest()
+    public async Task Push_Test()
     {
         var chainId = "AELF";
-        var clientId = "DApp";
+        var appId = "DApp";
         
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -48,18 +48,18 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
                 }
             }
         };
-        var version = await scanAppGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription);
         
-        var scanToken = Guid.NewGuid().ToString("N");
-        await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version, chainId);
+        var pushToken = Guid.NewGuid().ToString("N");
+        await appGrain.StartAsync(version);
+        var id = GrainIdHelper.GenerateBlockPusherGrainId(appId, version, chainId);
 
-        var blockScanGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
-        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
+        var pusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
+        await pusherInfoGrain.InitializeAsync(appId, version, subscription.SubscriptionItems[0], pushToken);
 
-        var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
-        await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
-        var streamId = await blockScanGrain.GetMessageStreamIdAsync();
+        var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
+        await blockPusherGrain.InitializeAsync(pushToken, 21);
+        var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
         var stream =
             Cluster.Client
                 .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
@@ -69,53 +69,53 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
             {
                 v.ChainId.ShouldBe(chainId);
-                v.AppId.ShouldBe(clientId);
+                v.AppId.ShouldBe(appId);
                 v.Version.ShouldBe(version);
-                v.PushToken.ShouldBe(scanToken);
+                v.PushToken.ShouldBe(pushToken);
                 subscribedBlock.AddRange(v.Blocks);
            return Task.CompletedTask;
         });
 
-        await blockScanExecutorGrain.HandleBlockAsync(new BlockWithTransactionDto());
+        await blockPusherGrain.HandleBlockAsync(new BlockWithTransactionDto());
         subscribedBlock.Count.ShouldBe(0);
 
-        await blockScanExecutorGrain.HandleHistoricalBlockAsync();
+        await blockPusherGrain.HandleHistoricalBlockAsync();
         
         subscribedBlock.Count.ShouldBe(50);
         subscribedBlock.Count(o => o.Confirmed).ShouldBe(25);
 
-        var scanMode = await blockScanGrain.GetPushModeAsync();
-        scanMode.ShouldBe(BlockPushMode.NewBlock);
+        var pushMode = await pusherInfoGrain.GetPushModeAsync();
+        pushMode.ShouldBe(BlockPushMode.NewBlock);
         
-        await blockScanExecutorGrain.HandleHistoricalBlockAsync();
+        await blockPusherGrain.HandleHistoricalBlockAsync();
         subscribedBlock.Count.ShouldBe(50);
         
-        await blockScanExecutorGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
+        await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
-        await blockScanExecutorGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
+        await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
-        await blockScanExecutorGrain.HandleBlockAsync(_blockDataProvider.Blocks[49].First());
+        await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[49].First());
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
-        await blockScanExecutorGrain.HandleBlockAsync(_blockDataProvider.Blocks[51].First());
+        await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[51].First());
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
-        await blockScanExecutorGrain.HandleBlockAsync(_blockDataProvider.Blocks[53].First());
+        await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[53].First());
         subscribedBlock.Count.ShouldBe(61);
         subscribedBlock.Last().BlockHeight.ShouldBe(53);
     }
 
     [Fact]
-    public async Task Block_WrongVersion_Test()
+    public async Task Push_WrongVersion_Test()
     {
         var chainId = "AELF";
-        var clientId = "DApp";
+        var appId = "DApp";
 
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
@@ -123,7 +123,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
 
-        var clientGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -136,19 +136,18 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
                 }
             }
         };
-        var version = await clientGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription);
         
-        var scanToken = Guid.NewGuid().ToString("N");
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
-        await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version, chainId);
+        var pushToken = Guid.NewGuid().ToString("N");
+        await appGrain.StartAsync(version);
+        var id = GrainIdHelper.GenerateBlockPusherGrainId(appId, version, chainId);
 
-        var blockScanGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
-        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
+        var pusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
+        await pusherInfoGrain.InitializeAsync(appId, version, subscription.SubscriptionItems[0], pushToken);
 
-        var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
-        await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
-        var streamId = await blockScanGrain.GetMessageStreamIdAsync();
+        var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
+        await blockPusherGrain.InitializeAsync(pushToken, 21);
+        var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
         var stream =
             Cluster.Client
                 .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
@@ -158,34 +157,34 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
-            v.AppId.ShouldBe(clientId);
+            v.AppId.ShouldBe(appId);
             v.Version.ShouldBe(version);
-            v.PushToken.ShouldBe(scanToken);
+            v.PushToken.ShouldBe(pushToken);
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
 
-        await blockScanExecutorGrain.HandleBlockAsync(new BlockWithTransactionDto());
+        await blockPusherGrain.HandleBlockAsync(new BlockWithTransactionDto());
         subscribedBlock.Count.ShouldBe(0);
 
-        await clientGrain.StopAsync(version);
+        await appGrain.StopAsync(version);
         
-        await blockScanExecutorGrain.HandleHistoricalBlockAsync();
+        await blockPusherGrain.HandleHistoricalBlockAsync();
 
         subscribedBlock.Count.ShouldBe(0);
     }
 
     [Fact]
-    public async Task Block_MissingBlock_Test()
+    public async Task Push_MissingBlock_Test()
     {
         var chainId = "AELF";
-        var clientId = "DApp";
+        var appId = "DApp";
 
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync("BlockHash1000", 1000);
         await chainGrain.SetLatestConfirmedBlockAsync("BlockHash1000", 1000);
 
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -198,30 +197,30 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
                 }
             }
         };
-        var version = await scanAppGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription);
 
-        var scanToken = Guid.NewGuid().ToString("N");
-        await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version, chainId);
+        var pushToken = Guid.NewGuid().ToString("N");
+        await appGrain.StartAsync(version);
+        var id = GrainIdHelper.GenerateBlockPusherGrainId(appId, version, chainId);
 
-        var blockScanGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
-        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
+        var pusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
+        await pusherInfoGrain.InitializeAsync(appId, version, subscription.SubscriptionItems[0], pushToken);
         
-        var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
-        await blockScanExecutorGrain.InitializeAsync(scanToken, 200);
+        var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
+        await blockPusherGrain.InitializeAsync(pushToken, 200);
 
-        await Assert.ThrowsAsync<ApplicationException>(async () => await blockScanExecutorGrain.HandleHistoricalBlockAsync());
+        await Assert.ThrowsAsync<ApplicationException>(async () => await blockPusherGrain.HandleHistoricalBlockAsync());
 
-        await blockScanExecutorGrain.InitializeAsync(scanToken, 180);
-        await blockScanGrain.SetNewBlockStartHeightAsync(180);
+        await blockPusherGrain.InitializeAsync(pushToken, 180);
+        await pusherInfoGrain.SetNewBlockStartHeightAsync(180);
         
-        await Assert.ThrowsAsync<ApplicationException>(async () => await blockScanExecutorGrain.HandleBlockAsync(new BlockWithTransactionDto
+        await Assert.ThrowsAsync<ApplicationException>(async () => await blockPusherGrain.HandleBlockAsync(new BlockWithTransactionDto
         {
             BlockHash = "BlockHash200",
             BlockHeight = 200
         }));
         
-        await Assert.ThrowsAsync<ApplicationException>(async () => await blockScanExecutorGrain.HandleConfirmedBlockAsync(new BlockWithTransactionDto
+        await Assert.ThrowsAsync<ApplicationException>(async () => await blockPusherGrain.HandleConfirmedBlockAsync(new BlockWithTransactionDto
         {
             BlockHash = "BlockHash200",
             BlockHeight = 200
@@ -229,10 +228,10 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
     }
 
     [Fact]
-    public async Task OnlyConfirmedBlock_Test()
+    public async Task Push_OnlyConfirmedBlock_Test()
     {
         var chainId = "AELF";
-        var clientId = "DApp";
+        var appId = "DApp";
 
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
@@ -240,7 +239,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
 
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -253,19 +252,19 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
                 }
             }
         };
-        var version = await scanAppGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription);
         
-        var scanToken = Guid.NewGuid().ToString("N");
-        await scanAppGrain.StartAsync(version);
+        var pushToken = Guid.NewGuid().ToString("N");
+        await appGrain.StartAsync(version);
 
-        var id = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version, chainId);
+        var id = GrainIdHelper.GenerateBlockPusherGrainId(appId, version, chainId);
 
-        var blockScanGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
-        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
+        var pusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
+        await pusherInfoGrain.InitializeAsync(appId, version, subscription.SubscriptionItems[0], pushToken);
 
-        var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
-        await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
-        var streamId = await blockScanGrain.GetMessageStreamIdAsync();
+        var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
+        await blockPusherGrain.InitializeAsync(pushToken, 21);
+        var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
         var stream =
             Cluster.Client
                 .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
@@ -275,17 +274,17 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
-            v.AppId.ShouldBe(clientId);
+            v.AppId.ShouldBe(appId);
             v.Version.ShouldBe(version);
-            v.PushToken.ShouldBe(scanToken);
+            v.PushToken.ShouldBe(pushToken);
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
 
-        await blockScanExecutorGrain.HandleConfirmedBlockAsync(new BlockWithTransactionDto());
+        await blockPusherGrain.HandleConfirmedBlockAsync(new BlockWithTransactionDto());
         subscribedBlock.Count.ShouldBe(0);
 
-        await blockScanExecutorGrain.HandleHistoricalBlockAsync();
+        await blockPusherGrain.HandleHistoricalBlockAsync();
         
         subscribedBlock.Count.ShouldBe(25);
         var number = 21;
@@ -298,10 +297,10 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
     }
 
     [Fact]
-    public async Task ConfirmedBlockReceiveFirst_Test()
+    public async Task Push_ConfirmedBlockReceiveFirst_Test()
     {
         var chainId = "AELF";
-        var clientId = "DApp";
+        var appId = "DApp";
 
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
@@ -309,7 +308,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -322,18 +321,18 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
                 }
             }
         };
-        var version = await scanAppGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription);
         
-        var scanToken = Guid.NewGuid().ToString("N");
-        await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version, chainId);
+        var pushToken = Guid.NewGuid().ToString("N");
+        await appGrain.StartAsync(version);
+        var id = GrainIdHelper.GenerateBlockPusherGrainId(appId, version, chainId);
 
-        var blockScanGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
-        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
+        var pusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
+        await pusherInfoGrain.InitializeAsync(appId, version, subscription.SubscriptionItems[0], pushToken);
 
-        var scanGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
-        await scanGrain.InitializeAsync(scanToken, 21);
-        var streamId = await blockScanGrain.GetMessageStreamIdAsync();
+        var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
+        await blockPusherGrain.InitializeAsync(pushToken, 21);
+        var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
         var stream =
             Cluster.Client
                 .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
@@ -343,26 +342,26 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
-            v.AppId.ShouldBe(clientId);
+            v.AppId.ShouldBe(appId);
             v.Version.ShouldBe(version);
-            v.PushToken.ShouldBe(scanToken);
+            v.PushToken.ShouldBe(pushToken);
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
         
-        await scanGrain.HandleHistoricalBlockAsync();
+        await blockPusherGrain.HandleHistoricalBlockAsync();
         
         subscribedBlock.Count.ShouldBe(50);
         
-        await scanGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[46].First());
+        await blockPusherGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[46].First());
         subscribedBlock.Count.ShouldBe(50);
     }
 
     [Fact]
-    public async Task Block_WithFilter_Test()
+    public async Task Push_WithFilter_Test()
     {
         var chainId = "AELF";
-        var clientId = "DApp";
+        var appId = "DApp";
 
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash,
@@ -370,7 +369,7 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -391,19 +390,19 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
                 }
             }
         };
-        var version = await scanAppGrain.AddSubscriptionAsync(subscription);
-        await scanAppGrain.StartAsync(version);
+        var version = await appGrain.AddSubscriptionAsync(subscription);
+        await appGrain.StartAsync(version);
 
-        var scanToken = Guid.NewGuid().ToString("N");
-        await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version, chainId);
+        var pushToken = Guid.NewGuid().ToString("N");
+        await appGrain.StartAsync(version);
+        var id = GrainIdHelper.GenerateBlockPusherGrainId(appId, version, chainId);
 
-        var blockScanGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
-        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
+        var pusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
+        await pusherInfoGrain.InitializeAsync(appId, version, subscription.SubscriptionItems[0], pushToken);
 
-        var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
-        await blockScanExecutorGrain.InitializeAsync(scanToken, 21);
-        var streamId = await blockScanGrain.GetMessageStreamIdAsync();
+        var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
+        await blockPusherGrain.InitializeAsync(pushToken, 21);
+        var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
         var stream =
             Cluster.Client
                 .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
@@ -413,37 +412,37 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
-            v.AppId.ShouldBe(clientId);
+            v.AppId.ShouldBe(appId);
             v.Version.ShouldBe(version);
-            v.PushToken.ShouldBe(scanToken);
+            v.PushToken.ShouldBe(pushToken);
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
 
-        await blockScanExecutorGrain.HandleHistoricalBlockAsync();
+        await blockPusherGrain.HandleHistoricalBlockAsync();
         subscribedBlock.Count.ShouldBe(50);
         subscribedBlock.Last().BlockHeight.ShouldBe(45);
 
-        await blockScanExecutorGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
+        await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
 
-        await blockScanExecutorGrain.HandleConfirmedBlockAsync( _blockDataProvider.Blocks[50].First() );
-        subscribedBlock.Count.ShouldBe(60);
+        await blockPusherGrain.HandleConfirmedBlockAsync( _blockDataProvider.Blocks[50].First() );
+        subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
     }
 
     [Fact]
-    public async Task Block_BlockPushThreshold_Test()
+    public async Task BlockPushThreshold_Test()
     {
         var chainId = "AELF";
-        var clientId = "DApp";
+        var appId = "DApp";
         
         var chainGrain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -456,18 +455,18 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
                 }
             }
         };
-        var version = await scanAppGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription);
 
-        var scanToken = Guid.NewGuid().ToString("N");
-        await scanAppGrain.StartAsync(version);
-        var id = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version, chainId);
+        var pushToken = Guid.NewGuid().ToString("N");
+        await appGrain.StartAsync(version);
+        var id = GrainIdHelper.GenerateBlockPusherGrainId(appId, version, chainId);
 
-        var blockScanGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
-        await blockScanGrain.InitializeAsync(clientId, version, subscription.SubscriptionItems[0], scanToken);
+        var pusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id);
+        await pusherInfoGrain.InitializeAsync(appId, version, subscription.SubscriptionItems[0], pushToken);
 
-        var blockScanExecutorGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
-        await blockScanExecutorGrain.InitializeAsync(scanToken, 1);
-        var streamId = await blockScanGrain.GetMessageStreamIdAsync();
+        var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
+        await blockPusherGrain.InitializeAsync(pushToken, 1);
+        var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
         var stream =
             Cluster.Client
                 .GetStreamProvider(AElfIndexerApplicationConsts.MessageStreamName)
@@ -477,21 +476,21 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
         await stream.SubscribeAsync((v, t) =>
             {
                 v.ChainId.ShouldBe(chainId);
-                v.AppId.ShouldBe(clientId);
+                v.AppId.ShouldBe(appId);
                 v.Version.ShouldBe(version);
-                v.PushToken.ShouldBe(scanToken);
+                v.PushToken.ShouldBe(pushToken);
                 subscribedBlock.AddRange(v.Blocks);
            return Task.CompletedTask;
         });
-        
+
         var blockStateSetInfoGrain = Cluster.Client.GetGrain<IAppBlockStateSetStatusGrain>(
-            GrainIdHelper.GenerateGrainId("BlockStateSetInfo", clientId, chainId, version));
+            GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, version, chainId));
         await blockStateSetInfoGrain.SetBlockStateSetStatusAsync(new BlockStateSetStatus
         {
             LastIrreversibleBlockHeight = 0,
         });
         
-        await blockScanExecutorGrain.HandleHistoricalBlockAsync();
+        await blockPusherGrain.HandleHistoricalBlockAsync();
         subscribedBlock.Count.ShouldBe(80);
         
         await blockStateSetInfoGrain.SetBlockStateSetStatusAsync(new BlockStateSetStatus
@@ -499,15 +498,15 @@ public class BlockScanExecutorGrainTests : AElfIndexerGrainTestBase
             LastIrreversibleBlockHeight = 10,
         });
         
-        await blockScanExecutorGrain.HandleHistoricalBlockAsync();
+        await blockPusherGrain.HandleHistoricalBlockAsync();
         subscribedBlock.Count.ShouldBe(90);
         
-        await blockScanGrain.SetNewBlockStartHeightAsync(9);
+        await pusherInfoGrain.SetNewBlockStartHeightAsync(9);
         
-        await blockScanExecutorGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
+        await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(90);
         
-        await blockScanExecutorGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[50].First());
+        await blockPusherGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[50].First());
         subscribedBlock.Count.ShouldBe(90);
     }
 }
