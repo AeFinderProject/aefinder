@@ -28,7 +28,7 @@ public class AppGrain : Grain<AppState>, IAppGrain
             if (State.NewVersion != null)
             {
                 toRemoveSubscriptionId = GetSubscriptionId(State.NewVersion.Version);
-                await StopBlockScanAsync(toRemoveSubscriptionId, State.NewVersion.Version);
+                await StopBlockPushAsync(toRemoveSubscriptionId, State.NewVersion.Version);
             }
             State.NewVersion = new AppVersion
             {
@@ -130,7 +130,7 @@ public class AppGrain : Grain<AppState>, IAppGrain
         if (State.CurrentVersion != null)
         {
             toRemoveSubscriptionId = GetSubscriptionId(State.CurrentVersion.Version);
-            await StopBlockScanAsync(toRemoveSubscriptionId, State.CurrentVersion.Version);
+            await StopBlockPushAsync(toRemoveSubscriptionId, State.CurrentVersion.Version);
         }
 
         State.CurrentVersion = new AppVersion
@@ -179,7 +179,7 @@ public class AppGrain : Grain<AppState>, IAppGrain
         }
         
         var toRemoveSubscriptionId = GetSubscriptionId(version);;
-        await StopBlockScanAsync(toRemoveSubscriptionId, version);
+        await StopBlockPushAsync(toRemoveSubscriptionId, version);
 
         await WriteStateAsync();
         
@@ -201,7 +201,7 @@ public class AppGrain : Grain<AppState>, IAppGrain
         return GrainIdHelper.GenerateGetAppCodeGrainId(this.GetPrimaryKeyString(), version);
     }
     
-    private async Task StopBlockScanAsync(string subscriptionId, string version)
+    private async Task StopBlockPushAsync(string subscriptionId, string version)
     {
         var subscriptionGrain = GrainFactory.GetGrain<ISubscriptionGrain>(subscriptionId);
         var subscription = await subscriptionGrain.GetSubscriptionAsync();
