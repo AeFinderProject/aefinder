@@ -1,4 +1,5 @@
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.Grains.Grain.Subscriptions;
 using AElfIndexer.Grains.State.Subscriptions;
 
 namespace AElfIndexer.Grains.Grain.BlockPush;

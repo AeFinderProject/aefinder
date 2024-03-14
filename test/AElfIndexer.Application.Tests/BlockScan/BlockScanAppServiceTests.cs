@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.Apps;
 using AElfIndexer.Grains.Grain.BlockPush;
+using AElfIndexer.Grains.Grain.Subscriptions;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -65,7 +65,7 @@ public class BlockScanAppServiceTests : AElfIndexerApplicationOrleansTestBase
         scanIds[chainId].Count.ShouldBe(1);
         scanIds[chainId].ShouldContain(id1);
 
-        var scanAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var scanAppGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         var versionStatus = await scanAppGrain.GetSubscriptionStatusAsync(version1);
         versionStatus.ShouldBe(SubscriptionStatus.Started);
         

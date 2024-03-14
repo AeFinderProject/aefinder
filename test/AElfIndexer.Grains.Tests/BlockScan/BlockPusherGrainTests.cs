@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.Grain.Apps;
 using AElfIndexer.Grains.Grain.BlockPush;
 using AElfIndexer.Grains.Grain.BlockStates;
 using AElfIndexer.Grains.Grain.Chains;
+using AElfIndexer.Grains.Grain.Subscriptions;
 using AElfIndexer.Grains.State.Subscriptions;
 using Orleans.Streams;
 using Shouldly;
@@ -35,7 +35,7 @@ public class BlockPusherGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -123,7 +123,7 @@ public class BlockPusherGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
 
-        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -184,7 +184,7 @@ public class BlockPusherGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestBlockAsync("BlockHash1000", 1000);
         await chainGrain.SetLatestConfirmedBlockAsync("BlockHash1000", 1000);
 
-        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -239,7 +239,7 @@ public class BlockPusherGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
 
-        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -308,7 +308,7 @@ public class BlockPusherGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -369,7 +369,7 @@ public class BlockPusherGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash,
             _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()
@@ -442,7 +442,7 @@ public class BlockPusherGrainTests : AElfIndexerGrainTestBase
         await chainGrain.SetLatestBlockAsync(_blockDataProvider.Blocks[60].First().BlockHash, _blockDataProvider.Blocks[60].First().BlockHeight);
         await chainGrain.SetLatestConfirmedBlockAsync(_blockDataProvider.Blocks[50].First().BlockHash, _blockDataProvider.Blocks[50].First().BlockHeight);
         
-        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var subscription = new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>()

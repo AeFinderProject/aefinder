@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElfIndexer.Grains.Grain.BlockPush;
+using AElfIndexer.Grains.Grain.Subscriptions;
 using AElfIndexer.Grains.State.Subscriptions;
 using Shouldly;
 using Xunit;

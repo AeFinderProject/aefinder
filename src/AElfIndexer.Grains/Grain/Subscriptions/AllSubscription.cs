@@ -1,6 +1,4 @@
-using AElfIndexer.Grains.State.Subscriptions;
-
-namespace AElfIndexer.Grains.Grain.Apps;
+namespace AElfIndexer.Grains.Grain.Subscriptions;
 
 public class AllSubscription
 {

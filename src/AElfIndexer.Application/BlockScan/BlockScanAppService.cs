@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.Apps;
 using AElfIndexer.Grains.Grain.BlockPush;
 using AElfIndexer.Grains.Grain.BlockStates;
+using AElfIndexer.Grains.Grain.Subscriptions;
 using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -32,7 +32,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
             JsonSerializer.Serialize(dto));
 
         var subscription = ObjectMapper.Map<SubscriptionDto,SubscriptionManifest>(dto);
-        var client = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         var version = await client.AddSubscriptionAsync(subscription);
         return version;
     }
@@ -178,7 +178,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
     
     public async Task<List<Guid>> GetMessageStreamIdsAsync(string clientId, string version)
     {
-        var client = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         var subscription = await client.GetSubscriptionAsync(version);
         var streamIds = new List<Guid>();
         foreach (var subscriptionItem in subscription.SubscriptionItems)
@@ -196,7 +196,7 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
     {
         Logger.LogInformation("ScanApp: {clientId} start scan, version: {version}", clientId, version);
 
-        var client = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         var subscription = await client.GetSubscriptionAsync(version);
         var versionStatus = await client.GetSubscriptionStatusAsync(version);
         var scanToken = Guid.NewGuid().ToString("N");
@@ -235,20 +235,20 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
 
     public async Task UpgradeVersionAsync(string clientId)
     {
-        var client = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         await client.UpgradeVersionAsync();
     }
 
     public async Task<AllSubscriptionDto> GetSubscriptionAsync(string clientId)
     {
-        var clientGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         var allSubscription = await clientGrain.GetAllSubscriptionAsync();
         return ObjectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
     }
 
     public async Task PauseAsync(string clientId, string version)
     {
-        var client = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         var scanManager = _clusterClient.GetGrain<IBlockPusherManagerGrain>(0);
         var subscription = await client.GetSubscriptionAsync(version);
         await client.PauseAsync(version);
@@ -261,13 +261,13 @@ public class BlockScanAppService : AElfIndexerAppService, IBlockScanAppService
 
     public async Task StopAsync(string clientId, string version)
     {
-        var clientGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         await clientGrain.StopAsync(version);
     }
     
     public async Task<bool> IsRunningAsync(string chainId, string clientId, string version, string token)
     {
-        var clientGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
+        var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
         return await clientGrain.IsRunningAsync(version, chainId, token);
     }
 }

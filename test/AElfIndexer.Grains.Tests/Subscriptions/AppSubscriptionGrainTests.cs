@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AElfIndexer.Grains.Grain.Apps;
 using AElfIndexer.Grains.Grain.BlockPush;
-using AElfIndexer.Grains.State.Subscriptions;
+using AElfIndexer.Grains.Grain.Subscriptions;
 using Shouldly;
 using Xunit;
 
-namespace AElfIndexer.Grains.Apps;
+namespace AElfIndexer.Grains.Subscriptions;
 
 [Collection(ClusterCollection.Name)]
-public class AppGrainTests : AElfIndexerGrainTestBase
+public class AppSubscriptionGrainTests : AElfIndexerGrainTestBase
 {
     [Fact]
     public async Task App_Test()
@@ -30,7 +29,7 @@ public class AppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var version1 = await appGrain.AddSubscriptionAsync(subscriptionManifest1);
         
         await appGrain.UpgradeVersionAsync();
@@ -131,7 +130,7 @@ public class AppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var appGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var version1 = await appGrain.AddSubscriptionAsync(subscriptionManifest1);
         
         var subscription1 = await appGrain.GetSubscriptionAsync(version1);
@@ -202,7 +201,7 @@ public class AppGrainTests : AElfIndexerGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var scanAppGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionManifest);
         
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);

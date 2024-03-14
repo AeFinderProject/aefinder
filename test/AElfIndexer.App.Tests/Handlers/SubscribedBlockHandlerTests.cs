@@ -4,9 +4,9 @@ using AElfIndexer.App.BlockProcessing;
 using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Grains;
-using AElfIndexer.Grains.Grain.Apps;
 using AElfIndexer.Grains.Grain.BlockPush;
 using AElfIndexer.Grains.Grain.BlockStates;
+using AElfIndexer.Grains.Grain.Subscriptions;
 using AElfIndexer.Grains.State.Subscriptions;
 using Orleans;
 using Shouldly;
@@ -35,7 +35,7 @@ public class SubscribedBlockHandlerTests : AElfIndexerAppTestBase
     public async Task Handle_Test()
     {
         var chainId = "AELF";
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(_appInfoProvider.AppId));
+        var appGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(_appInfoProvider.AppId));
         
         var currentVersion = await appGrain.AddSubscriptionAsync(new SubscriptionManifest
         {
@@ -139,7 +139,7 @@ public class SubscribedBlockHandlerTests : AElfIndexerAppTestBase
     public async Task Handle_Block_Error_Test()
     {
         var chainId = "AELF";
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(_appInfoProvider.AppId));
+        var appGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(_appInfoProvider.AppId));
         
         var currentVersion = await appGrain.AddSubscriptionAsync(new SubscriptionManifest
         {
@@ -185,7 +185,7 @@ public class SubscribedBlockHandlerTests : AElfIndexerAppTestBase
     public async Task Handle_Block_HandleFailed_Test()
     {
         var chainId = "AELF";
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(_appInfoProvider.AppId));
+        var appGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(_appInfoProvider.AppId));
         
         var currentVersion = await appGrain.AddSubscriptionAsync(new SubscriptionManifest
         {

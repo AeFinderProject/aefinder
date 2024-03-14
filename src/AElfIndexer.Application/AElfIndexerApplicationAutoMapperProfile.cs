@@ -2,7 +2,7 @@ using AElfIndexer.Block.Dtos;
 using AElfIndexer.BlockScan;
 using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
-using AElfIndexer.Grains.Grain.Apps;
+using AElfIndexer.Grains.Grain.Subscriptions;
 using AElfIndexer.Grains.State.Subscriptions;
 using AutoMapper;
 using Volo.Abp.AutoMapper;

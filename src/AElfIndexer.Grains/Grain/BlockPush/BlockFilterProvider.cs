@@ -1,5 +1,6 @@
 using AElfIndexer.Block;
 using AElfIndexer.Block.Dtos;
+using AElfIndexer.Grains.Grain.Subscriptions;
 using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;

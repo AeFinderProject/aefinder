@@ -1,4 +1,4 @@
-namespace AElfIndexer.Grains.State.Subscriptions;
+namespace AElfIndexer.Grains.Grain.Subscriptions;
 
 public class SubscriptionManifest
 {
