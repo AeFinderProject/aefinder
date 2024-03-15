@@ -46,7 +46,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                     StartBlockNumber = 10000
                 }
             }
-        });
+        }, new byte[] { });
 
         var blockPusherInfoGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(
             GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, currentVersion, chainId));
@@ -150,7 +150,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                     StartBlockNumber = 100000
                 }
             }
-        });
+        }, new byte[] { });
 
         var blockPusherInfoGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(
             GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, currentVersion, chainId));
@@ -196,7 +196,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                     StartBlockNumber = 10000
                 }
             }
-        });
+        }, new byte[] { });
 
         var blockPusherInfoGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(
             GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, currentVersion, chainId));

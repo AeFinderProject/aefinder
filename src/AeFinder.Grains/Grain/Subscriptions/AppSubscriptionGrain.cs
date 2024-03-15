@@ -6,9 +6,11 @@ namespace AeFinder.Grains.Grain.Subscriptions;
 
 public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptionGrain
 {
-    public async Task<string> AddSubscriptionAsync(SubscriptionManifest subscriptionManifest)
+    public async Task<string> AddSubscriptionAsync(SubscriptionManifest subscriptionManifest, byte[] code)
     {
         var newVersion = Guid.NewGuid().ToString("N");
+
+        await UpdateCodeAsync(newVersion, code);
         
         State.SubscriptionInfos[newVersion] = new SubscriptionInfo
         {
@@ -80,6 +82,12 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
     {
         var codeId = GetAppCodeId(version);
         return await GrainFactory.GetGrain<IAppCodeGrain>(codeId).GetCodeAsync();
+    }
+    
+    public async Task UpdateCodeAsync(string version, byte[] code)
+    {
+        var codeId = GetAppCodeId(version);
+        await GrainFactory.GetGrain<IAppCodeGrain>(codeId).SetCodeAsync(code);
     }
 
     public async Task<bool> IsRunningAsync(string version, string chainId, string pushToken)

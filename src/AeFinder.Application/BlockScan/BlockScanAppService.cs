@@ -31,7 +31,8 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
 
         var subscription = ObjectMapper.Map<SubscriptionManifestDto,SubscriptionManifest>(manifestDto);
         var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(clientId));
-        var version = await client.AddSubscriptionAsync(subscription);
+        // TODO: Use the code from developer.
+        var version = await client.AddSubscriptionAsync(subscription, new byte[]{});
         return version;
     }
     

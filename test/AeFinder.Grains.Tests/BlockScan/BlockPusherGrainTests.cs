@@ -47,7 +47,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
         
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -135,7 +135,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
         
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -196,7 +196,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
 
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -251,7 +251,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
         
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -320,7 +320,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
         
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -389,7 +389,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
         await appGrain.StartAsync(version);
 
         var pushToken = Guid.NewGuid().ToString("N");
@@ -454,7 +454,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription);
+        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
 
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
