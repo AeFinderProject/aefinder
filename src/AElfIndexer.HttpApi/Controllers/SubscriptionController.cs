@@ -1,9 +1,7 @@
 using System.Threading.Tasks;
 using AElfIndexer.BlockScan;
-using AElfIndexer.Grains.State.Subscriptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Orleans;
 using Volo.Abp;
 
 namespace AElfIndexer.Controllers;
@@ -14,12 +12,10 @@ namespace AElfIndexer.Controllers;
 public class SubscriptionController : AElfIndexerController
 {
     private readonly IBlockScanAppService _blockScanAppService;
-    private readonly IClusterClient _clusterClient;
 
-    public SubscriptionController(IBlockScanAppService blockScanAppService, IClusterClient clusterClient)
+    public SubscriptionController(IBlockScanAppService blockScanAppService)
     {
         _blockScanAppService = blockScanAppService;
-        _clusterClient = clusterClient;
     }
     
     [HttpPost]

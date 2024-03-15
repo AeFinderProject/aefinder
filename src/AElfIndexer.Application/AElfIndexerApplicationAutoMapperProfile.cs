@@ -4,6 +4,7 @@ using AElfIndexer.Entities.Es;
 using AElfIndexer.Etos;
 using AElfIndexer.Grains.Grain.Subscriptions;
 using AElfIndexer.Grains.State.Subscriptions;
+using AElfIndexer.Studio;
 using AutoMapper;
 using Volo.Abp.AutoMapper;
 
@@ -39,5 +40,6 @@ public class AElfIndexerApplicationAutoMapperProfile:Profile
         
         CreateMap<AllSubscription, AllSubscriptionDto>();
         CreateMap<SubscriptionDetail, AllSubscriptionDetailDto>();
+        CreateMap<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>();
     }
 }
