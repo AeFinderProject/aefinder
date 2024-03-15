@@ -52,6 +52,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
+        // ConfigureEsIndexCreation();
         ConfigureConventionalControllers();
         ConfigureAuthentication(context, configuration);
         ConfigureLocalization();
@@ -76,6 +77,12 @@ public class AeFinderHttpApiHostModule : AbpModule
     {
         Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AeFinder:"; });
     }
+    
+    //Create the ElasticSearch Index & Initialize field cache based on Domain Entity
+    // private void ConfigureEsIndexCreation()
+    // {
+    //     Configure<CollectionCreateOptions>(x => { x.AddModule(typeof(AeFinderDomainModule)); });
+    // }
 
     private void ConfigureVirtualFileSystem(ServiceConfigurationContext context)
     {

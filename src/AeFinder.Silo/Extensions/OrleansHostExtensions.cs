@@ -8,7 +8,6 @@ using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
 using Orleans.Statistics;
-using Orleans.Streams.Kafka.Config;
 
 namespace AeFinder.Silo.Extensions;
 
@@ -119,24 +118,20 @@ public static class OrleansHostExtensions
                     options.CounterUpdateIntervalMs = configSection.GetValue<int>("DashboardCounterUpdateIntervalMs");
                 })
                 .UseLinuxEnvironmentStatistics()
-                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); })
-                .AddKafka(AeFinderApplicationConsts.MessageStreamName)
+                .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); });
+                /*.AddKafka(AeFinderApplicationConsts.MessageStreamName)
                 .WithOptions(options =>
                 {
                     options.BrokerList = configuration.GetSection("Kafka:Brokers").Get<List<string>>();
                     options.ConsumerGroupId = "AeFinder";
                     options.ConsumeMode = ConsumeMode.LastCommittedMessage;
                     options.AddTopic(AeFinderApplicationConsts.MessageStreamNamespace,
-                        new TopicCreationConfig
-                        {
-                            AutoCreate = true, 
-                            Partitions = configuration.GetSection("Kafka:Partitions").Get<int>(),
-                            ReplicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>()
-                        });
+                        new TopicCreationConfig { AutoCreate = true });
                     options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
                 })
-                .AddJson()
-                .AddLoggingTracker().Build();
+                .AddJson()*/
+                //.AddLoggingTracker()
+                //.Build();
         });
     }
 }

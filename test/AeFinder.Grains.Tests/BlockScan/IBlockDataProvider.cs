@@ -56,6 +56,8 @@ public class BlockDataProvider:IBlockDataProvider,ISingletonDependency
             Confirmed = confirmed,
             BlockTime = DateTime.UtcNow,
             PreviousBlockHash = previousHash,
+            TransactionIds = new List<string>{txId1,txId2},
+            LogEventCount = 3,
             Transactions = new List<TransactionDto>
             {
                 new TransactionDto

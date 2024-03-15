@@ -1,14 +1,17 @@
 using System;
 using AeFinder.Block;
 using AeFinder.Grains.BlockScan;
-using AeFinder.Grains.Grain.BlockScan;
-using AeFinder.Grains.Grain.Client;
+using AeFinder.Grains.Grain.BlockPush;
+using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Orleans.Hosting;
 using Orleans.TestingHost;
+using Volo.Abp.AutoMapper;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.ObjectMapping;
+using Volo.Abp.Reflection;
 
 namespace AeFinder.Grains;
 
@@ -37,20 +40,40 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     services.AddSingleton<IBlockAppService, MockBlockAppService>();
                     services.AddSingleton<IBlockDataProvider, BlockDataProvider>();
                     services.AddTransient<IBlockFilterProvider, BlockFilterProvider>();
-                    services.AddTransient<IBlockFilterProvider, TransactionFilterProvider>();
-                    services.AddTransient<IBlockFilterProvider, LogEventFilterProvider>();
-                    services.Configure<BlockScanOptions>(o =>
+                    services.Configure<BlockPushOptions>(o =>
                     {
                         o.BatchPushBlockCount = 10;
-                        o.ScanHistoryBlockThreshold = 5;
+                        o.PushHistoryBlockThreshold = 5;
                         o.BatchPushNewBlockCount = 2;
                         o.MaxHistoricalBlockPushThreshold = 30;
                         o.MaxNewBlockPushThreshold = 30;
                     });
-                    services.Configure<ClientOptions>(o =>
+                    services.AddAutoMapper(typeof(AeFinderApplicationModule).Assembly);
+                    services.OnExposing(onServiceExposingContext =>
                     {
-                        o.MaxCountPerBlockStateSetBucket = 5;
+                        //Register types for IObjectMapper<TSource, TDestination> if implements
+                        onServiceExposingContext.ExposedTypes.AddRange(
+                            ReflectionHelper.GetImplementedGenericTypes(
+                                onServiceExposingContext.ImplementationType,
+                                typeof(IObjectMapper<,>)
+                            )
+                        );
                     });
+                    services.AddTransient(
+                        typeof(IObjectMapper<>),
+                        typeof(DefaultObjectMapper<>)
+                    );
+                    services.AddTransient(
+                        typeof(IObjectMapper),
+                        typeof(DefaultObjectMapper)
+                    );
+                    services.AddTransient(typeof(IAutoObjectMappingProvider),
+                        typeof(AutoMapperAutoObjectMappingProvider));
+                    services.AddTransient(sp => new MapperAccessor()
+                    {
+                        Mapper = sp.GetRequiredService<IMapper>()
+                    });
+                    services.AddTransient<IMapperAccessor>(provider => provider.GetRequiredService<MapperAccessor>());
                 })
                 .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
@@ -63,4 +86,9 @@ public class ClusterFixture:IDisposable,ISingletonDependency
         public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) => clientBuilder
             .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName);
     }
+}
+
+public class MapperAccessor : IMapperAccessor
+{
+    public IMapper Mapper { get; set; }
 }

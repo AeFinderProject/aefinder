@@ -3,7 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Block;
 using AeFinder.Block.Dtos;
-using AeFinder.Grains.Grain.BlockScan;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Chains;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -12,7 +13,7 @@ using Orleans;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
-namespace AeFinder.EntityEventHandler.Core;
+namespace AeFinder.EntityEventHandler;
 
 public interface IBlockIndexHandler
 {
@@ -45,20 +46,18 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
             var chainGrain = _clusterClient.GetGrain<IChainGrain>(block.ChainId);
             await chainGrain.SetLatestBlockAsync(block.BlockHash, block.BlockHeight);
             
-            var clientManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
-            var clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync(block.ChainId);
-            var tasks = clientIds.Select(async clientId =>
+            var clientManagerGrain = _clusterClient.GetGrain<IBlockPusherManagerGrain>(GrainIdHelper.GenerateBlockPusherManagerGrainId());
+            var ids = await clientManagerGrain.GetBlockPusherIdsByChainAsync(block.ChainId);
+            var tasks = ids.Select(async id =>
             {
-                var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(clientId);
-                var clientInfo = await clientGrain.GetClientInfoAsync();
-                var subscriptionInfo = await clientGrain.GetSubscriptionInfoAsync();
-                if (clientInfo.ScanModeInfo.ScanMode == ScanMode.NewBlock &&
-                    clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= block.BlockHeight &&
-                    !subscriptionInfo.OnlyConfirmedBlock)
+                var clientGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(id);
+                if (await clientGrain.IsPushBlockAsync(block.BlockHeight,false))
                 {
-                    Logger.LogDebug($"HandleNewBlock: {block.ChainId} Client: {clientId} BlockHeight: {block.BlockHeight} BlockHash: {block.BlockHash}");
-                    var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(clientId);
-                    await blockScanGrain.HandleNewBlockAsync(block);
+                    Logger.LogDebug(
+                        "HandleBlock: {ChainId} Client: {id} BlockHeight: {BlockHeight} BlockHash: {BlockHash}",
+                        block.ChainId, id, block.BlockHeight, block.BlockHash);
+                    var blockPusherGrain = _clusterClient.GetGrain<IBlockPusherGrain>(id);
+                    await blockPusherGrain.HandleBlockAsync(block);
                 }
             });
 
@@ -66,7 +65,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
         }
         catch (Exception e)
         {
-            Logger.LogError(e,$"Process new block failed.");
+            Logger.LogError(e,"Process new block failed.");
             throw;
         }
     }
@@ -81,6 +80,9 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
             var chainStatus = await chainGrain.GetChainStatusAsync();
             if (chainStatus.ConfirmedBlockHeight >= confirmBlock.BlockHeight)
             {
+                Logger.LogDebug(
+                    "Drop old block, ChainId: {chainId} ConfirmedBlockHeight: {ConfirmedBlockHeight} BlockHeight: {BlockHeight}",
+                    chainId, chainStatus.ConfirmedBlockHeight, confirmBlock.BlockHeight);
                 return;
             }
 
@@ -102,7 +104,8 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                     if (count != end - start + 1)
                     {
                         Logger.LogWarning(
-                            $"Wrong confirmed block count, ChainId: {chainId} StartBlockHeight: {start} EndBlockHeight: {end} Count: {count}");
+                            "Wrong confirmed block count, ChainId: {chainId} StartBlockHeight: {start} EndBlockHeight: {end} Count: {count}",
+                            chainId, start, end, count);
                         return;
                     }
 
@@ -119,26 +122,25 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
                         EndBlockHeight = end
                     });
 
-                    await chainGrain.SetLatestConfirmBlockAsync(blocks[0].BlockHash, blocks[0].BlockHeight);
+                    await chainGrain.SetLatestConfirmedBlockAsync(blocks[0].BlockHash, blocks[0].BlockHeight);
 
                     start = end + 1;
                     end = Math.Min(confirmBlock.BlockHeight - 1, start + MaxRequestBlockCount - 1);
                 }
             }
 
-            await chainGrain.SetLatestConfirmBlockAsync(confirmBlock.BlockHash, confirmBlock.BlockHeight);
+            await chainGrain.SetLatestConfirmedBlockAsync(confirmBlock.BlockHash, confirmBlock.BlockHeight);
 
-            var clientManagerGrain = _clusterClient.GetGrain<IBlockScanManagerGrain>(0);
-            var clientIds = await clientManagerGrain.GetBlockScanIdsByChainAsync(chainId);
-            var tasks = clientIds.Select(async clientId =>
+            var clientManagerGrain = _clusterClient.GetGrain<IBlockPusherManagerGrain>(GrainIdHelper.GenerateBlockPusherManagerGrainId());
+            var ids = await clientManagerGrain.GetBlockPusherIdsByChainAsync(chainId);
+            var tasks = ids.Select(async id =>
             {
-                var clientGrain = _clusterClient.GetGrain<IBlockScanInfoGrain>(clientId);
-                var clientInfo = await clientGrain.GetClientInfoAsync();
-                if (clientInfo.ScanModeInfo.ScanMode == ScanMode.NewBlock &&
-                    clientInfo.ScanModeInfo.ScanNewBlockStartHeight <= confirmBlock.BlockHeight)
+                var clientGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(id);
+                if (await clientGrain.IsPushBlockAsync(confirmBlock.BlockHeight,true))
                 {
-                    Logger.LogDebug($"HandleConfirmedBlock: {chainId} Client: {clientId} BlockHeight: {confirmBlock.BlockHeight}");
-                    var blockScanGrain = _clusterClient.GetGrain<IBlockScanGrain>(clientId);
+                    Logger.LogDebug("HandleConfirmedBlock: {chainId} Client: {id} BlockHeight: {BlockHeight}", chainId,
+                        id, confirmBlock.BlockHeight);
+                    var blockScanGrain = _clusterClient.GetGrain<IBlockPusherGrain>(id);
                     await blockScanGrain.HandleConfirmedBlockAsync(confirmBlock);
                 }
             });
@@ -147,7 +149,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
         }
         catch (Exception e)
         {
-            Logger.LogError(e,$"Process Confirmed block failed.");
+            Logger.LogError(e,"Process Confirmed block failed.");
             throw;
         }
     }

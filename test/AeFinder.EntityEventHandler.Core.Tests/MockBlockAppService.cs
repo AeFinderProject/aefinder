@@ -2,7 +2,7 @@ using AeFinder.Block;
 using AeFinder.Block.Dtos;
 using Volo.Abp.DependencyInjection;
 
-namespace AeFinder.EntityEventHandler.Core.Tests;
+namespace AeFinder.EntityEventHandler;
 
 public class MockBlockAppService : IBlockAppService, ISingletonDependency
 {
@@ -38,6 +38,11 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
     }
 
     public Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<TransactionDto>> GetSubscriptionTransactionsAsync(GetSubscriptionTransactionsInput input)
     {
         throw new NotImplementedException();
     }

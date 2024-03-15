@@ -2,51 +2,50 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AeFinder.BlockChainEventHandler.Core.DTOs;
-using AeFinder.BlockChainEventHandler.Core.Providers;
+using AeFinder.BlockChainEventHandler.DTOs;
+using AeFinder.BlockChainEventHandler.Providers;
+using AeFinder.BlockSync;
 using AeFinder.Etos;
 using AeFinder.Grains.EventData;
 using AElf.Contracts.Consensus.AEDPoS;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Orleans;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
 
-namespace AeFinder.BlockChainEventHandler.Core.Processors;
+namespace AeFinder.BlockChainEventHandler.Processors;
 
 public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDataEto>, ITransientDependency
 {
-    private readonly IClusterClient _clusterClient;
     private readonly ILogger<BlockChainDataEventHandler> _logger;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
     private readonly IBlockGrainProvider _blockGrainProvider;
-    private readonly BlockChainEventHandlerOptions _blockChainEventHandlerOptions;
+    private readonly IBlockSyncAppService _blockSyncAppService;
 
     public BlockChainDataEventHandler(
-        IClusterClient clusterClient,
         ILogger<BlockChainDataEventHandler> logger,
         IObjectMapper objectMapper,
         IBlockGrainProvider blockGrainProvider,
-        IOptionsSnapshot<BlockChainEventHandlerOptions> blockChainEventHandlerOptions,
-        IDistributedEventBus distributedEventBus)
+        IDistributedEventBus distributedEventBus, IBlockSyncAppService blockSyncAppService)
     {
-        _clusterClient = clusterClient;
         _logger = logger;
         _distributedEventBus = distributedEventBus;
+        _blockSyncAppService = blockSyncAppService;
         _objectMapper = objectMapper;
-        _blockChainEventHandlerOptions = blockChainEventHandlerOptions.Value;
         _blockGrainProvider = blockGrainProvider;
     }
 
     public async Task HandleEventAsync(BlockChainDataEto eventData)
     {
+        var lastBlockHeight = eventData.Blocks.Last().BlockHeight;
+        var syncMode = await _blockSyncAppService.GetBlockSyncModeAsync(eventData.ChainId, lastBlockHeight);
+
         _logger.LogInformation(
-            $"Received BlockChainDataEto form {eventData.ChainId}, start block: {eventData.Blocks.First().BlockHeight}, end block: {eventData.Blocks.Last().BlockHeight},");
+            "Received BlockChainDataEto form {ChainId}, start block: {StartBlockHeight}, end block: {EndBlockHeight}, sync mode: {SyncMode}",
+            eventData.ChainId, eventData.Blocks.First().BlockHeight, lastBlockHeight, syncMode);
 
         //prepare data
         List<Task<NewBlockTaskEntity>> prepareDataTaskList = new List<Task<NewBlockTaskEntity>>();
@@ -76,9 +75,11 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
 
         if (libBlockList != null)
         {
-            // _logger.LogInformation("newBlockEtos count: " + newBlockEtos.Count);
-            await _distributedEventBus.PublishAsync(new NewBlocksEto()
-                { NewBlocks = newBlockEtos });
+            if (syncMode == BlockSyncMode.NormalMode)
+            {
+                await _distributedEventBus.PublishAsync(new NewBlocksEto()
+                    { NewBlocks = newBlockEtos });
+            }
 
             if (libBlockList.Count > 0)
             {

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using AeFinder.Entities.Es;
-using Transaction = AeFinder.Entities.Es.Transaction;
 
 namespace AeFinder;
 

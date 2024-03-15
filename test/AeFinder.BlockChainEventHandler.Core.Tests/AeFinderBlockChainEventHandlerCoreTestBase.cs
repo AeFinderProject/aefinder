@@ -1,6 +1,6 @@
 using AeFinder.Orleans.TestBase;
 
-namespace AeFinder.BlockChainEventHandler.Core.Tests;
+namespace AeFinder.BlockChainEventHandler;
 
 public abstract class AeFinderBlockChainEventHandlerCoreTestBase:AeFinderOrleansTestBase<AeFinderBlockChainEventHandlerCoreTestModule>
 {
