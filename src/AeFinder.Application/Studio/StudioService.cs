@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
@@ -12,6 +13,7 @@ using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 using System.Text.Json;
 using AeFinder.BlockScan;
+using AeFinder.CodeOps;
 using AeFinder.Option;
 using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
@@ -25,13 +27,18 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 {
     private readonly IClusterClient _clusterClient;
     private readonly StudioOption _studioOption;
+    private readonly IBlockScanAppService _blockScanAppService;
+    private readonly ICodeAuditor _codeAuditor;
     private readonly ILogger<StudioService> _logger;
 
-    public StudioService(IClusterClient clusterClient, ILogger<StudioService> logger, IObjectMapper objectMapper, IOptionsSnapshot<StudioOption> studioOption)
+    public StudioService(IClusterClient clusterClient, ILogger<StudioService> logger, IObjectMapper objectMapper, IOptionsSnapshot<StudioOption> studioOption,
+        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _objectMapper = objectMapper;
+        _blockScanAppService = blockScanAppService;
+        _codeAuditor = codeAuditor;
         _studioOption = studioOption.Value;
     }
 
@@ -39,7 +46,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
     public async Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppName(ApplyAeFinderAppNameInput appNameInput)
     {
-        var userId = CurrentUser.GetId().ToString();
+        var userId = CurrentUser.GetId().ToString("N");
         _logger.LogInformation("receive request ApplyAeFinderAppName: adminId= {0} input= {1}", userId, JsonSerializer.Serialize(appNameInput));
 
         if (!IsAdminOf(userId, appNameInput.AppId))
@@ -63,7 +70,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
     public async Task<AddOrUpdateAeFinderAppDto> UpdateAeFinderApp(AddOrUpdateAeFinderAppInput input)
     {
-        var userId = CurrentUser.GetId().ToString();
+        var userId = CurrentUser.GetId().ToString("N");
         _logger.LogInformation("receive request UpdateAeFinderApp: adminId= {0} input= {1}", userId, JsonSerializer.Serialize(input));
         if (!IsAdminOf(userId, input.AppId))
         {
@@ -83,27 +90,30 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
     public async Task<AeFinderAppInfoDto> GetAeFinderApp(GetAeFinderAppInfoInput input)
     {
-        var userId = CurrentUser.GetId().ToString();
-        _logger.LogInformation("receive request GetAeFinderApp: adminId= {0} input= {1}", userId, JsonSerializer.Serialize(input));
-        var notAdmin = !IsAdminOf(userId, input.AppId);
-        if (notAdmin)
-        {
-            var nameGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderNameGrainId(input.AppId));
-            if (!await nameGrain.IsDeveloper(userId))
-            {
-                _logger.LogError("GetAeFinderApp: {0} auth failed {1}", CurrentUser.GetId(), input.AppId);
-                throw new UserFriendlyException("You are not developer of this app.");
-            }
-        }
-
+        _logger.LogInformation("receive request GetAeFinderApp: adminId= {0} input= {1}", CurrentUser.GetId().ToString("N"), JsonSerializer.Serialize(input));
+        AuthDeveloper(input.AppId);
         var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderNameGrainId(input.AppId));
         var info = await userAppGrain.GetAppByName(input.Name);
         return info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info);
     }
 
+    private async void AuthDeveloper(string appId)
+    {
+        var userId = CurrentUser.GetId().ToString("N");
+        if (!IsAdminOf(userId, appId))
+        {
+            var nameGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderNameGrainId(appId));
+            if (!await nameGrain.IsDeveloper(userId))
+            {
+                _logger.LogError("GetAeFinderApp: {0} auth failed {1}", CurrentUser.GetId(), appId);
+                throw new UserFriendlyException("You are not developer of this app.");
+            }
+        }
+    }
+
     public async Task<AddDeveloperToAppDto> AddDeveloperToApp(AddDeveloperToAppInput input)
     {
-        var adminId = CurrentUser.GetId().ToString();
+        var adminId = CurrentUser.GetId().ToString("N");
         _logger.LogInformation("receive request UpdateAeFinderApp: adminId= {0} input= {1}", adminId, JsonSerializer.Serialize(input));
         if (!IsAdminOf(adminId, input.AppId))
         {
@@ -124,7 +134,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
     public async Task<List<AeFinderAppInfo>> GetAeFinderAppList()
     {
-        var apps = await _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(CurrentUser.GetId().ToString())).GetApps();
+        var apps = await _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(CurrentUser.GetId().ToString("N"))).GetApps();
         var resonse = new List<AeFinderAppInfo>();
         if (!apps.IsNullOrEmpty())
         {
@@ -141,7 +151,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return resonse;
     }
 
-    public Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input)
+    public async Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input)
     {
         var subscriptionManifestDto = JsonSerializer.Deserialize<SubscriptionManifestDto>(input.SubscriptionManifest);
         if (subscriptionManifestDto == null || subscriptionManifestDto.SubscriptionItems.IsNullOrEmpty())
@@ -149,8 +159,18 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
             throw new UserFriendlyException("Invalid subscription manifest.");
         }
 
-        //todo finish this
-        return Task.FromResult("reere");
+        AuthDeveloper(input.AppId);
+        _codeAuditor.Audit(input.AppDll);
+        var version = await _blockScanAppService.AddSubscriptionAsync(input.AppId, subscriptionManifestDto, input.AppDll);
+        return version;
+    }
+
+    public Task DeploySubscriptionInfoAsync(string appId, string version)
+    {
+        AuthDeveloper(appId);
+        //todo deploy app dll to k8s
+        return Task.CompletedTask;
+        // return _blockScanAppService.DeploySubscriptionAsync(appId, version);
     }
 
     private async Task AddToUsersApps(List<string> userIds, string appId, AeFinderAppInfo info)

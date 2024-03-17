@@ -6,7 +6,8 @@ namespace AeFinder.BlockScan;
 
 public interface IBlockScanAppService
 {
-    Task<string> AddSubscriptionAsync(string clientId, SubscriptionManifestDto manifestDto);
+    Task<string> AddSubscriptionAsync(string clientId, SubscriptionManifestDto manifestDto, byte[] dll= null);
+
     //Task UpdateSubscriptionInfoAsync(string clientId, string version, List<SubscriptionInfo> subscriptionInfos);
     Task<List<Guid>> GetMessageStreamIdsAsync(string clientId, string version);
     Task StartScanAsync(string clientId, string version);

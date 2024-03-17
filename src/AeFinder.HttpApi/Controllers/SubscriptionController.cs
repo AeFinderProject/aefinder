@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using AeFinder.BlockScan;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Orleans;
 using Volo.Abp;
 
 namespace AeFinder.Controllers;
@@ -13,14 +12,12 @@ namespace AeFinder.Controllers;
 public class SubscriptionController : AeFinderController
 {
     private readonly IBlockScanAppService _blockScanAppService;
-    private readonly IClusterClient _clusterClient;
 
-    public SubscriptionController(IBlockScanAppService blockScanAppService, IClusterClient clusterClient)
+    public SubscriptionController(IBlockScanAppService blockScanAppService)
     {
         _blockScanAppService = blockScanAppService;
-        _clusterClient = clusterClient;
     }
-    
+
     [HttpPost]
     [Authorize]
     public virtual Task<string> SubmitSubscriptionInfoAsync(SubscriptionManifestDto input)

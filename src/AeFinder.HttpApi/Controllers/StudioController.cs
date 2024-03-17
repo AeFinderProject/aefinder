@@ -56,8 +56,15 @@ public class StudioController : AeFinderController
 
     [HttpPost]
     [Authorize]
-    public virtual Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input)
+    public Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input)
     {
         return _studioService.SubmitSubscriptionInfoAsync(input);
     }
+
+    [HttpGet]
+    [Authorize]
+    public Task DeploySubscriptionInfoAsync(string appId, string version)
+    {
+        return _studioService.DeploySubscriptionInfoAsync(appId,version);
+    } 
 }
