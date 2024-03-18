@@ -6,7 +6,7 @@ namespace AeFinder.Grains.Grain.Apps;
 
 public class AppGrain : Grain<AppGrainState>, IAppGrain
 {
-    public async Task<ExistDto> Registe(string adminId, string appId, string name)
+    public async Task<ExistDto> Register(string adminId, string appId, string name)
     {
         if (string.IsNullOrWhiteSpace(State.AdminId))
         {
@@ -62,5 +62,10 @@ public class AppGrain : Grain<AppGrainState>, IAppGrain
     public Task<AeFinderAppInfo> GetAppByName(string appName)
     {
         return Task.FromResult(State.NameToApps.TryGetValue(appName, out var app) ? app : null);
+    }
+
+    public async Task<bool> IsAdmin(string adminId)
+    {
+        return !adminId.IsNullOrEmpty() && State.AdminId.IsNullOrEmpty() && adminId.Equals(State.AdminId);
     }
 }
