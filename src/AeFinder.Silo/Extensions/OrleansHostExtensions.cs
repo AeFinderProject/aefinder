@@ -105,6 +105,11 @@ public static class OrleansHostExtensions
                     options.ClusterId = configSection.GetValue<string>("ClusterId");
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
                 })
+                .Configure<SiloMessagingOptions>(options =>
+                {
+                    options.ResponseTimeout = TimeSpan.FromSeconds(configSection.GetValue<int>("GrainResponseTimeOut"));
+                    options.MaxMessageBodySize = configSection.GetValue<int>("GrainMaxMessageBodySize");
+                })
                 //.AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
                 .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
