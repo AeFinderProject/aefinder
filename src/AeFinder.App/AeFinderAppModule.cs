@@ -1,11 +1,16 @@
+using System.Reflection;
+using System.Runtime.Loader;
 using AeFinder.App.BlockChain;
 using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
 using AeFinder.App.OperationLimits;
 using AeFinder.App.Repositories;
 using AeFinder.BlockScan;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Subscriptions;
 using AElf.EntityMapping.Elasticsearch;
 using AeFinder.Sdk;
+using AElf.EntityMapping.Elasticsearch.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NUglify.Helpers;
@@ -66,10 +71,35 @@ public class AeFinderAppModule : AbpModule
         var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
         if (appInfoOptions.ClientType == ClientType.Full)
         {
+            AsyncHelper.RunSync(async () => await CreateIndexAsync(context.ServiceProvider, appInfoOptions.AppId, appInfoOptions.Version));
             AsyncHelper.RunSync(async () => await InitBlockScanAsync(context, appInfoOptions.AppId, appInfoOptions.Version));
         }
     }
+    private async Task CreateIndexAsync(IServiceProvider serviceProvider, string appId, string version)
+    {
+        var clusterClient = serviceProvider.GetRequiredService<IClusterClient>();
+        var code = await clusterClient
+            .GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId)).GetCodeAsync(version);
+        var assembly = AssemblyLoadContext.Default.LoadFromStream(new MemoryStream(code));
+        var types = GetTypesAssignableFrom<IAeFinderEntity>(assembly);
+        var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
+        foreach (var t in types)
+        {
+            var indexName = $"{appId}-{version}.{t.Name}".ToLower();
+            //TODO Need to confirm shard and numberOfReplicas
+            await elasticIndexService.CreateIndexAsync(indexName, t, 5,1);
+        }
+    }
     
+    private List<Type> GetTypesAssignableFrom<T>(Assembly assembly)
+    {
+        var compareType = typeof(T);
+        return assembly.DefinedTypes
+            .Where(type => compareType.IsAssignableFrom(type) && !compareType.IsAssignableFrom(type.BaseType) &&
+                           !type.IsAbstract && type.IsClass && compareType != type)
+            .Cast<Type>().ToList();
+    }
+
     private async Task InitBlockScanAsync(ApplicationInitializationContext context, string appId, string version)
     {
         var blockScanService = context.ServiceProvider.GetRequiredService<IBlockScanAppService>();

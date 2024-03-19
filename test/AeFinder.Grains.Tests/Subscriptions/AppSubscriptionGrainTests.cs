@@ -29,7 +29,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
             }
         };
         
-        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var version1 = await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { });
         
         await appGrain.UpgradeVersionAsync();
@@ -130,7 +130,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
             }
         };
         
-        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var version1 = await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { });
         
         var subscription1 = await appGrain.GetSubscriptionAsync(version1);
@@ -201,7 +201,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
             }
         };
         
-        var scanAppGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var scanAppGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionManifest, new byte[] { });
         
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);

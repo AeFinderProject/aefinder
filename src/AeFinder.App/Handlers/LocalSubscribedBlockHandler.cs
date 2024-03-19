@@ -11,16 +11,19 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IProcessingStatusProvider _processingStatusProvider;
     private readonly IBlockAttachService _blockAttachService;
+    private readonly IVersionUpgradeProvider _versionUpgradeProvider;
     private readonly ILogger<LocalSubscribedBlockHandler> _logger;
 
     public LocalSubscribedBlockHandler(ILogger<LocalSubscribedBlockHandler> logger,
         IBlockScanAppService blockScanAppService,
-        IProcessingStatusProvider processingStatusProvider, IBlockAttachService blockAttachService)
+        IProcessingStatusProvider processingStatusProvider, IBlockAttachService blockAttachService,
+        IVersionUpgradeProvider versionUpgradeProvider)
     {
         _logger = logger;
         _blockScanAppService = blockScanAppService;
         _processingStatusProvider = processingStatusProvider;
         _blockAttachService = blockAttachService;
+        _versionUpgradeProvider = versionUpgradeProvider;
     }
 
     public async Task HandleEventAsync(SubscribedBlockDto subscribedBlock)
@@ -53,6 +56,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         try
         {
             await _blockAttachService.AttachBlocksAsync(subscribedBlock.ChainId, subscribedBlock.Blocks);
+            await _versionUpgradeProvider.UpgradeAsync();
         }
         catch (AppProcessingException e)
         {

@@ -65,7 +65,7 @@ public class Startup
         
         var client = OrleansClusterClientFactory.GetClusterClient(_configuration);
         await client.Connect();
-        var appSubscriptionGrain = client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appSubscriptionGrain = client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         return await appSubscriptionGrain.GetCodeAsync(version);
     }
 }
