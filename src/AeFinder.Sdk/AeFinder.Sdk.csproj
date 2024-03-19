@@ -24,4 +24,10 @@
       <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
     </ItemGroup>
 
+
+
+
+
+
+
 </Project>

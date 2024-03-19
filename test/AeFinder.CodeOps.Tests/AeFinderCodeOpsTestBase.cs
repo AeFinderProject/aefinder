@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using AeFinder.Entities;
-using AeFinder.Sdk;
+using AeFinder.Sdk.Entities;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;

@@ -1,12 +1,15 @@
 using AeFinder.Sdk;
 using GraphQL;
 using TokenApp.Entities;
+using Volo.Abp.ObjectMapping;
 
 namespace TokenApp.GraphQL;
 
 public class TokenAppQuery
 {
-    public static async Task<List<Account>> Account([FromServices] IReadOnlyRepository<Account> repository,
+    public static async Task<List<AccountDto>> Account(
+        [FromServices] IReadOnlyRepository<Account> repository,
+        [FromServices] IObjectMapper objectMapper,
         GetAccountInput input)
     {
         var queryable = await repository.GetQueryableAsync();
@@ -22,7 +25,9 @@ public class TokenAppQuery
         {
             queryable = queryable.Where(a => a.Symbol == input.Symbol);
         }
+        
+        var accounts= queryable.ToList();
 
-        return queryable.ToList();
+        return objectMapper.Map<List<Account>, List<AccountDto>>(accounts);
     }
 }

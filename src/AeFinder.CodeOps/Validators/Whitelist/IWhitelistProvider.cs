@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using AElf.Types;
-using AeFinder.Sdk;
+using AeFinder.Sdk.Entities;
 using GraphQL;
 using Nest;
 using Volo.Abp.DependencyInjection;

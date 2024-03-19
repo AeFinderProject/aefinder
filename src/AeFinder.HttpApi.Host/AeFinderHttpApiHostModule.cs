@@ -1,7 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -52,7 +54,6 @@ public class AeFinderHttpApiHostModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
-        // ConfigureEsIndexCreation();
         ConfigureConventionalControllers();
         ConfigureAuthentication(context, configuration);
         ConfigureLocalization();
@@ -62,10 +63,6 @@ public class AeFinderHttpApiHostModule : AbpModule
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
         ConfigureOrleans(context, configuration);
-        // context.Services.AddGraphQL(b => b
-        //     .AddAutoClrMappings()
-        //     .AddSystemTextJson()
-        //     .AddErrorInfoProvider(e => e.ExposeExceptionDetails = true));
         
         Configure<AbpAuditingOptions>(options =>
         {
@@ -77,12 +74,6 @@ public class AeFinderHttpApiHostModule : AbpModule
     {
         Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AeFinder:"; });
     }
-    
-    //Create the ElasticSearch Index & Initialize field cache based on Domain Entity
-    // private void ConfigureEsIndexCreation()
-    // {
-    //     Configure<CollectionCreateOptions>(x => { x.AddModule(typeof(AeFinderDomainModule)); });
-    // }
 
     private void ConfigureVirtualFileSystem(ServiceConfigurationContext context)
     {
@@ -175,11 +166,6 @@ public class AeFinderHttpApiHostModule : AbpModule
         {
             return new ClientBuilder()
                 .ConfigureDefaults()
-                // .UseRedisClustering(opt =>
-                // {
-                //     opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
-                //     opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
-                // })
                 .UseMongoDBClient(configuration["Orleans:MongoDBClient"])
                 .UseMongoDBClustering(options =>
                 {
@@ -313,7 +299,6 @@ public class AeFinderHttpApiHostModule : AbpModule
         var client = serviceProvider.GetRequiredService<IClusterClient>();
         AsyncHelper.RunSync(async ()=> await client.Connect());
     }
-
     private static void StopOrleans(IServiceProvider serviceProvider)
     {
         var client = serviceProvider.GetRequiredService<IClusterClient>();

@@ -61,7 +61,7 @@ public class AeFinderJsonFormatter : ITextFormatter
       output);
     
     output.Write(',');
-    JsonValueFormatter.WriteQuotedJsonString(_appIdKey, output);
+    JsonValueFormatter.WriteQuotedJsonString("appId", output);
     output.Write(':');
     if (logEvent.Properties.TryGetValue(_appIdKey, out var appId))
     {
@@ -73,7 +73,7 @@ public class AeFinderJsonFormatter : ITextFormatter
     }
     
     output.Write(',');
-    JsonValueFormatter.WriteQuotedJsonString(_versionKey, output);
+    JsonValueFormatter.WriteQuotedJsonString("version", output);
     output.Write(':');
     if (logEvent.Properties.TryGetValue(_versionKey, out var version))
     {

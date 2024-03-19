@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using AElf.EntityMapping.Repositories;
-using AeFinder.Sdk;
+using AeFinder.Sdk.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace AeFinder.App.BlockState;

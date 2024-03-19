@@ -1,5 +1,6 @@
 using AElf.EntityMapping.Repositories;
 using AeFinder.Sdk;
+using AeFinder.Sdk.Entities;
 
 namespace AeFinder.App.Repositories;
 

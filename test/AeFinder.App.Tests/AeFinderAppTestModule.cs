@@ -8,7 +8,7 @@ using AeFinder.App.BlockState;
 using AeFinder.App.MockApp;
 using AeFinder.App.OperationLimits;
 using AeFinder.Orleans.TestBase;
-using AeFinder.Sdk;
+using AeFinder.Sdk.Entities;
 using AeFinder.Sdk.Processor;
 using AElf.EntityMapping.Elasticsearch;
 using AElf.EntityMapping.Elasticsearch.Services;

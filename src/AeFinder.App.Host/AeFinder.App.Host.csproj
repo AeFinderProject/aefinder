@@ -23,5 +23,9 @@
         <ProjectReference Include="..\AeFinder.App\AeFinder.App.csproj" />
         <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Logs\" />
+    </ItemGroup>
     
 </Project>

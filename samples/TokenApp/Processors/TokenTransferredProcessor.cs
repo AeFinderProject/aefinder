@@ -1,5 +1,4 @@
 using AElf.Contracts.MultiToken;
-using AeFinder.Sdk;
 using AeFinder.Sdk.Logging;
 using AeFinder.Sdk.Processor;
 using TokenApp.Entities;

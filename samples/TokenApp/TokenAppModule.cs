@@ -1,5 +1,4 @@
-﻿using AeFinder.Sdk;
-using AeFinder.Sdk.Processor;
+﻿using AeFinder.Sdk.Processor;
 using GraphQL.Types;
 using Microsoft.Extensions.DependencyInjection;
 using TokenApp.GraphQL;

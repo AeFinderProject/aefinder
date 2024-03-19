@@ -1,4 +1,4 @@
-using AeFinder.Sdk;
+using AeFinder.Sdk.Entities;
 using Microsoft.Extensions.Options;
 using Volo.Abp.DependencyInjection;
 

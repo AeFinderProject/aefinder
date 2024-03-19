@@ -1,5 +1,6 @@
 using AeFinder.Block.Dtos;
-using AeFinder.Sdk;
+using AeFinder.Sdk.Dtos;
+using AeFinder.Sdk.Entities;
 using AeFinder.Sdk.Processor;
 using AutoMapper;
 
@@ -14,5 +15,8 @@ public class AeFinderAppAutoMapperProfile:Profile
         CreateMap<TransactionDto, Transaction>();
         CreateMap<LogEventDto, LogEvent>();
         CreateMap<BlockWithTransactionDto, BlockMetadata>();
+        
+        CreateMap<Metadata, MetadataDto>();
+        CreateMap<BlockMetadata, BlockMetadataDto>();
     }
 }
