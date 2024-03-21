@@ -4,6 +4,16 @@ namespace AeFinder.Kubernetes.ResourceDefinition;
 
 public class ConfigMapHelper
 {
+    public static string GetAppSettingConfigMapName(string appId, string version, string clientType)
+    {
+        return $"appsettings-config-{appId}-{version}-{clientType}";
+    }
+
+    public static string GetAppFileBeatConfigMapName(string appId, string version, string clientType)
+    {
+        return $"filebeat-config-{appId}-{version}-{clientType}";
+    }
+
     /// <summary>
     /// Create appsettings.json configmap resource definition
     /// </summary>

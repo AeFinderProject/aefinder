@@ -1,4 +1,5 @@
-﻿using k8s;
+﻿using AeFinder.Kubernetes.Manager;
+using k8s;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Volo.Abp.Modularity;
@@ -17,5 +18,6 @@ public class AeFinderKubernetesModule: AbpModule
             var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(options.KubeConfigPath);
             return new k8s.Kubernetes(config);
         });
+        context.Services.AddSingleton<IKubernetesAppManager, KubernetesAppManager>();
     }
 }

@@ -4,6 +4,11 @@ namespace AeFinder.Kubernetes.ResourceDefinition;
 
 public class IngressHelper
 {
+    public static string GetAppIngressName(string appId, string version)
+    {
+        return $"ingress-{appId}-{version}";
+    }
+    
     public static V1Ingress CreateAppIngressDefinition(string ingressName, 
         string hostName, string rulePath, string serviceName, int port = 80)
     {

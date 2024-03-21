@@ -1,0 +1,25 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /app/Logs/*.log
+
+setup.template.settings:
+  index.number_of_shards: 5
+  index.number_of_replicas: 1
+
+setup.template.name: "aefinder-app-[AppId]-[ClientType]-log-index"
+setup.template.pattern: "aefinder-app-[AppId]-[ClientType]-log-index-*"
+
+output.elasticsearch:
+  hosts: ["192.168.0.1:9200", "192.168.0.2:9200", "192.168.0.3:9200"]
+  index: "aefinder-app-[AppId]--[ClientType]-log-index-%{[agent.version]}-%{+yyyy.MM.dd}"
+  # username: "your_username"
+  # password: "your_password"
+
+setup.ilm.enabled: auto
+setup.ilm.rollover_alias: "aefinder-app-[AppId]--[ClientType]-log-index"
+setup.ilm.pattern: "{now/d}-000001"
+
+setup.template.enabled: false
+setup.ilm.overwrite: false

@@ -4,6 +4,11 @@ namespace AeFinder.Kubernetes.ResourceDefinition;
 
 public class DeploymentHelper
 {
+    public static string GetAppDeploymentName(string appId, string version, string clientType)
+    {
+        return $"deployment-{appId}-{version}-{clientType}";
+    }
+
     public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string imageName, string deploymentName,
         int replicasCount, string containerName, string configMapName,string sideCarConfigMapName)
     {

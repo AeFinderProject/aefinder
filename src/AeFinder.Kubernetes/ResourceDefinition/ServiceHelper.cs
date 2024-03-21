@@ -4,6 +4,12 @@ namespace AeFinder.Kubernetes.ResourceDefinition;
 
 public class ServiceHelper
 {
+
+    public static string GetAppServiceName(string appId, string version)
+    {
+        return $"service-{appId}-{version}";
+    }
+    
     public static V1Service CreateAppClusterIPServiceDefinition(string serviceName, 
         string deploymentName, int targetPort, int port = 80)
     {
