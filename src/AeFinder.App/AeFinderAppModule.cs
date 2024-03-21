@@ -11,6 +11,7 @@ using AeFinder.Grains.Grain.Subscriptions;
 using AElf.EntityMapping.Elasticsearch;
 using AeFinder.Sdk;
 using AeFinder.Sdk.Entities;
+using AElf.EntityMapping.Elasticsearch.Options;
 using AElf.EntityMapping.Elasticsearch.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -73,34 +74,26 @@ public class AeFinderAppModule : AbpModule
         if (appInfoOptions.ClientType == ClientType.Full)
         {
             AsyncHelper.RunSync(async () => await CreateIndexAsync(context.ServiceProvider, appInfoOptions.AppId, appInfoOptions.Version));
-            //AsyncHelper.RunSync(async () => await InitBlockScanAsync(context, appInfoOptions.AppId, appInfoOptions.Version));
+            AsyncHelper.RunSync(async () => await InitBlockPushAsync(context, appInfoOptions.AppId, appInfoOptions.Version));
         }
     }
+
     private async Task CreateIndexAsync(IServiceProvider serviceProvider, string appId, string version)
     {
-        try
+        var esOptions = serviceProvider.GetRequiredService<IOptionsSnapshot<ElasticsearchOptions>>().Value;
+        var clusterClient = serviceProvider.GetRequiredService<IClusterClient>();
+        var code = await clusterClient
+            .GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId)).GetCodeAsync(version);
+        var assembly = AssemblyLoadContext.Default.LoadFromStream(new MemoryStream(code));
+        var types = GetTypesAssignableFrom<IAeFinderEntity>(assembly);
+        var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
+        foreach (var t in types)
         {
-            var clusterClient = serviceProvider.GetRequiredService<IClusterClient>();
-            var code = await clusterClient
-                .GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId)).GetCodeAsync(version);
-            var assembly = AssemblyLoadContext.Default.LoadFromStream(new MemoryStream(code));
-            var types = GetTypesAssignableFrom<IAeFinderEntity>(assembly);
-            var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
-            foreach (var t in types)
-            {
-                var indexName = $"{appId}-{version}.{t.Name}".ToLower();
-                //TODO Need to confirm shard and numberOfReplicas
-                await elasticIndexService.CreateIndexAsync(indexName, t, 5,1);
-            }
+            var indexName = $"{appId}-{version}.{t.Name}".ToLower();
+            await elasticIndexService.CreateIndexAsync(indexName, t, esOptions.NumberOfShards, esOptions.NumberOfReplicas);
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-        
     }
-    
+
     private List<Type> GetTypesAssignableFrom<T>(Assembly assembly)
     {
         var compareType = typeof(T);
@@ -110,7 +103,7 @@ public class AeFinderAppModule : AbpModule
             .Cast<Type>().ToList();
     }
 
-    private async Task InitBlockScanAsync(ApplicationInitializationContext context, string appId, string version)
+    private async Task InitBlockPushAsync(ApplicationInitializationContext context, string appId, string version)
     {
         var blockScanService = context.ServiceProvider.GetRequiredService<IBlockScanAppService>();
         var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
