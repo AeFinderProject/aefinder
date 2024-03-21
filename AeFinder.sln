@@ -73,6 +73,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{7AD5
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenApp", "samples\TokenApp\TokenApp.csproj", "{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.Kubernetes", "src\AeFinder.Kubernetes\AeFinder.Kubernetes.csproj", "{6BA8CDC3-664C-4C17-8CBA-D6B2A7C37B4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -207,6 +209,10 @@ Global
 		{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6BA8CDC3-664C-4C17-8CBA-D6B2A7C37B4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6BA8CDC3-664C-4C17-8CBA-D6B2A7C37B4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6BA8CDC3-664C-4C17-8CBA-D6B2A7C37B4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6BA8CDC3-664C-4C17-8CBA-D6B2A7C37B4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -244,6 +250,7 @@ Global
 		{5392C9FC-7EA9-4364-B2E5-2B3D0676AE2F} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{DE3E0B07-F585-4204-9BC0-EDF571F9FFE8} = {04DBDB01-70F4-4E06-B468-8F87850B22BE}
 		{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43} = {7AD57916-6546-4CC5-B6F1-F7AEAA526DE3}
+		{6BA8CDC3-664C-4C17-8CBA-D6B2A7C37B4E} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {28315BFD-90E7-4E14-A2EA-F3D23AF4126F}
