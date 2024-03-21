@@ -45,10 +45,11 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 continue;
             }
 
+            var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, block.BlockHash);
             var previousBlockStateSet =
                 await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, block.PreviousBlockHash);
             if (currentBlockStateSetCount != 0 && previousBlockStateSet == null &&
-                block.PreviousBlockHash != Hash.Empty.ToHex())
+                block.PreviousBlockHash != Hash.Empty.ToHex() && blockStateSet == null)
             {
                 _logger.LogWarning(
                     "Previous block {PreviousBlockHash} not found. BlockHeight: {BlockHeight}, BlockHash: {BlockHash}.",
@@ -77,7 +78,6 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 }
             }
 
-            var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, block.BlockHash);
             if (blockStateSet == null)
             {
                 blockStateSet = new BlockStateSet

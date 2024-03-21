@@ -328,7 +328,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
         {
             query = query.And(transactionQuery.Or(logEventQuery));
         }
-        else
+        else if (transactionQuery != null || logEventQuery != null)
         {
             query = query.And(transactionQuery ?? logEventQuery);
         }
