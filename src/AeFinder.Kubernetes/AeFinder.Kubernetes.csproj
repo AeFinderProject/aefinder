@@ -11,4 +11,15 @@
       <PackageReference Include="Volo.Abp.Core" Version="7.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="AppConfigTemplate\appsettings-template.json" />
+      <Content Include="AppConfigTemplate\appsettings-template.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="AppConfigTemplate\filebeat-template.yml" />
+      <Content Include="AppConfigTemplate\filebeat-template.yml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>

@@ -73,7 +73,8 @@ public class KubernetesAppManager:IKubernetesAppManager
     private async Task<string> CreateQueryClientTypeAppPod(string appId, string version, string imageName)
     {
         //Create query app appsetting config map
-        string configMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeQuery);
+        string configMapName =
+            ConfigMapHelper.GetAppSettingConfigMapName(appId, version, KubernetesConstants.AppClientTypeQuery);
         string appSettingsContent = File.ReadAllText(KubernetesConstants.AppSettingTemplateFilePath);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderAppId, appId);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderVersion, version);
@@ -155,20 +156,84 @@ public class KubernetesAppManager:IKubernetesAppManager
     public async Task DestroyAppPodAsync(string appId, string version)
     {
         //Delete full app deployment
+        string fullTypeAppDeploymentName =
+            DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeFull);
+        var deployments = await _k8sClient.ListNamespacedDeploymentAsync(KubernetesConstants.AppNameSpace);
+        bool fullTypeAppDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullTypeAppDeploymentName);
+        if (fullTypeAppDeploymentExists)
+        {
+            // Delete the existing Deployment
+            await _k8sClient.DeleteNamespacedDeploymentAsync(
+                fullTypeAppDeploymentName,
+                KubernetesConstants.AppNameSpace
+            );
+        }
         
         //Delete full app appsetting config map
+        string fullTypeAppConfigMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeFull);
+        var configMaps = await _k8sClient.ListNamespacedConfigMapAsync(KubernetesConstants.AppNameSpace);
+        bool fullTypeAppConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == fullTypeAppConfigMapName);
+        if (fullTypeAppConfigMapExists)
+        {
+            await _k8sClient.DeleteNamespacedConfigMapAsync(fullTypeAppConfigMapName, KubernetesConstants.AppNameSpace);
+        }
         
         //Delete full app filebeat config map
-        
+        string fullTypeAppSideCarConfigName =
+            ConfigMapHelper.GetAppFileBeatConfigMapName(appId, version, KubernetesConstants.AppClientTypeFull);
+        bool fullTypeAppSideCarConfigExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == fullTypeAppSideCarConfigName);
+        if (fullTypeAppSideCarConfigExists)
+        {
+            await _k8sClient.DeleteNamespacedConfigMapAsync(fullTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
+        }
         
         //Delete query app deployment
+        string queryTypeAppDeploymentName =
+            DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeQuery);
+        bool queryTypeAppDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == queryTypeAppDeploymentName);
+        if (queryTypeAppDeploymentExists)
+        {
+            // Delete the existing Deployment
+            await _k8sClient.DeleteNamespacedDeploymentAsync(
+                queryTypeAppDeploymentName,
+                KubernetesConstants.AppNameSpace
+            );
+        }
 
         //Delete query app appsetting config map
+        string queryTypeAppConfigMapName =
+            ConfigMapHelper.GetAppSettingConfigMapName(appId, version, KubernetesConstants.AppClientTypeQuery);
+        bool queryTypeAppConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == queryTypeAppConfigMapName);
+        if (queryTypeAppConfigMapExists)
+        {
+            await _k8sClient.DeleteNamespacedConfigMapAsync(queryTypeAppConfigMapName, KubernetesConstants.AppNameSpace);
+        }
         
         //Delete query app filebeat config map
+        string queryTypeAppSideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeQuery);
+        bool queryTypeAppSideCarConfigExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == queryTypeAppSideCarConfigName);
+        if (queryTypeAppSideCarConfigExists)
+        {
+            await _k8sClient.DeleteNamespacedConfigMapAsync(queryTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
+        }
         
         //Delete query app service
+        string serviceName = ServiceHelper.GetAppServiceName(appId, version);
+        var services = await _k8sClient.ListNamespacedServiceAsync(KubernetesConstants.AppNameSpace);
+        bool sericeExists = services.Items.Any(item => item.Metadata.Name == serviceName);
+        if (sericeExists)
+        {
+            await _k8sClient.DeleteNamespacedServiceAsync(serviceName, KubernetesConstants.AppNameSpace);
+        }
         
         //Delete query app ingress
+        string ingressName = IngressHelper.GetAppIngressName(appId, version);
+        var ingresses = await _k8sClient.ListNamespacedIngressAsync(KubernetesConstants.AppNameSpace);
+        bool ingressExists = ingresses.Items.Any(item => item.Metadata.Name == ingressName);
+        if (ingressExists)
+        {
+            await _k8sClient.DeleteNamespacedIngressAsync(ingressName, KubernetesConstants.AppNameSpace);
+        }
+        
     }
 }
