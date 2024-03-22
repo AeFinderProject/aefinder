@@ -1,5 +1,6 @@
 using AeFinder.BlockSync;
 using AeFinder.Grains;
+using AeFinder.Option;
 using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,6 @@ public class AeFinderApplicationModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<ApiOptions>(configuration.GetSection("Api"));
         Configure<BlockSyncOptions>(configuration.GetSection("BlockSync"));
+        Configure<StudioOption>(configuration.GetSection("StudioOption"));
     }
 }
-
