@@ -1,5 +1,6 @@
 using AeFinder.Kubernetes.ResourceDefinition;
 using k8s;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace AeFinder.Kubernetes.Manager;
@@ -8,12 +9,16 @@ public class KubernetesAppManager:IKubernetesAppManager
 {
     private readonly k8s.Kubernetes _k8sClient;
     private readonly KubernetesOptions _kubernetesOptions;
-    public KubernetesAppManager(k8s.Kubernetes k8sClient,IOptionsSnapshot<KubernetesOptions> kubernetesOptions)
+    private readonly ILogger<KubernetesAppManager> _logger;
+
+    public KubernetesAppManager(ILogger<KubernetesAppManager> logger, k8s.Kubernetes k8sClient,
+        IOptionsSnapshot<KubernetesOptions> kubernetesOptions)
     {
+        _logger = logger;
         _k8sClient = k8sClient;
         _kubernetesOptions = kubernetesOptions.Value;
     }
-    
+
     public async Task<string> CreateNewAppPodAsync(string appId, string version, string imageName)
     {
         await CreateFullClientTypeAppPod(appId, version, imageName);
@@ -38,6 +43,7 @@ public class KubernetesAppManager:IKubernetesAppManager
                 ConfigMapHelper.CreateAppSettingConfigMapDefinition(configMapName, appSettingsContent);
             // Submit the ConfigMap to the cluster
             await _k8sClient.CreateNamespacedConfigMapAsync(configMap,KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]ConfigMap {configMapName} created", configMapName);
         }
         //Create full app filebeat config map
         string sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeFull);
@@ -52,6 +58,7 @@ public class KubernetesAppManager:IKubernetesAppManager
                 ConfigMapHelper.CreateFileBeatConfigMapDefinition(sideCarConfigName, sideCarConfigContent);
             // Submit the ConfigMap to the cluster
             await _k8sClient.CreateNamespacedConfigMapAsync(sideCarConfigMap,KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]ConfigMap {sideCarConfigName} created", sideCarConfigName);
         }
         //Create full app deployment
         string deploymentName =
@@ -67,6 +74,7 @@ public class KubernetesAppManager:IKubernetesAppManager
                 deploymentName, replicasCount, containerName, configMapName, sideCarConfigName);
             // Create Deployment
             await _k8sClient.CreateNamespacedDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);
         }
     }
 
@@ -88,6 +96,7 @@ public class KubernetesAppManager:IKubernetesAppManager
                 ConfigMapHelper.CreateAppSettingConfigMapDefinition(configMapName, appSettingsContent);
             // Submit the ConfigMap to the cluster
             await _k8sClient.CreateNamespacedConfigMapAsync(configMap,KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]ConfigMap {configMapName} created", configMapName);
         }
         
         //Create query app filebeat config map
@@ -103,6 +112,7 @@ public class KubernetesAppManager:IKubernetesAppManager
                 ConfigMapHelper.CreateFileBeatConfigMapDefinition(sideCarConfigName, sideCarConfigContent);
             // Submit the ConfigMap to the cluster
             await _k8sClient.CreateNamespacedConfigMapAsync(sideCarConfigMap,KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]ConfigMap {sideCarConfigName} created", sideCarConfigName);
         }
         
         //Create query app deployment
@@ -119,6 +129,7 @@ public class KubernetesAppManager:IKubernetesAppManager
                 deploymentName, replicasCount, containerName, configMapName, sideCarConfigName);
             // Create Deployment
             await _k8sClient.CreateNamespacedDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);
         }
         
         //Create query app service
@@ -132,6 +143,7 @@ public class KubernetesAppManager:IKubernetesAppManager
                 ServiceHelper.CreateAppClusterIPServiceDefinition(serviceName, deploymentName, targetPort);
             // Create Service
             await _k8sClient.CreateNamespacedServiceAsync(service, KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]Service {serviceName} created", serviceName);
         }
         
         //Create query app ingress
@@ -148,6 +160,7 @@ public class KubernetesAppManager:IKubernetesAppManager
                     rulePath, serviceName, targetPort);
             // Submit the Ingress to the cluster
             await _k8sClient.CreateNamespacedIngressAsync(ingress, KubernetesConstants.AppNameSpace); 
+            _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} created", ingressName);
         }
 
         return hostName + rulePath;
@@ -167,6 +180,7 @@ public class KubernetesAppManager:IKubernetesAppManager
                 fullTypeAppDeploymentName,
                 KubernetesConstants.AppNameSpace
             );
+            _logger.LogInformation("[KubernetesAppManager]Deployment {fullTypeAppDeploymentName} deleted.", fullTypeAppDeploymentName);
         }
         
         //Delete full app appsetting config map
@@ -176,6 +190,7 @@ public class KubernetesAppManager:IKubernetesAppManager
         if (fullTypeAppConfigMapExists)
         {
             await _k8sClient.DeleteNamespacedConfigMapAsync(fullTypeAppConfigMapName, KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]ConfigMap {fullTypeAppConfigMapName} deleted.", fullTypeAppConfigMapName);
         }
         
         //Delete full app filebeat config map
@@ -185,6 +200,7 @@ public class KubernetesAppManager:IKubernetesAppManager
         if (fullTypeAppSideCarConfigExists)
         {
             await _k8sClient.DeleteNamespacedConfigMapAsync(fullTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]ConfigMap {fullTypeAppSideCarConfigName} deleted.", fullTypeAppSideCarConfigName);
         }
         
         //Delete query app deployment
@@ -198,6 +214,7 @@ public class KubernetesAppManager:IKubernetesAppManager
                 queryTypeAppDeploymentName,
                 KubernetesConstants.AppNameSpace
             );
+            _logger.LogInformation("[KubernetesAppManager]Deployment {queryTypeAppDeploymentName} deleted.", queryTypeAppDeploymentName);
         }
 
         //Delete query app appsetting config map
@@ -207,6 +224,7 @@ public class KubernetesAppManager:IKubernetesAppManager
         if (queryTypeAppConfigMapExists)
         {
             await _k8sClient.DeleteNamespacedConfigMapAsync(queryTypeAppConfigMapName, KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]ConfigMap {queryTypeAppConfigMapName} deleted.", queryTypeAppConfigMapName);
         }
         
         //Delete query app filebeat config map
@@ -215,6 +233,7 @@ public class KubernetesAppManager:IKubernetesAppManager
         if (queryTypeAppSideCarConfigExists)
         {
             await _k8sClient.DeleteNamespacedConfigMapAsync(queryTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]ConfigMap {queryTypeAppSideCarConfigName} deleted.", queryTypeAppSideCarConfigName);
         }
         
         //Delete query app service
@@ -224,6 +243,7 @@ public class KubernetesAppManager:IKubernetesAppManager
         if (sericeExists)
         {
             await _k8sClient.DeleteNamespacedServiceAsync(serviceName, KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]Service {serviceName} deleted.", serviceName);
         }
         
         //Delete query app ingress
@@ -233,6 +253,7 @@ public class KubernetesAppManager:IKubernetesAppManager
         if (ingressExists)
         {
             await _k8sClient.DeleteNamespacedIngressAsync(ingressName, KubernetesConstants.AppNameSpace);
+            _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} deleted.", ingressName);
         }
         
     }
