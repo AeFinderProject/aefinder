@@ -60,4 +60,17 @@ public class StudioController : AeFinderController
     {
         return _studioService.SubmitSubscriptionInfoAsync(input);
     }
+    // [HttpPost("query")]
+    // [Authorize]
+    // public Task<string> QueryAeFinderApp(QueryAeFinderAppInput input)
+    // {
+    //     return _studioService.QueryAeFinderApp(input);
+    // }
+    //
+    // [HttpPost("logs")]
+    // [Authorize]
+    // public Task<string> QueryAeFinderAppLogs()
+    // {
+    //     return;
+    // }
 }
