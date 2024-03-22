@@ -3,6 +3,12 @@ filebeat.inputs:
     enabled: true
     paths:
       - /app/Logs/*.log
+    processors:
+      - add_kubernetes_metadata:
+          in_cluster: true
+          matchers:
+            - logs_path:
+                logs_path: "/app/Logs/"
 
 setup.template.settings:
   index.number_of_shards: 5
