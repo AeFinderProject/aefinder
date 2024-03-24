@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenIddict.Abstractions;
 using StackExchange.Redis;
 using Volo.Abp;
 using Volo.Abp.Account;
@@ -44,7 +45,7 @@ namespace AeFinder;
     typeof(AbpAspNetCoreMvcUiLeptonXLiteThemeModule),
     typeof(AeFinderMongoDbModule),
     typeof(AbpAspNetCoreSerilogModule)
-    )]
+)]
 public class AeFinderAuthServerModule : AbpModule
 {
     public override void PreConfigureServices(ServiceConfigurationContext context)
@@ -56,6 +57,28 @@ public class AeFinderAuthServerModule : AbpModule
             {
                 options.UseAspNetCore().DisableTransportSecurityRequirement();
                 options.SetIssuer(new Uri(configuration["AuthServer:IssuerUri"]));
+                options.SetAuthorizationEndpointUris("connect/authorize")
+                    .SetLogoutEndpointUris("connect/logout")
+                    .SetTokenEndpointUris("connect/token")
+                    .SetUserinfoEndpointUris("connect/userinfo")
+                    .SetVerificationEndpointUris("connect/verify");
+                options.AllowAuthorizationCodeFlow()
+                    .AllowHybridFlow()
+                    .AllowClientCredentialsFlow()
+                    .AllowRefreshTokenFlow();
+                options.RegisterScopes(OpenIddictConstants.Permissions.Scopes.Email,
+                    OpenIddictConstants.Permissions.Scopes.Profile,
+                    OpenIddictConstants.Permissions.Scopes.Roles,
+                    "dataEventRecords");
+                options.AddDevelopmentEncryptionCertificate()
+                    .AddDevelopmentSigningCertificate();
+
+                options.UseAspNetCore()
+                    .EnableAuthorizationEndpointPassthrough()
+                    .EnableLogoutEndpointPassthrough()
+                    .EnableTokenEndpointPassthrough()
+                    .EnableUserinfoEndpointPassthrough()
+                    .EnableStatusCodePagesIntegration();
             });
             builder.AddValidation(options =>
             {
@@ -105,18 +128,15 @@ public class AeFinderAuthServerModule : AbpModule
         {
             options.StyleBundles.Configure(
                 LeptonXLiteThemeBundles.Styles.Global,
-                bundle =>
-                {
-                    bundle.AddFiles("/global-styles.css");
-                }
+                bundle => { bundle.AddFiles("/global-styles.css"); }
             );
         });
 
         Configure<AbpAuditingOptions>(options =>
         {
-                //options.IsEnabledForGetRequests = true;
-                options.ApplicationName = "AuthServer";
-                options.IsEnabled = false;//Disables the auditing system
+            //options.IsEnabledForGetRequests = true;
+            options.ApplicationName = "AuthServer";
+            options.IsEnabled = false; //Disables the auditing system
         });
 
         if (hostingEnvironment.IsDevelopment())
@@ -137,15 +157,9 @@ public class AeFinderAuthServerModule : AbpModule
             options.Applications["Angular"].Urls[AccountUrlNames.PasswordReset] = "account/reset-password";
         });
 
-        Configure<AbpBackgroundJobOptions>(options =>
-        {
-            options.IsJobExecutionEnabled = false;
-        });
+        Configure<AbpBackgroundJobOptions>(options => { options.IsJobExecutionEnabled = false; });
 
-        Configure<AbpDistributedCacheOptions>(options =>
-        {
-            options.KeyPrefix = "AeFinder:";
-        });
+        Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AeFinder:"; });
 
         var dataProtectionBuilder = context.Services.AddDataProtection().SetApplicationName("AeFinder");
         if (!hostingEnvironment.IsDevelopment())
@@ -153,7 +167,7 @@ public class AeFinderAuthServerModule : AbpModule
             var redis = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]);
             dataProtectionBuilder.PersistKeysToStackExchangeRedis(redis, "AeFinder-Protection-Keys");
         }
-        
+
         context.Services.AddSingleton<IDistributedLockProvider>(sp =>
         {
             var connection = ConnectionMultiplexer
@@ -203,8 +217,10 @@ public class AeFinderAuthServerModule : AbpModule
         app.UseRouting();
         app.UseCors();
         app.UseAuthentication();
+        app.UseAuthorization();
+        app.UseSession();
         app.UseAbpOpenIddictValidation();
-       
+
         if (MultiTenancyConsts.IsEnabled)
         {
             app.UseMultiTenancy();
@@ -215,5 +231,11 @@ public class AeFinderAuthServerModule : AbpModule
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints();
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+            endpoints.MapDefaultControllerRoute();
+            endpoints.MapRazorPages();
+        });
     }
 }
