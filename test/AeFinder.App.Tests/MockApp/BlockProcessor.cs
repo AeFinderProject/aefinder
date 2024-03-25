@@ -15,7 +15,7 @@ public class BlockProcessor : BlockProcessorBase, ITransientDependency
         _objectMapper = objectMapper;
     }
 
-    public override async Task ProcessAsync(Sdk.Processor.Block block)
+    public override async Task ProcessAsync(Sdk.Processor.Block block, BlockContext context)
     {
         if (block.BlockHeight == 100000)
         {

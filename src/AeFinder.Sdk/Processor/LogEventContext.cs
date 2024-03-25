@@ -17,6 +17,10 @@ public class TransactionContext : ContextBase
     public LightBlock Block { get; set; } 
 }
 
+public class BlockContext : ContextBase
+{
+}
+
 public class LightBlock
 {
     public string BlockHash { get; set; } 
