@@ -4,6 +4,7 @@ using System.Linq;
 using AeFinder.Localization;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
+using AeFinder.OpenIddict;
 using Localization.Resources.AbpUi;
 using Medallion.Threading;
 using Medallion.Threading.Redis;
@@ -29,6 +30,7 @@ using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.DistributedLocking;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
+using Volo.Abp.OpenIddict.ExtensionGrantTypes;
 using Volo.Abp.UI.Navigation.Urls;
 using Volo.Abp.VirtualFileSystem;
 
@@ -44,7 +46,7 @@ namespace AeFinder;
     typeof(AbpAspNetCoreMvcUiLeptonXLiteThemeModule),
     typeof(AeFinderMongoDbModule),
     typeof(AbpAspNetCoreSerilogModule)
-    )]
+)]
 public class AeFinderAuthServerModule : AbpModule
 {
     public override void PreConfigureServices(ServiceConfigurationContext context)
@@ -64,6 +66,7 @@ public class AeFinderAuthServerModule : AbpModule
                 options.UseAspNetCore();
             });
         });
+        PreConfigure<OpenIddictServerBuilder>(builder => { builder.Configure(openIddictServerOptions => { openIddictServerOptions.GrantTypes.Add(LoginConsts.GrantType); }); });
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -105,19 +108,18 @@ public class AeFinderAuthServerModule : AbpModule
         {
             options.StyleBundles.Configure(
                 LeptonXLiteThemeBundles.Styles.Global,
-                bundle =>
-                {
-                    bundle.AddFiles("/global-styles.css");
-                }
+                bundle => { bundle.AddFiles("/global-styles.css"); }
             );
         });
 
         Configure<AbpAuditingOptions>(options =>
         {
-                //options.IsEnabledForGetRequests = true;
-                options.ApplicationName = "AuthServer";
-                options.IsEnabled = false;//Disables the auditing system
+            //options.IsEnabledForGetRequests = true;
+            options.ApplicationName = "AuthServer";
+            options.IsEnabled = false; //Disables the auditing system
         });
+
+        context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options => { options.Grants.Add(LoginConsts.GrantType, new LoginTokenExtensionGrant()); });
 
         if (hostingEnvironment.IsDevelopment())
         {
@@ -137,15 +139,9 @@ public class AeFinderAuthServerModule : AbpModule
             options.Applications["Angular"].Urls[AccountUrlNames.PasswordReset] = "account/reset-password";
         });
 
-        Configure<AbpBackgroundJobOptions>(options =>
-        {
-            options.IsJobExecutionEnabled = false;
-        });
+        Configure<AbpBackgroundJobOptions>(options => { options.IsJobExecutionEnabled = false; });
 
-        Configure<AbpDistributedCacheOptions>(options =>
-        {
-            options.KeyPrefix = "AeFinder:";
-        });
+        Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AeFinder:"; });
 
         var dataProtectionBuilder = context.Services.AddDataProtection().SetApplicationName("AeFinder");
         if (!hostingEnvironment.IsDevelopment())
@@ -153,7 +149,7 @@ public class AeFinderAuthServerModule : AbpModule
             var redis = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]);
             dataProtectionBuilder.PersistKeysToStackExchangeRedis(redis, "AeFinder-Protection-Keys");
         }
-        
+
         context.Services.AddSingleton<IDistributedLockProvider>(sp =>
         {
             var connection = ConnectionMultiplexer
@@ -204,7 +200,7 @@ public class AeFinderAuthServerModule : AbpModule
         app.UseCors();
         app.UseAuthentication();
         app.UseAbpOpenIddictValidation();
-       
+
         if (MultiTenancyConsts.IsEnabled)
         {
             app.UseMultiTenancy();

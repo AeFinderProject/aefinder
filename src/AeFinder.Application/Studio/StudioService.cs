@@ -173,12 +173,15 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return appGraphQl;
     }
 
-    public Task<string> QueryAeFinderAppAsync(string clientId, QueryAeFinderAppInput input)
+    public async Task<QueryAeFinderAppDto> QueryAeFinderAppAsync(string clientId, QueryAeFinderAppInput input)
     {
-        throw new NotImplementedException();
+        AuthDeveloper(input.AppId, clientId);
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(input.AppId));
+        var ans = await appGrain.GetGraphQls();
+        return new QueryAeFinderAppDto() { GraphQLs = ans };
     }
 
-    public Task<string> QueryAeFinderAppLogsAsync(string clientId, QueryAeFinderAppLogsInput input)
+    public Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogsAsync(string clientId, QueryAeFinderAppLogsInput input)
     {
         throw new NotImplementedException();
     }

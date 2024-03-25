@@ -11,6 +11,6 @@ public interface IStudioService
     Task<AddDeveloperToAppDto> AddDeveloperToApp(AddDeveloperToAppInput input);
     Task<List<AeFinderAppInfo>> GetAeFinderAppList();
     Task<string> SubmitSubscriptionInfoAsync(string clientId, SubscriptionInfo input);
-    Task<string> QueryAeFinderAppAsync(string clientId, QueryAeFinderAppInput input);
-    Task<string> QueryAeFinderAppLogsAsync(string clientId, QueryAeFinderAppLogsInput input);
+    Task<QueryAeFinderAppDto> QueryAeFinderAppAsync(string clientId, QueryAeFinderAppInput input);
+    Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogsAsync(string clientId, QueryAeFinderAppLogsInput input);
 }

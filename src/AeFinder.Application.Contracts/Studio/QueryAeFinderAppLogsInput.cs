@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace AeFinder.Studio;
 
-public class QueryAeFinderAppLogsInput
+public class QueryAeFinderAppLogsInput : IValidatableObject
 {
     [Required] public string AppId { get; set; }
     public string Level { get; set; }
@@ -12,4 +13,12 @@ public class QueryAeFinderAppLogsInput
     public string Pod { get; set; }
     public int SkipCount { get; set; } = 0;
     public int MaxResultCount { get; set; } = 10;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrEmpty(AppId))
+        {
+            yield return new ValidationResult("Invalid AppId input.");
+        }
+    }
 }

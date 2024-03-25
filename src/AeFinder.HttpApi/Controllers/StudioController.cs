@@ -63,14 +63,14 @@ public class StudioController : AeFinderController
 
     [HttpPost("query")]
     [Authorize]
-    public Task<string> QueryAeFinderApp(QueryAeFinderAppInput input)
+    public Task<QueryAeFinderAppDto> QueryAeFinderApp(QueryAeFinderAppInput input)
     {
         return _studioService.QueryAeFinderAppAsync(ClientId, input);
     }
 
     [HttpPost("logs")]
     [Authorize]
-    public Task<string> QueryAeFinderAppLogs(QueryAeFinderAppLogsInput input)
+    public Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogs(QueryAeFinderAppLogsInput input)
     {
         return _studioService.QueryAeFinderAppLogsAsync(ClientId, input);
     }

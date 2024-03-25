@@ -38,5 +38,6 @@ public class AeFinderApplicationModule : AbpModule
         Configure<ApiOptions>(configuration.GetSection("Api"));
         Configure<BlockSyncOptions>(configuration.GetSection("BlockSync"));
         Configure<StudioOption>(configuration.GetSection("StudioOption"));
+        Configure<AuthOption>(configuration.GetSection("AuthOption"));
     }
 }

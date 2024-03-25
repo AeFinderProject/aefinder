@@ -5,6 +5,7 @@ using AeFinder.Etos;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Studio;
 using AutoMapper;
+using Volo.Abp.Identity;
 
 namespace AeFinder;
 
@@ -40,5 +41,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<SubscriptionDetail, SubscriptionDetailDto>();
         CreateMap<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>();
         CreateMap<AeFinderAppInfo, AeFinderAppInfoDto>();
+
+        CreateMap<IdentityUser, IdentityUserDto>();
     }
 }
