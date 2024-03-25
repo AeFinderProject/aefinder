@@ -11,7 +11,7 @@ public class AeFinderGrainsModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
-        Configure<BlockPushOptions>(configuration.GetSection("BlockScan"));
+        Configure<BlockPushOptions>(configuration.GetSection("BlockPush"));
         Configure<PrimaryKeyOptions>(configuration.GetSection("GrainPrimaryKey"));
 
         context.Services.AddSingleton<IBlockGrain, BlockGrain>();
