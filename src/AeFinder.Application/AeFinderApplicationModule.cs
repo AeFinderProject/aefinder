@@ -1,4 +1,7 @@
+using AeFinder.BlockSync;
 using AeFinder.Grains;
+using AElf.EntityMapping;
+using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
@@ -20,7 +23,9 @@ namespace AeFinder;
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
     typeof(AbpSettingManagementApplicationModule),
-    typeof(AeFinderGrainsModule)
+    typeof(AeFinderGrainsModule),
+    typeof(AElfEntityMappingModule),
+    typeof(AElfEntityMappingElasticsearchModule)
 )]
 public class AeFinderApplicationModule : AbpModule
 {
@@ -30,6 +35,7 @@ public class AeFinderApplicationModule : AbpModule
 
         var configuration = context.Services.GetConfiguration();
         Configure<ApiOptions>(configuration.GetSection("Api"));
+        Configure<BlockSyncOptions>(configuration.GetSection("BlockSync"));
     }
 }
 

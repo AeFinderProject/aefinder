@@ -1,6 +1,6 @@
 ﻿using AeFinder.MultiTenancy;
 using AeFinder.OpenIddict;
-using AElf.Indexing.Elasticsearch;
+using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenIddict.Abstractions;
@@ -30,7 +30,7 @@ namespace AeFinder;
     typeof(AbpSettingManagementDomainModule),
     typeof(AbpTenantManagementDomainModule),
     typeof(AbpEmailingModule),
-    typeof(AElfIndexingElasticsearchModule)
+    typeof(AElfEntityMappingElasticsearchModule)
 )]
 public class AeFinderDomainModule : AbpModule
 {
@@ -40,7 +40,7 @@ public class AeFinderDomainModule : AbpModule
         {
             options.IsEnabled = MultiTenancyConsts.IsEnabled;
         });
-
+        
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
 #endif
@@ -53,4 +53,5 @@ public class AeFinderDomainModule : AbpModule
         context.Services.Replace(new ServiceDescriptor(typeof(IOpenIddictAuthorizationStore<>)
             .MakeGenericType(authorizationStoreRootType.GenericTypeArguments[0]), typeof(AeFinderOpenIddictAuthorizationStore), ServiceLifetime.Scoped));
     }
+
 }

@@ -1,6 +1,6 @@
 using AeFinder.Etos;
 
-namespace AeFinder.EntityEventHandler.Core.Tests;
+namespace AeFinder.EntityEventHandler;
 
 public interface IMockDataHelper
 {

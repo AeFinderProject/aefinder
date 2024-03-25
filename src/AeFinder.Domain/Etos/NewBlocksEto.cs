@@ -3,7 +3,7 @@ using Volo.Abp.EventBus;
 
 namespace AeFinder.Etos;
 
-[EventName("NewBlocks")]
+[EventName("AElf.NewBlocks")]
 public class NewBlocksEto
 {
     public List<NewBlockEto> NewBlocks { get; set; }

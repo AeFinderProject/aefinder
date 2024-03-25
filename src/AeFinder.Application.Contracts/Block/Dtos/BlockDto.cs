@@ -12,6 +12,7 @@ public class BlockDto:EntityDto<string>
     public string PreviousBlockHash { get; set; }
     public DateTime BlockTime { get; set; }
     public string SignerPubkey { get; set; }
+    public string Miner { get; set; }
     public string Signature { get; set; }
     public bool Confirmed{get;set;}
     public Dictionary<string,string> ExtraProperties {get;set;}

@@ -3,10 +3,8 @@ using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AutoMapper;
 using Volo.Abp.AutoMapper;
-using LogEvent = Serilog.Events.LogEvent;
-using Transaction = System.Transactions.Transaction;
 
-namespace AeFinder.EntityEventHandler.Core;
+namespace AeFinder.EntityEventHandler;
 
 public class AeFinderEntityEventHandlerCoreAutoMapperProfile:Profile
 {

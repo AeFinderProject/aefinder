@@ -1,4 +1,4 @@
-namespace AeFinder.BlockChainEventHandler.Core;
+namespace AeFinder.BlockChainEventHandler;
 
 public class BlockChainEventHandlerOptions
 {

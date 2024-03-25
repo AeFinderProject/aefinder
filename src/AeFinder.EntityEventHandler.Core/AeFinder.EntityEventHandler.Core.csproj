@@ -2,15 +2,15 @@
 
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
+        <RootNamespace>AeFinder.EntityEventHandler</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
-      <ProjectReference Include="..\AeFinder.Application\AeFinder.Application.csproj" />
-      <ProjectReference Include="..\AeFinder.Domain.Shared\AeFinder.Domain.Shared.csproj" />
-      <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
-      <ProjectReference Include="..\AeFinder.Grains\AeFinder.Grains.csproj" />
-      <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
+        <ProjectReference Include="..\AeFinder.Application\AeFinder.Application.csproj" />
+        <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
+        <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
+        <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc7" />
+        <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc7" />
     </ItemGroup>
-
+    
 </Project>

@@ -1,9 +1,9 @@
-using System.Text;
-using AElf.Orleans.EventSourcing.Snapshot;
 using EventStore.ClientAPI;
 using JsonNet.PrivateSettersContractResolvers;
 using Newtonsoft.Json;
+using AElf.Orleans.EventSourcing.Snapshot;
 using Orleans.Runtime;
+using System.Text;
 
 namespace AeFinder.Orleans.TestBase;
 

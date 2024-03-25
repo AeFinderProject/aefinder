@@ -1,5 +1,5 @@
-using AeFinder.BlockChainEventHandler.Core;
-using AeFinder.EntityEventHandler.Core;
+using AeFinder.BlockChainEventHandler;
+using AeFinder.EntityEventHandler;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Volo.Abp;

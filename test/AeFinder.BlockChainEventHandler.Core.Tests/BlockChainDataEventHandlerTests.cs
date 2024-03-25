@@ -1,6 +1,6 @@
-using AeFinder.BlockChainEventHandler.Core.DTOs;
-using AeFinder.BlockChainEventHandler.Core.Processors;
-using AeFinder.BlockChainEventHandler.Core.Providers;
+using AeFinder.BlockChainEventHandler.DTOs;
+using AeFinder.BlockChainEventHandler.Processors;
+using AeFinder.BlockChainEventHandler.Providers;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Blocks;
 using AeFinder.Orleans.TestBase;
@@ -8,7 +8,7 @@ using Shouldly;
 using Volo.Abp.EventBus.Distributed;
 using Xunit;
 
-namespace AeFinder.BlockChainEventHandler.Core.Tests;
+namespace AeFinder.BlockChainEventHandler;
 
 [Collection(ClusterCollection.Name)]
 public sealed class BlockChainDataEventHandlerTests:AeFinderBlockChainEventHandlerCoreTestBase

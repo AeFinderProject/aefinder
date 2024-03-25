@@ -3,7 +3,7 @@ using Volo.Abp.EventBus;
 
 namespace AeFinder.Etos;
 
-[EventName("ConfirmBlocks")]
+[EventName("AElf.ConfirmBlocks")]
 public class ConfirmBlocksEto
 {
     public List<ConfirmBlockEto> ConfirmBlocks { get; set; }

@@ -2,7 +2,7 @@ using AeFinder.Block;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
-namespace AeFinder.EntityEventHandler.Core.Tests;
+namespace AeFinder.EntityEventHandler;
 
 [DependsOn(typeof(AeFinderEntityEventHandlerCoreTestModule))]
 public class EntityEventHandlerCoreBlockIndexTestModule:AbpModule

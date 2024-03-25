@@ -8,9 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\AeFinder.Domain\AeFinder.Domain.csproj" />
     <ProjectReference Include="..\AeFinder.MongoDB.Tests\AeFinder.MongoDB.Tests.csproj" />
-    <ProjectReference Include="..\AeFinder.TestBase\AeFinder.TestBase.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,5 +27,5 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
+  
 </Project>

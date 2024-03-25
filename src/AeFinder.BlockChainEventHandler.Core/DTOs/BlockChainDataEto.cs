@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Volo.Abp.EventBus;
 
-namespace AeFinder.BlockChainEventHandler.Core.DTOs;
+namespace AeFinder.BlockChainEventHandler.DTOs;
 
-[EventName("BlockChainDataEto")]
+[EventName("AElf.WebApp.MessageQueue.BlockChainDataEto")]
 public class BlockChainDataEto
 {
     // [JsonProperty("chainId")]

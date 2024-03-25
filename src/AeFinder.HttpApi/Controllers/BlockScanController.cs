@@ -19,6 +19,14 @@ public class BlockScanController: AeFinderController
     }
 
     [HttpPost]
+    [Route("pause")]
+    [Authorize]
+    public virtual Task PauseAsync(string version)
+    {
+        return _blockScanAppService.PauseAsync(ClientId, version);
+    }
+
+    [HttpPost]
     [Route("stop")]
     [Authorize]
     public virtual Task StopAsync(string version)

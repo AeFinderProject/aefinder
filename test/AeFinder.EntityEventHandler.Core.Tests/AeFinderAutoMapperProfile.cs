@@ -1,7 +1,7 @@
 using AeFinder.Etos;
 using AutoMapper;
 
-namespace AeFinder.EntityEventHandler.Core.Tests;
+namespace AeFinder.EntityEventHandler;
 
 public class AeFinderAutoMapperProfile:Profile
 {

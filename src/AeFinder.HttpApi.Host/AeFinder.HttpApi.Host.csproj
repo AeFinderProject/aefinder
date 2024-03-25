@@ -16,22 +16,18 @@
     <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
     <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
-    <PackageReference Include="Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy" Version="7.0.0-rc.5" />
-    <PackageReference Include="Volo.Abp.Autofac" Version="7.0.0-rc.5" />
-    <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="7.0.0-rc.5" />
-    <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="7.0.0-rc.5" />
-    <PackageReference Include="Volo.Abp.Swashbuckle" Version="7.0.0-rc.5" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.Autofac" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.Swashbuckle" Version="7.0.0" />
     <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="7.1.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
     <ProjectReference Include="..\AeFinder.Application\AeFinder.Application.csproj" />
-    <ProjectReference Include="..\AeFinder.Domain.Shared\AeFinder.Domain.Shared.csproj" />
-    <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
-    <ProjectReference Include="..\AeFinder.Grains\AeFinder.Grains.csproj" />
     <ProjectReference Include="..\AeFinder.HttpApi\AeFinder.HttpApi.csproj" />
-    <ProjectReference Include="..\AeFinder.Client\AeFinder.Client.csproj" />
+    <ProjectReference Include="..\AeFinder.App\AeFinder.App.csproj" />
     <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
   </ItemGroup>
 

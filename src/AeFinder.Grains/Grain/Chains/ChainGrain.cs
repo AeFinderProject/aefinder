@@ -10,8 +10,7 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
 
     public override async Task OnActivateAsync()
     {
-        await this.ReadStateAsync();
-        await base.OnActivateAsync();
+        await ReadStateAsync();
     }
 
     public ChainGrain(ILogger<ChainGrain> logger)
@@ -32,7 +31,7 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
         await WriteStateAsync();
     }
 
-    public async Task SetLatestConfirmBlockAsync(string blockHash, long blockHeight)
+    public async Task SetLatestConfirmedBlockAsync(string blockHash, long blockHeight)
     {
         if (blockHeight <= State.ConfirmedBlockHeight)
         {

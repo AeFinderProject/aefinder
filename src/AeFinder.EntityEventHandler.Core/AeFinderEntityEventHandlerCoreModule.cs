@@ -2,7 +2,7 @@
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 
-namespace AeFinder.EntityEventHandler.Core;
+namespace AeFinder.EntityEventHandler;
 
 [DependsOn(typeof(AbpAutoMapperModule),
     typeof(AeFinderMongoDbModule),
