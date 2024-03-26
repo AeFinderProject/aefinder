@@ -3,6 +3,7 @@ using AeFinder.Silo.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Orleans.Hosting;
 using Serilog;
 using Serilog.Events;
 
@@ -34,7 +35,22 @@ public class Program
         {
             Log.Information("Starting AeFinder.Silo.");
 
-            await CreateHostBuilder(args).RunConsoleAsync();
+            // await CreateHostBuilder(args).RunConsoleAsync();
+            var host = CreateHostBuilder(args).Build();
+
+            // Listen to the application stopping event
+            var lifetime = host.Services.GetService<IHostApplicationLifetime>();
+            var siloHost = host.Services.GetRequiredService<ISiloHost>();
+
+            lifetime.ApplicationStopping.Register(async () =>
+            {
+                await siloHost.StopAsync();
+                // Optionally, you can also log that the application is stopping.
+                Log.Information("Gracefully stop Silo.");
+            });
+
+            // Run the host
+            await host.RunAsync();
 
             return 0;
         }

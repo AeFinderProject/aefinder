@@ -15,6 +15,10 @@ public class AeFinderKubernetesModule: AbpModule
         context.Services.AddSingleton<k8s.Kubernetes>(provider =>
         {
             var options = provider.GetRequiredService<IOptions<KubernetesOptions>>().Value;
+            if (options == null)
+            {
+                throw new Exception("the config of [Kubernetes] is missing.");
+            }
             var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(options.KubeConfigPath);
             return new k8s.Kubernetes(config);
         });
