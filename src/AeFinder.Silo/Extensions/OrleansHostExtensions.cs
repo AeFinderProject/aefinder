@@ -71,6 +71,7 @@ public static class OrleansHostExtensions
                 {
                     options.ResponseTimeout = TimeSpan.FromSeconds(configSection.GetValue<int>("GrainResponseTimeOut"));
                     options.MaxMessageBodySize = configSection.GetValue<int>("GrainMaxMessageBodySize");
+                    options.MaxForwardCount = configSection.GetValue<int>("MaxForwardCount");
                 })
                 //.AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .AddMongoDBGrainStorage("PubSubStore", options =>
