@@ -16,7 +16,7 @@ public class StudioController : AeFinderController
 {
     private readonly IStudioService _studioService;
 
-    public StudioController(IStudioService studioService) 
+    public StudioController(IStudioService studioService)
     {
         _studioService = studioService;
     }
@@ -58,32 +58,8 @@ public class StudioController : AeFinderController
 
     [HttpPost("submitsubscription")]
     [Authorize]
-    public Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input)
+    public Task<string> SubmitSubscriptionInfoAsync([FromForm] SubscriptionInfo input)
     {
-        var m = new SubscriptionManifestDto()
-        {
-            SubscriptionItems = new List<SubscriptionDto>()
-            {
-                new()
-                {
-                    ChainId = "AELF",
-                    StartBlockNumber = 100,
-                    OnlyConfirmed = true,
-                    TransactionConditions = new List<TransactionConditionDto>()
-                    {
-                        new()
-                        {
-                            To = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
-                            MethodNames = new List<string>()
-                            {
-                                "Transfer"
-                            }
-                        }
-                    },
-                }
-            }
-        };
-        var json = JsonConvert.SerializeObject(m);
         return _studioService.SubmitSubscriptionInfoAsync(input);
     }
 
