@@ -1,4 +1,4 @@
-using AeFinder.Sdk;
+using AeFinder.Sdk.Entities;
 using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.App.Repositories;

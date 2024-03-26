@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using AeFinder.Sdk;
+using AeFinder.Sdk.Entities;
 using AeFinder.Sdk.Processor;
 using Nest;
 

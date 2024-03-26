@@ -2,5 +2,5 @@ namespace AeFinder.Sdk.Processor;
 
 public interface IBlockProcessor : IBlockDataProcessor
 {
-    Task ProcessAsync(Block block);
+    Task ProcessAsync(Block block, BlockContext context);
 }

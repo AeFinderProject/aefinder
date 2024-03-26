@@ -64,7 +64,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 this.GetPrimaryKeyString(), State.PushToken, State.PushedBlockHeight);
 
             var pusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
-            var appSubscriptionGrain = GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(_appId));
+            var appSubscriptionGrain = GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appId));
             var chainGrain = GrainFactory.GetGrain<IChainGrain>(_subscription.ChainId);
             var chainStatus = await chainGrain.GetChainStatusAsync();
 
@@ -149,7 +149,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         
         await ReadStateAsync();
 
-        var appSubscriptionGrain = GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(_appId));
+        var appSubscriptionGrain = GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appId));
         var pusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
 
         if (!await CheckPushThresholdAsync(_subscription.StartBlockNumber, State.PushedBlockHeight, _blockPushOptions.MaxNewBlockPushThreshold))
@@ -247,7 +247,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
 
         await ReadStateAsync();
 
-        var appSubscriptionGrain = GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(_appId));
+        var appSubscriptionGrain = GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appId));
         var pusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
         
         if (!await CheckPushThresholdAsync(_subscription.StartBlockNumber, State.PushedConfirmedBlockHeight, _blockPushOptions.MaxNewBlockPushThreshold))

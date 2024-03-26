@@ -65,7 +65,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         scanIds[chainId].Count.ShouldBe(1);
         scanIds[chainId].ShouldContain(id1);
 
-        var scanAppGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var scanAppGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var versionStatus = await scanAppGrain.GetSubscriptionStatusAsync(version1);
         versionStatus.ShouldBe(SubscriptionStatus.Started);
         

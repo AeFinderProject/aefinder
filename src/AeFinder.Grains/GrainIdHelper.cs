@@ -9,7 +9,7 @@ public static class GrainIdHelper
         return ids.JoinAsString("-");
     }
 
-    public static string GenerateAppGrainId(string appId)
+    public static string GenerateAppSubscriptionGrainId(string appId)
     {
         return GenerateGrainId(appId);
     }
@@ -34,11 +34,6 @@ public static class GrainIdHelper
     public static int GenerateBlockPusherManagerGrainId()
     {
         return 0;
-    }
-
-    public static string GenerateSubscriptionGrainId(string appId, string version)
-    {
-        return GenerateGrainId(appId, version);
     }
 
     public static string GenerateGetAppCodeGrainId(string appId, string version)

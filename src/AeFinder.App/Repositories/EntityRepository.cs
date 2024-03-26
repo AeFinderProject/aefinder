@@ -3,6 +3,7 @@ using AeFinder.App.BlockState;
 using AeFinder.App.OperationLimits;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Sdk;
+using AeFinder.Sdk.Entities;
 using Newtonsoft.Json;
 
 namespace AeFinder.App.Repositories;

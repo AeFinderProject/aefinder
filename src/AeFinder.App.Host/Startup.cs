@@ -1,5 +1,4 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Threading.Tasks;
 using AeFinder.App.PlugIns;
 using AeFinder.Grains;
@@ -26,7 +25,7 @@ public class Startup
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services)
     {
-        var clientType = _configuration["AppInfo:ClientType"].ToEnum<ClientType>();
+        var clientType = _configuration.GetValue("AppInfo:ClientType", ClientType.Full);
         switch (clientType)
         {
             case ClientType.Query:
@@ -56,6 +55,8 @@ public class Startup
         
         app.UseCors();
         app.InitializeApplication();
+        
+            
     }
     
     private async Task<byte[]> GetPluginCodeAsync()
@@ -65,7 +66,7 @@ public class Startup
         
         var client = OrleansClusterClientFactory.GetClusterClient(_configuration);
         await client.Connect();
-        var appSubscriptionGrain = client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appSubscriptionGrain = client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         return await appSubscriptionGrain.GetCodeAsync(version);
     }
 }

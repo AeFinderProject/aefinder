@@ -1,6 +1,5 @@
 using AeFinder.App.OperationLimits;
 using AeFinder.Block.Dtos;
-using AeFinder.Sdk;
 using AeFinder.Sdk.Processor;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
@@ -51,7 +50,10 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                 "Processing block. ChainId: {ChainId}, BlockHash: {BlockHash}.", block.ChainId, block.BlockHash);
             try
             {
-                await blockProcessor.ProcessAsync(_objectMapper.Map<BlockWithTransactionDto, Sdk.Processor.Block>(block));
+                await blockProcessor.ProcessAsync(_objectMapper.Map<BlockWithTransactionDto, Sdk.Processor.Block>(block), new BlockContext
+                {
+                    ChainId = block.ChainId
+                });
             }
             catch (Exception e)
             {

@@ -2,7 +2,7 @@ using AeFinder.Entities;
 using AElf.EntityMapping.Entities;
 using Nest;
 
-namespace AeFinder.Sdk;
+namespace AeFinder.Sdk.Entities;
 
 public interface IAeFinderEntity
 {

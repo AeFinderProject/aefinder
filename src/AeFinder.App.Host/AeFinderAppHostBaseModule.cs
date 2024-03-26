@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using AeFinder.MongoDb;
 using GraphQL;
+using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.Extensions.Configuration;
@@ -84,13 +85,13 @@ public class AeFinderAppHostBaseModule : AbpModule
         var app = context.GetApplicationBuilder();
         var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
         app.UseGraphQL($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/graphql");
-        // app.UseGraphQLPlayground(
-        //     $"/{appInfoOptions.ScanAppId}/{typeof(TSchema).Name}/ui/playground",
-        //     new PlaygroundOptions
-        //     {
-        //         GraphQLEndPoint = "../graphql",
-        //         SubscriptionsEndPoint = "../graphql",
-        //     });
+        app.UseGraphQLPlayground(
+            $"/{appInfoOptions.AppId}/{appInfoOptions.Version}/ui/playground",
+            new PlaygroundOptions
+            {
+                GraphQLEndPoint = "../graphql",
+                SubscriptionsEndPoint = "../graphql",
+            });
         
         app.UseRouting();
         app.UseCors();
