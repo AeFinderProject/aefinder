@@ -1,10 +1,7 @@
 using System.Threading.Tasks;
 using AeFinder.Login;
 using AeFinder.Login.Dto;
-using EAeFinder.Login.Dto;
 using Microsoft.AspNetCore.Mvc;
-using Orleans;
-using Volo.Abp.Identity;
 
 namespace AeFinder.Controllers;
 
@@ -14,7 +11,7 @@ public class LoginAccountController : AeFinderController
 {
     private readonly ILoginAccountAppService _loginAccountAppService;
 
-    public LoginAccountController(ILoginAccountAppService loginAccountAppService, IClusterClient clusterClient) : base(clusterClient)
+    public LoginAccountController(ILoginAccountAppService loginAccountAppService)
     {
         _loginAccountAppService = loginAccountAppService;
     }

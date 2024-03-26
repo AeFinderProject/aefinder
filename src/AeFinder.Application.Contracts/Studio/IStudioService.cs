@@ -13,4 +13,6 @@ public interface IStudioService
     Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input);
     Task<QueryAeFinderAppDto> QueryAeFinderAppAsync(QueryAeFinderAppInput input);
     Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogsAsync(QueryAeFinderAppLogsInput input);
+
+    Task<string> GetAppIdAsync();
 }

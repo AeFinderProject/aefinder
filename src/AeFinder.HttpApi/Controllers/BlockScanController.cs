@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
+using AeFinder.Studio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Orleans;
 using Volo.Abp;
 
 namespace AeFinder.Controllers;
@@ -13,10 +13,12 @@ namespace AeFinder.Controllers;
 public class BlockScanController : AeFinderController
 {
     private readonly IBlockScanAppService _blockScanAppService;
+    private readonly IStudioService _studioService;
 
-    public BlockScanController(IBlockScanAppService blockScanAppService, IClusterClient clusterClient) : base(clusterClient)
+    public BlockScanController(IBlockScanAppService blockScanAppService, IStudioService studioService)
     {
         _blockScanAppService = blockScanAppService;
+        _studioService = studioService;
     }
 
     [HttpPost]
@@ -24,7 +26,8 @@ public class BlockScanController : AeFinderController
     [Authorize]
     public virtual async Task<Task> PauseAsync(string version)
     {
-        return _blockScanAppService.PauseAsync(await GetAppId(), version);
+        var appId = await _studioService.GetAppIdAsync();
+        return _blockScanAppService.PauseAsync(appId, version);
     }
 
     [HttpPost]
@@ -32,7 +35,8 @@ public class BlockScanController : AeFinderController
     [Authorize]
     public virtual async Task<Task> StopAsync(string version)
     {
-        return _blockScanAppService.StopAsync(await GetAppId(), version);
+        var appId = await _studioService.GetAppIdAsync();
+        return _blockScanAppService.StopAsync(appId, version);
     }
 
     [HttpPost]
@@ -40,6 +44,7 @@ public class BlockScanController : AeFinderController
     [Authorize]
     public virtual async Task<Task> UpgradeVersionAsync()
     {
-        return _blockScanAppService.UpgradeVersionAsync(await GetAppId());
+        var appId = await _studioService.GetAppIdAsync();
+        return _blockScanAppService.UpgradeVersionAsync(appId);
     }
 }

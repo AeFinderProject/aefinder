@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AeFinder.BlockScan;
 using AeFinder.Studio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Orleans;
+using Newtonsoft.Json;
 using Volo.Abp;
 
 namespace AeFinder.Controllers;
@@ -15,7 +16,7 @@ public class StudioController : AeFinderController
 {
     private readonly IStudioService _studioService;
 
-    public StudioController(IStudioService studioService, IClusterClient clusterClient) : base(clusterClient)
+    public StudioController(IStudioService studioService) 
     {
         _studioService = studioService;
     }
@@ -59,6 +60,30 @@ public class StudioController : AeFinderController
     [Authorize]
     public Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input)
     {
+        var m = new SubscriptionManifestDto()
+        {
+            SubscriptionItems = new List<SubscriptionDto>()
+            {
+                new()
+                {
+                    ChainId = "AELF",
+                    StartBlockNumber = 100,
+                    OnlyConfirmed = true,
+                    TransactionConditions = new List<TransactionConditionDto>()
+                    {
+                        new()
+                        {
+                            To = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
+                            MethodNames = new List<string>()
+                            {
+                                "Transfer"
+                            }
+                        }
+                    },
+                }
+            }
+        };
+        var json = JsonConvert.SerializeObject(m);
         return _studioService.SubmitSubscriptionInfoAsync(input);
     }
 

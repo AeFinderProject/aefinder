@@ -196,6 +196,24 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         throw new NotImplementedException();
     }
 
+    public async Task<string> GetAppIdAsync()
+    {
+        if (CurrentUser == null)
+        {
+            throw new UserFriendlyException("userid not found");
+        }
+
+        var userId = CurrentUser.GetId().ToString("N");
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
+        var info = await appGrain.GetAppInfo();
+        if (info != null && !info.AppId.IsNullOrEmpty())
+        {
+            return info.AppId;
+        }
+
+        throw new UserFriendlyException("app of current user not found");
+    }
+
     private async Task AddToUsersApps(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)
     {
         var tasks = userIds.Select(userId => _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(userId))).Select(userAppsGrain => userAppsGrain.AddApp(appId, info)).ToList();
