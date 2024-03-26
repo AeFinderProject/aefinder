@@ -22,6 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\src\AeFinder.Kubernetes\AeFinder.Kubernetes.csproj" />
       <ProjectReference Include="..\AeFinder.TestBase\AeFinder.TestBase.csproj" />
     </ItemGroup>
 
