@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -164,11 +165,18 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
             throw new UserFriendlyException("Invalid subscription manifest.");
         }
 
-        _codeAuditor.Audit(input.AppDll);
+        await using var stream = input.AppDll.OpenReadStream();
+        var dllBytes = stream.GetAllBytes();
+        _codeAuditor.Audit(dllBytes);
         var userId = CurrentUser.GetId().ToString("N");
         var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
         var info = await userAppGrain.GetAppInfo();
-        var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifestDto, input.AppDll);
+        if (info == null)
+        {
+            throw new UserFriendlyException("app not exists.");
+        }
+
+        var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifestDto, dllBytes);
         // var appGraphQl = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, version, _studioOption.ImageName);
         // var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(input.AppId));
         // await appGrain.SetGraphQlByVersion(version, appGraphQl);
