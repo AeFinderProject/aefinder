@@ -20,10 +20,10 @@ public static class GrainIdHelper
         return GenerateGrainId(namePrefix, appName);
     }
 
-    public static string GenerateAeFinderAppGrainId(string appId)
+    public static string GenerateAeFinderAppGrainId(string adminId)
     {
         const string namePrefix = "AeFinderApp";
-        return GenerateGrainId(namePrefix, appId);
+        return GenerateGrainId(namePrefix, adminId);
     }
 
     public static string GenerateBlockPusherGrainId(string appId, string version, string chainId)

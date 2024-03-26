@@ -1,5 +1,9 @@
 using AeFinder.BlockSync;
+using AeFinder.CodeOps;
+using AeFinder.CodeOps.Policies;
 using AeFinder.Grains;
+using AeFinder.Kubernetes;
+using AeFinder.Kubernetes.Manager;
 using AeFinder.Option;
 using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
@@ -26,7 +30,8 @@ namespace AeFinder;
     typeof(AbpSettingManagementApplicationModule),
     typeof(AeFinderGrainsModule),
     typeof(AElfEntityMappingModule),
-    typeof(AElfEntityMappingElasticsearchModule)
+    typeof(AElfEntityMappingElasticsearchModule),
+    typeof(AeFinderKubernetesModule)
 )]
 public class AeFinderApplicationModule : AbpModule
 {
@@ -39,5 +44,8 @@ public class AeFinderApplicationModule : AbpModule
         Configure<BlockSyncOptions>(configuration.GetSection("BlockSync"));
         Configure<StudioOption>(configuration.GetSection("StudioOption"));
         Configure<AuthOption>(configuration.GetSection("AuthOption"));
+        context.Services.AddTransient<ICodeAuditor, CodeAuditor>();
+        context.Services.AddTransient<IPolicy, DefaultPolicy>();
+        context.Services.AddTransient<IKubernetesAppManager, KubernetesAppManager>();
     }
 }

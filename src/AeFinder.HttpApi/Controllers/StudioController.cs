@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AeFinder.Studio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Orleans;
 using Volo.Abp;
 
 namespace AeFinder.Controllers;
@@ -14,7 +15,7 @@ public class StudioController : AeFinderController
 {
     private readonly IStudioService _studioService;
 
-    public StudioController(IStudioService studioService)
+    public StudioController(IStudioService studioService, IClusterClient clusterClient) : base(clusterClient)
     {
         _studioService = studioService;
     }
@@ -23,28 +24,28 @@ public class StudioController : AeFinderController
     [Authorize]
     public Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppName(ApplyAeFinderAppNameInput input)
     {
-        return _studioService.ApplyAeFinderAppName(ClientId, input);
+        return _studioService.ApplyAeFinderAppName(input);
     }
 
-    [HttpPost("update")]
+    [HttpGet("update")]
     [Authorize]
     public Task<AddOrUpdateAeFinderAppDto> AddOrUpdateAeFinderApp(AddOrUpdateAeFinderAppInput input)
     {
-        return _studioService.UpdateAeFinderApp(ClientId, input);
+        return _studioService.UpdateAeFinderApp(input);
     }
 
-    [HttpPost("adddeveloper")]
-    [Authorize]
-    public Task<AddDeveloperToAppDto> AddDeveloperToApp(AddDeveloperToAppInput input)
-    {
-        return _studioService.AddDeveloperToApp(input);
-    }
+    // [HttpPost("adddeveloper")]
+    // [Authorize]
+    // public Task<AddDeveloperToAppDto> AddDeveloperToApp(AddDeveloperToAppInput input)
+    // {
+    //     // return _studioService.AddDeveloperToApp(input);
+    // }
 
-    [HttpPost("info")]
+    [HttpGet("info")]
     [Authorize]
-    public Task<AeFinderAppInfoDto> GetAeFinderAppInfo(GetAeFinderAppInfoInput input)
+    public Task<AeFinderAppInfoDto> GetAeFinderAppInfo()
     {
-        return _studioService.GetAeFinderApp(ClientId, input);
+        return _studioService.GetAeFinderApp();
     }
 
     [HttpGet("applist")]
@@ -58,20 +59,20 @@ public class StudioController : AeFinderController
     [Authorize]
     public Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input)
     {
-        return _studioService.SubmitSubscriptionInfoAsync(ClientId, input);
+        return _studioService.SubmitSubscriptionInfoAsync(input);
     }
 
-    [HttpPost("query")]
-    [Authorize]
-    public Task<QueryAeFinderAppDto> QueryAeFinderApp(QueryAeFinderAppInput input)
-    {
-        return _studioService.QueryAeFinderAppAsync(ClientId, input);
-    }
-
-    [HttpPost("logs")]
-    [Authorize]
-    public Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogs(QueryAeFinderAppLogsInput input)
-    {
-        return _studioService.QueryAeFinderAppLogsAsync(ClientId, input);
-    }
+    // [HttpPost("query")]
+    // [Authorize]
+    // public Task<QueryAeFinderAppDto> QueryAeFinderApp(QueryAeFinderAppInput input)
+    // {
+    //     return _studioService.QueryAeFinderAppAsync(input);
+    // }
+    //
+    // [HttpPost("logs")]
+    // [Authorize]
+    // public Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogs(QueryAeFinderAppLogsInput input)
+    // {
+    //     return _studioService.QueryAeFinderAppLogsAsync(input);
+    // }
 }

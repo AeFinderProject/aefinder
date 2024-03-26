@@ -2,10 +2,11 @@ using AeFinder.Kubernetes.ResourceDefinition;
 using k8s;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.Kubernetes.Manager;
 
-public class KubernetesAppManager : IKubernetesAppManager
+public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
 {
     private readonly k8s.Kubernetes _k8sClient;
     private readonly KubernetesOptions _kubernetesOptions;

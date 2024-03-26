@@ -20,4 +20,6 @@ public class RegisterWithNameInput
     [DataType(DataType.Password)]
     [DisableAuditing]
     public string Password { get; set; }
+
+    public bool IsAdmin { get; set; }
 }

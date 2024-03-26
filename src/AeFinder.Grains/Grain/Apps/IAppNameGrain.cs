@@ -5,25 +5,22 @@ namespace AeFinder.Grains.Grain.Apps;
 
 public interface IAppNameGrain : IGrainWithStringKey
 {
-    Task<bool> Register(string appId);
+    Task<string> Register(string adminId);
 }
 
 public class AppNameGrain : Grain<AppNameState>, IAppNameGrain
 {
-    public async Task<bool> Register(string appId)
+    public async Task<string> Register(string adminId)
     {
-        if (appId == null)
+        if (adminId.IsNullOrEmpty() || !State.AppId.IsNullOrEmpty())
         {
-            return false;
+            return string.Empty;
         }
 
-        if (State.AppId != null)
-        {
-            return State.AppId.Equals(appId);
-        }
-
+        State.AdminId = adminId;
+        var appId = Guid.NewGuid().ToString("N");
         State.AppId = appId;
         await WriteStateAsync();
-        return true;
+        return appId;
     }
 }

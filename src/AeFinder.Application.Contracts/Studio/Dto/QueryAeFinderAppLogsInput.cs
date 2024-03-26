@@ -20,5 +20,16 @@ public class QueryAeFinderAppLogsInput : IValidatableObject
         {
             yield return new ValidationResult("Invalid AppId input.");
         }
+
+        if (SkipCount < 0)
+        {
+            yield return new ValidationResult("Invalid SkipCount input.");
+        }
+
+        var gap = MaxResultCount - SkipCount;
+        if (gap < 1 || gap >= 100)
+        {
+            yield return new ValidationResult("Invalid MaxResultCount input.");
+        }
     }
 }

@@ -13,19 +13,17 @@ namespace AeFinder.Controllers;
 public class SubscriptionController : AeFinderController
 {
     private readonly IBlockScanAppService _blockScanAppService;
-    private readonly IClusterClient _clusterClient;
 
-    public SubscriptionController(IBlockScanAppService blockScanAppService, IClusterClient clusterClient)
+    public SubscriptionController(IBlockScanAppService blockScanAppService, IClusterClient clusterClient) : base(clusterClient)
     {
         _blockScanAppService = blockScanAppService;
-        _clusterClient = clusterClient;
     }
-    
+
     [HttpPost]
     [Authorize]
-    public virtual Task<string> SubmitSubscriptionInfoAsync(SubscriptionManifestDto input)
+    public virtual async Task<string> SubmitSubscriptionInfoAsync(SubscriptionManifestDto input)
     {
-        return _blockScanAppService.AddSubscriptionAsync(ClientId, input);
+        return await _blockScanAppService.AddSubscriptionAsync(await GetAppId(), input);
     }
 
     // [HttpPut("{Version}")]
@@ -37,8 +35,8 @@ public class SubscriptionController : AeFinderController
 
     [HttpGet]
     [Authorize]
-    public virtual Task<AllSubscriptionDto> GetSubscriptionInfoAsync()
+    public virtual async Task<AllSubscriptionDto> GetSubscriptionInfoAsync()
     {
-        return _blockScanAppService.GetSubscriptionAsync(ClientId);
+        return await _blockScanAppService.GetSubscriptionAsync(await GetAppId());
     }
 }

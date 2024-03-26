@@ -3,6 +3,7 @@ using AeFinder.Login;
 using AeFinder.Login.Dto;
 using EAeFinder.Login.Dto;
 using Microsoft.AspNetCore.Mvc;
+using Orleans;
 using Volo.Abp.Identity;
 
 namespace AeFinder.Controllers;
@@ -13,13 +14,13 @@ public class LoginAccountController : AeFinderController
 {
     private readonly ILoginAccountAppService _loginAccountAppService;
 
-    public LoginAccountController(ILoginAccountAppService loginAccountAppService)
+    public LoginAccountController(ILoginAccountAppService loginAccountAppService, IClusterClient clusterClient) : base(clusterClient)
     {
         _loginAccountAppService = loginAccountAppService;
     }
 
     [HttpPost("register")]
-    public virtual Task<IdentityUserDto> RegisterAsync(RegisterWithNameInput input)
+    public virtual Task<RegisterWithNameDto> RegisterAsync(RegisterWithNameInput input)
     {
         return _loginAccountAppService.RegisterAsync(input);
     }
@@ -30,9 +31,9 @@ public class LoginAccountController : AeFinderController
         return _loginAccountAppService.RequestTokenByPasswordAsync(input);
     }
 
-    [HttpPost("refresh-token")]
-    public virtual Task<string> RefreshTokenAsync(RefreshTokenInput input)
-    {
-        return _loginAccountAppService.RefreshTokenAsync(input);
-    }
+    // [HttpPost("refresh-token")]
+    // public virtual Task<string> RefreshTokenAsync(RefreshTokenInput input)
+    // {
+    //     return _loginAccountAppService.RefreshTokenAsync(input);
+    // }
 }

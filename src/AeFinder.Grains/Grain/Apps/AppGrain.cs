@@ -16,15 +16,22 @@ public class AppGrain : Grain<AppGrainState>, IAppGrain
         State.AdminId = adminId;
         State.AppId = appId;
         State.Name = name;
+        State.AeFinderAppInfo = new AeFinderAppInfo() { AppId = appId, Name = name };
         await WriteStateAsync();
         return new RegisterDto() { Success = true, Added = true };
     }
 
     public async Task<AppInfo> AddDeveloperToApp(string developerId)
     {
+        var appInfo = new AppInfo() { AeFinderAppInfo = State.AeFinderAppInfo, DeveloperIds = State.DeveloperIds, AppId = State.AppId };
+        if (developerId.IsNullOrEmpty())
+        {
+            return appInfo;
+        }
+
         State.DeveloperIds.Add(developerId);
         await WriteStateAsync();
-        return new AppInfo() { AeFinderAppInfo = State.AeFinderAppInfo };
+        return appInfo;
     }
 
     public Task<bool> IsDeveloper(string developerId)
@@ -34,13 +41,17 @@ public class AppGrain : Grain<AppGrainState>, IAppGrain
 
     public async Task<AppInfo> AddOrUpdateAppInfo(AeFinderAppInfo aeFinderAppInfo)
     {
-        if (State.AeFinderAppInfo == null || State.AeFinderAppInfo.Name.Equals(aeFinderAppInfo.Name))
+        if (State.AppId.IsNullOrEmpty())
         {
-            State.AeFinderAppInfo = aeFinderAppInfo;
+            return null;
         }
 
+        aeFinderAppInfo.AppId = State.AppId;
+        aeFinderAppInfo.Name = State.Name;
+        State.AeFinderAppInfo = aeFinderAppInfo;
+
         await WriteStateAsync();
-        return new AppInfo() { DeveloperIds = State.DeveloperIds };
+        return new AppInfo() { AeFinderAppInfo = State.AeFinderAppInfo, DeveloperIds = State.DeveloperIds, AppId = State.AppId };
     }
 
 
@@ -49,9 +60,9 @@ public class AppGrain : Grain<AppGrainState>, IAppGrain
         return Task.FromResult(State.AeFinderAppInfo);
     }
 
-    public async Task<bool> IsAdmin(string adminId)
+    public Task<bool> IsAdmin(string appId)
     {
-        return !adminId.IsNullOrEmpty() && State.AdminId.IsNullOrEmpty() && adminId.Equals(State.AdminId);
+        return Task.FromResult(!appId.IsNullOrEmpty() && State.AppId.IsNullOrEmpty() && appId.Equals(State.AdminId));
     }
 
     public async Task SetGraphQlByVersion(string version, string graphQl)

@@ -4,12 +4,11 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.OpenIddict;
-using AeFinder.OpenIddict.Login;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using OpenIddict.Abstractions;
-using OpenIddict.Server;
 using OpenIddict.Server.AspNetCore;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
@@ -71,6 +70,7 @@ public class LoginTokenExtensionGrant : ITokenExtensionGrant, ITransientDependen
 
         principal.SetScopes(context.Request.GetScopes());
         principal.SetResources(await GetResourcesAsync(context.Request.GetScopes(), scopeManager));
+        principal.SetAudiences("AeFinder");
 
         await abpOpenIddictClaimDestinationsManager.SetAsync(principal);
 

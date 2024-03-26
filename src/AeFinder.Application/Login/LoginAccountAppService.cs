@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Threading.Tasks;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Login.Dto;
 using AeFinder.OpenIddict;
 using AeFinder.OpenIddict.Login;
@@ -8,10 +9,12 @@ using EAeFinder.Login.Dto;
 using IdentityModel.Client;
 using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
+using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
+using Volo.Abp.Users;
 
 namespace AeFinder.Login;
 
@@ -22,22 +25,50 @@ public class LoginAccountAppService : AeFinderAppService, ILoginAccountAppServic
     private readonly ILoginNewUserCreator _loginNewUserCreator;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly AuthOption _authOption;
-    private readonly IOpenIddictApplicationManager _applicationManager;
+    private readonly IClusterClient _clusterClient;
 
     public LoginAccountAppService(ILoginNewUserCreator loginNewUserCreator,
         IHttpClientFactory httpClientFactory,
-        IOptionsMonitor<AuthOption> authOption, IOpenIddictApplicationManager applicationManager)
+        IOptionsMonitor<AuthOption> authOption, IClusterClient clusterClient)
     {
         _loginNewUserCreator = loginNewUserCreator;
         _httpClientFactory = httpClientFactory;
-        _applicationManager = applicationManager;
+        _clusterClient = clusterClient;
         _authOption = authOption.CurrentValue;
     }
 
-    public async Task<IdentityUserDto> RegisterAsync(RegisterWithNameInput input)
+    public async Task<RegisterWithNameDto> RegisterAsync(RegisterWithNameInput input)
     {
-        var identityUser = await _loginNewUserCreator.CreateAsync(input.UserName, input.Password);
-        return ObjectMapper.Map<IdentityUser, IdentityUserDto>(identityUser);
+        const string userManageGrainId = "userManage";
+        var userManageGrain = _clusterClient.GetGrain<IUserManageGrain>(userManageGrainId);
+        string userId;
+        if (input.IsAdmin)
+        {
+            if (await userManageGrain.ExistsAdmin())
+            {
+                throw new UserFriendlyException("admin user already exists.");
+            }
+
+            var identityUser = await _loginNewUserCreator.CreateAsync(input.UserName, input.Password);
+            userId = identityUser.Id.ToString("N");
+            var success = await userManageGrain.SetAdmin(userId);
+            return new RegisterWithNameDto() { UserId = userId, IsAdmin = success };
+        }
+
+        if (CurrentUser == null)
+        {
+            throw new UserFriendlyException("pls login first. or contact admin.");
+        }
+
+        userId = CurrentUser.GetId().ToString("N");
+        if (await userManageGrain.IsAdmin(userId))
+        {
+            var identityUser = await _loginNewUserCreator.CreateAsync(input.UserName, input.Password);
+            userId = identityUser.Id.ToString("N");
+            return new RegisterWithNameDto() { UserId = userId };
+        }
+
+        throw new UserFriendlyException("pls contact admin.");
     }
 
     public async Task<string> RequestTokenByPasswordAsync(RequestTokenByPasswordInput input)

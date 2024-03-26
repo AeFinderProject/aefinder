@@ -21,6 +21,8 @@
 
     <PackageReference Include="AElf.Types" Version="1.6.0-alpha" />
 
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.4.1" />
+
     <PackageReference Include="Volo.Abp.Emailing" Version="7.0.0" />
 
     <PackageReference Include="Volo.Abp.FeatureManagement.Domain" Version="7.0.0" />

@@ -7,7 +7,7 @@ namespace AeFinder.Login;
 
 public interface ILoginAccountAppService
 {
-    Task<IdentityUserDto> RegisterAsync(RegisterWithNameInput input);
+    Task<RegisterWithNameDto> RegisterAsync(RegisterWithNameInput input);
 
     Task<string> RequestTokenByPasswordAsync(RequestTokenByPasswordInput input);
 

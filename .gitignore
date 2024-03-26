@@ -266,7 +266,7 @@ src/AeFinder.EntityEventHandler/Logs/*
 
 **/wwwroot/libs/*
 
-
+src/AeFinder.HttpApi.Host/KubeConfig/*
 src/AeFinder.AuthServer/package-lock.json
 src/AeFinder.AuthServer/wwwroot/libs/@fortawesome/fontawesome-free/css/all.css
 src/AeFinder.AuthServer/wwwroot/libs/@fortawesome/fontawesome-free/css/v4-shims.css

@@ -5,12 +5,12 @@ namespace AeFinder.Studio;
 
 public interface IStudioService
 {
-    Task<AddOrUpdateAeFinderAppDto> UpdateAeFinderApp(string appId, AddOrUpdateAeFinderAppInput input);
-    Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppName(string appId, ApplyAeFinderAppNameInput input);
-    Task<AeFinderAppInfoDto> GetAeFinderApp(string clientId, GetAeFinderAppInfoInput input);
+    Task<AddOrUpdateAeFinderAppDto> UpdateAeFinderApp(AddOrUpdateAeFinderAppInput input);
+    Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppName(ApplyAeFinderAppNameInput input);
+    Task<AeFinderAppInfoDto> GetAeFinderApp();
     Task<AddDeveloperToAppDto> AddDeveloperToApp(AddDeveloperToAppInput input);
     Task<List<AeFinderAppInfo>> GetAeFinderAppList();
-    Task<string> SubmitSubscriptionInfoAsync(string clientId, SubscriptionInfo input);
-    Task<QueryAeFinderAppDto> QueryAeFinderAppAsync(string clientId, QueryAeFinderAppInput input);
-    Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogsAsync(string clientId, QueryAeFinderAppLogsInput input);
+    Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input);
+    Task<QueryAeFinderAppDto> QueryAeFinderAppAsync(QueryAeFinderAppInput input);
+    Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogsAsync(QueryAeFinderAppLogsInput input);
 }
