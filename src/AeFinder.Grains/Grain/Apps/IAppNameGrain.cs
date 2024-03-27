@@ -12,15 +12,13 @@ public class AppNameGrain : Grain<AppNameState>, IAppNameGrain
 {
     public async Task<string> Register(string adminId)
     {
-        if (adminId.IsNullOrEmpty() || !State.AppId.IsNullOrEmpty())
+        if (adminId.IsNullOrEmpty() || (State.AdminId != null && State.AdminId.Equals(adminId)))
         {
             return string.Empty;
         }
 
         State.AdminId = adminId;
-        var appId = Guid.NewGuid().ToString("N");
-        State.AppId = appId;
         await WriteStateAsync();
-        return appId;
+        return adminId;
     }
 }

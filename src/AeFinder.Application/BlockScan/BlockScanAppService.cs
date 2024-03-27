@@ -24,13 +24,13 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
         _clusterClient = clusterClient;
     }
 
-    public async Task<string> AddSubscriptionAsync(string clientId, SubscriptionManifestDto manifestDto, byte[] dll = null)
+    public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifestDto, byte[] dll = null)
     {
-        Logger.LogInformation("ScanApp: {clientId} submit subscription: {subscription}", clientId,
+        Logger.LogInformation("ScanApp: {clientId} submit subscription: {subscription}", appId,
             JsonSerializer.Serialize(manifestDto));
 
         var subscription = ObjectMapper.Map<SubscriptionManifestDto,SubscriptionManifest>(manifestDto);
-        var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
+        var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         // TODO: Use the code from developer.
         if (dll == null)
         {

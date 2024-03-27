@@ -8,6 +8,7 @@ using AeFinder.BlockScan;
 using AeFinder.CodeOps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.Subscriptions;
 using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
 using Orleans;
@@ -55,7 +56,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
         //appid must not be registered
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
-        var res = await appGrain.Register(userId, appId, appNameInput.Name);
+        var res = await appGrain.Register(userId, appNameInput.Name, appNameInput.Name);
 
         var ans = new ApplyAeFinderAppNameDto() { Success = res.Success, AppId = appId };
         _logger.LogInformation("response ApplyAeFinderAppName: {0} input={1} exists={2} added={3}", userId, JsonSerializer.Serialize(appNameInput), res.Success, res.Added);
@@ -159,7 +160,17 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
     public async Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input)
     {
-        var subscriptionManifestDto = JsonSerializer.Deserialize<SubscriptionManifestDto>(input.SubscriptionManifest);
+        SubscriptionManifestDto subscriptionManifestDto;
+
+        try
+        {
+            subscriptionManifestDto = JsonSerializer.Deserialize<SubscriptionManifestDto>(input.SubscriptionManifest);
+        }
+        catch (Exception)
+        {
+            throw new UserFriendlyException("Invalid subscription manifest.");
+        }
+
         if (subscriptionManifestDto == null || subscriptionManifestDto.SubscriptionItems.IsNullOrEmpty())
         {
             throw new UserFriendlyException("Invalid subscription manifest.");
@@ -212,6 +223,17 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         }
 
         throw new UserFriendlyException("app of current user not found");
+    }
+
+    public async Task UpdateAeFinderAppAsync(UpdateAeFinderAppInput input)
+    {
+        await using var stream = input.AppDll.OpenReadStream();
+        var dllBytes = stream.GetAllBytes();
+        _codeAuditor.Audit(dllBytes);
+
+        var appId = await GetAppIdAsync();
+        var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        await subscriptionGrain.UpdateCodeAsync(input.Version, dllBytes);
     }
 
     private async Task AddToUsersApps(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)

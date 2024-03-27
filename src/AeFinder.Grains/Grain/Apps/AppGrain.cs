@@ -15,7 +15,6 @@ public class AppGrain : Grain<AppGrainState>, IAppGrain
 
         State.AdminId = adminId;
         State.AppId = appId;
-        State.Name = name;
         State.AeFinderAppInfo = new AeFinderAppInfo() { AppId = appId, Name = name };
         await WriteStateAsync();
         return new RegisterDto() { Success = true, Added = true };
@@ -47,7 +46,7 @@ public class AppGrain : Grain<AppGrainState>, IAppGrain
         }
 
         aeFinderAppInfo.AppId = State.AppId;
-        aeFinderAppInfo.Name = State.Name;
+        aeFinderAppInfo.Name = State.AppId;
         State.AeFinderAppInfo = aeFinderAppInfo;
 
         await WriteStateAsync();

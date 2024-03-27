@@ -6,6 +6,8 @@ public class AppGrainState
 {
     public string AdminId { get; set; }
     public string AppId { get; set; }
+    
+    //duplicated, appid is name
     public string Name { get; set; }
 
     public HashSet<string> DeveloperIds { get; set; } = new();

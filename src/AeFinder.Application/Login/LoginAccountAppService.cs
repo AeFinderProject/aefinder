@@ -8,12 +8,10 @@ using AeFinder.Option;
 using EAeFinder.Login.Dto;
 using IdentityModel.Client;
 using Microsoft.Extensions.Options;
-using OpenIddict.Abstractions;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.DependencyInjection;
-using Volo.Abp.Identity;
 using Volo.Abp.Users;
 
 namespace AeFinder.Login;
@@ -52,7 +50,7 @@ public class LoginAccountAppService : AeFinderAppService, ILoginAccountAppServic
             var identityUser = await _loginNewUserCreator.CreateAsync(input.UserName, input.Password);
             userId = identityUser.Id.ToString("N");
             var success = await userManageGrain.SetAdmin(userId);
-            return new RegisterWithNameDto() { UserId = userId, IsAdmin = success };
+            return new RegisterWithNameDto() { IsAdmin = success };
         }
 
         if (CurrentUser == null)
@@ -65,7 +63,7 @@ public class LoginAccountAppService : AeFinderAppService, ILoginAccountAppServic
         {
             var identityUser = await _loginNewUserCreator.CreateAsync(input.UserName, input.Password);
             userId = identityUser.Id.ToString("N");
-            return new RegisterWithNameDto() { UserId = userId };
+            return new RegisterWithNameDto();
         }
 
         throw new UserFriendlyException("pls contact admin.");

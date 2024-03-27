@@ -1,18 +1,12 @@
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Volo.Abp.Validation;
 
 namespace AeFinder.Studio;
 
-public class ApplyAeFinderAppNameInput : IValidatableObject
+public class ApplyAeFinderAppNameInput
 {
-    [Required] public string Name { get; set; }
-
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (string.IsNullOrEmpty(Name))
-        {
-            yield return new ValidationResult("Invalid Name input.");
-        }
-    }
+    [Required]
+    [DynamicStringLength(typeof(AppIdConsts), nameof(AppIdConsts.MaxNameLength))]
+    [RegularExpression(AppIdConsts.NameRegex, ErrorMessage = "Invalid Name input.")]
+    public string Name { get; set; }
 }

@@ -63,6 +63,13 @@ public class StudioController : AeFinderController
         return _studioService.SubmitSubscriptionInfoAsync(input);
     }
 
+    [HttpPost("updateapp")]
+    [Authorize]
+    public Task UpdateAeFinderAppAsync(UpdateAeFinderAppInput input)
+    {
+        return _studioService.UpdateAeFinderAppAsync(input);
+    }
+
     // [HttpPost("query")]
     // [Authorize]
     // public Task<QueryAeFinderAppDto> QueryAeFinderApp(QueryAeFinderAppInput input)

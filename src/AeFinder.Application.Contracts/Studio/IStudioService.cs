@@ -15,4 +15,6 @@ public interface IStudioService
     Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogsAsync(QueryAeFinderAppLogsInput input);
 
     Task<string> GetAppIdAsync();
+
+    Task UpdateAeFinderAppAsync(UpdateAeFinderAppInput input);
 }

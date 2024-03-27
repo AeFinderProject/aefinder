@@ -5,16 +5,16 @@ using Microsoft.AspNetCore.Http;
 
 namespace AeFinder.Studio;
 
-public class SubscriptionInfo : IValidatableObject             
+public class UpdateAeFinderAppInput : IValidatableObject
 {
-    [Required] public string SubscriptionManifest { get; set; }
+    [Required] public string Version { get; set; }
     [Required] public IFormFile AppDll { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (string.IsNullOrEmpty(SubscriptionManifest))
+        if (string.IsNullOrEmpty(Version))
         {
-            yield return new ValidationResult("Invalid SubscriptionManifest input.");
+            yield return new ValidationResult("Invalid Version input.");
         }
 
         if (AppDll == null || AppDll.Length == 0)
