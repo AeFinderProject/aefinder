@@ -53,7 +53,7 @@ public class LoginAccountAppService : AeFinderAppService, ILoginAccountAppServic
             return new RegisterWithNameDto() { IsAdmin = success };
         }
 
-        if (CurrentUser == null)
+        if (CurrentUser?.Id == null)
         {
             throw new UserFriendlyException("pls login first. or contact admin.");
         }

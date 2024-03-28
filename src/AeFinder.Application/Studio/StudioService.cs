@@ -209,7 +209,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
     public async Task<string> GetAppIdAsync()
     {
-        if (CurrentUser == null)
+        if (CurrentUser?.Id == null)
         {
             throw new UserFriendlyException("userid not found");
         }
