@@ -58,7 +58,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
         var res = await appGrain.Register(userId, appNameInput.Name, appNameInput.Name);
 
-        var ans = new ApplyAeFinderAppNameDto() { Success = res.Success, AppId = appId };
+        var ans = new ApplyAeFinderAppNameDto() { Success = res.Success, AppId = appNameInput.Name };
         _logger.LogInformation("response ApplyAeFinderAppName: {0} input={1} exists={2} added={3}", userId, JsonSerializer.Serialize(appNameInput), res.Success, res.Added);
         return ans;
     }
