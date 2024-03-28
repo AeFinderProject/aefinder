@@ -22,6 +22,5 @@ public class AeFinderKubernetesModule: AbpModule
             var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(options.KubeConfigPath);
             return new k8s.Kubernetes(config);
         });
-        context.Services.AddSingleton<IKubernetesAppManager, KubernetesAppManager>();
     }
 }
