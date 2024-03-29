@@ -19,7 +19,7 @@ public class ContractOperationLimitProvider : CallCountOperationLimitProvider,IC
 
     public void CheckCallCount()
     {
-        if (CallCount >= _options.MaxContractCallCount)
+        if (CallCount > _options.MaxContractCallCount)
         {
             throw new ApplicationException("Too many calls");
         }
