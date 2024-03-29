@@ -45,18 +45,6 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         }
 
         await PublishMessageAsync(subscribedBlock);
-
-
-        //TODO: This can only check one chain 
-        // if (subscribedBlock.Version == clientVersion.NewVersion)
-        // {
-        //     var chainGrain = _clusterClient.GetGrain<IChainGrain>(subscribedBlock.ChainId);
-        //     var chainStatus = await chainGrain.GetChainStatusAsync();
-        //     if (subscribedBlock.Blocks.Last().BlockHeight > chainStatus.BlockHeight - UpgradeVersionThreshold)
-        //     {
-        //         await _blockScanAppService.UpgradeVersionAsync(subscribedBlock.ClientId);
-        //     }
-        // }
     }
     
     private async Task PublishMessageAsync(SubscribedBlockDto subscribedBlock)
