@@ -76,7 +76,7 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
 
     private async Task SaveIndexAsync(string indexName, DataOperationType operationType, List<TEntity> toCommitData)
     {
-        _logger.LogDebug("Saving app index. Index name: {indexName}, OperationType: {operationType}", indexName,
+        _logger.LogDebug("Saving app index. IndexName: {indexName}, OperationType: {operationType}", indexName,
             operationType);
         switch (operationType)
         {
@@ -90,7 +90,7 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
                 break;
         }
 
-        _logger.LogDebug("Saved app index. Index name: {indexName}, OperationType: {operationType}", indexName,
+        _logger.LogDebug("Saved app index. IndexName: {indexName}, OperationType: {operationType}", indexName,
             operationType);
     }
 
