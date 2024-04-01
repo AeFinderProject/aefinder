@@ -66,6 +66,6 @@ public static class AeFinderLoggerExtensions
     
     public static void Log(this IAeFinderLogger logger,LogLevel logLevel, string? message, params object?[] args)
     {
-        logger.Log(LogLevel.Critical, null, message, args);
+        logger.Log(logLevel, null, message, args);
     }
 }
