@@ -36,7 +36,7 @@ public class KubernetesAppManagerTests:AeFinderKubernetesTestBase
     }
     
     [Fact]
-    public async Task KubernetesAppManagerTest_DeleteApp()
+    public async Task KubernetesAppManagerTest_DestroyApp()
     {
         string appId = "test-app";
         string version = "403dddd97d204b04953faab9ac18fa5e";
@@ -89,12 +89,6 @@ public class KubernetesAppManagerTests:AeFinderKubernetesTestBase
             It.IsAny<bool?>(),
             It.IsAny<CancellationToken>()
         )).ReturnsAsync(new V1DeploymentList { Items = new List<V1Deployment>() });
-        
-    }
-
-    [Fact]
-    public void KubernetesAppManagerTest_Destroy()
-    {
         
     }
 }
