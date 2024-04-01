@@ -25,8 +25,6 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
 
     public async Task SaveDataAsync()
     {
-        _logger.LogDebug("Saving dapp index.");
-        
         var indexName= string.Empty;
         DataOperationType operationType = DataOperationType.AddOrUpdate;
         var toCommitData = new List<TEntity>();
@@ -47,8 +45,6 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
         {
             await SaveIndexAsync(indexName,operationType, toCommitData);
         }
-        
-        _logger.LogDebug("Saved dapp index.");
     }
 
     public Task AddOrUpdateAsync(TEntity entity, string indexName)
@@ -80,6 +76,8 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
 
     private async Task SaveIndexAsync(string indexName, DataOperationType operationType, List<TEntity> toCommitData)
     {
+        _logger.LogDebug("Saving app index. Index name: {indexName}, OperationType: {operationType}", indexName,
+            operationType);
         switch (operationType)
         {
             case DataOperationType.AddOrUpdate:
@@ -91,6 +89,9 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
                 toCommitData.Clear();
                 break;
         }
+
+        _logger.LogDebug("Saved app index. Index name: {indexName}, OperationType: {operationType}", indexName,
+            operationType);
     }
 
     private void Register()
