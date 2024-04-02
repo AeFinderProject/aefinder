@@ -16,17 +16,13 @@ public static class OrleansHostExtensions
 {
     public static IHostBuilder UseOrleansSnapshot<TGrain>(this IHostBuilder hostBuilder)
     {
-        var configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.apollo.json")
-            .Build();
-        hostBuilder.ConfigureAppConfiguration(config => { config.AddApollo(config.Build().GetSection("apollo")); });
-        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
-        var configSection = configuration.GetSection("Orleans");
-        if (configSection == null)
-            throw new ArgumentNullException(nameof(configSection), "The OrleansServer node is missing");
-        var ip = configSection.GetValue<string>("AdvertisedIP");
-        return hostBuilder.UseOrleans(siloBuilder =>
+        return hostBuilder.UseOrleans((context, siloBuilder) =>
         {
+            var configuration = context.Configuration;
+            var configSection = context.Configuration.GetSection("Orleans");
+            if (configSection == null)
+                throw new ArgumentNullException(nameof(configSection), "The OrleansServer node is missing");
+            var ip = configSection.GetValue<string>("AdvertisedIP");
             siloBuilder
                 .ConfigureEndpoints(advertisedIP: IPAddress.Parse(configSection.GetValue<string>("AdvertisedIP")),
                     siloPort: configSection.GetValue<int>("SiloPort"),

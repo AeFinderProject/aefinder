@@ -120,7 +120,7 @@ public static class AeFinderHostBuilderExtensions
                 }
                 //To display the Apollo console logs 
 #if DEBUG
-                LogManager.UseConsoleLogging(Com.Ctrip.Framework.Apollo.Logging.LogLevel.Trace);
+                LogManager.UseConsoleLogging(LogLevel.Trace);
 #endif
                 builder.AddApollo(builder.Build().GetSection("apollo"));
             })

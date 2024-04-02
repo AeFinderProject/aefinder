@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Com.Ctrip.Framework.Apollo.Configuration" Version="2.10.1" />
+      <PackageReference Include="Com.Ctrip.Framework.Apollo.Configuration" Version="2.10.2" />
       <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="6.0.8" />
       <PackageReference Include="Orleans.Clustering.Redis" Version="3.2.2" />
       <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />

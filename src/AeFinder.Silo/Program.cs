@@ -1,4 +1,5 @@
-﻿using AeFinder.Grains.Grain.Blocks;
+﻿using AeFinder.Commons;
+using AeFinder.Grains.Grain.Blocks;
 using AeFinder.Silo.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,7 +13,7 @@ public class Program
     public async static Task<int> Main(string[] args)
     {
         Log.Logger = LogHelper.CreateLogger(LogEventLevel.Debug);
-        
+
         try
         {
             Log.Information("Starting AeFinder.Silo.");
@@ -32,6 +33,8 @@ public class Program
 
     internal static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
+            .InitAppConfiguration(true)
+            .UseApolloForHostBuilder()
             .ConfigureServices((hostcontext, services) => { services.AddApplication<AeFinderOrleansSiloModule>(); })
 
             // .UseOrleans<BlockGrain>()
