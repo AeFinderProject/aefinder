@@ -47,6 +47,14 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
     public async Task<BlockData> ConfirmBlock()
     {
         State.Block.Confirmed = true;
+        foreach (var transaction in State.Block.Transactions)
+        {
+            transaction.Confirmed = true;
+            foreach (var logEvent in transaction.LogEvents)
+            {
+                logEvent.Confirmed = true;
+            }
+        }
         _logger.LogInformation($"before write block {State.Block.BlockHeight} confirmed {State.Block.Confirmed} success");
         await WriteStateAsync();
         _logger.LogInformation($"after write block {State.Block.BlockHeight} confirmed {State.Block.Confirmed} success");
