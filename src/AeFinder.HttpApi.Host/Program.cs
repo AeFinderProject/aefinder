@@ -16,7 +16,7 @@ public class Program
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
             .Build();
-        
+
         Log.Logger = new LoggerConfiguration()
 #if DEBUG
             .MinimumLevel.Debug()
@@ -37,6 +37,11 @@ public class Program
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.AddAppSettingsSecretsJson()
                 .UseAutofac()
+                .ConfigureAppConfiguration(config =>
+                {  
+                    config.AddJsonFile("apollosettings.json");
+                    config.AddApollo(config.Build().GetSection("apollo"));
+                })
                 .UseSerilog();
             await builder.AddApplicationAsync<AeFinderHttpApiHostModule>();
             var app = builder.Build();

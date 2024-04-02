@@ -18,7 +18,7 @@ public class LoginNewUserCreator : ILoginNewUserCreator, ITransientDependency
     private readonly IOptions<IdentityOptions> _identityOptions;
     private readonly IdentityUserManager _identityUserManager;
 
-    public LoginNewUserCreator(ICurrentTenant currentTenant, IOptions<IdentityOptions> identityOptions, IdentityUserManager identityUserManager, IGuidGenerator guidGenerator)
+    public LoginNewUserCreator(ICurrentTenant currentTenant, IOptionsSnapshot<IdentityOptions> identityOptions, IdentityUserManager identityUserManager, IGuidGenerator guidGenerator)
     {
         _currentTenant = currentTenant;
         _identityOptions = identityOptions;
