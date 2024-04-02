@@ -182,7 +182,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var userId = CurrentUser.GetId().ToString("N");
         var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
         var info = await userAppGrain.GetAppInfo();
-        if (info == null)
+        if (info == null || info.AppId.IsNullOrEmpty())
         {
             throw new UserFriendlyException("app not exists.");
         }
