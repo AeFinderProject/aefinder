@@ -34,11 +34,13 @@ public static class OrleansHostExtensions
                 {
                     options.DatabaseName = configSection.GetValue<string>("DataBase");
                     options.Strategy = MongoDBMembershipStrategy.SingleDocument;
+                    options.CreateShardKeyForCosmos = true;
                 })
                 .AddMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
                 {
                     op.CollectionPrefix = "GrainStorage";
                     op.DatabaseName = configSection.GetValue<string>("DataBase");
+                    op.CreateShardKeyForCosmos = true;
 
                     op.ConfigureJsonSerializerSettings = jsonSettings =>
                     {
@@ -60,7 +62,7 @@ public static class OrleansHostExtensions
                 .UseMongoDBReminders(options =>
                 {
                     options.DatabaseName = configSection.GetValue<string>("DataBase");
-                    options.CreateShardKeyForCosmos = false;
+                    options.CreateShardKeyForCosmos = true;
                 })
                 .Configure<ClusterOptions>(options =>
                 {
