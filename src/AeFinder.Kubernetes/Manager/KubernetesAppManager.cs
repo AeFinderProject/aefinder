@@ -1,3 +1,4 @@
+using AeFinder.Kubernetes.Adapter;
 using AeFinder.Kubernetes.ResourceDefinition;
 using k8s;
 using Microsoft.Extensions.Logging;
@@ -6,17 +7,21 @@ using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.Kubernetes.Manager;
 
-public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
+public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
 {
-    private readonly k8s.Kubernetes _k8sClient;
+    // private readonly k8s.Kubernetes _k8sClient;
     private readonly KubernetesOptions _kubernetesOptions;
     private readonly ILogger<KubernetesAppManager> _logger;
+    private readonly IKubernetesClientAdapter _kubernetesClientAdapter;
 
-    public KubernetesAppManager(ILogger<KubernetesAppManager> logger, k8s.Kubernetes k8sClient,
+    public KubernetesAppManager(ILogger<KubernetesAppManager> logger, 
+        // k8s.Kubernetes k8sClient,
+        IKubernetesClientAdapter kubernetesClientAdapter,
         IOptionsSnapshot<KubernetesOptions> kubernetesOptions)
     {
         _logger = logger;
-        _k8sClient = k8sClient;
+        // _k8sClient = k8sClient;
+        _kubernetesClientAdapter = kubernetesClientAdapter;
         _kubernetesOptions = kubernetesOptions.Value;
     }
 
@@ -36,14 +41,14 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderVersion, version);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderClientType,
             KubernetesConstants.AppClientTypeFull);
-        var configMaps = await _k8sClient.ListNamespacedConfigMapAsync(KubernetesConstants.AppNameSpace);
+        var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
         bool configMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == configMapName);
         if (!configMapExists)
         {
             var configMap =
                 ConfigMapHelper.CreateAppSettingConfigMapDefinition(configMapName, appSettingsContent);
             // Submit the ConfigMap to the cluster
-            await _k8sClient.CreateNamespacedConfigMapAsync(configMap, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.CreateConfigMapAsync(configMap,KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {configMapName} created", configMapName);
         }
 
@@ -59,7 +64,7 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
             var sideCarConfigMap =
                 ConfigMapHelper.CreateFileBeatConfigMapDefinition(sideCarConfigName, sideCarConfigContent);
             // Submit the ConfigMap to the cluster
-            await _k8sClient.CreateNamespacedConfigMapAsync(sideCarConfigMap, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.CreateConfigMapAsync(sideCarConfigMap,KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {sideCarConfigName} created", sideCarConfigName);
         }
 
@@ -69,14 +74,14 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         string containerName =
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeFull);
         int replicasCount = _kubernetesOptions.AppPodReplicas;
-        var deployments = await _k8sClient.ListNamespacedDeploymentAsync(KubernetesConstants.AppNameSpace);
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         bool deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(imageName,
                 deploymentName, replicasCount, containerName, configMapName, sideCarConfigName);
             // Create Deployment
-            await _k8sClient.CreateNamespacedDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);
         }
     }
@@ -91,14 +96,14 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderVersion, version);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderClientType,
             KubernetesConstants.AppClientTypeQuery);
-        var configMaps = await _k8sClient.ListNamespacedConfigMapAsync(KubernetesConstants.AppNameSpace);
+        var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
         bool configMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == configMapName);
         if (!configMapExists)
         {
             var configMap =
                 ConfigMapHelper.CreateAppSettingConfigMapDefinition(configMapName, appSettingsContent);
             // Submit the ConfigMap to the cluster
-            await _k8sClient.CreateNamespacedConfigMapAsync(configMap, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.CreateConfigMapAsync(configMap,KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {configMapName} created", configMapName);
         }
 
@@ -114,7 +119,7 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
             var sideCarConfigMap =
                 ConfigMapHelper.CreateFileBeatConfigMapDefinition(sideCarConfigName, sideCarConfigContent);
             // Submit the ConfigMap to the cluster
-            await _k8sClient.CreateNamespacedConfigMapAsync(sideCarConfigMap, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.CreateConfigMapAsync(sideCarConfigMap,KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {sideCarConfigName} created", sideCarConfigName);
         }
 
@@ -124,28 +129,28 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         string containerName =
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeQuery);
         int replicasCount = _kubernetesOptions.AppPodReplicas;
-        var deployments = await _k8sClient.ListNamespacedDeploymentAsync(KubernetesConstants.AppNameSpace);
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         bool deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(imageName,
                 deploymentName, replicasCount, containerName, configMapName, sideCarConfigName);
             // Create Deployment
-            await _k8sClient.CreateNamespacedDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);
         }
 
         //Create query app service
         string serviceName = ServiceHelper.GetAppServiceName(appId, version);
         int targetPort = KubernetesConstants.AppContainerTargetPort;
-        var services = await _k8sClient.ListNamespacedServiceAsync(KubernetesConstants.AppNameSpace);
+        var services = await _kubernetesClientAdapter.ListServiceAsync(KubernetesConstants.AppNameSpace);
         bool sericeExists = services.Items.Any(item => item.Metadata.Name == serviceName);
         if (!sericeExists)
         {
             var service =
                 ServiceHelper.CreateAppClusterIPServiceDefinition(serviceName, deploymentName, targetPort);
             // Create Service
-            await _k8sClient.CreateNamespacedServiceAsync(service, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.CreateServiceAsync(service, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Service {serviceName} created", serviceName);
         }
 
@@ -154,7 +159,7 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         string hostName = _kubernetesOptions.HostName;
         // string rulePath = $"/{appId}";
         string rulePath = $"/{appId}/{version}/graphql";
-        var ingresses = await _k8sClient.ListNamespacedIngressAsync(KubernetesConstants.AppNameSpace);
+        var ingresses = await _kubernetesClientAdapter.ListIngressAsync(KubernetesConstants.AppNameSpace);
         bool ingressExists = ingresses.Items.Any(item => item.Metadata.Name == ingressName);
         if (!ingressExists)
         {
@@ -162,7 +167,7 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
                 IngressHelper.CreateAppIngressDefinition(ingressName, hostName,
                     rulePath, serviceName, targetPort);
             // Submit the Ingress to the cluster
-            await _k8sClient.CreateNamespacedIngressAsync(ingress, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.CreateIngressAsync(ingress, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} created", ingressName);
         }
 
@@ -174,12 +179,12 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         //Delete full app deployment
         string fullTypeAppDeploymentName =
             DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeFull);
-        var deployments = await _k8sClient.ListNamespacedDeploymentAsync(KubernetesConstants.AppNameSpace);
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         bool fullTypeAppDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullTypeAppDeploymentName);
         if (fullTypeAppDeploymentExists)
         {
             // Delete the existing Deployment
-            await _k8sClient.DeleteNamespacedDeploymentAsync(
+            await _kubernetesClientAdapter.DeleteDeploymentAsync(
                 fullTypeAppDeploymentName,
                 KubernetesConstants.AppNameSpace
             );
@@ -187,12 +192,12 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         }
 
         //Delete full app appsetting config map
-        string fullTypeAppConfigMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version, KubernetesConstants.AppClientTypeFull);
-        var configMaps = await _k8sClient.ListNamespacedConfigMapAsync(KubernetesConstants.AppNameSpace);
+        string fullTypeAppConfigMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeFull);
+        var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
         bool fullTypeAppConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == fullTypeAppConfigMapName);
         if (fullTypeAppConfigMapExists)
         {
-            await _k8sClient.DeleteNamespacedConfigMapAsync(fullTypeAppConfigMapName, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.DeleteConfigMapAsync(fullTypeAppConfigMapName, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {fullTypeAppConfigMapName} deleted.", fullTypeAppConfigMapName);
         }
 
@@ -202,7 +207,7 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         bool fullTypeAppSideCarConfigExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == fullTypeAppSideCarConfigName);
         if (fullTypeAppSideCarConfigExists)
         {
-            await _k8sClient.DeleteNamespacedConfigMapAsync(fullTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.DeleteConfigMapAsync(fullTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {fullTypeAppSideCarConfigName} deleted.", fullTypeAppSideCarConfigName);
         }
 
@@ -213,7 +218,7 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         if (queryTypeAppDeploymentExists)
         {
             // Delete the existing Deployment
-            await _k8sClient.DeleteNamespacedDeploymentAsync(
+            await _kubernetesClientAdapter.DeleteDeploymentAsync(
                 queryTypeAppDeploymentName,
                 KubernetesConstants.AppNameSpace
             );
@@ -226,7 +231,7 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         bool queryTypeAppConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == queryTypeAppConfigMapName);
         if (queryTypeAppConfigMapExists)
         {
-            await _k8sClient.DeleteNamespacedConfigMapAsync(queryTypeAppConfigMapName, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.DeleteConfigMapAsync(queryTypeAppConfigMapName, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {queryTypeAppConfigMapName} deleted.", queryTypeAppConfigMapName);
         }
 
@@ -235,27 +240,27 @@ public class KubernetesAppManager : IKubernetesAppManager, ITransientDependency
         bool queryTypeAppSideCarConfigExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == queryTypeAppSideCarConfigName);
         if (queryTypeAppSideCarConfigExists)
         {
-            await _k8sClient.DeleteNamespacedConfigMapAsync(queryTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.DeleteConfigMapAsync(queryTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {queryTypeAppSideCarConfigName} deleted.", queryTypeAppSideCarConfigName);
         }
 
         //Delete query app service
         string serviceName = ServiceHelper.GetAppServiceName(appId, version);
-        var services = await _k8sClient.ListNamespacedServiceAsync(KubernetesConstants.AppNameSpace);
+        var services = await _kubernetesClientAdapter.ListServiceAsync(KubernetesConstants.AppNameSpace);
         bool sericeExists = services.Items.Any(item => item.Metadata.Name == serviceName);
         if (sericeExists)
         {
-            await _k8sClient.DeleteNamespacedServiceAsync(serviceName, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.DeleteServiceAsync(serviceName, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Service {serviceName} deleted.", serviceName);
         }
 
         //Delete query app ingress
         string ingressName = IngressHelper.GetAppIngressName(appId, version);
-        var ingresses = await _k8sClient.ListNamespacedIngressAsync(KubernetesConstants.AppNameSpace);
+        var ingresses = await _kubernetesClientAdapter.ListIngressAsync(KubernetesConstants.AppNameSpace);
         bool ingressExists = ingresses.Items.Any(item => item.Metadata.Name == ingressName);
         if (ingressExists)
         {
-            await _k8sClient.DeleteNamespacedIngressAsync(ingressName, KubernetesConstants.AppNameSpace);
+            await _kubernetesClientAdapter.DeleteIngressAsync(ingressName, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} deleted.", ingressName);
         }
     }
