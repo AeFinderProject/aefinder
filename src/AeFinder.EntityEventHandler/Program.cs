@@ -49,6 +49,8 @@ namespace AeFinder.EntityEventHandler
         
         internal static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .InitAppConfiguration(false)
+                .UseApolloForConfigureHostBuilder()
                 .ConfigureAppConfiguration(build =>
                 {
                     build.AddJsonFile("appsettings.secrets.json", optional: true);

@@ -27,12 +27,12 @@ public class LoginAccountAppService : AeFinderAppService, ILoginAccountAppServic
 
     public LoginAccountAppService(ILoginNewUserCreator loginNewUserCreator,
         IHttpClientFactory httpClientFactory,
-        IOptionsMonitor<AuthOption> authOption, IClusterClient clusterClient)
+        IOptionsSnapshot<AuthOption> authOption, IClusterClient clusterClient)
     {
         _loginNewUserCreator = loginNewUserCreator;
         _httpClientFactory = httpClientFactory;
         _clusterClient = clusterClient;
-        _authOption = authOption.CurrentValue;
+        _authOption = authOption.Value;
     }
 
     public async Task<RegisterWithNameDto> RegisterAsync(RegisterWithNameInput input)

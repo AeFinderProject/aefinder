@@ -16,15 +16,13 @@ public static class OrleansHostExtensions
 {
     public static IHostBuilder UseOrleansSnapshot<TGrain>(this IHostBuilder hostBuilder)
     {
-        var configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json")
-            .Build();
-        if (configuration == null) throw new ArgumentNullException(nameof(configuration));
-        var configSection = configuration.GetSection("Orleans");
-        if (configSection == null)
-            throw new ArgumentNullException(nameof(configSection), "The OrleansServer node is missing");
-        return hostBuilder.UseOrleans(siloBuilder =>
+        return hostBuilder.UseOrleans((context, siloBuilder) =>
         {
+            var configuration = context.Configuration;
+            var configSection = context.Configuration.GetSection("Orleans");
+            if (configSection == null)
+                throw new ArgumentNullException(nameof(configSection), "The OrleansServer node is missing");
+            var ip = configSection.GetValue<string>("AdvertisedIP");
             siloBuilder
                 .ConfigureEndpoints(advertisedIP: IPAddress.Parse(configSection.GetValue<string>("AdvertisedIP")),
                     siloPort: configSection.GetValue<int>("SiloPort"),
@@ -46,7 +44,6 @@ public static class OrleansHostExtensions
                         jsonSettings.DefaultValueHandling = DefaultValueHandling.Populate;
                         jsonSettings.ObjectCreationHandling = ObjectCreationHandling.Replace;
                     };
-
                 })
                 .Configure<GrainCollectionOptions>(options =>
                 {

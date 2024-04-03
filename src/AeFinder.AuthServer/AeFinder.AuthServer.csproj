@@ -19,6 +19,7 @@
     <Content Remove="Logs\**" />
     <EmbeddedResource Remove="Logs\**" />
     <None Remove="Logs\**" />
+    <None Include="appsettings.apollo.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,7 +33,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
     <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="6.0.5" />
     <PackageReference Include="DistributedLock.Redis" Version="1.0.2" />
@@ -50,6 +51,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj">
+      <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
+    </ProjectReference>
     <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
   </ItemGroup>
 
