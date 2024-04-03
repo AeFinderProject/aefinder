@@ -67,8 +67,26 @@ public static class OrleansHostExtensions
                     options.ClusterId = configSection.GetValue<string>("ClusterId");
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
                 })
+                .Configure<SiloMessagingOptions>(options =>
+                {
+                    options.ResponseTimeout = TimeSpan.FromSeconds(configSection.GetValue<int>("GrainResponseTimeOut"));
+                    options.MaxMessageBodySize = configSection.GetValue<int>("GrainMaxMessageBodySize");
+                    options.MaxForwardCount = configSection.GetValue<int>("MaxForwardCount");
+                })
                 //.AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .AddMemoryGrainStorage("PubSubStore")
+                .AddMongoDBGrainStorage("PubSubStore", options =>
+                {
+                    // Config PubSubStore Storage for Persistent Stream 
+                    options.CollectionPrefix = "StreamStorage";
+                    options.DatabaseName = configSection.GetValue<string>("DataBase");
+
+                    options.ConfigureJsonSerializerSettings = jsonSettings =>
+                    {
+                        jsonSettings.NullValueHandling = NullValueHandling.Include;
+                        jsonSettings.DefaultValueHandling = DefaultValueHandling.Populate;
+                        jsonSettings.ObjectCreationHandling = ObjectCreationHandling.Replace;
+                    };
+                })
                 .ConfigureApplicationParts(parts => parts.AddFromApplicationBaseDirectory())
                 .UseDashboard(options =>
                 {
