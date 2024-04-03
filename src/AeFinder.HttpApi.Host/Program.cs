@@ -36,12 +36,9 @@ public class Program
             Log.Information("Starting AeFinder.HttpApi.Host.");
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.AddAppSettingsSecretsJson()
+                .InitAppConfiguration(false)
+                .UseApolloForConfigureHostBuilder()
                 .UseAutofac()
-                .ConfigureAppConfiguration(config =>
-                {  
-                    config.AddJsonFile("apollosettings.json");
-                    config.AddApollo(config.Build().GetSection("apollo"));
-                })
                 .UseSerilog();
             await builder.AddApplicationAsync<AeFinderHttpApiHostModule>();
             var app = builder.Build();

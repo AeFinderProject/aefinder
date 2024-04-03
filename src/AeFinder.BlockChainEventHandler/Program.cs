@@ -49,11 +49,11 @@ namespace AeFinder.BlockChainEventHandler
         
         internal static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .InitAppConfiguration(false)
+                .UseApolloForConfigureHostBuilder()
                 .ConfigureAppConfiguration(build =>
                 {
                     build.AddJsonFile("appsettings.secrets.json", optional: true);
-                    build.AddJsonFile("apollosettings.json");
-                    build.AddApollo(build.Build().GetSection("apollo"));
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
