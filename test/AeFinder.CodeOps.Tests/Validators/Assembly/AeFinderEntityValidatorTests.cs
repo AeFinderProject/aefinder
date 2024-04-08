@@ -17,6 +17,7 @@ public class AeFinderEntityValidatorTests : AeFinderCodeOpsTestBase
     {
         var sourceCode = @"
         using AeFinder.Sdk;
+        using AeFinder.Sdk.Entities;
 
         namespace MyPlugin;
 
@@ -65,6 +66,7 @@ public class AeFinderEntityValidatorTests : AeFinderCodeOpsTestBase
     {
         var sourceCode = @"
         using AeFinder.Sdk;
+        using AeFinder.Sdk.Entities;
 
         namespace MyPlugin;
 

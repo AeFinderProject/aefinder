@@ -12,5 +12,8 @@ public class AeFinderCodeOpsModule : AbpModule
     {
         context.Services.AddTransient<IValidator, AeFinderEntityValidator>();
         context.Services.AddTransient<IValidator, WhitelistValidator>();
+        
+        var configuration = context.Services.GetConfiguration();
+        Configure<CodeOpsOptions>(configuration.GetSection("CodeOps"));
     }
 }
