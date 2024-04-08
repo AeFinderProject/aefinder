@@ -16,5 +16,5 @@ public interface IStudioService
 
     Task<string> GetAppIdAsync();
 
-    Task UpdateAeFinderAppAsync(UpdateAeFinderAppInput input);
+    Task<UpdateAeFinderAppDto> UpdateAeFinderAppAsync(UpdateAeFinderAppInput input);
 }
