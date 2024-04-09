@@ -31,6 +31,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         using System.Linq;
         using System.Collections.Generic;
         using Nest;
+        using AeFinder.Sdk.Entities;
 
         namespace TestApp;
 
@@ -70,7 +71,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
 
         public class TestAppBlockProcessor : BlockProcessorBase
         {
-            public override async Task ProcessAsync(AeFinder.Sdk.Processor.Block block)
+            public override async Task ProcessAsync(AeFinder.Sdk.Processor.Block block, BlockContext context)
             {
                 throw new NotImplementedException();
             }
@@ -102,6 +103,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         using Microsoft.Extensions.Logging;
         using System.Threading.Tasks;
         using System;
+        using AeFinder.Sdk.Entities;
 
         namespace TestApp;
 
@@ -110,6 +112,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
             public int IntValue { get; set; }
             [Keyword]
             public string StringValue { get; set; }
+            public DateAttribute T {get;set;}
         }
 
         public class Client
@@ -124,7 +127,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         {
             private readonly ILogger<TestAppBlockProcessor> _logger;
 
-            public override async Task ProcessAsync(AeFinder.Sdk.Processor.Block block)
+            public override async Task ProcessAsync(AeFinder.Sdk.Processor.Block block, BlockContext context)
             {
                 throw new NotImplementedException();
             }

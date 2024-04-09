@@ -21,10 +21,6 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
 
     private IAsyncStream<SubscribedBlockDto> _stream = null!;
 
-    private string _appId;
-    private string _version;
-    private Subscription _subscription;
-
     public BlockPusherGrain(IOptionsSnapshot<BlockPushOptions> blockPushOptions,
         IBlockFilterProvider blockFilterProvider, ILogger<BlockPusherGrain> logger, IObjectMapper objectMapper)
     {
@@ -42,18 +38,18 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         State.PushedConfirmedBlockHash = null;
         State.PushedBlocks = new SortedDictionary<long, HashSet<string>>();
         State.PushToken = pushToken;
-        
+
         var blockPusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
         await blockPusherInfoGrain.SetHistoricalBlockPushModeAsync();
-        
+
         var pushInfo = await blockPusherInfoGrain.GetPushInfoAsync();
-        _appId = pushInfo.AppId;
-        _version = pushInfo.Version;
-        _subscription = await blockPusherInfoGrain.GetSubscriptionAsync();
+        State.AppId = pushInfo.AppId;
+        State.Version = pushInfo.Version;
+        State.Subscription = await blockPusherInfoGrain.GetSubscriptionAsync();
 
         await WriteStateAsync();
     }
-    
+
     public async Task HandleHistoricalBlockAsync()
     {
         try
@@ -64,15 +60,18 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 this.GetPrimaryKeyString(), State.PushToken, State.PushedBlockHeight);
 
             var pusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
-            var appSubscriptionGrain = GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appId));
-            var chainGrain = GrainFactory.GetGrain<IChainGrain>(_subscription.ChainId);
+            var appSubscriptionGrain =
+                GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(State.AppId));
+            var chainGrain = GrainFactory.GetGrain<IChainGrain>(State.Subscription.ChainId);
             var chainStatus = await chainGrain.GetChainStatusAsync();
 
             while (true)
             {
-                if (!await appSubscriptionGrain.IsRunningAsync(_version, _subscription.ChainId, State.PushToken) ||
+                if (!await appSubscriptionGrain.IsRunningAsync(State.Version, State.Subscription.ChainId,
+                        State.PushToken) ||
                     await pusherInfoGrain.GetPushModeAsync() != BlockPushMode.HistoricalBlock ||
-                    !await CheckPushThresholdAsync(_subscription.StartBlockNumber, State.PushedConfirmedBlockHeight, _blockPushOptions.MaxHistoricalBlockPushThreshold))
+                    !await CheckPushThresholdAsync(State.Subscription.StartBlockNumber,
+                        State.PushedConfirmedBlockHeight, _blockPushOptions.MaxHistoricalBlockPushThreshold))
                 {
                     break;
                 }
@@ -95,12 +94,16 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
 
                 var blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
                 {
-                    ChainId = _subscription.ChainId,
+                    ChainId = State.Subscription.ChainId,
                     StartBlockHeight = State.PushedConfirmedBlockHeight + 1,
                     EndBlockHeight = targetHeight,
                     IsOnlyConfirmed = true,
-                    TransactionFilters = _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(_subscription.TransactionConditions),
-                    LogEventFilters = _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(_subscription.LogEventConditions)
+                    TransactionFilters =
+                        _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(State.Subscription
+                            .TransactionConditions),
+                    LogEventFilters =
+                        _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(State.Subscription
+                            .LogEventConditions)
                 });
 
                 if (blocks.Count != targetHeight - State.PushedConfirmedBlockHeight)
@@ -109,7 +112,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                         $"Cannot fill vacant blocks: from {State.PushedConfirmedBlockHeight + 1} to {targetHeight}");
                 }
 
-                if (!_subscription.OnlyConfirmed)
+                if (!State.Subscription.OnlyConfirmed)
                 {
                     SetConfirmed(blocks, false);
                     await PushBlocksAsync(blocks);
@@ -120,7 +123,8 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
 
                 State.PushedBlockHeight = blocks.Last().BlockHeight;
                 State.PushedBlockHash = blocks.Last().BlockHash;
-                State.PushedConfirmedBlockHeight = blocks.Last().BlockHeight;;
+                State.PushedConfirmedBlockHeight = blocks.Last().BlockHeight;
+                ;
                 State.PushedConfirmedBlockHash = blocks.Last().BlockHash;
 
                 await WriteStateAsync();
@@ -146,20 +150,22 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         {
             return;
         }
-        
+
         await ReadStateAsync();
 
-        var appSubscriptionGrain = GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appId));
+        var appSubscriptionGrain =
+            GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(State.AppId));
         var pusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
 
-        if (!await CheckPushThresholdAsync(_subscription.StartBlockNumber, State.PushedBlockHeight, _blockPushOptions.MaxNewBlockPushThreshold))
+        if (!await CheckPushThresholdAsync(State.Subscription.StartBlockNumber, State.PushedBlockHeight,
+                _blockPushOptions.MaxNewBlockPushThreshold))
         {
             return;
         }
 
-        if (_subscription.OnlyConfirmed
+        if (State.Subscription.OnlyConfirmed
             || await pusherInfoGrain.GetPushModeAsync() != BlockPushMode.NewBlock
-            || !await appSubscriptionGrain.IsRunningAsync(_version, _subscription.ChainId, State.PushToken))
+            || !await appSubscriptionGrain.IsRunningAsync(State.Version, State.Subscription.ChainId, State.PushToken))
         {
             _logger.LogWarning(
                 "Grain: {GrainId} token: {PushToken} handle block failed, block height: {BlockHeight}, block hash: {BlockHash}",
@@ -179,7 +185,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         {
             blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
-                ChainId = _subscription.ChainId,
+                ChainId = State.Subscription.ChainId,
                 StartBlockHeight = startHeight,
                 EndBlockHeight = GetMaxTargetHeight(startHeight, block.BlockHeight),
                 IsOnlyConfirmed = false
@@ -199,13 +205,13 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 this.GetPrimaryKeyString(), State.PushToken, block.BlockHeight, block.BlockHash, startHeight);
             blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
-                ChainId = _subscription.ChainId,
+                ChainId = State.Subscription.ChainId,
                 StartBlockHeight = startHeight,
                 EndBlockHeight = GetMaxTargetHeight(startHeight, block.BlockHeight),
                 IsOnlyConfirmed = false
             });
         }
-        
+
         if (blocks.Count == 0)
         {
             var message =
@@ -226,9 +232,10 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         State.PushedBlockHeight = unPushedBlock.Last().BlockHeight;
         State.PushedBlockHash = unPushedBlock.Last().BlockHash;
 
-        var subscribedBlocks = await _blockFilterProvider.FilterBlocksAsync(unPushedBlock, _subscription.TransactionConditions,
-            _subscription.LogEventConditions);
-        
+        var subscribedBlocks = await _blockFilterProvider.FilterBlocksAsync(unPushedBlock,
+            State.Subscription.TransactionConditions,
+            State.Subscription.LogEventConditions);
+
         SetConfirmed(subscribedBlocks, false);
         await PushBlocksAsync(subscribedBlocks);
 
@@ -247,24 +254,26 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
 
         await ReadStateAsync();
 
-        var appSubscriptionGrain = GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appId));
+        var appSubscriptionGrain =
+            GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(State.AppId));
         var pusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
-        
-        if (!await CheckPushThresholdAsync(_subscription.StartBlockNumber, State.PushedConfirmedBlockHeight, _blockPushOptions.MaxNewBlockPushThreshold))
+
+        if (!await CheckPushThresholdAsync(State.Subscription.StartBlockNumber, State.PushedConfirmedBlockHeight,
+                _blockPushOptions.MaxNewBlockPushThreshold))
         {
             return;
         }
-        
+
         if (block.BlockHeight <= State.PushedConfirmedBlockHeight
             || await pusherInfoGrain.GetPushModeAsync() != BlockPushMode.NewBlock
-            || !await appSubscriptionGrain.IsRunningAsync(_version, _subscription.ChainId, State.PushToken))
+            || !await appSubscriptionGrain.IsRunningAsync(State.Version, State.Subscription.ChainId, State.PushToken))
         {
             _logger.LogWarning(
                 "Grain: {GrainId} token: {PushToken} handle confirmed block failed, block height: {BlockHeight}",
                 this.GetPrimaryKeyString(), State.PushToken, block.BlockHeight);
             return;
         }
-        
+
         var pushedBlocks = new List<BlockWithTransactionDto>();
         if (block.BlockHeight == State.PushedConfirmedBlockHeight + 1)
         {
@@ -280,19 +289,20 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
             var startHeight = State.PushedConfirmedBlockHeight + 1;
             pushedBlocks.AddRange(await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
-                ChainId = _subscription.ChainId,
+                ChainId = State.Subscription.ChainId,
                 StartBlockHeight = startHeight,
                 EndBlockHeight = GetMaxTargetHeight(startHeight, block.BlockHeight),
                 IsOnlyConfirmed = true
             }));
 
-            pushedBlocks = await _blockFilterProvider.FilterIncompleteConfirmedBlocksAsync(_subscription.ChainId,
+            pushedBlocks = await _blockFilterProvider.FilterIncompleteConfirmedBlocksAsync(State.Subscription.ChainId,
                 pushedBlocks,
                 State.PushedConfirmedBlockHash, State.PushedConfirmedBlockHeight);
         }
 
         pushedBlocks =
-            await _blockFilterProvider.FilterBlocksAsync(pushedBlocks, _subscription.TransactionConditions,_subscription.LogEventConditions);
+            await _blockFilterProvider.FilterBlocksAsync(pushedBlocks, State.Subscription.TransactionConditions,
+                State.Subscription.LogEventConditions);
 
         if (pushedBlocks.Count == 0)
         {
@@ -302,7 +312,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
             throw new ApplicationException(message);
         }
 
-        if (!_subscription.OnlyConfirmed && !await IsUnConfirmedBlockPushedAsync(pushedBlocks))
+        if (!State.Subscription.OnlyConfirmed && !await IsUnConfirmedBlockPushedAsync(pushedBlocks))
         {
             return;
         }
@@ -348,22 +358,23 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
     {
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
-            AppId = _appId,
-            ChainId = _subscription.ChainId,
-            Version = _version,
+            AppId = State.AppId,
+            ChainId = State.Subscription.ChainId,
+            Version = State.Version,
             Blocks = blocks,
             PushToken = State.PushToken
         });
     }
 
-    private async Task<List<BlockWithTransactionDto>> GetUnPushedBlocksAsync(List<BlockWithTransactionDto> blocks, bool needCheckIncomplete)
+    private async Task<List<BlockWithTransactionDto>> GetUnPushedBlocksAsync(List<BlockWithTransactionDto> blocks,
+        bool needCheckIncomplete)
     {
         var unPushedBlock = new List<BlockWithTransactionDto>();
         while (true)
         {
             if (needCheckIncomplete)
             {
-                blocks = await _blockFilterProvider.FilterIncompleteBlocksAsync(_subscription.ChainId, blocks);
+                blocks = await _blockFilterProvider.FilterIncompleteBlocksAsync(State.Subscription.ChainId, blocks);
                 if (blocks.Count == 0)
                 {
                     _logger.LogWarning(
@@ -405,7 +416,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
             var startBlockHeight = blocks.Last().BlockHeight + 1;
             blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
-                ChainId = _subscription.ChainId,
+                ChainId = State.Subscription.ChainId,
                 StartBlockHeight = startBlockHeight,
                 EndBlockHeight = startBlockHeight + _blockPushOptions.BatchPushBlockCount - 1,
                 IsOnlyConfirmed = false
@@ -415,10 +426,10 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 break;
             }
         }
-        
+
         return unPushedBlock;
     }
-    
+
     private bool CheckPushThreshold(long blockHeight)
     {
         if (blockHeight < State.PushedBlockHeight + _blockPushOptions.BatchPushNewBlockCount)
@@ -463,7 +474,8 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
     private async Task<long> GetConfirmedBlockHeightAsync()
     {
         var blockStateSetStatusGrain = GrainFactory.GetGrain<IAppBlockStateSetStatusGrain>(
-            GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appId, _version,_subscription.ChainId));
+            GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(State.AppId, State.Version,
+                State.Subscription.ChainId));
         return (await blockStateSetStatusGrain.GetBlockStateSetStatusAsync()).LastIrreversibleBlockHeight;
     }
 

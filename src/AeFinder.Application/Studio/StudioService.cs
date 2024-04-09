@@ -182,7 +182,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var userId = CurrentUser.GetId().ToString("N");
         var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
         var info = await userAppGrain.GetAppInfo();
-        if (info == null)
+        if (info == null || info.AppId.IsNullOrEmpty())
         {
             throw new UserFriendlyException("app not exists.");
         }
@@ -225,7 +225,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         throw new UserFriendlyException("app of current user not found");
     }
 
-    public async Task UpdateAeFinderAppAsync(UpdateAeFinderAppInput input)
+    public async Task<UpdateAeFinderAppDto> UpdateAeFinderAppAsync(UpdateAeFinderAppInput input)
     {
         await using var stream = input.AppDll.OpenReadStream();
         var dllBytes = stream.GetAllBytes();
@@ -234,6 +234,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var appId = await GetAppIdAsync();
         var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         await subscriptionGrain.UpdateCodeAsync(input.Version, dllBytes);
+        return new UpdateAeFinderAppDto() { Success = true };
     }
 
     private async Task AddToUsersApps(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)

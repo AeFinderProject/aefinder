@@ -12,7 +12,7 @@ public class AppNameGrain : Grain<AppNameState>, IAppNameGrain
 {
     public async Task<string> Register(string adminId)
     {
-        if (adminId.IsNullOrEmpty() || (State.AdminId != null && State.AdminId.Equals(adminId)))
+        if (adminId.IsNullOrEmpty() || State.AdminId != null)
         {
             return string.Empty;
         }

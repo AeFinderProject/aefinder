@@ -259,7 +259,12 @@ public class BlockAppService:ApplicationService,IBlockAppService
         var queryable = await _transactionIndexRepository.GetQueryableAsync();
 
         var resultList = new List<TransactionDto>();
-        Expression<Func<TransactionIndex, bool>> query = q => q.ChainId == input.ChainId && q.BlockHeight >= input.StartBlockHeight && q.BlockHeight <= input.EndBlockHeight && q.Confirmed == input.IsOnlyConfirmed;
+        Expression<Func<TransactionIndex, bool>> query = q => q.ChainId == input.ChainId && q.BlockHeight >= input.StartBlockHeight && q.BlockHeight <= input.EndBlockHeight;
+        
+        if (input.IsOnlyConfirmed)
+        {
+            query = query.And(p => p.Confirmed == input.IsOnlyConfirmed);
+        }
         
         Expression<Func<TransactionIndex, bool>> transactionQuery = null;
         if (input.TransactionFilters != null && input.TransactionFilters.Count > 0)

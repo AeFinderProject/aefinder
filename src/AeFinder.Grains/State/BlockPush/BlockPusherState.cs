@@ -1,3 +1,5 @@
+using AeFinder.Grains.Grain.Subscriptions;
+
 namespace AeFinder.Grains.State.BlockPush;
 
 public class BlockPusherState
@@ -8,4 +10,7 @@ public class BlockPusherState
     public string PushedConfirmedBlockHash { get; set; }
     public SortedDictionary<long, HashSet<string>> PushedBlocks = new();
     public string PushToken { get; set; }
+    public string AppId { get; set; }
+    public string Version { get; set; }
+    public Subscription Subscription { get; set; }
 }

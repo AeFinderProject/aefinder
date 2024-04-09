@@ -31,7 +31,8 @@ namespace AeFinder;
     typeof(AeFinderGrainsModule),
     typeof(AElfEntityMappingModule),
     typeof(AElfEntityMappingElasticsearchModule),
-    typeof(AeFinderKubernetesModule)
+    typeof(AeFinderKubernetesModule),
+    typeof(AeFinderCodeOpsModule)
 )]
 public class AeFinderApplicationModule : AbpModule
 {

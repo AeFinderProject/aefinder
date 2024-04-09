@@ -24,7 +24,7 @@ public class EntityOperationLimitProvider : CallCountOperationLimitProvider, IEn
 
     public void Check<TEntity>(TEntity entity)
     {
-        if (CallCount >= _options.MaxEntityCallCount)
+        if (CallCount > _options.MaxEntityCallCount)
         {
             throw new ApplicationException("Too many calls");
         }

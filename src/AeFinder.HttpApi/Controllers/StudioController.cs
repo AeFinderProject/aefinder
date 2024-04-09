@@ -65,7 +65,7 @@ public class StudioController : AeFinderController
 
     [HttpPost("updateapp")]
     [Authorize]
-    public Task UpdateAeFinderAppAsync([FromForm] UpdateAeFinderAppInput input)
+    public Task<UpdateAeFinderAppDto> UpdateAeFinderAppAsync([FromForm] UpdateAeFinderAppInput input)
     {
         return _studioService.UpdateAeFinderAppAsync(input);
     }
