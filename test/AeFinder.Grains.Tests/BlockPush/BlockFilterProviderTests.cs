@@ -8,7 +8,7 @@ using Force.DeepCloner;
 using Shouldly;
 using Xunit;
 
-namespace AeFinder.Grains.BlockScan;
+namespace AeFinder.Grains.BlockPush;
 
 public class BlockFilterProviderTests : AeFinderGrainTestBase
 {

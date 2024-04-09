@@ -6,7 +6,7 @@ using AeFinder.Block;
 using AeFinder.Block.Dtos;
 using Volo.Abp.DependencyInjection;
 
-namespace AeFinder.Grains.BlockScan;
+namespace AeFinder.Grains.BlockPush;
 
 public class MockBlockAppService : IBlockAppService, ISingletonDependency
 {
