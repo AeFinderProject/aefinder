@@ -4,7 +4,7 @@ using System.Linq;
 using AeFinder.Block.Dtos;
 using Volo.Abp.DependencyInjection;
 
-namespace AeFinder.Grains.BlockScan;
+namespace AeFinder.Grains.BlockPush;
 
 public interface IBlockDataProvider
 {
