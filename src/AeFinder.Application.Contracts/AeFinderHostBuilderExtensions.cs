@@ -1,4 +1,4 @@
-using AElfIndexer;
+using AeFinder.Reporter;
 using Com.Ctrip.Framework.Apollo.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Prometheus;
 using Serilog;
 using Serilog.Events;
+using ConfigurationHelper = AeFinder.Commons.ConfigurationHelper;
 
 namespace AeFinder;
 
@@ -19,7 +20,7 @@ public static class AeFinderHostBuilderExtensions
 
     public static IHostBuilder UseApolloForConfigureHostBuilder(this IHostBuilder hostBuilder)
     {
-        if (!Commons.ConfigurationHelper.IsApolloEnabled())
+        if (!ConfigurationHelper.IsApolloEnabled())
         {
             return hostBuilder.ConfigureGloballySharedLog(false);
         }
@@ -32,17 +33,14 @@ public static class AeFinderHostBuilderExtensions
             .ConfigureGloballySharedLog(false);
     }
 
-    public static IHostBuilder AddMetrics(this IHostBuilder hostBuilder)
+    public static void AddMetrics(this IServiceCollection services, IConfiguration configuration)
     {
-        return hostBuilder.ConfigureServices((_, services) =>
+        services.AddMetricServer(options =>
         {
-            services.AddMetricServer(options =>
-            {
-                var metricsOption = Commons.ConfigurationHelper.GetValue("Metrics", new MetricsOption());
-                options.Port = metricsOption.Port;
-            });
-            services.AddHealthChecks();
+            var metricsOption = configuration.GetSection("Metrics").Get<MetricsOption>();
+            options.Port = metricsOption.Port;
         });
+        services.AddHealthChecks();
     }
 
     private static IHostBuilder AddAppSettingsApolloJson(this IHostBuilder hostBuilder)
@@ -54,8 +52,8 @@ public static class AeFinderHostBuilderExtensions
     private static IHostBuilder InitConfigurationHelper(this IHostBuilder hostBuilder, bool configureService)
     {
         return configureService
-            ? hostBuilder.ConfigureServices((context, _) => { Commons.ConfigurationHelper.Initialize(context.Configuration); })
-            : hostBuilder.ConfigureAppConfiguration((context, _) => { Commons.ConfigurationHelper.Initialize(context.Configuration); });
+            ? hostBuilder.ConfigureServices((context, _) => { ConfigurationHelper.Initialize(context.Configuration); })
+            : hostBuilder.ConfigureAppConfiguration((context, _) => { ConfigurationHelper.Initialize(context.Configuration); });
     }
 
     private static IHostBuilder ConfigureGloballySharedLog(this IHostBuilder hostBuilder, bool configureService)

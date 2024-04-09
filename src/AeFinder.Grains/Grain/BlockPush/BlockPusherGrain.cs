@@ -1,8 +1,10 @@
+using System.Runtime.InteropServices;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Chains;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Grains.Reporter;
 using AeFinder.Grains.State.BlockPush;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -15,6 +17,7 @@ namespace AeFinder.Grains.Grain.BlockPush;
 public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
 {
     private readonly IBlockFilterProvider _blockFilterProvider;
+    private readonly IScanReporter _scanReporter;
     private readonly BlockPushOptions _blockPushOptions;
     private readonly ILogger<BlockPusherGrain> _logger;
     private readonly IObjectMapper _objectMapper;
@@ -22,11 +25,12 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
     private IAsyncStream<SubscribedBlockDto> _stream = null!;
 
     public BlockPusherGrain(IOptionsSnapshot<BlockPushOptions> blockPushOptions,
-        IBlockFilterProvider blockFilterProvider, ILogger<BlockPusherGrain> logger, IObjectMapper objectMapper)
+        IBlockFilterProvider blockFilterProvider, ILogger<BlockPusherGrain> logger, IObjectMapper objectMapper, IScanReporter scanReporter)
     {
         _blockFilterProvider = blockFilterProvider;
         _logger = logger;
         _objectMapper = objectMapper;
+        _scanReporter = scanReporter;
         _blockPushOptions = blockPushOptions.Value;
     }
 
@@ -92,6 +96,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 var targetHeight = Math.Min(State.PushedConfirmedBlockHeight + _blockPushOptions.BatchPushBlockCount,
                     chainStatus.ConfirmedBlockHeight - _blockPushOptions.PushHistoryBlockThreshold);
 
+                var start = DateTime.UtcNow;
                 var blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
                 {
                     ChainId = State.Subscription.ChainId,
@@ -105,6 +110,9 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                         _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(State.Subscription
                             .LogEventConditions)
                 });
+
+                // run async, we dont need to wait for it
+                RecordBlockScanAsync((DateTime.UtcNow - start).TotalMilliseconds, blocks);
 
                 if (blocks.Count != targetHeight - State.PushedConfirmedBlockHeight)
                 {
@@ -121,10 +129,10 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 SetConfirmed(blocks, true);
                 await PushBlocksAsync(blocks);
 
+                RecordBlockHeightAsync(blocks.Last().BlockHeight);
                 State.PushedBlockHeight = blocks.Last().BlockHeight;
                 State.PushedBlockHash = blocks.Last().BlockHash;
                 State.PushedConfirmedBlockHeight = blocks.Last().BlockHeight;
-                ;
                 State.PushedConfirmedBlockHash = blocks.Last().BlockHash;
 
                 await WriteStateAsync();
@@ -133,7 +141,6 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 _logger.LogInformation(
                     "Grain: {GrainId} token: {PushToken} pushed historical block from {BeginBlockHeight} to {EndBlockHeight}",
                     this.GetPrimaryKeyString(), State.PushToken, blocks.First().BlockHeight, blocks.Last().BlockHeight);
-
             }
         }
         catch (Exception e)
@@ -142,6 +149,16 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 this.GetPrimaryKeyString(), State.PushToken, e.Message);
             throw;
         }
+    }
+
+    private async Task<Action> RecordBlockScanAsync(double latency, List<BlockWithTransactionDto> blocks)
+    {
+        return () => { _scanReporter.RecordScanBlock($"{State.AppId}-{State.Subscription.ChainId}-{State.Version}", latency, Marshal.SizeOf(blocks)); };
+    }
+
+    private async Task<Action> RecordBlockHeightAsync(long height)
+    {
+        return () => { _scanReporter.RecordScanHeight($"{State.AppId}-{State.Subscription.ChainId}-{State.Version}", height); };
     }
 
     public async Task HandleBlockAsync(BlockWithTransactionDto block)

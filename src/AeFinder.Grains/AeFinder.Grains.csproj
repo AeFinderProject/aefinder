@@ -21,7 +21,4 @@
       <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
     </ItemGroup>
 
-
-
-
 </Project>
