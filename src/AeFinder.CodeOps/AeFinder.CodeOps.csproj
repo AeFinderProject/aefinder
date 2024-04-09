@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="AElf.Cryptography" Version="1.6.0" />
         <PackageReference Include="Basic.Reference.Assemblies.Net70" Version="1.4.5" />
         <PackageReference Include="Mono.Cecil" Version="0.11.4" />
         <PackageReference Include="NEST" Version="7.17.5" />

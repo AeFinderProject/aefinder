@@ -12,7 +12,7 @@ using Orleans.Streams;
 using Shouldly;
 using Xunit;
 
-namespace AeFinder.Grains.BlockScan;
+namespace AeFinder.Grains.BlockPush;
 
 [Collection(ClusterCollection.Name)]
 public class BlockPusherGrainTests : AeFinderGrainTestBase

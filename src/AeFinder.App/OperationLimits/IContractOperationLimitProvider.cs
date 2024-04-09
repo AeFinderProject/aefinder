@@ -8,7 +8,8 @@ public interface IContractOperationLimitProvider: IOperationLimitProvider
     void CheckCallCount();
 }
 
-public class ContractOperationLimitProvider : CallCountOperationLimitProvider,IContractOperationLimitProvider,ISingletonDependency
+public class ContractOperationLimitProvider : CallCountOperationLimitProvider, IContractOperationLimitProvider,
+    ISingletonDependency
 {
     private readonly OperationLimitOptions _options;
 
@@ -19,11 +20,12 @@ public class ContractOperationLimitProvider : CallCountOperationLimitProvider,IC
 
     public void CheckCallCount()
     {
+        CallCount++;
+
         if (CallCount > _options.MaxContractCallCount)
         {
-            throw new ApplicationException("Too many calls");
+            throw new ApplicationException(
+                $"Too many contract calls. The maximum of calls allowed is {_options.MaxContractCallCount} per block.");
         }
-
-        CallCount++;
     }
 }

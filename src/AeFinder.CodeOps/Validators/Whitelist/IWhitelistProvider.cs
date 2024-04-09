@@ -2,6 +2,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using AElf.Types;
 using AeFinder.Sdk.Entities;
+using AElf.Cryptography.SecretSharing;
+using AElf.CSharp.Core;
 using GraphQL;
 using Nest;
 using Volo.Abp.DependencyInjection;
@@ -36,16 +38,21 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Assembly(System.Reflection.Assembly.Load("System.ObjectModel"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.Linq"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("System.Linq.Expressions"), Trust.Full)
+            .Assembly(System.Reflection.Assembly.Load("System.Linq.Queryable"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("System.Collections"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("System.ComponentModel"), Trust.Full)
+            .Assembly(System.Reflection.Assembly.Load("Microsoft.Extensions.DependencyInjection.Abstractions"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("Google.Protobuf"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("GraphQL"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("Nest"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("AutoMapper"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.ObjectMapping"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.Core"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("AeFinder.Domain"), Trust.Partial)
             .Assembly(typeof(AeFinderEntity).Assembly, Trust.Full) // AeFinder.Sdk
             .Assembly(typeof(Address).Assembly, Trust.Full) // AElf.Types
+            .Assembly(typeof(IMethod).Assembly, Trust.Full) // AElf.CSharp.Core
+            .Assembly(typeof(SecretSharingHelper).Assembly, Trust.Full) // AElf.Cryptography
             ;
     }
 
@@ -85,21 +92,29 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type(typeof(byte[]).Name, Permission.Allowed)
                 .Type(nameof(Double), Permission.Allowed)
                 .Type(nameof(Single), Permission.Allowed)
+                .Type(nameof(Exception), Permission.Allowed)
+                .Type(nameof(Attribute), Permission.Allowed)
+                .Type(nameof(Guid), Permission.Allowed)
+                .Type(nameof(Random), Permission.Allowed)
+                .Type(nameof(AbpStringExtensions), Permission.Allowed)
             );
     }
 
     private void WhitelistReflectionTypes(Whitelist whitelist)
     {
         whitelist
-            // Used by protobuf generated code
+            // Used by protobuf generated code and GraphQL
             .Namespace("System.Reflection", Permission.Denied, type => type
                 .Type(nameof(AssemblyCompanyAttribute), Permission.Allowed)
                 .Type(nameof(AssemblyConfigurationAttribute), Permission.Allowed)
                 .Type(nameof(AssemblyFileVersionAttribute), Permission.Allowed)
                 .Type(nameof(AssemblyInformationalVersionAttribute), Permission.Allowed)
                 .Type(nameof(AssemblyProductAttribute), Permission.Allowed)
-                .Type(nameof(AssemblyTitleAttribute), Permission.Allowed))
-            ;
+                .Type(nameof(AssemblyTitleAttribute), Permission.Allowed)
+                .Type(nameof(MethodBase), Permission.Allowed)
+                .Type(nameof(MethodInfo), Permission.Allowed)
+                .Type(nameof(FieldInfo), Permission.Allowed)
+            );
     }
 
     private void WhitelistLinqAndCollections(Whitelist whitelist)
@@ -138,10 +153,15 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             )
             .Namespace("Volo.Abp.Modularity", Permission.Denied, type => type
                 .Type(nameof(AbpModule), Permission.Allowed)
+                .Type(nameof(ServiceConfigurationContext), Permission.Allowed)
             )
             .Namespace("Nest", Permission.Denied, type => type
                 .Type(nameof(KeywordAttribute), Permission.Allowed)
                 .Type(nameof(TextAttribute), Permission.Allowed)
+            )
+            .Namespace("AutoMapper", Permission.Allowed)
+            .Namespace("AeFinder.Entities", Permission.Denied, type => type
+                .Type("AeFinderEntity`1", Permission.Allowed)
             )
             ;
     }
