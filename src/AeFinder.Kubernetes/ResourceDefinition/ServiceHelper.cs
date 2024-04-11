@@ -7,7 +7,7 @@ public class ServiceHelper
 
     public static string GetAppServiceName(string appId, string version)
     {
-        return $"service-{appId}-{version}";
+        return $"service-{appId}-{version}".ToLower();
     }
     
     public static V1Service CreateAppClusterIPServiceDefinition(string serviceName, 
