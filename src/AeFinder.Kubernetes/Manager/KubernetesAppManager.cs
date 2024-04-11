@@ -176,7 +176,7 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         string ingressName = IngressHelper.GetAppIngressName(appId, version);
         string hostName = _kubernetesOptions.HostName;
         // string rulePath = $"/{appId}";
-        string rulePath = $"/{appId}/{version}/graphql";
+        string rulePath = $"/{appId}/{version}";
         var ingresses = await _kubernetesClientAdapter.ListIngressAsync(KubernetesConstants.AppNameSpace);
         bool ingressExists = ingresses.Items.Any(item => item.Metadata.Name == ingressName);
         if (!ingressExists)
@@ -189,7 +189,7 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
             _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} created", ingressName);
         }
 
-        return hostName + rulePath;
+        return hostName + rulePath + "/graphql";
     }
     
     public async Task DestroyAppPodAsync(string appId, string version)
