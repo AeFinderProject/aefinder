@@ -12,6 +12,14 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
     {
         _k8sClient = k8sClient;
     }
+    
+    public async Task<V1NamespaceList> ListNamespaceAsync()
+    {
+        // Call the extension method of the k8s.Kubernetes
+        var namespaces =
+            await _k8sClient.ListNamespaceAsync();
+        return namespaces;
+    }
 
     public async Task<V1ConfigMapList> ListConfigMapAsync(string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken))
@@ -49,6 +57,13 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
         return ingresses;
     }
 
+    public async Task<V1Namespace> CreateNamespaceAsync(V1Namespace nameSpace,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return await _k8sClient.CreateNamespaceAsync(nameSpace,
+            cancellationToken: cancellationToken);
+    }
+    
     public async Task<V1ConfigMap> CreateConfigMapAsync(V1ConfigMap configMap, string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken))
     {
