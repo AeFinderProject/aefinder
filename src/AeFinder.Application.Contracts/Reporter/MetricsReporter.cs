@@ -1,6 +1,6 @@
 using Prometheus;
 
-namespace AElfIndexer;
+namespace AeFinder.Reporter;
 
 public static class MetricsReporter
 {

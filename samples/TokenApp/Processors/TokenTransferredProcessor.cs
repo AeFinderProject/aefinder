@@ -12,8 +12,8 @@ public class TokenTransferredProcessor : LogEventProcessorBase<Transferred>, ITr
     {
         return chainId switch
         {
-            "AELF" => "MainChainTokenContractAddress",
-            "tDVV" => "SideChainTokenContractAddress",
+            "AELF" => "JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE",
+            "tDVW" => "ASh2Wt7nSEmYqnGxPPzp4pnVDU4uhj1XW9Se5VeZcX2UDdyjx",
             _ => throw new Exception("Unknown chain id")
         };
     }

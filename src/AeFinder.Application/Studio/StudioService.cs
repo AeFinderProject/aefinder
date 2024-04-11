@@ -9,7 +9,10 @@ using AeFinder.CodeOps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Kubernetes.Manager;
+using AeFinder.Option;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
 using Orleans;
 using Volo.Abp;
@@ -26,18 +29,22 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 {
     private readonly IClusterClient _clusterClient;
     private readonly IBlockScanAppService _blockScanAppService;
+    private readonly IKubernetesAppManager _kubernetesAppManager;
+    private readonly StudioOption _studioOption;
     private readonly ICodeAuditor _codeAuditor;
     private readonly ILogger<StudioService> _logger;
     private readonly IObjectMapper _objectMapper;
 
     public StudioService(IClusterClient clusterClient, ILogger<StudioService> logger, IObjectMapper objectMapper,
-        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor)
+        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor, IOptions<StudioOption> studioOption, IKubernetesAppManager kubernetesAppManager)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _objectMapper = objectMapper;
         _blockScanAppService = blockScanAppService;
         _codeAuditor = codeAuditor;
+        _studioOption = studioOption.Value;
+        _kubernetesAppManager = kubernetesAppManager;
     }
 
     public async Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppName(ApplyAeFinderAppNameInput appNameInput)
@@ -187,8 +194,9 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
             throw new UserFriendlyException("app not exists.");
         }
 
-        var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifestDto, dllBytes);
-        // var appGraphQl = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, version, _studioOption.ImageName);
+        var version = "ffd8770b9ef542f3bd403327e385ed07";
+        // var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifestDto, dllBytes);
+        var rulePath = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, version, _studioOption.ImageName);
         // var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(input.AppId));
         // await appGrain.SetGraphQlByVersion(version, appGraphQl);
         return version;
