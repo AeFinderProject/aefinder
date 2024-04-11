@@ -6,7 +6,7 @@ public class IngressHelper
 {
     public static string GetAppIngressName(string appId, string version)
     {
-        return $"ingress-{appId}-{version}";
+        return $"ingress-{appId}-{version}".ToLower();
     }
     
     public static V1Ingress CreateAppIngressDefinition(string ingressName, 
