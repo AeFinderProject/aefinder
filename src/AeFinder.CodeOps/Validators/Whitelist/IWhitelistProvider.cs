@@ -6,6 +6,7 @@ using AElf.Cryptography.SecretSharing;
 using AElf.CSharp.Core;
 using GraphQL;
 using Nest;
+using Volo.Abp.AutoMapper;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Modularity;
 
@@ -47,6 +48,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Assembly(System.Reflection.Assembly.Load("Nest"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("AutoMapper"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.ObjectMapping"), Trust.Full)
+            .Assembly(System.Reflection.Assembly.Load("Volo.Abp.AutoMapper"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.Core"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("AeFinder.Domain"), Trust.Partial)
             .Assembly(typeof(AeFinderEntity).Assembly, Trust.Full) // AeFinder.Sdk
@@ -160,6 +162,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type(nameof(TextAttribute), Permission.Allowed)
             )
             .Namespace("AutoMapper", Permission.Allowed)
+            .Namespace("Volo.Abp.AutoMapper", Permission.Allowed)
             .Namespace("AeFinder.Entities", Permission.Denied, type => type
                 .Type("AeFinderEntity`1", Permission.Allowed)
             )
