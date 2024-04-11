@@ -27,12 +27,32 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
 
     public async Task<string> CreateNewAppPodAsync(string appId, string version, string imageName)
     {
-        await CreateFullClientTypeAppPod(appId, version, imageName);
+        await CheckNameSpaceAsync();
+        
+        await CreateFullClientTypeAppPodAsync(appId, version, imageName);
 
-        return await CreateQueryClientTypeAppPod(appId, version, imageName);
+        return await CreateQueryClientTypeAppPodAsync(appId, version, imageName);
     }
 
-    private async Task CreateFullClientTypeAppPod(string appId, string version, string imageName)
+    private async Task CheckNameSpaceAsync()
+    {
+        var namespaces = await _kubernetesClientAdapter.ListNamespaceAsync();
+
+        string nameSpace = KubernetesConstants.AppNameSpace;
+        // 检查特定的命名空间是否存在
+        var namespaceExists = namespaces.Items.Any(n => n.Metadata.Name == nameSpace);
+        
+        if (!namespaceExists)
+        {
+            _logger.LogInformation($"Namespace '{nameSpace}' does not exist.");
+            var newNamespace = NameSpaceHelper.CreateNameSpaceDefinition(nameSpace);
+            // 创建命名空间
+            var result = await _kubernetesClientAdapter.CreateNamespaceAsync(newNamespace);
+            _logger.LogInformation($"Namespace created: {result.Metadata.Name}");
+        }
+    }
+
+    private async Task CreateFullClientTypeAppPodAsync(string appId, string version, string imageName)
     {
         //Create full app appsetting config map
         string configMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeFull);
@@ -84,7 +104,7 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
     }
 
-    private async Task<string> CreateQueryClientTypeAppPod(string appId, string version, string imageName)
+    private async Task<string> CreateQueryClientTypeAppPodAsync(string appId, string version, string imageName)
     {
         //Create query app appsetting config map
         string configMapName =

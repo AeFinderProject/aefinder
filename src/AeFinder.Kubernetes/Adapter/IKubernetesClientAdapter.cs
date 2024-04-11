@@ -4,6 +4,8 @@ namespace AeFinder.Kubernetes.Adapter;
 
 public interface IKubernetesClientAdapter
 {
+    Task<V1NamespaceList> ListNamespaceAsync();
+    
     Task<V1ConfigMapList> ListConfigMapAsync(string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
 
@@ -14,6 +16,9 @@ public interface IKubernetesClientAdapter
         CancellationToken cancellationToken = default(CancellationToken));
 
     Task<V1IngressList> ListIngressAsync(string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken));
+
+    Task<V1Namespace> CreateNamespaceAsync(V1Namespace nameSpace,
         CancellationToken cancellationToken = default(CancellationToken));
 
     Task<V1ConfigMap> CreateConfigMapAsync(V1ConfigMap configMap, string namespaceParameter,
