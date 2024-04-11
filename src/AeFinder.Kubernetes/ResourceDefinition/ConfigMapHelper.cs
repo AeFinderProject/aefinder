@@ -11,7 +11,7 @@ public class ConfigMapHelper
 
     public static string GetAppFileBeatConfigMapName(string appId, string version, string clientType)
     {
-        return $"filebeat-config-{appId}-{version}-{clientType}";
+        return $"filebeat-config-{appId}-{version}-{clientType}".ToLower();
     }
 
     /// <summary>
