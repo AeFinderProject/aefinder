@@ -5,7 +5,7 @@ namespace AeFinder.Sdk.Dtos;
 public class AeFinderEntityDto
 {
     public string Id { get; set; }
-    public Metadata Metadata { get; set; } = new ();
+    public MetadataDto Metadata { get; set; } = new ();
 }
 
 public class MetadataDto
