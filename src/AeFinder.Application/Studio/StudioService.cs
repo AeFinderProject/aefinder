@@ -197,9 +197,24 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var version = "ffd8770b9ef542f3bd403327e385ed07";
         // var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifestDto, dllBytes);
         var rulePath = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, version, _studioOption.ImageName);
+        _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2}", info.AppId, version, rulePath);
         // var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(input.AppId));
         // await appGrain.SetGraphQlByVersion(version, appGraphQl);
         return version;
+    }
+
+    public async Task DestroyAppAsync(string version)
+    {
+        var userId = CurrentUser.GetId().ToString("N");
+        var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
+        var info = await userAppGrain.GetAppInfo();
+        if (info == null || info.AppId.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("app not exists.");
+        }
+
+        await _kubernetesAppManager.DestroyAppPodAsync(info.AppId, version);
+        _logger.LogInformation("DestroyAppAsync: {0} {1}", info.AppId, version);
     }
 
     public async Task<QueryAeFinderAppDto> QueryAeFinderAppAsync(QueryAeFinderAppInput input)

@@ -63,6 +63,13 @@ public class StudioController : AeFinderController
         return _studioService.SubmitSubscriptionInfoAsync(input);
     }
 
+    [HttpGet("destroyapp")]
+    [Authorize]
+    public Task DestroyAppAsync(string version)
+    {
+        return _studioService.DestroyAppAsync(version);
+    }
+
     [HttpPost("updateapp")]
     [Authorize]
     public Task<UpdateAeFinderAppDto> UpdateAeFinderAppAsync([FromForm] UpdateAeFinderAppInput input)
