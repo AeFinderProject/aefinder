@@ -19,7 +19,7 @@ public class AeFinderKubernetesTestModule:AbpModule
         {
             o.KubeConfigPath = "/";
             o.AppPodReplicas = 2;
-            o.HostName = "www.hoopox.com";
+            o.HostName = "www.syb.com";
         });
         var kubernetesMock = new Moq.Mock<k8s.Kubernetes>(
                 new object[] { new KubernetesClientConfiguration() { Host = "http://localhost" } })

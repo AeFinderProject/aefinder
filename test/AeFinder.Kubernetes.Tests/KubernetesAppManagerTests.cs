@@ -32,7 +32,7 @@ public class KubernetesAppManagerTests:AeFinderKubernetesTestBase
         string namespaceName = KubernetesConstants.AppNameSpace;
 
         string graphqlUrl = await _appManager.CreateNewAppPodAsync(appId, version, imageName);
-        graphqlUrl.ShouldBe("www.hoopox.com/test-app/403dddd97d204b04953faab9ac18fa5e/graphql");
+        graphqlUrl.ShouldBe("www.syb.com/test-app/403dddd97d204b04953faab9ac18fa5e/graphql");
     }
     
     [Fact]
