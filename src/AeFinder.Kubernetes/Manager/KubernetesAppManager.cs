@@ -55,7 +55,7 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
     private async Task CreateFullClientTypeAppPodAsync(string appId, string version, string imageName)
     {
         //Create full app appsetting config map
-        string configMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version, KubernetesConstants.AppClientTypeFull);
+        string configMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeFull);
         string appSettingsContent = File.ReadAllText(KubernetesConstants.AppSettingTemplateFilePath);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderAppId, appId);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderVersion, version);
@@ -73,11 +73,11 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Create full app filebeat config map
-        string sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId, version, KubernetesConstants.AppClientTypeFull);
+        string sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeFull);
         var sideCarConfigContent = File.ReadAllText(KubernetesConstants.AppFileBeatConfigTemplateFilePath);
-        sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderAppId, appId);
+        sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderAppId, appId.ToLower());
         sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderClientType,
-            KubernetesConstants.AppClientTypeFull);
+            KubernetesConstants.AppClientTypeFull.ToLower());
         bool sideCarConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == sideCarConfigName);
         if (!sideCarConfigMapExists)
         {
@@ -126,13 +126,13 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
             await _kubernetesClientAdapter.CreateConfigMapAsync(configMap,KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {configMapName} created", configMapName);
         }
-
+        
         //Create query app filebeat config map
-        string sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId, version, KubernetesConstants.AppClientTypeQuery);
+        string sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeQuery);
         var sideCarConfigContent = File.ReadAllText(KubernetesConstants.AppFileBeatConfigTemplateFilePath);
-        sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderAppId, appId);
+        sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderAppId, appId.ToLower());
         sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderClientType,
-            KubernetesConstants.AppClientTypeQuery);
+            KubernetesConstants.AppClientTypeQuery.ToLower());
         bool sideCarConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == sideCarConfigName);
         if (!sideCarConfigMapExists)
         {
@@ -142,7 +142,7 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
             await _kubernetesClientAdapter.CreateConfigMapAsync(sideCarConfigMap,KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {sideCarConfigName} created", sideCarConfigName);
         }
-
+        
         //Create query app deployment
         string deploymentName =
             DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeQuery);

@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AeFinder.Block.Dtos;
 using AeFinder.Entities.Es;
-using AElf.EntityMapping.Elasticsearch.Linq;
 using AElf.EntityMapping.Repositories;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
