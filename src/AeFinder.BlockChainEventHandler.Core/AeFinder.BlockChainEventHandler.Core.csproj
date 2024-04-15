@@ -11,7 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="AElf.CSharp.Core" Version="1.2.1" />
+      <PackageReference Include="AElf.CSharp.Core" Version="1.6.0" />
       <PackageReference Include="Microsoft.Orleans.Client" Version="3.6.5" />
       <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">
         <PrivateAssets>all</PrivateAssets>

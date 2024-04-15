@@ -1,5 +1,5 @@
 ﻿using AeFinder.Block;
-using AeFinder.Grains.BlockScan;
+using AeFinder.Grains.BlockPush;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Volo.Abp.Modularity;

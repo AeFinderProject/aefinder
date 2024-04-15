@@ -6,7 +6,7 @@ public class DeploymentHelper
 {
     public static string GetAppDeploymentName(string appId, string version, string clientType)
     {
-        return $"deployment-{appId}-{version}-{clientType}";
+        return $"deployment-{appId}-{version}-{clientType}".ToLower();
     }
 
     public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string imageName, string deploymentName,

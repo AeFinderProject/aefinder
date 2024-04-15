@@ -6,12 +6,12 @@ public class ConfigMapHelper
 {
     public static string GetAppSettingConfigMapName(string appId, string version, string clientType)
     {
-        return $"appsettings-config-{appId}-{version}-{clientType}";
+        return $"appsettings-config-{appId}-{version}-{clientType}".ToLower();
     }
 
     public static string GetAppFileBeatConfigMapName(string appId, string version, string clientType)
     {
-        return $"filebeat-config-{appId}-{version}-{clientType}";
+        return $"filebeat-config-{appId}-{version}-{clientType}".ToLower();
     }
 
     /// <summary>
