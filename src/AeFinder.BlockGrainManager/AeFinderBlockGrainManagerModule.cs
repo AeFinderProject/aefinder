@@ -1,4 +1,6 @@
+using AeFinder.BlockChainEventHandler;
 using AeFinder.Grains;
+using AeFinder.MongoDb;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -6,13 +8,23 @@ using Orleans;
 using Orleans.Configuration;
 using Orleans.Providers.MongoDB.Configuration;
 using Volo.Abp;
+using Volo.Abp.AspNetCore.Serilog;
+using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Caching;
+using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.Modularity;
 using Volo.Abp.Threading;
 
 namespace AeFinder.BlockGrainManager;
 
+[DependsOn(typeof(AbpAutofacModule),
+    typeof(AeFinderGrainsModule),
+    typeof(AeFinderBlockChainEventHandlerCoreModule),
+    typeof(AbpAspNetCoreSerilogModule),
+    typeof(AeFinderMongoDbModule),
+    typeof(AeFinderApplicationModule),
+    typeof(AbpCachingStackExchangeRedisModule))]
 public class AeFinderBlockGrainManagerModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
