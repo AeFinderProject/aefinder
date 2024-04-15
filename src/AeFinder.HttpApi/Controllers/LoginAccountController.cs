@@ -22,7 +22,7 @@ public class LoginAccountController : AeFinderController
         return _loginAccountAppService.RegisterAsync(input);
     }
 
-    [HttpPost("request-token/by-password")]
+    [HttpGet("request-token/by-password")]
     public virtual Task<string> RequestTokenByPasswordAsync(RequestTokenByPasswordInput input)
     {
         return _loginAccountAppService.RequestTokenByPasswordAsync(input);

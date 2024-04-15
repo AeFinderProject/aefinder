@@ -21,14 +21,14 @@ public class StudioController : AeFinderController
         _studioService = studioService;
     }
 
-    [HttpGet("apply")]
+    [HttpPost("apply")]
     [Authorize]
     public Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppName(ApplyAeFinderAppNameInput input)
     {
         return _studioService.ApplyAeFinderAppName(input);
     }
 
-    [HttpGet("update")]
+    [HttpPost("update")]
     [Authorize]
     public Task<AddOrUpdateAeFinderAppDto> AddOrUpdateAeFinderApp(AddOrUpdateAeFinderAppInput input)
     {
