@@ -259,6 +259,13 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return new UpdateAeFinderAppDto() { Success = true };
     }
 
+    public async Task RestartAppAsync(string version)
+    {
+        var appId = await GetAppIdAsync();
+        await _kubernetesAppManager.RestartAppPodAsync(appId, version);
+
+    }
+
     private async Task AddToUsersApps(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)
     {
         var tasks = userIds.Select(userId => _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(userId))).Select(userAppsGrain => userAppsGrain.AddApp(appId, info)).ToList();

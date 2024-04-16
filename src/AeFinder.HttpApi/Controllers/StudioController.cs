@@ -63,6 +63,14 @@ public class StudioController : AeFinderController
         return _studioService.SubmitSubscriptionInfoAsync(input);
     }
 
+    [HttpPost("restartapp")]
+    [Authorize]
+    public Task<string> RestartAppAsync(string version)
+    {
+        _studioService.RestartAppAsync(version);
+        return Task.FromResult(string.Empty);
+    }
+
     [HttpPost("destroyapp")]
     [Authorize]
     public Task<string> DestroyAppAsync(string version)
