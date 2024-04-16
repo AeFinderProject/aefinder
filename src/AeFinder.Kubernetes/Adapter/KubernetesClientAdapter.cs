@@ -119,4 +119,18 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
         return await _k8sClient.DeleteNamespacedIngressAsync(name, namespaceParameter,
             cancellationToken: cancellationToken);
     }
+
+    public async Task<V1Deployment> ReadNamespacedDeploymentAsync(string name, string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return await _k8sClient.ReadNamespacedDeploymentAsync(name, namespaceParameter,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task<V1Deployment> ReplaceNamespacedDeploymentAsync(V1Deployment deployment,string name, string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return await _k8sClient.ReplaceNamespacedDeploymentAsync(deployment, name, namespaceParameter,
+            cancellationToken: cancellationToken);
+    }
 }
