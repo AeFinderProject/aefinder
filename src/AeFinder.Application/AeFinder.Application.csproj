@@ -18,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc7" />
-    <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc7" />
+    <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc9.2" />
+    <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc9.2" />
     <PackageReference Include="GraphQL.Client" Version="6.0.3" />
     <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">
       <PrivateAssets>all</PrivateAssets>
