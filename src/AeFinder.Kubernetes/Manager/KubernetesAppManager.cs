@@ -284,4 +284,49 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
             _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} deleted.", ingressName);
         }
     }
+
+    public async Task RestartAppPodAsync(string appId, string version)
+    {
+        //Restart Full Client Type App Pod
+        string fullClientDeploymentName =
+            DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeFull);
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
+        bool fullClientDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullClientDeploymentName);
+        if (fullClientDeploymentExists)
+        {
+            var deployment = await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(fullClientDeploymentName, KubernetesConstants.AppNameSpace);
+            // Add or update annotations to trigger rolling updates
+            var annotations = deployment.Spec.Template.Metadata.Annotations ?? new Dictionary<string, string>();
+            annotations["kubectl.kubernetes.io/restartedAt"] = DateTime.UtcNow.ToString("s");
+            deployment.Spec.Template.Metadata.Annotations = annotations;
+
+            // Update Deployment
+            await _kubernetesClientAdapter.ReplaceNamespacedDeploymentAsync(deployment, fullClientDeploymentName, KubernetesConstants.AppNameSpace);
+        }
+        else
+        {
+            _logger.LogError($"Deployment {fullClientDeploymentName} is not exists!");
+        }
+        
+        
+        //Restart Query Client Type App Pod
+        string queryClientDeploymentName =
+            DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeQuery);
+        bool queryClientDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == queryClientDeploymentName);
+        if (queryClientDeploymentExists)
+        {
+            var deployment = await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(queryClientDeploymentName, KubernetesConstants.AppNameSpace);
+            // Add or update annotations to trigger rolling updates
+            var annotations = deployment.Spec.Template.Metadata.Annotations ?? new Dictionary<string, string>();
+            annotations["kubectl.kubernetes.io/restartedAt"] = DateTime.UtcNow.ToString("s");
+            deployment.Spec.Template.Metadata.Annotations = annotations;
+
+            // Update Deployment
+            await _kubernetesClientAdapter.ReplaceNamespacedDeploymentAsync(deployment, queryClientDeploymentName, KubernetesConstants.AppNameSpace);
+        }
+        else
+        {
+            _logger.LogError($"Deployment {queryClientDeploymentName} is not exists!");
+        }
+    }
 }
