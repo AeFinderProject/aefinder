@@ -194,8 +194,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
             throw new UserFriendlyException("app not exists.");
         }
 
-        var version = "ffd8770b9ef542f3bd403327e385ed07";
-        // var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifestDto, dllBytes);
+        var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifestDto, dllBytes);
         var rulePath = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, version, _studioOption.ImageName);
         _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2}", info.AppId, version, rulePath);
         // var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(input.AppId));

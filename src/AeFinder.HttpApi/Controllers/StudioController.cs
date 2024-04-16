@@ -63,11 +63,12 @@ public class StudioController : AeFinderController
         return _studioService.SubmitSubscriptionInfoAsync(input);
     }
 
-    [HttpGet("destroyapp")]
+    [HttpPost("destroyapp")]
     [Authorize]
-    public Task DestroyAppAsync(string version)
+    public Task<string> DestroyAppAsync(string version)
     {
-        return _studioService.DestroyAppAsync(version);
+        _studioService.DestroyAppAsync(version);
+        return Task.FromResult(string.Empty);
     }
 
     [HttpPost("updateapp")]
