@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
 using AeFinder.Studio;
+using BrunoZell.ModelBinding;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -58,9 +59,9 @@ public class StudioController : AeFinderController
 
     [HttpPost("submitsubscription")]
     [Authorize]
-    public Task<string> SubmitSubscriptionInfoAsync([FromForm] SubscriptionInfo input)
+    public Task<string> SubmitSubscriptionInfoAsync([FromForm] SubscriptionInfo input, [ModelBinder(BinderType = typeof(JsonModelBinder))]SubscriptionManifestDto subscriptionManifest)
     {
-        return _studioService.SubmitSubscriptionInfoAsync(input);
+        return _studioService.SubmitSubscriptionInfoAsync(input, subscriptionManifest);
     }
 
     [HttpPost("updateapp")]

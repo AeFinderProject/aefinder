@@ -29,7 +29,7 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
         Logger.LogInformation("ScanApp: {clientId} submit subscription: {subscription}", appId,
             JsonSerializer.Serialize(manifestDto));
 
-        var subscription = ObjectMapper.Map<SubscriptionManifestDto,SubscriptionManifest>(manifestDto);
+        var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifestDto);
         var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         // TODO: Use the code from developer.
         if (dll == null)
@@ -39,7 +39,6 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
 
         var version = await client.AddSubscriptionAsync(subscription, dll);
         return version;
-
     }
 
     // public async Task UpdateSubscriptionInfoAsync(string clientId, string version, List<SubscriptionInfo> subscriptionInfos)
