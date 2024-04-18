@@ -29,6 +29,11 @@ public class BlockPusherManagerGrain : Grain<BlockPusherManagerState>, IBlockPus
 
     public async Task RemoveBlockPusherAsync(string chainId, string blockPusherId)
     {
+        if (chainId == null)
+        {
+            return;
+        }
+
         if (State.BlockPusherIds.TryGetValue(chainId, out var clientIds))
         {
             if (clientIds.Remove(blockPusherId))
