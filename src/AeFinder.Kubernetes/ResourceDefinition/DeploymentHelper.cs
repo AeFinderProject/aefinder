@@ -10,7 +10,7 @@ public class DeploymentHelper
     }
 
     public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string imageName, string deploymentName,
-        int replicasCount, string containerName, string configMapName,string sideCarConfigMapName)
+        int replicasCount, string containerName,int containerPort, string configMapName,string sideCarConfigMapName)
     {
         var labels = new Dictionary<string, string>
         {
@@ -42,7 +42,10 @@ public class DeploymentHelper
                                 // Add your specific configuration here based on index
                                 // For example, you can mount different config files as volumes
                                 // or set different environment variables
-
+                                Ports = new List<V1ContainerPort>
+                                {
+                                    new V1ContainerPort(containerPort)
+                                },
                                 VolumeMounts = new List<V1VolumeMount>
                                 {
                                     new V1VolumeMount

@@ -38,7 +38,7 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
     {
         var namespaces = await _kubernetesClientAdapter.ListNamespaceAsync();
 
-        string nameSpace = KubernetesConstants.AppNameSpace;
+        var nameSpace = KubernetesConstants.AppNameSpace;
         // 检查特定的命名空间是否存在
         var namespaceExists = namespaces.Items.Any(n => n.Metadata.Name == nameSpace);
         
@@ -55,14 +55,14 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
     private async Task CreateFullClientTypeAppPodAsync(string appId, string version, string imageName)
     {
         //Create full app appsetting config map
-        string configMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeFull);
-        string appSettingsContent = File.ReadAllText(KubernetesConstants.AppSettingTemplateFilePath);
+        var configMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeFull);
+        var appSettingsContent = File.ReadAllText(KubernetesConstants.AppSettingTemplateFilePath);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderAppId, appId);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderVersion, version);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderClientType,
             KubernetesConstants.AppClientTypeFull);
         var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
-        bool configMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == configMapName);
+        var configMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == configMapName);
         if (!configMapExists)
         {
             var configMap =
@@ -73,12 +73,12 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Create full app filebeat config map
-        string sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeFull);
+        var sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeFull);
         var sideCarConfigContent = File.ReadAllText(KubernetesConstants.AppFileBeatConfigTemplateFilePath);
         sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderAppId, appId.ToLower());
         sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderClientType,
             KubernetesConstants.AppClientTypeFull.ToLower());
-        bool sideCarConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == sideCarConfigName);
+        var sideCarConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == sideCarConfigName);
         if (!sideCarConfigMapExists)
         {
             var sideCarConfigMap =
@@ -89,17 +89,18 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Create full app deployment
-        string deploymentName =
+        var deploymentName =
             DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeFull);
-        string containerName =
+        var containerName =
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeFull);
-        int replicasCount = _kubernetesOptions.AppPodReplicas;
+        var targetPort = KubernetesConstants.AppContainerTargetPort;
+        var replicasCount = _kubernetesOptions.AppPodReplicas;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
-        bool deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
+        var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(imageName,
-                deploymentName, replicasCount, containerName, configMapName, sideCarConfigName);
+                deploymentName, replicasCount, containerName, targetPort, configMapName, sideCarConfigName);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);
@@ -109,15 +110,15 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
     private async Task<string> CreateQueryClientTypeAppPodAsync(string appId, string version, string imageName)
     {
         //Create query app appsetting config map
-        string configMapName =
+        var configMapName =
             ConfigMapHelper.GetAppSettingConfigMapName(appId, version, KubernetesConstants.AppClientTypeQuery);
-        string appSettingsContent = File.ReadAllText(KubernetesConstants.AppSettingTemplateFilePath);
+        var appSettingsContent = File.ReadAllText(KubernetesConstants.AppSettingTemplateFilePath);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderAppId, appId);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderVersion, version);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderClientType,
             KubernetesConstants.AppClientTypeQuery);
         var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
-        bool configMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == configMapName);
+        var configMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == configMapName);
         if (!configMapExists)
         {
             var configMap =
@@ -128,12 +129,12 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
         
         //Create query app filebeat config map
-        string sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeQuery);
+        var sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeQuery);
         var sideCarConfigContent = File.ReadAllText(KubernetesConstants.AppFileBeatConfigTemplateFilePath);
         sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderAppId, appId.ToLower());
         sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderClientType,
             KubernetesConstants.AppClientTypeQuery.ToLower());
-        bool sideCarConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == sideCarConfigName);
+        var sideCarConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == sideCarConfigName);
         if (!sideCarConfigMapExists)
         {
             var sideCarConfigMap =
@@ -144,27 +145,27 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
         
         //Create query app deployment
-        string deploymentName =
+        var deploymentName =
             DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeQuery);
-        string containerName =
+        var containerName =
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeQuery);
-        int replicasCount = _kubernetesOptions.AppPodReplicas;
+        var targetPort = KubernetesConstants.AppContainerTargetPort;
+        var replicasCount = _kubernetesOptions.AppPodReplicas;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
-        bool deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
+        var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(imageName,
-                deploymentName, replicasCount, containerName, configMapName, sideCarConfigName);
+                deploymentName, replicasCount, containerName, targetPort, configMapName, sideCarConfigName);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);
         }
 
         //Create query app service
-        string serviceName = ServiceHelper.GetAppServiceName(appId, version);
-        int targetPort = KubernetesConstants.AppContainerTargetPort;
+        var serviceName = ServiceHelper.GetAppServiceName(appId, version);
         var services = await _kubernetesClientAdapter.ListServiceAsync(KubernetesConstants.AppNameSpace);
-        bool sericeExists = services.Items.Any(item => item.Metadata.Name == serviceName);
+        var sericeExists = services.Items.Any(item => item.Metadata.Name == serviceName);
         if (!sericeExists)
         {
             var service =
@@ -175,12 +176,12 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Create query app ingress
-        string ingressName = IngressHelper.GetAppIngressName(appId, version);
-        string hostName = _kubernetesOptions.HostName;
+        var ingressName = IngressHelper.GetAppIngressName(appId, version);
+        var hostName = _kubernetesOptions.HostName;
         // string rulePath = $"/{appId}";
-        string rulePath = $"/{appId}/{version}";
+        var rulePath = $"/{appId}/{version}";
         var ingresses = await _kubernetesClientAdapter.ListIngressAsync(KubernetesConstants.AppNameSpace);
-        bool ingressExists = ingresses.Items.Any(item => item.Metadata.Name == ingressName);
+        var ingressExists = ingresses.Items.Any(item => item.Metadata.Name == ingressName);
         if (!ingressExists)
         {
             var ingress =
@@ -197,10 +198,10 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
     public async Task DestroyAppPodAsync(string appId, string version)
     {
         //Delete full app deployment
-        string fullTypeAppDeploymentName =
+        var fullTypeAppDeploymentName =
             DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeFull);
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
-        bool fullTypeAppDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullTypeAppDeploymentName);
+        var fullTypeAppDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullTypeAppDeploymentName);
         if (fullTypeAppDeploymentExists)
         {
             // Delete the existing Deployment
@@ -212,9 +213,9 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Delete full app appsetting config map
-        string fullTypeAppConfigMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeFull);
+        var fullTypeAppConfigMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeFull);
         var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
-        bool fullTypeAppConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == fullTypeAppConfigMapName);
+        var fullTypeAppConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == fullTypeAppConfigMapName);
         if (fullTypeAppConfigMapExists)
         {
             await _kubernetesClientAdapter.DeleteConfigMapAsync(fullTypeAppConfigMapName, KubernetesConstants.AppNameSpace);
@@ -222,9 +223,9 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Delete full app filebeat config map
-        string fullTypeAppSideCarConfigName =
+        var fullTypeAppSideCarConfigName =
             ConfigMapHelper.GetAppFileBeatConfigMapName(appId, version, KubernetesConstants.AppClientTypeFull);
-        bool fullTypeAppSideCarConfigExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == fullTypeAppSideCarConfigName);
+        var fullTypeAppSideCarConfigExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == fullTypeAppSideCarConfigName);
         if (fullTypeAppSideCarConfigExists)
         {
             await _kubernetesClientAdapter.DeleteConfigMapAsync(fullTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
@@ -232,9 +233,9 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Delete query app deployment
-        string queryTypeAppDeploymentName =
+        var queryTypeAppDeploymentName =
             DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeQuery);
-        bool queryTypeAppDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == queryTypeAppDeploymentName);
+        var queryTypeAppDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == queryTypeAppDeploymentName);
         if (queryTypeAppDeploymentExists)
         {
             // Delete the existing Deployment
@@ -246,9 +247,9 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Delete query app appsetting config map
-        string queryTypeAppConfigMapName =
+        var queryTypeAppConfigMapName =
             ConfigMapHelper.GetAppSettingConfigMapName(appId, version, KubernetesConstants.AppClientTypeQuery);
-        bool queryTypeAppConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == queryTypeAppConfigMapName);
+        var queryTypeAppConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == queryTypeAppConfigMapName);
         if (queryTypeAppConfigMapExists)
         {
             await _kubernetesClientAdapter.DeleteConfigMapAsync(queryTypeAppConfigMapName, KubernetesConstants.AppNameSpace);
@@ -256,8 +257,8 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Delete query app filebeat config map
-        string queryTypeAppSideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId, version, KubernetesConstants.AppClientTypeQuery);
-        bool queryTypeAppSideCarConfigExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == queryTypeAppSideCarConfigName);
+        var queryTypeAppSideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeQuery);
+        var queryTypeAppSideCarConfigExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == queryTypeAppSideCarConfigName);
         if (queryTypeAppSideCarConfigExists)
         {
             await _kubernetesClientAdapter.DeleteConfigMapAsync(queryTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
@@ -265,9 +266,9 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Delete query app service
-        string serviceName = ServiceHelper.GetAppServiceName(appId, version);
+        var serviceName = ServiceHelper.GetAppServiceName(appId, version);
         var services = await _kubernetesClientAdapter.ListServiceAsync(KubernetesConstants.AppNameSpace);
-        bool sericeExists = services.Items.Any(item => item.Metadata.Name == serviceName);
+        var sericeExists = services.Items.Any(item => item.Metadata.Name == serviceName);
         if (sericeExists)
         {
             await _kubernetesClientAdapter.DeleteServiceAsync(serviceName, KubernetesConstants.AppNameSpace);
@@ -275,9 +276,9 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
 
         //Delete query app ingress
-        string ingressName = IngressHelper.GetAppIngressName(appId, version);
+        var ingressName = IngressHelper.GetAppIngressName(appId, version);
         var ingresses = await _kubernetesClientAdapter.ListIngressAsync(KubernetesConstants.AppNameSpace);
-        bool ingressExists = ingresses.Items.Any(item => item.Metadata.Name == ingressName);
+        var ingressExists = ingresses.Items.Any(item => item.Metadata.Name == ingressName);
         if (ingressExists)
         {
             await _kubernetesClientAdapter.DeleteIngressAsync(ingressName, KubernetesConstants.AppNameSpace);
@@ -288,10 +289,10 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
     public async Task RestartAppPodAsync(string appId, string version)
     {
         //Restart Full Client Type App Pod
-        string fullClientDeploymentName =
+        var fullClientDeploymentName =
             DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeFull);
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
-        bool fullClientDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullClientDeploymentName);
+        var fullClientDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullClientDeploymentName);
         if (fullClientDeploymentExists)
         {
             var deployment = await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(fullClientDeploymentName, KubernetesConstants.AppNameSpace);
@@ -310,9 +311,9 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         
         
         //Restart Query Client Type App Pod
-        string queryClientDeploymentName =
+        var queryClientDeploymentName =
             DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeQuery);
-        bool queryClientDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == queryClientDeploymentName);
+        var queryClientDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == queryClientDeploymentName);
         if (queryClientDeploymentExists)
         {
             var deployment = await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(queryClientDeploymentName, KubernetesConstants.AppNameSpace);
