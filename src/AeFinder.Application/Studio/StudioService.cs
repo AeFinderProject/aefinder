@@ -165,22 +165,16 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return response;
     }
 
-    public async Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input)
+    public async Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input, SubscriptionManifestDto subscriptionManifest)
     {
-        SubscriptionManifestDto subscriptionManifestDto;
-
-        try
+        if (subscriptionManifest == null || subscriptionManifest.SubscriptionItems.Count == 0)
         {
-            subscriptionManifestDto = JsonSerializer.Deserialize<SubscriptionManifestDto>(input.SubscriptionManifest);
-        }
-        catch (Exception)
-        {
-            throw new UserFriendlyException("Invalid subscription manifest.");
+            throw new UserFriendlyException("invalid subscription manifest.");
         }
 
-        if (subscriptionManifestDto == null || subscriptionManifestDto.SubscriptionItems.IsNullOrEmpty())
+        if (subscriptionManifest.SubscriptionItems.Any(item => item.ChainId.IsNullOrEmpty() || item.StartBlockNumber < 0))
         {
-            throw new UserFriendlyException("Invalid subscription manifest.");
+            throw new UserFriendlyException("invalid subscription manifest.");
         }
 
         await using var stream = input.AppDll.OpenReadStream();
