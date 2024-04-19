@@ -190,13 +190,8 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
         
         var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifest, dllBytes);
-        // var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(info.AppId));
-        // var version = "ffd8770b9ef542f3bd403327e385ed07";
-        // await client.UpdateCodeAsync(version, dllBytes);
         var rulePath = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, version, _studioOption.ImageName);
         _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2}", info.AppId, version, rulePath);
-        // var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(input.AppId));
-        // await appGrain.SetGraphQlByVersion(version, appGraphQl);
         return version;
     }
 
@@ -261,7 +256,6 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
     {
         var appId = await GetAppIdAsync();
         await _kubernetesAppManager.RestartAppPodAsync(appId, version);
-
     }
 
     private async Task AddToUsersApps(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)
