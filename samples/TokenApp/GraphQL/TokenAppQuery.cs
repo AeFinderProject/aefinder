@@ -27,7 +27,6 @@ public class TokenAppQuery
         }
         
         var accounts= queryable.ToList();
-
         return objectMapper.Map<List<Account>, List<AccountDto>>(accounts);
     }
 }
