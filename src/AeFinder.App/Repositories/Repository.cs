@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace AeFinder.App.Repositories;
 
-public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityRepository<TEntity>
+public class Repository<TEntity> : RepositoryBase<TEntity>, IRepository<TEntity>
     where TEntity : AeFinderEntity, IAeFinderEntity
 {
     private readonly IAppStateProvider _appStateProvider;
@@ -19,7 +19,7 @@ public class EntityRepository<TEntity> : EntityRepositoryBase<TEntity>, IEntityR
 
     private readonly string _entityName;
 
-    public EntityRepository(IAppStateProvider appStateProvider, IAppBlockStateSetProvider appBlockStateSetProvider,
+    public Repository(IAppStateProvider appStateProvider, IAppBlockStateSetProvider appBlockStateSetProvider,
         IAppDataIndexProvider<TEntity> appDataIndexProvider, 
         IEntityOperationLimitProvider entityOperationLimitProvider, IBlockProcessingContext blockProcessingContext)
     {

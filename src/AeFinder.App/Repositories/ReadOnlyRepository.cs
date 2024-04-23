@@ -4,7 +4,7 @@ using AeFinder.Sdk.Entities;
 
 namespace AeFinder.App.Repositories;
 
-public class ReadOnlyRepository<TEntity> : EntityRepositoryBase<TEntity>, IReadOnlyRepository<TEntity> 
+public class ReadOnlyRepository<TEntity> : RepositoryBase<TEntity>, IReadOnlyRepository<TEntity> 
     where TEntity : AeFinderEntity, IAeFinderEntity
 {
     private readonly IEntityMappingRepository<TEntity, string> _repository;
