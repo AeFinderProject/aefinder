@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Studio;
 using Newtonsoft.Json;
 using Orleans;
 using Shouldly;
@@ -19,6 +21,15 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
     {
         _blockScanAppService = GetRequiredService<IBlockScanAppService>();
         _clusterClient = GetRequiredService<IClusterClient>();
+    }
+
+    [Fact]
+    public async Task AppNameTest()
+    {
+        var regex = new Regex(AppIdConsts.NameRegex);
+        regex.IsMatch("app-name.1212").ShouldBe(true);
+        regex.IsMatch("app-name.1212_").ShouldBe(false);
+        regex.IsMatch("App-name.1212").ShouldBe(false);
     }
 
     [Fact]

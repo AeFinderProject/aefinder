@@ -104,47 +104,6 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info);
     }
 
-    //to be finished
-    private async void AuthDeveloper(string appId, string clientId = null)
-    {
-        if (!clientId.IsNullOrEmpty() && clientId.Equals(appId))
-        {
-            return;
-        }
-
-        var userId = CurrentUser.GetId().ToString("N");
-        if (!IsAdminOf(userId, appId))
-        {
-            var nameGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(appId));
-            if (!await nameGrain.IsDeveloper(userId))
-            {
-                _logger.LogError("GetAeFinderApp: {0} auth failed {1}", CurrentUser.GetId(), appId);
-                throw new UserFriendlyException("You are not developer of this app.");
-            }
-        }
-    }
-
-    //to be finished
-    public async Task<AddDeveloperToAppDto> AddDeveloperToApp(AddDeveloperToAppInput input)
-    {
-        var adminId = CurrentUser.GetId().ToString("N");
-        _logger.LogInformation("receive request UpdateAeFinderApp: adminId= {0} input= {1}", adminId, JsonSerializer.Serialize(input));
-        if (!IsAdminOf(adminId, input.AppId))
-        {
-            _logger.LogError("UpdateAeFinderApp: {0} is not admin of {1}", CurrentUser.GetId(), input.AppId);
-            throw new UserFriendlyException("You are not admin of this app.");
-        }
-
-        var nameGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(input.AppId));
-        var appInfo = await nameGrain.AddDeveloperToApp(input.DeveloperId);
-        if (appInfo != null)
-        {
-            await _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(input.DeveloperId)).AddApp(input.AppId, appInfo.AeFinderAppInfo);
-        }
-
-        return new AddDeveloperToAppDto();
-    }
-
     public async Task<List<AeFinderAppInfo>> GetAeFinderAppList()
     {
         var userId = CurrentUser.GetId().ToString("N");
@@ -209,19 +168,6 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         _logger.LogInformation("DestroyAppAsync: {0} {1}", info.AppId, version);
     }
 
-    public async Task<QueryAeFinderAppDto> QueryAeFinderAppAsync(QueryAeFinderAppInput input)
-    {
-        var userId = CurrentUser.GetId().ToString("N");
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
-        var ans = await appGrain.GetGraphQls();
-        return new QueryAeFinderAppDto() { GraphQLs = ans };
-    }
-
-    public Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogsAsync(QueryAeFinderAppLogsInput input)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<string> GetAppIdAsync()
     {
         if (CurrentUser?.Id == null)
@@ -262,11 +208,5 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
     {
         var tasks = userIds.Select(userId => _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(userId))).Select(userAppsGrain => userAppsGrain.AddApp(appId, info)).ToList();
         await tasks.WhenAll();
-    }
-
-    private bool IsAdminOf(string adminId, string appId)
-    {
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(adminId));
-        return appGrain.IsAdmin(appId).Result;
     }
 }

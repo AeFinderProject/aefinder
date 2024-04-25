@@ -3,5 +3,7 @@ namespace AeFinder.Studio;
 public static class AppIdConsts
 {
     public static int MaxNameLength { get; set; } = 30;
-    public const string NameRegex = "^[a-zA-Z0-9_-]*$";
+    private const string QnameCharFmt = "[A-Za-z0-9]";
+    private const string QnameExtCharFmt = "[-A-Za-z0-9_.]";
+    public const string NameRegex = "(" + QnameCharFmt + QnameExtCharFmt + "*)?" + QnameCharFmt;
 }
