@@ -8,13 +8,37 @@ public class DeploymentHelper
     {
         return $"deployment-{appId}-{version}-{clientType}".ToLower();
     }
+    
+    /// <summary>
+    /// label name must be no more than 63 characters
+    /// </summary>
+    /// <param name="appId"></param>
+    /// <param name="version"></param>
+    /// <param name="clientType"></param>
+    /// <returns></returns>
+    public static string GetAppDeploymentLabelName(string version, string clientType)
+    {
+        return $"deployment-{version}-{clientType}".ToLower();
+    }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="imageName"></param>
+    /// <param name="deploymentName"></param>
+    /// <param name="deploymentLabelName">must be no more than 63 characters</param>
+    /// <param name="replicasCount"></param>
+    /// <param name="containerName"></param>
+    /// <param name="containerPort"></param>
+    /// <param name="configMapName"></param>
+    /// <param name="sideCarConfigMapName"></param>
+    /// <returns></returns>
     public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string imageName, string deploymentName,
-        int replicasCount, string containerName,int containerPort, string configMapName,string sideCarConfigMapName)
+        string deploymentLabelName, int replicasCount, string containerName, int containerPort, string configMapName, string sideCarConfigMapName)
     {
         var labels = new Dictionary<string, string>
         {
-            { KubernetesConstants.AppLabelKey, deploymentName }
+            { KubernetesConstants.AppLabelKey, deploymentLabelName }
         };
 
         var deployment = new V1Deployment
@@ -51,7 +75,8 @@ public class DeploymentHelper
                                     new V1VolumeMount
                                     {
                                         Name = "config-volume",
-                                        MountPath = KubernetesConstants.AppSettingFileMountPath, // Change to the directory where you want to mount
+                                        MountPath = KubernetesConstants
+                                            .AppSettingFileMountPath, // Change to the directory where you want to mount
                                         SubPath = KubernetesConstants.AppSettingFileName
                                     },
                                     new V1VolumeMount
