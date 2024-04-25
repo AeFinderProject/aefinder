@@ -11,7 +11,7 @@ public class ServiceHelper
     }
     
     public static V1Service CreateAppClusterIPServiceDefinition(string serviceName, 
-        string deploymentName, int targetPort, int port = 80)
+        string deploymentLabelName,int targetPort, int port = 80)
     {
         var service = new V1Service
         {
@@ -24,7 +24,7 @@ public class ServiceHelper
             {
                 Selector = new Dictionary<string, string>
                 {
-                    { KubernetesConstants.AppLabelKey, deploymentName }
+                    { KubernetesConstants.AppLabelKey, deploymentLabelName }
                 },
                 Ports = new List<V1ServicePort>
                 {
