@@ -24,18 +24,23 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
         _clusterClient = clusterClient;
     }
 
-    public async Task<string> AddSubscriptionAsync(string clientId, SubscriptionManifestDto manifestDto)
+    public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifestDto, byte[] dll = null)
     {
-        Logger.LogInformation("ScanApp: {clientId} submit subscription: {subscription}", clientId,
+        Logger.LogInformation("ScanApp: {clientId} submit subscription: {subscription}", appId,
             JsonSerializer.Serialize(manifestDto));
 
-        var subscription = ObjectMapper.Map<SubscriptionManifestDto,SubscriptionManifest>(manifestDto);
-        var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
+        var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifestDto);
+        var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         // TODO: Use the code from developer.
-        var version = await client.AddSubscriptionAsync(subscription, new byte[]{});
+        if (dll == null)
+        {
+            return null;
+        }
+
+        var version = await client.AddSubscriptionAsync(subscription, dll);
         return version;
     }
-    
+
     // public async Task UpdateSubscriptionInfoAsync(string clientId, string version, List<SubscriptionInfo> subscriptionInfos)
     // {
     //     Logger.LogInformation($"Client: {clientId} update subscribe: {JsonSerializer.Serialize(subscriptionInfos)}");
@@ -174,7 +179,7 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
     //         }
     //     }
     // }
-    
+
     public async Task<List<Guid>> GetMessageStreamIdsAsync(string clientId, string version)
     {
         var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
@@ -207,7 +212,7 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
             var blockScanExecutorGrain = _clusterClient.GetGrain<IBlockPusherGrain>(id);
 
             var startBlockHeight = subscriptionItem.StartBlockNumber;
-            
+
             if (versionStatus != SubscriptionStatus.Initialized)
             {
                 var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
@@ -223,7 +228,7 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
                     startBlockHeight += 1;
                 }
             }
-            
+
             await blockScanGrain.InitializeAsync(clientId, version, subscriptionItem, scanToken);
             await blockScanExecutorGrain.InitializeAsync(scanToken, startBlockHeight);
 
@@ -263,7 +268,7 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
         var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
         await clientGrain.StopAsync(version);
     }
-    
+
     public async Task<bool> IsRunningAsync(string chainId, string clientId, string version, string token)
     {
         var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));

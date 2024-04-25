@@ -1,5 +1,6 @@
 ﻿using AeFinder.MultiTenancy;
 using AeFinder.OpenIddict;
+using AeFinder.OpenIddict.Login;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -36,22 +37,19 @@ public class AeFinderDomainModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        Configure<AbpMultiTenancyOptions>(options =>
-        {
-            options.IsEnabled = MultiTenancyConsts.IsEnabled;
-        });
-        
+        Configure<AbpMultiTenancyOptions>(options => { options.IsEnabled = MultiTenancyConsts.IsEnabled; });
+        context.Services.TryAddTransient<ILoginNewUserCreator, LoginNewUserCreator>();
+
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
 #endif
         //Override AbpOpenIddictTokenStore and set PruneAsync isTransactional as false
         var tokenStoreRootType = OpenIddictHelpers.FindGenericBaseType(typeof(AeFinderOpenIddictTokenStore), typeof(IOpenIddictTokenStore<>));
         context.Services.Replace(new ServiceDescriptor(typeof(IOpenIddictTokenStore<>).MakeGenericType(tokenStoreRootType.GenericTypeArguments[0]), typeof(AeFinderOpenIddictTokenStore), ServiceLifetime.Scoped));
-        
+
         //Override AbpOpenIddictTokenStore and set PruneAsync isTransactional as false
         var authorizationStoreRootType = OpenIddictHelpers.FindGenericBaseType(typeof(AeFinderOpenIddictAuthorizationStore), typeof(IOpenIddictAuthorizationStore<>));
         context.Services.Replace(new ServiceDescriptor(typeof(IOpenIddictAuthorizationStore<>)
             .MakeGenericType(authorizationStoreRootType.GenericTypeArguments[0]), typeof(AeFinderOpenIddictAuthorizationStore), ServiceLifetime.Scoped));
     }
-
 }

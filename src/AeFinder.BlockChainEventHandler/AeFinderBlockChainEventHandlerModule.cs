@@ -1,3 +1,4 @@
+using System;
 using AeFinder.Grains;
 using AeFinder.MongoDb;
 using Microsoft.Extensions.Configuration;
@@ -60,6 +61,11 @@ public class AeFinderBlockChainEventHandlerModule:AbpModule
                 {
                     options.ClusterId = configuration["Orleans:ClusterId"];
                     options.ServiceId = configuration["Orleans:ServiceId"];
+                })
+                .Configure<ClientMessagingOptions>(options =>
+                {
+                    options.ResponseTimeout = TimeSpan.FromSeconds(Convert.ToInt32(configuration["Orleans:GrainResponseTimeOut"]));
+                    options.MaxMessageBodySize = Convert.ToInt32(configuration["Orleans:GrainMaxMessageBodySize"]);
                 })
                 .ConfigureApplicationParts(parts =>
                     parts.AddApplicationPart(typeof(AeFinderGrainsModule).Assembly).WithReferences())
