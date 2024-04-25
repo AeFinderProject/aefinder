@@ -19,6 +19,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
 
         CreateMap<TransactionIndex, TransactionDto>();
         CreateMap<LogEventIndex, LogEventDto>();
+        CreateMap<SummaryIndex, SummaryDto>();
 
         CreateMap<BlockDto, BlockWithTransactionDto>();
         CreateMap<NewBlockEto, BlockWithTransactionDto>();

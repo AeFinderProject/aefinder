@@ -27,13 +27,15 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     private readonly IEntityMappingRepository<LogEventIndex, string> _logEventIndexRepository;
     private readonly IBlockIndexHandler _blockIndexHandler;
     private readonly IBlockSyncAppService _blockSyncAppService;
+    private readonly IEntityMappingRepository<SummaryIndex, string> _summaryIndexRepository;
 
     public BlockHandler(
         IEntityMappingRepository<BlockIndex, string> blockIndexRepository,
         IEntityMappingRepository<TransactionIndex, string> transactionIndexRepository,
         IEntityMappingRepository<LogEventIndex, string> logEventIndexRepository,
         ILogger<BlockHandler> logger,
-        IObjectMapper objectMapper, IBlockIndexHandler blockIndexHandler, IBlockSyncAppService blockSyncAppService)
+        IObjectMapper objectMapper, IBlockIndexHandler blockIndexHandler, IBlockSyncAppService blockSyncAppService,
+        IEntityMappingRepository<SummaryIndex, string> summaryIndexRepository)
     {
         _blockIndexRepository = blockIndexRepository;
         _logger = logger;
@@ -42,6 +44,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         _logEventIndexRepository = logEventIndexRepository;
         _blockIndexHandler = blockIndexHandler;
         _blockSyncAppService = blockSyncAppService;
+        _summaryIndexRepository = summaryIndexRepository;
     }
 
     public async Task HandleEventAsync(NewBlocksEto eventData)
@@ -92,10 +95,23 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             {
                 tasks.Add( _logEventIndexRepository.AddOrUpdateManyAsync(logEventIndexList));
             }
+            
+            //Record latest new block height
+            var chainId = eventData.NewBlocks.Last().ChainId;
+            var summaryIndex = await _summaryIndexRepository.GetAsync(chainId);
+            if (summaryIndex == null)
+            {
+                summaryIndex = new SummaryIndex();
+                summaryIndex.ChainId = chainId;
+            }
+            summaryIndex.LatestBlockHash = eventData.NewBlocks.Last().BlockHash;
+            summaryIndex.LatestBlockHeight = eventData.NewBlocks.Last().BlockHeight;
+            tasks.Add( _summaryIndexRepository.AddOrUpdateAsync(summaryIndex));
 
             await tasks.WhenAll();
             
             var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
+
             _ = Task.Run(async () =>
             {
                 foreach (var dto in blockDtos)
@@ -224,6 +240,19 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         {
             tasks.Add(_logEventIndexRepository.AddOrUpdateManyAsync(confirmLogEventIndexList));
         }
+        
+        //Record latest confirmed block height
+        var chainId = lastBlock.ChainId;
+        var summaryIndex = await _summaryIndexRepository.GetAsync(chainId);
+        if (summaryIndex == null)
+        {
+            summaryIndex = new SummaryIndex();
+            summaryIndex.ChainId = chainId;
+        }
+        summaryIndex.ConfirmedBlockHash = lastBlock.BlockHash;
+        summaryIndex.ConfirmedBlockHeight = lastBlock.BlockHeight;
+        tasks.Add( _summaryIndexRepository.AddOrUpdateAsync(summaryIndex));
+        
         await tasks.WhenAll();
         
         var blockDtos = _objectMapper.Map<List<ConfirmBlockEto>, List<BlockWithTransactionDto>>(eventData.ConfirmBlocks);
