@@ -138,7 +138,15 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
         await using var stream = input.AppDll.OpenReadStream();
         var dllBytes = stream.GetAllBytes();
-        _codeAuditor.Audit(dllBytes);
+        try
+        {
+            _codeAuditor.Audit(dllBytes);
+        }
+        catch (Exception e)
+        {
+            throw new UserFriendlyException("audit failed: " + e.Message);
+        }
+
         var userId = CurrentUser.GetId().ToString("N");
         var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
         var info = await userAppGrain.GetAppInfo();
@@ -147,7 +155,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
             throw new UserFriendlyException("app not exists.");
         }
 
-        
+
         var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifest, dllBytes);
         var rulePath = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, version, _studioOption.ImageName);
         _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2}", info.AppId, version, rulePath);
@@ -190,11 +198,19 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
     {
         await using var stream = input.AppDll.OpenReadStream();
         var dllBytes = stream.GetAllBytes();
-        _codeAuditor.Audit(dllBytes);
+        try
+        {
+            _codeAuditor.Audit(dllBytes);
+        }
+        catch (Exception e)
+        {
+            throw new UserFriendlyException("audit failed: " + e.Message);
+        }
 
         var appId = await GetAppIdAsync();
         var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         await subscriptionGrain.UpdateCodeAsync(input.Version, dllBytes);
+        await _kubernetesAppManager.RestartAppPodAsync(appId, input.Version);
         return new UpdateAeFinderAppDto() { Success = true };
     }
 
