@@ -45,4 +45,12 @@ public class BlockController : AbpController
     {
         return _blockAppService.GetLogEventsAsync(input);
     }
+    
+    [HttpPost]
+    [Route("summaries")]
+    [Authorize]
+    public virtual Task<List<SummaryDto>> GetSummariesAsync(GetSummariesInput input)
+    {
+        return _blockAppService.GetSummariesAsync(input);
+    }
 }
