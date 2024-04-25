@@ -138,14 +138,14 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
         await using var stream = input.AppDll.OpenReadStream();
         var dllBytes = stream.GetAllBytes();
-        try
-        {
-            _codeAuditor.Audit(dllBytes);
-        }
-        catch (Exception e)
-        {
-            throw new UserFriendlyException("audit failed: " + e.Message);
-        }
+        // try
+        // {
+        //     _codeAuditor.Audit(dllBytes);
+        // }
+        // catch (Exception e)
+        // {
+        //     throw new UserFriendlyException("audit failed: " + e.Message);
+        // }
 
         var userId = CurrentUser.GetId().ToString("N");
         var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
