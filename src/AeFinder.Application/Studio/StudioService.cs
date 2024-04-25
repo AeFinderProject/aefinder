@@ -47,7 +47,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         _kubernetesAppManager = kubernetesAppManager;
     }
 
-    public async Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppName(ApplyAeFinderAppNameInput appNameInput)
+    public async Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppNameAsync(ApplyAeFinderAppNameInput appNameInput)
     {
         var userId = CurrentUser.GetId().ToString("N");
 
@@ -70,7 +70,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return ans;
     }
 
-    public async Task<AddOrUpdateAeFinderAppDto> UpdateAeFinderApp(AddOrUpdateAeFinderAppInput input)
+    public async Task<AddOrUpdateAeFinderAppDto> UpdateAeFinderAppAsync(AddOrUpdateAeFinderAppInput input)
     {
         var userId = CurrentUser.GetId().ToString("N");
 
@@ -91,11 +91,11 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
 
         // we do not wait for the result of AddToUsersApps
-        await AddToUsersApps(userIds, appInfo.AppId, _objectMapper.Map<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>(input));
+        await AddToUsersAppsAsync(userIds, appInfo.AppId, _objectMapper.Map<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>(input));
         return new AddOrUpdateAeFinderAppDto();
     }
 
-    public async Task<AeFinderAppInfoDto> GetAeFinderApp()
+    public async Task<AeFinderAppInfoDto> GetAeFinderAppAsync()
     {
         var userId = CurrentUser.GetId().ToString("N");
         _logger.LogInformation("receive request GetAeFinderApp: adminId= {0}", userId);
@@ -104,7 +104,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info);
     }
 
-    public async Task<List<AeFinderAppInfo>> GetAeFinderAppList()
+    public async Task<List<AeFinderAppInfo>> GetAeFinderAppListAsync()
     {
         var userId = CurrentUser.GetId().ToString("N");
         var apps = await _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(userId)).GetApps();
@@ -220,7 +220,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         await _kubernetesAppManager.RestartAppPodAsync(appId, version);
     }
 
-    private async Task AddToUsersApps(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)
+    private async Task AddToUsersAppsAsync(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)
     {
         var tasks = userIds.Select(userId => _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(userId))).Select(userAppsGrain => userAppsGrain.AddApp(appId, info)).ToList();
         await tasks.WhenAll();

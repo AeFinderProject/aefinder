@@ -6,10 +6,10 @@ namespace AeFinder.Studio;
 
 public interface IStudioService
 {
-    Task<AddOrUpdateAeFinderAppDto> UpdateAeFinderApp(AddOrUpdateAeFinderAppInput input);
-    Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppName(ApplyAeFinderAppNameInput input);
-    Task<AeFinderAppInfoDto> GetAeFinderApp();
-    Task<List<AeFinderAppInfo>> GetAeFinderAppList();
+    Task<AddOrUpdateAeFinderAppDto> UpdateAeFinderAppAsync(AddOrUpdateAeFinderAppInput input);
+    Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppNameAsync(ApplyAeFinderAppNameInput input);
+    Task<AeFinderAppInfoDto> GetAeFinderAppAsync();
+    Task<List<AeFinderAppInfo>> GetAeFinderAppListAsync();
     Task DestroyAppAsync(string version);
     Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input, SubscriptionManifestDto subscriptionManifest);
 

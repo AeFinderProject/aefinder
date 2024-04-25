@@ -26,28 +26,28 @@ public class StudioController : AeFinderController
     [Authorize]
     public Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppName(ApplyAeFinderAppNameInput input)
     {
-        return _studioService.ApplyAeFinderAppName(input);
+        return _studioService.ApplyAeFinderAppNameAsync(input);
     }
 
     [HttpPost("update")]
     [Authorize]
     public Task<AddOrUpdateAeFinderAppDto> AddOrUpdateAeFinderApp(AddOrUpdateAeFinderAppInput input)
     {
-        return _studioService.UpdateAeFinderApp(input);
+        return _studioService.UpdateAeFinderAppAsync(input);
     }
 
     [HttpGet("info")]
     [Authorize]
     public Task<AeFinderAppInfoDto> GetAeFinderAppInfo()
     {
-        return _studioService.GetAeFinderApp();
+        return _studioService.GetAeFinderAppAsync();
     }
 
     [HttpGet("applist")]
     [Authorize]
     public Task<List<AeFinderAppInfo>> GetAeFinderAppList()
     {
-        return _studioService.GetAeFinderAppList();
+        return _studioService.GetAeFinderAppListAsync();
     }
 
     [HttpPost("submitsubscription")]
