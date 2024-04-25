@@ -104,6 +104,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
                 summaryIndex = new SummaryIndex();
                 summaryIndex.ChainId = chainId;
             }
+            summaryIndex.LatestBlockHash = eventData.NewBlocks.Last().BlockHash;
             summaryIndex.LatestBlockHeight = eventData.NewBlocks.Last().BlockHeight;
             tasks.Add( _summaryIndexRepository.AddOrUpdateAsync(summaryIndex));
 
@@ -248,6 +249,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             summaryIndex = new SummaryIndex();
             summaryIndex.ChainId = chainId;
         }
+        summaryIndex.ConfirmedBlockHash = lastBlock.BlockHash;
         summaryIndex.ConfirmedBlockHeight = lastBlock.BlockHeight;
         tasks.Add( _summaryIndexRepository.AddOrUpdateAsync(summaryIndex));
         
