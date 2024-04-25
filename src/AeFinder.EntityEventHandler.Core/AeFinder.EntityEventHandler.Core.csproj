@@ -9,8 +9,8 @@
         <ProjectReference Include="..\AeFinder.Application\AeFinder.Application.csproj" />
         <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
         <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
-        <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc9.6" />
-        <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc9.6" />
+        <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc9.3" />
+        <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc9.3" />
     </ItemGroup>
     
 </Project>

@@ -44,4 +44,10 @@ public interface IKubernetesClientAdapter
     
     Task<V1Status> DeleteIngressAsync(string name, string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
+
+    Task<V1Deployment> ReadNamespacedDeploymentAsync(string name, string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken));
+
+    Task<V1Deployment> ReplaceNamespacedDeploymentAsync(V1Deployment deployment, string name, string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken));
 }

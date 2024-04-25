@@ -36,13 +36,6 @@ public class StudioController : AeFinderController
         return _studioService.UpdateAeFinderApp(input);
     }
 
-    // [HttpPost("adddeveloper")]
-    // [Authorize]
-    // public Task<AddDeveloperToAppDto> AddDeveloperToApp(AddDeveloperToAppInput input)
-    // {
-    //     // return _studioService.AddDeveloperToApp(input);
-    // }
-
     [HttpGet("info")]
     [Authorize]
     public Task<AeFinderAppInfoDto> GetAeFinderAppInfo()
@@ -59,9 +52,25 @@ public class StudioController : AeFinderController
 
     [HttpPost("submitsubscription")]
     [Authorize]
-    public Task<string> SubmitSubscriptionInfoAsync([FromForm] SubscriptionInfo input, [ModelBinder(BinderType = typeof(JsonModelBinder))]SubscriptionManifestDto subscriptionManifest)
+    public Task<string> SubmitSubscriptionInfoAsync([FromForm] SubscriptionInfo input, [ModelBinder(BinderType = typeof(JsonModelBinder))] SubscriptionManifestDto subscriptionManifest)
     {
         return _studioService.SubmitSubscriptionInfoAsync(input, subscriptionManifest);
+    }
+
+    [HttpPost("restartapp")]
+    [Authorize]
+    public Task<string> RestartAppAsync(string version)
+    {
+        _studioService.RestartAppAsync(version);
+        return Task.FromResult(string.Empty);
+    }
+
+    [HttpPost("destroyapp")]
+    [Authorize]
+    public Task<string> DestroyAppAsync(string version)
+    {
+        _studioService.DestroyAppAsync(version);
+        return Task.FromResult(string.Empty);
     }
 
     [HttpPost("updateapp")]
@@ -70,18 +79,4 @@ public class StudioController : AeFinderController
     {
         return _studioService.UpdateAeFinderAppAsync(input);
     }
-
-    // [HttpPost("query")]
-    // [Authorize]
-    // public Task<QueryAeFinderAppDto> QueryAeFinderApp(QueryAeFinderAppInput input)
-    // {
-    //     return _studioService.QueryAeFinderAppAsync(input);
-    // }
-    //
-    // [HttpPost("logs")]
-    // [Authorize]
-    // public Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogs(QueryAeFinderAppLogsInput input)
-    // {
-    //     return _studioService.QueryAeFinderAppLogsAsync(input);
-    // }
 }

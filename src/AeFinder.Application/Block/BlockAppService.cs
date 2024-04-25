@@ -141,7 +141,6 @@ public class BlockAppService:ApplicationService,IBlockAppService
                
             }
             mustQuery = mustQuery.And(shouldQuery);
-            
             var list = queryable.Where(mustQuery).OrderBy(p => p.BlockHeight).OrderBy(p => p.Index).Skip(0).Take(10000).ToList();
             if (list.Count == 10000)
             {

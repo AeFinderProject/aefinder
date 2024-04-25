@@ -29,12 +29,6 @@ public class SubscriptionController : AeFinderController
         return await _blockScanAppService.AddSubscriptionAsync(appId, input);
     }
 
-    // [HttpPut("{Version}")]
-    // [Authorize]
-    // public virtual Task UpdateSubscriptionInfoAsync(string Version, [FromBody]List<SubscriptionInfo> subscriptionInfos)
-    // {
-    //     return _blockScanAppService.UpdateSubscriptionInfoAsync(ClientId, Version, subscriptionInfos);
-    // }
 
     [HttpGet]
     [Authorize]

@@ -1,4 +1,4 @@
-using AElfIndexer;
+using AeFinder.Reporter;
 using Com.Ctrip.Framework.Apollo.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
