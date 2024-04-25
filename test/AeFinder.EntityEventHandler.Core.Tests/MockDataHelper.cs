@@ -3,7 +3,7 @@ using AeFinder.Etos;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
-namespace AeFinder.EntityEventHandler.Core.Tests;
+namespace AeFinder.EntityEventHandler;
 
 public class MockDataHelper:IMockDataHelper,IScopedDependency
 {

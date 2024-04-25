@@ -6,14 +6,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
-        <ProjectReference Include="..\..\src\AeFinder.Domain.Shared\AeFinder.Domain.Shared.csproj" />
-        <ProjectReference Include="..\..\src\AeFinder.Grains\AeFinder.Grains.csproj" />
+        <ProjectReference Include="..\..\src\AeFinder.Application\AeFinder.Application.csproj" />
         <ProjectReference Include="..\AeFinder.Domain.Tests\AeFinder.Domain.Tests.csproj" />
-        <ProjectReference Include="..\AeFinder.TestBase\AeFinder.TestBase.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
         <PackageReference Include="coverlet.collector" Version="3.2.0">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -22,5 +20,8 @@
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
         <PackageReference Include="Microsoft.Orleans.TestingHost" Version="3.6.5" />
     </ItemGroup>
+
+
+
 
 </Project>

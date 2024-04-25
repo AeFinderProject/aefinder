@@ -1,7 +1,7 @@
 using AeFinder.Etos;
 using AeFinder.Grains.EventData;
 
-namespace AeFinder.BlockChainEventHandler.Core;
+namespace AeFinder.BlockChainEventHandler;
 
 public class NewBlockTaskEntity
 {

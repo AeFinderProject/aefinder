@@ -1,11 +1,17 @@
-using AeFinder.Grains.Grain.Blocks;
-using AElf.Orleans.EventSourcing.Snapshot.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using AElf.Orleans.EventSourcing.Snapshot.Hosting;
+using AeFinder.Grains.Grain.BlockPush;
+using AeFinder.Grains.Grain.Blocks;
+using AutoMapper;
+using Microsoft.Extensions.Configuration;
 using Orleans;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;
+using Moq;
+using Volo.Abp.AutoMapper;
+using Volo.Abp.ObjectMapping;
+using Volo.Abp.Reflection;
 
 namespace AeFinder.Orleans.TestBase;
 
@@ -32,6 +38,33 @@ public class ClusterFixture:IDisposable,ISingletonDependency
         public void Configure(ISiloHostBuilder hostBuilder) {
             hostBuilder.ConfigureServices(services => {
                     services.AddSingleton<IBlockGrain, BlockGrain>();
+                    services.AddTransient(p=>Mock.Of<IBlockFilterProvider>());
+                    services.AddAutoMapper(typeof(AeFinderApplicationModule).Assembly);
+                    services.OnExposing(onServiceExposingContext =>
+                    {
+                        //Register types for IObjectMapper<TSource, TDestination> if implements
+                        onServiceExposingContext.ExposedTypes.AddRange(
+                            ReflectionHelper.GetImplementedGenericTypes(
+                                onServiceExposingContext.ImplementationType,
+                                typeof(IObjectMapper<,>)
+                            )
+                        );
+                    });
+                    services.AddTransient(
+                        typeof(IObjectMapper<>),
+                        typeof(DefaultObjectMapper<>)
+                    );
+                    services.AddTransient(
+                        typeof(IObjectMapper),
+                        typeof(DefaultObjectMapper)
+                    );
+                    services.AddTransient(typeof(IAutoObjectMappingProvider),
+                        typeof(AutoMapperAutoObjectMappingProvider));
+                    services.AddTransient(sp => new MapperAccessor()
+                    {
+                        Mapper = sp.GetRequiredService<IMapper>()
+                    });
+                    services.AddTransient<IMapperAccessor>(provider => provider.GetRequiredService<MapperAccessor>());
                 })
                 // .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
                 // {
@@ -65,4 +98,9 @@ public class ClusterFixture:IDisposable,ISingletonDependency
         public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) => clientBuilder
             .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName);
     }
+}
+
+public class MapperAccessor : IMapperAccessor
+{
+    public IMapper Mapper { get; set; }
 }

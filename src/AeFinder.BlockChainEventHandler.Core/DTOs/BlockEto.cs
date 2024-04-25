@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace AeFinder.BlockChainEventHandler.Core.DTOs;
+namespace AeFinder.BlockChainEventHandler.DTOs;
 
 public class BlockEto
 {
