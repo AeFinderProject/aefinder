@@ -53,6 +53,8 @@ namespace AeFinder.EntityEventHandler
                 {
                     build.AddJsonFile("appsettings.secrets.json", optional: true);
                 })
+                .InitAppConfiguration(true)
+                .UseApolloForHostBuilder()
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddApplication<AeFinderEntityEventHandlerModule>();

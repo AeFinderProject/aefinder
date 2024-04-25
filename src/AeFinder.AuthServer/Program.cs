@@ -16,7 +16,7 @@ public class Program
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
             .Build();
-        
+
         Log.Logger = new LoggerConfiguration()
 #if DEBUG
             .MinimumLevel.Debug()
@@ -36,6 +36,8 @@ public class Program
             Log.Information("Starting AeFinder.AuthServer.");
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.AddAppSettingsSecretsJson()
+                .InitAppConfiguration(false)
+                .UseApolloForConfigureHostBuilder()
                 .UseAutofac()
                 .UseSerilog();
             await builder.AddApplicationAsync<AeFinderAuthServerModule>();

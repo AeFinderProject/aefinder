@@ -3,11 +3,13 @@ using AeFinder.BlockScan;
 using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Studio;
 using AutoMapper;
+using Volo.Abp.Identity;
 
 namespace AeFinder;
 
-public class AeFinderApplicationAutoMapperProfile:Profile
+public class AeFinderApplicationAutoMapperProfile : Profile
 {
     public AeFinderApplicationAutoMapperProfile()
     {
@@ -34,8 +36,12 @@ public class AeFinderApplicationAutoMapperProfile:Profile
         CreateMap<Subscription, SubscriptionDto>();
         CreateMap<TransactionCondition, TransactionConditionDto>();
         CreateMap<LogEventCondition, LogEventConditionDto>();
-        
+
         CreateMap<AllSubscription, AllSubscriptionDto>();
         CreateMap<SubscriptionDetail, SubscriptionDetailDto>();
+        CreateMap<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>();
+        CreateMap<AeFinderAppInfo, AeFinderAppInfoDto>();
+
+        CreateMap<IdentityUser, IdentityUserDto>();
     }
 }

@@ -9,7 +9,6 @@ using Volo.Abp.AspNetCore.Mvc;
 
 namespace AeFinder.Controllers;
 
-
 [RemoteService]
 [ControllerName("Block")]
 [Route("api/app/block")]
@@ -21,7 +20,7 @@ public class BlockController : AbpController
     {
         _blockAppService = blockAppService;
     }
-    
+
     [HttpPost]
     [Route("blocks")]
     [Authorize]
@@ -29,7 +28,7 @@ public class BlockController : AbpController
     {
         return _blockAppService.GetBlocksAsync(input);
     }
-    
+
     [HttpPost]
     [Route("transactions")]
     [Authorize]
@@ -37,7 +36,7 @@ public class BlockController : AbpController
     {
         return _blockAppService.GetTransactionsAsync(input);
     }
-    
+
     [HttpPost]
     [Route("logevents")]
     [Authorize]

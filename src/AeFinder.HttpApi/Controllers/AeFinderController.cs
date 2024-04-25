@@ -8,6 +8,7 @@ namespace AeFinder.Controllers;
  */
 public abstract class AeFinderController : AbpControllerBase
 {
+
     protected AeFinderController()
     {
         LocalizationResource = typeof(AeFinderResource);
@@ -15,10 +16,6 @@ public abstract class AeFinderController : AbpControllerBase
 
     protected string ClientId
     {
-        get
-        {
-            return CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value;
-
-        }
+        get { return CurrentUser.GetAllClaims().First(o => o.Type == "client_id").Value; }
     }
 }
