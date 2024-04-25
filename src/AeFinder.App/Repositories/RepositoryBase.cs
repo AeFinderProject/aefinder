@@ -3,7 +3,7 @@ using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.App.Repositories;
 
-public abstract class EntityRepositoryBase<TEntity>
+public abstract class RepositoryBase<TEntity>
     where TEntity : AeFinderEntity, IAeFinderEntity
 {
     public IAbpLazyServiceProvider LazyServiceProvider { get; set; }
