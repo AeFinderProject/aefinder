@@ -40,7 +40,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         _codeAuditor = codeAuditor;
     }
 
-    public async Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppName(ApplyAeFinderAppNameInput appNameInput)
+    public async Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppNameAsync(ApplyAeFinderAppNameInput appNameInput)
     {
         var userId = CurrentUser.GetId().ToString("N");
 
@@ -63,7 +63,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return ans;
     }
 
-    public async Task<AddOrUpdateAeFinderAppDto> UpdateAeFinderApp(AddOrUpdateAeFinderAppInput input)
+    public async Task<AddOrUpdateAeFinderAppDto> UpdateAeFinderAppAsync(AddOrUpdateAeFinderAppInput input)
     {
         var userId = CurrentUser.GetId().ToString("N");
 
@@ -84,11 +84,11 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
 
         // we do not wait for the result of AddToUsersApps
-        await AddToUsersApps(userIds, appInfo.AppId, _objectMapper.Map<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>(input));
+        await AddToUsersAppsAsync(userIds, appInfo.AppId, _objectMapper.Map<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>(input));
         return new AddOrUpdateAeFinderAppDto();
     }
 
-    public async Task<AeFinderAppInfoDto> GetAeFinderApp()
+    public async Task<AeFinderAppInfoDto> GetAeFinderAppAsync()
     {
         var userId = CurrentUser.GetId().ToString("N");
         _logger.LogInformation("receive request GetAeFinderApp: adminId= {0}", userId);
@@ -97,48 +97,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info);
     }
 
-    //to be finished
-    private async void AuthDeveloper(string appId, string clientId = null)
-    {
-        if (!clientId.IsNullOrEmpty() && clientId.Equals(appId))
-        {
-            return;
-        }
-
-        var userId = CurrentUser.GetId().ToString("N");
-        if (!IsAdminOf(userId, appId))
-        {
-            var nameGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(appId));
-            if (!await nameGrain.IsDeveloper(userId))
-            {
-                _logger.LogError("GetAeFinderApp: {0} auth failed {1}", CurrentUser.GetId(), appId);
-                throw new UserFriendlyException("You are not developer of this app.");
-            }
-        }
-    }
-
-    //to be finished
-    public async Task<AddDeveloperToAppDto> AddDeveloperToApp(AddDeveloperToAppInput input)
-    {
-        var adminId = CurrentUser.GetId().ToString("N");
-        _logger.LogInformation("receive request UpdateAeFinderApp: adminId= {0} input= {1}", adminId, JsonSerializer.Serialize(input));
-        if (!IsAdminOf(adminId, input.AppId))
-        {
-            _logger.LogError("UpdateAeFinderApp: {0} is not admin of {1}", CurrentUser.GetId(), input.AppId);
-            throw new UserFriendlyException("You are not admin of this app.");
-        }
-
-        var nameGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(input.AppId));
-        var appInfo = await nameGrain.AddDeveloperToApp(input.DeveloperId);
-        if (appInfo != null)
-        {
-            await _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(input.DeveloperId)).AddApp(input.AppId, appInfo.AeFinderAppInfo);
-        }
-
-        return new AddDeveloperToAppDto();
-    }
-
-    public async Task<List<AeFinderAppInfo>> GetAeFinderAppList()
+    public async Task<List<AeFinderAppInfo>> GetAeFinderAppListAsync()
     {
         var userId = CurrentUser.GetId().ToString("N");
         var apps = await _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(userId)).GetApps();
@@ -182,9 +141,6 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         }
 
         var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifest, dllBytes);
-        // var appGraphQl = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, version, _studioOption.ImageName);
-        // var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(input.AppId));
-        // await appGrain.SetGraphQlByVersion(version, appGraphQl);
         return version;
     }
 
@@ -231,15 +187,9 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return new UpdateAeFinderAppDto() { Success = true };
     }
 
-    private async Task AddToUsersApps(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)
+    private async Task AddToUsersAppsAsync(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)
     {
         var tasks = userIds.Select(userId => _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(userId))).Select(userAppsGrain => userAppsGrain.AddApp(appId, info)).ToList();
         await tasks.WhenAll();
-    }
-
-    private bool IsAdminOf(string adminId, string appId)
-    {
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(adminId));
-        return appGrain.IsAdmin(appId).Result;
     }
 }
