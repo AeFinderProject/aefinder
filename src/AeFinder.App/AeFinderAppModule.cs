@@ -45,7 +45,7 @@ public class AeFinderAppModule : AbpModule
         Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
 
         context.Services.AddSingleton(typeof(IAppDataIndexProvider<>), typeof(AppDataIndexProvider<>));
-        context.Services.AddTransient(typeof(IEntityRepository<>), typeof(EntityRepository<>));
+        context.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
         context.Services.AddTransient(typeof(IReadOnlyRepository<>), typeof(ReadOnlyRepository<>));
     }
     
