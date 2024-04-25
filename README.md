@@ -72,7 +72,7 @@ We welcome contributions to the AeFinder project. If you would like to contribut
 
 ## License
 
-AeFinder is licensed under ???.
+AeFinder is licensed under [MIT](LICENSE).
 
 ## Contact
 
