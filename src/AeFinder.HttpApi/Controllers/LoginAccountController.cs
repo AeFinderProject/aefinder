@@ -28,9 +28,4 @@ public class LoginAccountController : AeFinderController
         return _loginAccountAppService.RequestTokenByPasswordAsync(input);
     }
 
-    // [HttpPost("refresh-token")]
-    // public virtual Task<string> RefreshTokenAsync(RefreshTokenInput input)
-    // {
-    //     return _loginAccountAppService.RefreshTokenAsync(input);
-    // }
 }
