@@ -1,6 +1,6 @@
 namespace AeFinder.Sdk;
 
-public interface IEntityRepository<TEntity>
+public interface IRepository<TEntity>
 {
     Task<TEntity> GetAsync(string id);
     Task AddOrUpdateAsync(TEntity entity);

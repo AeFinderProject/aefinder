@@ -169,6 +169,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Namespace("AeFinder.Entities", Permission.Denied, type => type
                 .Type("AeFinderEntity`1", Permission.Allowed)
             )
+            .Namespace("Volo.Abp.DependencyInjection", Permission.Allowed)
             ;
     }
 

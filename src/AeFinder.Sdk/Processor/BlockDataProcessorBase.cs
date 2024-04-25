@@ -14,28 +14,28 @@ public abstract class BlockDataProcessorBase : IBlockDataProcessor
     protected async Task<TEntity> GetEntityAsync<TEntity>(string id)
         where TEntity : AeFinderEntity
     {
-        var repository = LazyServiceProvider.GetRequiredService<IEntityRepository<TEntity>>();
+        var repository = LazyServiceProvider.GetRequiredService<IRepository<TEntity>>();
         return await repository.GetAsync(id);
     }
 
     protected async Task SaveEntityAsync<TEntity>(TEntity entity)
         where TEntity : AeFinderEntity
     {
-        var repository = LazyServiceProvider.GetRequiredService<IEntityRepository<TEntity>>();
+        var repository = LazyServiceProvider.GetRequiredService<IRepository<TEntity>>();
         await repository.AddOrUpdateAsync(entity);
     }
 
     protected async Task DeleteEntityAsync<TEntity>(string id)
         where TEntity : AeFinderEntity
     {
-        var repository = LazyServiceProvider.GetRequiredService<IEntityRepository<TEntity>>();
+        var repository = LazyServiceProvider.GetRequiredService<IRepository<TEntity>>();
         await repository.DeleteAsync(id);
     }
 
     protected async Task DeleteEntityAsync<TEntity>(TEntity entity)
         where TEntity : AeFinderEntity
     {
-        var repository = LazyServiceProvider.GetRequiredService<IEntityRepository<TEntity>>();
+        var repository = LazyServiceProvider.GetRequiredService<IRepository<TEntity>>();
         await repository.DeleteAsync(entity);
     }
 }
