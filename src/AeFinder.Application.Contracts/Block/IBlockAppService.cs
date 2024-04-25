@@ -13,4 +13,6 @@ public interface IBlockAppService:IApplicationService
     Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input);
     
     Task<List<TransactionDto>> GetSubscriptionTransactionsAsync(GetSubscriptionTransactionsInput input);
+
+    Task<List<SummaryDto>> GetSummariesAsync(GetSummariesInput input);
 }

@@ -21,16 +21,19 @@ public class BlockAppService:ApplicationService,IBlockAppService
     private readonly IEntityMappingRepository<TransactionIndex, string> _transactionIndexRepository;
     private readonly IEntityMappingRepository<LogEventIndex, string> _logEventIndexRepository;
     private readonly ApiOptions _apiOptions;
+    private readonly IEntityMappingRepository<SummaryIndex, string> _summaryIndexRepository;
     
     public BlockAppService(IEntityMappingRepository<BlockIndex, string> blockIndexRepository,
         IEntityMappingRepository<TransactionIndex,string> transactionIndexRepository,
         IEntityMappingRepository<LogEventIndex,string> logEventIndexRepository,
-        IOptionsSnapshot<ApiOptions> apiOptions)
+        IOptionsSnapshot<ApiOptions> apiOptions,
+        IEntityMappingRepository<SummaryIndex, string> summaryIndexRepository)
     {
         _blockIndexRepository = blockIndexRepository;
         _transactionIndexRepository = transactionIndexRepository;
         _logEventIndexRepository = logEventIndexRepository;
         _apiOptions = apiOptions.Value;
+        _summaryIndexRepository = summaryIndexRepository;
     }
 
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
@@ -350,5 +353,16 @@ public class BlockAppService:ApplicationService,IBlockAppService
         
 
         return resultList;
+     }
+
+     public async Task<List<SummaryDto>> GetSummariesAsync(GetSummariesInput input)
+     {
+         var resultList = new List<SummaryDto>();
+         Expression<Func<SummaryIndex, bool>> expression = p =>
+             p.ChainId == input.ChainId;
+         var queryable = await _summaryIndexRepository.GetQueryableAsync();
+         var list = queryable.Where(expression).Skip(0).Take(100).ToList();
+         resultList = ObjectMapper.Map<List<SummaryIndex>, List<SummaryDto>>(list);
+         return resultList;
      }
 }
