@@ -62,6 +62,7 @@ public class StudioController : AeFinderController
     }
 
     [HttpPost("submit")]
+    [Authorize]
     public Task<string> SubmitAsync(SubscriptionManifestDto subscriptionManifest)
     {
         return _studioService.SubmitAsync(subscriptionManifest);
