@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
 using AeFinder.Studio;
 using BrunoZell.ModelBinding;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Volo.Abp;
@@ -52,8 +54,16 @@ public class StudioController : AeFinderController
 
     [HttpPost("submitsubscription")]
     [Authorize]
-    public Task<string> SubmitSubscriptionInfoAsync([FromForm] SubscriptionInfo input, [ModelBinder(BinderType = typeof(JsonModelBinder))] SubscriptionManifestDto subscriptionManifest)
+    // public Task<string> SubmitSubscriptionInfoAsync([FromForm] SubscriptionInfo input, [ModelBinder(BinderType = typeof(JsonModelBinder))] SubscriptionManifestDto subscriptionManifest)
+    // {
+    public Task<string> SubmitSubscriptionInfoAsync([ModelBinder(BinderType = typeof(JsonModelBinder))] SubscriptionManifestDto subscriptionManifest)
     {
+        var input = new SubscriptionInfo();
+        var filePath = "/app/AeFinder.TokenApp.dll";
+        FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+        string fileName = Path.GetFileName(filePath);
+        IFormFile formFile = new FormFile(fileStream, 0, fileStream.Length, null, fileName);
+        input.AppDll = formFile;
         return _studioService.SubmitSubscriptionInfoAsync(input, subscriptionManifest);
     }
 
