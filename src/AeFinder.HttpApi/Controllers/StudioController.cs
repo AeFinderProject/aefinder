@@ -56,9 +56,8 @@ public class StudioController : AeFinderController
     [Authorize]
     // public Task<string> SubmitSubscriptionInfoAsync([FromForm] SubscriptionInfo input, [ModelBinder(BinderType = typeof(JsonModelBinder))] SubscriptionManifestDto subscriptionManifest)
     // {
-    public Task<string> SubmitSubscriptionInfoAsync([ModelBinder(BinderType = typeof(JsonModelBinder))] SubscriptionManifestDto subscriptionManifest)
+    public Task<string> SubmitSubscriptionInfoAsync(SubscriptionManifestDto subscriptionManifest)
     {
-        
         return _studioService.SubmitSubscriptionInfoAsync(null, subscriptionManifest);
     }
 
