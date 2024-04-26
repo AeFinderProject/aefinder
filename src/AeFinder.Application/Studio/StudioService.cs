@@ -9,6 +9,7 @@ using AeFinder.CodeOps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
 using Orleans;
@@ -129,7 +130,12 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
             throw new UserFriendlyException("invalid subscription manifest.");
         }
 
-        await using var stream = input.AppDll.OpenReadStream();
+        var filePath = "/app/AeFinder.TokenApp.dll";
+        FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+        string fileName = Path.GetFileName(filePath);
+        IFormFile formFile = new FormFile(fileStream, 0, fileStream.Length, null, fileName);
+
+        await using var stream = formFile.OpenReadStream();
         var dllBytes = stream.GetAllBytes();
         _codeAuditor.Audit(dllBytes);
         var userId = CurrentUser.GetId().ToString("N");

@@ -58,13 +58,8 @@ public class StudioController : AeFinderController
     // {
     public Task<string> SubmitSubscriptionInfoAsync([ModelBinder(BinderType = typeof(JsonModelBinder))] SubscriptionManifestDto subscriptionManifest)
     {
-        var input = new SubscriptionInfo();
-        var filePath = "/app/AeFinder.TokenApp.dll";
-        FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-        string fileName = Path.GetFileName(filePath);
-        IFormFile formFile = new FormFile(fileStream, 0, fileStream.Length, null, fileName);
-        input.AppDll = formFile;
-        return _studioService.SubmitSubscriptionInfoAsync(input, subscriptionManifest);
+        
+        return _studioService.SubmitSubscriptionInfoAsync(null, subscriptionManifest);
     }
 
     [HttpPost("updateapp")]
