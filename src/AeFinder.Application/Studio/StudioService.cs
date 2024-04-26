@@ -150,6 +150,11 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         return version;
     }
 
+    public async Task<string> SubmitAsync(SubscriptionManifestDto subscriptionManifest)
+    {
+        return await SubmitSubscriptionInfoAsync(null, subscriptionManifest);
+    }
+
     public async Task<QueryAeFinderAppDto> QueryAeFinderAppAsync(QueryAeFinderAppInput input)
     {
         var userId = CurrentUser.GetId().ToString("N");

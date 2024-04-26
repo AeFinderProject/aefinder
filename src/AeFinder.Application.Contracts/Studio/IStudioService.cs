@@ -11,6 +11,7 @@ public interface IStudioService
     Task<AeFinderAppInfoDto> GetAeFinderAppAsync();
     Task<List<AeFinderAppInfo>> GetAeFinderAppListAsync();
     Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input, SubscriptionManifestDto subscriptionManifest);
+    Task<string> SubmitAsync(SubscriptionManifestDto subscriptionManifest);
 
     Task<string> GetAppIdAsync();
 

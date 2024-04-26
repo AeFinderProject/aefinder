@@ -61,6 +61,13 @@ public class StudioController : AeFinderController
         return _studioService.SubmitSubscriptionInfoAsync(null, subscriptionManifest);
     }
 
+    [HttpPost("submit")]
+    public Task<string> SubmitAsync(SubscriptionManifestDto subscriptionManifest)
+    {
+        return _studioService.SubmitAsync(subscriptionManifest);
+    }
+
+
     [HttpPost("updateapp")]
     [Authorize]
     public Task<UpdateAeFinderAppDto> UpdateAeFinderAppAsync([FromForm] UpdateAeFinderAppInput input)
