@@ -5,7 +5,6 @@ using AeFinder.Studio;
 using BrunoZell.ModelBinding;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Volo.Abp;
 
 namespace AeFinder.Controllers;
@@ -52,6 +51,7 @@ public class StudioController : AeFinderController
 
     [HttpPost("submitsubscription")]
     [Authorize]
+    [Studio.RequestSizeLimit(valueCountLimit: 214748364)]
     public Task<string> SubmitSubscriptionInfoAsync([FromForm] SubscriptionInfo input, [ModelBinder(BinderType = typeof(JsonModelBinder))] SubscriptionManifestDto subscriptionManifest)
     {
         return _studioService.SubmitSubscriptionInfoAsync(input, subscriptionManifest);
