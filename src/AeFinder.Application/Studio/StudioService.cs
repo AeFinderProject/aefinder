@@ -177,11 +177,19 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         {
             throw new UserFriendlyException("app not exists.");
         }
-
         await AssertAppVersionExistsAsync(info.AppId, version);
 
         await _kubernetesAppManager.DestroyAppPodAsync(info.AppId, version);
         _logger.LogInformation("DestroyAppAsync: {0} {1}", info.AppId, version);
+    }
+
+    private async Task AssertAppVersionExistsAsync(string appId, string version)
+    {
+        var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
+        if (subscription == null || (!subscription.NewVersion.Version.Equals(version) && !subscription.CurrentVersion.Version.Equals(version)))
+        {
+            throw new UserFriendlyException("subscription not exists.");
+        }
     }
 
     public async Task<string> GetAppIdAsync()
@@ -216,6 +224,8 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         }
 
         var appId = await GetAppIdAsync();
+        await AssertAppVersionExistsAsync(appId, input.Version);
+
         var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         await subscriptionGrain.UpdateCodeAsync(input.Version, dllBytes);
         await _kubernetesAppManager.RestartAppPodAsync(appId, input.Version);
@@ -228,15 +238,6 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         await AssertAppVersionExistsAsync(appId, version);
 
         await _kubernetesAppManager.RestartAppPodAsync(appId, version);
-    }
-
-    private async Task AssertAppVersionExistsAsync(string appId, string version)
-    {
-        var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
-        if (subscription == null || !subscription.NewVersion.Version.Equals(version) || !subscription.CurrentVersion.Version.Equals(version))
-        {
-            throw new UserFriendlyException("subscription not exists.");
-        }
     }
 
     private async Task AddToUsersAppsAsync(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)
