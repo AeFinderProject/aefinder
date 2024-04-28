@@ -156,10 +156,16 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         }
 
 
-        var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifest, dllBytes);
-        var rulePath = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, version, _studioOption.ImageName);
-        _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2}", info.AppId, version, rulePath);
-        return version;
+        var dto = await _blockScanAppService.AddSubscriptionV2Async(info.AppId, subscriptionManifest, dllBytes);
+        if (dto.StopVersion != null)
+        {
+            await _kubernetesAppManager.DestroyAppPodAsync(info.AppId, dto.StopVersion);
+            _logger.LogInformation("DestroyAppAsync: {0} {1}", info.AppId, dto.StopVersion);
+        }
+
+        var rulePath = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, dto.NewVersion, _studioOption.ImageName);
+        _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2}", info.AppId, dto.NewVersion, rulePath);
+        return dto.NewVersion;
     }
 
     public async Task DestroyAppAsync(string version)

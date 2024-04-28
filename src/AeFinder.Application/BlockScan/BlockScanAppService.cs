@@ -6,6 +6,7 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Studio;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp;
@@ -26,6 +27,12 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
 
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifestDto, byte[] dll = null)
     {
+        var dto = await AddSubscriptionV2Async(appId, manifestDto, dll);
+        return dto.NewVersion;
+    }
+
+    public async Task<AddSubscriptionDto> AddSubscriptionV2Async(string appId, SubscriptionManifestDto manifestDto, byte[] dll = null)
+    {
         Logger.LogInformation("ScanApp: {clientId} submit subscription: {subscription}", appId,
             JsonSerializer.Serialize(manifestDto));
 
@@ -37,9 +44,9 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
             return null;
         }
 
-        var version = await client.AddSubscriptionAsync(subscription, dll);
-        return version;
+        return await client.AddSubscriptionV2Async(subscription, dll);
     }
+
 
     // public async Task UpdateSubscriptionInfoAsync(string clientId, string version, List<SubscriptionInfo> subscriptionInfos)
     // {

@@ -1,6 +1,8 @@
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.State.Subscriptions;
+using AeFinder.Studio;
 using Orleans;
+using SubscriptionInfo = AeFinder.Grains.State.Subscriptions.SubscriptionInfo;
 
 namespace AeFinder.Grains.Grain.Subscriptions;
 
@@ -8,10 +10,17 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
 {
     public async Task<string> AddSubscriptionAsync(SubscriptionManifest subscriptionManifest, byte[] code)
     {
+        var dto = await AddSubscriptionV2Async(subscriptionManifest, code);
+        return dto.NewVersion;
+    }
+
+    public async Task<AddSubscriptionDto> AddSubscriptionV2Async(SubscriptionManifest subscriptionManifest, byte[] code)
+    {
+        var addSubscriptionDto = new AddSubscriptionDto();
         var newVersion = Guid.NewGuid().ToString("N");
 
         await UpdateCodeAsync(newVersion, code);
-        
+
         State.SubscriptionInfos[newVersion] = new SubscriptionInfo
         {
             SubscriptionManifest = subscriptionManifest,
@@ -26,16 +35,19 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         {
             if (State.NewVersion != null)
             {
+                addSubscriptionDto.StopVersion = State.NewVersion;
                 await StopBlockPushAsync(State.NewVersion);
                 State.SubscriptionInfos.Remove(State.NewVersion);
             }
+
             State.NewVersion = newVersion;
         }
 
         await WriteStateAsync();
-        
-        return newVersion;
+        addSubscriptionDto.NewVersion = newVersion;
+        return addSubscriptionDto;
     }
+
 
     public async Task UpdateSubscriptionAsync(string version, SubscriptionManifest subscriptionManifest)
     {
@@ -43,6 +55,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         {
             return;
         }
+
         State.SubscriptionInfos[version].SubscriptionManifest = subscriptionManifest;
         await WriteStateAsync();
     }
@@ -83,7 +96,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         var codeId = GetAppCodeId(version);
         return await GrainFactory.GetGrain<IAppCodeGrain>(codeId).GetCodeAsync();
     }
-    
+
     public async Task UpdateCodeAsync(string version, byte[] code)
     {
         var codeId = GetAppCodeId(version);
@@ -138,7 +151,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Started;
         await WriteStateAsync();
     }
-    
+
     public async Task PauseAsync(string version)
     {
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Paused;
@@ -159,7 +172,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         {
             return;
         }
-        
+
         await StopBlockPushAsync(version);
         State.SubscriptionInfos.Remove(version);
 
@@ -170,12 +183,12 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
     {
         await ReadStateAsync();
     }
-    
+
     private string GetAppCodeId(string version)
     {
         return GrainIdHelper.GenerateGetAppCodeGrainId(this.GetPrimaryKeyString(), version);
     }
-    
+
     private async Task StopBlockPushAsync(string version)
     {
         var subscription = State.SubscriptionInfos[version].SubscriptionManifest;
