@@ -1,7 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -49,6 +52,7 @@ public class AeFinderHttpApiHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        context.Services.AddHttpClient();
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
@@ -61,14 +65,15 @@ public class AeFinderHttpApiHostModule : AbpModule
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
         ConfigureOrleans(context, configuration);
-        // context.Services.AddGraphQL(b => b
-        //     .AddAutoClrMappings()
-        //     .AddSystemTextJson()
-        //     .AddErrorInfoProvider(e => e.ExposeExceptionDetails = true));
-        
+
         Configure<AbpAuditingOptions>(options =>
         {
-            options.IsEnabled = false;//Disables the auditing system
+            options.IsEnabled = false; //Disables the auditing system
+        });
+        context.Services.Configure<FormOptions>(option =>
+        {
+            option.KeyLengthLimit = 60480;
+            option.MultipartBodyLengthLimit = 60485760;
         });
     }
 
@@ -103,10 +108,7 @@ public class AeFinderHttpApiHostModule : AbpModule
 
     private void ConfigureConventionalControllers()
     {
-        Configure<AbpAspNetCoreMvcOptions>(options =>
-        {
-            options.ConventionalControllers.Create(typeof(AeFinderApplicationModule).Assembly);
-        });
+        Configure<AbpAspNetCoreMvcOptions>(options => { options.ConventionalControllers.Create(typeof(AeFinderApplicationModule).Assembly); });
     }
 
     private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
@@ -168,15 +170,11 @@ public class AeFinderHttpApiHostModule : AbpModule
         {
             return new ClientBuilder()
                 .ConfigureDefaults()
-                // .UseRedisClustering(opt =>
-                // {
-                //     opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
-                //     opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
-                // })
                 .UseMongoDBClient(configuration["Orleans:MongoDBClient"])
                 .UseMongoDBClustering(options =>
                 {
-                    options.DatabaseName = configuration["Orleans:DataBase"];;
+                    options.DatabaseName = configuration["Orleans:DataBase"];
+                    ;
                     options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
                 .Configure<ClusterOptions>(options =>
@@ -295,7 +293,7 @@ public class AeFinderHttpApiHostModule : AbpModule
 
         StartOrleans(context.ServiceProvider);
     }
-    
+
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
         StopOrleans(context.ServiceProvider);
@@ -304,7 +302,7 @@ public class AeFinderHttpApiHostModule : AbpModule
     private static void StartOrleans(IServiceProvider serviceProvider)
     {
         var client = serviceProvider.GetRequiredService<IClusterClient>();
-        AsyncHelper.RunSync(async ()=> await client.Connect());
+        AsyncHelper.RunSync(async () => await client.Connect());
     }
 
     private static void StopOrleans(IServiceProvider serviceProvider)

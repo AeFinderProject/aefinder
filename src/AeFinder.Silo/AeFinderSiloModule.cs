@@ -1,8 +1,11 @@
 using AeFinder.Grains;
 using AeFinder.MongoDb;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
+using Volo.Abp.Caching;
+using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict.Tokens;
 
@@ -12,13 +15,17 @@ namespace AeFinder.Silo;
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AeFinderMongoDbModule),
     typeof(AeFinderApplicationModule),
-    typeof(AeFinderGrainsModule))]
+    typeof(AeFinderGrainsModule),
+    typeof(AbpCachingStackExchangeRedisModule))]
 public class AeFinderOrleansSiloModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        var configuration = context.Services.GetConfiguration();
         context.Services.AddHostedService<AeFinderHostedService>();
         ConfigureTokenCleanupService();
+        ConfigureCache(configuration);
+        // ConfigureEsIndexCreation();
     }
     
     //Disable TokenCleanupService
@@ -26,4 +33,13 @@ public class AeFinderOrleansSiloModule:AbpModule
     {
         Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
+    private void ConfigureCache(IConfiguration configuration)
+    {
+        Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AeFinder:"; });
+    }
+    //Create the ElasticSearch Index & Initialize field cache based on Domain Entity
+    // private void ConfigureEsIndexCreation()
+    // {
+    //     Configure<CollectionCreateOptions>(x => { x.AddModule(typeof(AeFinderDomainModule)); });
+    // }
 }

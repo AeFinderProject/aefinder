@@ -1,8 +1,8 @@
-using AeFinder.BlockChainEventHandler.Core.DTOs;
+using AeFinder.BlockChainEventHandler.DTOs;
 using AElf.Contracts.Consensus.AEDPoS;
 using AElf.CSharp.Core.Extension;
 
-namespace AeFinder.BlockChainEventHandler.Core.Tests;
+namespace AeFinder.BlockChainEventHandler;
 
 public class MockDataHelper
 {

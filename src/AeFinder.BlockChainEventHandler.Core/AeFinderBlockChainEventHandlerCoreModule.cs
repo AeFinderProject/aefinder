@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 
-namespace AeFinder.BlockChainEventHandler.Core;
+namespace AeFinder.BlockChainEventHandler;
 
 [DependsOn(typeof(AbpAutoMapperModule),
     typeof(AeFinderGrainsModule))]

@@ -2,10 +2,10 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
-using Microsoft.AspNetCore.SignalR.Client;
 using Volo.Abp.Account;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.IdentityModel;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace AeFinder.HttpApi.Client.ConsoleTestApp;
 

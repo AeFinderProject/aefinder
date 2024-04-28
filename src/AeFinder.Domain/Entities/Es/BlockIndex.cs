@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using AElf.Indexing.Elasticsearch;
+using AElf.EntityMapping.Entities;
 
 namespace AeFinder.Entities.Es;
 
-public class BlockIndex:BlockBase,IIndexBuild
+public class BlockIndex:BlockBase,IEntityMappingEntity
 {
     // public List<Transaction> Transactions {get;set;}
     public List<string> TransactionIds { get; set; }

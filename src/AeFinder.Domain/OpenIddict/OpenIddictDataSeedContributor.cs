@@ -77,13 +77,13 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
         };
 
         var configurationSection = _configuration.GetSection("OpenIddict:Applications");
-        
+
         var dappClients = _configuration.GetSection("OpenIddict:Applications:AeFinder_DApps");
         foreach (var section in dappClients.GetChildren())
         {
             var clientId = section.GetValue<string>("ClientId");
             var clientSecret = section.GetValue<string>("ClientSecret");
-                
+
             await CreateApplicationAsync(
                 name: clientId,
                 type: OpenIddictConstants.ClientTypes.Confidential,
@@ -95,7 +95,8 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                     OpenIddictConstants.GrantTypes.AuthorizationCode,
                     OpenIddictConstants.GrantTypes.Password,
                     OpenIddictConstants.GrantTypes.ClientCredentials,
-                    OpenIddictConstants.GrantTypes.RefreshToken
+                    OpenIddictConstants.GrantTypes.RefreshToken,
+                    LoginConsts.GrantType
                 },
                 scopes: commonScopes
             );
@@ -118,7 +119,8 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                 grantTypes: new List<string> //Hybrid flow
                 {
                     OpenIddictConstants.GrantTypes.AuthorizationCode,
-                    OpenIddictConstants.GrantTypes.Implicit
+                    OpenIddictConstants.GrantTypes.Implicit,
+                    LoginConsts.GrantType
                 },
                 scopes: commonScopes,
                 redirectUri: $"{webClientRootUrl}signin-oidc",
@@ -267,7 +269,7 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
             Check.NotNullOrEmpty(grantTypes, nameof(grantTypes));
             Check.NotNullOrEmpty(scopes, nameof(scopes));
 
-            if (new [] { OpenIddictConstants.GrantTypes.AuthorizationCode, OpenIddictConstants.GrantTypes.Implicit }.All(grantTypes.Contains))
+            if (new[] { OpenIddictConstants.GrantTypes.AuthorizationCode, OpenIddictConstants.GrantTypes.Implicit }.All(grantTypes.Contains))
             {
                 application.Permissions.Add(OpenIddictConstants.Permissions.ResponseTypes.CodeIdToken);
 
@@ -300,11 +302,17 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                     grantType == OpenIddictConstants.GrantTypes.ClientCredentials ||
                     grantType == OpenIddictConstants.GrantTypes.Password ||
                     grantType == OpenIddictConstants.GrantTypes.RefreshToken ||
-                    grantType == OpenIddictConstants.GrantTypes.DeviceCode)
+                    grantType == OpenIddictConstants.GrantTypes.DeviceCode ||
+                    grantType == LoginConsts.GrantType)
                 {
                     application.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Token);
                     application.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Revocation);
                     application.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Introspection);
+                }
+
+                if (grantType == LoginConsts.GrantType)
+                {
+                    application.Permissions.Add($"gt:{LoginConsts.GrantType}");
                 }
 
                 if (grantType == OpenIddictConstants.GrantTypes.ClientCredentials)

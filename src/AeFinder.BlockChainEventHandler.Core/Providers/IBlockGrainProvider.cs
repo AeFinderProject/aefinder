@@ -4,7 +4,7 @@ using AeFinder.Grains.Grain.Blocks;
 using Orleans;
 using Volo.Abp.DependencyInjection;
 
-namespace AeFinder.BlockChainEventHandler.Core.Providers;
+namespace AeFinder.BlockChainEventHandler.Providers;
 
 public interface IBlockGrainProvider
 {

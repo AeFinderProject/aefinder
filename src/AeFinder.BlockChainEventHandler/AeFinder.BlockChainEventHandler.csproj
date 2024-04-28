@@ -6,22 +6,24 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Com.Ctrip.Framework.Apollo.Configuration" Version="2.10.2" />
       <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="6.0.8" />
       <PackageReference Include="Orleans.Clustering.Redis" Version="3.2.2" />
       <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />
       <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
       <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
       <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
-      <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="7.0.0-rc.5" />
-      <PackageReference Include="Volo.Abp.Autofac" Version="7.0.0-rc.5" />
-      <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="7.0.0-rc.5" />
-      <PackageReference Include="Volo.Abp.EventBus.RabbitMQ" Version="7.0.0-rc.5" />
-      <PackageReference Include="Volo.Abp.Swashbuckle" Version="7.0.0-rc.5" />
+      <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="7.0.0" />
+      <PackageReference Include="Volo.Abp.Autofac" Version="7.0.0" />
+      <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="7.0.0" />
+      <PackageReference Include="Volo.Abp.EventBus.RabbitMQ" Version="7.0.0" />
+      <PackageReference Include="Volo.Abp.Swashbuckle" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\AeFinder.Application\AeFinder.Application.csproj" />
       <ProjectReference Include="..\AeFinder.BlockChainEventHandler.Core\AeFinder.BlockChainEventHandler.Core.csproj" />
-      <ProjectReference Include="..\AeFinder.Grains\AeFinder.Grains.csproj" />
+      <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
     </ItemGroup>
 
     <ItemGroup>

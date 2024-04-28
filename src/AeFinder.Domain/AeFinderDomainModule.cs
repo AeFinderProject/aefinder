@@ -1,6 +1,7 @@
 ﻿using AeFinder.MultiTenancy;
 using AeFinder.OpenIddict;
-using AElf.Indexing.Elasticsearch;
+using AeFinder.OpenIddict.Login;
+using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenIddict.Abstractions;
@@ -30,16 +31,14 @@ namespace AeFinder;
     typeof(AbpSettingManagementDomainModule),
     typeof(AbpTenantManagementDomainModule),
     typeof(AbpEmailingModule),
-    typeof(AElfIndexingElasticsearchModule)
+    typeof(AElfEntityMappingElasticsearchModule)
 )]
 public class AeFinderDomainModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        Configure<AbpMultiTenancyOptions>(options =>
-        {
-            options.IsEnabled = MultiTenancyConsts.IsEnabled;
-        });
+        Configure<AbpMultiTenancyOptions>(options => { options.IsEnabled = MultiTenancyConsts.IsEnabled; });
+        context.Services.TryAddTransient<ILoginNewUserCreator, LoginNewUserCreator>();
 
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
@@ -47,7 +46,7 @@ public class AeFinderDomainModule : AbpModule
         //Override AbpOpenIddictTokenStore and set PruneAsync isTransactional as false
         var tokenStoreRootType = OpenIddictHelpers.FindGenericBaseType(typeof(AeFinderOpenIddictTokenStore), typeof(IOpenIddictTokenStore<>));
         context.Services.Replace(new ServiceDescriptor(typeof(IOpenIddictTokenStore<>).MakeGenericType(tokenStoreRootType.GenericTypeArguments[0]), typeof(AeFinderOpenIddictTokenStore), ServiceLifetime.Scoped));
-        
+
         //Override AbpOpenIddictTokenStore and set PruneAsync isTransactional as false
         var authorizationStoreRootType = OpenIddictHelpers.FindGenericBaseType(typeof(AeFinderOpenIddictAuthorizationStore), typeof(IOpenIddictAuthorizationStore<>));
         context.Services.Replace(new ServiceDescriptor(typeof(IOpenIddictAuthorizationStore<>)

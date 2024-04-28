@@ -1,36 +1,41 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AeFinder.Block.Dtos;
+using AeFinder.BlockSync;
 using AeFinder.Entities.Es;
 using AeFinder.Etos;
-using AElf.Indexing.Elasticsearch;
+using AElf.EntityMapping.Repositories;
 using Microsoft.Extensions.Logging;
-using Nest;
+using Nito.AsyncEx;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
 
-namespace AeFinder.EntityEventHandler.Core;
+namespace AeFinder.EntityEventHandler;
 
 public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,
     ITransientDependency
 {
-    private readonly INESTRepository<BlockIndex, string> _blockIndexRepository;
+    private readonly IEntityMappingRepository<BlockIndex, string> _blockIndexRepository;
     private readonly ILogger<BlockHandler> _logger;
     private readonly IObjectMapper _objectMapper;
-    private readonly INESTRepository<TransactionIndex, string> _transactionIndexRepository;
-    private readonly INESTRepository<LogEventIndex, string> _logEventIndexRepository;
+    private readonly IEntityMappingRepository<TransactionIndex, string> _transactionIndexRepository;
+    private readonly IEntityMappingRepository<LogEventIndex, string> _logEventIndexRepository;
     private readonly IBlockIndexHandler _blockIndexHandler;
+    private readonly IBlockSyncAppService _blockSyncAppService;
+    private readonly IEntityMappingRepository<SummaryIndex, string> _summaryIndexRepository;
 
     public BlockHandler(
-        INESTRepository<BlockIndex,string> blockIndexRepository,
-        INESTRepository<TransactionIndex,string> transactionIndexRepository,
-        INESTRepository<LogEventIndex,string> logEventIndexRepository,
+        IEntityMappingRepository<BlockIndex, string> blockIndexRepository,
+        IEntityMappingRepository<TransactionIndex, string> transactionIndexRepository,
+        IEntityMappingRepository<LogEventIndex, string> logEventIndexRepository,
         ILogger<BlockHandler> logger,
-        IObjectMapper objectMapper, IBlockIndexHandler blockIndexHandler)
+        IObjectMapper objectMapper, IBlockIndexHandler blockIndexHandler, IBlockSyncAppService blockSyncAppService,
+        IEntityMappingRepository<SummaryIndex, string> summaryIndexRepository)
     {
         _blockIndexRepository = blockIndexRepository;
         _logger = logger;
@@ -38,6 +43,8 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         _transactionIndexRepository = transactionIndexRepository;
         _logEventIndexRepository = logEventIndexRepository;
         _blockIndexHandler = blockIndexHandler;
+        _blockSyncAppService = blockSyncAppService;
+        _summaryIndexRepository = summaryIndexRepository;
     }
 
     public async Task HandleEventAsync(NewBlocksEto eventData)
@@ -56,8 +63,10 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
                 blockIndexList.Add(blockIndex);
             }
 
-            // var blockIndexList = _objectMapper.Map<List<NewBlockEto>, List<BlockIndex>>(eventData.NewBlocks);
-            await _blockIndexRepository.BulkAddOrUpdateAsync(blockIndexList);
+            var tasks = new List<Task>
+            {
+                _blockIndexRepository.AddOrUpdateManyAsync(blockIndexList)
+            };
 
             List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
             List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
@@ -79,19 +88,30 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
 
             if (transactionIndexList.Count > 0)
             {
-                _logger.LogDebug(
-                    $"Transaction is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockHeight}, total transaction count:{transactionIndexList.Count}");
-                await _transactionIndexRepository.BulkAddOrUpdateAsync(transactionIndexList);
+                tasks.Add(_transactionIndexRepository.AddOrUpdateManyAsync(transactionIndexList));
             }
 
             if (logEventIndexList.Count > 0)
             {
-                _logger.LogDebug(
-                    $"LogEvent is bulk-adding, its start block number:{eventData.NewBlocks.First().BlockHeight}, total logevent count:{logEventIndexList.Count}");
-                await _logEventIndexRepository.BulkAddOrUpdateAsync(logEventIndexList);
+                tasks.Add( _logEventIndexRepository.AddOrUpdateManyAsync(logEventIndexList));
             }
             
+            //Record latest new block height
+            var chainId = eventData.NewBlocks.Last().ChainId;
+            var summaryIndex = await _summaryIndexRepository.GetAsync(chainId);
+            if (summaryIndex == null)
+            {
+                summaryIndex = new SummaryIndex();
+                summaryIndex.ChainId = chainId;
+            }
+            summaryIndex.LatestBlockHash = eventData.NewBlocks.Last().BlockHash;
+            summaryIndex.LatestBlockHeight = eventData.NewBlocks.Last().BlockHeight;
+            tasks.Add( _summaryIndexRepository.AddOrUpdateAsync(summaryIndex));
+
+            await tasks.WhenAll();
+            
             var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
+
             _ = Task.Run(async () =>
             {
                 foreach (var dto in blockDtos)
@@ -114,7 +134,10 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         List<TransactionIndex> confirmTransactionIndexList = new List<TransactionIndex>();
         List<LogEventIndex> confirmLogEventIndexList = new List<LogEventIndex>(); 
         var indexes = new List<BlockIndex>();
-        _logger.LogInformation($"block:{eventData.ConfirmBlocks.First().BlockHeight}-{eventData.ConfirmBlocks.Last().BlockHeight} is confirming");
+        var lastBlock = eventData.ConfirmBlocks.Last();
+        var syncMode = await _blockSyncAppService.GetBlockSyncModeAsync(lastBlock.ChainId, lastBlock.BlockHeight);
+        _logger.LogInformation("block:{FirstBlockHeight}-{LastBlockHeight} is confirming. sync mode: {SyncMode}.",
+            eventData.ConfirmBlocks.First().BlockHeight, lastBlock.BlockHeight, syncMode);
         foreach (var confirmBlock in eventData.ConfirmBlocks)
         {
             var blockIndex = _objectMapper.Map<ConfirmBlockEto, BlockIndex>(confirmBlock);
@@ -145,14 +168,16 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
                 }
             }
 
-            //find the same height blocks
-            var mustQuery = new List<Func<QueryContainerDescriptor<BlockIndex>, QueryContainer>>();
-            mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(confirmBlock.ChainId)));
-            mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockHeight).Value(confirmBlock.BlockHeight)));
-            QueryContainer Filter(QueryContainerDescriptor<BlockIndex> f) => f.Bool(b => b.Must(mustQuery));
+            if (syncMode == BlockSyncMode.FastSyncMode)
+            {
+                continue;
+            }
 
-            var forkBlockList = await _blockIndexRepository.GetListAsync(Filter);
-            if (forkBlockList.Item1 == 0)
+            //find the same height blocks
+            var queryable = await _blockIndexRepository.GetQueryableAsync();
+            Expression<Func<BlockIndex, bool>> expression = p => p.ChainId == confirmBlock.ChainId && p.BlockHeight == confirmBlock.BlockHeight;
+            var forkBlockList = queryable.Where(expression).ToList();
+            if (forkBlockList.Count == 0)
             {
                 continue;
             }
@@ -161,7 +186,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             List<BlockIndex> forkBlockIndexList = new List<BlockIndex>();
             List<TransactionIndex> forkTransactionIndexList = new List<TransactionIndex>();
             List<LogEventIndex> forkLogEventIndexList = new List<LogEventIndex>();
-            foreach (var forkBlock in forkBlockList.Item2)
+            foreach (var forkBlock in forkBlockList)
             {
                 if (forkBlock.BlockHash == confirmBlock.BlockHash)
                 {
@@ -186,38 +211,60 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             if (forkBlockIndexList.Count > 0)
             {
                 _logger.LogDebug($"bulk delete blocks,total count {forkBlockIndexList.Count}");
-                await _blockIndexRepository.BulkDeleteAsync(forkBlockIndexList);
+                await _blockIndexRepository.DeleteManyAsync(forkBlockIndexList);
             }
             if (forkTransactionIndexList.Count > 0)
             {
                 _logger.LogDebug($"bulk delete transactions,total count {forkTransactionIndexList.Count}");
-                await _transactionIndexRepository.BulkDeleteAsync(forkTransactionIndexList);
+                await _transactionIndexRepository.DeleteManyAsync(forkTransactionIndexList);
             }
             if (forkLogEventIndexList.Count > 0)
             {
                 _logger.LogDebug($"bulk delete log events,total count {forkLogEventIndexList.Count}");
-                await _logEventIndexRepository.BulkDeleteAsync(forkLogEventIndexList);
+                await _logEventIndexRepository.DeleteManyAsync(forkLogEventIndexList);
             }
         }
 
-        _logger.LogDebug($"blocks is confirming,start {confirmBlockIndexList.First().BlockHeight} end {confirmBlockIndexList.Last().BlockHeight},total confirm {confirmBlockIndexList.Count}");
-        await _blockIndexRepository.BulkAddOrUpdateAsync(confirmBlockIndexList);
+        _logger.LogDebug("blocks is confirming,start {FirstBlockHeight} end {LastBlockHeight},total confirm {Count}",
+            confirmBlockIndexList.First().BlockHeight, confirmBlockIndexList.Last().BlockHeight,
+            confirmBlockIndexList.Count);
+        var tasks = new List<Task>
+        {
+            _blockIndexRepository.AddOrUpdateManyAsync(confirmBlockIndexList)
+        };
         if (confirmTransactionIndexList.Count > 0)
         {
-            _logger.LogDebug($"transactions is confirming,start {confirmTransactionIndexList.First().BlockHeight} end {confirmTransactionIndexList.Last().BlockHeight},total confirm {confirmTransactionIndexList.Count}");
-            await _transactionIndexRepository.BulkAddOrUpdateAsync(confirmTransactionIndexList);
+            tasks.Add(_transactionIndexRepository.AddOrUpdateManyAsync(confirmTransactionIndexList));
         }
         if (confirmLogEventIndexList.Count > 0)
         {
-            _logger.LogDebug($"log events is confirming,start {confirmLogEventIndexList.First().BlockHeight} end {confirmLogEventIndexList.Last().BlockHeight},total confirm {confirmLogEventIndexList.Count}");
-            await _logEventIndexRepository.BulkAddOrUpdateAsync(confirmLogEventIndexList);
+            tasks.Add(_logEventIndexRepository.AddOrUpdateManyAsync(confirmLogEventIndexList));
         }
+        
+        //Record latest confirmed block height
+        var chainId = lastBlock.ChainId;
+        var summaryIndex = await _summaryIndexRepository.GetAsync(chainId);
+        if (summaryIndex == null)
+        {
+            summaryIndex = new SummaryIndex();
+            summaryIndex.ChainId = chainId;
+        }
+        summaryIndex.ConfirmedBlockHash = lastBlock.BlockHash;
+        summaryIndex.ConfirmedBlockHeight = lastBlock.BlockHeight;
+        tasks.Add( _summaryIndexRepository.AddOrUpdateAsync(summaryIndex));
+        
+        await tasks.WhenAll();
         
         var blockDtos = _objectMapper.Map<List<ConfirmBlockEto>, List<BlockWithTransactionDto>>(eventData.ConfirmBlocks);
         _ = Task.Run(async () =>
         {
             foreach (var dto in blockDtos)
             {
+                if (syncMode == BlockSyncMode.FastSyncMode)
+                {
+                    await _blockIndexHandler.ProcessNewBlockAsync(dto);
+                }
+
                 await _blockIndexHandler.ProcessConfirmedBlocksAsync(dto);
             }
         });
@@ -225,18 +272,15 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
 
     private async Task<List<TransactionIndex>> GetTransactionListAsync(string chainId,string blockHash)
     {
-        var mustQuery = new List<Func<QueryContainerDescriptor<TransactionIndex>, QueryContainer>>();
-        mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(chainId)));
-        mustQuery.Add(q => q.Term(i => i.Field(f => f.BlockHash).Value(blockHash)));
-        QueryContainer Filter(QueryContainerDescriptor<TransactionIndex> f) => f.Bool(b => b.Must(mustQuery));
-
-        var forkTransactionList = await _transactionIndexRepository.GetListAsync(Filter);
-        if (forkTransactionList.Item1 == 0)
+        Expression<Func<TransactionIndex, bool>> expression = p => p.ChainId == chainId && p.BlockHash == blockHash;
+        var queryable = await _transactionIndexRepository.GetQueryableAsync();
+        var forkTransactionList =  queryable.Where(expression).ToList();
+        if (forkTransactionList.Count == 0)
         {
             return new List<TransactionIndex>();
         }
 
-        return forkTransactionList.Item2;
+        return forkTransactionList;
     }
 
 

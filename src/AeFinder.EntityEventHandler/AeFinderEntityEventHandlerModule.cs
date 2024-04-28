@@ -1,7 +1,7 @@
-using AeFinder.EntityEventHandler.Core;
 using AeFinder.Grains;
-using AeFinder.Grains.Grain.BlockScan;
-using AElf.Indexing.Elasticsearch.Options;
+using AeFinder.Grains.Grain.BlockPush;
+using AElf.EntityMapping.Options;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -10,6 +10,8 @@ using Orleans.Providers.MongoDB.Configuration;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
+using Volo.Abp.Caching;
+using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict.Tokens;
@@ -21,7 +23,8 @@ namespace AeFinder.EntityEventHandler;
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AeFinderEntityEventHandlerCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AbpEventBusRabbitMqModule))]
+    typeof(AbpEventBusRabbitMqModule),
+    typeof(AbpCachingStackExchangeRedisModule))]
 public class AeFinderEntityEventHandlerModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -30,7 +33,7 @@ public class AeFinderEntityEventHandlerModule : AbpModule
         ConfigureTokenCleanupService();
         ConfigureEsIndexCreation();
         context.Services.AddHostedService<AeFinderHostedService>();
-        
+        ConfigureCache(configuration);
         context.Services.AddSingleton<IClusterClient>(o =>
         {
             return new ClientBuilder()
@@ -66,7 +69,7 @@ public class AeFinderEntityEventHandlerModule : AbpModule
         
         AsyncHelper.RunSync(async () =>
         {
-            var grain = client.GetGrain<IBlockScanCheckGrain>(AeFinderApplicationConsts.BlockScanCheckGrainId);
+            var grain = client.GetGrain<IBlockPushCheckGrain>(GrainIdHelper.GenerateBlockPushCheckGrainId());
             await grain.Start();
         });
     }
@@ -77,10 +80,10 @@ public class AeFinderEntityEventHandlerModule : AbpModule
         AsyncHelper.RunSync(client.Close);
     }
 
-    //Create the ElasticSearch Index based on Domain Entity
+    //Create the ElasticSearch Index & Initialize field cache based on Domain Entity
     private void ConfigureEsIndexCreation()
     {
-        Configure<IndexCreateOption>(x => { x.AddModule(typeof(AeFinderDomainModule)); });
+        Configure<CollectionCreateOptions>(x => { x.AddModule(typeof(AeFinderDomainModule)); });
     }
     
     //Disable TokenCleanupService
@@ -88,4 +91,9 @@ public class AeFinderEntityEventHandlerModule : AbpModule
     {
         Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
+    private void ConfigureCache(IConfiguration configuration)
+    {
+        Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AeFinder:"; });
+    }
+    
 }

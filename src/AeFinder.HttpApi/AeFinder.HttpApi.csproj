@@ -9,18 +9,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
-    <ProjectReference Include="..\AeFinder.Domain.Shared\AeFinder.Domain.Shared.csproj" />
     <ProjectReference Include="..\AeFinder.Grains\AeFinder.Grains.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Volo.Abp.Account.HttpApi" Version="7.0.0-rc.5" />
-    <PackageReference Include="Volo.Abp.AspNetCore.SignalR" Version="7.0.0-rc.5" />
-    <PackageReference Include="Volo.Abp.Identity.HttpApi" Version="7.0.0-rc.5" />
-    <PackageReference Include="Volo.Abp.PermissionManagement.HttpApi" Version="7.0.0-rc.5" />
-    <PackageReference Include="Volo.Abp.TenantManagement.HttpApi" Version="7.0.0-rc.5" />
-    <PackageReference Include="Volo.Abp.FeatureManagement.HttpApi" Version="7.0.0-rc.5" />
-    <PackageReference Include="Volo.Abp.SettingManagement.HttpApi" Version="7.0.0-rc.5" />
+    <PackageReference Include="JsonModelBinder" Version="2.1.1" />
+    <PackageReference Include="Volo.Abp.Account.HttpApi" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.AspNetCore.SignalR" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.Identity.HttpApi" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.HttpApi" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.TenantManagement.HttpApi" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.HttpApi" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.SettingManagement.HttpApi" Version="7.0.0" />
   </ItemGroup>
 
 </Project>
