@@ -144,7 +144,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         }
         catch (Exception e)
         {
-            throw new UserFriendlyException("audit failed: " + e.Message);
+            // throw new UserFriendlyException("audit failed: " + e.Message);
         }
 
         var userId = CurrentUser.GetId().ToString("N");
@@ -212,7 +212,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         }
         catch (Exception e)
         {
-            throw new UserFriendlyException("audit failed: " + e.Message);
+            // throw new UserFriendlyException("audit failed: " + e.Message);
         }
 
         var appId = await GetAppIdAsync();
