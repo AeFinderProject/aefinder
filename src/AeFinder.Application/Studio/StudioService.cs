@@ -178,6 +178,8 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
             throw new UserFriendlyException("app not exists.");
         }
 
+        await AssertAppVersionExistsAsync(info.AppId, version);
+
         await _kubernetesAppManager.DestroyAppPodAsync(info.AppId, version);
         _logger.LogInformation("DestroyAppAsync: {0} {1}", info.AppId, version);
     }
@@ -223,7 +225,18 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
     public async Task RestartAppAsync(string version)
     {
         var appId = await GetAppIdAsync();
+        await AssertAppVersionExistsAsync(appId, version);
+
         await _kubernetesAppManager.RestartAppPodAsync(appId, version);
+    }
+
+    private async Task AssertAppVersionExistsAsync(string appId, string version)
+    {
+        var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
+        if (subscription == null || !subscription.NewVersion.Version.Equals(version) || !subscription.CurrentVersion.Version.Equals(version))
+        {
+            throw new UserFriendlyException("subscription not exists.");
+        }
     }
 
     private async Task AddToUsersAppsAsync(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)
