@@ -46,4 +46,9 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
     {
         throw new NotImplementedException();
     }
+
+    public Task<List<SummaryDto>> GetSummariesAsync(GetSummariesInput input)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -142,7 +142,12 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
 
         return result;
     }
-    
+
+    public Task<List<SummaryDto>> GetSummariesAsync(GetSummariesInput input)
+    {
+        throw new NotImplementedException();
+    }
+
     private Tuple<HashSet<string>, HashSet<string>> GetTransactionFilter(List<FilterTransactionInput> filters)
     {
         var toFilter = new HashSet<string>();
