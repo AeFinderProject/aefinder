@@ -51,7 +51,6 @@ public class StudioController : AeFinderController
 
     [HttpPost("submitsubscription")]
     [Authorize]
-    [Studio.RequestSizeLimit(valueCountLimit: 214748364)]
     public Task<string> SubmitSubscriptionInfoAsync([FromForm] SubscriptionInfo input, [ModelBinder(BinderType = typeof(JsonModelBinder))] SubscriptionManifestDto subscriptionManifest)
     {
         return _studioService.SubmitSubscriptionInfoAsync(input, subscriptionManifest);
