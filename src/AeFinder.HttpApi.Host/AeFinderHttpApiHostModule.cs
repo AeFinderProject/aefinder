@@ -1,9 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using AeFinder.Grains;
-using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -64,10 +63,15 @@ public class AeFinderHttpApiHostModule : AbpModule
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
         ConfigureOrleans(context, configuration);
-        
+
         Configure<AbpAuditingOptions>(options =>
         {
-            options.IsEnabled = false;//Disables the auditing system
+            options.IsEnabled = false; //Disables the auditing system
+        });
+        context.Services.Configure<FormOptions>(option =>
+        {
+            option.KeyLengthLimit = 60480;
+            option.MultipartBodyLengthLimit = 60485760;
         });
     }
 
@@ -102,10 +106,7 @@ public class AeFinderHttpApiHostModule : AbpModule
 
     private void ConfigureConventionalControllers()
     {
-        Configure<AbpAspNetCoreMvcOptions>(options =>
-        {
-            options.ConventionalControllers.Create(typeof(AeFinderApplicationModule).Assembly);
-        });
+        Configure<AbpAspNetCoreMvcOptions>(options => { options.ConventionalControllers.Create(typeof(AeFinderApplicationModule).Assembly); });
     }
 
     private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
@@ -170,7 +171,8 @@ public class AeFinderHttpApiHostModule : AbpModule
                 .UseMongoDBClient(configuration["Orleans:MongoDBClient"])
                 .UseMongoDBClustering(options =>
                 {
-                    options.DatabaseName = configuration["Orleans:DataBase"];;
+                    options.DatabaseName = configuration["Orleans:DataBase"];
+                    ;
                     options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
                 .Configure<ClusterOptions>(options =>
@@ -289,7 +291,7 @@ public class AeFinderHttpApiHostModule : AbpModule
 
         StartOrleans(context.ServiceProvider);
     }
-    
+
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
         StopOrleans(context.ServiceProvider);
@@ -298,8 +300,9 @@ public class AeFinderHttpApiHostModule : AbpModule
     private static void StartOrleans(IServiceProvider serviceProvider)
     {
         var client = serviceProvider.GetRequiredService<IClusterClient>();
-        AsyncHelper.RunSync(async ()=> await client.Connect());
+        AsyncHelper.RunSync(async () => await client.Connect());
     }
+
     private static void StopOrleans(IServiceProvider serviceProvider)
     {
         var client = serviceProvider.GetRequiredService<IClusterClient>();
