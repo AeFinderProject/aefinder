@@ -2,8 +2,10 @@ using AeFinder.App.BlockState;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Studio.Eto;
 using Orleans;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Threading;
 
 namespace AeFinder.App.Handlers;
@@ -18,8 +20,9 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
     private readonly IAppInfoProvider _appInfoProvider;
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IClusterClient _clusterClient;
+    private readonly IDistributedEventBus _distributedEventBus;
     private const long UpgradeHeightThreshold = 1000;
-    
+
     private string _currentVersion = null;
     private readonly Dictionary<string, long> _currentVersionConfirmedBlockHeights = new();
     private List<string> _newVersionChains = new();
@@ -55,6 +58,12 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
         await _clusterClient
             .GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId))
             .UpgradeVersionAsync();
+        await _distributedEventBus.PublishAsync(new AppUpgradeEto()
+        {
+            AppId = _appInfoProvider.AppId,
+            CurrentVersion = _currentVersion,
+            NewVersion = _appInfoProvider.Version
+        });
         _currentVersion = _appInfoProvider.Version;
     }
 

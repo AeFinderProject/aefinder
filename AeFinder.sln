@@ -73,6 +73,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{7AD5
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenApp", "samples\TokenApp\TokenApp.csproj", "{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.BackgroundWorker", "src\AeFinder.BackgroundWorker\AeFinder.BackgroundWorker.csproj", "{3DAA91B3-2610-4138-B908-FB4917C86FDF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -207,6 +209,10 @@ Global
 		{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DAA91B3-2610-4138-B908-FB4917C86FDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DAA91B3-2610-4138-B908-FB4917C86FDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DAA91B3-2610-4138-B908-FB4917C86FDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DAA91B3-2610-4138-B908-FB4917C86FDF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
