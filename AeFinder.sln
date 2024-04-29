@@ -75,6 +75,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenApp", "samples\TokenAp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.BackgroundWorker", "src\AeFinder.BackgroundWorker\AeFinder.BackgroundWorker.csproj", "{3DAA91B3-2610-4138-B908-FB4917C86FDF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.Kubernetes", "src\AeFinder.Kubernetes\AeFinder.Kubernetes.csproj", "{8DBB72A4-6815-44AB-85A7-94B4BAE4013B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -213,6 +215,10 @@ Global
 		{3DAA91B3-2610-4138-B908-FB4917C86FDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3DAA91B3-2610-4138-B908-FB4917C86FDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3DAA91B3-2610-4138-B908-FB4917C86FDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DBB72A4-6815-44AB-85A7-94B4BAE4013B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DBB72A4-6815-44AB-85A7-94B4BAE4013B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DBB72A4-6815-44AB-85A7-94B4BAE4013B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DBB72A4-6815-44AB-85A7-94B4BAE4013B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
