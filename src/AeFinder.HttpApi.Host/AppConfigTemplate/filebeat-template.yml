@@ -9,6 +9,26 @@ filebeat.inputs:
           matchers:
             - logs_path:
                 logs_path: "/app/Logs/"
+      - decode_json_fields:
+          fields: [ "message" ]
+          target: ""
+          overwrite_keys: true
+          add_error_key: true
+      - rename:
+          fields:
+            - from: "appId"
+              to: "app_id"
+            - from: "version"
+              to: "app_version"
+            - from: "exception"
+              to: "app_exception"
+            - from: "level"
+              to: "app_log_level"
+            - from: "time"
+              to: "app_log_time"
+          ignore_missing: true
+          fail_on_error: false
+
 
 setup.template.settings:
   index.number_of_shards: 5
