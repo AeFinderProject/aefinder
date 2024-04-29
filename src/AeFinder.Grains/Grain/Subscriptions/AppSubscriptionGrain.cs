@@ -1,13 +1,18 @@
+using System.Runtime.InteropServices.ComTypes;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Studio;
+using AeFinder.Studio.Eto;
 using Orleans;
+using Volo.Abp.EventBus.Local;
 using SubscriptionInfo = AeFinder.Grains.State.Subscriptions.SubscriptionInfo;
 
 namespace AeFinder.Grains.Grain.Subscriptions;
 
 public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptionGrain
 {
+    public ILocalEventBus LocalEventBus { get; set; }
+
     public async Task<string> AddSubscriptionAsync(SubscriptionManifest subscriptionManifest, byte[] code)
     {
         var dto = await AddSubscriptionV2Async(subscriptionManifest, code);
@@ -134,6 +139,12 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         {
             await StopBlockPushAsync(State.CurrentVersion);
             State.SubscriptionInfos.Remove(State.CurrentVersion);
+            await LocalEventBus.PublishAsync(new AppUpgradeEto()
+            {
+                AppId = this.GetPrimaryKeyString(),
+                CurrentVersion = State.CurrentVersion,
+                NewVersion = State.NewVersion
+            });
         }
 
         State.CurrentVersion = State.NewVersion;

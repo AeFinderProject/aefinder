@@ -1,4 +1,6 @@
 using AeFinder.Grains;
+using AeFinder.Kubernetes;
+using AeFinder.Kubernetes.Manager;
 using AeFinder.MongoDb;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,8 +18,9 @@ namespace AeFinder.Silo;
     typeof(AeFinderMongoDbModule),
     typeof(AeFinderApplicationModule),
     typeof(AeFinderGrainsModule),
+    typeof(AeFinderKubernetesModule),
     typeof(AbpCachingStackExchangeRedisModule))]
-public class AeFinderOrleansSiloModule:AbpModule
+public class AeFinderOrleansSiloModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -25,14 +28,15 @@ public class AeFinderOrleansSiloModule:AbpModule
         context.Services.AddHostedService<AeFinderHostedService>();
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
-        // ConfigureEsIndexCreation();
+        context.Services.AddTransient<IKubernetesAppManager, KubernetesAppManager>();
     }
-    
+
     //Disable TokenCleanupService
     private void ConfigureTokenCleanupService()
     {
         Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
+
     private void ConfigureCache(IConfiguration configuration)
     {
         Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AeFinder:"; });
