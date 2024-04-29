@@ -11,7 +11,7 @@ filebeat.inputs:
                 logs_path: "/app/Logs/"
       - decode_json_fields:
           fields: [ "message" ]
-          target: ""
+          target: "app_log"
           overwrite_keys: true
           add_error_key: true
       - rename:
