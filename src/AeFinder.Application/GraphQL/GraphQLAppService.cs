@@ -9,6 +9,7 @@ using AeFinder.GraphQL.Dto;
 using AeFinder.Kubernetes;
 using IdentityServer4.Extensions;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp.Caching;
@@ -22,9 +23,10 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
     private readonly KubernetesOptions _kubernetesOption;
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IDistributedCache<string, string> _appCurrentVersionCache;
+    private readonly ILogger<GraphQLAppService> _logger;
 
     public GraphQLAppService(IHttpClientFactory httpClientFactory,
-        IOptionsSnapshot<KubernetesOptions> kubernetesOption,
+        ILogger<GraphQLAppService> logger, IOptionsSnapshot<KubernetesOptions> kubernetesOption,
         IBlockScanAppService blockScanAppService,
         IDistributedCache<string, string> appCurrentVersionCache)
     {
@@ -32,6 +34,7 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
         _kubernetesOption = kubernetesOption.Value;
         _blockScanAppService = blockScanAppService;
         _appCurrentVersionCache = appCurrentVersionCache;
+        _logger = logger;
     }
 
     public async Task<HttpResponseMessage> RequestForwardAsync(string appId, string version, GraphQLQueryInput input)
@@ -65,6 +68,7 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
             serverUrl = $"{originName}/{appId}/{currentVersion}/graphql";
         }
 
+        _logger.LogInformation("RequestForward:" + serverUrl);
         var json = JsonSerializer.Serialize(new { query = input.Query, variables = input.Variables });
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
