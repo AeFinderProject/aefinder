@@ -18,7 +18,6 @@ namespace AeFinder.Silo;
     typeof(AeFinderMongoDbModule),
     typeof(AeFinderApplicationModule),
     typeof(AeFinderGrainsModule),
-    typeof(AeFinderKubernetesModule),
     typeof(AbpCachingStackExchangeRedisModule))]
 public class AeFinderOrleansSiloModule : AbpModule
 {

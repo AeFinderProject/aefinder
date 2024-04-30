@@ -1,11 +1,12 @@
 ﻿using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Blocks;
+using AeFinder.Kubernetes;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
 namespace AeFinder.Grains;
 
-[DependsOn(typeof(AeFinderApplicationContractsModule))]
+[DependsOn(typeof(AeFinderApplicationContractsModule), typeof(AeFinderKubernetesModule))]
 public class AeFinderGrainsModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
