@@ -1,6 +1,7 @@
 ﻿using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Blocks;
 using AeFinder.Kubernetes;
+using AeFinder.Kubernetes.Manager;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
@@ -16,5 +17,6 @@ public class AeFinderGrainsModule : AbpModule
         Configure<PrimaryKeyOptions>(configuration.GetSection("GrainPrimaryKey"));
 
         context.Services.AddSingleton<IBlockGrain, BlockGrain>();
+        context.Services.AddTransient<IKubernetesAppManager, KubernetesAppManager>();
     }
 }
