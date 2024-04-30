@@ -58,7 +58,7 @@ After starting all the above services, AeFinder is ready to provide external ser
 
 ## Modules
 
-Portkey DID Server includes the following services:
+AeFinder Server includes the following services:
 
 - `AeFinder.DbMigrator`: Data initialization service.
 - `AeFinder.AuthServer`: Authentication service.

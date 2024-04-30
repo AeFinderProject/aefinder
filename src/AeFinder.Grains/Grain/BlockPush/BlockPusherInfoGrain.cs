@@ -104,7 +104,7 @@ public class BlockPusherInfoGrain : Grain<BlockPusherInfoState>, IBlockPusherInf
     public async Task<bool> IsNeedRecoverAsync()
     {
         await ReadStateAsync();
-        return State.BlockPushMode == BlockPushMode.HistoricalBlock && State.LastHandleHistoricalBlockTime >=
+        return State.BlockPushMode == BlockPushMode.HistoricalBlock && State.LastHandleHistoricalBlockTime <
             DateTime.UtcNow.AddMinutes(-_blockPushOptions.HistoricalPushRecoveryThreshold);
     }
 
