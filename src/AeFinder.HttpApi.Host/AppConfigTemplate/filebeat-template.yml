@@ -14,22 +14,6 @@ filebeat.inputs:
           target: "app_log"
           overwrite_keys: true
           add_error_key: true
-      - rename:
-          fields:
-            - from: "appId"
-              to: "app_id"
-            - from: "version"
-              to: "app_version"
-            - from: "exception"
-              to: "app_exception"
-            - from: "level"
-              to: "app_log_level"
-            - from: "time"
-              to: "app_log_time"
-            - from: "eventId"
-              to: "app_log_event_id"
-          ignore_missing: true
-          fail_on_error: false
 
 
 setup.template.settings:
