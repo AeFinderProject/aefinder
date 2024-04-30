@@ -19,6 +19,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
+        <ProjectReference Include="..\AeFinder.Kubernetes\AeFinder.Kubernetes.csproj" />
     </ItemGroup>
 
     <ItemGroup>
