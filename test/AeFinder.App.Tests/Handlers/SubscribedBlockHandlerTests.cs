@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AeFinder.App.BlockProcessing;
 using AeFinder.Block.Dtos;
@@ -7,6 +8,7 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Studio;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -28,6 +30,14 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
         _blockScanAppService = GetRequiredService<IBlockScanAppService>();
         _appInfoProvider = GetRequiredService<IAppInfoProvider>();
         _processingStatusProvider = GetRequiredService<IProcessingStatusProvider>();
+    }
+
+    [Fact]
+    public async Task AppNameRegexTest()
+    {
+        var regex = new Regex(AppIdConsts.NameRegex);
+        regex.IsMatch("token-009").ShouldBeTrue();
+        regex.IsMatch("token.009").ShouldBeTrue();
     }
 
     [Fact]
