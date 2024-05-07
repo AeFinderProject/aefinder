@@ -1,17 +1,21 @@
-using System.Runtime.InteropServices.ComTypes;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Studio;
 using AeFinder.Studio.Eto;
 using Orleans;
-using Volo.Abp.EventBus.Local;
+using Volo.Abp.EventBus.Distributed;
 using SubscriptionInfo = AeFinder.Grains.State.Subscriptions.SubscriptionInfo;
 
 namespace AeFinder.Grains.Grain.Subscriptions;
 
 public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptionGrain
 {
-    public ILocalEventBus LocalEventBus { get; set; }
+    private readonly IDistributedEventBus _distributedEventBus;
+
+    public AppSubscriptionGrain(IDistributedEventBus distributedEventBus)
+    {
+        _distributedEventBus = distributedEventBus;
+    }
 
     public async Task<string> AddSubscriptionAsync(SubscriptionManifest subscriptionManifest, byte[] code)
     {
@@ -35,6 +39,11 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         if (State.CurrentVersion == null)
         {
             State.CurrentVersion = newVersion;
+            await _distributedEventBus.PublishAsync(new AppCurrentVersionSetEto()
+            {
+                CurrentVersion = newVersion,
+                AppId = this.GetPrimaryKeyString()
+            });
         }
         else
         {
@@ -139,7 +148,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         {
             await StopBlockPushAsync(State.CurrentVersion);
             State.SubscriptionInfos.Remove(State.CurrentVersion);
-            await LocalEventBus.PublishAsync(new AppUpgradeEto()
+            await _distributedEventBus.PublishAsync(new AppUpgradeEto()
             {
                 AppId = this.GetPrimaryKeyString(),
                 CurrentVersion = State.CurrentVersion,
@@ -148,6 +157,11 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         }
 
         State.CurrentVersion = State.NewVersion;
+        await _distributedEventBus.PublishAsync(new AppCurrentVersionSetEto()
+        {
+            AppId = this.GetPrimaryKeyString(),
+            CurrentVersion = State.NewVersion
+        });
         State.NewVersion = null;
         await WriteStateAsync();
     }

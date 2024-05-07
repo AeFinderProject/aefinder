@@ -7,7 +7,7 @@ using Volo.Abp.Modularity;
 
 namespace AeFinder.Grains;
 
-[DependsOn(typeof(AeFinderApplicationContractsModule), typeof(AeFinderKubernetesModule))]
+[DependsOn(typeof(AeFinderApplicationContractsModule))]
 public class AeFinderGrainsModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -17,6 +17,5 @@ public class AeFinderGrainsModule : AbpModule
         Configure<PrimaryKeyOptions>(configuration.GetSection("GrainPrimaryKey"));
 
         context.Services.AddSingleton<IBlockGrain, BlockGrain>();
-        context.Services.AddTransient<IKubernetesAppManager, KubernetesAppManager>();
     }
 }

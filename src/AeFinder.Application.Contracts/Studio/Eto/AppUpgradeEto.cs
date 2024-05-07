@@ -9,3 +9,10 @@ public class AppUpgradeEto
     public string NewVersion { get; set; }
     public string CurrentVersion { get; set; }
 }
+
+[EventName("AppCurrentVersionSetEto")]
+public class AppCurrentVersionSetEto
+{
+    public string AppId { get; set; }
+    public string CurrentVersion { get; set; }
+}

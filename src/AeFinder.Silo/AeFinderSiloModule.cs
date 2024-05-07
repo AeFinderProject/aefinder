@@ -8,6 +8,7 @@ using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
+using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict.Tokens;
 
@@ -17,6 +18,7 @@ namespace AeFinder.Silo;
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AeFinderMongoDbModule),
     typeof(AeFinderApplicationModule),
+    typeof(AbpEventBusRabbitMqModule),
     typeof(AeFinderGrainsModule),
     typeof(AbpCachingStackExchangeRedisModule))]
 public class AeFinderOrleansSiloModule : AbpModule
