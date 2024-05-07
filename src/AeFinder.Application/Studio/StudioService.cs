@@ -36,7 +36,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
     private readonly IObjectMapper _objectMapper;
 
     public StudioService(IClusterClient clusterClient, ILogger<StudioService> logger, IObjectMapper objectMapper,
-        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor,  IOptionsSnapshot<StudioOption> studioOption, IKubernetesAppManager kubernetesAppManager)
+        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor, IOptionsSnapshot<StudioOption> studioOption, IKubernetesAppManager kubernetesAppManager)
     {
         _clusterClient = clusterClient;
         _logger = logger;
@@ -158,7 +158,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var dto = await _blockScanAppService.AddSubscriptionV2Async(info.AppId, subscriptionManifest, dllBytes);
         if (!dto.StopVersion.IsNullOrEmpty())
         {
-            await DestroyAppAsync(dto.StopVersion);
+            await _kubernetesAppManager.DestroyAppPodAsync(info.AppId, dto.StopVersion);
         }
 
         var rulePath = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, dto.NewVersion, _studioOption.ImageName);
