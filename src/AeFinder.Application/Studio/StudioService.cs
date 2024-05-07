@@ -36,7 +36,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
     private readonly IObjectMapper _objectMapper;
 
     public StudioService(IClusterClient clusterClient, ILogger<StudioService> logger, IObjectMapper objectMapper,
-        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor, IOptions<StudioOption> studioOption, IKubernetesAppManager kubernetesAppManager)
+        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor,  IOptionsSnapshot<StudioOption> studioOption, IKubernetesAppManager kubernetesAppManager)
     {
         _clusterClient = clusterClient;
         _logger = logger;
