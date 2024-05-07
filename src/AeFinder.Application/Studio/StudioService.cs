@@ -156,6 +156,10 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         }
 
         var dto = await _blockScanAppService.AddSubscriptionV2Async(info.AppId, subscriptionManifest, dllBytes);
+        if (!dto.StopVersion.IsNullOrEmpty())
+        {
+            await DestroyAppAsync(dto.StopVersion);
+        }
 
         var rulePath = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, dto.NewVersion, _studioOption.ImageName);
         _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2} stoped version {3}", info.AppId, dto.NewVersion, rulePath, dto.StopVersion);

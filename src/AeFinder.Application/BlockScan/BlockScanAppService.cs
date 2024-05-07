@@ -6,6 +6,7 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Kubernetes.Manager;
 using AeFinder.Studio;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -19,10 +20,12 @@ namespace AeFinder.BlockScan;
 public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
 {
     private readonly IClusterClient _clusterClient;
+    private readonly IKubernetesAppManager _kubernetesAppManager;
 
-    public BlockScanAppService(IClusterClient clusterClient)
+    public BlockScanAppService(IClusterClient clusterClient, IKubernetesAppManager kubernetesAppManager)
     {
         _clusterClient = clusterClient;
+        _kubernetesAppManager = kubernetesAppManager;
     }
 
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifestDto, byte[] dll = null)
@@ -274,6 +277,7 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
     {
         var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
         await clientGrain.StopAsync(version);
+        await _kubernetesAppManager.DestroyAppPodAsync(clientId, version);
     }
 
     public async Task<bool> IsRunningAsync(string chainId, string clientId, string version, string token)

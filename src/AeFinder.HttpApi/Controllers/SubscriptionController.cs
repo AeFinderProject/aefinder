@@ -29,7 +29,6 @@ public class SubscriptionController : AeFinderController
         return await _blockScanAppService.AddSubscriptionAsync(appId, input);
     }
 
-
     [HttpGet]
     [Authorize]
     public virtual async Task<AllSubscriptionDto> GetSubscriptionInfoAsync()
