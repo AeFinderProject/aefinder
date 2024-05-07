@@ -187,7 +187,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         if (subscription == null || (!subscription.NewVersion.Version.Equals(version) && !subscription.CurrentVersion.Version.Equals(version)))
         {
-            throw new UserFriendlyException("subscription not exists.");
+            throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
         }
     }
 
