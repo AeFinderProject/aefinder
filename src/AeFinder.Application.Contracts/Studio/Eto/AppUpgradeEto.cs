@@ -2,7 +2,7 @@ using Volo.Abp.EventBus;
 
 namespace AeFinder.Studio.Eto;
 
-[EventName("AppUpgradeEto")]
+[EventName("AeFinder.AppUpgradeEto")]
 public class AppUpgradeEto
 {
     public string AppId { get; set; }
@@ -10,7 +10,7 @@ public class AppUpgradeEto
     public string CurrentVersion { get; set; }
 }
 
-[EventName("AppCurrentVersionSetEto")]
+[EventName("AeFinder.AppCurrentVersionSetEto")]
 public class AppCurrentVersionSetEto
 {
     public string AppId { get; set; }
