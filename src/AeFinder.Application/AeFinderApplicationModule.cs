@@ -1,3 +1,4 @@
+using AeFinder.App.Deploy;
 using AeFinder.BlockSync;
 using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
@@ -31,7 +32,8 @@ namespace AeFinder;
     typeof(AeFinderGrainsModule),
     typeof(AElfEntityMappingModule),
     typeof(AElfEntityMappingElasticsearchModule),
-    typeof(AeFinderCodeOpsModule)
+    typeof(AeFinderCodeOpsModule),
+    typeof(AeFinderAppDeployModule)
 )]
 public class AeFinderApplicationModule : AbpModule
 {
