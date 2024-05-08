@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AeFinder.App.Deploy;
 using AeFinder.BlockScan;
 using AeFinder.CodeOps;
 using AeFinder.Grains;
@@ -29,14 +30,14 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 {
     private readonly IClusterClient _clusterClient;
     private readonly IBlockScanAppService _blockScanAppService;
-    private readonly IKubernetesAppManager _kubernetesAppManager;
+    private readonly IAppDeployManager _kubernetesAppManager;
     private readonly StudioOption _studioOption;
     private readonly ICodeAuditor _codeAuditor;
     private readonly ILogger<StudioService> _logger;
     private readonly IObjectMapper _objectMapper;
 
     public StudioService(IClusterClient clusterClient, ILogger<StudioService> logger, IObjectMapper objectMapper,
-        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor, IOptionsSnapshot<StudioOption> studioOption, IKubernetesAppManager kubernetesAppManager)
+        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor, IOptionsSnapshot<StudioOption> studioOption, IAppDeployManager kubernetesAppManager)
     {
         _clusterClient = clusterClient;
         _logger = logger;
@@ -158,10 +159,10 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var dto = await _blockScanAppService.AddSubscriptionV2Async(info.AppId, subscriptionManifest, dllBytes);
         if (!dto.StopVersion.IsNullOrEmpty())
         {
-            await _kubernetesAppManager.DestroyAppPodAsync(info.AppId, dto.StopVersion);
+            await _kubernetesAppManager.DestroyAppAsync(info.AppId, dto.StopVersion);
         }
 
-        var rulePath = await _kubernetesAppManager.CreateNewAppPodAsync(info.AppId, dto.NewVersion, _studioOption.ImageName);
+        var rulePath = await _kubernetesAppManager.CreateNewAppAsync(info.AppId, dto.NewVersion, _studioOption.ImageName);
         _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2} stoped version {3}", info.AppId, dto.NewVersion, rulePath, dto.StopVersion);
         return dto.NewVersion;
     }
@@ -178,7 +179,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
         await AssertAppVersionExistsAsync(info.AppId, version);
 
-        await _kubernetesAppManager.DestroyAppPodAsync(info.AppId, version);
+        await _kubernetesAppManager.DestroyAppAsync(info.AppId, version);
         _logger.LogInformation("DestroyAppAsync: {0} {1}", info.AppId, version);
     }
 
@@ -227,7 +228,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
         var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         await subscriptionGrain.UpdateCodeAsync(input.Version, dllBytes);
-        await _kubernetesAppManager.RestartAppPodAsync(appId, input.Version);
+        await _kubernetesAppManager.RestartAppAsync(appId, input.Version);
         return new UpdateAeFinderAppDto() { Success = true };
     }
 
@@ -236,7 +237,7 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var appId = await GetAppIdAsync();
         await AssertAppVersionExistsAsync(appId, version);
 
-        await _kubernetesAppManager.RestartAppPodAsync(appId, version);
+        await _kubernetesAppManager.RestartAppAsync(appId, version);
     }
 
     private async Task AddToUsersAppsAsync(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)

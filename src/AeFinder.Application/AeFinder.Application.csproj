@@ -10,11 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AeFinder.App.Deploy\AeFinder.App.Deploy.csproj" />
     <ProjectReference Include="..\AeFinder.CodeOps\AeFinder.CodeOps.csproj" />
     <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
     <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
     <ProjectReference Include="..\AeFinder.Grains\AeFinder.Grains.csproj" />
-    <ProjectReference Include="..\AeFinder.Kubernetes\AeFinder.Kubernetes.csproj" />
   </ItemGroup>
 
   <ItemGroup>

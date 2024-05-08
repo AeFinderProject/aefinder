@@ -77,6 +77,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.BackgroundWorker",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.Kubernetes", "src\AeFinder.Kubernetes\AeFinder.Kubernetes.csproj", "{AA8E4E21-8D54-4CBF-AFF1-F5C90BC99ED3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.App.Deploy", "src\AeFinder.App.Deploy\AeFinder.App.Deploy.csproj", "{A6E1BDC9-D4AD-47B0-9D9C-A28DCBBE027B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -223,6 +225,10 @@ Global
 		{AA8E4E21-8D54-4CBF-AFF1-F5C90BC99ED3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA8E4E21-8D54-4CBF-AFF1-F5C90BC99ED3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA8E4E21-8D54-4CBF-AFF1-F5C90BC99ED3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6E1BDC9-D4AD-47B0-9D9C-A28DCBBE027B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6E1BDC9-D4AD-47B0-9D9C-A28DCBBE027B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6E1BDC9-D4AD-47B0-9D9C-A28DCBBE027B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6E1BDC9-D4AD-47B0-9D9C-A28DCBBE027B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -262,6 +268,7 @@ Global
 		{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43} = {7AD57916-6546-4CC5-B6F1-F7AEAA526DE3}
 		{AA8E4E21-8D54-4CBF-AFF1-F5C90BC99ED3} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{3DAA91B3-2610-4138-B908-FB4917C86FDF} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
+		{A6E1BDC9-D4AD-47B0-9D9C-A28DCBBE027B} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {28315BFD-90E7-4E14-A2EA-F3D23AF4126F}

@@ -1,3 +1,4 @@
+using AeFinder.App.Deploy;
 using AeFinder.Kubernetes.Adapter;
 using AeFinder.Kubernetes.ResourceDefinition;
 using k8s;
@@ -7,7 +8,7 @@ using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.Kubernetes.Manager;
 
-public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
+public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 {
     // private readonly k8s.Kubernetes _k8sClient;
     private readonly KubernetesOptions _kubernetesOptions;
@@ -25,7 +26,7 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         _kubernetesOptions = kubernetesOptions.Value;
     }
 
-    public async Task<string> CreateNewAppPodAsync(string appId, string version, string imageName)
+    public async Task<string> CreateNewAppAsync(string appId, string version, string imageName)
     {
         await CheckNameSpaceAsync();
         
@@ -200,7 +201,7 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         return hostName + rulePath + "/graphql";
     }
 
-    public async Task DestroyAppPodAsync(string appId, string version)
+    public async Task DestroyAppAsync(string appId, string version)
     {
         //Delete full app deployment
         var fullTypeAppDeploymentName =
@@ -291,7 +292,7 @@ public class KubernetesAppManager:IKubernetesAppManager,ISingletonDependency
         }
     }
 
-    public async Task RestartAppPodAsync(string appId, string version)
+    public async Task RestartAppAsync(string appId, string version)
     {
         //Restart Full Client Type App Pod
         var fullClientDeploymentName =

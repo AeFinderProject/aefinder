@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AeFinder.App.Deploy;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
@@ -20,9 +21,9 @@ namespace AeFinder.BlockScan;
 public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
 {
     private readonly IClusterClient _clusterClient;
-    private readonly IKubernetesAppManager _kubernetesAppManager;
+    private readonly IAppDeployManager _kubernetesAppManager;
 
-    public BlockScanAppService(IClusterClient clusterClient, IKubernetesAppManager kubernetesAppManager)
+    public BlockScanAppService(IClusterClient clusterClient, IAppDeployManager kubernetesAppManager)
     {
         _clusterClient = clusterClient;
         _kubernetesAppManager = kubernetesAppManager;
@@ -279,7 +280,7 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
         Logger.LogDebug("ScanApp: {clientId} stop scan, version: {version}", clientId, version);
         await clientGrain.StopAsync(version);
         Logger.LogDebug("ScanApp: {clientId} stop scan, version: {version}", clientId, version);
-        await _kubernetesAppManager.DestroyAppPodAsync(clientId, version);
+        await _kubernetesAppManager.DestroyAppAsync(clientId, version);
     }
 
     public async Task<bool> IsRunningAsync(string chainId, string clientId, string version, string token)

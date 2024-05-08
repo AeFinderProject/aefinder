@@ -1,3 +1,4 @@
+using AeFinder.App.Deploy;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,6 @@ public class AeFinderBackGroundModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AeFinderBackGroundModule>(); });
-        context.Services.AddTransient<IKubernetesAppManager, KubernetesAppManager>();
+        context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
     }
 }

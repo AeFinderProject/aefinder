@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using AeFinder.App.Deploy;
 using AeFinder.Grains;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
@@ -66,7 +67,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
         ConfigureOrleans(context, configuration);
-        context.Services.AddTransient<IKubernetesAppManager, KubernetesAppManager>();
+        context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
         Configure<AbpAuditingOptions>(options =>
         {
             options.IsEnabled = false; //Disables the auditing system

@@ -1,3 +1,4 @@
+using AeFinder.App.Deploy;
 using AeFinder.Grains;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
@@ -29,7 +30,7 @@ public class AeFinderOrleansSiloModule : AbpModule
         context.Services.AddHostedService<AeFinderHostedService>();
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
-        context.Services.AddTransient<IKubernetesAppManager, KubernetesAppManager>();
+        context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
     }
 
     //Disable TokenCleanupService
