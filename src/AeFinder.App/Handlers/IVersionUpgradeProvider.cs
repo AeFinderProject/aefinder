@@ -58,12 +58,6 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
         await _clusterClient
             .GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId))
             .UpgradeVersionAsync();
-        await _distributedEventBus.PublishAsync(new AppUpgradeEto()
-        {
-            AppId = _appInfoProvider.AppId,
-            CurrentVersion = _currentVersion,
-            NewVersion = _appInfoProvider.Version
-        });
         _currentVersion = _appInfoProvider.Version;
     }
 
