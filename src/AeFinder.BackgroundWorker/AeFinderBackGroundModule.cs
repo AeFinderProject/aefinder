@@ -8,7 +8,8 @@ using Volo.Abp.Modularity;
 namespace AeFinder.BackgroundWorker;
 
 [DependsOn(typeof(AeFinderKubernetesModule),
-    typeof(AbpEventBusRabbitMqModule))]
+    typeof(AbpEventBusRabbitMqModule),
+    typeof(AeFinderApplicationModule))]
 public class AeFinderBackGroundModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
