@@ -1,3 +1,4 @@
+using AeFinder.App.Deploy;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.Studio.Eto;
 using Microsoft.Extensions.Logging;
@@ -9,9 +10,9 @@ namespace AeFinder.BackgroundWorker.EventHandler;
 public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITransientDependency
 {
     private readonly ILogger<AppUpgradeHandler> _logger;
-    private readonly IKubernetesAppManager _kubernetesAppManager;
+    private readonly IAppDeployManager _kubernetesAppManager;
 
-    public AppUpgradeHandler(ILogger<AppUpgradeHandler> logger, IKubernetesAppManager kubernetesAppManager)
+    public AppUpgradeHandler(ILogger<AppUpgradeHandler> logger, IAppDeployManager kubernetesAppManager)
     {
         _logger = logger;
         _kubernetesAppManager = kubernetesAppManager;
@@ -19,7 +20,7 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
 
     public async Task HandleEventAsync(AppUpgradeEto eventData)
     {
-        await _kubernetesAppManager.DestroyAppPodAsync(eventData.AppId, eventData.CurrentVersion);
+        await _kubernetesAppManager.DestroyAppAsync(eventData.AppId, eventData.CurrentVersion);
         _logger.LogInformation("destroy app pod, appId: {0}, newVersion: {1} currentVersion: {2}", eventData.AppId, eventData.NewVersion, eventData.CurrentVersion);
     }
 }
