@@ -2,11 +2,11 @@ using AeFinder.GraphQL;
 using AeFinder.Studio.Eto;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
-using Volo.Abp.EventBus;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.BackgroundWorker.EventHandler;
 
-public class AppCurrentVersionSetHandler : ILocalEventHandler<AppCurrentVersionSetEto>, ITransientDependency
+public class AppCurrentVersionSetHandler : IDistributedEventHandler<AppCurrentVersionSetEto>, ITransientDependency
 {
     private readonly ILogger<AppCurrentVersionSetHandler> _logger;
     private readonly IGraphQLAppService _graphQlAppService;
