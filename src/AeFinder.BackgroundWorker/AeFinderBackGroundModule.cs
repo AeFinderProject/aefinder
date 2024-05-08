@@ -6,6 +6,7 @@ using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
+using Volo.Abp.OpenIddict.Tokens;
 
 namespace AeFinder.BackgroundWorker;
 
@@ -20,5 +21,12 @@ public class AeFinderBackGroundModule : AbpModule
         context.Services.AddHostedService<AeFinderHostedService>();
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AeFinderBackGroundModule>(); });
         context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
+        ConfigureTokenCleanupService();
+    }
+    
+    //Disable TokenCleanupBackgroundWorker
+    private void ConfigureTokenCleanupService()
+    {
+        Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
 }
