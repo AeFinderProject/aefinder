@@ -33,11 +33,17 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Remove="appsettings.json" />
+        <Content Include="appsettings.json">
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
       <Content Update="appsettings.apollo.json">
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       </Content>
+      <None Include="bin\Debug\net7.0\appsettings.apollo.json" />
     </ItemGroup>
 
 </Project>
