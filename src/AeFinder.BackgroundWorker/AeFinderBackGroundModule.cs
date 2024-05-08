@@ -1,6 +1,7 @@
 using AeFinder.App.Deploy;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
+using AeFinder.MongoDb;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
@@ -13,6 +14,7 @@ namespace AeFinder.BackgroundWorker;
 [DependsOn(typeof(AbpAutofacModule),
     typeof(AeFinderKubernetesModule),
     typeof(AbpEventBusRabbitMqModule),
+    typeof(AeFinderMongoDbModule),
     typeof(AeFinderApplicationModule))]
 public class AeFinderBackGroundModule : AbpModule
 {
