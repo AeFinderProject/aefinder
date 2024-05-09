@@ -20,6 +20,7 @@ public class AeFinderBackGroundModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        context.Services.AddHttpClient();
         context.Services.AddHostedService<AeFinderHostedService>();
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AeFinderBackGroundModule>(); });
         context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
