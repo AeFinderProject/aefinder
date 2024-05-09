@@ -186,7 +186,25 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
     private async Task AssertAppVersionExistsAsync(string appId, string version)
     {
         var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
-        if (subscription == null || (!subscription.NewVersion.Version.Equals(version) && !subscription.CurrentVersion.Version.Equals(version)))
+        if (subscription == null || (subscription.NewVersion == null && subscription.CurrentVersion == null))
+        {
+            throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
+        }
+
+        if (subscription.NewVersion != null && subscription.CurrentVersion != null)
+        {
+            if (!subscription.NewVersion.Version.Equals(version) && !subscription.CurrentVersion.Version.Equals(version))
+            {
+                throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
+            }
+        }
+
+        if (subscription.NewVersion != null && !subscription.NewVersion.Version.Equals(version))
+        {
+            throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
+        }
+        
+        if (subscription.CurrentVersion != null && !subscription.CurrentVersion.Version.Equals(version))
         {
             throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
         }
