@@ -13,6 +13,7 @@ using Volo.Abp;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Caching;
+using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict.Tokens;
@@ -21,6 +22,7 @@ using Volo.Abp.Threading;
 namespace AeFinder.BackgroundWorker;
 
 [DependsOn(typeof(AbpAutofacModule),
+    typeof(AbpCachingStackExchangeRedisModule),
     typeof(AeFinderKubernetesModule),
     typeof(AbpEventBusRabbitMqModule),
     typeof(AeFinderMongoDbModule),

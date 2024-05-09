@@ -9,11 +9,15 @@ using AeFinder.Kubernetes;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Volo.Abp;
+using Volo.Abp.Auditing;
 using Volo.Abp.Caching;
 using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.GraphQL;
 
+[RemoteService(IsEnabled = false)]
+[DisableAuditing]
 public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingletonDependency
 {
     private readonly IHttpClientFactory _httpClientFactory;
