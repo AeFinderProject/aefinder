@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -56,12 +57,20 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
                 var allSubscription = await _blockScanAppService.GetSubscriptionAsync(appId);
                 if (allSubscription == null || allSubscription.CurrentVersion == null)
                 {
-                    throw new Exception("No available current version, please contact admin check subscription info");
+                    var exceptionResponse = new HttpResponseMessage(HttpStatusCode.NotFound)
+                    {
+                        Content = new StringContent("No available current version, please contact admin check subscription info.")
+                    };
+                    return exceptionResponse;
                 }
                 currentVersion = allSubscription.CurrentVersion.Version;
                 if (currentVersion.IsNullOrEmpty())
                 {
-                    throw new Exception("No current version, please contact admin check subscription info");
+                    var exceptionResponse = new HttpResponseMessage(HttpStatusCode.NotFound)
+                    {
+                        Content = new StringContent("No current version, please contact admin check subscription info.")
+                    };
+                    return exceptionResponse;
                 }
                 //set app current version to cache
                 await CacheAppCurrentVersionAsync(appId, currentVersion);
