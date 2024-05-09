@@ -198,16 +198,19 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
                 throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
             }
         }
-
-        if (subscription.NewVersion != null && !subscription.NewVersion.Version.Equals(version))
+        else
         {
-            throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
-        }
+            if (subscription.NewVersion != null && !subscription.NewVersion.Version.Equals(version))
+            {
+                throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
+            }
         
-        if (subscription.CurrentVersion != null && !subscription.CurrentVersion.Version.Equals(version))
-        {
-            throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
+            if (subscription.CurrentVersion != null && !subscription.CurrentVersion.Version.Equals(version))
+            {
+                throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
+            }
         }
+
     }
 
     public async Task<string> GetAppIdAsync()
