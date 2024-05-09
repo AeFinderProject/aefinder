@@ -35,6 +35,7 @@ public class AeFinderBackGroundModule : AbpModule
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AeFinderBackGroundModule>(); });
         context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
         ConfigureTokenCleanupService();
+        ConfigureCache(configuration);
         
         context.Services.AddSingleton<IClusterClient>(o =>
         {
