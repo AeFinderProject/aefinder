@@ -188,26 +188,26 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         if (subscription == null || (subscription.NewVersion == null && subscription.CurrentVersion == null))
         {
-            throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
+            throw new UserFriendlyException($"subscription not exists. appId={appId} version={version}");
         }
 
         if (subscription.NewVersion != null && subscription.CurrentVersion != null)
         {
             if (!subscription.NewVersion.Version.Equals(version) && !subscription.CurrentVersion.Version.Equals(version))
             {
-                throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
+                throw new UserFriendlyException($"subscription not exists. appId={appId} version={version}");
             }
         }
         else
         {
             if (subscription.NewVersion != null && !subscription.NewVersion.Version.Equals(version))
             {
-                throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
+                throw new UserFriendlyException($"subscription not exists. appId={appId} version={version}");
             }
         
             if (subscription.CurrentVersion != null && !subscription.CurrentVersion.Version.Equals(version))
             {
-                throw new UserFriendlyException($"subscription not exists. appId={1} version={2}", appId, version);
+                throw new UserFriendlyException($"subscription not exists. appId={appId} version={version}");
             }
         }
 
