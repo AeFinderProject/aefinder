@@ -48,6 +48,14 @@ public class BlockPusherInfoGrainTests : AeFinderGrainTestBase
         var pushMode = await blockPusherInfoGrain.GetPushModeAsync();
         pushMode.ShouldBe(BlockPushMode.HistoricalBlock);
 
+        await blockPusherInfoGrain.SetHandleHistoricalBlockTimeAsync(DateTime.UtcNow);
+        var isNeedRecover = await blockPusherInfoGrain.IsNeedRecoverAsync();
+        isNeedRecover.ShouldBeFalse();
+        
+        await blockPusherInfoGrain.SetHandleHistoricalBlockTimeAsync(DateTime.UtcNow.AddMinutes(-10));
+        isNeedRecover = await blockPusherInfoGrain.IsNeedRecoverAsync();
+        isNeedRecover.ShouldBeTrue();
+
         var subscribe = await blockPusherInfoGrain.GetSubscriptionAsync();
         subscribe.ChainId.ShouldBe(subscription.SubscriptionItems[0].ChainId);
         subscribe.OnlyConfirmed.ShouldBe(subscription.SubscriptionItems[0].OnlyConfirmed);
@@ -70,6 +78,9 @@ public class BlockPusherInfoGrainTests : AeFinderGrainTestBase
         await blockPusherInfoGrain.SetNewBlockStartHeightAsync(80);
         pushMode = await blockPusherInfoGrain.GetPushModeAsync();
         pushMode.ShouldBe(BlockPushMode.NewBlock);
+        
+        isNeedRecover = await blockPusherInfoGrain.IsNeedRecoverAsync();
+        isNeedRecover.ShouldBeFalse();
 
         ids = await pusherManagerGrain.GetBlockPusherIdsByChainAsync("AELF");
         ids.Count.ShouldBe(1);
