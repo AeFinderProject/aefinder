@@ -3,6 +3,9 @@ filebeat.inputs:
     enabled: true
     paths:
       - /app/Logs/*.log
+    fields:
+      environment: "localTest"
+    fields_under_root: true
     processors:
       - add_kubernetes_metadata:
           in_cluster: true
