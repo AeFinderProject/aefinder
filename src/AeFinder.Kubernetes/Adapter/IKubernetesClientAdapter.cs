@@ -5,7 +5,10 @@ namespace AeFinder.Kubernetes.Adapter;
 public interface IKubernetesClientAdapter
 {
     Task<V1NamespaceList> ListNamespaceAsync();
-    
+
+    Task<V1Namespace> ReadNamespaceAsync(string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken));
+
     Task<V1ConfigMapList> ListConfigMapAsync(string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
 

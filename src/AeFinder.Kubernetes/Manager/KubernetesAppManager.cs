@@ -15,13 +15,11 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
     private readonly ILogger<KubernetesAppManager> _logger;
     private readonly IKubernetesClientAdapter _kubernetesClientAdapter;
 
-    public KubernetesAppManager(ILogger<KubernetesAppManager> logger, 
-        // k8s.Kubernetes k8sClient,
+    public KubernetesAppManager(ILogger<KubernetesAppManager> logger,
         IKubernetesClientAdapter kubernetesClientAdapter,
         IOptionsSnapshot<KubernetesOptions> kubernetesOptions)
     {
         _logger = logger;
-        // _k8sClient = k8sClient;
         _kubernetesClientAdapter = kubernetesClientAdapter;
         _kubernetesOptions = kubernetesOptions.Value;
     }
@@ -37,19 +35,27 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 
     private async Task CheckNameSpaceAsync()
     {
-        var namespaces = await _kubernetesClientAdapter.ListNamespaceAsync();
+        // var namespaces = await _kubernetesClientAdapter.ListNamespaceAsync();
 
         var nameSpace = KubernetesConstants.AppNameSpace;
-        // 检查特定的命名空间是否存在
-        var namespaceExists = namespaces.Items.Any(n => n.Metadata.Name == nameSpace);
+        // var namespaceExists = namespaces.Items.Any(n => n.Metadata.Name == nameSpace);
+        //
+        // if (!namespaceExists)
+        // {
+        //     _logger.LogInformation($"Namespace '{nameSpace}' does not exist.");
+        //     var newNamespace = NameSpaceHelper.CreateNameSpaceDefinition(nameSpace);
+        //     var result = await _kubernetesClientAdapter.CreateNamespaceAsync(newNamespace);
+        //     _logger.LogInformation($"Namespace created: {result.Metadata.Name}");
+        // }
         
-        if (!namespaceExists)
+        try
         {
-            _logger.LogInformation($"Namespace '{nameSpace}' does not exist.");
-            var newNamespace = NameSpaceHelper.CreateNameSpaceDefinition(nameSpace);
-            // 创建命名空间
-            var result = await _kubernetesClientAdapter.CreateNamespaceAsync(newNamespace);
-            _logger.LogInformation($"Namespace created: {result.Metadata.Name}");
+            await _kubernetesClientAdapter.ReadNamespaceAsync(nameSpace);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Namespace '{nameSpace}' does not exist. An error occurred: {ex.Message}");
+            throw ex;
         }
     }
 
