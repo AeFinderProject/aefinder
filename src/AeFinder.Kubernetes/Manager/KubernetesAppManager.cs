@@ -26,7 +26,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 
     public async Task<string> CreateNewAppAsync(string appId, string version, string imageName)
     {
-        await CheckNameSpaceAsync();
+        // await CheckNameSpaceAsync();
         
         await CreateFullClientTypeAppPodAsync(appId, version, imageName);
 
