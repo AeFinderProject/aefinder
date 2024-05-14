@@ -105,9 +105,11 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
         if (info != null)
         {
-            var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(info.AppId));
+            var appSubscriptionGrain =
+                _clusterClient.GetGrain<IAppSubscriptionGrain>(
+                    GrainIdHelper.GenerateAppSubscriptionGrainId(info.AppId));
             var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
-            var allSubscriptionDto= ObjectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
+            var allSubscriptionDto = _objectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
             info.allSubscription = allSubscriptionDto;
         }
 
@@ -152,9 +154,14 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         {
             _codeAuditor.Audit(dllBytes);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            // throw new UserFriendlyException("audit failed: " + e.Message);
+            if (ex.Message.Contains("Code did not pass audit"))
+            {
+                throw new UserFriendlyException("Dll file audit failed: " + ex.Message);
+            }
+
+            throw ex;
         }
 
         var userId = CurrentUser.GetId().ToString("N");
@@ -248,9 +255,14 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         {
             _codeAuditor.Audit(dllBytes);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            // throw new UserFriendlyException("audit failed: " + e.Message);
+            if (ex.Message.Contains("Code did not pass audit"))
+            {
+                throw new UserFriendlyException("Dll file audit failed: " + ex.Message);
+            }
+
+            throw ex;
         }
 
         var appId = await GetAppIdAsync();
