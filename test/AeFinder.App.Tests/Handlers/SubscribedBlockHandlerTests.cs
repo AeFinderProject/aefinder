@@ -57,6 +57,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                 }
             }
         }, new byte[] { });
+        _appInfoProvider.SetVersion(currentVersion);
 
         var blockPusherInfoGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(
             GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, currentVersion, chainId));
