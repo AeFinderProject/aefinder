@@ -109,7 +109,9 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
                 _clusterClient.GetGrain<IAppSubscriptionGrain>(
                     GrainIdHelper.GenerateAppSubscriptionGrainId(info.AppId));
             var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
+            _logger.LogInformation("receive request GetAeFinderApp: allSubscription= {0}", JsonSerializer.Serialize(allSubscription));
             var allSubscriptionDto = _objectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
+            _logger.LogInformation("receive request GetAeFinderApp: allSubscriptionDto= {0}", JsonSerializer.Serialize(allSubscriptionDto));
             info.allSubscription = allSubscriptionDto;
         }
 
