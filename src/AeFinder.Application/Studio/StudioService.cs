@@ -205,31 +205,21 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
     private async Task AssertAppVersionExistsAsync(string appId, string version)
     {
         var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
+
+        // Check if the subscription exists and if there is any version information
         if (subscription == null || (subscription.NewVersion == null && subscription.CurrentVersion == null))
         {
-            throw new UserFriendlyException($"subscription not exists. appId={appId} version={version}");
+            throw new UserFriendlyException($"Subscription not exists. appId={appId}, version={version}");
         }
 
-        if (subscription.NewVersion != null && subscription.CurrentVersion != null)
-        {
-            if (!subscription.NewVersion.Version.Equals(version) && !subscription.CurrentVersion.Version.Equals(version))
-            {
-                throw new UserFriendlyException($"subscription not exists. appId={appId} version={version}");
-            }
-        }
-        else
-        {
-            if (subscription.NewVersion != null && !subscription.NewVersion.Version.Equals(version))
-            {
-                throw new UserFriendlyException($"subscription not exists. appId={appId} version={version}");
-            }
-        
-            if (subscription.CurrentVersion != null && !subscription.CurrentVersion.Version.Equals(version))
-            {
-                throw new UserFriendlyException($"subscription not exists. appId={appId} version={version}");
-            }
-        }
+        // Check whether the version matches the new version or the current version
+        bool isNewVersionValid = subscription.NewVersion != null && subscription.NewVersion.Version.Equals(version);
+        bool isCurrentVersionValid = subscription.CurrentVersion != null && subscription.CurrentVersion.Version.Equals(version);
 
+        if (!isNewVersionValid && !isCurrentVersionValid)
+        {
+            throw new UserFriendlyException($"Subscription not exists. appId={appId}, version={version}");
+        }
     }
 
     public async Task<string> GetAppIdAsync()

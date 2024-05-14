@@ -43,40 +43,18 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
     {
         var serverUrl = "";
         string originName = _kubernetesOption.OriginName.TrimEnd('/');
-        if (!version.IsNullOrEmpty())
+
+        string currentVersion = await EnsureCurrentVersion(appId, version);
+        if (currentVersion == null)
         {
-            serverUrl = $"{originName}/{appId}/{version}/graphql";
-        }
-        else
-        {
-            //Get app current version
-            var currentVersion = await GetAppCurrentVersionCacheAsync(appId);
-            if (currentVersion.IsNullOrEmpty())
+            var exceptionResponse = new HttpResponseMessage(HttpStatusCode.NotFound)
             {
-                //get app current version from grain
-                var allSubscription = await _blockScanAppService.GetSubscriptionAsync(appId);
-                if (allSubscription == null || allSubscription.CurrentVersion == null)
-                {
-                    var exceptionResponse = new HttpResponseMessage(HttpStatusCode.NotFound)
-                    {
-                        Content = new StringContent("No available current version, please contact admin check subscription info.")
-                    };
-                    return exceptionResponse;
-                }
-                currentVersion = allSubscription.CurrentVersion.Version;
-                if (currentVersion.IsNullOrEmpty())
-                {
-                    var exceptionResponse = new HttpResponseMessage(HttpStatusCode.NotFound)
-                    {
-                        Content = new StringContent("No current version, please contact admin check subscription info.")
-                    };
-                    return exceptionResponse;
-                }
-                //set app current version to cache
-                await CacheAppCurrentVersionAsync(appId, currentVersion);
-            }
-            serverUrl = $"{originName}/{appId}/{currentVersion}/graphql";
+                Content = new StringContent("No available current version, please contact admin check subscription info.")
+            };
+            return exceptionResponse;
         }
+
+        serverUrl = $"{originName}/{appId}/{currentVersion}/graphql";
 
         _logger.LogInformation("RequestForward:" + serverUrl);
         var json = JsonSerializer.Serialize(new { query = input.Query, variables = input.Variables });
@@ -86,6 +64,34 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
         var response = await httpClient.PostAsync(serverUrl, content);
 
         return response;
+    }
+
+    private async Task<string> EnsureCurrentVersion(string appId, string version)
+    {
+        if (!version.IsNullOrEmpty())
+        {
+            return version;
+        }
+
+        // Try to get the current version from the cache
+        var currentVersion = await GetAppCurrentVersionCacheAsync(appId);
+        if (!currentVersion.IsNullOrEmpty())
+        {
+            return currentVersion;
+        }
+
+        // Get subscription information
+        var allSubscription = await _blockScanAppService.GetSubscriptionAsync(appId);
+        if (allSubscription?.CurrentVersion == null || allSubscription.CurrentVersion.Version.IsNullOrEmpty())
+        {
+            return null;
+        }
+
+        currentVersion = allSubscription.CurrentVersion.Version;
+        // Update cache
+        await CacheAppCurrentVersionAsync(appId, currentVersion);
+
+        return currentVersion;
     }
 
     public async Task CacheAppCurrentVersionAsync(string appId, string currentVersion)
