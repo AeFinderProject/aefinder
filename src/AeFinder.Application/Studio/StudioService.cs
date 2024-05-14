@@ -102,6 +102,15 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         _logger.LogInformation("receive request GetAeFinderApp: adminId= {0}", userId);
         var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
         var info = await userAppGrain.GetAppInfo();
+
+        if (info != null)
+        {
+            var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(info.AppId));
+            var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
+            var allSubscriptionDto= ObjectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
+            info.allSubscription = allSubscriptionDto;
+        }
+
         return info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info);
     }
 
