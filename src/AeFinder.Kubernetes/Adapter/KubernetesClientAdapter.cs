@@ -21,6 +21,14 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
         return namespaces;
     }
 
+    public async Task<V1Namespace> ReadNamespaceAsync(string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var namespaces =
+            await _k8sClient.ReadNamespaceAsync(namespaceParameter, cancellationToken: cancellationToken);
+        return namespaces;
+    }
+
     public async Task<V1ConfigMapList> ListConfigMapAsync(string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -117,6 +125,20 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
         CancellationToken cancellationToken = default(CancellationToken))
     {
         return await _k8sClient.DeleteNamespacedIngressAsync(name, namespaceParameter,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task<V1Deployment> ReadNamespacedDeploymentAsync(string name, string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return await _k8sClient.ReadNamespacedDeploymentAsync(name, namespaceParameter,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task<V1Deployment> ReplaceNamespacedDeploymentAsync(V1Deployment deployment,string name, string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return await _k8sClient.ReplaceNamespacedDeploymentAsync(deployment, name, namespaceParameter,
             cancellationToken: cancellationToken);
     }
 }

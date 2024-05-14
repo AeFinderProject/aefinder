@@ -36,7 +36,7 @@ public class BlockScanController : AeFinderController
     public virtual async Task<Task> StopAsync(string version)
     {
         var appId = await _studioService.GetAppIdAsync();
-        return _blockScanAppService.StopAsync(appId, version);
+        return  _blockScanAppService.StopAsync(appId, version);
     }
 
     [HttpPost]

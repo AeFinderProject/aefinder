@@ -1,9 +1,10 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using AeFinder.App.Deploy;
 using AeFinder.Grains;
-using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Kubernetes;
+using AeFinder.Kubernetes.Manager;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -46,6 +47,7 @@ namespace AeFinder;
     typeof(AeFinderApplicationModule),
     typeof(AeFinderMongoDbModule),
     typeof(AbpAspNetCoreSerilogModule),
+    typeof(AeFinderKubernetesModule),
     typeof(AbpSwashbuckleModule)
 )]
 public class AeFinderHttpApiHostModule : AbpModule
@@ -65,7 +67,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
         ConfigureOrleans(context, configuration);
-
+        context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
         Configure<AbpAuditingOptions>(options =>
         {
             options.IsEnabled = false; //Disables the auditing system

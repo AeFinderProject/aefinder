@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using AeFinder.BlockScan;
 
 namespace AeFinder.Studio;
 
 public class AeFinderAppInfoDto : AeFinderAppInfo
 {
+    public AllSubscriptionDto allSubscription { get; set; }
 }
 
 public class AeFinderAppInfo : IValidatableObject

@@ -1,3 +1,4 @@
+using AeFinder.App.Deploy;
 using AeFinder.BlockSync;
 using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
@@ -31,8 +32,8 @@ namespace AeFinder;
     typeof(AeFinderGrainsModule),
     typeof(AElfEntityMappingModule),
     typeof(AElfEntityMappingElasticsearchModule),
-    typeof(AeFinderKubernetesModule),
-    typeof(AeFinderCodeOpsModule)
+    typeof(AeFinderCodeOpsModule),
+    typeof(AeFinderAppDeployModule)
 )]
 public class AeFinderApplicationModule : AbpModule
 {
@@ -47,6 +48,5 @@ public class AeFinderApplicationModule : AbpModule
         Configure<AuthOption>(configuration.GetSection("AuthOption"));
         context.Services.AddTransient<ICodeAuditor, CodeAuditor>();
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
-        context.Services.AddTransient<IKubernetesAppManager, KubernetesAppManager>();
     }
 }

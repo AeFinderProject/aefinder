@@ -3,12 +3,21 @@ filebeat.inputs:
     enabled: true
     paths:
       - /app/Logs/*.log
+    fields:
+      environment: "localTest"
+    fields_under_root: true
     processors:
       - add_kubernetes_metadata:
           in_cluster: true
           matchers:
             - logs_path:
                 logs_path: "/app/Logs/"
+      - decode_json_fields:
+          fields: [ "message" ]
+          target: "app_log"
+          overwrite_keys: true
+          add_error_key: true
+
 
 setup.template.settings:
   index.number_of_shards: 5
@@ -22,7 +31,8 @@ setup.template.pattern: "aefinder-app-[AppId]-[ClientType]-log-index-*"
 setup.ilm.enabled: false
 
 output.elasticsearch:
-  hosts: ["192.168.0.1:9200", "192.168.0.2:9200", "192.168.0.3:9200"]
+  hosts: [
+          "http://localhost:9200"]
   index: "aefinder-app-[AppId]-[ClientType]-log-index-%{+yyyy-MM}"
   # username: "your_username"
   # password: "your_password"
