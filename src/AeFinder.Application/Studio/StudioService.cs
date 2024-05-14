@@ -103,19 +103,19 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
         var info = await userAppGrain.GetAppInfo();
 
-        if (info != null)
+        var appInfo = (info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info));
+        
+        if (appInfo != null)
         {
             var appSubscriptionGrain =
                 _clusterClient.GetGrain<IAppSubscriptionGrain>(
-                    GrainIdHelper.GenerateAppSubscriptionGrainId(info.AppId));
+                    GrainIdHelper.GenerateAppSubscriptionGrainId(appInfo.AppId));
             var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
-            _logger.LogInformation("receive request GetAeFinderApp: allSubscription= {0}", JsonSerializer.Serialize(allSubscription));
             var allSubscriptionDto = _objectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
-            _logger.LogInformation("receive request GetAeFinderApp: allSubscriptionDto= {0}", JsonSerializer.Serialize(allSubscriptionDto));
-            info.allSubscription = allSubscriptionDto;
+            appInfo.allSubscription = allSubscriptionDto;
         }
 
-        return info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info);
+        return appInfo;
     }
 
     public async Task<List<AeFinderAppInfo>> GetAeFinderAppListAsync()

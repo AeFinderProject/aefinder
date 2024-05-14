@@ -6,6 +6,7 @@ namespace AeFinder.Studio;
 
 public class AeFinderAppInfoDto : AeFinderAppInfo
 {
+    public AllSubscriptionDto allSubscription { get; set; }
 }
 
 public class AeFinderAppInfo : IValidatableObject
@@ -17,8 +18,6 @@ public class AeFinderAppInfo : IValidatableObject
     public string AppId { get; set; }
 
     public string Name { get; set; }
-    
-    public AllSubscriptionDto allSubscription { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
