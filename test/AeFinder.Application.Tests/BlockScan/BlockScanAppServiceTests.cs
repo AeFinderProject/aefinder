@@ -38,7 +38,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
             }
         };
 
-        var version1 = await _blockScanAppService.AddSubscriptionAsync(appId, subscriptionInput);
+        var version1 = await _blockScanAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1]);
 
         var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
@@ -85,7 +85,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
             }
         };
         
-        var version2 = await _blockScanAppService.AddSubscriptionAsync(appId, subscriptionInput2);
+        var version2 = await _blockScanAppService.AddSubscriptionAsync(appId, subscriptionInput2, new byte[1]);
         var id2 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version2, chainId);
         
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
@@ -131,7 +131,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
             }
         };
         
-        var version3 = await _blockScanAppService.AddSubscriptionAsync(appId, subscriptionInfo3);
+        var version3 = await _blockScanAppService.AddSubscriptionAsync(appId, subscriptionInfo3, new byte[1]);
         var id3 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version3, chainId);
 
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
