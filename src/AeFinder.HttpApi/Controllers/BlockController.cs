@@ -52,4 +52,12 @@ public class BlockController : AbpController
     {
         return _blockAppService.GetSummariesAsync(input);
     }
+    
+    [HttpPost]
+    [Route("blockstest")]
+    [Authorize]
+    public virtual Task<List<BlockDto>> GetBlocksTestAsync(GetBlocksTestInput input)
+    {
+        return _blockAppService.GetBlocksTestAsync(input);
+    }
 }

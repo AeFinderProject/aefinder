@@ -365,4 +365,78 @@ public class BlockAppService:ApplicationService,IBlockAppService
          resultList = ObjectMapper.Map<List<SummaryIndex>, List<SummaryDto>>(list);
          return resultList;
      }
+
+     // public Task<List<BlockDto>> GetBlocksTestAsync(GetBlocksTestInput input)
+     // {
+     //     if ((input.EndBlockHeight - input.StartBlockHeight + 1) > _apiOptions.BlockQueryHeightInterval)
+     //     {
+     //         input.EndBlockHeight = input.StartBlockHeight + _apiOptions.BlockQueryHeightInterval - 1;
+     //     }
+     //     List<BlockDto> items = new List<BlockDto>();
+     //     Expression<Func<BlockIndex, bool>> expression = p =>
+     //         p.ChainId == input.ChainId && p.BlockHeight >= input.StartBlockHeight &&
+     //         p.BlockHeight <= input.EndBlockHeight;
+     //     if (!string.IsNullOrEmpty(input.BlockHash))
+     //     {
+     //         expression = p =>
+     //             p.ChainId == input.ChainId && p.BlockHash == input.BlockHash;
+     //     }
+     //     if (input.IsOnlyConfirmed)
+     //     {
+     //         expression = expression.And(p => p.Confirmed == input.IsOnlyConfirmed);
+     //     }
+     //     var queryable = await _blockIndexRepository.GetQueryableAsync();
+     //     var list = queryable.Where(expression).OrderBy(p => p.BlockHeight).After(new object[]{input.ResultCount,input.StartValue}).ToList();
+     //
+     //     // var list = queryable.Where(expression).OrderBy(p => p.BlockHeight).Skip(0).Take(10000).ToList();
+     //     if (list.Count == 10000)
+     //     {
+     //         list = queryable.Where(expression).OrderBy(p => p.BlockHeight).Skip(0).Take(20000).ToList();
+     //         if (list.Count == 20000)
+     //         {
+     //             list = queryable.Where(expression).OrderBy(p => p.BlockHeight).Skip(0).Take(int.MaxValue).ToList();
+     //         }
+     //     }
+     //     items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list);
+     //     List<BlockDto> resultList = new List<BlockDto>();
+     //     resultList.AddRange(items);
+     //     return resultList;
+     // }
+
+     public async Task<List<BlockDto>> GetBlocksTestAsync(GetBlocksTestInput input)
+     {
+         if ((input.EndBlockHeight - input.StartBlockHeight + 1) > _apiOptions.BlockQueryHeightInterval)
+         {
+             input.EndBlockHeight = input.StartBlockHeight + _apiOptions.BlockQueryHeightInterval - 1;
+         }
+         List<BlockDto> items = new List<BlockDto>();
+         Expression<Func<BlockIndex, bool>> expression = p =>
+             p.ChainId == input.ChainId && p.BlockHeight >= input.StartBlockHeight &&
+             p.BlockHeight <= input.EndBlockHeight;
+         if (!string.IsNullOrEmpty(input.BlockHash))
+         {
+             expression = p =>
+                 p.ChainId == input.ChainId && p.BlockHash == input.BlockHash;
+         }
+         if (input.IsOnlyConfirmed)
+         {
+             expression = expression.And(p => p.Confirmed == input.IsOnlyConfirmed);
+         }
+         var queryable = await _blockIndexRepository.GetQueryableAsync();
+         var list = queryable.Where(expression).OrderBy(p => p.BlockHeight).After(new object[]{input.ResultCount,input.StartValue}).ToList();
+     
+         // var list = queryable.Where(expression).OrderBy(p => p.BlockHeight).Skip(0).Take(10000).ToList();
+         if (list.Count == 10000)
+         {
+             list = queryable.Where(expression).OrderBy(p => p.BlockHeight).Skip(0).Take(20000).ToList();
+             if (list.Count == 20000)
+             {
+                 list = queryable.Where(expression).OrderBy(p => p.BlockHeight).Skip(0).Take(int.MaxValue).ToList();
+             }
+         }
+         items = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list);
+         List<BlockDto> resultList = new List<BlockDto>();
+         resultList.AddRange(items);
+         return resultList;
+     }
 }
