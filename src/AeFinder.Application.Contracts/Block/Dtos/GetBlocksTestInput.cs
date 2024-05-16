@@ -15,4 +15,8 @@ public class GetBlocksTestInput
     public long SearAfterBlockHeight { get; set; }
     
     public string SearAfterCHainId { get; set; }
+    
+    public string StartWithStr { get; set; }
+    public string EndWithStr { get; set; }
+    public string ContainsStr { get; set; }
 }

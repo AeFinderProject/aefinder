@@ -422,9 +422,25 @@ public class BlockAppService:ApplicationService,IBlockAppService
          {
              expression = expression.And(p => p.Confirmed == input.IsOnlyConfirmed);
          }
+
+         if (!string.IsNullOrEmpty(input.EndWithStr))
+         {
+             expression.And(p => p.ChainId.EndsWith(input.EndWithStr));
+         }
+
+         if (!string.IsNullOrEmpty(input.StartWithStr))
+         {
+             expression.And(p => p.ChainId.StartsWith(input.StartWithStr));
+         }
+
+         if (!string.IsNullOrEmpty(input.ContainsStr))
+         {
+             expression.And(p => p.Miner.Contains(input.ContainsStr));
+         }
+
          var queryable = await _blockIndexRepository.GetQueryableAsync();
          var list = queryable.Where(expression).OrderByDescending(p=>p.ChainId).OrderBy(p => p.BlockHeight).After(new object[]{input.SearAfterCHainId, input.SearAfterBlockHeight}).ToList();
-     
+
          // var list = queryable.Where(expression).OrderBy(p => p.BlockHeight).Skip(0).Take(10000).ToList();
          // if (list.Count == 10000)
          // {
