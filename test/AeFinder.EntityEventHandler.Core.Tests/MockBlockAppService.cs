@@ -51,4 +51,9 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
     {
         throw new NotImplementedException();
     }
+
+    public Task<List<BlockDto>> GetBlocksTestAsync(GetBlocksTestInput input)
+    {
+        throw new NotImplementedException();
+    }
 }
