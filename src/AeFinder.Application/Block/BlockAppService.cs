@@ -7,6 +7,7 @@ using AeFinder.Block.Dtos;
 using AeFinder.Entities.Es;
 using AElf.EntityMapping.Repositories;
 using Microsoft.Extensions.Options;
+using Serilog;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Auditing;
@@ -438,6 +439,8 @@ public class BlockAppService:ApplicationService,IBlockAppService
              expression.And(p => p.Miner.Contains(input.ContainsStr));
          }
 
+         Log.Logger.Information(expression.ToString());
+         
          var queryable = await _blockIndexRepository.GetQueryableAsync();
          
          var list = queryable.Where(expression).ToList();
