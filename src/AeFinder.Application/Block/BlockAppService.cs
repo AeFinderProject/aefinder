@@ -426,16 +426,19 @@ public class BlockAppService:ApplicationService,IBlockAppService
 
          if (!string.IsNullOrEmpty(input.EndWithStr))
          {
+             Log.Logger.Information(input.EndWithStr);
              expression.And(p => p.ChainId.EndsWith(input.EndWithStr));
          }
 
          if (!string.IsNullOrEmpty(input.StartWithStr))
          {
+             Log.Logger.Information(input.StartWithStr);
              expression.And(p => p.ChainId.StartsWith(input.StartWithStr));
          }
 
          if (!string.IsNullOrEmpty(input.ContainsStr))
          {
+             Log.Logger.Information(input.ContainsStr);
              expression.And(p => p.Miner.Contains(input.ContainsStr));
          }
 
