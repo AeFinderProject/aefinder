@@ -12,7 +12,7 @@ public class GetBlocksTestInput
     public List<FilterContractEventInput> Events { get; set; }
     public string BlockHash { get; set; }
     
-    public string SearAfterBlockHeight { get; set; }
+    public long SearAfterBlockHeight { get; set; }
     
     public string SearAfterCHainId { get; set; }
 }
