@@ -51,6 +51,20 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
         return await client.AddSubscriptionV2Async(subscription, dll);
     }
 
+    public async Task UpdateSubscriptionInfoAsync(string appId, string version,
+        SubscriptionManifestDto manifestDto)
+    {
+        Logger.LogInformation($"Client: {appId} version: {version} update subscribe: {JsonSerializer.Serialize(manifestDto)}");
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+
+        var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifestDto);
+        var currentSubscriptionInfos = await appSubscriptionGrain.GetSubscriptionAsync(version);
+        
+        //TODO: Check input subscription info if is valid
+        
+        
+        await appSubscriptionGrain.UpdateSubscriptionAsync(version, subscription);
+    }
 
     // public async Task UpdateSubscriptionInfoAsync(string clientId, string version, List<SubscriptionInfo> subscriptionInfos)
     // {

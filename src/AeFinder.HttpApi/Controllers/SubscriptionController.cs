@@ -28,6 +28,14 @@ public class SubscriptionController : AeFinderController
         var appId = await _studioService.GetAppIdAsync();
         return await _blockScanAppService.AddSubscriptionAsync(appId, input);
     }
+    
+    [HttpPut("{Version}")]
+    [Authorize]
+    public virtual async Task UpdateSubscriptionInfoAsync(string Version, [FromBody]SubscriptionManifestDto subscriptionManifest)
+    {
+        var appId = await _studioService.GetAppIdAsync();
+        await _blockScanAppService.UpdateSubscriptionInfoAsync(appId, Version, subscriptionManifest);
+    }
 
     [HttpGet]
     [Authorize]
