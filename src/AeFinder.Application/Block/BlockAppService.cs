@@ -423,7 +423,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
              expression = expression.And(p => p.Confirmed == input.IsOnlyConfirmed);
          }
          var queryable = await _blockIndexRepository.GetQueryableAsync();
-         var list = queryable.Where(expression).OrderByDescending(p => p.BlockHeight).OrderBy(p=>p.ChainId).After(new object[]{input.SearAfterBlockHeight,input.SearAfterCHainId}).ToList();
+         var list = queryable.Where(expression).OrderByDescending(p=>p.ChainId).OrderBy(p => p.BlockHeight).After(new object[]{input.SearAfterBlockHeight,input.SearAfterCHainId}).ToList();
      
          // var list = queryable.Where(expression).OrderBy(p => p.BlockHeight).Skip(0).Take(10000).ToList();
          // if (list.Count == 10000)
