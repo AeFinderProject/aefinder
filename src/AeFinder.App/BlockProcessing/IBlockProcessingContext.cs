@@ -8,10 +8,8 @@ public interface IBlockProcessingContext
     public string BlockHash { get; }
     public long BlockHeight { get; }
     public DateTime BlockTime { get; }
-    public bool IsRollback { get; }
 
-    void SetContext(string chainId, string blockHash, long blockHeight, DateTime blockTime,
-        bool isRollback);
+    void SetContext(string chainId, string blockHash, long blockHeight, DateTime blockTime);
 }
 
 public class BlockProcessingContext : IBlockProcessingContext,ISingletonDependency
@@ -20,16 +18,13 @@ public class BlockProcessingContext : IBlockProcessingContext,ISingletonDependen
     public string BlockHash { get; private set; }
     public long BlockHeight { get; private set; }
     public DateTime BlockTime { get; private set; }
-    public bool IsRollback { get; private set; }
 
-    public void SetContext(string chainId, string blockHash, long blockHeight, DateTime blockTime,
-        bool isRollback)
+    public void SetContext(string chainId, string blockHash, long blockHeight, DateTime blockTime)
     {
         ChainId = chainId;
         BlockHash = blockHash;
         BlockHeight = blockHeight;
         BlockTime = blockTime;
-        IsRollback = isRollback;
     }
 }
 

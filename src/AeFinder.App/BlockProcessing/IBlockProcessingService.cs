@@ -1,6 +1,8 @@
 using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
 using AeFinder.Grains.Grain.BlockStates;
+using AeFinder.Sdk;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Local;
 
@@ -16,15 +18,23 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IFullBlockProcessor _fullBlockProcessor;
     private readonly IAppDataIndexManagerProvider _appDataIndexManagerProvider;
+    private readonly IAppStateProvider _appStateProvider;
+    private readonly IAppInfoProvider _appInfoProvider;
+
+    private readonly IServiceProvider _serviceProvider;
     
     public ILocalEventBus LocalEventBus { get; set; }
 
     public BlockProcessingService(IAppBlockStateSetProvider appBlockStateSetProvider,
-        IFullBlockProcessor fullBlockProcessor, IAppDataIndexManagerProvider appDataIndexManagerProvider)
+        IFullBlockProcessor fullBlockProcessor, IAppDataIndexManagerProvider appDataIndexManagerProvider,
+        IAppStateProvider appStateProvider, IAppInfoProvider appInfoProvider, IServiceProvider serviceProvider)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _fullBlockProcessor = fullBlockProcessor;
         _appDataIndexManagerProvider = appDataIndexManagerProvider;
+        _appStateProvider = appStateProvider;
+        _appInfoProvider = appInfoProvider;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task ProcessAsync(string chainId, string branchBlockHash)
@@ -37,21 +47,42 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
 
         var rollbackBlockStateSets = await GetToBeRollbackBlockStateSetsAsync(chainId, blockStateSets);
 
+        var longestChainBlockStateSet = blockStateSets.Last();
+        
+        var appDataIndexProviderInterfaceType = typeof(IAppDataIndexProvider<>);
         foreach (var blockStateSet in rollbackBlockStateSets)
         {
-            await _fullBlockProcessor.ProcessAsync(blockStateSet.Block, true);
+            foreach (var change in blockStateSet.Changes)
+            {
+                var longestChainState = await _appStateProvider.GetStateAsync(chainId, change.Key,
+                    new BlockIndex(longestChainBlockStateSet.Block.BlockHash, longestChainBlockStateSet.Block.BlockHeight));
+                
+                var type = Type.GetType(change.Value.Type);
+                var entity = JsonConvert.DeserializeObject(change.Value.Value, type);
+                var constructedInterfaceType = appDataIndexProviderInterfaceType.MakeGenericType(type);
+                var service = _serviceProvider.GetService(constructedInterfaceType);
+                
+                if (longestChainState != null)
+                {
+                    var method = constructedInterfaceType.GetMethod("AddOrUpdateAsync");
+                    method.Invoke(service,new object[]{entity, GetIndexName(type.Name)});
+                }
+                else
+                {
+                    var method = constructedInterfaceType.GetMethod("DeleteAsync");
+                    method.Invoke(service,new object[]{entity, GetIndexName(type.Name)});
+                }
+            }
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, false);
         }
 
         foreach (var blockStateSet in blockStateSets)
         {
-            await _fullBlockProcessor.ProcessAsync(blockStateSet.Block, false);
+            await _fullBlockProcessor.ProcessAsync(blockStateSet.Block);
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, true);
         }
 
         await _appDataIndexManagerProvider.SavaDataAsync();
-
-        var longestChainBlockStateSet = blockStateSets.Last();
 
         await _appBlockStateSetProvider.SetBestChainBlockStateSetAsync(chainId,
             longestChainBlockStateSet.Block.BlockHash);
@@ -74,7 +105,7 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
             });
         }
     }
-
+    
     private async Task<List<BlockStateSet>> GetToBeProcessedBlockStateSetsAsync(string chainId, string branchBlockHash)
     {
         var blockStateSets = new List<BlockStateSet>();
@@ -118,7 +149,6 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
             blockHash = blockStateSet.Block.PreviousBlockHash;
         }
 
-        rollbackBlockStateSets.Reverse();
         return rollbackBlockStateSets;
     }
     
@@ -165,5 +195,10 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
         }
 
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);
+    }
+    
+    private string GetIndexName(string entityName)
+    {
+        return $"{_appInfoProvider.AppId}-{_appInfoProvider.Version}.{entityName}".ToLower();
     }
 }

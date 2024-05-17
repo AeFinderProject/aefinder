@@ -9,7 +9,7 @@ namespace AeFinder.App.BlockProcessing;
 
 public interface IFullBlockProcessor
 {
-    Task ProcessAsync(BlockWithTransactionDto block, bool isRollback);
+    Task ProcessAsync(BlockWithTransactionDto block);
 }
 
 public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
@@ -37,11 +37,11 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         _blockProcessingContext = blockProcessingContext;
     }
 
-    public async Task ProcessAsync(BlockWithTransactionDto block, bool isRollback)
+    public async Task ProcessAsync(BlockWithTransactionDto block)
     {
         _operationLimitManager.ResetAll();
         _blockProcessingContext.SetContext(block.ChainId, block.BlockHash, block.BlockHeight,
-            block.BlockTime, isRollback);
+            block.BlockTime);
         
         var blockProcessor = _blockProcessors.FirstOrDefault();
         if (blockProcessor != null)
