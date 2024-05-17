@@ -76,7 +76,8 @@ public class Repository<TEntity> : RepositoryBase<TEntity>, IRepository<TEntity>
                !string.IsNullOrWhiteSpace(entity.Metadata.ChainId);
         if (!checkResult)
         {
-            throw new Exception($"Invalid entity: {JsonConvert.SerializeObject(entity)}");
+            throw new Exception(
+                $"Invalid entity: ChainId: {entity.Metadata.ChainId}, Id: {entity.Id}, BlockHash: {entity.Metadata.Block.BlockHash}, BlockHeight: {entity.Metadata.Block.BlockHeight}");
         }
     }
 
