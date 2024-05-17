@@ -1,3 +1,5 @@
+using AElf.EntityMapping;
+using AElf.EntityMapping.Elasticsearch;
 using GraphQL;
 using Microsoft.Extensions.Logging;
 using Nest;
@@ -32,9 +34,11 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         using System.Collections.Generic;
         using Nest;
         using AeFinder.Sdk.Entities;
+        using AElf.EntityMapping.Elasticsearch.Linq;
 
         namespace TestApp;
 
+        [NestedAttributes(""Test"")]
         public class TestAppEntity : AeFinderEntity, IAeFinderEntity
         {
             public int IntValue { get; set; }
@@ -56,6 +60,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
                 [FromServices] IObjectMapper objectMapper, string chainId)
             {
                 var query = await repository.GetQueryableAsync();
+                query = query.After(new object[]{1,100});
                 var list = query.ToList();
 
                 return objectMapper.Map<List<TestAppEntity>, List<TestAppEntityDto>>(list);
@@ -85,7 +90,9 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         }
         ";
         AddAssemblies(typeof(FromServicesAttribute).Assembly.Location, typeof(IObjectMapper).Assembly.Location,
-            typeof(AbpModule).Assembly.Location, typeof(KeywordAttribute).Assembly.Location);
+            typeof(AbpModule).Assembly.Location, typeof(KeywordAttribute).Assembly.Location,
+            typeof(AElfEntityMappingModule).Assembly.Location,
+            typeof(AElfEntityMappingElasticsearchModule).Assembly.Location);
         var assemblyDefinition = CompileToAssemblyDefinition(sourceCode);
 
         var validationResult = _whitelistValidator.Validate(assemblyDefinition.MainModule, CancellationToken.None);
