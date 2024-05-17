@@ -20,21 +20,21 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
     private readonly IAppDataIndexManagerProvider _appDataIndexManagerProvider;
     private readonly IAppStateProvider _appStateProvider;
     private readonly IAppInfoProvider _appInfoProvider;
-
-    private readonly IServiceProvider _serviceProvider;
-    
+    private readonly IGeneralAppDataIndexProvider _generalAppDataIndexProvider;
+    private readonly IRuntimeTypeProvider _runtimeTypeProvider;
     public ILocalEventBus LocalEventBus { get; set; }
 
     public BlockProcessingService(IAppBlockStateSetProvider appBlockStateSetProvider,
         IFullBlockProcessor fullBlockProcessor, IAppDataIndexManagerProvider appDataIndexManagerProvider,
-        IAppStateProvider appStateProvider, IAppInfoProvider appInfoProvider, IServiceProvider serviceProvider)
+        IAppStateProvider appStateProvider, IAppInfoProvider appInfoProvider, IGeneralAppDataIndexProvider generalAppDataIndexProvider, IRuntimeTypeProvider runtimeTypeProvider)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _fullBlockProcessor = fullBlockProcessor;
         _appDataIndexManagerProvider = appDataIndexManagerProvider;
         _appStateProvider = appStateProvider;
         _appInfoProvider = appInfoProvider;
-        _serviceProvider = serviceProvider;
+        _generalAppDataIndexProvider = generalAppDataIndexProvider;
+        _runtimeTypeProvider = runtimeTypeProvider;
     }
 
     public async Task ProcessAsync(string chainId, string branchBlockHash)
@@ -49,7 +49,6 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
 
         var longestChainBlockStateSet = blockStateSets.Last();
         
-        var appDataIndexProviderInterfaceType = typeof(IAppDataIndexProvider<>);
         foreach (var blockStateSet in rollbackBlockStateSets)
         {
             foreach (var change in blockStateSet.Changes)
@@ -57,20 +56,16 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
                 var longestChainState = await _appStateProvider.GetStateAsync(chainId, change.Key,
                     new BlockIndex(longestChainBlockStateSet.Block.BlockHash, longestChainBlockStateSet.Block.BlockHeight));
                 
-                var type = Type.GetType(change.Value.Type);
+                var type = _runtimeTypeProvider.GetType(change.Value.Type);
                 var entity = JsonConvert.DeserializeObject(change.Value.Value, type);
-                var constructedInterfaceType = appDataIndexProviderInterfaceType.MakeGenericType(type);
-                var service = _serviceProvider.GetService(constructedInterfaceType);
                 
                 if (longestChainState != null)
                 {
-                    var method = constructedInterfaceType.GetMethod("AddOrUpdateAsync");
-                    method.Invoke(service,new object[]{entity, GetIndexName(type.Name)});
+                    await _generalAppDataIndexProvider.AddOrUpdateAsync(entity, type);
                 }
                 else
                 {
-                    var method = constructedInterfaceType.GetMethod("DeleteAsync");
-                    method.Invoke(service,new object[]{entity, GetIndexName(type.Name)});
+                    await _generalAppDataIndexProvider.DeleteAsync(entity, type);
                 }
             }
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, false);
