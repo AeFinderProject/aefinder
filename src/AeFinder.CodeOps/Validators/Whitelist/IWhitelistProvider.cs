@@ -6,7 +6,6 @@ using AElf.Cryptography.SecretSharing;
 using AElf.CSharp.Core;
 using GraphQL;
 using Nest;
-using Volo.Abp.AutoMapper;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Modularity;
 
@@ -51,6 +50,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.AutoMapper"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.Core"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("AeFinder.Domain"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("Newtonsoft.Json"), Trust.Full)
             .Assembly(typeof(AeFinderEntity).Assembly, Trust.Full) // AeFinder.Sdk
             .Assembly(typeof(Address).Assembly, Trust.Full) // AElf.Types
             .Assembly(typeof(IMethod).Assembly, Trust.Full) // AElf.CSharp.Core
@@ -77,6 +77,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type(typeof(NotSupportedException), Permission.Allowed) // Required for protobuf generated code
                 .Type(typeof(ArgumentOutOfRangeException), Permission.Allowed) // From AEDPoS
                 .Type(nameof(DateTime), Permission.Allowed)
+                .Type(nameof(DateTimeOffset), Permission.Allowed)
                 .Type(typeof(void).Name, Permission.Allowed)
                 .Type(nameof(Object), Permission.Allowed)
                 .Type(nameof(Type), Permission.Allowed)
@@ -170,6 +171,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type("AeFinderEntity`1", Permission.Allowed)
             )
             .Namespace("Volo.Abp.DependencyInjection", Permission.Allowed)
+            .Namespace("Newtonsoft.Json", Permission.Allowed)
             ;
     }
 

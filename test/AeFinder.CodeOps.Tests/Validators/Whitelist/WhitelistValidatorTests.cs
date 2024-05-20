@@ -1,6 +1,7 @@
 using GraphQL;
 using Microsoft.Extensions.Logging;
 using Nest;
+using Newtonsoft.Json;
 using Shouldly;
 using Volo.Abp.Modularity;
 using Volo.Abp.ObjectMapping;
@@ -32,6 +33,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         using System.Collections.Generic;
         using Nest;
         using AeFinder.Sdk.Entities;
+        using Newtonsoft.Json;
 
         namespace TestApp;
 
@@ -73,6 +75,8 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         {
             public override async Task ProcessAsync(AeFinder.Sdk.Processor.Block block, BlockContext context)
             {
+                var json = JsonConvert.SerializeObject(block);
+                var time = DateTimeOffset.FromUnixTimeMilliseconds(1).UtcDateTime;
                 throw new NotImplementedException();
             }
         }
@@ -85,7 +89,8 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         }
         ";
         AddAssemblies(typeof(FromServicesAttribute).Assembly.Location, typeof(IObjectMapper).Assembly.Location,
-            typeof(AbpModule).Assembly.Location, typeof(KeywordAttribute).Assembly.Location);
+            typeof(AbpModule).Assembly.Location, typeof(KeywordAttribute).Assembly.Location,
+            typeof(JsonConvert).Assembly.Location);
         var assemblyDefinition = CompileToAssemblyDefinition(sourceCode);
 
         var validationResult = _whitelistValidator.Validate(assemblyDefinition.MainModule, CancellationToken.None);
