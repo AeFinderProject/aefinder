@@ -9,7 +9,7 @@
 
     <ItemGroup>
       <PackageReference Include="AElf.CSharp.Core" Version="1.6.0" />
-      <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc10" />
+      <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc11" />
       <PackageReference Include="AElf.Types" Version="1.6.0" />
       <PackageReference Include="Google.Protobuf" Version="3.19.4" />
       <PackageReference Include="GraphQL" Version="7.0.2" />
