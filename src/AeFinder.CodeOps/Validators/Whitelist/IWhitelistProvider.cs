@@ -4,6 +4,8 @@ using AElf.Types;
 using AeFinder.Sdk.Entities;
 using AElf.Cryptography.SecretSharing;
 using AElf.CSharp.Core;
+using AElf.EntityMapping;
+using AElf.EntityMapping.Elasticsearch;
 using GraphQL;
 using Nest;
 using Volo.Abp.DependencyInjection;
@@ -55,6 +57,8 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Assembly(typeof(Address).Assembly, Trust.Full) // AElf.Types
             .Assembly(typeof(IMethod).Assembly, Trust.Full) // AElf.CSharp.Core
             .Assembly(typeof(SecretSharingHelper).Assembly, Trust.Full) // AElf.Cryptography
+            .Assembly(typeof(AElfEntityMappingModule).Assembly, Trust.Partial)
+            .Assembly(typeof(AElfEntityMappingElasticsearchModule).Assembly, Trust.Partial)
             ;
     }
 
@@ -172,6 +176,9 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             )
             .Namespace("Volo.Abp.DependencyInjection", Permission.Allowed)
             .Namespace("Newtonsoft.Json", Permission.Allowed)
+            .Namespace("AElf.EntityMapping.Elasticsearch.Linq", Permission.Denied, type => type
+                .Type("NestedAttributes", Permission.Allowed)
+            )
             ;
     }
 
