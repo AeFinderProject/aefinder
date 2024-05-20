@@ -29,6 +29,17 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         await _appBlockStateSetProvider.InitializeAsync(chainId);
 
         var longestChainBlockStateSet = await _appBlockStateSetProvider.GetLongestChainBlockStateSetAsync(chainId);
+
+        if (!longestChainBlockStateSet.Processed)
+        {
+            await LocalEventBus.PublishAsync(new LongestChainFoundEventData()
+            {
+                ChainId = chainId,
+                BlockHash = longestChainBlockStateSet.Block.BlockHash,
+                BlockHeight = longestChainBlockStateSet.Block.BlockHeight
+            });
+        }
+
         var lastIrreversibleBlockStateSet =
             await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
         var lastIrreversibleBlockHeight = lastIrreversibleBlockStateSet?.Block.BlockHeight ?? 0;
@@ -134,4 +145,6 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
             });
         }
     }
+    
+    
 }
