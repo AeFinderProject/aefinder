@@ -29,8 +29,9 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         await _appBlockStateSetProvider.InitializeAsync(chainId);
 
         var longestChainBlockStateSet = await _appBlockStateSetProvider.GetLongestChainBlockStateSetAsync(chainId);
+        var bestChainBlockStateSet = await _appBlockStateSetProvider.GetBestChainBlockStateSetAsync(chainId);
 
-        if (!longestChainBlockStateSet.Processed)
+        if (longestChainBlockStateSet?.Block.BlockHash != bestChainBlockStateSet?.Block.BlockHash)
         {
             await LocalEventBus.PublishAsync(new LongestChainFoundEventData()
             {
