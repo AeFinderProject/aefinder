@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
@@ -61,9 +62,45 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
         var currentSubscriptionInfos = await appSubscriptionGrain.GetSubscriptionAsync(version);
         
         //TODO: Check input subscription info if is valid
+        CheckInputSubscriptionInfoIsValid(subscription.SubscriptionItems, currentSubscriptionInfos.SubscriptionItems);
+        
         
         
         await appSubscriptionGrain.UpdateSubscriptionAsync(version, subscription);
+    }
+
+    private void CheckInputSubscriptionInfoIsValid(List<Subscription> subscriptionInfos,
+        List<Subscription> currentSubscriptionInfos)
+    {
+        foreach (var subscriptionInfo in subscriptionInfos)
+        {
+            var subscriptionInfoForCheckChainId = currentSubscriptionInfos.FindAll(i =>
+                (i.ChainId == subscriptionInfo.ChainId));
+            if (subscriptionInfoForCheckChainId == null || subscriptionInfoForCheckChainId.Count == 0)
+            {
+                var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add new chain";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+
+            var currentSubscriptionInfo = subscriptionInfoForCheckChainId.FirstOrDefault();
+            if ((currentSubscriptionInfo.TransactionConditions == null ||
+                 currentSubscriptionInfo.TransactionConditions.Count == 0) &&
+                (subscriptionInfo.TransactionConditions != null && subscriptionInfo.TransactionConditions.Count > 0))
+            {
+                var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add transactionConditions";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+            
+            if ((currentSubscriptionInfo.LogEventConditions == null ||
+                 currentSubscriptionInfo.LogEventConditions.Count == 0) &&
+                (subscriptionInfo.LogEventConditions != null && subscriptionInfo.LogEventConditions.Count > 0))
+            {
+                var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add logEventConditions";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+            
+            
+        }
     }
 
     // public async Task UpdateSubscriptionInfoAsync(string clientId, string version, List<SubscriptionInfo> subscriptionInfos)
