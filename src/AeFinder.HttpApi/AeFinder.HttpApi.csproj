@@ -17,6 +17,7 @@
     <PackageReference Include="JsonModelBinder" Version="2.1.1" />
     <PackageReference Include="Volo.Abp.Account.HttpApi" Version="7.0.0" />
     <PackageReference Include="Volo.Abp.AspNetCore.SignalR" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.Http.Client.IdentityModel" Version="7.0.0" />
     <PackageReference Include="Volo.Abp.Identity.HttpApi" Version="7.0.0" />
     <PackageReference Include="Volo.Abp.PermissionManagement.HttpApi" Version="7.0.0" />
     <PackageReference Include="Volo.Abp.TenantManagement.HttpApi" Version="7.0.0" />
