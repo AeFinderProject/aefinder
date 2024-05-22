@@ -1,33 +1,68 @@
 using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
 using AeFinder.Block.Dtos;
+using AeFinder.BlockScan;
+using AeFinder.Grains;
 using AElf.Types;
 using AeFinder.Grains.Grain.BlockStates;
+using AeFinder.Grains.Grain.Subscriptions;
 using Microsoft.Extensions.Logging;
+using Orleans;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Local;
+using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.App.BlockProcessing;
 
 public class BlockAttachService : IBlockAttachService, ITransientDependency
 {
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
-
+    private readonly IAppInfoProvider _appInfoProvider;
+    private readonly IClusterClient _clusterClient;
+    private readonly IBlockFilterAppService _blockFilterAppService;
+    private readonly IObjectMapper _objectMapper;
     private readonly ILogger<BlockAttachService> _logger;
+
+    private const int MaxRequestBlockCount = 100;
 
     public ILocalEventBus LocalEventBus { get; set; }
 
     public BlockAttachService(IAppBlockStateSetProvider appBlockStateSetProvider,
-        ILogger<BlockAttachService> logger)
+        ILogger<BlockAttachService> logger, IAppInfoProvider appInfoProvider, IClusterClient clusterClient,
+        IBlockFilterAppService blockFilterAppService, IObjectMapper objectMapper)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _logger = logger;
+        _appInfoProvider = appInfoProvider;
+        _clusterClient = clusterClient;
+        _blockFilterAppService = blockFilterAppService;
+        _objectMapper = objectMapper;
     }
 
     public async Task AttachBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks)
     {
         await _appBlockStateSetProvider.InitializeAsync(chainId);
 
+        var firstBlock = blocks.First();
+        var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, firstBlock.BlockHash);
+        var previousBlockStateSet =
+            await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, firstBlock.PreviousBlockHash);
+        var currentBlockStateSetCount = await _appBlockStateSetProvider.GetBlockStateSetCountAsync(chainId);
+        if (currentBlockStateSetCount != 0 && previousBlockStateSet == null &&
+            firstBlock.PreviousBlockHash != Hash.Empty.ToHex() && blockStateSet == null)
+        {
+            _logger.LogWarning(
+                "Handle unlinked block. BlockHeight: {BlockHeight}, BlockHash: {BlockHash}, Previous BlockHash: {PreviousBlockHash}.",
+                firstBlock.BlockHeight, firstBlock.BlockHash, firstBlock.PreviousBlockHash);
+
+            await HandleUnlinkedBlockAsync(chainId, firstBlock);
+        }
+
+        await HandleBlocksAsync(chainId, blocks);
+    }
+
+    private async Task HandleBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks)
+    {
         var longestChainBlockStateSet = await _appBlockStateSetProvider.GetLongestChainBlockStateSetAsync(chainId);
         var lastIrreversibleBlockStateSet =
             await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
@@ -132,6 +167,70 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 BlockHash = newLongestChainBlockStateSet.Block.BlockHash,
                 BlockHeight = newLongestChainBlockStateSet.Block.BlockHeight
             });
+        }
+    }
+
+    private async Task HandleUnlinkedBlockAsync(string chainId, BlockWithTransactionDto block)
+    { 
+        var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
+        var subscription = await client.GetSubscriptionAsync(_appInfoProvider.Version);
+        var subscriptionItem = subscription.SubscriptionItems.First(o => o.ChainId == chainId);
+
+        var lastIrreversibleBlockState = await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
+        var startBlockHeight = 0L;
+        if (lastIrreversibleBlockState != null)
+        {
+            startBlockHeight = lastIrreversibleBlockState.Block.BlockHeight + 1;
+        }
+        else
+        {
+            startBlockHeight = subscriptionItem.StartBlockNumber;
+        }
+
+        var previousBlockHash = block.PreviousBlockHash;
+        var previousBlockHeight = block.BlockHeight - 1;
+
+        while (true)
+        {
+            var endBlockHeight = Math.Min(startBlockHeight + MaxRequestBlockCount - 1, block.BlockHeight - 1);
+            var blocks = await _blockFilterAppService.GetBlocksAsync(new GetSubscriptionTransactionsInput
+            {
+                ChainId = chainId,
+                StartBlockHeight = startBlockHeight,
+                EndBlockHeight = endBlockHeight,
+                IsOnlyConfirmed = block.Confirmed
+            });
+
+            blocks = await _blockFilterAppService.FilterBlocksAsync(blocks,
+                _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(subscriptionItem
+                    .TransactionConditions),
+                _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(subscriptionItem
+                    .LogEventConditions));
+
+            if (block.Confirmed)
+            {
+                blocks = await _blockFilterAppService.FilterIncompleteConfirmedBlocksAsync(chainId, blocks, previousBlockHash,
+                    previousBlockHeight);
+            }
+            else
+            {
+                blocks = await _blockFilterAppService.FilterIncompleteBlocksAsync(chainId, blocks);
+            }
+
+            if (blocks.Count == 0)
+            {
+                return;
+            }
+
+            await HandleBlocksAsync(chainId, blocks);
+            
+            if (endBlockHeight == block.BlockHeight - 1)
+            {
+                return;
+            }
+            startBlockHeight = endBlockHeight + 1;
+            previousBlockHash = blocks.Last().BlockHash;
+            previousBlockHeight = blocks.Last().BlockHeight;
         }
     }
 }

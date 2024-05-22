@@ -1,6 +1,9 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Subscriptions;
 using Shouldly;
 using Volo.Abp.EventBus.Local;
 using Xunit;
@@ -11,12 +14,14 @@ public class BlockAttachServiceTests : AeFinderAppTestBase
 {
     private readonly IBlockAttachService _blockAttachService;
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
+    private readonly IAppInfoProvider _appInfoProvider;
     private readonly ILocalEventBus _localEventBus;
 
     public BlockAttachServiceTests()
     {
         _blockAttachService = GetRequiredService<IBlockAttachService>();
         _appBlockStateSetProvider = GetRequiredService<IAppBlockStateSetProvider>();
+        _appInfoProvider = GetRequiredService<IAppInfoProvider>();
         _localEventBus = GetRequiredService<ILocalEventBus>();
     }
 
@@ -37,6 +42,23 @@ public class BlockAttachServiceTests : AeFinderAppTestBase
             lastIrreversibleBlockStateSetFoundEventData = d;
             return Task.CompletedTask;
         });
+        
+        var subscriptionManifest1 = new SubscriptionManifest
+        {
+            SubscriptionItems = new List<Subscription>()
+            {
+                new()
+                {
+                    ChainId = chainId,
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 100
+                }
+            }
+        };
+        
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
+        var version = await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { });
+        _appInfoProvider.SetVersion(version); 
 
         {
             var blocks = BlockCreationHelper.CreateBlock(100, 10, "BlockHash", chainId);

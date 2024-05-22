@@ -8,7 +8,8 @@ namespace AeFinder.Grains;
 
 [DependsOn(
     typeof(AeFinderDomainTestModule),
-    typeof(AeFinderGrainsModule)
+    typeof(AeFinderGrainsModule),
+    typeof(AeFinderApplicationModule)
     )]
 public class AeFinderGrainTestModule : AbpModule
 {
