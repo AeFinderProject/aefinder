@@ -26,7 +26,7 @@ public class GeneralAppDataIndexProvider : IGeneralAppDataIndexProvider, ISingle
     public Task AddOrUpdateAsync(object entity, Type type)
     {
         var provider = GetProvider(type);
-        var method = GetMethod(type, AddOrUpdateMethodName);
+        var method = GetMethod(type, AddOrUpdateMethodName, _addOrUpdateMethods);
         method.Invoke(provider, new[] { entity, GetIndexName(type) });
         return Task.CompletedTask;
     }
@@ -34,7 +34,7 @@ public class GeneralAppDataIndexProvider : IGeneralAppDataIndexProvider, ISingle
     public Task DeleteAsync(object entity, Type type)
     {
         var provider = GetProvider(type);
-        var method = GetMethod(type, DeleteMethodName);
+        var method = GetMethod(type, DeleteMethodName, _deleteMethods);
         method.Invoke(provider, new[] { entity, GetIndexName(type) });
         return Task.CompletedTask;
     }
@@ -53,16 +53,9 @@ public class GeneralAppDataIndexProvider : IGeneralAppDataIndexProvider, ISingle
         return provider;
     }
 
-    private MethodInfo GetMethod(Type type, string methodName)
+    private MethodInfo GetMethod(Type type, string methodName, ConcurrentDictionary<string,MethodInfo> methodCache)
     {
-        var methods = methodName switch
-        {
-            AddOrUpdateMethodName => _addOrUpdateMethods,
-            DeleteMethodName => _deleteMethods,
-            _ => throw new Exception($"Invalid method name: {methodName}")
-        };
-
-        if (methods.TryGetValue(type.FullName, out var method))
+        if (methodCache.TryGetValue(type.FullName, out var method))
         {
             return method;
         }
@@ -74,7 +67,7 @@ public class GeneralAppDataIndexProvider : IGeneralAppDataIndexProvider, ISingle
             throw new Exception($"Cannot find method: {methodName} from type: {type.FullName}");
         }
 
-        methods[type.FullName] = method;
+        methodCache[type.FullName] = method;
 
         return method;
     }

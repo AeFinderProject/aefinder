@@ -57,14 +57,13 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
                     new BlockIndex(longestChainBlockStateSet.Block.BlockHash, longestChainBlockStateSet.Block.BlockHeight));
                 
                 var type = _runtimeTypeProvider.GetType(change.Value.Type);
-                var entity = JsonConvert.DeserializeObject(change.Value.Value, type);
-                
                 if (longestChainState != null)
                 {
-                    await _generalAppDataIndexProvider.AddOrUpdateAsync(entity, type);
+                    await _generalAppDataIndexProvider.AddOrUpdateAsync(longestChainState, type);
                 }
                 else
                 {
+                    var entity = JsonConvert.DeserializeObject(change.Value.Value, type);
                     await _generalAppDataIndexProvider.DeleteAsync(entity, type);
                 }
             }
@@ -190,10 +189,5 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
         }
 
         await _appBlockStateSetProvider.UpdateBlockStateSetAsync(chainId, blockStateSet);
-    }
-    
-    private string GetIndexName(string entityName)
-    {
-        return $"{_appInfoProvider.AppId}-{_appInfoProvider.Version}.{entityName}".ToLower();
     }
 }
