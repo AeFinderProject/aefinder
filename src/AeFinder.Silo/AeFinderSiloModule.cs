@@ -1,7 +1,5 @@
 using AeFinder.App.Deploy;
 using AeFinder.Grains;
-using AeFinder.Kubernetes;
-using AeFinder.Kubernetes.Manager;
 using AeFinder.MongoDb;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +28,7 @@ public class AeFinderOrleansSiloModule : AbpModule
         context.Services.AddHostedService<AeFinderHostedService>();
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
-        context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
+        // context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
     }
 
     //Disable TokenCleanupService

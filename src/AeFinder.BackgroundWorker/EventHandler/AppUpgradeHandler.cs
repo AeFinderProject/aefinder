@@ -1,5 +1,4 @@
 using AeFinder.App.Deploy;
-using AeFinder.Kubernetes.Manager;
 using AeFinder.Studio.Eto;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
