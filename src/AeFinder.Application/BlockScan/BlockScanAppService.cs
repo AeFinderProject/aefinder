@@ -74,31 +74,111 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
     {
         foreach (var subscriptionInfo in subscriptionInfos)
         {
-            var subscriptionInfoForCheckChainId = currentSubscriptionInfos.FindAll(i =>
+            var currentSubscriptionInfoForCheckChainId = currentSubscriptionInfos.FindAll(i =>
                 (i.ChainId == subscriptionInfo.ChainId));
-            if (subscriptionInfoForCheckChainId == null || subscriptionInfoForCheckChainId.Count == 0)
+            if (currentSubscriptionInfoForCheckChainId == null || currentSubscriptionInfoForCheckChainId.Count == 0)
             {
                 var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add new chain";
                 throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
 
-            var currentSubscriptionInfo = subscriptionInfoForCheckChainId.FirstOrDefault();
-            if ((currentSubscriptionInfo.TransactionConditions == null ||
-                 currentSubscriptionInfo.TransactionConditions.Count == 0) &&
-                (subscriptionInfo.TransactionConditions != null && subscriptionInfo.TransactionConditions.Count > 0))
+            // var currentSubscriptionInfo = subscriptionInfoForCheckChainId.FirstOrDefault();
+            // if ((currentSubscriptionInfo.TransactionConditions == null ||
+            //      currentSubscriptionInfo.TransactionConditions.Count == 0) &&
+            //     (subscriptionInfo.TransactionConditions != null && subscriptionInfo.TransactionConditions.Count > 0))
+            // {
+            //     var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add transactionConditions";
+            //     throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            // }
+            //
+            // if ((currentSubscriptionInfo.LogEventConditions == null ||
+            //      currentSubscriptionInfo.LogEventConditions.Count == 0) &&
+            //     (subscriptionInfo.LogEventConditions != null && subscriptionInfo.LogEventConditions.Count > 0))
+            // {
+            //     var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add logEventConditions";
+            //     throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            // }
+            
+            var currentSubscriptionInfoForCheckStartBlockNumber = currentSubscriptionInfoForCheckChainId.FindAll(i =>
+                i.StartBlockNumber == subscriptionInfo.StartBlockNumber);
+            if (currentSubscriptionInfoForCheckStartBlockNumber == null || currentSubscriptionInfoForCheckStartBlockNumber.Count == 0)
             {
-                var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add transactionConditions";
+                var errorMessage =
+                    $"Invalid start block number {subscriptionInfo.StartBlockNumber}, can not update start block number in chain {subscriptionInfo.ChainId}";
                 throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
             
-            if ((currentSubscriptionInfo.LogEventConditions == null ||
-                 currentSubscriptionInfo.LogEventConditions.Count == 0) &&
-                (subscriptionInfo.LogEventConditions != null && subscriptionInfo.LogEventConditions.Count > 0))
+            var currentSubscriptionForCheckIsOnlyConfirmed = currentSubscriptionInfoForCheckStartBlockNumber.FindAll(i =>
+                i.OnlyConfirmed == subscriptionInfo.OnlyConfirmed);
+            if (currentSubscriptionForCheckIsOnlyConfirmed == null || currentSubscriptionForCheckIsOnlyConfirmed.Count == 0)
             {
-                var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add logEventConditions";
+                var errorMessage =
+                    $"Invalid only confirmed block {subscriptionInfo.OnlyConfirmed}, can not update only confirmed block in chain {subscriptionInfo.ChainId}";
                 throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
             }
             
+            var currentSubscriptionInfoForCheckTransactionConditions = currentSubscriptionForCheckIsOnlyConfirmed.FirstOrDefault();
+            if (currentSubscriptionInfoForCheckTransactionConditions.TransactionConditions != null &&
+                currentSubscriptionInfoForCheckTransactionConditions.TransactionConditions.Count > 0)
+            {
+                foreach (var transactionCondition in currentSubscriptionInfoForCheckTransactionConditions.TransactionConditions)
+                {
+                    var currentTo = transactionCondition.To;
+                    var subscriptionInfoForCheckTransactionCondition =
+                        subscriptionInfo.TransactionConditions.FirstOrDefault(i =>
+                            (i.To == currentTo));
+                    if (subscriptionInfoForCheckTransactionCondition == null)
+                    {
+                        var errorMessage =
+                            $"Can not remove subscribe transaction condition to address {currentTo} in chain {subscriptionInfo.ChainId}";
+                        throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+                    }
+
+                    foreach (var methodName in transactionCondition.MethodNames)
+                    {
+                        var inputMethodName=subscriptionInfoForCheckTransactionCondition.MethodNames.FirstOrDefault(i => i == methodName);
+                        if (inputMethodName.IsNullOrEmpty())
+                        {
+                            var errorMessage =
+                                $"Can not remove subscribe transaction condition method name {methodName} in chain {subscriptionInfo.ChainId} to address {currentTo}";
+                            throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+                        }
+                    }
+                }
+                
+            }
+            
+            
+            var currentSubscriptionInfoForCheckLogEventConditions = currentSubscriptionForCheckIsOnlyConfirmed.FirstOrDefault();
+            if (currentSubscriptionInfoForCheckLogEventConditions.LogEventConditions != null &&
+                currentSubscriptionInfoForCheckLogEventConditions.LogEventConditions.Count > 0)
+            {
+                foreach (var logEventCondition in currentSubscriptionInfoForCheckLogEventConditions.LogEventConditions)
+                {
+                    var currentContractAddress = logEventCondition.ContractAddress;
+                    var subscriptionInfoForCheckLogEventCondition =
+                        subscriptionInfo.LogEventConditions.FirstOrDefault(i =>
+                            (i.ContractAddress == currentContractAddress));
+                    if (subscriptionInfoForCheckLogEventCondition == null)
+                    {
+                        var errorMessage =
+                            $"Can not remove subscribe log event condition contract address {currentContractAddress} in chain {subscriptionInfo.ChainId}";
+                        throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+                    }
+
+                    foreach (var eventName in logEventCondition.EventNames)
+                    {
+                        var inputEventName=subscriptionInfoForCheckLogEventCondition.EventNames.FirstOrDefault(i => i == eventName);
+                        if (inputEventName.IsNullOrEmpty())
+                        {
+                            var errorMessage =
+                                $"Can not remove subscribe transaction condition method name {eventName} in chain {subscriptionInfo.ChainId} contract address {currentContractAddress}";
+                            throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+                        }
+                    }
+                }
+                
+            }
             
         }
     }
