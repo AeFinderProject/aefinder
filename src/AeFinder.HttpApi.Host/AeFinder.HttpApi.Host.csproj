@@ -38,10 +38,9 @@
     <Content Remove="Logs\**" />
     <EmbeddedResource Remove="Logs\**" />
     <None Remove="Logs\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="KubeConfig" />
+    <Content Update="AppConfigTemplate\filebeat-template.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

@@ -16,4 +16,8 @@
       <None Remove="AppConfigTemplate\filebeat-template.yml" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\AeFinder.App.Deploy\AeFinder.App.Deploy.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -2,10 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AeFinder.App.Deploy;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Kubernetes.Manager;
+using AeFinder.Studio;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp;
@@ -18,13 +21,21 @@ namespace AeFinder.BlockScan;
 public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
 {
     private readonly IClusterClient _clusterClient;
+    private readonly IAppDeployManager _kubernetesAppManager;
 
-    public BlockScanAppService(IClusterClient clusterClient)
+    public BlockScanAppService(IClusterClient clusterClient, IAppDeployManager kubernetesAppManager)
     {
         _clusterClient = clusterClient;
+        _kubernetesAppManager = kubernetesAppManager;
     }
 
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifestDto, byte[] dll = null)
+    {
+        var dto = await AddSubscriptionV2Async(appId, manifestDto, dll);
+        return dto.NewVersion;
+    }
+
+    public async Task<AddSubscriptionDto> AddSubscriptionV2Async(string appId, SubscriptionManifestDto manifestDto, byte[] dll = null)
     {
         Logger.LogInformation("ScanApp: {clientId} submit subscription: {subscription}", appId,
             JsonSerializer.Serialize(manifestDto));
@@ -37,9 +48,9 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
             return null;
         }
 
-        var version = await client.AddSubscriptionAsync(subscription, dll);
-        return version;
+        return await client.AddSubscriptionV2Async(subscription, dll);
     }
+
 
     // public async Task UpdateSubscriptionInfoAsync(string clientId, string version, List<SubscriptionInfo> subscriptionInfos)
     // {
@@ -266,7 +277,10 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
     public async Task StopAsync(string clientId, string version)
     {
         var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
+        Logger.LogDebug("ScanApp: {clientId} stop scan, version: {version}", clientId, version);
         await clientGrain.StopAsync(version);
+        Logger.LogDebug("ScanApp: {clientId} stop scan, version: {version}", clientId, version);
+        await _kubernetesAppManager.DestroyAppAsync(clientId, version);
     }
 
     public async Task<bool> IsRunningAsync(string chainId, string clientId, string version, string token)

@@ -4,12 +4,17 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AeFinder.App.Deploy;
 using AeFinder.BlockScan;
 using AeFinder.CodeOps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Kubernetes.Manager;
+using AeFinder.Option;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
 using Orleans;
 using Volo.Abp;
@@ -26,18 +31,22 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 {
     private readonly IClusterClient _clusterClient;
     private readonly IBlockScanAppService _blockScanAppService;
+    private readonly IAppDeployManager _kubernetesAppManager;
+    private readonly StudioOption _studioOption;
     private readonly ICodeAuditor _codeAuditor;
     private readonly ILogger<StudioService> _logger;
     private readonly IObjectMapper _objectMapper;
 
     public StudioService(IClusterClient clusterClient, ILogger<StudioService> logger, IObjectMapper objectMapper,
-        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor)
+        IBlockScanAppService blockScanAppService, ICodeAuditor codeAuditor, IOptionsSnapshot<StudioOption> studioOption, IAppDeployManager kubernetesAppManager)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _objectMapper = objectMapper;
         _blockScanAppService = blockScanAppService;
         _codeAuditor = codeAuditor;
+        _studioOption = studioOption.Value;
+        _kubernetesAppManager = kubernetesAppManager;
     }
 
     public async Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppNameAsync(ApplyAeFinderAppNameInput appNameInput)
@@ -94,7 +103,20 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         _logger.LogInformation("receive request GetAeFinderApp: adminId= {0}", userId);
         var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
         var info = await userAppGrain.GetAppInfo();
-        return info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info);
+
+        var appInfo = (info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info));
+        
+        if (appInfo != null)
+        {
+            var appSubscriptionGrain =
+                _clusterClient.GetGrain<IAppSubscriptionGrain>(
+                    GrainIdHelper.GenerateAppSubscriptionGrainId(appInfo.AppId));
+            var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
+            var allSubscriptionDto = _objectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
+            appInfo.allSubscription = allSubscriptionDto;
+        }
+
+        return appInfo;
     }
 
     public async Task<List<AeFinderAppInfo>> GetAeFinderAppListAsync()
@@ -131,7 +153,20 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
         await using var stream = input.AppDll.OpenReadStream();
         var dllBytes = stream.GetAllBytes();
-        _codeAuditor.Audit(dllBytes);
+        try
+        {
+            _codeAuditor.Audit(dllBytes);
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("Code did not pass audit"))
+            {
+                throw new UserFriendlyException("Dll file audit failed: " + ex.Message);
+            }
+
+            throw ex;
+        }
+
         var userId = CurrentUser.GetId().ToString("N");
         var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
         var info = await userAppGrain.GetAppInfo();
@@ -140,21 +175,51 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
             throw new UserFriendlyException("app not exists.");
         }
 
-        var version = await _blockScanAppService.AddSubscriptionAsync(info.AppId, subscriptionManifest, dllBytes);
-        return version;
+        var dto = await _blockScanAppService.AddSubscriptionV2Async(info.AppId, subscriptionManifest, dllBytes);
+        if (!dto.StopVersion.IsNullOrEmpty())
+        {
+            await _kubernetesAppManager.DestroyAppAsync(info.AppId, dto.StopVersion);
+        }
+
+        var rulePath = await _kubernetesAppManager.CreateNewAppAsync(info.AppId, dto.NewVersion, _studioOption.ImageName);
+        _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2} stoped version {3}", info.AppId, dto.NewVersion, rulePath, dto.StopVersion);
+        return dto.NewVersion;
     }
 
-    public async Task<QueryAeFinderAppDto> QueryAeFinderAppAsync(QueryAeFinderAppInput input)
+    public async Task DestroyAppAsync(string version)
     {
         var userId = CurrentUser.GetId().ToString("N");
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
-        var ans = await appGrain.GetGraphQls();
-        return new QueryAeFinderAppDto() { GraphQLs = ans };
+        var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
+        var info = await userAppGrain.GetAppInfo();
+        if (info == null || info.AppId.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("app not exists.");
+        }
+
+        await AssertAppVersionExistsAsync(info.AppId, version);
+
+        await _kubernetesAppManager.DestroyAppAsync(info.AppId, version);
+        _logger.LogInformation("DestroyAppAsync: {0} {1}", info.AppId, version);
     }
 
-    public Task<QueryAeFinderAppLogsDto> QueryAeFinderAppLogsAsync(QueryAeFinderAppLogsInput input)
+    private async Task AssertAppVersionExistsAsync(string appId, string version)
     {
-        throw new NotImplementedException();
+        var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
+
+        // Check if the subscription exists and if there is any version information
+        if (subscription == null || (subscription.NewVersion == null && subscription.CurrentVersion == null))
+        {
+            throw new UserFriendlyException($"Subscription not exists. appId={appId}, version={version}");
+        }
+
+        // Check whether the version matches the new version or the current version
+        bool isNewVersionValid = subscription.NewVersion != null && subscription.NewVersion.Version.Equals(version);
+        bool isCurrentVersionValid = subscription.CurrentVersion != null && subscription.CurrentVersion.Version.Equals(version);
+
+        if (!isNewVersionValid && !isCurrentVersionValid)
+        {
+            throw new UserFriendlyException($"Subscription not exists. appId={appId}, version={version}");
+        }
     }
 
     public async Task<string> GetAppIdAsync()
@@ -179,17 +244,116 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
     {
         await using var stream = input.AppDll.OpenReadStream();
         var dllBytes = stream.GetAllBytes();
-        _codeAuditor.Audit(dllBytes);
+        try
+        {
+            _codeAuditor.Audit(dllBytes);
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("Code did not pass audit"))
+            {
+                throw new UserFriendlyException("Dll file audit failed: " + ex.Message);
+            }
+
+            throw ex;
+        }
 
         var appId = await GetAppIdAsync();
+        await AssertAppVersionExistsAsync(appId, input.Version);
+
         var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         await subscriptionGrain.UpdateCodeAsync(input.Version, dllBytes);
+        await _kubernetesAppManager.RestartAppAsync(appId, input.Version);
         return new UpdateAeFinderAppDto() { Success = true };
+    }
+
+    public async Task RestartAppAsync(string version)
+    {
+        var appId = await GetAppIdAsync();
+        await AssertAppVersionExistsAsync(appId, version);
+
+        await _kubernetesAppManager.RestartAppAsync(appId, version);
     }
 
     private async Task AddToUsersAppsAsync(IEnumerable<string> userIds, string appId, AeFinderAppInfo info)
     {
         var tasks = userIds.Select(userId => _clusterClient.GetGrain<IUserAppGrain>(GrainIdHelper.GenerateUserAppsGrainId(userId))).Select(userAppsGrain => userAppsGrain.AddApp(appId, info)).ToList();
         await tasks.WhenAll();
+    }
+
+    public async Task<AppBlockStateMonitorDto> MonitorAppBlockStateAsync(string appId)
+    {
+        if (appId.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("invalid appId.");
+        }
+        
+        var result = new AppBlockStateMonitorDto();
+        var appSubscriptionGrain =
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(
+                GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        if (allSubscription == null)
+        {
+            return result;
+        }
+
+        if (allSubscription.CurrentVersion != null)
+        {
+            var currentVersionBlockStates = new List<MonitorBlockState>();
+            var version = allSubscription.CurrentVersion.Version;
+            var subscription = allSubscription.CurrentVersion.SubscriptionManifest;
+            foreach (var subscriptionItem in subscription.SubscriptionItems)
+            {
+                var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
+                    GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, version, subscriptionItem.ChainId));
+                var blockStateSetStatus = await appBlockStateSetStatusGrain.GetBlockStateSetStatusAsync();
+                var monitorBlockState = new MonitorBlockState()
+                {
+                    ChainId = subscriptionItem.ChainId,
+                    AppId = appId,
+                    Version = version,
+                    LongestChainBlockHash = blockStateSetStatus.LongestChainBlockHash,
+                    LongestChainHeight = blockStateSetStatus.LongestChainHeight,
+                    BestChainBlockHash = blockStateSetStatus.BestChainBlockHash,
+                    BestChainHeight = blockStateSetStatus.BestChainHeight,
+                    LastIrreversibleBlockHash = blockStateSetStatus.LastIrreversibleBlockHash,
+                    LastIrreversibleBlockHeight = blockStateSetStatus.LastIrreversibleBlockHeight
+                };
+                currentVersionBlockStates.Add(monitorBlockState);
+            }
+
+            result.CurrentVersionBlockStates = currentVersionBlockStates;
+        }
+
+        if (allSubscription.NewVersion != null)
+        {
+            var newVersionBlockStates = new List<MonitorBlockState>();
+            var version = allSubscription.NewVersion.Version;
+            var subscription = allSubscription.NewVersion.SubscriptionManifest;
+            foreach (var subscriptionItem in subscription.SubscriptionItems)
+            {
+                var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
+                    GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, version, subscriptionItem.ChainId));
+                var blockStateSetStatus = await appBlockStateSetStatusGrain.GetBlockStateSetStatusAsync();
+                var monitorBlockState = new MonitorBlockState()
+                {
+                    ChainId = subscriptionItem.ChainId,
+                    AppId = appId,
+                    Version = version,
+                    LongestChainBlockHash = blockStateSetStatus.LongestChainBlockHash,
+                    LongestChainHeight = blockStateSetStatus.LongestChainHeight,
+                    BestChainBlockHash = blockStateSetStatus.BestChainBlockHash,
+                    BestChainHeight = blockStateSetStatus.BestChainHeight,
+                    LastIrreversibleBlockHash = blockStateSetStatus.LastIrreversibleBlockHash,
+                    LastIrreversibleBlockHeight = blockStateSetStatus.LastIrreversibleBlockHeight
+                };
+                newVersionBlockStates.Add(monitorBlockState);
+            }
+
+            result.NewVersionBlockStates = newVersionBlockStates;
+        }
+
+        return result;
     }
 }

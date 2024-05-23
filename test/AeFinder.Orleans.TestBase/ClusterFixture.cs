@@ -10,6 +10,8 @@ using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;
 using Moq;
 using Volo.Abp.AutoMapper;
+using Volo.Abp.EventBus.Distributed;
+using Volo.Abp.EventBus.Local;
 using Volo.Abp.ObjectMapping;
 using Volo.Abp.Reflection;
 
@@ -65,6 +67,11 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                         Mapper = sp.GetRequiredService<IMapper>()
                     });
                     services.AddTransient<IMapperAccessor>(provider => provider.GetRequiredService<MapperAccessor>());
+                    // services.AddTransient<IDistributedEventBus, LocalDistributedEventBus>();
+                    // services.AddTransient<ILocalEventBus, LocalEventBus>();
+                    var mockDistributedEventBus = new Mock<IDistributedEventBus>();
+                    // mock IDistributedEventBus
+                    services.AddSingleton<IDistributedEventBus>(mockDistributedEventBus.Object);
                 })
                 // .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
                 // {

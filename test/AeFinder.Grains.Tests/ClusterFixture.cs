@@ -5,11 +5,13 @@ using AeFinder.Grains.Grain.BlockPush;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Orleans;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
 using Volo.Abp.Reflection;
 
@@ -74,6 +76,9 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                         Mapper = sp.GetRequiredService<IMapper>()
                     });
                     services.AddTransient<IMapperAccessor>(provider => provider.GetRequiredService<MapperAccessor>());
+                    var mockDistributedEventBus = new Mock<IDistributedEventBus>();
+                    // mock IDistributedEventBus
+                    services.AddSingleton<IDistributedEventBus>(mockDistributedEventBus.Object);
                 })
                 .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")

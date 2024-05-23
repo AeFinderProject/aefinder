@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
@@ -56,10 +57,30 @@ public class StudioController : AeFinderController
         return _studioService.SubmitSubscriptionInfoAsync(input, subscriptionManifest);
     }
 
+    [HttpPost("restartapp")]
+    [Authorize]
+    public async Task RestartAppAsync(string version)
+    {
+        await _studioService.RestartAppAsync(version);
+    }
+
+    [HttpPost("destroyapp")]
+    [Authorize]
+    public async Task DestroyAppAsync(string version)
+    {
+        await _studioService.DestroyAppAsync(version);
+    }
+
     [HttpPost("updateapp")]
     [Authorize]
-    public Task<UpdateAeFinderAppDto> UpdateAeFinderAppAsync([FromForm] UpdateAeFinderAppInput input)
+    public async Task<UpdateAeFinderAppDto> UpdateAeFinderAppAsync([FromForm] UpdateAeFinderAppInput input)
     {
-        return _studioService.UpdateAeFinderAppAsync(input);
+        return await _studioService.UpdateAeFinderAppAsync(input);
+    }
+
+    [HttpPost("monitorapp/{appId}")]
+    public async Task<AppBlockStateMonitorDto> MonitorAppBlockStateAsync(string appId)
+    {
+        return await _studioService.MonitorAppBlockStateAsync(appId);
     }
 }

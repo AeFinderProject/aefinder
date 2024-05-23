@@ -1,10 +1,13 @@
+using Microsoft.Extensions.Configuration;
+
 namespace AeFinder.Kubernetes;
 
 public class KubernetesConstants
 {
      public const string NginxIngressClassName = "nginx";
      //resource definition
-     public const string AppNameSpace = "aefinder-app";
+     // public const string AppNameSpace = "aefinder-app";
+     public static string AppNameSpace { get; private set; }
      public const string AppLabelKey = "app";
      public const string AppSettingFileName = "appsettings.json";
      public const string AppSettingFileMountPath = "/app/appsettings.json";
@@ -23,6 +26,9 @@ public class KubernetesConstants
      public const string PlaceHolderVersion = "[Version]";
      public const string PlaceHolderClientType = "[ClientType]";
      public const int AppContainerTargetPort = 8308;
-
-
+     
+     public static void Initialize(IConfiguration configuration)
+     {
+          AppNameSpace = configuration["Kubernetes:AppNameSpace"] ?? "aefinder-app";
+     }
 }
