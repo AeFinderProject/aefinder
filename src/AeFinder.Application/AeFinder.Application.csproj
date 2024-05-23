@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AeFinder.App.Deploy\AeFinder.App.Deploy.csproj" />
+    <ProjectReference Include="..\AeFinder.App.Deploy\AeFinder.App.Deploy.csproj" />
     <ProjectReference Include="..\AeFinder.CodeOps\AeFinder.CodeOps.csproj" />
     <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
     <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
@@ -19,6 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="GraphQL.Client" Version="6.0.3" />
+    <PackageReference Include="IdentityModel.OidcClient" Version="5.2.1" />
     <PackageReference Include="IdentityModel.OidcClient" Version="5.2.1" />
     <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">
       <PrivateAssets>all</PrivateAssets>
