@@ -103,7 +103,12 @@ public static class OrleansHostExtensions
                     options.ConsumerGroupId = "AeFinder";
                     options.ConsumeMode = ConsumeMode.LastCommittedMessage;
                     options.AddTopic(AeFinderApplicationConsts.MessageStreamNamespace,
-                        new TopicCreationConfig { AutoCreate = true });
+                        new TopicCreationConfig
+                        {
+                            AutoCreate = true, 
+                            Partitions = configuration.GetSection("Kafka:Partitions").Get<int>(),
+                            ReplicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>()
+                        });
                     options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
                 })
                 .AddJson()

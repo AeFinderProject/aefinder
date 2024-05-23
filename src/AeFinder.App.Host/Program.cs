@@ -18,7 +18,6 @@ public class Program
         
         var appId = configuration["AppInfo:AppId"];
         var version = configuration["AppInfo:Version"];
-        
         Log.Logger = new LoggerConfiguration()
 #if DEBUG
             .MinimumLevel.Debug()

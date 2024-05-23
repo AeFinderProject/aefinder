@@ -1,10 +1,12 @@
+using AeFinder.Studio;
 using Orleans;
 
 namespace AeFinder.Grains.Grain.Subscriptions;
 
-public interface IAppSubscriptionGrain: IGrainWithStringKey
+public interface IAppSubscriptionGrain : IGrainWithStringKey
 {
     Task<string> AddSubscriptionAsync(SubscriptionManifest subscriptionManifest, byte[] code);
+    Task<AddSubscriptionDto> AddSubscriptionV2Async(SubscriptionManifest subscriptionManifest, byte[] code);
     Task UpdateSubscriptionAsync(string version, SubscriptionManifest subscriptionManifest);
     Task UpdateCodeAsync(string version, byte[] code);
     Task<SubscriptionManifest> GetSubscriptionAsync(string version);

@@ -1,3 +1,4 @@
+using AeFinder.App.Deploy;
 using AeFinder.Grains;
 using AeFinder.MongoDb;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
+using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict.Tokens;
 
@@ -15,9 +17,10 @@ namespace AeFinder.Silo;
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AeFinderMongoDbModule),
     typeof(AeFinderApplicationModule),
+    typeof(AbpEventBusRabbitMqModule),
     typeof(AeFinderGrainsModule),
     typeof(AbpCachingStackExchangeRedisModule))]
-public class AeFinderOrleansSiloModule:AbpModule
+public class AeFinderOrleansSiloModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -25,14 +28,15 @@ public class AeFinderOrleansSiloModule:AbpModule
         context.Services.AddHostedService<AeFinderHostedService>();
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
-        // ConfigureEsIndexCreation();
+        // context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
     }
-    
+
     //Disable TokenCleanupService
     private void ConfigureTokenCleanupService()
     {
         Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
+
     private void ConfigureCache(IConfiguration configuration)
     {
         Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AeFinder:"; });

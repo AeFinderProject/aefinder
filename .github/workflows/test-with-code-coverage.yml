@@ -1,0 +1,55 @@
+name: Test with code coverage
+
+on:
+  push:
+    branches:
+      - '**'
+
+env:
+  DOTNET_INSTALL_DIR: "./.dotnet"
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    permissions:
+      pull-requests: write
+      contents: write
+    services:
+      elasticsearch:
+        image: elasticsearch:7.17.0
+        ports:
+          - 9200:9200
+        options: -e="discovery.type=single-node" -e="xpack.security.enabled=false" --health-cmd="curl http://localhost:9200/_cluster/health" --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0'
+      - name: Verify Elasticsearch connection
+        env:
+          ELASTIC_SEARCH_URL: http://127.0.0.1:${{ job.services.elasticsearch.ports[9200] }}
+        run: |
+          echo $ELASTIC_SEARCH_URL
+          curl -fsSL "$ELASTIC_SEARCH_URL/_cat/health?h=status"
+      - name: Install dependencies
+        run: dotnet restore --verbosity quiet
+
+      - name: Build
+        run: dotnet build --no-restore /clp:ErrorsOnly /p:GeneratePackageOnBuild=false --verbosity quiet
+
+      - name: Test
+        run: |
+          for name in `ls ./test/*.Tests/*.csproj | awk '{print $NF}'`;
+          do
+              dotnet test ${name} --no-restore --no-build --logger trx --settings CodeCoverage.runsettings --results-directory coverage --collect:"XPlat Code Coverage" 
+          done
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true
+          files: coverage/*/coverage.cobertura.xml
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

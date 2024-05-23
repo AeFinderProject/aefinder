@@ -1,9 +1,8 @@
+using AeFinder.App.Deploy;
 using AeFinder.BlockSync;
 using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
 using AeFinder.Grains;
-using AeFinder.Kubernetes;
-using AeFinder.Kubernetes.Manager;
 using AeFinder.Option;
 using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
@@ -31,8 +30,8 @@ namespace AeFinder;
     typeof(AeFinderGrainsModule),
     typeof(AElfEntityMappingModule),
     typeof(AElfEntityMappingElasticsearchModule),
-    typeof(AeFinderKubernetesModule),
-    typeof(AeFinderCodeOpsModule)
+    typeof(AeFinderCodeOpsModule),
+    typeof(AeFinderAppDeployModule)
 )]
 public class AeFinderApplicationModule : AbpModule
 {
