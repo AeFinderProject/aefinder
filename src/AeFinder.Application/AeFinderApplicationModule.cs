@@ -3,8 +3,6 @@ using AeFinder.BlockSync;
 using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
 using AeFinder.Grains;
-using AeFinder.Kubernetes;
-using AeFinder.Kubernetes.Manager;
 using AeFinder.Option;
 using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
