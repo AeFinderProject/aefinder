@@ -43,6 +43,7 @@ public class AeFinderAppModule : AbpModule
         Configure<AppInfoOptions>(configuration.GetSection("AppInfo"));
         Configure<AppStateOptions>(configuration.GetSection("AppState"));
         Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
+        Configure<AppIndexOptions>(configuration.GetSection("AppIndex"));
 
         context.Services.AddSingleton(typeof(IAppDataIndexProvider<>), typeof(AppDataIndexProvider<>));
         context.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
@@ -87,10 +88,12 @@ public class AeFinderAppModule : AbpModule
         var assembly = AssemblyLoadContext.Default.LoadFromStream(new MemoryStream(code));
         var types = GetTypesAssignableFrom<IAeFinderEntity>(assembly);
         var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
+        var appIndexOptions = serviceProvider.GetRequiredService<IOptionsSnapshot<AppIndexOptions>>().Value;
         foreach (var t in types)
         {
             var indexName = $"{appId}-{version}.{t.Name}".ToLower();
-            await elasticIndexService.CreateIndexAsync(indexName, t, esOptions.NumberOfShards, esOptions.NumberOfReplicas);
+            await elasticIndexService.CreateIndexAsync(indexName, t, esOptions.NumberOfShards,
+                esOptions.NumberOfReplicas, appIndexOptions.IndexSettings);
         }
     }
 

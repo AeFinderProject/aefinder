@@ -6,10 +6,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
 using AeFinder.GraphQL.Dto;
-using AeFinder.Kubernetes;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.Caching;
@@ -22,34 +20,34 @@ namespace AeFinder.GraphQL;
 public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingletonDependency
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly KubernetesOptions _kubernetesOption;
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IDistributedCache<string, string> _appCurrentVersionCache;
     private readonly ILogger<GraphQLAppService> _logger;
 
     public GraphQLAppService(IHttpClientFactory httpClientFactory,
-        ILogger<GraphQLAppService> logger, IOptionsSnapshot<KubernetesOptions> kubernetesOption,
+        ILogger<GraphQLAppService> logger, 
         IBlockScanAppService blockScanAppService,
         IDistributedCache<string, string> appCurrentVersionCache)
     {
         _httpClientFactory = httpClientFactory;
-        _kubernetesOption = kubernetesOption.Value;
         _blockScanAppService = blockScanAppService;
         _appCurrentVersionCache = appCurrentVersionCache;
         _logger = logger;
     }
 
-    public async Task<HttpResponseMessage> RequestForwardAsync(string appId, string version, GraphQLQueryInput input)
+    public async Task<HttpResponseMessage> RequestForwardAsync(string appId, string version,
+        string kubernetesOriginName, GraphQLQueryInput input)
     {
         var serverUrl = "";
-        string originName = _kubernetesOption.OriginName.TrimEnd('/');
+        string originName = kubernetesOriginName.TrimEnd('/');
 
         string currentVersion = await EnsureCurrentVersion(appId, version);
         if (currentVersion == null)
         {
             var exceptionResponse = new HttpResponseMessage(HttpStatusCode.NotFound)
             {
-                Content = new StringContent("No available current version, please contact admin check subscription info.")
+                Content = new StringContent(
+                    "No available current version, please contact admin check subscription info.")
             };
             return exceptionResponse;
         }
