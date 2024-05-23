@@ -25,7 +25,7 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
 
     private string _currentVersion = null;
     private readonly Dictionary<string, long> _currentVersionConfirmedBlockHeights = new();
-    private List<string> _newVersionChains = new();
+    private List<string> _pendingVersionChains = new();
 
     public VersionUpgradeProvider(IAppInfoProvider appInfoProvider, IClusterClient clusterClient, IAppBlockStateSetProvider appBlockStateSetProvider)
     {
@@ -69,18 +69,18 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
 
         _currentVersion = allSubscription.CurrentVersion.Version;
 
-        _newVersionChains = allSubscription.NewVersion?.SubscriptionManifest.SubscriptionItems.Select(o => o.ChainId)
+        _pendingVersionChains = allSubscription.PendingVersion?.SubscriptionManifest.SubscriptionItems.Select(o => o.ChainId)
             .ToList();
     }
 
     private async Task<bool> IsThresholdExceededAsync()
     {
-        foreach (var chainId in _newVersionChains)
+        foreach (var chainId in _pendingVersionChains)
         {
-            var newVersionConfirmedBlockHeight =
+            var pendingVersionConfirmedBlockHeight =
                 (await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId))?.Block.BlockHeight;
-            if (newVersionConfirmedBlockHeight == null ||
-                newVersionConfirmedBlockHeight.Value + UpgradeHeightThreshold <
+            if (pendingVersionConfirmedBlockHeight == null ||
+                pendingVersionConfirmedBlockHeight.Value + UpgradeHeightThreshold <
                 _currentVersionConfirmedBlockHeights.GetValueOrDefault(chainId, 0))
             {
                 return false;
@@ -92,7 +92,7 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
 
     private async Task UpdateCurrentVersionConfirmedBlockHeightsAsync()
     {
-        foreach (var chainId in _newVersionChains)
+        foreach (var chainId in _pendingVersionChains)
         {
             var grain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
                 GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoProvider.AppId, _currentVersion, chainId));

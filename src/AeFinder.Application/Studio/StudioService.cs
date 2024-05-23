@@ -206,16 +206,16 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
         var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
 
         // Check if the subscription exists and if there is any version information
-        if (subscription == null || (subscription.NewVersion == null && subscription.CurrentVersion == null))
+        if (subscription == null || (subscription.PendingVersion == null && subscription.CurrentVersion == null))
         {
             throw new UserFriendlyException($"Subscription not exists. appId={appId}, version={version}");
         }
 
         // Check whether the version matches the new version or the current version
-        bool isNewVersionValid = subscription.NewVersion != null && subscription.NewVersion.Version.Equals(version);
+        bool isPendingVersionValid = subscription.PendingVersion != null && subscription.PendingVersion.Version.Equals(version);
         bool isCurrentVersionValid = subscription.CurrentVersion != null && subscription.CurrentVersion.Version.Equals(version);
 
-        if (!isNewVersionValid && !isCurrentVersionValid)
+        if (!isPendingVersionValid && !isCurrentVersionValid)
         {
             throw new UserFriendlyException($"Subscription not exists. appId={appId}, version={version}");
         }
@@ -325,11 +325,11 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
             result.CurrentVersionBlockStates = currentVersionBlockStates;
         }
 
-        if (allSubscription.NewVersion != null)
+        if (allSubscription.PendingVersion != null)
         {
-            var newVersionBlockStates = new List<MonitorBlockState>();
-            var version = allSubscription.NewVersion.Version;
-            var subscription = allSubscription.NewVersion.SubscriptionManifest;
+            var pendingVersionBlockStates = new List<MonitorBlockState>();
+            var version = allSubscription.PendingVersion.Version;
+            var subscription = allSubscription.PendingVersion.SubscriptionManifest;
             foreach (var subscriptionItem in subscription.SubscriptionItems)
             {
                 var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
@@ -347,10 +347,10 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
                     LastIrreversibleBlockHash = blockStateSetStatus.LastIrreversibleBlockHash,
                     LastIrreversibleBlockHeight = blockStateSetStatus.LastIrreversibleBlockHeight
                 };
-                newVersionBlockStates.Add(monitorBlockState);
+                pendingVersionBlockStates.Add(monitorBlockState);
             }
 
-            result.NewVersionBlockStates = newVersionBlockStates;
+            result.PendingVersionBlockStates = pendingVersionBlockStates;
         }
 
         return result;

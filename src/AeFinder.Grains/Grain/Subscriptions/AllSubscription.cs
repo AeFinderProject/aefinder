@@ -3,7 +3,7 @@ namespace AeFinder.Grains.Grain.Subscriptions;
 public class AllSubscription
 {
     public SubscriptionDetail CurrentVersion { get; set; }
-    public SubscriptionDetail NewVersion { get; set; }
+    public SubscriptionDetail PendingVersion { get; set; }
 }
 
 public class SubscriptionDetail

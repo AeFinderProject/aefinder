@@ -5,7 +5,7 @@ namespace AeFinder.Studio;
 public class AppBlockStateMonitorDto
 {
     public List<MonitorBlockState> CurrentVersionBlockStates { get; set; }
-    public List<MonitorBlockState> NewVersionBlockStates { get; set; }
+    public List<MonitorBlockState> PendingVersionBlockStates { get; set; }
 }
 
 public class MonitorBlockState
