@@ -78,7 +78,7 @@ public class StudioController : AeFinderController
         return await _studioService.UpdateAeFinderAppAsync(input);
     }
 
-    [HttpPost("monitorapp/{appId}")]
+    [HttpGet("monitorapp/{appId}")]
     public async Task<AppBlockStateMonitorDto> MonitorAppBlockStateAsync(string appId)
     {
         return await _studioService.MonitorAppBlockStateAsync(appId);
