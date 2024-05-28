@@ -446,7 +446,7 @@ public class BlockAppService:ApplicationService,IBlockAppService
          
          var queryable = await _blockIndexRepository.GetQueryableAsync();
          
-         var list = queryable.Where(expression).ToList();
+         var list = queryable.Where(expression).OrderBy(p => p.BlockHeight).ToList();
          
          if (!string.IsNullOrEmpty(input.SearAfterCHainId))
          {

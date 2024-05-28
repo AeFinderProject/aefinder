@@ -39,6 +39,38 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
+        <None Remove="appsettings.json" />
+        <Content Include="appsettings.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <None Remove="librdkafka.a" />
+        <Content Include="librdkafka.a">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <None Remove="librdkafka.dylib" />
+        <Content Include="librdkafka.dylib">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <None Remove="librdkafka++.a" />
+        <Content Include="librdkafka++.a">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <None Remove="librdkafka++.dylib" />
+        <Content Include="librdkafka++.dylib">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <None Remove="librdkafka++.1.dylib" />
+        <Content Include="librdkafka++.1.dylib">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <None Remove="librdkafka-static.a" />
+        <Content Include="librdkafka-static.a">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <None Remove="librdkafka.1.dylib" />
+        <Content Include="librdkafka.1.dylib">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
 </Project>
