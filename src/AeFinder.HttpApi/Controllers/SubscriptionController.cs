@@ -9,7 +9,7 @@ namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("Subscription")]
-[Route("api/app/subscription")]
+[Route("api/apps/subscriptions")]
 public class SubscriptionController : AeFinderController
 {
     private readonly IBlockScanAppService _blockScanAppService;
@@ -23,17 +23,33 @@ public class SubscriptionController : AeFinderController
 
     [HttpPost]
     [Authorize]
-    public virtual async Task<string> SubmitSubscriptionInfoAsync(SubscriptionManifestDto input)
+    public async Task<string> AddSubscriptionAsync(SubscriptionManifestDto input)
     {
-        var appId = await _studioService.GetAppIdAsync();
+        var appId = ClientId;
         return await _blockScanAppService.AddSubscriptionAsync(appId, input);
+    }
+    
+    [HttpPut]
+    //[Authorize]
+    [Route("manifest/{version}")]
+    public async Task<string> UpdateManifestAsync()
+    {
+        return null;
+    }
+    
+    [HttpPut]
+    //[Authorize]
+    [Route("code/{version}")]
+    public async Task<string> UpdateCodeAsync()
+    {
+        return null;
     }
 
     [HttpGet]
-    [Authorize]
-    public virtual async Task<AllSubscriptionDto> GetSubscriptionInfoAsync()
+    //[Authorize]
+    public async Task<AllSubscriptionDto> GetSubscriptionInfoAsync()
     {
-        var appId = await _studioService.GetAppIdAsync();
+        var appId = ClientId;
         return await _blockScanAppService.GetSubscriptionAsync(appId);
     }
 }

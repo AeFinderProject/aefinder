@@ -1,10 +1,13 @@
+using AeFinder.Apps;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
 using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Grains.State.Apps;
 using AeFinder.Studio;
 using AutoMapper;
+using Volo.Abp.AutoMapper;
 using Volo.Abp.Identity;
 
 namespace AeFinder;
@@ -44,5 +47,12 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AeFinderAppInfo, AeFinderAppInfoDto>();
 
         CreateMap<IdentityUser, IdentityUserDto>();
+
+        CreateMap<AppState, AppDto>()
+            .ForMember(destination => destination.CreateTime,
+                opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.CreateTime)))
+            .ForMember(destination => destination.UpdateTime,
+                opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.UpdateTime)));
+        CreateMap<CreateAppDto, AppState>();
     }
 }

@@ -50,72 +50,75 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
     public async Task<ApplyAeFinderAppNameDto> ApplyAeFinderAppNameAsync(ApplyAeFinderAppNameInput appNameInput)
     {
-        var userId = CurrentUser.GetId().ToString("N");
-
-        _logger.LogInformation("receive request ApplyAeFinderAppName: adminId= {0} input= {1}", userId, JsonSerializer.Serialize(appNameInput));
-
-        // app name must be unique
-        var appNameGrain = _clusterClient.GetGrain<IAppNameGrain>(GrainIdHelper.GenerateAeFinderNameGrainId(appNameInput.Name));
-        var appId = await appNameGrain.Register(userId);
-        if (appId.IsNullOrEmpty())
-        {
-            throw new UserFriendlyException("App name already exists.");
-        }
-
-        //appid must not be registered
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
-        var res = await appGrain.Register(userId, appNameInput.Name, appNameInput.Name);
-
-        var ans = new ApplyAeFinderAppNameDto() { Success = res.Success, AppId = appNameInput.Name };
-        _logger.LogInformation("response ApplyAeFinderAppName: {0} input={1} exists={2} added={3}", userId, JsonSerializer.Serialize(appNameInput), res.Success, res.Added);
-        return ans;
+        throw new NotImplementedException();
+        // var userId = CurrentUser.GetId().ToString("N");
+        //
+        // _logger.LogInformation("receive request ApplyAeFinderAppName: adminId= {0} input= {1}", userId, JsonSerializer.Serialize(appNameInput));
+        //
+        // // app name must be unique
+        // var appNameGrain = _clusterClient.GetGrain<IAppNameGrain>(GrainIdHelper.GenerateAeFinderNameGrainId(appNameInput.Name));
+        // var appId = await appNameGrain.Register(userId);
+        // if (appId.IsNullOrEmpty())
+        // {
+        //     throw new UserFriendlyException("App name already exists.");
+        // }
+        //
+        // //appid must not be registered
+        // var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
+        // var res = await appGrain.Register(userId, appNameInput.Name, appNameInput.Name);
+        //
+        // var ans = new ApplyAeFinderAppNameDto() { Success = res.Success, AppId = appNameInput.Name };
+        // _logger.LogInformation("response ApplyAeFinderAppName: {0} input={1} exists={2} added={3}", userId, JsonSerializer.Serialize(appNameInput), res.Success, res.Added);
+        // return ans;
     }
 
     public async Task<AddOrUpdateAeFinderAppDto> UpdateAeFinderAppAsync(AddOrUpdateAeFinderAppInput input)
     {
-        var userId = CurrentUser.GetId().ToString("N");
-
-        _logger.LogInformation("receive request UpdateAeFinderApp: adminId= {0} input= {1}", userId, JsonSerializer.Serialize(input));
-
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
-        var appInfo = await appGrain.AddOrUpdateAppInfo(_objectMapper.Map<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>(input));
-        if (appInfo == null)
-        {
-            throw new UserFriendlyException("App not exists.");
-        }
-
-        var userIds = new List<string>() { userId };
-        if (appInfo.DeveloperIds != null)
-        {
-            userIds.AddRange(appInfo.DeveloperIds);
-        }
-
-
-        // we do not wait for the result of AddToUsersApps
-        await AddToUsersAppsAsync(userIds, appInfo.AppId, _objectMapper.Map<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>(input));
-        return new AddOrUpdateAeFinderAppDto();
+        throw new NotImplementedException();
+        // var userId = CurrentUser.GetId().ToString("N");
+        //
+        // _logger.LogInformation("receive request UpdateAeFinderApp: adminId= {0} input= {1}", userId, JsonSerializer.Serialize(input));
+        //
+        // var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
+        // var appInfo = await appGrain.AddOrUpdateAppInfo(_objectMapper.Map<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>(input));
+        // if (appInfo == null)
+        // {
+        //     throw new UserFriendlyException("App not exists.");
+        // }
+        //
+        // var userIds = new List<string>() { userId };
+        // if (appInfo.DeveloperIds != null)
+        // {
+        //     userIds.AddRange(appInfo.DeveloperIds);
+        // }
+        //
+        //
+        // // we do not wait for the result of AddToUsersApps
+        // await AddToUsersAppsAsync(userIds, appInfo.AppId, _objectMapper.Map<AddOrUpdateAeFinderAppInput, AeFinderAppInfo>(input));
+        // return new AddOrUpdateAeFinderAppDto();
     }
 
     public async Task<AeFinderAppInfoDto> GetAeFinderAppAsync()
     {
-        var userId = CurrentUser.GetId().ToString("N");
-        _logger.LogInformation("receive request GetAeFinderApp: adminId= {0}", userId);
-        var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
-        var info = await userAppGrain.GetAppInfo();
-
-        var appInfo = (info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info));
-        
-        if (appInfo != null)
-        {
-            var appSubscriptionGrain =
-                _clusterClient.GetGrain<IAppSubscriptionGrain>(
-                    GrainIdHelper.GenerateAppSubscriptionGrainId(appInfo.AppId));
-            var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
-            var allSubscriptionDto = _objectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
-            appInfo.allSubscription = allSubscriptionDto;
-        }
-
-        return appInfo;
+        throw new NotImplementedException();
+        // var userId = CurrentUser.GetId().ToString("N");
+        // _logger.LogInformation("receive request GetAeFinderApp: adminId= {0}", userId);
+        // var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
+        // var info = await userAppGrain.GetAppInfo();
+        //
+        // var appInfo = (info == null ? null : _objectMapper.Map<AeFinderAppInfo, AeFinderAppInfoDto>(info));
+        //
+        // if (appInfo != null)
+        // {
+        //     var appSubscriptionGrain =
+        //         _clusterClient.GetGrain<IAppSubscriptionGrain>(
+        //             GrainIdHelper.GenerateAppSubscriptionGrainId(appInfo.AppId));
+        //     var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        //     var allSubscriptionDto = _objectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
+        //     appInfo.allSubscription = allSubscriptionDto;
+        // }
+        //
+        // return appInfo;
     }
 
     public async Task<List<AeFinderAppInfo>> GetAeFinderAppListAsync()
@@ -140,65 +143,66 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
     public async Task<string> SubmitSubscriptionInfoAsync(SubscriptionInfo input, SubscriptionManifestDto subscriptionManifest)
     {
-        if (subscriptionManifest == null || subscriptionManifest.SubscriptionItems.Count == 0)
-        {
-            throw new UserFriendlyException("invalid subscription manifest.");
-        }
-
-        if (subscriptionManifest.SubscriptionItems.Any(item => item.ChainId.IsNullOrEmpty() || item.StartBlockNumber < 0))
-        {
-            throw new UserFriendlyException("invalid subscription manifest.");
-        }
-
-        await using var stream = input.AppDll.OpenReadStream();
-        var dllBytes = stream.GetAllBytes();
-        try
-        {
-            _codeAuditor.Audit(dllBytes);
-        }
-        catch (Exception ex)
-        {
-            if (ex.Message.Contains("Code did not pass audit"))
-            {
-                throw new UserFriendlyException("Dll file audit failed: " + ex.Message);
-            }
-
-            throw ex;
-        }
-
-        var userId = CurrentUser.GetId().ToString("N");
-        var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
-        var info = await userAppGrain.GetAppInfo();
-        if (info == null || info.AppId.IsNullOrEmpty())
-        {
-            throw new UserFriendlyException("app not exists.");
-        }
-
-        var dto = await _blockScanAppService.AddSubscriptionV2Async(info.AppId, subscriptionManifest, dllBytes);
-        if (!dto.StopVersion.IsNullOrEmpty())
-        {
-            await _kubernetesAppManager.DestroyAppAsync(info.AppId, dto.StopVersion);
-        }
-
-        var rulePath = await _kubernetesAppManager.CreateNewAppAsync(info.AppId, dto.NewVersion, _studioOption.ImageName);
-        _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2} stoped version {3}", info.AppId, dto.NewVersion, rulePath, dto.StopVersion);
-        return dto.NewVersion;
+        throw new NotImplementedException();
+        // if (subscriptionManifest == null || subscriptionManifest.SubscriptionItems.Count == 0)
+        // {
+        //     throw new UserFriendlyException("invalid subscription manifest.");
+        // }
+        //
+        // if (subscriptionManifest.SubscriptionItems.Any(item => item.ChainId.IsNullOrEmpty() || item.StartBlockNumber < 0))
+        // {
+        //     throw new UserFriendlyException("invalid subscription manifest.");
+        // }
+        //
+        // await using var stream = input.AppDll.OpenReadStream();
+        // var dllBytes = stream.GetAllBytes();
+        // try
+        // {
+        //     _codeAuditor.Audit(dllBytes);
+        // }
+        // catch (Exception ex)
+        // {
+        //     if (ex.Message.Contains("Code did not pass audit"))
+        //     {
+        //         throw new UserFriendlyException("Dll file audit failed: " + ex.Message);
+        //     }
+        //
+        //     throw ex;
+        // }
+        //
+        // var userId = CurrentUser.GetId().ToString("N");
+        // var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
+        // var info = await userAppGrain.GetAppInfo();
+        // if (info == null || info.AppId.IsNullOrEmpty())
+        // {
+        //     throw new UserFriendlyException("app not exists.");
+        // }
+        //
+        // var dto = await _blockScanAppService.AddSubscriptionV2Async(info.AppId, subscriptionManifest, dllBytes);
+        // if (!dto.StopVersion.IsNullOrEmpty())
+        // {
+        //     await _kubernetesAppManager.DestroyAppAsync(info.AppId, dto.StopVersion);
+        // }
+        //
+        // var rulePath = await _kubernetesAppManager.CreateNewAppAsync(info.AppId, dto.NewVersion, _studioOption.ImageName);
+        // _logger.LogInformation("SubmitSubscriptionInfoAsync: {0} {1} {2} stoped version {3}", info.AppId, dto.NewVersion, rulePath, dto.StopVersion);
+        // return dto.NewVersion;
     }
 
     public async Task DestroyAppAsync(string version)
     {
-        var userId = CurrentUser.GetId().ToString("N");
-        var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
-        var info = await userAppGrain.GetAppInfo();
-        if (info == null || info.AppId.IsNullOrEmpty())
-        {
-            throw new UserFriendlyException("app not exists.");
-        }
-
-        await AssertAppVersionExistsAsync(info.AppId, version);
-
-        await _kubernetesAppManager.DestroyAppAsync(info.AppId, version);
-        _logger.LogInformation("DestroyAppAsync: {0} {1}", info.AppId, version);
+        // var userId = CurrentUser.GetId().ToString("N");
+        // var userAppGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
+        // var info = await userAppGrain.GetAppInfo();
+        // if (info == null || info.AppId.IsNullOrEmpty())
+        // {
+        //     throw new UserFriendlyException("app not exists.");
+        // }
+        //
+        // await AssertAppVersionExistsAsync(info.AppId, version);
+        //
+        // await _kubernetesAppManager.DestroyAppAsync(info.AppId, version);
+        // _logger.LogInformation("DestroyAppAsync: {0} {1}", info.AppId, version);
     }
 
     private async Task AssertAppVersionExistsAsync(string appId, string version)
@@ -223,18 +227,18 @@ public class StudioService : AeFinderAppService, IStudioService, ISingletonDepen
 
     public async Task<string> GetAppIdAsync()
     {
-        if (CurrentUser?.Id == null)
-        {
-            throw new UserFriendlyException("userid not found");
-        }
-
-        var userId = CurrentUser.GetId().ToString("N");
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
-        var info = await appGrain.GetAppInfo();
-        if (info != null && !info.AppId.IsNullOrEmpty())
-        {
-            return info.AppId;
-        }
+        // if (CurrentUser?.Id == null)
+        // {
+        //     throw new UserFriendlyException("userid not found");
+        // }
+        //
+        // var userId = CurrentUser.GetId().ToString("N");
+        // var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAeFinderAppGrainId(userId));
+        // var info = await appGrain.GetAppInfo();
+        // if (info != null && !info.AppId.IsNullOrEmpty())
+        // {
+        //     return info.AppId;
+        // }
 
         throw new UserFriendlyException("app of current user not found");
     }
