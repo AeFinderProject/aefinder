@@ -169,65 +169,75 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         allScanIds[chainId].ShouldNotContain(id3);
     }
 
-    // [Fact]
-    // public async Task UpdateSubscriptionTest()
-    // {
-    //     var clientId = "ClientTest";
-    //     var subscriptionInfo1 = new List<SubscriptionInfo>
-    //     {
-    //         new SubscriptionInfo
-    //         {
-    //             ChainId = "AELF",
-    //             FilterType = BlockFilterType.Transaction,
-    //             OnlyConfirmedBlock = true,
-    //             StartBlockNumber = 999,
-    //             SubscribeEvents = new List<FilterContractEventInput>()
-    //             {
-    //                 new FilterContractEventInput()
-    //                 {
-    //                     ContractAddress = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
-    //                     EventNames = new List<string>()
-    //                     {
-    //                         "Transfer"
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     };
-    //     var version1 = await _blockScanAppService.SubmitSubscriptionInfoAsync(clientId, subscriptionInfo1);
-    //     
-    //     var subscription = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
-    //     subscription.CurrentVersion.Version.ShouldBe(version1);
-    //     subscription.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
-    //     subscription.NewVersion.ShouldBeNull();
-    //     
-    //     var subscriptionInfo2 = new List<SubscriptionInfo>
-    //     {
-    //         new SubscriptionInfo
-    //         {
-    //             ChainId = "AELF",
-    //             FilterType = BlockFilterType.Transaction,
-    //             OnlyConfirmedBlock = true,
-    //             StartBlockNumber = 999,
-    //             SubscribeEvents = new List<FilterContractEventInput>()
-    //             {
-    //                 new FilterContractEventInput()
-    //                 {
-    //                     ContractAddress = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
-    //                     EventNames = new List<string>()
-    //                     {
-    //                         "Transfer",
-    //                         "SetNumbered"
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     };
-    //     await _blockScanAppService.UpdateSubscriptionInfoAsync(clientId, version1, subscriptionInfo2);
-    //     var subscription2 = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
-    //     subscription2.CurrentVersion.Version.ShouldBe(version1);
-    //     subscription2.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
-    //     subscription2.CurrentVersion.SubscriptionInfos[0].SubscribeEvents.Count.ShouldBe(1);
-    //     subscription2.CurrentVersion.SubscriptionInfos[0].SubscribeEvents[0].EventNames.Count.ShouldBe(2);
-    // }
+    [Fact]
+    public async Task UpdateSubscriptionTest()
+    {
+        var subscriptionInfo1 = new SubscriptionManifestDto()
+        {
+            SubscriptionItems=new List<SubscriptionDto>()
+            {
+                new SubscriptionDto()
+                {
+                    ChainId = "AELF",
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 999,
+                    LogEventConditions = new List<LogEventConditionDto>()
+                    {
+                        new LogEventConditionDto()
+                        {
+                            ContractAddress = "TokenAddress1",
+                            EventNames = new List<string>()
+                            {
+                                "Transfer",
+                                "Burned"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        var appId = "test-app";
+        var dll = System.Text.Encoding.UTF8.GetBytes("Program codes");
+        var version1 = await _blockScanAppService.AddSubscriptionAsync(appId, subscriptionInfo1, dll);
+        
+        var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
+        subscription.CurrentVersion.Version.ShouldBe(version1);
+        subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems.Count.ShouldBe(1);
+        subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(999);
+        subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].LogEventConditions[0].EventNames.Count.ShouldBe(2);
+        subscription.NewVersion.ShouldBeNull();
+
+        var subscriptionInfo2 = new SubscriptionManifestDto()
+        {
+            SubscriptionItems = new List<SubscriptionDto>()
+            {
+                new SubscriptionDto()
+                {
+                    ChainId = "AELF",
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 999,
+                    LogEventConditions = new List<LogEventConditionDto>()
+                    {
+                        new LogEventConditionDto()
+                        {
+                            ContractAddress = "TokenAddress1",
+                            EventNames = new List<string>()
+                            {
+                                "Transfer",
+                                "Burned",
+                                "Created",
+                                "TransactionChargedFee"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        await _blockScanAppService.UpdateSubscriptionInfoAsync(appId, version1, subscriptionInfo2);
+        var subscription2 = await _blockScanAppService.GetSubscriptionAsync(appId);
+        subscription2.CurrentVersion.Version.ShouldBe(version1);
+        subscription2.CurrentVersion.SubscriptionManifest.SubscriptionItems.Count.ShouldBe(1);
+        subscription2.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].LogEventConditions[0].EventNames.Count.ShouldBe(4);
+
+    }
 }
