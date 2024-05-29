@@ -7,6 +7,7 @@ public class OrganizationAppGrain : Grain<OrganizationAppState>, IOrganizationAp
 {
     public async Task AddAppAsync(string appId)
     {
+        // TODO: limit app count
         State.AppIds.Add(appId);
         await WriteStateAsync();
     }

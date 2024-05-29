@@ -71,4 +71,9 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(appId);
     }
+    
+    public static string GenerateOrganizationAppGrainId(string organizationId)
+    {
+        return GenerateGrainId(organizationId);
+    }
 }

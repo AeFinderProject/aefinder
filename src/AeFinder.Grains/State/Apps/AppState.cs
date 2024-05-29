@@ -5,6 +5,7 @@ namespace AeFinder.Grains.State.Apps;
 public class AppState
 {
     public string AppId { get; set; }
+    public string OrganizationId { get; set; }
     public string DeployKey { get; set; }
     public string AppName { get; set; }
     public string ImageUrl { get; set; }

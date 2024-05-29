@@ -1,8 +1,10 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using Nito.AsyncEx;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -28,23 +30,26 @@ public class AppService : AeFinderAppService, IAppService
         
         // TODO: register appid and deploy key
         
-        // TODO: add Org->app
-        
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateGrainId(dto.AppId));
+        // TODO: get OrganizationId
+        var organizationId = "MockOrgId";
+        dto.OrganizationId = organizationId;
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(dto.AppId));
         return await appGrain.CreateAsync(dto);
     }
 
     public async Task<AppDto> UpdateAsync(string appId, UpdateAppDto dto)
     {
-        // TODO: check Org->app, whether the app belongs to the current user
-        
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateGrainId(appId));
+        await CheckPermissionAsync(appId);
+
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         return await appGrain.UpdateAsync(dto);
     }
 
     public async Task<AppDto> GetAsync(string appId)
     {
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateGrainId(appId));
+        await CheckPermissionAsync(appId);
+        
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var app = await appGrain.GetAsync();
 
         var subscriptionGrain =
@@ -58,6 +63,39 @@ public class AppService : AeFinderAppService, IAppService
 
     public async Task<PagedResultDto<AppDto>> GetListAsync()
     {
-        throw new System.NotImplementedException();
+        // TODO: get OrganizationId
+        var organizationId = "MockOrgId";
+        var organizationAppGrain =
+            _clusterClient.GetGrain<IOrganizationAppGrain>(
+                GrainIdHelper.GenerateOrganizationAppGrainId(organizationId));
+        var appIds = await organizationAppGrain.GetAppsAsync();
+
+        var tasks = appIds.Select(async id =>
+        {
+            var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(id));
+            return await appGrain.GetAsync();
+        });
+
+        var apps = await tasks.WhenAll();
+
+        return new PagedResultDto<AppDto>
+        {
+            TotalCount = apps.Length,
+            Items = apps.OrderByDescending(o => o.UpdateTime).ToList()
+        };
+    }
+
+    private async Task CheckPermissionAsync(string appId)
+    {
+        // TODO: get OrganizationId
+        var organizationId = "MockOrgId";
+        var organizationAppGrain =
+            _clusterClient.GetGrain<IOrganizationAppGrain>(
+                GrainIdHelper.GenerateOrganizationAppGrainId(organizationId));
+        var appIds = await organizationAppGrain.GetAppsAsync();
+        if (!appIds.Contains(appId))
+        {
+            throw new UserFriendlyException("No permission!");
+        }
     }
 }

@@ -22,6 +22,11 @@ public class AppGrain : Grain<AppState>, IAppGrain
             throw new UserFriendlyException($"App: {dto.AppName} already exists!");
         }
 
+        var organizationAppGain =
+            GrainFactory.GetGrain<IOrganizationAppGrain>(
+                GrainIdHelper.GenerateOrganizationAppGrainId(dto.OrganizationId));
+        await organizationAppGain.AddAppAsync(dto.AppId);
+
         State = _objectMapper.Map<CreateAppDto, AppState>(dto);
         State.Status = AppStatus.UnDeployed;
         State.CreateTime = DateTime.UtcNow;
