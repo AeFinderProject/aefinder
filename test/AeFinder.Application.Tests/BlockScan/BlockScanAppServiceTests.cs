@@ -181,6 +181,18 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
                     ChainId = "AELF",
                     OnlyConfirmed = false,
                     StartBlockNumber = 999,
+                    TransactionConditions = new List<TransactionConditionDto>()
+                    {
+                        new TransactionConditionDto()
+                        {
+                            To = "ToAddress",
+                            MethodNames = new List<string>()
+                            {
+                                "Method1",
+                                "Method2"
+                            }
+                        }
+                    },
                     LogEventConditions = new List<LogEventConditionDto>()
                     {
                         new LogEventConditionDto()
@@ -216,6 +228,18 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
                     ChainId = "AELF",
                     OnlyConfirmed = false,
                     StartBlockNumber = 999,
+                    TransactionConditions = new List<TransactionConditionDto>()
+                    {
+                        new TransactionConditionDto()
+                        {
+                            To = "ToAddress",
+                            MethodNames = new List<string>()
+                            {
+                                "Method1",
+                                "Method2"
+                            }
+                        }
+                    },
                     LogEventConditions = new List<LogEventConditionDto>()
                     {
                         new LogEventConditionDto()
@@ -238,6 +262,52 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         subscription2.CurrentVersion.Version.ShouldBe(version1);
         subscription2.CurrentVersion.SubscriptionManifest.SubscriptionItems.Count.ShouldBe(1);
         subscription2.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].LogEventConditions[0].EventNames.Count.ShouldBe(4);
+        
+        var subscriptionInfo3 = new SubscriptionManifestDto()
+        {
+            SubscriptionItems = new List<SubscriptionDto>()
+            {
+                new SubscriptionDto()
+                {
+                    ChainId = "AELF",
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 999,
+                    TransactionConditions = new List<TransactionConditionDto>()
+                    {
+                        new TransactionConditionDto()
+                        {
+                            To = "ToAddress",
+                            MethodNames = new List<string>()
+                            {
+                                "Method1",
+                                "Method2",
+                                "Method3"
+                            }
+                        }
+                    },
+                    LogEventConditions = new List<LogEventConditionDto>()
+                    {
+                        new LogEventConditionDto()
+                        {
+                            ContractAddress = "TokenAddress1",
+                            EventNames = new List<string>()
+                            {
+                                "Transfer",
+                                "Burned",
+                                "Created",
+                                "TransactionChargedFee"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        await _blockScanAppService.UpdateSubscriptionInfoAsync(appId, version1, subscriptionInfo3);
+        var subscription3 = await _blockScanAppService.GetSubscriptionAsync(appId);
+        subscription3.CurrentVersion.Version.ShouldBe(version1);
+        subscription3.CurrentVersion.SubscriptionManifest.SubscriptionItems.Count.ShouldBe(1);
+        subscription3.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].TransactionConditions[0].MethodNames.Count.ShouldBe(3);
+        subscription3.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].LogEventConditions[0].EventNames.Count.ShouldBe(4);
 
     }
 }
