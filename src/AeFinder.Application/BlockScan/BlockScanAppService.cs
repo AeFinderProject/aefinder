@@ -60,11 +60,12 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
         var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifestDto);
         var currentSubscriptionInfos = await appSubscriptionGrain.GetSubscriptionAsync(version);
         
-        //TODO: Check input subscription info if is valid
+        //Check input subscription info if is valid
         CheckInputSubscriptionInfoIsValid(subscription.SubscriptionItems, currentSubscriptionInfos.SubscriptionItems);
         CheckInputSubscriptionInfoIsDuplicateOrMissing(subscription.SubscriptionItems,currentSubscriptionInfos.SubscriptionItems);
 
         await appSubscriptionGrain.UpdateSubscriptionAsync(version, subscription);
+        await _kubernetesAppManager.RestartAppAsync(appId, version);
     }
 
     private void CheckInputSubscriptionInfoIsValid(List<Subscription> subscriptionInfos,
