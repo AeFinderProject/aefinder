@@ -201,12 +201,6 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 IsOnlyConfirmed = block.Confirmed
             });
 
-            blocks = await _blockFilterAppService.FilterBlocksAsync(blocks,
-                _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(subscriptionItem
-                    .TransactionConditions),
-                _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(subscriptionItem
-                    .LogEventConditions));
-
             if (block.Confirmed)
             {
                 blocks = await _blockFilterAppService.FilterIncompleteConfirmedBlocksAsync(chainId, blocks, previousBlockHash,
@@ -216,6 +210,12 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
             {
                 blocks = await _blockFilterAppService.FilterIncompleteBlocksAsync(chainId, blocks);
             }
+            
+            blocks = await _blockFilterAppService.FilterBlocksAsync(blocks,
+                _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(subscriptionItem
+                    .TransactionConditions),
+                _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(subscriptionItem
+                    .LogEventConditions));
 
             if (blocks.Count == 0)
             {
