@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using AeFinder.User;
 using AeFinder.User.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +13,25 @@ namespace AeFinder.Controllers;
 [Route("api/organizationUnits")]
 public class OrganizationUnitsController : AeFinderController
 {
+    private readonly IOrganizationAppService _organizationAppService;
+    public OrganizationUnitsController(IOrganizationAppService organizationAppService)
+    {
+        _organizationAppService = organizationAppService;
+    }
+    
     [HttpPost]
     [Authorize]
-    public virtual async Task<CreateOrganizationUnitDto> CreateOrganizationUnitAsync(CreateOrganizationUnitInput input)
+    public virtual async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(CreateOrganizationUnitInput input)
     {
-        // return _studioService.ApplyAeFinderAppNameAsync(input);
-        return new CreateOrganizationUnitDto();
+        return await _organizationAppService.CreateOrganizationUnitAsync(input.DisplayName);
     }
+
+    [HttpGet]
+    [Authorize]
+    public virtual async Task<List<OrganizationUnitDto>> GetAllOrganizationUnitsAsync()
+    {
+        return await _organizationAppService.GetAllOrganizationUnitsAsync();
+    }
+    
+    
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.User.Dto;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
@@ -15,8 +16,6 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     // private readonly UserManager<IdentityUser> _userManager;
     private readonly IdentityUserManager _identityUserManager;
     private readonly IRepository<IdentityUser, Guid> _identityUserRepository;
-    // private readonly IRepository<IdentityUserOrganizationUnit, Guid> _userOrganizationUnitRepository;
-    // private readonly IRepository<IdentityUser> _identityUserRepository;
     private readonly IRepository<IdentityUserOrganizationUnit> _identityUserOrganizationUnitRepository;
     
     public OrganizationAppService(
@@ -34,17 +33,18 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         _identityUserOrganizationUnitRepository = identityUserOrganizationUnitRepository;
     }
     
-    public async Task<OrganizationUnit> CreateOrganizationUnitAsync(string displayName, Guid? parentId = null)
+    public async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(string displayName, Guid? parentId = null)
     {
         var organizationUnit = new OrganizationUnit(
-            GuidGenerator.Create(), // 生成唯一标识符
-            displayName,           // 组织单元显示名称
-            parentId,                   // 父组织单元的ID，这里是根组织单元
+            GuidGenerator.Create(), // Generate a unique identifier
+            displayName,           // Organizational unit Displays name
+            parentId,                   // the ID of the parent organizational unit, here is the root organizational unit
             CurrentTenant.Id
         );
         await _organizationUnitManager.CreateAsync(organizationUnit);
         await CurrentUnitOfWork.SaveChangesAsync();
-        return organizationUnit;
+        var organizationUnitDto = ObjectMapper.Map<OrganizationUnit, OrganizationUnitDto>(organizationUnit);
+        return organizationUnitDto;
     }
 
 
@@ -69,21 +69,24 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         await _identityUserManager.AddToOrganizationUnitAsync(user.Id, organizationUnit.Id);
     }
 
-    public async Task<List<OrganizationUnit>> GetAllOrganizationUnitsAsync()
+    public async Task<List<OrganizationUnitDto>> GetAllOrganizationUnitsAsync()
     {
         var organizationUnits = await _organizationUnitRepository.GetListAsync();
-        return organizationUnits;
+        var result = ObjectMapper.Map<List<OrganizationUnit>, List<OrganizationUnitDto>>(organizationUnits);
+        return result;
     }
     
-    public async Task<OrganizationUnit> GetOrganizationUnitAsync(Guid id)
+    public async Task<OrganizationUnitDto> GetOrganizationUnitAsync(Guid id)
     {
         var organizationUnit = await _organizationUnitRepository.GetAsync(id);
-        return organizationUnit;
+        var organizationUnitDto = ObjectMapper.Map<OrganizationUnit, OrganizationUnitDto>(organizationUnit);
+            
+        return organizationUnitDto;
     }
 
     public async Task<List<IdentityUser>> GetUsersInOrganizationUnitAsync(Guid organizationUnitId)
     {
-        // 获取组织单元和用户的关联查询
+        // the associated query of organizational units and users
         var userOrgUnitsQuery = await _identityUserOrganizationUnitRepository.GetQueryableAsync();
         // var userOrgUnits = await AsyncExecuter.ToListAsync(
         //     userOrgUnitsQuery.Where(uou => uou.OrganizationUnitId == organizationUnitId));
@@ -91,7 +94,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         
         var userIds = userOrgUnits.Select(uou => uou.UserId).ToList();
 
-        // 获取用户实体查询
+        // get users entity query
         var usersQuery = await _identityUserRepository.GetQueryableAsync();
         var users = await AsyncExecuter.ToListAsync(
             usersQuery.Where(user => userIds.Contains(user.Id)));
