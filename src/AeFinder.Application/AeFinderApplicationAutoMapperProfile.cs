@@ -33,11 +33,19 @@ public class AeFinderApplicationAutoMapperProfile : Profile
 
         CreateMap<SubscriptionManifestDto, SubscriptionManifest>();
         CreateMap<SubscriptionManifest, SubscriptionManifestDto>();
-        CreateMap<SubscriptionDto, Subscription>();
+        CreateMap<SubscriptionDto, Subscription>()
+            .ForMember(destination => destination.TransactionConditions,
+                opt => opt.MapFrom(source => source.Transactions))
+            .ForMember(destination => destination.LogEventConditions,
+                opt => opt.MapFrom(source => source.LogEvents));
         CreateMap<TransactionConditionDto, TransactionCondition>();
         CreateMap<LogEventConditionDto, LogEventCondition>();
 
-        CreateMap<Subscription, SubscriptionDto>();
+        CreateMap<Subscription, SubscriptionDto>()
+            .ForMember(destination => destination.Transactions,
+            opt => opt.MapFrom(source => source.TransactionConditions))
+            .ForMember(destination => destination.LogEvents,
+                opt => opt.MapFrom(source => source.LogEventConditions));
         CreateMap<TransactionCondition, TransactionConditionDto>();
         CreateMap<LogEventCondition, LogEventConditionDto>();
 

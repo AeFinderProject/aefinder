@@ -3,6 +3,7 @@ using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Studio;
 using AeFinder.Studio.Eto;
 using Orleans;
+using Volo.Abp;
 using Volo.Abp.EventBus.Distributed;
 using SubscriptionInfo = AeFinder.Grains.State.Subscriptions.SubscriptionInfo;
 
@@ -27,8 +28,6 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
     {
         var addSubscriptionDto = new AddSubscriptionDto();
         var newVersion = Guid.NewGuid().ToString("N");
-
-        await UpdateCodeAsync(newVersion, code);
 
         State.SubscriptionInfos[newVersion] = new SubscriptionInfo
         {
@@ -57,6 +56,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
             State.NewVersion = newVersion;
         }
 
+        await UpdateCodeAsync(newVersion, code);
         await WriteStateAsync();
         addSubscriptionDto.NewVersion = newVersion;
         return addSubscriptionDto;
@@ -65,10 +65,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
 
     public async Task UpdateSubscriptionAsync(string version, SubscriptionManifest subscriptionManifest)
     {
-        if (version != State.CurrentVersion && version != State.NewVersion)
-        {
-            return;
-        }
+        CheckVersion(version);
 
         State.SubscriptionInfos[version].SubscriptionManifest = subscriptionManifest;
         await WriteStateAsync();
@@ -113,6 +110,8 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
 
     public async Task UpdateCodeAsync(string version, byte[] code)
     {
+        CheckVersion(version);
+        
         var codeId = GetAppCodeId(version);
         await GrainFactory.GetGrain<IAppCodeGrain>(codeId).SetCodeAsync(code);
     }
@@ -221,6 +220,14 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         {
             var id = GrainIdHelper.GenerateBlockPusherGrainId(this.GetPrimaryKeyString(), version, item.ChainId);
             await GrainFactory.GetGrain<IBlockPusherInfoGrain>(id).StopAsync();
+        }
+    }
+
+    private void CheckVersion(string version)
+    {
+        if (version != State.CurrentVersion && version != State.NewVersion)
+        {
+            throw new UserFriendlyException($"Invalid version: {version}");
         }
     }
 }
