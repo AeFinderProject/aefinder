@@ -122,6 +122,11 @@ public class AeFinderHttpApiHostModule : AbpModule
                 options.RequireHttpsMetadata = Convert.ToBoolean(configuration["AuthServer:RequireHttpsMetadata"]);
                 options.Audience = "AeFinder";
             });
+        context.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("OnlyAdminAccess", policy =>
+                policy.RequireRole("admin"));
+        });
     }
 
     private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)

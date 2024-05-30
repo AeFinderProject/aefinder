@@ -20,14 +20,14 @@ public class OrganizationUnitsController : AeFinderController
     }
     
     [HttpPost]
-    [Authorize]
+    [Authorize(Policy = "OnlyAdminAccess")]
     public virtual async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(CreateOrganizationUnitInput input)
     {
         return await _organizationAppService.CreateOrganizationUnitAsync(input.DisplayName);
     }
 
     [HttpGet]
-    [Authorize]
+    [Authorize(Policy = "OnlyAdminAccess")]
     public virtual async Task<List<OrganizationUnitDto>> GetAllOrganizationUnitsAsync()
     {
         return await _organizationAppService.GetAllOrganizationUnitsAsync();
