@@ -11,7 +11,7 @@ public interface IBlockScanAppService
 
     Task<AddSubscriptionDto> AddSubscriptionV2Async(string appId, SubscriptionManifestDto manifestDto, byte[] dll = null);
 
-    //Task UpdateSubscriptionInfoAsync(string clientId, string version, List<SubscriptionInfo> subscriptionInfos);
+    Task UpdateSubscriptionInfoAsync(string appId, string version, SubscriptionManifestDto manifestDto);
     Task<List<Guid>> GetMessageStreamIdsAsync(string clientId, string version);
     Task StartScanAsync(string clientId, string version);
     Task UpgradeVersionAsync(string clientId);

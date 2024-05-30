@@ -30,6 +30,7 @@ dotnet publish src/AeFinder.Silo/AeFinder.Silo.csproj -o build/Silo
 dotnet publish src/AeFinder.HttpApi.Host/AeFinder.HttpApi.Host.csproj -o build/HttpApi
 dotnet publish src/AeFinder.EntityEventHandler/AeFinder.EntityEventHandler.csproj -o build/EntityEventHandler
 dotnet publish src/AeFinder.BlockChainEventHandler/AeFinder.BlockChainEventHandler.csproj -o build/BlockChainEventHandler
+dotnet publish src/AeFinder.BackgroundWorker/AeFinder.BackgroundWorker.csproj -o build/BackgroundWorker
 
 # enter build folder
 cd build
@@ -50,8 +51,11 @@ dotnet HttpApi/AeFinder.HttpApi.Host.dll
 # run EntityEventHandler service
 dotnet EntityEventHandler/AeFinder.EntityEventHandler.dll
 
-# run ContractEventHandler service
+# run BlockChainEventHandler service
 dotnet BlockChainEventHandler/AeFinder.BlockChainEventHandler.dll
+
+# run BackgroundWorker service
+dotnet BackgroundWorker/AeFinder.BackgroundWorker.dll
 ```
 
 After starting all the above services, AeFinder is ready to provide external services.
@@ -66,6 +70,7 @@ AeFinder includes the following services:
 - `AeFinder.HttpApi.Host`: API interface service.
 - `AeFinder.EntityEventHandler`: Block data entity event handling service.
 - `AeFinder.BlockChainEventHandler`: Blockchain block event handling service.
+- `AeFinder.BackgroundWorker`: Background worker service.
 
 ## Contributing
 
