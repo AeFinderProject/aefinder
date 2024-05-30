@@ -31,6 +31,7 @@
     <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.6.5" />
     <PackageReference Include="Volo.Abp.Account.Application.Contracts" Version="7.0.0" />
     <PackageReference Include="Volo.Abp.FeatureManagement.Application.Contracts" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.Identity.Domain" Version="7.0.0" />
     <PackageReference Include="Volo.Abp.SettingManagement.Application.Contracts" Version="7.0.0" />
     <PackageReference Include="Volo.Abp.TenantManagement.Application.Contracts" Version="7.0.0" />
   </ItemGroup>

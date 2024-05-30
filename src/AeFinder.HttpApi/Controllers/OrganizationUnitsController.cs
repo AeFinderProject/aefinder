@@ -13,9 +13,9 @@ public class OrganizationUnitsController : AeFinderController
 {
     [HttpPost]
     [Authorize]
-    public virtual async Task<RegisterOrganizationUnitDto> RegisterOrganizationUnitAsync(RegisterOrganizationUnitInput input)
+    public virtual async Task<CreateOrganizationUnitDto> CreateOrganizationUnitAsync(CreateOrganizationUnitInput input)
     {
         // return _studioService.ApplyAeFinderAppNameAsync(input);
-        return new RegisterOrganizationUnitDto();
+        return new CreateOrganizationUnitDto();
     }
 }
