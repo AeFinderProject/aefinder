@@ -2,6 +2,7 @@ using AeFinder.App.Deploy;
 using AeFinder.BlockSync;
 using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
+using AeFinder.DevelopmentTemplate;
 using AeFinder.Grains;
 using AeFinder.Option;
 using AElf.EntityMapping;
@@ -44,6 +45,8 @@ public class AeFinderApplicationModule : AbpModule
         Configure<BlockSyncOptions>(configuration.GetSection("BlockSync"));
         Configure<StudioOption>(configuration.GetSection("StudioOption"));
         Configure<AuthOption>(configuration.GetSection("AuthOption"));
+        Configure<AppDeployOptions>(configuration.GetSection("AppDeploy"));
+        Configure<DevTemplateOptions>(configuration.GetSection("DevTemplate"));
         context.Services.AddTransient<ICodeAuditor, CodeAuditor>();
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
     }
