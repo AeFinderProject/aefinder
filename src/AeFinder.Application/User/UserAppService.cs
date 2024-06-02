@@ -77,10 +77,16 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         {
             ClientId = appId,
             ClientSecret = deployKey,
+            ConsentType=OpenIddictConstants.ConsentTypes.Implicit,
+            Type = OpenIddictConstants.ClientTypes.Confidential,
+            DisplayName = "AeFinder Apps",
             Permissions =
             {
                 OpenIddictConstants.Permissions.Endpoints.Token,
-                OpenIddictConstants.Permissions.GrantTypes.ClientCredentials
+                OpenIddictConstants.Permissions.GrantTypes.ClientCredentials,
+                OpenIddictConstants.Permissions.Prefixes.Scope + "AeFinder",
+                OpenIddictConstants.Permissions.ResponseTypes.IdToken
+                
             }
         });
     }
