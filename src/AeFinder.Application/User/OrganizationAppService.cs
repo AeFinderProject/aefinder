@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.User.Dto;
+using Volo.Abp;
+using Volo.Abp.Auditing;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder.User;
 
+[RemoteService(IsEnabled = false)]
+[DisableAuditing]
 public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
 {
     private readonly OrganizationUnitManager _organizationUnitManager;

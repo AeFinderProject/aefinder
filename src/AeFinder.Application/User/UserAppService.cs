@@ -3,16 +3,21 @@ using System.Threading.Tasks;
 using AeFinder.User.Dto;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using OpenIddict.Abstractions;
 using Volo.Abp;
+using Volo.Abp.Auditing;
 using Volo.Abp.Identity;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder.User;
 
+[RemoteService(IsEnabled = false)]
+[DisableAuditing]
 public class UserAppService : IdentityUserAppService, IUserAppService
 {
     private readonly IOrganizationUnitRepository _organizationUnitRepository;
     private readonly ILookupNormalizer _lookupNormalizer;
+    private readonly IOpenIddictApplicationManager _applicationManager;
 
     public UserAppService(
         IdentityUserManager userManager,
@@ -20,11 +25,13 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         IIdentityRoleRepository roleRepository,
         ILookupNormalizer lookupNormalizer,
         IOptions<IdentityOptions> identityOptions,
+        IOpenIddictApplicationManager applicationManager,
         IOrganizationUnitRepository organizationUnitRepository)
         : base(userManager, userRepository, roleRepository, identityOptions)
     {
         _organizationUnitRepository = organizationUnitRepository;
         _lookupNormalizer = lookupNormalizer;
+        _applicationManager = applicationManager;
     }
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)
@@ -57,5 +64,24 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         await UserManager.AddToOrganizationUnitAsync(identityUser, ou);
 
         return ObjectMapper.Map<IdentityUser, IdentityUserDto>(identityUser);
+    }
+
+    public async Task RegisterAppAuthentication(string appId, string deployKey)
+    {
+        if (await _applicationManager.FindByClientIdAsync(appId) != null)
+        {
+            throw new Exception("A app with the same ID already exists.");
+        }
+
+        await _applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
+        {
+            ClientId = appId,
+            ClientSecret = deployKey,
+            Permissions =
+            {
+                OpenIddictConstants.Permissions.Endpoints.Token,
+                OpenIddictConstants.Permissions.GrantTypes.ClientCredentials
+            }
+        });
     }
 }
