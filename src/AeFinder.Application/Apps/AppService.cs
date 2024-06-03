@@ -19,11 +19,14 @@ public class AppService : AeFinderAppService, IAppService
 {
     private readonly IClusterClient _clusterClient;
     private readonly IUserAppService _userAppService;
+    private readonly IOrganizationAppService _organizationAppService;
 
-    public AppService(IClusterClient clusterClient, IUserAppService userAppService)
+    public AppService(IClusterClient clusterClient, IUserAppService userAppService,
+        IOrganizationAppService organizationAppService)
     {
         _clusterClient = clusterClient;
         _userAppService = userAppService;
+        _organizationAppService = organizationAppService;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -33,10 +36,7 @@ public class AppService : AeFinderAppService, IAppService
         
         await _userAppService.RegisterAppAuthentication(dto.AppId, dto.DeployKey);
         
-        // TODO: get OrganizationId
-        
-        var organizationId = "MockOrgId";
-        dto.OrganizationId = organizationId;
+        dto.OrganizationId = await GetOrganizationIdAsync();
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(dto.AppId));
         return await appGrain.CreateAsync(dto);
     }
@@ -67,8 +67,7 @@ public class AppService : AeFinderAppService, IAppService
 
     public async Task<PagedResultDto<AppDto>> GetListAsync()
     {
-        // TODO: get OrganizationId
-        var organizationId = "MockOrgId";
+        var organizationId = await GetOrganizationIdAsync();
         var organizationAppGrain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(
                 GrainIdHelper.GenerateOrganizationAppGrainId(organizationId));
@@ -91,8 +90,7 @@ public class AppService : AeFinderAppService, IAppService
 
     private async Task CheckPermissionAsync(string appId)
     {
-        // TODO: get OrganizationId
-        var organizationId = "MockOrgId";
+        var organizationId = await GetOrganizationIdAsync();
         var organizationAppGrain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(
                 GrainIdHelper.GenerateOrganizationAppGrainId(organizationId));
@@ -101,5 +99,11 @@ public class AppService : AeFinderAppService, IAppService
         {
             throw new UserFriendlyException("No permission!");
         }
+    }
+
+    private async Task<string> GetOrganizationIdAsync()
+    {
+        var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
+        return organizationIds.First().Id.ToString("N");
     }
 }
