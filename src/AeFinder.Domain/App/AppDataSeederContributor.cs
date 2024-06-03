@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.Options;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
@@ -17,14 +19,16 @@ public class AppDataSeederContributor: IDataSeedContributor, ITransientDependenc
     private readonly IdentityUserManager _identityUserManager;
     private readonly IIdentityRoleRepository _roleRepository;
     private readonly ILookupNormalizer _lookupNormalizer;
+    private readonly AppOptions _appOptions;
 
     public AppDataSeederContributor(IConfiguration configuration, IdentityUserManager identityUserManager,
-        IIdentityRoleRepository roleRepository, ILookupNormalizer lookupNormalizer)
+        IIdentityRoleRepository roleRepository, ILookupNormalizer lookupNormalizer,IOptionsSnapshot<AppOptions> appOptions)
     {
         _configuration = configuration;
         _identityUserManager = identityUserManager;
         _roleRepository = roleRepository;
         _lookupNormalizer = lookupNormalizer;
+        _appOptions = appOptions.Value;
     }
 
     [UnitOfWork]
@@ -39,7 +43,7 @@ public class AppDataSeederContributor: IDataSeedContributor, ITransientDependenc
         var adminUser = await _identityUserManager.FindByNameAsync("admin");
         if (adminUser != null)
         {
-            var adminPassword = _configuration["App:AdminPassword"];
+            var adminPassword = _appOptions.AdminPassword;
             var token = await _identityUserManager.GeneratePasswordResetTokenAsync(adminUser);
             var result = await _identityUserManager.ResetPasswordAsync(adminUser, token, adminPassword);
             if (!result.Succeeded)
