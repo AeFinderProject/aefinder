@@ -1,4 +1,5 @@
 ﻿using AeFinder.MongoDb;
+using AeFinder.Options;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Autofac;
@@ -22,9 +23,9 @@ public class AeFinderDbMigratorModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        var configuration = context.Services.GetConfiguration();
         Configure<AbpBackgroundJobOptions>(options => options.IsJobExecutionEnabled = false);
-
+        Configure<AppOptions>(configuration.GetSection("App"));
         IdentityBuilderExtensions.AddDefaultTokenProviders(context.Services.AddIdentity<IdentityUser, IdentityRole>());
-        // .AddEntityFrameworkStores<ApplicationDbContext>()
     }
 }
