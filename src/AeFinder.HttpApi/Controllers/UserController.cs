@@ -33,4 +33,10 @@ public class UserController : AeFinderController
     //     await _userAppService.RegisterAppAuthentication(appId, deployKey);
     // }
     
+    [HttpGet("info")]
+    [Authorize]
+    public virtual async Task<IdentityUser> GetUserInfoAsync()
+    {
+        return await _userAppService.GetUserInfoAsync();
+    }
 }
