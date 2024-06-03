@@ -48,6 +48,14 @@ public class SubscriptionController : AeFinderController
         CheckFile(input.Code);
         await _subscriptionAppService.UpdateSubscriptionCodeAsync(ClientId, version, input.Code.GetAllBytes());
     }
+    
+    [HttpPut("{Version}")]
+    [Authorize]
+    public virtual async Task UpdateSubscriptionInfoAsync(string Version, [FromBody]SubscriptionManifestDto subscriptionManifest)
+    {
+        var appId = await _studioService.GetAppIdAsync();
+        await _blockScanAppService.UpdateSubscriptionInfoAsync(appId, Version, subscriptionManifest);
+    }
 
     [HttpGet]
     //[Authorize]

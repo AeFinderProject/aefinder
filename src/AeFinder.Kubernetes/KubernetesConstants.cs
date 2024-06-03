@@ -25,6 +25,7 @@ public class KubernetesConstants
      public const string PlaceHolderAppId = "[AppId]";
      public const string PlaceHolderVersion = "[Version]";
      public const string PlaceHolderClientType = "[ClientType]";
+     public const string PlaceHolderNameSpace = "[NameSpace]";
      public const int AppContainerTargetPort = 8308;
      
      public static void Initialize(IConfiguration configuration)
