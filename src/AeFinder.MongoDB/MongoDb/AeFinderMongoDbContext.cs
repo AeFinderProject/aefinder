@@ -1,4 +1,6 @@
-﻿using Volo.Abp.Data;
+﻿using MongoDB.Driver;
+using Volo.Abp.Data;
+using Volo.Abp.Identity;
 using Volo.Abp.MongoDB;
 
 namespace AeFinder.MongoDb;
@@ -10,13 +12,26 @@ public class AeFinderMongoDbContext : AbpMongoDbContext
      * public IMongoCollection<Question> Questions => Collection<Question>();
      */
 
+    // protected override void CreateModel(IMongoModelBuilder modelBuilder)
+    // {
+    //     base.CreateModel(modelBuilder);
+    //
+    //     //modelBuilder.Entity<YourEntity>(b =>
+    //     //{
+    //     //    //...
+    //     //});
+    // }
+    
+    public IMongoCollection<IdentityUserOrganizationUnit> IdentityUserOrganizationUnit { get; set; }
+
     protected override void CreateModel(IMongoModelBuilder modelBuilder)
     {
         base.CreateModel(modelBuilder);
-
-        //modelBuilder.Entity<YourEntity>(b =>
-        //{
-        //    //...
-        //});
+            
+        // Configure entities in MongoDB
+        modelBuilder.Entity<IdentityUserOrganizationUnit>(b =>
+        {
+            b.CollectionName = "IdentityUserOrganizationUnit";
+        });
     }
 }

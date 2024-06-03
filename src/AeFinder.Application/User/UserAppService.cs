@@ -1,8 +1,10 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.User.Dto;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -18,6 +20,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
     private readonly IOrganizationUnitRepository _organizationUnitRepository;
     private readonly ILookupNormalizer _lookupNormalizer;
     private readonly IOpenIddictApplicationManager _applicationManager;
+    private readonly IOrganizationAppService _organizationAppService;
 
     public UserAppService(
         IdentityUserManager userManager,
@@ -26,16 +29,24 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         ILookupNormalizer lookupNormalizer,
         IOptions<IdentityOptions> identityOptions,
         IOpenIddictApplicationManager applicationManager,
+        IOrganizationAppService organizationAppService,
         IOrganizationUnitRepository organizationUnitRepository)
         : base(userManager, userRepository, roleRepository, identityOptions)
     {
         _organizationUnitRepository = organizationUnitRepository;
         _lookupNormalizer = lookupNormalizer;
         _applicationManager = applicationManager;
+        _organizationAppService = organizationAppService;
     }
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)
     {
+        var existUser = await UserManager.FindByNameAsync(input.UserName);
+        if (existUser != null && !existUser.Id.ToString().IsNullOrEmpty())
+        {
+            throw new UserFriendlyException($"user {existUser.Name} is already exist!");
+        }
+        
         var user = new IdentityUser(GuidGenerator.Create(), input.UserName, input.Email, CurrentTenant.Id);
 
         if (input.OrganizationUnitId.IsNullOrEmpty())
@@ -43,10 +54,24 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             throw new UserFriendlyException("Failed to create user. OrganizationUnitId is null");
         }
 
+        Guid organizationUnitGuid;
+        if (!Guid.TryParse(input.OrganizationUnitId, out organizationUnitGuid))
+        {
+            throw new UserFriendlyException("Invalid OrganizationUnitId string");
+        }
+
+        OrganizationUnitDto organizationUnitDto =
+            await _organizationAppService.GetOrganizationUnitAsync(organizationUnitGuid);
+        if (organizationUnitDto == null || organizationUnitDto.Id.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException($"OrganizationUnit {organizationUnitGuid} is not exist");
+        }
+
         var createResult = await UserManager.CreateAsync(user, input.Password);
         if (!createResult.Succeeded)
         {
-            throw new UserFriendlyException("Failed to create user.");
+            // throw new UserFriendlyException("Failed to create user.");
+            throw new UserFriendlyException("Failed to create user. " + createResult.Errors.Select(e => e.Description).Aggregate((errors, error) => errors + ", " + error));
         }
         
         //add appAdmin role into user
@@ -60,7 +85,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         }
         
         // bind organization with user
-        var ou = await _organizationUnitRepository.GetAsync(input.OrganizationUnitId);
+        var ou = await _organizationUnitRepository.GetAsync(organizationUnitDto.DisplayName);
         await UserManager.AddToOrganizationUnitAsync(identityUser, ou);
 
         return ObjectMapper.Map<IdentityUser, IdentityUserDto>(identityUser);
