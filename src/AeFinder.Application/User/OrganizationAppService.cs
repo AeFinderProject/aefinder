@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.App;
 using AeFinder.User.Dto;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -20,13 +21,13 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     // private readonly UserManager<IdentityUser> _userManager;
     private readonly IdentityUserManager _identityUserManager;
     private readonly IRepository<IdentityUser, Guid> _identityUserRepository;
-    private readonly IRepository<IdentityUserOrganizationUnit> _identityUserOrganizationUnitRepository;
-    
+    private readonly IRepository<ExtendedIdentityUserOrganizationUnit> _identityUserOrganizationUnitRepository;
+
     public OrganizationAppService(
         OrganizationUnitManager organizationUnitManager,
         IRepository<OrganizationUnit, Guid> organizationUnitRepository,
         IRepository<IdentityUser, Guid> identityUserRepository,
-        IRepository<IdentityUserOrganizationUnit> identityUserOrganizationUnitRepository,
+        IRepository<ExtendedIdentityUserOrganizationUnit> identityUserOrganizationUnitRepository,
         IdentityUserManager identityUserManager)
     {
         _organizationUnitManager = organizationUnitManager;
@@ -62,15 +63,20 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     {
         var user = await _identityUserManager.GetByIdAsync(userId);
         if (user == null) {
-            throw new Exception("User not found.");
+            throw new UserFriendlyException("User not found.");
         }
 
         var organizationUnit = await _organizationUnitRepository.GetAsync(organizationUnitId);
         if (organizationUnit == null) {
-            throw new Exception("Organization unit not found.");
+            throw new UserFriendlyException("Organization unit not found.");
         }
         
         await _identityUserManager.AddToOrganizationUnitAsync(user.Id, organizationUnit.Id);
+
+        var userOU = new ExtendedIdentityUserOrganizationUnit(userId, organizationUnitId, CurrentTenant.Id);
+        await _identityUserOrganizationUnitRepository.InsertAsync(userOU);
+        
+        await CurrentUnitOfWork.SaveChangesAsync();
     }
 
     public async Task<List<OrganizationUnitDto>> GetAllOrganizationUnitsAsync()
@@ -114,5 +120,27 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
             return await _identityUserManager.IsInRoleAsync(user, "Admin");
         }
         return false;
+    }
+    
+    public async Task<List<OrganizationUnitDto>> GetOrganizationUnitsByUserIdAsync(Guid userId)
+    {
+        var organizationUnitList = await _identityUserOrganizationUnitRepository
+            .GetListAsync(uou => uou.UserId == userId);
+
+        if (organizationUnitList == null || organizationUnitList.Count == 0)
+        {
+            throw new UserFriendlyException("The user does not belong to any organization.");
+        }
+
+        var organizationUnitIds = organizationUnitList.Select(uou => uou.OrganizationUnitId)
+            .ToList();
+
+        var organizationUnitQuery = await _organizationUnitRepository.GetQueryableAsync();
+        var organizationUnits = organizationUnitQuery
+            .Where(ou => organizationUnitIds.Contains(ou.Id))
+            .ToList();
+
+        var result = ObjectMapper.Map<List<OrganizationUnit>, List<OrganizationUnitDto>>(organizationUnits);
+        return result;
     }
 }

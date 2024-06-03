@@ -19,4 +19,6 @@ public interface IOrganizationAppService
     Task<OrganizationUnitDto> GetOrganizationUnitAsync(Guid id);
 
     Task<List<IdentityUser>> GetUsersInOrganizationUnitAsync(Guid organizationUnitId);
+
+    Task<List<OrganizationUnitDto>> GetOrganizationUnitsByUserIdAsync(Guid userId);
 }

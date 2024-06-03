@@ -85,8 +85,9 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         }
         
         // bind organization with user
-        var ou = await _organizationUnitRepository.GetAsync(organizationUnitDto.DisplayName);
-        await UserManager.AddToOrganizationUnitAsync(identityUser, ou);
+        var organizationUnit = await _organizationUnitRepository.GetAsync(organizationUnitDto.DisplayName);
+        await UserManager.AddToOrganizationUnitAsync(identityUser, organizationUnit);
+        await _organizationAppService.AddUserToOrganizationUnitAsync(identityUser.Id,organizationUnit.Id);
 
         return ObjectMapper.Map<IdentityUser, IdentityUserDto>(identityUser);
     }
