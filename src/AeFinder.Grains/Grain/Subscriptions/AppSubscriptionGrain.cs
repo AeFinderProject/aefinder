@@ -18,13 +18,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         _distributedEventBus = distributedEventBus;
     }
 
-    public async Task<string> AddSubscriptionAsync(SubscriptionManifest subscriptionManifest, byte[] code)
-    {
-        var dto = await AddSubscriptionV2Async(subscriptionManifest, code);
-        return dto.NewVersion;
-    }
-
-    public async Task<AddSubscriptionDto> AddSubscriptionV2Async(SubscriptionManifest subscriptionManifest, byte[] code)
+    public async Task<AddSubscriptionDto> AddSubscriptionAsync(SubscriptionManifest subscriptionManifest, byte[] code)
     {
         var addSubscriptionDto = new AddSubscriptionDto();
         var newVersion = Guid.NewGuid().ToString("N");

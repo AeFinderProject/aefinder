@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
 using AeFinder.BlockScan;
@@ -38,7 +40,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
         var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
 
-        var addResult = await appSubscriptionGrain.AddSubscriptionV2Async(subscription, code);
+        var addResult = await appSubscriptionGrain.AddSubscriptionAsync(subscription, code);
         
         if (!addResult.StopVersion.IsNullOrEmpty())
         {
@@ -51,9 +53,19 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         return addResult.NewVersion;
     }
 
-    public Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest)
+    public async Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest)
     {
-        throw new System.NotImplementedException();
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+
+        var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
+        var currentSubscriptionInfos = await appSubscriptionGrain.GetSubscriptionAsync(version);
+        
+        //Check input subscription info if is valid
+        CheckInputSubscriptionInfoIsValid(subscription.SubscriptionItems, currentSubscriptionInfos.SubscriptionItems);
+        CheckInputSubscriptionInfoIsDuplicateOrMissing(subscription.SubscriptionItems,currentSubscriptionInfos.SubscriptionItems);
+
+        await appSubscriptionGrain.UpdateSubscriptionAsync(version, subscription);
+        await _appDeployManager.RestartAppAsync(appId, version);
     }
 
     public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code)
@@ -83,6 +95,139 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         catch (CodeCheckException ex)
         {
             throw new UserFriendlyException(ex.Message);
+        }
+    }
+    
+    private void CheckInputSubscriptionInfoIsValid(List<Subscription> subscriptionInfos,
+        List<Subscription> currentSubscriptionInfos)
+    {
+        foreach (var subscriptionInfo in subscriptionInfos)
+        {
+            var currentSubscriptionInfoForCheckChainId = currentSubscriptionInfos.FindAll(i =>
+                (i.ChainId == subscriptionInfo.ChainId));
+            if (currentSubscriptionInfoForCheckChainId == null || currentSubscriptionInfoForCheckChainId.Count == 0)
+            {
+                var errorMessage = $"Invalid chain id {subscriptionInfo.ChainId}, can not add new chain";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+
+            var currentSubscriptionInfo = currentSubscriptionInfoForCheckChainId.FirstOrDefault();
+            if ((currentSubscriptionInfo.TransactionConditions == null ||
+                 currentSubscriptionInfo.TransactionConditions.Count == 0) &&
+                (subscriptionInfo.TransactionConditions != null && subscriptionInfo.TransactionConditions.Count > 0))
+            {
+                var errorMessage = $"Can not add transactionConditions in chain {subscriptionInfo.ChainId}";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+            
+            if ((currentSubscriptionInfo.LogEventConditions == null ||
+                 currentSubscriptionInfo.LogEventConditions.Count == 0) &&
+                (subscriptionInfo.LogEventConditions != null && subscriptionInfo.LogEventConditions.Count > 0))
+            {
+                var errorMessage = $"Can not add logEventConditions in chain {subscriptionInfo.ChainId}";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+            
+            var currentSubscriptionInfoForCheckStartBlockNumber = currentSubscriptionInfoForCheckChainId.FindAll(i =>
+                i.StartBlockNumber == subscriptionInfo.StartBlockNumber);
+            if (currentSubscriptionInfoForCheckStartBlockNumber == null || currentSubscriptionInfoForCheckStartBlockNumber.Count == 0)
+            {
+                var errorMessage =
+                    $"Invalid start block number {subscriptionInfo.StartBlockNumber}, can not update start block number in chain {subscriptionInfo.ChainId}";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+            
+            var currentSubscriptionForCheckIsOnlyConfirmed = currentSubscriptionInfoForCheckStartBlockNumber.FindAll(i =>
+                i.OnlyConfirmed == subscriptionInfo.OnlyConfirmed);
+            if (currentSubscriptionForCheckIsOnlyConfirmed == null || currentSubscriptionForCheckIsOnlyConfirmed.Count == 0)
+            {
+                var errorMessage =
+                    $"Invalid only confirmed block {subscriptionInfo.OnlyConfirmed}, can not update only confirmed block in chain {subscriptionInfo.ChainId}";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+        }
+    }
+
+    private void CheckInputSubscriptionInfoIsDuplicateOrMissing(List<Subscription> subscriptionInfos,
+        List<Subscription> currentSubscriptionInfos)
+    {
+        foreach (var currentSubscriptionInfo in currentSubscriptionInfos)
+        {
+            var subscriptionInfoForCheckDuplicate= subscriptionInfos.FindAll(i =>
+                (i.ChainId == currentSubscriptionInfo.ChainId));
+            if (subscriptionInfoForCheckDuplicate != null && subscriptionInfoForCheckDuplicate.Count > 1)
+            {
+                var errorMessage =
+                    $"Duplicate subscribe information in chain {currentSubscriptionInfo.ChainId}";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+            
+            var subscriptionInfoForCheck = subscriptionInfoForCheckDuplicate.FirstOrDefault(i =>
+                (i.StartBlockNumber == currentSubscriptionInfo.StartBlockNumber && i.OnlyConfirmed == currentSubscriptionInfo.OnlyConfirmed));
+            if (subscriptionInfoForCheck == null)
+            {
+                var errorMessage =
+                    $"Can not modify StartBlockNumber or OnlyConfirmed of subscribe information in chain {currentSubscriptionInfo.ChainId}";
+                throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+            }
+            
+            if (currentSubscriptionInfo.TransactionConditions != null &&
+                currentSubscriptionInfo.TransactionConditions.Count > 0)
+            {
+                foreach (var transactionCondition in currentSubscriptionInfo.TransactionConditions)
+                {
+                    var currentTo = transactionCondition.To;
+                    var subscriptionInfoForCheckTransactionCondition =
+                        subscriptionInfoForCheck.TransactionConditions.FirstOrDefault(i =>
+                            (i.To == currentTo));
+                    if (subscriptionInfoForCheckTransactionCondition == null)
+                    {
+                        var errorMessage =
+                            $"Can not remove subscribed transaction condition of to address {currentTo} in chain {subscriptionInfoForCheck.ChainId}";
+                        throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+                    }
+
+                    foreach (var methodName in transactionCondition.MethodNames)
+                    {
+                        var inputMethodName=subscriptionInfoForCheckTransactionCondition.MethodNames.FirstOrDefault(i => i == methodName);
+                        if (inputMethodName.IsNullOrEmpty())
+                        {
+                            var errorMessage =
+                                $"Can not remove subscribed transaction condition of method name {methodName} in chain {subscriptionInfoForCheck.ChainId} to address {currentTo}";
+                            throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+                        }
+                    }
+                }
+            }
+            
+            if (currentSubscriptionInfo.LogEventConditions != null &&
+                currentSubscriptionInfo.LogEventConditions.Count > 0)
+            {
+                foreach (var logEventCondition in currentSubscriptionInfo.LogEventConditions)
+                {
+                    var currentContractAddress = logEventCondition.ContractAddress;
+                    var subscriptionInfoForCheckLogEventCondition =
+                        subscriptionInfoForCheck.LogEventConditions.FirstOrDefault(i =>
+                            (i.ContractAddress == currentContractAddress));
+                    if (subscriptionInfoForCheckLogEventCondition == null)
+                    {
+                        var errorMessage =
+                            $"Can not remove subscribe log event condition of contract address {currentContractAddress} in chain {subscriptionInfoForCheck.ChainId}";
+                        throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+                    }
+
+                    foreach (var eventName in logEventCondition.EventNames)
+                    {
+                        var inputEventName=subscriptionInfoForCheckLogEventCondition.EventNames.FirstOrDefault(i => i == eventName);
+                        if (inputEventName.IsNullOrEmpty())
+                        {
+                            var errorMessage =
+                                $"Can not remove subscribe log event condition of event name {eventName} in chain {subscriptionInfoForCheck.ChainId} contract address {currentContractAddress}";
+                            throw new UserFriendlyException("Invalid subscriptionInfo", details: errorMessage);
+                        }
+                    }
+                }
+            }
         }
     }
 }

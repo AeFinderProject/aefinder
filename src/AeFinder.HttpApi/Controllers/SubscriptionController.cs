@@ -1,9 +1,7 @@
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
 using AeFinder.Models;
-using AeFinder.Studio;
 using AeFinder.Subscriptions;
-using BrunoZell.ModelBinding;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -49,14 +47,6 @@ public class SubscriptionController : AeFinderController
         await _subscriptionAppService.UpdateSubscriptionCodeAsync(ClientId, version, input.Code.GetAllBytes());
     }
     
-    [HttpPut("{Version}")]
-    [Authorize]
-    public virtual async Task UpdateSubscriptionInfoAsync(string Version, [FromBody]SubscriptionManifestDto subscriptionManifest)
-    {
-        var appId = await _studioService.GetAppIdAsync();
-        await _blockScanAppService.UpdateSubscriptionInfoAsync(appId, Version, subscriptionManifest);
-    }
-
     [HttpGet]
     //[Authorize]
     public async Task<AllSubscriptionDto> GetSubscriptionAsync()
