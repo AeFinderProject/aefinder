@@ -116,4 +116,20 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             }
         });
     }
+
+    public async Task<IdentityUser> GetUserInfoAsync()
+    {
+        if (CurrentUser == null || CurrentUser.Id == null)
+        {
+            throw new UserFriendlyException("CurrentUser is null");
+        }
+        
+        var user = await UserManager.FindByIdAsync(CurrentUser.Id.ToString());
+        if (user == null)
+        {
+            throw new UserFriendlyException("user not found.");
+        }
+
+        return user;
+    }
 }

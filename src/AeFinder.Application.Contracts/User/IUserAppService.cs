@@ -9,4 +9,6 @@ public interface IUserAppService
     Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input);
 
     Task RegisterAppAuthentication(string appId, string deployKey);
+
+    Task<IdentityUser> GetUserInfoAsync();
 }
