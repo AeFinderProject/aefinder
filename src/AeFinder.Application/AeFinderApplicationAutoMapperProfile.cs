@@ -6,6 +6,7 @@ using AeFinder.Etos;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.Apps;
 using AeFinder.Studio;
+using AeFinder.User.Dto;
 using AutoMapper;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Identity;
@@ -62,5 +63,6 @@ public class AeFinderApplicationAutoMapperProfile : Profile
             .ForMember(destination => destination.UpdateTime,
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.UpdateTime)));
         CreateMap<CreateAppDto, AppState>();
+        CreateMap<OrganizationUnit, OrganizationUnitDto>();
     }
 }
