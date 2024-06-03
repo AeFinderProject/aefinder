@@ -20,7 +20,7 @@ public class AppController : AeFinderController
     }
 
     [HttpPost]
-    //[Authorize]
+    [Authorize]
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
     {
         return await _appService.CreateAsync(dto);
@@ -28,7 +28,7 @@ public class AppController : AeFinderController
 
     [HttpPut]
     [Route("{appId}")]
-    //[Authorize]
+    [Authorize]
     public async Task<AppDto> UpdateAsync(string appId, UpdateAppDto dto)
     {
         return await _appService.UpdateAsync(appId, dto);
@@ -36,12 +36,14 @@ public class AppController : AeFinderController
 
     [HttpGet]
     [Route("{appId}")]
+    [Authorize]
     public async Task<AppDto> GetAsync(string appId)
     {
         return await _appService.GetAsync(appId);
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<PagedResultDto<AppDto>> GetListAsync()
     {
         return await _appService.GetListAsync();

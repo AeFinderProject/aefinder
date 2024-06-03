@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.User;
 using Nito.AsyncEx;
 using Orleans;
 using Volo.Abp;
@@ -17,10 +18,12 @@ namespace AeFinder.Apps;
 public class AppService : AeFinderAppService, IAppService
 {
     private readonly IClusterClient _clusterClient;
+    private readonly IUserAppService _userAppService;
 
-    public AppService(IClusterClient clusterClient)
+    public AppService(IClusterClient clusterClient, IUserAppService userAppService)
     {
         _clusterClient = clusterClient;
+        _userAppService = userAppService;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -28,9 +31,10 @@ public class AppService : AeFinderAppService, IAppService
         dto.AppId = dto.AppName.ToLower().Replace(" ", "_");
         dto.DeployKey = Guid.NewGuid().ToString("N");
         
-        // TODO: register appid and deploy key
+        await _userAppService.RegisterAppAuthentication(dto.AppId, dto.DeployKey);
         
         // TODO: get OrganizationId
+        
         var organizationId = "MockOrgId";
         dto.OrganizationId = organizationId;
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(dto.AppId));

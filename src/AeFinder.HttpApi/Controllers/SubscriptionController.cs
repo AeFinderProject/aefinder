@@ -23,7 +23,7 @@ public class SubscriptionController : AeFinderController
     }
 
     [HttpPost]
-    //[Authorize]
+    [Authorize]
     public async Task<string> AddSubscriptionAsync([FromForm]AddSubscriptionInput input)
     {
         CheckFile(input.Code);
@@ -31,7 +31,7 @@ public class SubscriptionController : AeFinderController
     }
     
     [HttpPut]
-    //[Authorize]
+    [Authorize]
     [Route("manifest/{version}")]
     public async Task UpdateManifestAsync(string version, SubscriptionManifestDto input)
     {
@@ -39,7 +39,7 @@ public class SubscriptionController : AeFinderController
     }
     
     [HttpPut]
-    //[Authorize]
+    [Authorize]
     [Route("code/{version}")]
     public async Task UpdateCodeAsync(string version, [FromForm]UpdateSubscriptionCodeInput input)
     {
@@ -48,7 +48,7 @@ public class SubscriptionController : AeFinderController
     }
     
     [HttpGet]
-    //[Authorize]
+    [Authorize]
     public async Task<AllSubscriptionDto> GetSubscriptionAsync()
     {
         return await _subscriptionAppService.GetSubscriptionManifestAsync(ClientId);
