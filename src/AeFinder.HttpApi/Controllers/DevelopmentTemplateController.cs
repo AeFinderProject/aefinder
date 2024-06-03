@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using AeFinder.DevelopmentTemplate;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
 
@@ -18,7 +19,7 @@ public class DevelopmentTemplateController : AeFinderController
     }
     
     [HttpGet]
-    //[Authorize]
+    [Authorize]
     public async Task<FileContentResult> GenerateProjectAsync(GenerateProjectDto input)
     {
         return await _developmentTemplateAppService.GenerateProjectAsync(input);
