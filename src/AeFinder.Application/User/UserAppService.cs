@@ -62,7 +62,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
         OrganizationUnitDto organizationUnitDto =
             await _organizationAppService.GetOrganizationUnitAsync(organizationUnitGuid);
-        if (organizationUnitDto == null || organizationUnitDto.Id.IsNullOrEmpty())
+        if (organizationUnitDto == null || organizationUnitDto.Id.ToString().IsNullOrEmpty())
         {
             throw new UserFriendlyException($"OrganizationUnit {organizationUnitGuid} is not exist");
         }
