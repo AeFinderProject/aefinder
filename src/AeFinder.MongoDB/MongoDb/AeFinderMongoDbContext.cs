@@ -23,16 +23,16 @@ public class AeFinderMongoDbContext : AbpMongoDbContext
     //     //});
     // }
     
-    public IMongoCollection<ExtendedIdentityUserOrganizationUnit> ExtendedIdentityUserOrganizationUnit { get; set; }
-
-    protected override void CreateModel(IMongoModelBuilder modelBuilder)
-    {
-        base.CreateModel(modelBuilder);
-            
-        // Configure entities in MongoDB
-        modelBuilder.Entity<ExtendedIdentityUserOrganizationUnit>(b =>
-        {
-            b.CollectionName = "ExtendedIdentityUserOrganizationUnit";
-        });
-    }
+    // public IMongoCollection<ExtendedIdentityUserOrganizationUnit> ExtendedIdentityUserOrganizationUnit { get; set; }
+    //
+    // protected override void CreateModel(IMongoModelBuilder modelBuilder)
+    // {
+    //     base.CreateModel(modelBuilder);
+    //         
+    //     // Configure entities in MongoDB
+    //     modelBuilder.Entity<ExtendedIdentityUserOrganizationUnit>(b =>
+    //     {
+    //         b.CollectionName = "ExtendedIdentityUserOrganizationUnit";
+    //     });
+    // }
 }
