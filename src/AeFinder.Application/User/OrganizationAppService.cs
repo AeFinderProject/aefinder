@@ -94,7 +94,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         return organizationUnitDto;
     }
 
-    public async Task<List<IdentityUser>> GetUsersInOrganizationUnitAsync(Guid organizationUnitId)
+    public async Task<List<IdentityUserDto>> GetUsersInOrganizationUnitAsync(Guid organizationUnitId)
     {
         // the associated query of organizational units and users
         var userOrgUnitsQuery = await _identityUserOrganizationUnitRepository.GetQueryableAsync();
@@ -109,7 +109,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         var users = await AsyncExecuter.ToListAsync(
             usersQuery.Where(user => userIds.Contains(user.Id)));
 
-        return users;
+        return ObjectMapper.Map<List<IdentityUser>, List<IdentityUserDto>>(users);
     }
     
     public async Task<bool> IsUserAdminAsync(string userId)
