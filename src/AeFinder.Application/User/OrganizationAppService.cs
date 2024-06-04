@@ -29,7 +29,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         IRepository<OrganizationUnit, Guid> organizationUnitRepository,
         // IRepository<IdentityUser, Guid> identityUserRepository,
         IIdentityUserRepository identityUserRepository,
-        IRepository<ExtendedIdentityUserOrganizationUnit> identityUserOrganizationUnitRepository,
+        // IRepository<ExtendedIdentityUserOrganizationUnit> identityUserOrganizationUnitRepository,
         IdentityUserManager identityUserManager)
     {
         _organizationUnitManager = organizationUnitManager;
