@@ -14,11 +14,4 @@ public class DateTimeHelper
     {
         return DateTime.UnixEpoch.AddMilliseconds(value);
     }
-
-    public static DateTime AddHours(DateTime value, long hours)
-    {
-        return (DateTime.MaxValue - value).TotalHours <= hours
-            ? DateTime.MaxValue
-            : value.AddHours(hours);
-    }
 }

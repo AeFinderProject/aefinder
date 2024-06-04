@@ -6,7 +6,7 @@ using Xunit;
 
 namespace AeFinder.Apps;
 
-public class AppServiceTests : AeFinderApplicationOrleansTestBase
+public class AppServiceTests : AeFinderApplicationAppTestBase
 {
     private readonly IAppService _appService;
 
