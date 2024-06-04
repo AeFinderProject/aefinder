@@ -29,7 +29,8 @@ public class AeFinderMongoDbModule : AbpModule
     {
         context.Services.AddMongoDbContext<AeFinderMongoDbContext>(options =>
         {
-            options.AddDefaultRepositories(includeAllEntities: true);
+            options.AddDefaultRepositories();
+            // options.AddDefaultRepositories(includeAllEntities: true);
         });
 
         Configure<AbpUnitOfWorkDefaultOptions>(options =>

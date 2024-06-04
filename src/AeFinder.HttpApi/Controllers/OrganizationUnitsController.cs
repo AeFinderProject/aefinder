@@ -49,7 +49,7 @@ public class OrganizationUnitsController : AeFinderController
     
     [HttpGet("users")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public virtual async Task<List<IdentityUser>> GetUsersInOrganizationUnitAsync(string organizationUnitId)
+    public virtual async Task<List<IdentityUserDto>> GetUsersInOrganizationUnitAsync(string organizationUnitId)
     {
         Guid organizationUnitGuid;
         if (!Guid.TryParse(organizationUnitId, out organizationUnitGuid))

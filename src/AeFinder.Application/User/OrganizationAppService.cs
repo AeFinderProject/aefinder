@@ -20,13 +20,15 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     private readonly IRepository<OrganizationUnit, Guid> _organizationUnitRepository;
     // private readonly UserManager<IdentityUser> _userManager;
     private readonly IdentityUserManager _identityUserManager;
-    private readonly IRepository<IdentityUser, Guid> _identityUserRepository;
-    private readonly IRepository<ExtendedIdentityUserOrganizationUnit> _identityUserOrganizationUnitRepository;
+    // private readonly IRepository<IdentityUser, Guid> _identityUserRepository;
+    // private readonly IRepository<ExtendedIdentityUserOrganizationUnit> _identityUserOrganizationUnitRepository;
+    private readonly IIdentityUserRepository _identityUserRepository;
 
     public OrganizationAppService(
         OrganizationUnitManager organizationUnitManager,
         IRepository<OrganizationUnit, Guid> organizationUnitRepository,
-        IRepository<IdentityUser, Guid> identityUserRepository,
+        // IRepository<IdentityUser, Guid> identityUserRepository,
+        IIdentityUserRepository identityUserRepository,
         IRepository<ExtendedIdentityUserOrganizationUnit> identityUserOrganizationUnitRepository,
         IdentityUserManager identityUserManager)
     {
@@ -35,7 +37,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         // _userManager = userManager;
         _identityUserManager = identityUserManager;
         _identityUserRepository = identityUserRepository;
-        _identityUserOrganizationUnitRepository = identityUserOrganizationUnitRepository;
+        // _identityUserOrganizationUnitRepository = identityUserOrganizationUnitRepository;
     }
     
     public async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(string displayName, Guid? parentId = null)
@@ -73,8 +75,8 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         
         await _identityUserManager.AddToOrganizationUnitAsync(user.Id, organizationUnit.Id);
 
-        var userOU = new ExtendedIdentityUserOrganizationUnit(userId, organizationUnitId, CurrentTenant.Id);
-        await _identityUserOrganizationUnitRepository.InsertAsync(userOU);
+        // var userOU = new ExtendedIdentityUserOrganizationUnit(userId, organizationUnitId, CurrentTenant.Id);
+        // await _identityUserOrganizationUnitRepository.InsertAsync(userOU);
         
         await CurrentUnitOfWork.SaveChangesAsync();
     }
@@ -97,17 +99,18 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     public async Task<List<IdentityUserDto>> GetUsersInOrganizationUnitAsync(Guid organizationUnitId)
     {
         // the associated query of organizational units and users
-        var userOrgUnitsQuery = await _identityUserOrganizationUnitRepository.GetQueryableAsync();
-        // var userOrgUnits = await AsyncExecuter.ToListAsync(
-        //     userOrgUnitsQuery.Where(uou => uou.OrganizationUnitId == organizationUnitId));
-        var userOrgUnits = userOrgUnitsQuery.Where(uou => uou.OrganizationUnitId == organizationUnitId).ToList();
-        
-        var userIds = userOrgUnits.Select(uou => uou.UserId).ToList();
-
-        // get users entity query
-        var usersQuery = await _identityUserRepository.GetQueryableAsync();
-        var users = await AsyncExecuter.ToListAsync(
-            usersQuery.Where(user => userIds.Contains(user.Id)));
+        // var userOrgUnitsQuery = await _identityUserOrganizationUnitRepository.GetQueryableAsync();
+        // // var userOrgUnits = await AsyncExecuter.ToListAsync(
+        // //     userOrgUnitsQuery.Where(uou => uou.OrganizationUnitId == organizationUnitId));
+        // var userOrgUnits = userOrgUnitsQuery.Where(uou => uou.OrganizationUnitId == organizationUnitId).ToList();
+        //
+        // var userIds = userOrgUnits.Select(uou => uou.UserId).ToList();
+        //
+        // // get users entity query
+        // var usersQuery = await _identityUserRepository.GetQueryableAsync();
+        // var users = await AsyncExecuter.ToListAsync(
+        //     usersQuery.Where(user => userIds.Contains(user.Id)));
+        var users = await _identityUserRepository.GetUsersInOrganizationUnitAsync(organizationUnitId);
 
         return ObjectMapper.Map<List<IdentityUser>, List<IdentityUserDto>>(users);
     }
@@ -124,22 +127,23 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     
     public async Task<List<OrganizationUnitDto>> GetOrganizationUnitsByUserIdAsync(Guid userId)
     {
-        var organizationUnitList = await _identityUserOrganizationUnitRepository
-            .GetListAsync(uou => uou.UserId == userId);
-
-        if (organizationUnitList == null || organizationUnitList.Count == 0)
-        {
-            throw new UserFriendlyException("The user does not belong to any organization.");
-        }
-
-        var organizationUnitIds = organizationUnitList.Select(uou => uou.OrganizationUnitId)
-            .ToList();
-
-        var organizationUnitQuery = await _organizationUnitRepository.GetQueryableAsync();
-        var organizationUnits = organizationUnitQuery
-            .Where(ou => organizationUnitIds.Contains(ou.Id))
-            .ToList();
-
+        var organizationUnits = await _identityUserRepository.GetOrganizationUnitsAsync(userId);
+        // var organizationUnitList = await _identityUserOrganizationUnitRepository
+        //     .GetListAsync(uou => uou.UserId == userId);
+        //
+        // if (organizationUnitList == null || organizationUnitList.Count == 0)
+        // {
+        //     throw new UserFriendlyException("The user does not belong to any organization.");
+        // }
+        //
+        // var organizationUnitIds = organizationUnitList.Select(uou => uou.OrganizationUnitId)
+        //     .ToList();
+        //
+        // var organizationUnitQuery = await _organizationUnitRepository.GetQueryableAsync();
+        // var organizationUnits = organizationUnitQuery
+        //     .Where(ou => organizationUnitIds.Contains(ou.Id))
+        //     .ToList();
+        //
         var result = ObjectMapper.Map<List<OrganizationUnit>, List<OrganizationUnitDto>>(organizationUnits);
         return result;
     }
