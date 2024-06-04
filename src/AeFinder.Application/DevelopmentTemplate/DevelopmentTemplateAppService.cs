@@ -29,7 +29,7 @@ public class DevelopmentTemplateAppService : AeFinderAppService, IDevelopmentTem
     {
         var tempFolder = Guid.NewGuid().ToString("N");
         var generatedPath = Path.Combine(_devTemplateOptions.TemplatePath, GeneratedProjectFolder, tempFolder);
-        var zipFileName = Path.Combine(generatedPath + ".zip");
+        var zipFileName = generatedPath + ".zip";
 
         try
         {
