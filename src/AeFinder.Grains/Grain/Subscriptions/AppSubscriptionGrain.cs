@@ -1,3 +1,5 @@
+using AeFinder.Apps;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Studio;
@@ -37,6 +39,8 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
                 CurrentVersion = newVersion,
                 AppId = this.GetPrimaryKeyString()
             });
+            
+            await GrainFactory.GetGrain<IAppGrain>(this.GetPrimaryKeyString()).SetStatusAsync(AppStatus.Deployed);
         }
         else
         {
@@ -157,6 +161,8 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         });
         State.NewVersion = null;
         await WriteStateAsync();
+
+        await GrainFactory.GetGrain<IAppGrain>(this.GetPrimaryKeyString()).SetStatusAsync(AppStatus.Deployed);
     }
 
     public Task<SubscriptionStatus> GetSubscriptionStatusAsync(string version)

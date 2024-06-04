@@ -7,5 +7,6 @@ public interface IAppGrain : IGrainWithStringKey
 {
     Task<AppDto> CreateAsync(CreateAppDto dto);
     Task<AppDto> UpdateAsync(UpdateAppDto dto);
+    Task SetStatusAsync(AppStatus status);
     Task<AppDto> GetAsync();
 }

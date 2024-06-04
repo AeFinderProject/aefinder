@@ -47,6 +47,13 @@ public class AppGrain : Grain<AppState>, IAppGrain
         return _objectMapper.Map<AppState, AppDto>(State);
     }
 
+    public async Task SetStatusAsync(AppStatus status)
+    {
+        State.Status = status;
+        State.UpdateTime = DateTime.UtcNow;
+        await WriteStateAsync();
+    }
+
     public Task<AppDto> GetAsync()
     {
         return Task.FromResult(_objectMapper.Map<AppState, AppDto>(State));
