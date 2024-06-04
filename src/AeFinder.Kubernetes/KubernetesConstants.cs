@@ -7,6 +7,7 @@ public class KubernetesConstants
      public const string NginxIngressClassName = "nginx";
      //resource definition
      // public const string AppNameSpace = "aefinder-app";
+     public const string NodeAffinityValue = "aefinder";
      public static string AppNameSpace { get; private set; }
      public const string AppLabelKey = "app";
      public const string AppSettingFileName = "appsettings.json";
