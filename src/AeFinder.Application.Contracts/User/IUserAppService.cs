@@ -10,5 +10,5 @@ public interface IUserAppService
 
     Task RegisterAppAuthentication(string appId, string deployKey);
 
-    Task<IdentityUser> GetUserInfoAsync();
+    Task<IdentityUserDto> GetUserInfoAsync();
 }
