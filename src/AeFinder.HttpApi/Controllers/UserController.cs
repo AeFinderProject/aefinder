@@ -35,7 +35,7 @@ public class UserController : AeFinderController
     
     [HttpGet("info")]
     [Authorize]
-    public virtual async Task<IdentityUser> GetUserInfoAsync()
+    public virtual async Task<IdentityUserDto> GetUserInfoAsync()
     {
         return await _userAppService.GetUserInfoAsync();
     }
