@@ -96,7 +96,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
     {
         if (await _applicationManager.FindByClientIdAsync(appId) != null)
         {
-            throw new Exception("A app with the same ID already exists.");
+            throw new UserFriendlyException("A app with the same ID already exists.");
         }
 
         await _applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
