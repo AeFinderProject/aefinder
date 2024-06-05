@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AeFinder.Apps;
 using AeFinder.BlockScan;
 using Shouldly;
 using Volo.Abp.Validation;
@@ -10,16 +11,18 @@ namespace AeFinder.Subscriptions;
 public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
 {
     private readonly ISubscriptionAppService _subscriptionAppService;
+    private readonly IAppService _appService;
 
     public SubscriptionAppServiceTests()
     {
         _subscriptionAppService = GetRequiredService<ISubscriptionAppService>();
+        _appService = GetRequiredService<IAppService>();
     }
 
     [Fact]
     public async Task SubscriptionTest()
     {
-        var appId = "AppId";
+        var appId = (await _appService.CreateAsync(new CreateAppDto { AppName = "AppId" })).AppId;
         var chainId = "AELF";
         var subscriptionInput = new SubscriptionManifestDto()
         {
@@ -142,6 +145,8 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
     [Fact]
     public async Task UpdateSubscriptionTest()
     {
+        var appId = (await _appService.CreateAsync(new CreateAppDto { AppName = "AppId" })).AppId;
+        
         var subscriptionInfo1 = new SubscriptionManifestDto()
         {
             SubscriptionItems=new List<SubscriptionDto>()
@@ -178,7 +183,6 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
                 }
             }
         };
-        var appId = "test-app";
         var dll = System.Text.Encoding.UTF8.GetBytes("Program codes");
         var version1 = await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInfo1, dll);
         

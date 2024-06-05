@@ -31,14 +31,14 @@ public class AppService : AeFinderAppService, IAppService
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
     {
-        dto.AppId = dto.AppName.ToLower().Replace(" ", "_");
+        dto.AppId = dto.AppName.Trim().ToLower().Replace(" ", "_");
         dto.DeployKey = Guid.NewGuid().ToString("N");
-        
-        await _userAppService.RegisterAppAuthentication(dto.AppId, dto.DeployKey);
         
         dto.OrganizationId = await GetOrganizationIdAsync();
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(dto.AppId));
-        return await appGrain.CreateAsync(dto);
+        var appDto = await appGrain.CreateAsync(dto);
+        await _userAppService.RegisterAppAuthentication(dto.AppId, dto.DeployKey);
+        return appDto;
     }
 
     public async Task<AppDto> UpdateAsync(string appId, UpdateAppDto dto)

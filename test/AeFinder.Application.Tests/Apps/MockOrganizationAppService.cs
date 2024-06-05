@@ -34,11 +34,11 @@ public class MockOrganizationAppService: AeFinderAppService, IOrganizationAppSer
         throw new NotImplementedException();
     }
 
-    public Task<List<IdentityUser>> GetUsersInOrganizationUnitAsync(Guid organizationUnitId)
+    public Task<List<IdentityUserDto>> GetUsersInOrganizationUnitAsync(Guid organizationUnitId)
     {
         throw new NotImplementedException();
     }
-
+    
     public async Task<List<OrganizationUnitDto>> GetOrganizationUnitsByUserIdAsync(Guid userId)
     {
         return new List<OrganizationUnitDto>
