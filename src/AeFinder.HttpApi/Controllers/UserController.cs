@@ -33,4 +33,17 @@ public class UserController : AeFinderController
     //     await _userAppService.RegisterAppAuthentication(appId, deployKey);
     // }
     
+    [HttpGet("info")]
+    [Authorize]
+    public virtual async Task<IdentityUserDto> GetUserInfoAsync()
+    {
+        return await _userAppService.GetUserInfoAsync();
+    }
+
+    [HttpPost("reset/password")]
+    [Authorize]
+    public virtual async Task ResetPasswordAsync(ResetPasswordInput input)
+    {
+        await _userAppService.ResetPasswordAsync(input.NewPassword);
+    }
 }

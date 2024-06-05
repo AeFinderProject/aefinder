@@ -13,26 +13,14 @@ public class AeFinderMongoDbContext : AbpMongoDbContext
      * public IMongoCollection<Question> Questions => Collection<Question>();
      */
 
-    // protected override void CreateModel(IMongoModelBuilder modelBuilder)
-    // {
-    //     base.CreateModel(modelBuilder);
-    //
-    //     //modelBuilder.Entity<YourEntity>(b =>
-    //     //{
-    //     //    //...
-    //     //});
-    // }
-    
-    public IMongoCollection<ExtendedIdentityUserOrganizationUnit> ExtendedIdentityUserOrganizationUnit { get; set; }
-
     protected override void CreateModel(IMongoModelBuilder modelBuilder)
     {
         base.CreateModel(modelBuilder);
-            
-        // Configure entities in MongoDB
-        modelBuilder.Entity<ExtendedIdentityUserOrganizationUnit>(b =>
-        {
-            b.CollectionName = "ExtendedIdentityUserOrganizationUnit";
-        });
+    
+        //modelBuilder.Entity<YourEntity>(b =>
+        //{
+        //    //...
+        //});
     }
+    
 }
