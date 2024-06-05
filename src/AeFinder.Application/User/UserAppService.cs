@@ -132,4 +132,26 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
         return ObjectMapper.Map<IdentityUser, IdentityUserDto>(identityUser);
     }
+
+    public async Task ResetPasswordAsync(string newPassword)
+    {
+        if (CurrentUser == null || CurrentUser.Id == null)
+        {
+            throw new UserFriendlyException("CurrentUser is null");
+        }
+        
+        var identityUser = await UserManager.FindByIdAsync(CurrentUser.Id.ToString());
+        if (identityUser == null)
+        {
+            throw new UserFriendlyException("user not found.");
+        }
+        
+        var token = await UserManager.GeneratePasswordResetTokenAsync(identityUser);
+        var result = await UserManager.ResetPasswordAsync(identityUser, token, newPassword);
+        if (!result.Succeeded)
+        {
+            throw new UserFriendlyException("reset user password failed." + result.Errors.Select(e => e.Description)
+                .Aggregate((errors, error) => errors + ", " + error));
+        }
+    }
 }

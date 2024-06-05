@@ -11,4 +11,6 @@ public interface IUserAppService
     Task RegisterAppAuthentication(string appId, string deployKey);
 
     Task<IdentityUserDto> GetUserInfoAsync();
+
+    Task ResetPasswordAsync(string newPassword);
 }
