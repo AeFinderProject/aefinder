@@ -1,3 +1,4 @@
+using System.Linq;
 using AeFinder.Apps;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
@@ -44,7 +45,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
 
         CreateMap<Subscription, SubscriptionDto>()
             .ForMember(destination => destination.Transactions,
-            opt => opt.MapFrom(source => source.TransactionConditions))
+                opt => opt.MapFrom(source => source.TransactionConditions))
             .ForMember(destination => destination.LogEvents,
                 opt => opt.MapFrom(source => source.LogEventConditions));
         CreateMap<TransactionCondition, TransactionConditionDto>();
@@ -64,5 +65,12 @@ public class AeFinderApplicationAutoMapperProfile : Profile
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.UpdateTime)));
         CreateMap<CreateAppDto, AppState>();
         CreateMap<OrganizationUnit, OrganizationUnitDto>();
+
+        CreateMap<BlockWithTransactionDto, AppSubscribedBlockDto>();
+        CreateMap<TransactionDto, AppSubscribedTransactionDto>()
+            .ForMember(destination => destination.ExtraProperties,
+                opt => opt.MapFrom(source => source.ExtraProperties.Where(o =>
+                    AeFinderApplicationConsts.AppInterestedExtraPropertiesKey.Contains(o.Key))));
+        CreateMap<LogEventDto, AppSubscribedLogEventDto>();
     }
 }

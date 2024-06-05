@@ -64,7 +64,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
             {
                 v.ChainId.ShouldBe(chainId);
@@ -152,7 +152,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
@@ -269,7 +269,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
@@ -337,7 +337,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
@@ -407,7 +407,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockWithTransactionDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
@@ -471,7 +471,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
             {
                 v.ChainId.ShouldBe(chainId);

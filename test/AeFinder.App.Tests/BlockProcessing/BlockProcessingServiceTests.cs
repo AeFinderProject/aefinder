@@ -5,6 +5,7 @@ using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
 using AeFinder.App.MockApp;
 using AeFinder.Block.Dtos;
+using AeFinder.BlockScan;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Sdk;
 using Shouldly;
@@ -465,7 +466,7 @@ public class BlockProcessingServiceTests: AeFinderAppTestBase
         }
     }
     
-    private async Task AddBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks, bool process = false)
+    private async Task AddBlocksAsync(string chainId, List<AppSubscribedBlockDto> blocks, bool process = false)
     {
         foreach (var block in blocks)
         {

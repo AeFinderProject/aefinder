@@ -1,6 +1,7 @@
 using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
 using AeFinder.Block.Dtos;
+using AeFinder.BlockScan;
 using AElf.Types;
 using AeFinder.Grains.Grain.BlockStates;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         _logger = logger;
     }
 
-    public async Task AttachBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks)
+    public async Task AttachBlocksAsync(string chainId, List<AppSubscribedBlockDto> blocks)
     {
         await _appBlockStateSetProvider.InitializeAsync(chainId);
 
