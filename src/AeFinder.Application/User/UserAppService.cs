@@ -9,6 +9,7 @@ using OpenIddict.Abstractions;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.Identity;
+using Volo.Abp.OpenIddict.Applications;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder.User;
@@ -41,13 +42,15 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)
     {
-        var existUser = await UserManager.FindByNameAsync(input.UserName);
+        var userName = input.UserName.Trim();
+        var email = input.Email.Trim();
+        var existUser = await UserManager.FindByNameAsync(userName);
         if (existUser != null && !existUser.Id.ToString().IsNullOrEmpty())
         {
             throw new UserFriendlyException($"user {existUser.Name} is already exist!");
         }
         
-        var user = new IdentityUser(GuidGenerator.Create(), input.UserName, input.Email, CurrentTenant.Id);
+        var user = new IdentityUser(GuidGenerator.Create(), userName, email, CurrentTenant.Id);
 
         if (input.OrganizationUnitId.IsNullOrEmpty())
         {
@@ -70,8 +73,8 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         var createResult = await UserManager.CreateAsync(user, input.Password);
         if (!createResult.Succeeded)
         {
-            // throw new UserFriendlyException("Failed to create user.");
-            throw new UserFriendlyException("Failed to create user. " + createResult.Errors.Select(e => e.Description).Aggregate((errors, error) => errors + ", " + error));
+            throw new UserFriendlyException("Failed to create user. " + createResult.Errors.Select(e => e.Description)
+                .Aggregate((errors, error) => errors + ", " + error));
         }
         
         //add appAdmin role into user
@@ -131,5 +134,42 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         }
 
         return ObjectMapper.Map<IdentityUser, IdentityUserDto>(identityUser);
+    }
+
+    public async Task<string> GetClientDisplayNameAsync(string clientId)
+    {
+        var openIddictApplication = await _applicationManager.FindByClientIdAsync(clientId);
+        // return openIddictApplication.DisplayName;
+        
+        var displayName = (string) openIddictApplication.GetType().GetProperty("DisplayName")?.GetValue(openIddictApplication);
+
+        if (!string.IsNullOrEmpty(displayName))
+        {
+            return displayName;
+        }
+
+        return string.Empty;
+    }
+
+    public async Task ResetPasswordAsync(string newPassword)
+    {
+        if (CurrentUser == null || CurrentUser.Id == null)
+        {
+            throw new UserFriendlyException("CurrentUser is null");
+        }
+        
+        var identityUser = await UserManager.FindByIdAsync(CurrentUser.Id.ToString());
+        if (identityUser == null)
+        {
+            throw new UserFriendlyException("user not found.");
+        }
+        
+        var token = await UserManager.GeneratePasswordResetTokenAsync(identityUser);
+        var result = await UserManager.ResetPasswordAsync(identityUser, token, newPassword);
+        if (!result.Succeeded)
+        {
+            throw new UserFriendlyException("reset user password failed." + result.Errors.Select(e => e.Description)
+                .Aggregate((errors, error) => errors + ", " + error));
+        }
     }
 }

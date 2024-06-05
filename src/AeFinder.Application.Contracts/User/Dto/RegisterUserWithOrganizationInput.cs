@@ -13,6 +13,8 @@ public class RegisterUserWithOrganizationInput
     [StringLength(50, MinimumLength = 8, ErrorMessage = "The password must be at least 8 characters long and not exceed 50 characters.")]
     public string Password { get; set; }
     
+    [Required(ErrorMessage = "Email is required.")]
+    [EmailAddress(ErrorMessage = "Invalid Email Address")]
     public string Email { get; set; }
     
     public string OrganizationUnitId { get; set; }
