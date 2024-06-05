@@ -35,6 +35,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     
     public async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(string displayName, Guid? parentId = null)
     {
+        displayName = displayName.Trim();
         var organizationUnit = new OrganizationUnit(
             GuidGenerator.Create(), // Generate a unique identifier
             displayName,           // Organizational unit Displays name

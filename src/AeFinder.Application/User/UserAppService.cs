@@ -41,13 +41,15 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)
     {
-        var existUser = await UserManager.FindByNameAsync(input.UserName);
+        var userName = input.UserName.Trim();
+        var email = input.Email.Trim();
+        var existUser = await UserManager.FindByNameAsync(userName);
         if (existUser != null && !existUser.Id.ToString().IsNullOrEmpty())
         {
             throw new UserFriendlyException($"user {existUser.Name} is already exist!");
         }
         
-        var user = new IdentityUser(GuidGenerator.Create(), input.UserName, input.Email, CurrentTenant.Id);
+        var user = new IdentityUser(GuidGenerator.Create(), userName, email, CurrentTenant.Id);
 
         if (input.OrganizationUnitId.IsNullOrEmpty())
         {
@@ -70,8 +72,8 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         var createResult = await UserManager.CreateAsync(user, input.Password);
         if (!createResult.Succeeded)
         {
-            // throw new UserFriendlyException("Failed to create user.");
-            throw new UserFriendlyException("Failed to create user. " + createResult.Errors.Select(e => e.Description).Aggregate((errors, error) => errors + ", " + error));
+            throw new UserFriendlyException("Failed to create user. " + createResult.Errors.Select(e => e.Description)
+                .Aggregate((errors, error) => errors + ", " + error));
         }
         
         //add appAdmin role into user
