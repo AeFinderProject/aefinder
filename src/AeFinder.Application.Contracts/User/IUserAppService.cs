@@ -13,4 +13,6 @@ public interface IUserAppService
     Task<IdentityUserDto> GetUserInfoAsync();
 
     Task ResetPasswordAsync(string newPassword);
+
+    Task<string> GetClientDisplayNameAsync(string clientId);
 }

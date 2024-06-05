@@ -9,6 +9,7 @@ using OpenIddict.Abstractions;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.Identity;
+using Volo.Abp.OpenIddict.Applications;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder.User;
@@ -133,6 +134,21 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         }
 
         return ObjectMapper.Map<IdentityUser, IdentityUserDto>(identityUser);
+    }
+
+    public async Task<string> GetClientDisplayNameAsync(string clientId)
+    {
+        var openIddictApplication = await _applicationManager.FindByClientIdAsync(clientId);
+        // return openIddictApplication.DisplayName;
+        
+        var displayName = (string) openIddictApplication.GetType().GetProperty("DisplayName")?.GetValue(openIddictApplication);
+
+        if (!string.IsNullOrEmpty(displayName))
+        {
+            return displayName;
+        }
+
+        return string.Empty;
     }
 
     public async Task ResetPasswordAsync(string newPassword)
