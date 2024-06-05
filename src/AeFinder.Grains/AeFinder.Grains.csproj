@@ -21,13 +21,4 @@
       <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Reference Include="AeFinder.Kubernetes">
-        <HintPath>..\AeFinder.Kubernetes\bin\Debug\net7.0\AeFinder.Kubernetes.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-
-
-
-
 </Project>
