@@ -134,6 +134,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         context.Services.AddAbpSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "AeFinder API", Version = "v1" });
+                // options.DocumentFilter<HideApisFilter>();
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
