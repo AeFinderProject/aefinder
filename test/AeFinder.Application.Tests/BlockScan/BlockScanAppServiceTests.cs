@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AeFinder.Apps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Subscriptions;
@@ -15,19 +16,21 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
     private readonly IBlockScanAppService _blockScanAppService;
     private ISubscriptionAppService _subscriptionAppService;
     private readonly IClusterClient _clusterClient;
+    private readonly IAppService _appService;
 
     public BlockScanAppServiceTests()
     {
         _subscriptionAppService = GetRequiredService<ISubscriptionAppService>();
         _blockScanAppService = GetRequiredService<IBlockScanAppService>();
         _clusterClient = GetRequiredService<IClusterClient>();
+        _appService = GetRequiredService<IAppService>();
     }
 
     [Fact]
     public async Task ScanTest()
     {
-        var appId = "AppId";
         var chainId = "AELF";
+        var appId = (await _appService.CreateAsync(new CreateAppDto { AppName = "AppId" })).AppId;
         var subscriptionInput = new SubscriptionManifestDto()
         {
             SubscriptionItems = new List<SubscriptionDto>()
