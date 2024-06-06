@@ -432,8 +432,7 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
         var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
         Logger.LogInformation("ScanApp: {clientId} start stop scan, version: {version}", clientId, version);
         await clientGrain.StopAsync(version);
-        Logger.LogInformation("ScanApp: {clientId} stopped by {userName} , version: {version}", clientId,
-            CurrentUser.UserName, version);
+        Logger.LogInformation("ScanApp: {clientId} stopped , version: {version}", clientId, version);
         await _kubernetesAppManager.DestroyAppAsync(clientId, version);
     }
 
