@@ -48,11 +48,5 @@ public class AeFinderApplicationModule : AbpModule
         Configure<AuthOption>(configuration.GetSection("AuthOption"));
         context.Services.AddTransient<ICodeAuditor, CodeAuditor>();
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
-        context.Services.Replace(
-            ServiceDescriptor.Transient<IIdentityUserAppService, CustomIdentityUserAppService>()
-        );
-        context.Services.Replace(
-            ServiceDescriptor.Transient<IAccountAppService, CustomAccountAppService>()
-        );
     }
 }
