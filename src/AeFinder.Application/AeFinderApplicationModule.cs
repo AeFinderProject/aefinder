@@ -51,11 +51,5 @@ public class AeFinderApplicationModule : AbpModule
         Configure<DevTemplateOptions>(configuration.GetSection("DevTemplate"));
         context.Services.AddTransient<ICodeAuditor, CodeAuditor>();
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
-        context.Services.Replace(
-            ServiceDescriptor.Transient<IIdentityUserAppService, CustomIdentityUserAppService>()
-        );
-        context.Services.Replace(
-            ServiceDescriptor.Transient<IAccountAppService, CustomAccountAppService>()
-        );
     }
 }
