@@ -5,9 +5,11 @@ using AeFinder.CodeOps.Policies;
 using AeFinder.DevelopmentTemplate;
 using AeFinder.Grains;
 using AeFinder.Option;
+using AeFinder.User;
 using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
@@ -49,5 +51,11 @@ public class AeFinderApplicationModule : AbpModule
         Configure<DevTemplateOptions>(configuration.GetSection("DevTemplate"));
         context.Services.AddTransient<ICodeAuditor, CodeAuditor>();
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
+        context.Services.Replace(
+            ServiceDescriptor.Transient<IIdentityUserAppService, CustomIdentityUserAppService>()
+        );
+        context.Services.Replace(
+            ServiceDescriptor.Transient<IAccountAppService, CustomAccountAppService>()
+        );
     }
 }
