@@ -54,7 +54,7 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
 
         serverUrl = $"{originName}/{appId}/{currentVersion}/graphql";
 
-        // _logger.LogInformation("RequestForward:" + serverUrl);
+        _logger.LogDebug("RequestForward:" + serverUrl);
         var json = JsonSerializer.Serialize(new { query = input.Query, variables = input.Variables });
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 

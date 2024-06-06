@@ -46,4 +46,11 @@ public class UserController : AeFinderController
     {
         await _userAppService.ResetPasswordAsync(input.NewPassword);
     }
+    
+    // [HttpGet("client/displayName")]
+    // [Authorize]
+    // public virtual async Task<string> GetClientDisplayNameAsync(string clientId)
+    // {
+    //     return await _userAppService.GetClientDisplayNameAsync(clientId);
+    // }
 }
