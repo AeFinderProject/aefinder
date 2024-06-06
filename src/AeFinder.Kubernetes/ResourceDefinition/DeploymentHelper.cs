@@ -6,6 +6,7 @@ public class DeploymentHelper
 {
     public static string GetAppDeploymentName(string appId, string version, string clientType)
     {
+        appId = appId.Replace("_", "-");
         return $"deployment-{appId}-{version}-{clientType}".ToLower();
     }
     

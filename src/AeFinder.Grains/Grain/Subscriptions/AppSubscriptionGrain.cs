@@ -71,6 +71,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
 
     public async Task<SubscriptionManifest> GetSubscriptionAsync(string version)
     {
+        CheckVersion(version);
         return State.SubscriptionInfos[version].SubscriptionManifest;
     }
 

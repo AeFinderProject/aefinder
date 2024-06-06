@@ -7,6 +7,7 @@ public class ServiceHelper
 
     public static string GetAppServiceName(string appId, string version)
     {
+        appId = appId.Replace("_", "-");
         return $"service-{appId}-{version}".ToLower();
     }
     

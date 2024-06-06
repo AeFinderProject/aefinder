@@ -6,6 +6,7 @@ using AeFinder.App.Deploy;
 using AeFinder.BlockScan;
 using AeFinder.CodeOps;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -35,6 +36,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code)
     {
+        await CheckAppExistAsync(appId);
         AuditCode(code);
         
         var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
@@ -55,6 +57,8 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 
     public async Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest)
     {
+        await CheckAppExistAsync(appId);
+        
         var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
 
         var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
@@ -70,6 +74,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 
     public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code)
     {
+        await CheckAppExistAsync(appId);
         AuditCode(code);
         
         var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
@@ -80,10 +85,25 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 
     public async Task<AllSubscriptionDto> GetSubscriptionManifestAsync(string appId)
     {
+        await CheckAppExistAsync(appId);
+        
         var clientGrain =
             _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var allSubscription = await clientGrain.GetAllSubscriptionAsync();
         return ObjectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
+    }
+
+    private async Task CheckAppExistAsync(string appId)
+    {
+        // TODO: In order to be compatible with the previous AeFinder App, verification is temporarily turned off and
+        // will be turned on after switching to the new version.
+        return;
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var app = await appGrain.GetAsync();
+        if (app.AppId.IsNullOrWhiteSpace())
+        {
+            throw new UserFriendlyException("App does not exist.");
+        }
     }
 
     private void AuditCode(byte[] code)
