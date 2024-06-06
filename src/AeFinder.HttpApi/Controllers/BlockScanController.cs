@@ -29,10 +29,10 @@ public class BlockScanController : AeFinderController
 
     [HttpPost]
     [Route("stop")]
-    [Authorize]
-    public virtual async Task<Task> StopAsync(string version)
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public virtual async Task<Task> StopAsync(string appId, string version)
     {
-        return  _blockScanAppService.StopAsync(ClientId, version);
+        return _blockScanAppService.StopAsync(appId, version);
     }
 
     [HttpPost]
