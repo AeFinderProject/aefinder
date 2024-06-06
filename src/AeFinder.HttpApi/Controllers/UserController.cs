@@ -9,7 +9,7 @@ using Volo.Abp.Identity;
 namespace AeFinder.Controllers;
 
 [RemoteService]
-[ControllerName("OrganizationUnits")]
+[ControllerName("Users")]
 [Route("api/users")]
 public class UserController : AeFinderController
 {
@@ -26,12 +26,12 @@ public class UserController : AeFinderController
         return await _userAppService.RegisterUserWithOrganization(input);
     }
     
-    // [HttpPost("app")]
-    // [Authorize(Policy = "OnlyAdminAccess")]
-    // public virtual async Task RegisterAppAuthentication(string appId,string deployKey)
-    // {
-    //     await _userAppService.RegisterAppAuthentication(appId, deployKey);
-    // }
+    [HttpPost("app")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public virtual async Task RegisterAppAuthentication(string appId,string deployKey)
+    {
+        await _userAppService.RegisterAppAuthentication(appId, deployKey);
+    }
     
     [HttpGet("info")]
     [Authorize]
