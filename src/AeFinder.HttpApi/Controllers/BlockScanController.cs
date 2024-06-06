@@ -21,7 +21,7 @@ public class BlockScanController : AeFinderController
 
     [HttpPost]
     [Route("pause")]
-    [Authorize]
+    [Authorize(Policy = "OnlyAdminAccess")]
     public virtual async Task<Task> PauseAsync(string version)
     {
         return _blockScanAppService.PauseAsync(ClientId, version);
@@ -29,7 +29,7 @@ public class BlockScanController : AeFinderController
 
     [HttpPost]
     [Route("stop")]
-    [Authorize]
+    [Authorize(Policy = "OnlyAdminAccess")]
     public virtual async Task<Task> StopAsync(string version)
     {
         return  _blockScanAppService.StopAsync(ClientId, version);
@@ -37,7 +37,7 @@ public class BlockScanController : AeFinderController
 
     [HttpPost]
     [Route("upgrade")]
-    [Authorize]
+    [Authorize(Policy = "OnlyAdminAccess")]
     public virtual async Task<Task> UpgradeVersionAsync()
     {
         return _blockScanAppService.UpgradeVersionAsync(ClientId);
