@@ -10,6 +10,7 @@ namespace AeFinder.User;
 [RemoteService(IsEnabled = false)]
 [DisableAuditing]
 [Dependency(ReplaceServices = true)]
+[ExposeServices(typeof(IAccountAppService))]
 public class CustomAccountAppService: IAccountAppService, ITransientDependency
 {
 
