@@ -11,7 +11,6 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
-using AeFinder.Option;
 using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
 using Orleans;
