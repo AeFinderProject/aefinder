@@ -22,24 +22,24 @@ public class AppDeployController : AeFinderController
     [HttpPost]
     [Route("deploy")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public async Task<string> CreateNewAppAsync(CreateNewAppDto dto)
+    public async Task<string> CreateNewAppAsync(CreateNewAppInput input)
     {
-        return await _appDeployManager.CreateNewAppAsync(dto.AppId, dto.Version, dto.ImageName);
+        return await _appDeployManager.CreateNewAppAsync(input.AppId, input.Version, input.ImageName);
     }
 
     [HttpPost]
     [Route("destroy")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public async Task DestroyAppAsync(DestroyAppDto dto)
+    public async Task DestroyAppAsync(AppVersionInput input)
     {
-        await _appDeployManager.DestroyAppAsync(dto.AppId, dto.Version);
+        await _appDeployManager.DestroyAppAsync(input.AppId, input.Version);
     }
 
     [HttpPost]
     [Route("restart")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public async Task RestartAppAsync(RestartAppDto dto)
+    public async Task RestartAppAsync(AppVersionInput input)
     {
-        await _appDeployManager.RestartAppAsync(dto.AppId, dto.Version);
+        await _appDeployManager.RestartAppAsync(input.AppId, input.Version);
     }
 }

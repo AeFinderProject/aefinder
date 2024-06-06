@@ -1,5 +1,5 @@
 using AeFinder.App.Deploy;
-using AeFinder.Studio.Eto;
+using AeFinder.Apps;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
