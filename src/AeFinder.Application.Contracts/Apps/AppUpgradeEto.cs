@@ -1,6 +1,6 @@
 using Volo.Abp.EventBus;
 
-namespace AeFinder.Studio.Eto;
+namespace AeFinder.Apps;
 
 [EventName("AeFinder.AppUpgradeEto")]
 public class AppUpgradeEto

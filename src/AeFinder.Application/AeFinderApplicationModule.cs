@@ -4,7 +4,6 @@ using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
 using AeFinder.DevelopmentTemplate;
 using AeFinder.Grains;
-using AeFinder.Option;
 using AeFinder.User;
 using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
@@ -45,8 +44,6 @@ public class AeFinderApplicationModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<ApiOptions>(configuration.GetSection("Api"));
         Configure<BlockSyncOptions>(configuration.GetSection("BlockSync"));
-        Configure<StudioOption>(configuration.GetSection("StudioOption"));
-        Configure<AuthOption>(configuration.GetSection("AuthOption"));
         Configure<AppDeployOptions>(configuration.GetSection("AppDeploy"));
         Configure<DevTemplateOptions>(configuration.GetSection("DevTemplate"));
         context.Services.AddTransient<ICodeAuditor, CodeAuditor>();

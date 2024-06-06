@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
 using AeFinder.Models;
@@ -5,6 +6,7 @@ using AeFinder.Subscriptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Volo.Abp;
 
 namespace AeFinder.Controllers;
@@ -56,9 +58,17 @@ public class SubscriptionController : AeFinderController
 
     private void CheckFile(IFormFile file)
     {
+        if (file == null || file.Length == 0)
+        {
+            throw new UserFriendlyException("File is empty.");
+        }
+        
         if (file.Length > MaxCodeSize)
         {
             throw new UserFriendlyException(message: "File is too Large.");
         }
+
+        Logger.LogInformation("File: {f}", Convert.ToBase64String(file.GetAllBytes()));
+
     }
 }

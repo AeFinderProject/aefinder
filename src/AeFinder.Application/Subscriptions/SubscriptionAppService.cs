@@ -95,6 +95,9 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 
     private async Task CheckAppExistAsync(string appId)
     {
+        // TODO: In order to be compatible with the previous AeFinder App, verification is temporarily turned off and
+        // will be turned on after switching to the new version.
+        return;
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var app = await appGrain.GetAsync();
         if (app.AppId.IsNullOrWhiteSpace())

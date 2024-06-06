@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.User;
 using Nito.AsyncEx;
@@ -86,6 +87,51 @@ public class AppService : AeFinderAppService, IAppService
             TotalCount = apps.Length,
             Items = apps.OrderByDescending(o => o.UpdateTime).ToList()
         };
+    }
+
+    public async Task<AppSyncStateDto> GetSyncStateAsync(string appId, string version = null)
+    {
+        var state = new AppSyncStateDto();
+        
+        var appSubscriptionGrain =
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(
+                GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+
+        var subscriptionManifest = new SubscriptionManifest();
+        if (version.IsNullOrWhiteSpace())
+        {
+            // TODO: Get current version from cache
+            var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
+            if (allSubscription.CurrentVersion != null)
+            {
+                version = allSubscription.CurrentVersion.Version;
+                subscriptionManifest = allSubscription.CurrentVersion.SubscriptionManifest;
+            }
+        }
+        else
+        {
+            subscriptionManifest = await appSubscriptionGrain.GetSubscriptionAsync(version);
+        }
+
+        foreach (var subscriptionItem in subscriptionManifest.SubscriptionItems)
+        {
+            var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
+                GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, version, subscriptionItem.ChainId));
+            var blockStateSetStatus = await appBlockStateSetStatusGrain.GetBlockStateSetStatusAsync();
+            var appSyncStateItem = new AppSyncStateItem()
+            {
+                ChainId = subscriptionItem.ChainId,
+                LongestChainBlockHash = blockStateSetStatus.LongestChainBlockHash,
+                LongestChainHeight = blockStateSetStatus.LongestChainHeight,
+                BestChainBlockHash = blockStateSetStatus.BestChainBlockHash,
+                BestChainHeight = blockStateSetStatus.BestChainHeight,
+                LastIrreversibleBlockHash = blockStateSetStatus.LastIrreversibleBlockHash,
+                LastIrreversibleBlockHeight = blockStateSetStatus.LastIrreversibleBlockHeight
+            };
+            state.Items.Add(appSyncStateItem);
+        }
+        
+        return state;
     }
 
     private async Task CheckPermissionAsync(string appId)
