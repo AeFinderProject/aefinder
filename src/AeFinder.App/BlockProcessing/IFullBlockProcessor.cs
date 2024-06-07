@@ -1,6 +1,5 @@
 using AeFinder.App.OperationLimits;
 using AeFinder.Block.Dtos;
-using AeFinder.BlockScan;
 using AeFinder.Sdk.Processor;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
@@ -10,7 +9,7 @@ namespace AeFinder.App.BlockProcessing;
 
 public interface IFullBlockProcessor
 {
-    Task ProcessAsync(AppSubscribedBlockDto block, bool isRollback);
+    Task ProcessAsync(BlockWithTransactionDto block, bool isRollback);
 }
 
 public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
@@ -38,7 +37,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         _blockProcessingContext = blockProcessingContext;
     }
 
-    public async Task ProcessAsync(AppSubscribedBlockDto block, bool isRollback)
+    public async Task ProcessAsync(BlockWithTransactionDto block, bool isRollback)
     {
         _operationLimitManager.ResetAll();
         _blockProcessingContext.SetContext(block.ChainId, block.BlockHash, block.BlockHeight,
@@ -51,7 +50,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                 "Processing block. ChainId: {ChainId}, BlockHash: {BlockHash}.", block.ChainId, block.BlockHash);
             try
             {
-                await blockProcessor.ProcessAsync(_objectMapper.Map<AppSubscribedBlockDto, Sdk.Processor.Block>(block), new BlockContext
+                await blockProcessor.ProcessAsync(_objectMapper.Map<BlockWithTransactionDto, Sdk.Processor.Block>(block), new BlockContext
                 {
                     ChainId = block.ChainId
                 });
@@ -73,11 +72,11 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                 try
                 {
                     await transactionProcessor.ProcessAsync(
-                        _objectMapper.Map<AppSubscribedTransactionDto, Transaction>(transaction),
+                        _objectMapper.Map<TransactionDto, Transaction>(transaction),
                         new TransactionContext
                         {
                             ChainId = block.ChainId,
-                            Block = _objectMapper.Map<AppSubscribedBlockDto, LightBlock>(block)
+                            Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block)
                         });
                 }
                 catch (Exception e)
@@ -103,9 +102,9 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                         await logEventProcessor.ProcessAsync(new LogEventContext
                         {
                             ChainId = block.ChainId,
-                            Block = _objectMapper.Map<AppSubscribedBlockDto, LightBlock>(block),
-                            Transaction = _objectMapper.Map<AppSubscribedTransactionDto, Transaction>(transaction),
-                            LogEvent = _objectMapper.Map<AppSubscribedLogEventDto, LogEvent>(logEvent)
+                            Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block),
+                            Transaction = _objectMapper.Map<TransactionDto, Transaction>(transaction),
+                            LogEvent = _objectMapper.Map<LogEventDto, LogEvent>(logEvent)
                         });
                     }
                     catch (Exception e)

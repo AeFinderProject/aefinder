@@ -10,6 +10,7 @@ using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Sdk;
 using Shouldly;
 using Volo.Abp.EventBus.Local;
+using Volo.Abp.ObjectMapping;
 using Xunit;
 
 namespace AeFinder.App.BlockProcessing;
@@ -25,6 +26,7 @@ public class BlockProcessingServiceTests: AeFinderAppTestBase
     private readonly IReadOnlyRepository<AccountBalanceEntity> _accountBalanceEntityRepository;
     private readonly IBlockAttachService _blockAttachService;
     private readonly ILocalEventBus _localEventBus;
+    private readonly IObjectMapper _objectMapper;
 
     public BlockProcessingServiceTests()
     {
@@ -37,6 +39,7 @@ public class BlockProcessingServiceTests: AeFinderAppTestBase
         _appStateProvider = GetRequiredService<IAppStateProvider>();
         _blockAttachService = GetRequiredService<IBlockAttachService>();
         _localEventBus = GetRequiredService<ILocalEventBus>();
+        _objectMapper = GetRequiredService<IObjectMapper>();
     }
 
     [Fact]
@@ -472,7 +475,7 @@ public class BlockProcessingServiceTests: AeFinderAppTestBase
         {
             await _appBlockStateSetProvider.AddBlockStateSetAsync(chainId, new BlockStateSet
             {
-                Block = block,
+                Block = _objectMapper.Map<AppSubscribedBlockDto, BlockWithTransactionDto>(block),
                 Changes = new(),
                 Processed = process
             });

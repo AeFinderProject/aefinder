@@ -7,22 +7,24 @@ using AeFinder.Grains.Grain.BlockStates;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Local;
+using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.App.BlockProcessing;
 
 public class BlockAttachService : IBlockAttachService, ITransientDependency
 {
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
-
+    private readonly IObjectMapper _objectMapper;
     private readonly ILogger<BlockAttachService> _logger;
 
     public ILocalEventBus LocalEventBus { get; set; }
 
     public BlockAttachService(IAppBlockStateSetProvider appBlockStateSetProvider,
-        ILogger<BlockAttachService> logger)
+        ILogger<BlockAttachService> logger, IObjectMapper objectMapper)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _logger = logger;
+        _objectMapper = objectMapper;
     }
 
     public async Task AttachBlocksAsync(string chainId, List<AppSubscribedBlockDto> blocks)
@@ -83,7 +85,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
             {
                 blockStateSet = new BlockStateSet
                 {
-                    Block = block,
+                    Block = _objectMapper.Map<AppSubscribedBlockDto, BlockWithTransactionDto>(block),
                     Changes = new()
                 };
                 await _appBlockStateSetProvider.AddBlockStateSetAsync(chainId, blockStateSet);

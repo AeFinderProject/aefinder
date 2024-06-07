@@ -11,13 +11,17 @@ public class AeFinderAppAutoMapperProfile:Profile
 {
     public AeFinderAppAutoMapperProfile()
     {
-        CreateMap<AppSubscribedBlockDto, Sdk.Processor.Block>();
-        CreateMap<AppSubscribedBlockDto, LightBlock>();
-        CreateMap<AppSubscribedTransactionDto, Transaction>();
-        CreateMap<AppSubscribedLogEventDto, LogEvent>();
-        CreateMap<AppSubscribedBlockDto, BlockMetadata>();
+        CreateMap<BlockWithTransactionDto, Sdk.Processor.Block>();
+        CreateMap<BlockWithTransactionDto, LightBlock>();
+        CreateMap<TransactionDto, Transaction>();
+        CreateMap<LogEventDto, LogEvent>();
+        CreateMap<BlockWithTransactionDto, BlockMetadata>();
         
         CreateMap<Metadata, MetadataDto>();
         CreateMap<BlockMetadata, BlockMetadataDto>();
+        
+        CreateMap<AppSubscribedBlockDto, BlockWithTransactionDto>();
+        CreateMap<AppSubscribedTransactionDto, TransactionDto>();
+        CreateMap<AppSubscribedLogEventDto, LogEventDto>();
     }
 }
