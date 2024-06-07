@@ -16,16 +16,16 @@ public class LoginAccountController : AeFinderController
         _loginAccountAppService = loginAccountAppService;
     }
 
-    [HttpPost("register")]
-    public virtual Task<RegisterWithNameDto> RegisterAsync(RegisterWithNameInput input)
-    {
-        return _loginAccountAppService.RegisterAsync(input);
-    }
-
-    [HttpGet("request-token/by-password")]
-    public virtual Task<string> RequestTokenByPasswordAsync(RequestTokenByPasswordInput input)
-    {
-        return _loginAccountAppService.RequestTokenByPasswordAsync(input);
-    }
+    // [HttpPost("register")]
+    // public virtual Task<RegisterWithNameDto> RegisterAsync(RegisterWithNameInput input)
+    // {
+    //     return _loginAccountAppService.RegisterAsync(input);
+    // }
+    //
+    // [HttpGet("request-token/by-password")]
+    // public virtual Task<string> RequestTokenByPasswordAsync(RequestTokenByPasswordInput input)
+    // {
+    //     return _loginAccountAppService.RequestTokenByPasswordAsync(input);
+    // }
 
 }
