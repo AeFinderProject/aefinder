@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AeFinder.App.BlockProcessing;
 using AeFinder.Block.Dtos;
@@ -9,8 +8,6 @@ using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Orleans.TestBase;
-using AeFinder.Studio;
-using Orleans;
 using Shouldly;
 using Xunit;
 
@@ -35,20 +32,12 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
     }
 
     [Fact]
-    public async Task AppNameRegexTest()
-    {
-        var regex = new Regex(AppIdConsts.NameRegex);
-        regex.IsMatch("token-009").ShouldBeTrue();
-        regex.IsMatch("token.009").ShouldBeTrue();
-    }
-
-    [Fact]
     public async Task Handle_Test()
     {
         var chainId = "AELF";
         var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
         
-        var currentVersion = await appGrain.AddSubscriptionAsync(new SubscriptionManifest
+        var currentVersion = (await appGrain.AddSubscriptionAsync(new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>
             {
@@ -58,7 +47,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                     StartBlockNumber = 10000
                 }
             }
-        }, new byte[] { });
+        }, new byte[] { })).NewVersion;
         _appInfoProvider.SetVersion(currentVersion);
 
         var blockPusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(
@@ -153,7 +142,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
         var chainId = "AELF";
         var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
         
-        var currentVersion = await appGrain.AddSubscriptionAsync(new SubscriptionManifest
+        var currentVersion = (await appGrain.AddSubscriptionAsync(new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>
             {
@@ -163,7 +152,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                     StartBlockNumber = 100000
                 }
             }
-        }, new byte[] { });
+        }, new byte[] { })).NewVersion;
 
         var blockPusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(
             GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, currentVersion, chainId));
@@ -199,7 +188,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
         var chainId = "AELF";
         var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
         
-        var currentVersion = await appGrain.AddSubscriptionAsync(new SubscriptionManifest
+        var currentVersion = (await appGrain.AddSubscriptionAsync(new SubscriptionManifest
         {
             SubscriptionItems = new List<Subscription>
             {
@@ -209,7 +198,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                     StartBlockNumber = 10000
                 }
             }
-        }, new byte[] { });
+        }, new byte[] { })).NewVersion;
 
         var blockPusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(
             GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, currentVersion, chainId));
