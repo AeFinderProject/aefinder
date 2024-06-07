@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
-using AeFinder.Studio;
+using AeFinder.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
@@ -9,7 +9,7 @@ namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("BlockScan")]
-[Route("api/app/block-scan")]
+[Route("api/block-scan")]
 public class BlockScanController : AeFinderController
 {
     private readonly IBlockScanAppService _blockScanAppService;
@@ -21,25 +21,25 @@ public class BlockScanController : AeFinderController
 
     [HttpPost]
     [Route("pause")]
-    [Authorize]
-    public virtual async Task<Task> PauseAsync(string version)
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public virtual async Task PauseAsync(AppVersionInput input)
     {
-        return _blockScanAppService.PauseAsync(ClientId, version);
+        await _blockScanAppService.PauseAsync(input.AppId, input.Version);
     }
-
+    
     [HttpPost]
     [Route("stop")]
-    [Authorize]
-    public virtual async Task<Task> StopAsync(string version)
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public virtual async Task StopAsync(AppVersionInput input)
     {
-        return  _blockScanAppService.StopAsync(ClientId, version);
+        await _blockScanAppService.StopAsync(input.AppId, input.Version);
     }
 
     [HttpPost]
     [Route("upgrade")]
-    [Authorize]
-    public virtual async Task<Task> UpgradeVersionAsync()
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public virtual async Task UpgradeVersionAsync(AppInput input)
     {
-        return _blockScanAppService.UpgradeVersionAsync(ClientId);
+        await _blockScanAppService.UpgradeVersionAsync(input.AppId);
     }
 }

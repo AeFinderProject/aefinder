@@ -56,9 +56,14 @@ public class SubscriptionController : AeFinderController
 
     private void CheckFile(IFormFile file)
     {
+        if (file == null || file.Length == 0)
+        {
+            throw new UserFriendlyException("File is empty.");
+        }
+
         if (file.Length > MaxCodeSize)
         {
-            throw new UserFriendlyException(message: "File is too Large.");
+            throw new UserFriendlyException("File is too Large.");
         }
     }
 }

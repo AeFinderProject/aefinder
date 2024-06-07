@@ -1,4 +1,4 @@
-namespace AeFinder.Studio;
+namespace AeFinder.Subscriptions;
 
 public class AddSubscriptionDto
 {

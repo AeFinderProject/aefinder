@@ -35,8 +35,5 @@
     <PackageReference Include="Volo.Abp.TenantManagement.Application.Contracts" Version="7.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Orleans_CodeGenInputs Remove="Option\StudioOption.cs" />
-  </ItemGroup>
 
 </Project>

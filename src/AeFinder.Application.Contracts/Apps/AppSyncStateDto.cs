@@ -1,18 +1,15 @@
 using System.Collections.Generic;
 
-namespace AeFinder.Studio;
+namespace AeFinder.Apps;
 
-public class AppBlockStateMonitorDto
+public class AppSyncStateDto
 {
-    public List<MonitorBlockState> CurrentVersionBlockStates { get; set; }
-    public List<MonitorBlockState> NewVersionBlockStates { get; set; }
+    public List<AppSyncStateItem> Items { get; set; } = new();
 }
 
-public class MonitorBlockState
+public class AppSyncStateItem
 {
     public string ChainId { get; set; }
-    public string AppId { get; set; }
-    public string Version { get; set; }
     public string LongestChainBlockHash { get; set; }
     public long LongestChainHeight { get; set; }
     public string BestChainBlockHash { get; set; }

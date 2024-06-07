@@ -48,4 +48,11 @@ public class AppController : AeFinderController
     {
         return await _appService.GetListAsync();
     }
+        
+    [HttpGet]
+    [Route("sync-state/{appId}")]
+    public async Task<AppSyncStateDto> GetSyncStateAsync(string appId, string version=null)
+    {
+        return await _appService.GetSyncStateAsync(appId, version);
+    }
 }

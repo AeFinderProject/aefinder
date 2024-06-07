@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 
@@ -9,4 +10,5 @@ public interface IAppService
     Task<AppDto> UpdateAsync(string appId, UpdateAppDto dto);
     Task<AppDto> GetAsync(string appId);
     Task<PagedResultDto<AppDto>> GetListAsync();
+    Task<AppSyncStateDto> GetSyncStateAsync(string appId, string version = null);
 }
