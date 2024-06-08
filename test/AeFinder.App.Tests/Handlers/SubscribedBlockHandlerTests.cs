@@ -109,7 +109,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
         
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
-            Blocks = new List<BlockWithTransactionDto>(),
+            Blocks = new List<AppSubscribedBlockDto>(),
             PushToken = pushToken,
             Version = currentVersion,
             ChainId = chainId,

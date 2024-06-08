@@ -68,7 +68,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
             {
                 _logger.LogInformation(
                     "Processing transaction. ChainId: {ChainId}, BlockHash: {BlockHash}, TransactionHash: {TransactionHash}.",
-                    transaction.ChainId, transaction.BlockHash, transaction.TransactionId);
+                    block.ChainId, block.BlockHash, transaction.TransactionId);
                 try
                 {
                     await transactionProcessor.ProcessAsync(
@@ -88,14 +88,14 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
             foreach (var logEvent in transaction.LogEvents)
             {
                 var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>
-                    p.GetContractAddress(logEvent.ChainId) == logEvent.ContractAddress &&
+                    p.GetContractAddress(block.ChainId) == logEvent.ContractAddress &&
                     p.GetEventName() == logEvent.EventName);
                 
                 if (logEventProcessor != null)
                 {
                     _logger.LogInformation(
                         "Processing log event. ChainId: {ChainId}, BlockHash: {BlockHash}, TransactionHash: {TransactionHash}, ContractAddress: {ContractAddress}, EventName: {EventName}.",
-                        logEvent.ChainId, logEvent.BlockHash, transaction.TransactionId, logEvent.ContractAddress,
+                        block.ChainId, block.BlockHash, transaction.TransactionId, logEvent.ContractAddress,
                         logEvent.EventName);
                     try
                     {
