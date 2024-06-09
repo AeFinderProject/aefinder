@@ -1,4 +1,5 @@
 using AeFinder.Block.Dtos;
+using AeFinder.BlockScan;
 
 namespace AeFinder.Grains.Grain.BlockStates;
 

@@ -1,5 +1,5 @@
+using AeFinder.Apps;
 using AeFinder.GraphQL;
-using AeFinder.Studio.Eto;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;

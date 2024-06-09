@@ -122,6 +122,11 @@ public class AeFinderHttpApiHostModule : AbpModule
                 options.RequireHttpsMetadata = Convert.ToBoolean(configuration["AuthServer:RequireHttpsMetadata"]);
                 options.Audience = "AeFinder";
             });
+        context.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("OnlyAdminAccess", policy =>
+                policy.RequireRole("admin"));
+        });
     }
 
     private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
@@ -129,6 +134,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         context.Services.AddAbpSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "AeFinder API", Version = "v1" });
+                // options.DocumentFilter<HideApisFilter>();
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()

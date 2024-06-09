@@ -66,4 +66,14 @@ public static class GrainIdHelper
         const string userAppPrefix = "UserApps";
         return GenerateGrainId(userAppPrefix, userId);
     }
+    
+    public static string GenerateAppGrainId(string appId)
+    {
+        return GenerateGrainId(appId);
+    }
+    
+    public static string GenerateOrganizationAppGrainId(string organizationId)
+    {
+        return GenerateGrainId(organizationId);
+    }
 }

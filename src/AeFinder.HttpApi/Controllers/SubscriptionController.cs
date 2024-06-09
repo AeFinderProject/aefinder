@@ -1,7 +1,9 @@
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
-using AeFinder.Studio;
+using AeFinder.Models;
+using AeFinder.Subscriptions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
 
@@ -9,39 +11,59 @@ namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("Subscription")]
-[Route("api/app/subscription")]
+[Route("api/apps/subscriptions")]
 public class SubscriptionController : AeFinderController
 {
-    private readonly IBlockScanAppService _blockScanAppService;
-    private readonly IStudioService _studioService;
+    private readonly ISubscriptionAppService _subscriptionAppService;
+    private const long MaxCodeSize = 5 * 1024 * 1024;
 
-    public SubscriptionController(IBlockScanAppService blockScanAppService, IStudioService studioService)
+    public SubscriptionController(ISubscriptionAppService subscriptionAppService)
     {
-        _blockScanAppService = blockScanAppService;
-        _studioService = studioService;
+        _subscriptionAppService = subscriptionAppService;
     }
 
     [HttpPost]
     [Authorize]
-    public virtual async Task<string> SubmitSubscriptionInfoAsync(SubscriptionManifestDto input)
+    public async Task<string> AddSubscriptionAsync([FromForm]AddSubscriptionInput input)
     {
-        var appId = await _studioService.GetAppIdAsync();
-        return await _blockScanAppService.AddSubscriptionAsync(appId, input);
+        CheckFile(input.Code);
+        return await _subscriptionAppService.AddSubscriptionAsync(ClientId, input.Manifest,input.Code.GetAllBytes());
     }
     
-    [HttpPut("{Version}")]
+    [HttpPut]
     [Authorize]
-    public virtual async Task UpdateSubscriptionInfoAsync(string Version, [FromBody]SubscriptionManifestDto subscriptionManifest)
+    [Route("manifest/{version}")]
+    public async Task UpdateManifestAsync(string version, SubscriptionManifestDto input)
     {
-        var appId = await _studioService.GetAppIdAsync();
-        await _blockScanAppService.UpdateSubscriptionInfoAsync(appId, Version, subscriptionManifest);
+        await _subscriptionAppService.UpdateSubscriptionManifestAsync(ClientId, version, input);
     }
-
+    
+    [HttpPut]
+    [Authorize]
+    [Route("code/{version}")]
+    public async Task UpdateCodeAsync(string version, [FromForm]UpdateSubscriptionCodeInput input)
+    {
+        CheckFile(input.Code);
+        await _subscriptionAppService.UpdateSubscriptionCodeAsync(ClientId, version, input.Code.GetAllBytes());
+    }
+    
     [HttpGet]
     [Authorize]
-    public virtual async Task<AllSubscriptionDto> GetSubscriptionInfoAsync()
+    public async Task<AllSubscriptionDto> GetSubscriptionAsync()
     {
-        var appId = await _studioService.GetAppIdAsync();
-        return await _blockScanAppService.GetSubscriptionAsync(appId);
+        return await _subscriptionAppService.GetSubscriptionManifestAsync(ClientId);
+    }
+
+    private void CheckFile(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            throw new UserFriendlyException("File is empty.");
+        }
+
+        if (file.Length > MaxCodeSize)
+        {
+            throw new UserFriendlyException("File is too Large.");
+        }
     }
 }
