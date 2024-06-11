@@ -56,7 +56,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         //test skip block
         if (subscribedBlock.Blocks.First().ChainId.Equals("AELF"))
         {
-            if (subscribedBlock.Blocks.First().BlockHeight > 1973200  && subscribedBlock.Blocks.First().BlockHeight < 1973333)
+            if (subscribedBlock.Blocks.First().BlockHeight > 1993000  && subscribedBlock.Blocks.First().BlockHeight < 1993111)
             {
                 _logger.LogError("drop block");
                 return;
