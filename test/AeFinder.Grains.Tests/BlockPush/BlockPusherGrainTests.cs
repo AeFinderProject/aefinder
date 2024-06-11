@@ -47,7 +47,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
+        var version = (await appGrain.AddSubscriptionAsync(subscription, new byte[] { })).NewVersion;
         
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -64,7 +64,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
             {
                 v.ChainId.ShouldBe(chainId);
@@ -135,7 +135,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
+        var version = (await appGrain.AddSubscriptionAsync(subscription, new byte[] { })).NewVersion;
         
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -152,7 +152,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
@@ -196,7 +196,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
+        var version = (await appGrain.AddSubscriptionAsync(subscription, new byte[] { })).NewVersion;
 
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -251,7 +251,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
+        var version = (await appGrain.AddSubscriptionAsync(subscription, new byte[] { })).NewVersion;
         
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -269,7 +269,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
@@ -320,7 +320,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
+        var version = (await appGrain.AddSubscriptionAsync(subscription, new byte[] { })).NewVersion;
         
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -337,7 +337,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
@@ -389,7 +389,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
+        var version = (await appGrain.AddSubscriptionAsync(subscription, new byte[] { })).NewVersion;
         await appGrain.StartAsync(version);
 
         var pushToken = Guid.NewGuid().ToString("N");
@@ -407,7 +407,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockWithTransactionDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
@@ -454,7 +454,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 }
             }
         };
-        var version = await appGrain.AddSubscriptionAsync(subscription, new byte[] { });
+        var version = (await appGrain.AddSubscriptionAsync(subscription, new byte[] { })).NewVersion;
 
         var pushToken = Guid.NewGuid().ToString("N");
         await appGrain.StartAsync(version);
@@ -471,7 +471,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
 
-        var subscribedBlock = new List<BlockDto>();
+        var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
             {
                 v.ChainId.ShouldBe(chainId);

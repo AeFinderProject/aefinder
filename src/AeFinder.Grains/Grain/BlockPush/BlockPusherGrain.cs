@@ -361,12 +361,13 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
 
     private async Task PushBlocksAsync(List<BlockWithTransactionDto> blocks)
     {
+        var subscribedBlockDtos = _objectMapper.Map<List<BlockWithTransactionDto>, List<AppSubscribedBlockDto>>(blocks);
         await _stream.OnNextAsync(new SubscribedBlockDto
         {
             AppId = State.AppId,
             ChainId = State.Subscription.ChainId,
             Version = State.Version,
-            Blocks = blocks,
+            Blocks = subscribedBlockDtos,
             PushToken = State.PushToken
         });
     }

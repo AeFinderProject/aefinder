@@ -39,7 +39,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         _objectMapper = objectMapper;
     }
 
-    public async Task AttachBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks)
+    public async Task AttachBlocksAsync(string chainId, List<AppSubscribedBlockDto> blocks)
     {
         await _appBlockStateSetProvider.InitializeAsync(chainId);
 
@@ -61,7 +61,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         await HandleBlocksAsync(chainId, blocks);
     }
 
-    private async Task HandleBlocksAsync(string chainId, List<BlockWithTransactionDto> blocks)
+    private async Task HandleBlocksAsync(string chainId, List<AppSubscribedBlockDto> blocks)
     {
         var longestChainBlockStateSet = await _appBlockStateSetProvider.GetLongestChainBlockStateSetAsync(chainId);
         var lastIrreversibleBlockStateSet =
@@ -117,7 +117,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
             {
                 blockStateSet = new BlockStateSet
                 {
-                    Block = block,
+                    Block = _objectMapper.Map<AppSubscribedBlockDto, BlockWithTransactionDto>(block),
                     Changes = new()
                 };
                 await _appBlockStateSetProvider.AddBlockStateSetAsync(chainId, blockStateSet);
@@ -170,7 +170,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         }
     }
 
-    private async Task HandleUnlinkedBlockAsync(string chainId, BlockWithTransactionDto block)
+    private async Task HandleUnlinkedBlockAsync(string chainId, AppSubscribedBlockDto block)
     { 
         var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
         var subscription = await client.GetSubscriptionAsync(_appInfoProvider.Version);
@@ -222,7 +222,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 return;
             }
 
-            await HandleBlocksAsync(chainId, blocks);
+            await HandleBlocksAsync(chainId, _objectMapper.Map<List<BlockWithTransactionDto>, List<AppSubscribedBlockDto>>(blocks));
             
             if (endBlockHeight == block.BlockHeight - 1)
             {

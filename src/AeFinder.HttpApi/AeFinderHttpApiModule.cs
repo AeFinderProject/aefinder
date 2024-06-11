@@ -1,5 +1,6 @@
 ﻿using AeFinder.Localization;
 using Localization.Resources.AbpUi;
+using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.Account;
 using Volo.Abp.AspNetCore.SignalR;
 using Volo.Abp.FeatureManagement;
@@ -27,6 +28,10 @@ public class AeFinderHttpApiModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         ConfigureLocalization();
+        Configure<MvcOptions>(options =>
+        {
+            options.Conventions.Add(new ApplicationDescription());
+        });
     }
 
     private void ConfigureLocalization()

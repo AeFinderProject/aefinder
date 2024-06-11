@@ -6,6 +6,7 @@ public class IngressHelper
 {
     public static string GetAppIngressName(string appId, string version)
     {
+        appId = appId.Replace("_", "-");
         return $"ingress-{appId}-{version}".ToLower();
     }
     

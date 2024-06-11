@@ -57,7 +57,7 @@ public class BlockAttachServiceUnlinkedTests : AeFinderAppUnlinkedBlockTestBase
         };
         
         var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
-        var version = await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { });
+        var version = (await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { })).NewVersion;
         _appInfoProvider.SetVersion(version); 
 
         {

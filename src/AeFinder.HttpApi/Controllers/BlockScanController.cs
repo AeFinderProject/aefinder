@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
-using AeFinder.Studio;
+using AeFinder.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
@@ -9,42 +9,37 @@ namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("BlockScan")]
-[Route("api/app/block-scan")]
+[Route("api/block-scan")]
 public class BlockScanController : AeFinderController
 {
     private readonly IBlockScanAppService _blockScanAppService;
-    private readonly IStudioService _studioService;
 
-    public BlockScanController(IBlockScanAppService blockScanAppService, IStudioService studioService)
+    public BlockScanController(IBlockScanAppService blockScanAppService)
     {
         _blockScanAppService = blockScanAppService;
-        _studioService = studioService;
     }
 
     [HttpPost]
     [Route("pause")]
-    [Authorize]
-    public virtual async Task<Task> PauseAsync(string version)
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public virtual async Task PauseAsync(AppVersionInput input)
     {
-        var appId = await _studioService.GetAppIdAsync();
-        return _blockScanAppService.PauseAsync(appId, version);
+        await _blockScanAppService.PauseAsync(input.AppId, input.Version);
     }
-
+    
     [HttpPost]
     [Route("stop")]
-    [Authorize]
-    public virtual async Task<Task> StopAsync(string version)
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public virtual async Task StopAsync(AppVersionInput input)
     {
-        var appId = await _studioService.GetAppIdAsync();
-        return  _blockScanAppService.StopAsync(appId, version);
+        await _blockScanAppService.StopAsync(input.AppId, input.Version);
     }
 
     [HttpPost]
     [Route("upgrade")]
-    [Authorize]
-    public virtual async Task<Task> UpgradeVersionAsync()
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public virtual async Task UpgradeVersionAsync(AppInput input)
     {
-        var appId = await _studioService.GetAppIdAsync();
-        return _blockScanAppService.UpgradeVersionAsync(appId);
+        await _blockScanAppService.UpgradeVersionAsync(input.AppId);
     }
 }
