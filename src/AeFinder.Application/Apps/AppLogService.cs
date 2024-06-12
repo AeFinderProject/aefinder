@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AeFinder.App.ES;
 using AeFinder.Apps.Dto;
+using AeFinder.Log;
+using AeFinder.Log.Entities;
 using AElf.EntityMapping.Repositories;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -14,11 +15,13 @@ namespace AeFinder.Apps;
 [DisableAuditing]
 public class AppLogService : AeFinderAppService, IAppLogService
 {
-    private readonly IEntityMappingRepository<AppLogIndex, string> _appLogIndexRepository;
+    // private readonly IEntityMappingRepository<AppLogIndex, string> _appLogIndexRepository;
+    private readonly ILogService _logService;
     
-    public AppLogService(IEntityMappingRepository<AppLogIndex, string> appLogIndexRepository)
+    public AppLogService(ILogService logService)
     {
-        _appLogIndexRepository = appLogIndexRepository;
+        // _appLogIndexRepository = appLogIndexRepository;
+        _logService = logService;
     }
 
     public async Task<List<AppLogRecordDto>> GetLatestRealTimeLogs(string nameSpace, string startTime, string appId,
@@ -42,29 +45,19 @@ public class AppLogService : AeFinderAppService, IAppLogService
             throw new UserFriendlyException(
                 $"Invalid version: '{version}'. Please provide a valid version.");
         }
+        
+        
 
         var logIndexName = GetLogIndexName(nameSpace, appId);
-        var queryable = await _appLogIndexRepository.GetQueryableAsync(logIndexName);
-
-        queryable = queryable.Where(o => o.App_log.Version == version);
-        queryable = queryable.Where(o => o.App_log.EventId == 1);
-        queryable = queryable.OrderBy(o => o.App_log.Time);
-        if (!id.IsNullOrEmpty())
+        
+        if (id.IsNullOrEmpty())
         {
-            queryable = queryable.OrderBy(o => o.Id);
+            var result = await _logService.GetAppLogByStartTimeAsync(logIndexName, 1000, startTime, 1, version);
+            return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(result);
         }
-
-        var searchAfter = new List<string>();
-        searchAfter.Add(startTime);
-        if (!id.IsNullOrEmpty())
-        {
-            searchAfter.Add(id);
-        }
-
-        queryable = queryable.After(searchAfter.Cast<object>().ToArray());
-        var result = queryable.ToList();
-
-        return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(result);
+        
+        var appLogs = await _logService.GetAppLogByStartTimeAsync(logIndexName, 1000, startTime, 1, version,id);
+        return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(appLogs);
 
         // return new List<AppLogRecordDto>()
         // {

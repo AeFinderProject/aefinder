@@ -1,5 +1,4 @@
 using System.Linq;
-using AeFinder.App.ES;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Block.Dtos;
@@ -8,6 +7,7 @@ using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.Apps;
+using AeFinder.Log.Entities;
 using AeFinder.User.Dto;
 using AutoMapper;
 using Volo.Abp.Identity;
