@@ -56,6 +56,7 @@ public class AeFinderAuthServerModule : AbpModule
         {
             builder.AddServer(options =>
             {
+                options.AllowClientCredentialsFlow();
                 options.UseAspNetCore().DisableTransportSecurityRequirement();
                 options.SetIssuer(new Uri(configuration["AuthServer:IssuerUri"]));
             });

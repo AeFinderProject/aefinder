@@ -1,4 +1,7 @@
-﻿using Volo.Abp.Data;
+﻿using AeFinder.App;
+using MongoDB.Driver;
+using Volo.Abp.Data;
+using Volo.Abp.Identity;
 using Volo.Abp.MongoDB;
 
 namespace AeFinder.MongoDb;
@@ -13,10 +16,11 @@ public class AeFinderMongoDbContext : AbpMongoDbContext
     protected override void CreateModel(IMongoModelBuilder modelBuilder)
     {
         base.CreateModel(modelBuilder);
-
+    
         //modelBuilder.Entity<YourEntity>(b =>
         //{
         //    //...
         //});
     }
+    
 }

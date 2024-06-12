@@ -30,7 +30,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
         };
         
         var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        var version1 = await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { });
+        var version1 = (await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { })).NewVersion;
         
         await appGrain.UpgradeVersionAsync();
 
@@ -51,7 +51,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
             }
         };
         
-        var version2 = await appGrain.AddSubscriptionAsync(subscriptionManifest2, new byte[] { });
+        var version2 = (await appGrain.AddSubscriptionAsync(subscriptionManifest2, new byte[] { })).NewVersion;
         var id1 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version1, chainId);
         var pusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id1);
         var scanToken1 = Guid.NewGuid().ToString("N");
@@ -131,7 +131,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
         };
         
         var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        var version1 = await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { });
+        var version1 = (await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { })).NewVersion;
         
         var subscription1 = await appGrain.GetSubscriptionAsync(version1);
         subscription1.SubscriptionItems[0].ChainId.ShouldBe("tDVV");
@@ -202,7 +202,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
         };
         
         var scanAppGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        var version1 = await scanAppGrain.AddSubscriptionAsync(subscriptionManifest, new byte[] { });
+        var version1 = (await scanAppGrain.AddSubscriptionAsync(subscriptionManifest, new byte[] { })).NewVersion;
         
         var subscription1 = await scanAppGrain.GetSubscriptionAsync(version1);
         subscription1.SubscriptionItems.Count.ShouldBe(1);
@@ -222,7 +222,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
             }
         };
         
-        var version2 = await scanAppGrain.AddSubscriptionAsync(subscriptionManifest2, new byte[] { });
+        var version2 = (await scanAppGrain.AddSubscriptionAsync(subscriptionManifest2, new byte[] { })).NewVersion;
 
         var id1 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version1, chainId);
         var blockScanGrain1 = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(id1);

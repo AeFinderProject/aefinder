@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace AeFinder;
 
 public class AeFinderApplicationConsts
@@ -10,4 +12,7 @@ public class AeFinderApplicationConsts
     public const int AppLogEventId = 1;
     public const string AppCurrentVersionCacheKeyPrefix = "AppCurrentVersionCache_";
     public const int AppCurrentVersionCacheHours = 24;
+    
+    public static readonly HashSet<string> AppInterestedExtraPropertiesKey = new HashSet<string>
+        { "RefBlockNumber", "RefBlockPrefix", "ReturnValue", "Error", "TransactionFee", "ResourceFee" };
 }

@@ -6,6 +6,7 @@ public class DeploymentHelper
 {
     public static string GetAppDeploymentName(string appId, string version, string clientType)
     {
+        appId = appId.Replace("_", "-");
         return $"deployment-{appId}-{version}-{clientType}".ToLower();
     }
     
@@ -57,6 +58,36 @@ public class DeploymentHelper
                     Metadata = new V1ObjectMeta { Labels = labels },
                     Spec = new V1PodSpec
                     {
+                        Affinity = new V1Affinity
+                        {
+                            NodeAffinity = new V1NodeAffinity
+                            {
+                                RequiredDuringSchedulingIgnoredDuringExecution = new V1NodeSelector
+                                {
+                                    NodeSelectorTerms = new List<V1NodeSelectorTerm>
+                                    {
+                                        new V1NodeSelectorTerm
+                                        {
+                                            MatchExpressions = new List<V1NodeSelectorRequirement>
+                                            {
+                                                new V1NodeSelectorRequirement
+                                                {
+                                                    Key = "resource",
+                                                    OperatorProperty = "In",
+                                                    Values = new List<string> { KubernetesConstants.NodeAffinityValue }
+                                                },
+                                                new V1NodeSelectorRequirement
+                                                {
+                                                    Key = "app",
+                                                    OperatorProperty = "In",
+                                                    Values = new List<string> { KubernetesConstants.NodeAffinityValue }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
                         Containers = new List<V1Container>
                         {
                             new V1Container

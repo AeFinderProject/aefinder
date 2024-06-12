@@ -25,15 +25,15 @@ setup.template.settings:
 
 setup.template.enabled: true
 setup.template.overwrite: true
-setup.template.name: "aefinder-app-[AppId]-[ClientType]-log-index"
-setup.template.pattern: "aefinder-app-[AppId]-[ClientType]-log-index-*"
+setup.template.name: "[NameSpace]-[AppId]-log-index"
+setup.template.pattern: "[NameSpace]-[AppId]-log-index-*"
 
 setup.ilm.enabled: false
 
 output.elasticsearch:
   hosts: [
           "http://localhost:9200"]
-  index: "aefinder-app-[AppId]-[ClientType]-log-index-%{+yyyy-MM}"
+  index: "[NameSpace]-[AppId]-log-index-%{+yyyy-MM}"
   # username: "your_username"
   # password: "your_password"
   
@@ -41,8 +41,3 @@ processors:
   - add_host_metadata:
       when.not.contains.tags: forwarded
   - add_docker_metadata: ~
-
-#setup.ilm.enabled: auto
-#setup.ilm.rollover_alias: "aefinder-app-[AppId]--[ClientType]-log-index"
-#setup.ilm.pattern: "{now/d}-000001"
-#setup.ilm.overwrite: false

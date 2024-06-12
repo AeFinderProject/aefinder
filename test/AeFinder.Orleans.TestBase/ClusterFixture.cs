@@ -1,3 +1,4 @@
+using AeFinder.BlockScan;
 using Microsoft.Extensions.DependencyInjection;
 using AElf.Orleans.EventSourcing.Snapshot.Hosting;
 using AeFinder.Grains.Grain.BlockPush;
@@ -40,7 +41,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
         public void Configure(ISiloHostBuilder hostBuilder) {
             hostBuilder.ConfigureServices(services => {
                     services.AddSingleton<IBlockGrain, BlockGrain>();
-                    services.AddTransient(p=>Mock.Of<IBlockFilterProvider>());
+                    services.AddTransient(p=>Mock.Of<IBlockFilterAppService>());
                     services.AddAutoMapper(typeof(AeFinderApplicationModule).Assembly);
                     services.OnExposing(onServiceExposingContext =>
                     {

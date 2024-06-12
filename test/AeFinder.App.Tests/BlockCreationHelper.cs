@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AeFinder.Block.Dtos;
+using AeFinder.BlockScan;
 using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core;
 using AElf.CSharp.Core.Extension;
@@ -11,16 +12,15 @@ namespace AeFinder.App;
 
 public static class BlockCreationHelper
 {
-    public static List<BlockWithTransactionDto> CreateBlock(long startBlock, long blockCount, string blockHash,
+    public static List<AppSubscribedBlockDto> CreateBlock(long startBlock, long blockCount, string blockHash,
         string chainId, string perHash = "", bool confirmed = false)
     {
-        var blocks = new List<BlockWithTransactionDto>();
+        var blocks = new List<AppSubscribedBlockDto>();
         for (var i = startBlock; i < startBlock + blockCount; i++)
         {
             var perBlockHash = i == startBlock && perHash != "" ? perHash : blockHash + (i - 1);
-            var blockWithTransactionDto = new BlockWithTransactionDto
+            var blockWithTransactionDto = new AppSubscribedBlockDto
             {
-                Id = i.ToString(),
                 Confirmed = confirmed,
                 BlockHash = blockHash + i,
                 BlockHeight = i,
@@ -34,12 +34,12 @@ public static class BlockCreationHelper
         return blocks;
     }
 
-    public static List<BlockWithTransactionDto> CreateBlockWithTransactions(
+    public static List<AppSubscribedBlockDto> CreateBlockWithTransactions(
         long startBlock, long blockCount, string blockHash, string chainId,
         long transactionCount, string transactionId, TransactionStatus status,
         string perHash = "", bool confirmed = false)
     {
-        var blocks = new List<BlockWithTransactionDto>();
+        var blocks = new List<AppSubscribedBlockDto>();
         for (var i = startBlock; i < startBlock + blockCount; i++)
         {
             var perBlockHash = i == startBlock && perHash != "" ? perHash : blockHash + (i - 1);
@@ -51,16 +51,14 @@ public static class BlockCreationHelper
                 chainId, perBlockHash, confirmed, status);
             var transactionIds = transactions.Select(tx => tx.TransactionId).ToList();
 
-            var blockWithTransactionDto = new BlockWithTransactionDto
+            var blockWithTransactionDto = new AppSubscribedBlockDto
             {
-                Id = i.ToString(),
                 Confirmed = confirmed,
                 BlockHash = hash,
                 BlockHeight = i,
                 BlockTime = dateTime,
                 ChainId = chainId,
                 PreviousBlockHash = perBlockHash,
-                TransactionIds = transactionIds,
                 Transactions = transactions
             };
             blocks.Add(blockWithTransactionDto);
@@ -69,12 +67,12 @@ public static class BlockCreationHelper
         return blocks;
     }
 
-    public static List<BlockWithTransactionDto> CreateBlockWithTransactionAndTransferredLogEvents(
+    public static List<AppSubscribedBlockDto> CreateBlockWithTransactionAndTransferredLogEvents(
         long startBlock, long blockCount, string blockHash, string chainId,
         long transactionCount, string transactionId, TransactionStatus status,
         long logEventCount, string perHash = "", bool confirmed = false)
     {
-        var blocks = new List<BlockWithTransactionDto>();
+        var blocks = new List<AppSubscribedBlockDto>();
         for (var i = startBlock; i < startBlock + blockCount; i++)
         {
             var perBlockHash = i == startBlock && perHash != "" ? perHash : blockHash + (i - 1);
@@ -85,18 +83,15 @@ public static class BlockCreationHelper
                 hash, i, dateTime,
                 chainId, perBlockHash, confirmed, status,
                 logEventCount);
-            var transactionIds = transactions.Select(tx => tx.TransactionId).ToList();
 
-            var blockWithTransactionDto = new BlockWithTransactionDto
+            var blockWithTransactionDto = new AppSubscribedBlockDto
             {
-                Id = i.ToString(),
                 Confirmed = confirmed,
                 BlockHash = hash,
                 BlockHeight = i,
                 BlockTime = dateTime,
                 ChainId = chainId,
                 PreviousBlockHash = perBlockHash,
-                TransactionIds = transactionIds,
                 Transactions = transactions
             };
             blocks.Add(blockWithTransactionDto);
@@ -105,29 +100,23 @@ public static class BlockCreationHelper
         return blocks;
     }
 
-    private static List<TransactionDto> CreateTransaction(
+    private static List<AppSubscribedTransactionDto> CreateTransaction(
         long transactionCount, string transactionId,
         string blockHash, long blockHeight, DateTime blockTime,
         string chainId, string perHash, bool confirmed, TransactionStatus status,
         long logEventCount = 0)
     {
-        var transactions = new List<TransactionDto>();
+        var transactions = new List<AppSubscribedTransactionDto>();
         for (var i = 0; i < transactionCount; i++)
         {
             var id = blockHash + transactionId + i;
             var logEvents = logEventCount > 0
                 ? CreateTransferLogEvent(logEventCount, id,
                     blockHash, blockHeight, blockTime, chainId, perHash, confirmed)
-                : new List<LogEventDto>();
-            var transactionDto = new TransactionDto
+                : new List<AppSubscribedLogEventDto>();
+            var transactionDto = new AppSubscribedTransactionDto
             {
                 TransactionId = id,
-                Confirmed = confirmed,
-                PreviousBlockHash = perHash,
-                BlockHash = blockHash,
-                BlockHeight = blockHeight,
-                BlockTime = blockTime,
-                ChainId = chainId,
                 Status = status,
                 LogEvents = logEvents
             };
@@ -137,12 +126,12 @@ public static class BlockCreationHelper
         return transactions;
     }
 
-    private static List<LogEventDto> CreateTransferLogEvent(
+    private static List<AppSubscribedLogEventDto> CreateTransferLogEvent(
         long logEventCount, string transactionId,
         string blockHash, long blockHeight, DateTime blockTime,
         string chainId, string perHash, bool confirmed)
     {
-        var logEventDtos = new List<LogEventDto>();
+        var logEventDtos = new List<AppSubscribedLogEventDto>();
         for (var i = 0; i < logEventCount; i++)
         {
             var transferred = new Transferred
@@ -153,15 +142,8 @@ public static class BlockCreationHelper
                 Symbol = "TEST"
             };
             var transferredToLogEvent = transferred.ToLogEvent();
-            var logEventDto = new LogEventDto
+            var logEventDto = new AppSubscribedLogEventDto
             {
-                TransactionId = transactionId,
-                Confirmed = confirmed,
-                PreviousBlockHash = perHash,
-                BlockHash = blockHash,
-                BlockHeight = blockHeight,
-                BlockTime = blockTime,
-                ChainId = chainId,
                 Index = i,
                 ContractAddress = "TokenContractAddress",
                 EventName = "Transferred",
