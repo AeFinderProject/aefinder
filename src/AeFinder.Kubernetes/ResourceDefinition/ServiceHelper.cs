@@ -11,6 +11,11 @@ public class ServiceHelper
         return $"service-{appId}-{version}".ToLower();
     }
     
+    public static string GetAppServicePortName(string serviceName)
+    {
+        return $"{serviceName}-port".ToLower();
+    }
+    
     public static V1Service CreateAppClusterIPServiceDefinition(string serviceName, 
         string deploymentLabelName,int targetPort, int port = 80)
     {
@@ -31,6 +36,7 @@ public class ServiceHelper
                 {
                     new V1ServicePort
                     {
+                        Name = GetAppServicePortName(serviceName),
                         Protocol = "TCP",
                         Port = port,
                         TargetPort = targetPort,

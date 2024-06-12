@@ -1,3 +1,4 @@
+using AeFinder.Kubernetes.ResourceDefinition;
 using k8s;
 using k8s.Models;
 using Volo.Abp.DependencyInjection;
@@ -65,6 +66,15 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
         return ingresses;
     }
 
+    public async Task<object> ListServiceMonitorAsync(string monitorGroup, string coreApiVersion,
+        string namespaceParameter, string monitorPlural)
+    {
+        var serviceMonitors =
+            await _k8sClient.ListNamespacedCustomObjectAsync(monitorGroup, coreApiVersion, namespaceParameter,
+                monitorPlural);
+        return serviceMonitors;
+    }
+
     public async Task<V1Namespace> CreateNamespaceAsync(V1Namespace nameSpace,
         CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -100,6 +110,14 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
             cancellationToken: cancellationToken);
     }
 
+    public async Task<object> CreateServiceMonitorAsync(ServiceMonitor serviceMonitor, string monitorGroup,
+        string coreApiVersion, string namespaceParameter,
+        string monitorPlural, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return await _k8sClient.CreateNamespacedCustomObjectAsync(serviceMonitor, monitorGroup, coreApiVersion,
+            namespaceParameter, monitorPlural, cancellationToken: cancellationToken);
+    }
+
     public async Task<V1Status> DeleteConfigMapAsync(string name, string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -126,6 +144,13 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
     {
         return await _k8sClient.DeleteNamespacedIngressAsync(name, namespaceParameter,
             cancellationToken: cancellationToken);
+    }
+
+    public async Task<object> DeleteServiceMonitorAsync(string monitorGroup, string coreApiVersion,
+        string namespaceParameter, string monitorPlural, string serviceMonitorName)
+    {
+        return await _k8sClient.DeleteNamespacedCustomObjectAsync(monitorGroup, coreApiVersion, namespaceParameter,
+            monitorPlural, serviceMonitorName);
     }
 
     public async Task<V1Deployment> ReadNamespacedDeploymentAsync(string name, string namespaceParameter,
