@@ -28,6 +28,7 @@ public class AeFinderHttpApiModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         ConfigureLocalization();
+        //Remove Account Controller
         Configure<MvcOptions>(options =>
         {
             options.Conventions.Add(new ApplicationDescription());

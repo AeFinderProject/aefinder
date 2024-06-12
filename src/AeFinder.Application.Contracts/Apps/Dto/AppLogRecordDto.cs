@@ -1,0 +1,12 @@
+using System;
+
+namespace AeFinder.Apps.Dto;
+
+public class AppLogRecordDto
+{
+    public DateTime @Timestamp { get; set; }
+
+    public string Environment { get; set; }
+    
+    public AppLogInfo App_log { get; set; }
+}
