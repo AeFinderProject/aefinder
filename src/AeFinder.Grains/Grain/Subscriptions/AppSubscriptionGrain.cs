@@ -43,14 +43,14 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         }
         else
         {
-            if (State.NewVersion != null)
+            if (State.PendingVersion != null)
             {
-                addSubscriptionDto.StopVersion = State.NewVersion;
-                await StopBlockPushAsync(State.NewVersion);
-                State.SubscriptionInfos.Remove(State.NewVersion);
+                addSubscriptionDto.StopVersion = State.PendingVersion;
+                await StopBlockPushAsync(State.PendingVersion);
+                State.SubscriptionInfos.Remove(State.PendingVersion);
             }
 
-            State.NewVersion = newVersion;
+            State.PendingVersion = newVersion;
         }
 
         await UpdateCodeAsync(newVersion, code);
@@ -87,13 +87,13 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
             };
         }
 
-        if (State.NewVersion != null)
+        if (State.PendingVersion != null)
         {
-            result.NewVersion = new SubscriptionDetail
+            result.PendingVersion = new SubscriptionDetail
             {
-                Version = State.NewVersion,
-                Status = State.SubscriptionInfos[State.NewVersion].Status,
-                SubscriptionManifest = State.SubscriptionInfos[State.NewVersion].SubscriptionManifest
+                Version = State.PendingVersion,
+                Status = State.SubscriptionInfos[State.PendingVersion].Status,
+                SubscriptionManifest = State.SubscriptionInfos[State.PendingVersion].SubscriptionManifest
             };
         }
 
@@ -136,7 +136,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
 
     public async Task UpgradeVersionAsync()
     {
-        if (State.NewVersion == null)
+        if (State.PendingVersion == null)
         {
             return;
         }
@@ -149,17 +149,17 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
             {
                 AppId = this.GetPrimaryKeyString(),
                 CurrentVersion = State.CurrentVersion,
-                NewVersion = State.NewVersion
+                PendingVersion = State.PendingVersion
             });
         }
 
-        State.CurrentVersion = State.NewVersion;
+        State.CurrentVersion = State.PendingVersion;
         await _distributedEventBus.PublishAsync(new AppCurrentVersionSetEto()
         {
             AppId = this.GetPrimaryKeyString(),
-            CurrentVersion = State.NewVersion
+            CurrentVersion = State.PendingVersion
         });
-        State.NewVersion = null;
+        State.PendingVersion = null;
         await WriteStateAsync();
 
         await GrainFactory.GetGrain<IAppGrain>(this.GetPrimaryKeyString()).SetStatusAsync(AppStatus.Deployed);
@@ -188,9 +188,9 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         {
             State.CurrentVersion = null;
         }
-        else if (version == State.NewVersion)
+        else if (version == State.PendingVersion)
         {
-            State.NewVersion = null;
+            State.PendingVersion = null;
         }
         else
         {
@@ -225,7 +225,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
 
     private void CheckVersion(string version)
     {
-        if (version != State.CurrentVersion && version != State.NewVersion)
+        if (version != State.CurrentVersion && version != State.PendingVersion)
         {
             throw new UserFriendlyException($"Invalid version: {version}");
         }
