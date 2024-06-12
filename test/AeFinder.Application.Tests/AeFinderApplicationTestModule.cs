@@ -1,6 +1,8 @@
-﻿using AeFinder.Orleans.TestBase;
+﻿using AeFinder.CodeOps;
+using AeFinder.Orleans.TestBase;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Volo.Abp.Modularity;
 
 namespace AeFinder;
@@ -21,5 +23,7 @@ public class AeFinderApplicationTestModule : AbpModule
             o.TransactionQueryHeightInterval = 1000;
             o.LogEventQueryHeightInterval = 1000;
         });
+        
+        context.Services.AddTransient<ICodeAuditor>(o=>Mock.Of<ICodeAuditor>());
     }
 }

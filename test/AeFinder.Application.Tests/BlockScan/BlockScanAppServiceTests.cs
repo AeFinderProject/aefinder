@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AeFinder.Apps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Subscriptions;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -11,20 +13,24 @@ namespace AeFinder.BlockScan;
 
 public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
 {
-    private IBlockScanAppService _blockScanAppService;
-    private IClusterClient _clusterClient;
+    private readonly IBlockScanAppService _blockScanAppService;
+    private ISubscriptionAppService _subscriptionAppService;
+    private readonly IClusterClient _clusterClient;
+    private readonly IAppService _appService;
 
     public BlockScanAppServiceTests()
     {
+        _subscriptionAppService = GetRequiredService<ISubscriptionAppService>();
         _blockScanAppService = GetRequiredService<IBlockScanAppService>();
         _clusterClient = GetRequiredService<IClusterClient>();
+        _appService = GetRequiredService<IAppService>();
     }
 
     [Fact]
     public async Task ScanTest()
     {
-        var appId = "AppId";
         var chainId = "AELF";
+        var appId = (await _appService.CreateAsync(new CreateAppDto { AppName = "AppId" })).AppId;
         var subscriptionInput = new SubscriptionManifestDto()
         {
             SubscriptionItems = new List<SubscriptionDto>()
@@ -38,7 +44,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
             }
         };
 
-        var version1 = await _blockScanAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1]);
+        var version1 = await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1]);
 
         var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
@@ -85,7 +91,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
             }
         };
         
-        var version2 = await _blockScanAppService.AddSubscriptionAsync(appId, subscriptionInput2, new byte[1]);
+        var version2 = await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput2, new byte[1]);
         var id2 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version2, chainId);
         
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
@@ -131,7 +137,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
             }
         };
         
-        var version3 = await _blockScanAppService.AddSubscriptionAsync(appId, subscriptionInfo3, new byte[1]);
+        var version3 = await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInfo3, new byte[1]);
         var id3 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version3, chainId);
 
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
@@ -168,66 +174,4 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         allScanIds = await blockScanManagerGrain.GetAllBlockPusherIdsAsync();
         allScanIds[chainId].ShouldNotContain(id3);
     }
-
-    // [Fact]
-    // public async Task UpdateSubscriptionTest()
-    // {
-    //     var clientId = "ClientTest";
-    //     var subscriptionInfo1 = new List<SubscriptionInfo>
-    //     {
-    //         new SubscriptionInfo
-    //         {
-    //             ChainId = "AELF",
-    //             FilterType = BlockFilterType.Transaction,
-    //             OnlyConfirmedBlock = true,
-    //             StartBlockNumber = 999,
-    //             SubscribeEvents = new List<FilterContractEventInput>()
-    //             {
-    //                 new FilterContractEventInput()
-    //                 {
-    //                     ContractAddress = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
-    //                     EventNames = new List<string>()
-    //                     {
-    //                         "Transfer"
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     };
-    //     var version1 = await _blockScanAppService.SubmitSubscriptionInfoAsync(clientId, subscriptionInfo1);
-    //     
-    //     var subscription = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
-    //     subscription.CurrentVersion.Version.ShouldBe(version1);
-    //     subscription.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
-    //     subscription.NewVersion.ShouldBeNull();
-    //     
-    //     var subscriptionInfo2 = new List<SubscriptionInfo>
-    //     {
-    //         new SubscriptionInfo
-    //         {
-    //             ChainId = "AELF",
-    //             FilterType = BlockFilterType.Transaction,
-    //             OnlyConfirmedBlock = true,
-    //             StartBlockNumber = 999,
-    //             SubscribeEvents = new List<FilterContractEventInput>()
-    //             {
-    //                 new FilterContractEventInput()
-    //                 {
-    //                     ContractAddress = "23GxsoW9TRpLqX1Z5tjrmcRMMSn5bhtLAf4HtPj8JX9BerqTqp",
-    //                     EventNames = new List<string>()
-    //                     {
-    //                         "Transfer",
-    //                         "SetNumbered"
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     };
-    //     await _blockScanAppService.UpdateSubscriptionInfoAsync(clientId, version1, subscriptionInfo2);
-    //     var subscription2 = await _blockScanAppService.GetSubscriptionInfoAsync(clientId);
-    //     subscription2.CurrentVersion.Version.ShouldBe(version1);
-    //     subscription2.CurrentVersion.SubscriptionInfos[0].FilterType.ShouldBe(BlockFilterType.Transaction);
-    //     subscription2.CurrentVersion.SubscriptionInfos[0].SubscribeEvents.Count.ShouldBe(1);
-    //     subscription2.CurrentVersion.SubscriptionInfos[0].SubscribeEvents[0].EventNames.Count.ShouldBe(2);
-    // }
 }

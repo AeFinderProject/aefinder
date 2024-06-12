@@ -1,5 +1,6 @@
 using System;
 using AeFinder.Block;
+using AeFinder.BlockScan;
 using AeFinder.Grains.BlockPush;
 using AeFinder.Grains.Grain.BlockPush;
 using AutoMapper;
@@ -41,7 +42,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
             hostBuilder.ConfigureServices(services => {
                     services.AddSingleton<IBlockAppService, MockBlockAppService>();
                     services.AddSingleton<IBlockDataProvider, BlockDataProvider>();
-                    services.AddTransient<IBlockFilterProvider, BlockFilterProvider>();
+                    services.AddTransient<IBlockFilterAppService, BlockFilterAppService>();
                     services.Configure<BlockPushOptions>(o =>
                     {
                         o.BatchPushBlockCount = 10;

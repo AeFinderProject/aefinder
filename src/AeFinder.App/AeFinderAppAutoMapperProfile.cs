@@ -1,4 +1,5 @@
 using AeFinder.Block.Dtos;
+using AeFinder.BlockScan;
 using AeFinder.Sdk.Dtos;
 using AeFinder.Sdk.Entities;
 using AeFinder.Sdk.Processor;
@@ -18,5 +19,9 @@ public class AeFinderAppAutoMapperProfile:Profile
         
         CreateMap<Metadata, MetadataDto>();
         CreateMap<BlockMetadata, BlockMetadataDto>();
+        
+        CreateMap<AppSubscribedBlockDto, BlockWithTransactionDto>();
+        CreateMap<AppSubscribedTransactionDto, TransactionDto>();
+        CreateMap<AppSubscribedLogEventDto, LogEventDto>();
     }
 }

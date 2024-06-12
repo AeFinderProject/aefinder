@@ -2,7 +2,7 @@ namespace AeFinder.Grains.Grain.Subscriptions;
 
 public class SubscriptionManifest
 {
-    public List<Subscription> SubscriptionItems { get; set; }
+    public List<Subscription> SubscriptionItems { get; set; } = new();
 }
 
 public class Subscription
