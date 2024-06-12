@@ -1,8 +1,11 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
+using AeFinder.Kubernetes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 
@@ -15,11 +18,14 @@ public class AppController : AeFinderController
 {
     private readonly IAppService _appService;
     private readonly IAppLogService _appLogService;
+    private readonly KubernetesOptions _kubernetesOption;
 
-    public AppController(IAppService appService,IAppLogService appLogService)
+    public AppController(IAppService appService, IAppLogService appLogService,
+        IOptionsSnapshot<KubernetesOptions> kubernetesOption)
     {
         _appService = appService;
         _appLogService = appLogService;
+        _kubernetesOption = kubernetesOption.Value;
     }
 
     [HttpPost]
@@ -61,8 +67,10 @@ public class AppController : AeFinderController
 
     [HttpGet("log")]
     [Authorize]
-    public async Task<AppLogRecordDto> GetLatestRealTimeLogs(string startTime, string appId, string version)
+    public async Task<List<AppLogRecordDto>> GetLatestRealTimeLogs(string startTime, string appId, string version,
+        string logId)
     {
-        return await _appLogService.GetLatestRealTimeLogs(startTime, appId, version);
+        return await _appLogService.GetLatestRealTimeLogs(_kubernetesOption.AppNameSpace, startTime, appId, version,
+            logId);
     }
 }

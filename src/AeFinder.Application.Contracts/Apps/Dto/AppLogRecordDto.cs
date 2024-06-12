@@ -4,6 +4,7 @@ namespace AeFinder.Apps.Dto;
 
 public class AppLogRecordDto
 {
+    public string Id { get; set; }
     public DateTime @Timestamp { get; set; }
 
     public string Environment { get; set; }

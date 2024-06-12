@@ -1,5 +1,7 @@
 using System.Linq;
+using AeFinder.App.ES;
 using AeFinder.Apps;
+using AeFinder.Apps.Dto;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
 using AeFinder.Entities.Es;
@@ -68,5 +70,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
                 opt => opt.MapFrom(source => source.ExtraProperties.Where(o =>
                     AeFinderApplicationConsts.AppInterestedExtraPropertiesKey.Contains(o.Key))));
         CreateMap<LogEventDto, AppSubscribedLogEventDto>();
+        
+        CreateMap<AppLogIndex, AppLogRecordDto>();
     }
 }
