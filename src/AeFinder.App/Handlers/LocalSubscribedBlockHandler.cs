@@ -52,16 +52,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             "Processing blocks. ChainId: {ChainId}, block height: {FirstBlockHeight}-{LastBlockHeight}, confirmed: {Confirmed}",
             subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,
             subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
-
-        //test skip block
-        if (subscribedBlock.Blocks.First().ChainId.Equals("AELF"))
-        {
-            if (subscribedBlock.Blocks.First().BlockHeight > 1993000  && subscribedBlock.Blocks.First().BlockHeight < 1993111)
-            {
-                _logger.LogError("drop block");
-                return;
-            }
-        }
+        
         try
         {
             await _blockAttachService.AttachBlocksAsync(subscribedBlock.ChainId, subscribedBlock.Blocks);
