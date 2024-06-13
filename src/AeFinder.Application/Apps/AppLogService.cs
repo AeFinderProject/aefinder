@@ -15,12 +15,10 @@ namespace AeFinder.Apps;
 [DisableAuditing]
 public class AppLogService : AeFinderAppService, IAppLogService
 {
-    // private readonly IEntityMappingRepository<AppLogIndex, string> _appLogIndexRepository;
     private readonly ILogService _logService;
     
     public AppLogService(ILogService logService)
     {
-        // _appLogIndexRepository = appLogIndexRepository;
         _logService = logService;
     }
 
@@ -46,38 +44,16 @@ public class AppLogService : AeFinderAppService, IAppLogService
                 $"Invalid version: '{version}'. Please provide a valid version.");
         }
         
-        
-
         var logIndexName = GetLogIndexName(nameSpace, appId);
         
         if (id.IsNullOrEmpty())
         {
-            var result = await _logService.GetAppLogByStartTimeAsync(logIndexName, 1000, startTime, 1, version);
+            var result = await _logService.GetAppLogByStartTimeAsync(logIndexName, AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version);
             return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(result);
         }
         
-        var appLogs = await _logService.GetAppLogByStartTimeAsync(logIndexName, 1000, startTime, 1, version,id);
+        var appLogs = await _logService.GetAppLogByStartTimeAsync(logIndexName, AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version,id);
         return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(appLogs);
-
-        // return new List<AppLogRecordDto>()
-        // {
-        //     new AppLogRecordDto()
-        //     {
-        //         Id = "tvIwDJABk1kMdT6vWTzq",
-        //         @Timestamp = DateTime.Now,
-        //         Environment = "TestNet",
-        //         App_log = new AppLogInfo()
-        //         {
-        //             AppId = "aelfscan-genesis",
-        //             Version = "ad8752cac1674b86b8dd27c331226c5e",
-        //             EventId = 1,
-        //             Exception = "",
-        //             Level = "Debug",
-        //             Message = "",
-        //             Time = DateTime.Now
-        //         }
-        //     }
-        // };
 
     }
 
