@@ -59,6 +59,6 @@ public class AppLogService : AeFinderAppService, IAppLogService
 
     private string GetLogIndexName(string nameSpace,string appId,DateTime startDateTime)
     {
-        return $"{nameSpace}-{appId}-log-index-{startDateTime.ToString("yyyy-MM-dd")}".ToLower();
+        return $"{nameSpace}-{appId}-log-index-{startDateTime.ToString("yyyy-MM")}".ToLower();
     }
 }
