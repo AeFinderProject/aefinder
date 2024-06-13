@@ -4,6 +4,7 @@ namespace AeFinder.Kubernetes;
 
 public class KubernetesConstants
 {
+     public const string CoreApiVersion = "v1";
      public const string NginxIngressClassName = "nginx";
      //resource definition
      // public const string AppNameSpace = "aefinder-app";
@@ -28,6 +29,10 @@ public class KubernetesConstants
      public const string PlaceHolderClientType = "[ClientType]";
      public const string PlaceHolderNameSpace = "[NameSpace]";
      public const int AppContainerTargetPort = 8308;
+     
+     //Prometheus
+     public const string MonitorGroup = "monitoring.coreos.com";
+     public const string MonitorPlural = "servicemonitors";
      
      public static void Initialize(IConfiguration configuration)
      {

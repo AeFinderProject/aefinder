@@ -177,14 +177,31 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         //Create query app service
         var serviceName = ServiceHelper.GetAppServiceName(appId, version);
         var services = await _kubernetesClientAdapter.ListServiceAsync(KubernetesConstants.AppNameSpace);
-        var sericeExists = services.Items.Any(item => item.Metadata.Name == serviceName);
-        if (!sericeExists)
+        var serviceExists = services.Items.Any(item => item.Metadata.Name == serviceName);
+        if (!serviceExists)
         {
             var service =
                 ServiceHelper.CreateAppClusterIPServiceDefinition(serviceName, deploymentLabelName, targetPort);
             // Create Service
             await _kubernetesClientAdapter.CreateServiceAsync(service, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Service {serviceName} created", serviceName);
+        }
+        
+        //Create query app service monitor
+        var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
+        var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+            KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
+        var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitors, serviceMonitorName);
+        var servicePortName = ServiceHelper.GetAppServicePortName(serviceName);
+        if (!serviceMonitorExists)
+        {
+            var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(serviceMonitorName,
+                deploymentName, deploymentLabelName, servicePortName);
+            //Create Service Monitor
+            await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
+                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
+                KubernetesConstants.MonitorPlural);
+            _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} created", serviceMonitorName);
         }
 
         //Create query app ingress
@@ -205,6 +222,16 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         }
 
         return hostName + rulePath + "/graphql";
+    }
+    
+    public async Task<bool> ExistsServiceMonitorAsync(object serviceMonitors,string serviceMonitorName)
+    {
+        foreach (var item in (serviceMonitors as IDictionary<string, dynamic>)["items"])
+        {
+            if (item["metadata"]["name"] == serviceMonitorName)
+                return true;
+        }
+        return false;
     }
 
     public async Task DestroyAppAsync(string appId, string version)
@@ -295,6 +322,19 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         {
             await _kubernetesClientAdapter.DeleteIngressAsync(ingressName, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} deleted.", ingressName);
+        }
+        
+        //Delete query app service monitor
+        var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
+        var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+            KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
+        var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitors, serviceMonitorName);
+        if (serviceMonitorExists)
+        {
+            await _kubernetesClientAdapter.DeleteServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural,
+                serviceMonitorName);
+            _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} deleted.", serviceMonitorName);
         }
     }
 
