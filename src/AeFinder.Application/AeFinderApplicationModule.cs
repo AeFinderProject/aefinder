@@ -4,7 +4,6 @@ using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
 using AeFinder.DevelopmentTemplate;
 using AeFinder.Grains;
-using AeFinder.Logger;
 using AeFinder.User;
 using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
@@ -34,8 +33,7 @@ namespace AeFinder;
     typeof(AElfEntityMappingModule),
     typeof(AElfEntityMappingElasticsearchModule),
     typeof(AeFinderCodeOpsModule),
-    typeof(AeFinderAppDeployModule),
-    typeof(AeFinderLogModule)
+    typeof(AeFinderAppDeployModule)
 )]
 public class AeFinderApplicationModule : AbpModule
 {
