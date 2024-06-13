@@ -1,4 +1,5 @@
 ﻿using AeFinder.Localization;
+using AeFinder.Logger;
 using Localization.Resources.AbpUi;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.Account;
@@ -21,7 +22,8 @@ namespace AeFinder;
     typeof(AbpTenantManagementHttpApiModule),
     typeof(AbpFeatureManagementHttpApiModule),
     typeof(AbpSettingManagementHttpApiModule),
-    typeof(AbpAspNetCoreSignalRModule)
+    typeof(AbpAspNetCoreSignalRModule),
+    typeof(AeFinderLogggerModule)
     )]
 public class AeFinderHttpApiModule : AbpModule
 {
