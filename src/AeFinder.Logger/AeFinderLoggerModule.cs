@@ -8,7 +8,7 @@ using Volo.Abp.Modularity;
 
 namespace AeFinder.Logger;
 
-public class AeFinderLogggerModule: AbpModule
+public class AeFinderLoggerModule: AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {

@@ -23,7 +23,7 @@ namespace AeFinder;
     typeof(AbpFeatureManagementHttpApiModule),
     typeof(AbpSettingManagementHttpApiModule),
     typeof(AbpAspNetCoreSignalRModule),
-    typeof(AeFinderLogggerModule)
+    typeof(AeFinderLoggerModule)
     )]
 public class AeFinderHttpApiModule : AbpModule
 {
