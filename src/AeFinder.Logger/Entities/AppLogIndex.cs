@@ -8,7 +8,7 @@ public class AppLogIndex
 {
     public string Log_id { get; set; }
 
-    [JsonProperty("@timestamp")]
+    [PropertyName("@timestamp")]
     public DateTime Timestamp { get; set; }
 
     public string Environment { get; set; }
