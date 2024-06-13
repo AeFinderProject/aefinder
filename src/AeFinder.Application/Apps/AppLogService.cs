@@ -44,7 +44,7 @@ public class AppLogService : AeFinderAppService, IAppLogService
                 $"Invalid version: '{version}'. Please provide a valid version.");
         }
         
-        var logIndexName = GetLogIndexName(nameSpace, appId);
+        var logIndexName = GetLogIndexName(nameSpace, appId,startDateTime);
         
         if (id.IsNullOrEmpty())
         {
@@ -57,8 +57,8 @@ public class AppLogService : AeFinderAppService, IAppLogService
 
     }
 
-    private string GetLogIndexName(string nameSpace,string appId)
+    private string GetLogIndexName(string nameSpace,string appId,DateTime startDateTime)
     {
-        return $"{nameSpace}-{appId}-log-index".ToLower();
+        return $"{nameSpace}-{appId}-log-index-{startDateTime.ToString("yyyy-MM-dd")}".ToLower();
     }
 }
