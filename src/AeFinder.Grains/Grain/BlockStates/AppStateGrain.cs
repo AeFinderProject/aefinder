@@ -5,15 +5,15 @@ namespace AeFinder.Grains.Grain.BlockStates;
 
 public class AppStateGrain : Grain<AppStateState>, IAppStateGrain
 {
-    public async Task<string> GetLastIrreversibleStateAsync()
+    public async Task<AppState> GetLastIrreversibleStateAsync()
     {
         await ReadStateAsync();
         return State.LastIrreversibleState;
     }
 
-    public async Task SetLastIrreversibleStateAsync(string value)
+    public async Task SetLastIrreversibleStateAsync(AppState state)
     {
-        State.LastIrreversibleState = value;
+        State.LastIrreversibleState = state;
         await WriteStateAsync();
     }
 }
