@@ -33,7 +33,7 @@ setup.ilm.enabled: false
 output.elasticsearch:
   hosts: [
           "http://localhost:9200"]
-  index: "[NameSpace]-[AppId]-log-index-%{+yyyy-MM}"
+  index: "[NameSpace]-[AppId]-log-index-%{+yyyy-MM-dd}"
   # username: "your_username"
   # password: "your_password"
   
