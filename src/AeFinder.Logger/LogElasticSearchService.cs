@@ -44,7 +44,7 @@ public class LogElasticSearchService:ILogService
             .Index(indexName)
             .Sort(so => so
                 .Ascending(f => f.App_log.Time)
-                .Ascending(f => f.Id))
+                .Ascending(f => f.Log_id))
             .SearchAfter(searchAfter.Cast<object>().ToArray())
             .Size(pageSize)
             .Query(q => q
