@@ -1,13 +1,15 @@
 using AeFinder.Apps;
 using Nest;
+using Newtonsoft.Json;
 
 namespace AeFinder.Logger.Entities;
 
 public class AppLogIndex
 {
-    [Keyword] public string Id { get; set; }
+    public string Log_id { get; set; }
 
-    public DateTime @Timestamp { get; set; }
+    [JsonProperty("@timestamp")]
+    public DateTime Timestamp { get; set; }
 
     public string Environment { get; set; }
 

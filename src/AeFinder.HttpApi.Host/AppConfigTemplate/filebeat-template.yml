@@ -38,6 +38,8 @@ output.elasticsearch:
   # password: "your_password"
   
 processors:
+  - add_id:
+        target: log_id
   - add_host_metadata:
       when.not.contains.tags: forwarded
   - add_docker_metadata: ~
