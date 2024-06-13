@@ -79,7 +79,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.Kubernetes", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.App.Deploy", "src\AeFinder.App.Deploy\AeFinder.App.Deploy.csproj", "{A6E1BDC9-D4AD-47B0-9D9C-A28DCBBE027B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.Log", "src\AeFinder.Log\AeFinder.Log.csproj", "{407317DE-6652-4560-A3B5-78163D47656F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.Logger", "src\AeFinder.Logger\AeFinder.Logger.csproj", "{407317DE-6652-4560-A3B5-78163D47656F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

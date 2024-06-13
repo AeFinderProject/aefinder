@@ -16,7 +16,7 @@
     <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
     <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
     <ProjectReference Include="..\AeFinder.Grains\AeFinder.Grains.csproj" />
-    <ProjectReference Include="..\AeFinder.Log\AeFinder.Log.csproj" />
+    <ProjectReference Include="..\AeFinder.Logger\AeFinder.Logger.csproj" />
   </ItemGroup>
 
   <ItemGroup>

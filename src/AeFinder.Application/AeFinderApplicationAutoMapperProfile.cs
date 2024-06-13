@@ -7,7 +7,7 @@ using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.Apps;
-using AeFinder.Log.Entities;
+using AeFinder.Logger.Entities;
 using AeFinder.User.Dto;
 using AutoMapper;
 using Volo.Abp.Identity;
