@@ -9,7 +9,7 @@ namespace AeFinder.App.BlockProcessing;
 
 public interface IFullBlockProcessor
 {
-    Task ProcessAsync(BlockWithTransactionDto block, bool isRollback);
+    Task ProcessAsync(BlockWithTransactionDto block);
 }
 
 public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
@@ -37,27 +37,29 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         _blockProcessingContext = blockProcessingContext;
     }
 
-    public async Task ProcessAsync(BlockWithTransactionDto block, bool isRollback)
+    public async Task ProcessAsync(BlockWithTransactionDto block)
     {
         _operationLimitManager.ResetAll();
         _blockProcessingContext.SetContext(block.ChainId, block.BlockHash, block.BlockHeight,
-            block.BlockTime, isRollback);
-        
+            block.BlockTime);
+
         var blockProcessor = _blockProcessors.FirstOrDefault();
         if (blockProcessor != null)
         {
             _logger.LogInformation(
-                "Processing block. ChainId: {ChainId}, BlockHash: {BlockHash}.", block.ChainId, block.BlockHash);
+                "Processing block. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}.",
+                block.ChainId, block.BlockHash, block.BlockHeight);
             try
             {
-                await blockProcessor.ProcessAsync(_objectMapper.Map<BlockWithTransactionDto, Sdk.Processor.Block>(block), new BlockContext
-                {
-                    ChainId = block.ChainId
-                });
+                await blockProcessor.ProcessAsync(
+                    _objectMapper.Map<BlockWithTransactionDto, Sdk.Processor.Block>(block), new BlockContext
+                    {
+                        ChainId = block.ChainId
+                    });
             }
             catch (Exception e)
             {
-                throw new AppProcessingException("Block processing failed!",e);
+                throw new AppProcessingException("Block processing failed!", e);
             }
         }
 
@@ -67,8 +69,8 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
             if (transactionProcessor != null)
             {
                 _logger.LogInformation(
-                    "Processing transaction. ChainId: {ChainId}, BlockHash: {BlockHash}, TransactionHash: {TransactionHash}.",
-                    block.ChainId, block.BlockHash, transaction.TransactionId);
+                    "Processing transaction. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}, TransactionHash: {TransactionHash}.",
+                    block.ChainId, block.BlockHash, block.BlockHeight, transaction.TransactionId);
                 try
                 {
                     await transactionProcessor.ProcessAsync(
@@ -81,7 +83,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                 }
                 catch (Exception e)
                 {
-                    throw new AppProcessingException("Transaction processing failed!",e);
+                    throw new AppProcessingException("Transaction processing failed!", e);
                 }
             }
 
@@ -90,12 +92,13 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                 var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>
                     p.GetContractAddress(block.ChainId) == logEvent.ContractAddress &&
                     p.GetEventName() == logEvent.EventName);
-                
+
                 if (logEventProcessor != null)
                 {
                     _logger.LogInformation(
-                        "Processing log event. ChainId: {ChainId}, BlockHash: {BlockHash}, TransactionHash: {TransactionHash}, ContractAddress: {ContractAddress}, EventName: {EventName}.",
-                        block.ChainId, block.BlockHash, transaction.TransactionId, logEvent.ContractAddress,
+                        "Processing log event. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}, TransactionHash: {TransactionHash}, ContractAddress: {ContractAddress}, EventName: {EventName}.",
+                        block.ChainId, block.BlockHash, block.BlockHeight, transaction.TransactionId,
+                        logEvent.ContractAddress,
                         logEvent.EventName);
                     try
                     {
@@ -109,7 +112,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                     }
                     catch (Exception e)
                     {
-                        throw new AppProcessingException("Log event processing failed!",e);
+                        throw new AppProcessingException("Log event processing failed!", e);
                     }
                 }
             }

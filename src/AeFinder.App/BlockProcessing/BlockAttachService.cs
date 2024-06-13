@@ -64,6 +64,18 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
     private async Task HandleBlocksAsync(string chainId, List<AppSubscribedBlockDto> blocks)
     {
         var longestChainBlockStateSet = await _appBlockStateSetProvider.GetLongestChainBlockStateSetAsync(chainId);
+        var bestChainBlockStateSet = await _appBlockStateSetProvider.GetBestChainBlockStateSetAsync(chainId);
+
+        if (longestChainBlockStateSet?.Block.BlockHash != bestChainBlockStateSet?.Block.BlockHash)
+        {
+            await LocalEventBus.PublishAsync(new LongestChainFoundEventData()
+            {
+                ChainId = chainId,
+                BlockHash = longestChainBlockStateSet.Block.BlockHash,
+                BlockHeight = longestChainBlockStateSet.Block.BlockHeight
+            });
+        }
+
         var lastIrreversibleBlockStateSet =
             await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
         var lastIrreversibleBlockHeight = lastIrreversibleBlockStateSet?.Block.BlockHeight ?? 0;
