@@ -2,6 +2,7 @@ using AeFinder.App.Deploy;
 using AeFinder.Kubernetes.Adapter;
 using AeFinder.Kubernetes.ResourceDefinition;
 using k8s;
+using k8s.Autorest;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Volo.Abp.DependencyInjection;
@@ -186,23 +187,6 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             await _kubernetesClientAdapter.CreateServiceAsync(service, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Service {serviceName} created", serviceName);
         }
-        
-        //Create query app service monitor
-        var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
-        var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
-            KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
-        var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitors, serviceMonitorName);
-        var servicePortName = ServiceHelper.GetAppServicePortName(serviceName);
-        if (!serviceMonitorExists)
-        {
-            var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(serviceMonitorName,
-                deploymentName, deploymentLabelName, servicePortName);
-            //Create Service Monitor
-            await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
-                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
-                KubernetesConstants.MonitorPlural);
-            _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} created", serviceMonitorName);
-        }
 
         //Create query app ingress
         var ingressName = IngressHelper.GetAppIngressName(appId, version);
@@ -220,18 +204,51 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             await _kubernetesClientAdapter.CreateIngressAsync(ingress, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} created", ingressName);
         }
+        
+        //Create query app service monitor
+        var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
+        var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
+        var servicePortName = ServiceHelper.GetAppServicePortName(serviceName);
+        if (!serviceMonitorExists)
+        {
+            var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(serviceMonitorName,
+                deploymentName, deploymentLabelName, servicePortName);
+            //Create Service Monitor
+            await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
+                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
+                KubernetesConstants.MonitorPlural);
+            _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} created", serviceMonitorName);
+        }
 
         return hostName + rulePath + "/graphql";
     }
     
-    public async Task<bool> ExistsServiceMonitorAsync(object serviceMonitors,string serviceMonitorName)
+    public async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
     {
-        foreach (var item in (serviceMonitors as IDictionary<string, dynamic>)["items"])
+        try
         {
-            if (item["metadata"]["name"] == serviceMonitorName)
-                return true;
+            var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
+            foreach (var item in (serviceMonitors as IDictionary<string, dynamic>)["items"])
+            {
+                if (item["metadata"]["name"] == serviceMonitorName)
+                    return true;
+            }
+            return false;
         }
-        return false;
+        catch (HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            // Handle resources do not exist
+            _logger.LogInformation($"The service monitor resource {serviceMonitorName} does not exist.");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            // Handle other potential exceptions
+            _logger.LogError($"List service monitor resource exception: {ex.Message}");
+            return false;
+        }
+        
     }
 
     public async Task DestroyAppAsync(string appId, string version)
@@ -326,9 +343,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         
         //Delete query app service monitor
         var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
-        var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
-            KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
-        var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitors, serviceMonitorName);
+        var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
         if (serviceMonitorExists)
         {
             await _kubernetesClientAdapter.DeleteServiceMonitorAsync(KubernetesConstants.MonitorGroup,
