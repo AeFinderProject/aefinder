@@ -49,13 +49,13 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
         subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(100);
-        subscription.NewVersion.ShouldBeNull();
+        subscription.PendingVersion.ShouldBeNull();
         
         await _blockScanAppService.UpgradeVersionAsync(appId);
         
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
-        subscription.NewVersion.ShouldBeNull();
+        subscription.PendingVersion.ShouldBeNull();
         
         var streamIds = await _blockScanAppService.GetMessageStreamIdsAsync(appId, version1);
         var id1 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version1, chainId);
@@ -97,8 +97,8 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
         subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(100);
-        subscription.NewVersion.Version.ShouldBe(version2);
-        subscription.NewVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(200);
+        subscription.PendingVersion.Version.ShouldBe(version2);
+        subscription.PendingVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(200);
         
         await _blockScanAppService.PauseAsync(appId, version1);
         scanIds = await blockScanManagerGrain.GetAllBlockPusherIdsAsync();
@@ -143,8 +143,8 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
         subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(100);
-        subscription.NewVersion.Version.ShouldBe(version3);
-        subscription.NewVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(300);
+        subscription.PendingVersion.Version.ShouldBe(version3);
+        subscription.PendingVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(300);
         
         await _blockScanAppService.StartScanAsync(appId, version3);
         
@@ -158,7 +158,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version3);
         subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(300);
-        subscription.NewVersion.ShouldBeNull();
+        subscription.PendingVersion.ShouldBeNull();
         
         allScanIds = await blockScanManagerGrain.GetAllBlockPusherIdsAsync();
         allScanIds[chainId].ShouldNotContain(id1);
@@ -169,7 +169,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
 
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.ShouldBeNull();
-        subscription.NewVersion.ShouldBeNull();
+        subscription.PendingVersion.ShouldBeNull();
         
         allScanIds = await blockScanManagerGrain.GetAllBlockPusherIdsAsync();
         allScanIds[chainId].ShouldNotContain(id3);
