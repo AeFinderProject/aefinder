@@ -322,6 +322,9 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             await _kubernetesClientAdapter.DeleteIngressAsync(ingressName, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} deleted.", ingressName);
         }
+        
+        //Delete query app service monitor
+        
     }
 
     public async Task RestartAppAsync(string appId, string version)
