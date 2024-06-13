@@ -201,6 +201,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
                 KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
                 KubernetesConstants.MonitorPlural);
+            _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} created", serviceMonitorName);
         }
 
         //Create query app ingress
@@ -324,7 +325,17 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         }
         
         //Delete query app service monitor
-        
+        var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
+        var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+            KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
+        var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitors, serviceMonitorName);
+        if (serviceMonitorExists)
+        {
+            await _kubernetesClientAdapter.DeleteServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural,
+                serviceMonitorName);
+            _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} deleted.", serviceMonitorName);
+        }
     }
 
     public async Task RestartAppAsync(string appId, string version)
