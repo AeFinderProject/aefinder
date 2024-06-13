@@ -1,11 +1,13 @@
 using System.Linq;
 using AeFinder.Apps;
+using AeFinder.Apps.Dto;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
 using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.Apps;
+using AeFinder.Logger.Entities;
 using AeFinder.User.Dto;
 using AutoMapper;
 using Volo.Abp.Identity;
@@ -68,5 +70,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
                 opt => opt.MapFrom(source => source.ExtraProperties.Where(o =>
                     AeFinderApplicationConsts.AppInterestedExtraPropertiesKey.Contains(o.Key))));
         CreateMap<LogEventDto, AppSubscribedLogEventDto>();
+        
+        CreateMap<AppLogIndex, AppLogRecordDto>();
     }
 }
