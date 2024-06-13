@@ -206,19 +206,19 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         }
         
         //Create query app service monitor
-        var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
-        var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
-        var servicePortName = ServiceHelper.GetAppServicePortName(serviceName);
-        if (!serviceMonitorExists)
-        {
-            var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(serviceMonitorName,
-                deploymentName, deploymentLabelName, servicePortName);
-            //Create Service Monitor
-            await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
-                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
-                KubernetesConstants.MonitorPlural);
-            _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} created", serviceMonitorName);
-        }
+        // var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
+        // var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
+        // var servicePortName = ServiceHelper.GetAppServicePortName(serviceName);
+        // if (!serviceMonitorExists)
+        // {
+        //     var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(serviceMonitorName,
+        //         deploymentName, deploymentLabelName, servicePortName);
+        //     //Create Service Monitor
+        //     await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
+        //         KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
+        //         KubernetesConstants.MonitorPlural);
+        //     _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} created", serviceMonitorName);
+        // }
 
         return hostName + rulePath + "/graphql";
     }
@@ -342,15 +342,15 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         }
         
         //Delete query app service monitor
-        var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
-        var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
-        if (serviceMonitorExists)
-        {
-            await _kubernetesClientAdapter.DeleteServiceMonitorAsync(KubernetesConstants.MonitorGroup,
-                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural,
-                serviceMonitorName);
-            _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} deleted.", serviceMonitorName);
-        }
+        // var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
+        // var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
+        // if (serviceMonitorExists)
+        // {
+        //     await _kubernetesClientAdapter.DeleteServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+        //         KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural,
+        //         serviceMonitorName);
+        //     _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} deleted.", serviceMonitorName);
+        // }
     }
 
     public async Task RestartAppAsync(string appId, string version)
