@@ -151,19 +151,24 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         return string.Empty;
     }
 
-    public async Task ResetPasswordAsync(string newPassword)
+    public async Task ResetPasswordAsync(string userName, string newPassword)
     {
         if (CurrentUser == null || CurrentUser.Id == null)
         {
             throw new UserFriendlyException("CurrentUser is null");
         }
-        
+
+        if (CurrentUser.Name != userName)
+        {
+            throw new UserFriendlyException("Can only reset your own password");
+        }
+
         var identityUser = await UserManager.FindByIdAsync(CurrentUser.Id.ToString());
         if (identityUser == null)
         {
             throw new UserFriendlyException("user not found.");
         }
-        
+
         var token = await UserManager.GeneratePasswordResetTokenAsync(identityUser);
         var result = await UserManager.ResetPasswordAsync(identityUser, token, newPassword);
         if (!result.Succeeded)
