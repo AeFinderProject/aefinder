@@ -4,9 +4,12 @@ filebeat.inputs:
     paths:
       - /app/Logs/*.log
     fields:
+      log_id: ""
       environment: "localTest"
     fields_under_root: true
     processors:
+      - add_id:
+          target_field: log_id
       - add_kubernetes_metadata:
           in_cluster: true
           matchers:
@@ -38,8 +41,6 @@ output.elasticsearch:
   # password: "your_password"
   
 processors:
-  - add_id:
-      target: log_id
   - add_host_metadata:
       when.not.contains.tags: forwarded
   - add_docker_metadata: ~
