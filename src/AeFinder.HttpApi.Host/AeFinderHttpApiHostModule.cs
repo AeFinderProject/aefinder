@@ -118,7 +118,7 @@ public class AeFinderHttpApiHostModule : AbpModule
 
     private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
     {
-        IdentityBuilderExtensions.AddDefaultTokenProviders(context.Services.AddIdentity<IdentityUser, IdentityRole>());
+        // IdentityBuilderExtensions.AddDefaultTokenProviders(context.Services.AddIdentity<IdentityUser, IdentityRole>());
         context.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
