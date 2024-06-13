@@ -15,9 +15,9 @@ public class AppLogIndex
 
     public string Message { get; set; }
 
-    public FileBeatLogHostInfo Host { get; set; }
-
-    public FileBeatLogAgentInfo Agent { get; set; }
+    // public FileBeatLogHostInfo Host { get; set; }
+    //
+    // public FileBeatLogAgentInfo Agent { get; set; }
 
     public AppLogInfo App_log { get; set; }
 }
