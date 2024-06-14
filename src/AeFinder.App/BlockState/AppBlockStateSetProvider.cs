@@ -14,8 +14,6 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
     private readonly ConcurrentDictionary<string, BlockStateSet> _longestChainBlockStateSets = new();
     private readonly ConcurrentDictionary<string, BlockStateSet> _bestChainBlockStateSets= new();
     private readonly ConcurrentDictionary<string, BlockStateSet> _lastIrreversibleBlockStateSets= new();
-    private readonly ConcurrentDictionary<string, Dictionary<string, long>> _branches = new();
-    private readonly ConcurrentDictionary<string, Dictionary<string, ChangedBlockStateSet>> _changedBlockStateSets = new();
     
     private readonly IClusterClient _clusterClient;
     private readonly IAppInfoProvider _appInfoProvider;
@@ -62,8 +60,6 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
         {
             _lastIrreversibleBlockStateSets[chainId] = blockStateSets[status.LastIrreversibleBlockHash];
         }
-
-        _branches[chainId] = status.Branches;
     }
     
     private async Task InitializeBranchBlockStateSetsAsync(string chainId, string blockHash, ConcurrentDictionary<string,BlockStateSet> blockStateSets)
@@ -88,9 +84,6 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
         }
 
         sets[blockStateSet.Block.BlockHash] = blockStateSet;
-
-        UpdateBranch(chainId,blockStateSet);
-        AddChangedBlockStateSet(chainId, blockStateSet, DataOperationType.AddOrUpdate);
         
         return Task.CompletedTask;
     }
@@ -102,7 +95,6 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
             return Task.CompletedTask;
         }
         sets[blockStateSet.Block.BlockHash] = blockStateSet;
-        AddChangedBlockStateSet(chainId, blockStateSet, DataOperationType.AddOrUpdate);
         return Task.CompletedTask;
     }
 
@@ -158,14 +150,9 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
     {
         if (_blockStateSets.TryGetValue(chainId, out var sets))
         {
-            var toRemovedSets = sets.RemoveAll(set => set.Value.Block.BlockHeight < blockHeight).ToList();
-            toRemovedSets.AddRange(sets.RemoveAll(set => set.Value.Block.BlockHeight == blockHeight && set.Value.Block.BlockHash != blockHash));
-
-            foreach (var item in toRemovedSets)
-            {
-                RemoveBranch(chainId,item.Value);
-                AddChangedBlockStateSet(chainId, item.Value, DataOperationType.Delete);
-            }
+            sets.RemoveAll(set =>
+                set.Value.Block.BlockHeight < blockHeight || 
+                (set.Value.Block.BlockHeight == blockHeight && set.Value.Block.BlockHash != blockHash));
         }
     }
     
@@ -191,33 +178,11 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
 
     public async Task SaveDataAsync(string chainId)
     {
-        _logger.LogDebug("Saving BlockStateSets. ChainId: {ChainId}.", chainId);
-
-        if (_changedBlockStateSets.TryGetValue(chainId, out var changedBlockStateSet) && changedBlockStateSet.Count > 0)
-        {
-            _logger.LogDebug("Changed BlockStateSet Count: {Count}", changedBlockStateSet.Count);
-            var tasks = changedBlockStateSet.Select(o =>
-            {
-                var appBlockStateSetsGrain =
-                    _clusterClient.GetGrain<IAppBlockStateSetGrain>(GetBlockStateSetKey(chainId,
-                        o.Value.BlockStateSet.Block.BlockHash));
-                switch (o.Value.OperationType)
-                {
-                    case DataOperationType.AddOrUpdate:
-                        return appBlockStateSetsGrain.SetBlockStateSetAsync(o.Value.BlockStateSet);
-                    case DataOperationType.Delete:
-                        return appBlockStateSetsGrain.RemoveBlockStateSetAsync();
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            });
-            await Task.WhenAll(tasks);
-        }
+        _logger.LogDebug("Saving BlockStateSetsStatus. ChainId: {ChainId}.", chainId);
 
         _bestChainBlockStateSets.TryGetValue(chainId, out var bestChainBlockStateSet);
         _longestChainBlockStateSets.TryGetValue(chainId, out var longestChainBlockStateSet);
         _lastIrreversibleBlockStateSets.TryGetValue(chainId, out var lastIrreversibleBlockStateSet);
-        var branches = _branches.TryGetValue(chainId, out var branchHashes) ? branchHashes : new Dictionary<string, long>();
         
         var appBlockStateSetsStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(GetBlockStateSetStatusKey(chainId));
         await appBlockStateSetsStatusGrain.SetBlockStateSetStatusAsync(new BlockStateSetStatus
@@ -228,48 +193,10 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
             LongestChainHeight = longestChainBlockStateSet?.Block.BlockHeight ?? 0,
             LastIrreversibleBlockHash = lastIrreversibleBlockStateSet?.Block.BlockHash,
             LastIrreversibleBlockHeight = lastIrreversibleBlockStateSet?.Block.BlockHeight ?? 0,
-            Branches = branches
+            Branches = new Dictionary<string, long>()
         });
         
-        changedBlockStateSet?.Clear();
-        
-        _logger.LogDebug("Saved BlockStateSets. ChainId: {ChainId}", chainId);
-    }
-    
-    private void AddChangedBlockStateSet(string chainId, BlockStateSet blockStateSet, DataOperationType operationType)
-    {
-        if (!_changedBlockStateSets.TryGetValue(chainId, out var changedSets))
-        {
-            changedSets = new Dictionary<string, ChangedBlockStateSet>();
-        }
-        changedSets[blockStateSet.Block.BlockHash] = new ChangedBlockStateSet
-        {
-            OperationType = operationType,
-            BlockStateSet = blockStateSet
-        };
-        _changedBlockStateSets[chainId] = changedSets;
-    }
-
-    private void UpdateBranch(string chainId, BlockStateSet blockStateSet)
-    {
-        if (!_branches.TryGetValue(chainId, out var branches))
-        {
-            branches = new Dictionary<string, long>();
-            _branches[chainId] = branches;
-        }
-
-        branches.Remove(blockStateSet.Block.PreviousBlockHash);
-        branches.Add(blockStateSet.Block.BlockHash,blockStateSet.Block.BlockHeight);
-    }
-    
-    private void RemoveBranch(string chainId, BlockStateSet blockStateSet)
-    {
-        if (!_branches.TryGetValue(chainId, out var branches))
-        {
-            return;
-        }
-
-        branches.Remove(blockStateSet.Block.BlockHash);
+        _logger.LogDebug("Saved BlockStateSetsStatus. ChainId: {ChainId}", chainId);
     }
     
     private string GetBlockStateSetKey(string chainId, string blockHash)
@@ -282,10 +209,4 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
     {
         return GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoProvider.AppId, _appInfoProvider.Version, chainId);
     }
-}
-
-public class ChangedBlockStateSet
-{
-    public DataOperationType OperationType { get; set; }
-    public BlockStateSet BlockStateSet { get; set; }
 }

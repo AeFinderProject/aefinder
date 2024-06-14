@@ -16,4 +16,21 @@ public class AppStateGrain : Grain<AppStateState>, IAppStateGrain
         State.LastIrreversibleState = state;
         await WriteStateAsync();
     }
+
+    public async Task<AppStateDto> GetStateAsync()
+    {
+        await ReadStateAsync();
+        return new AppStateDto
+        {
+            LastIrreversibleState = State.LastIrreversibleState,
+            PendingState = State.PendingState
+        };
+    }
+
+    public async Task SetStateAsync(AppStateDto state)
+    {
+        State.LastIrreversibleState = state.LastIrreversibleState;
+        State.PendingState = state.PendingState;
+        await WriteStateAsync();
+    }
 }
