@@ -49,10 +49,12 @@ public class AppLogService : AeFinderAppService, IAppLogService
         if (id.IsNullOrEmpty())
         {
             var result = await _logService.GetAppLogByStartTimeAsync(logIndexName, AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version);
+            result = result.OrderByDescending(x => x.App_log.Time).ToList();
             return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(result);
         }
         
         var appLogs = await _logService.GetAppLogByStartTimeAsync(logIndexName, AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version,id);
+        appLogs = appLogs.OrderByDescending(x => x.App_log.Time).OrderByDescending(x=>x.Log_id).ToList();
         return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(appLogs);
 
     }
