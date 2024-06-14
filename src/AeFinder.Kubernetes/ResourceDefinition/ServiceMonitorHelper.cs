@@ -33,7 +33,7 @@ public class ServiceMonitorHelper
                     {
                         Port = servicePortName,
                         Interval = "15s",
-                        Path = "/metrics"
+                        Path = KubernetesConstants.MetricsPath
                     }
                 },
                 NamespaceSelector = new NamespaceSelector
