@@ -15,9 +15,9 @@ public class ServiceHelper
     {
         return $"service-{version}-port".ToLower();
     }
-    
-    public static V1Service CreateAppClusterIPServiceDefinition(string serviceName, 
-        string deploymentLabelName,string servicePortName,int targetPort, int port = 80)
+
+    public static V1Service CreateAppClusterIPServiceDefinition(string serviceName,
+        string deploymentLabelName, string servicePortName, int targetPort, int port = 80)
     {
         var service = new V1Service
         {
@@ -36,7 +36,7 @@ public class ServiceHelper
                 {
                     new V1ServicePort
                     {
-                        Name = GetAppServicePortName(serviceName),
+                        Name = servicePortName,
                         Protocol = "TCP",
                         Port = port,
                         TargetPort = targetPort,

@@ -33,6 +33,7 @@ public class KubernetesConstants
      //Prometheus
      public const string MonitorGroup = "monitoring.coreos.com";
      public const string MonitorPlural = "servicemonitors";
+     public const string MetricsPath = "/metrics";
      
      public static void Initialize(IConfiguration configuration)
      {
