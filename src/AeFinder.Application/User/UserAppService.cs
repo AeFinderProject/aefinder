@@ -158,7 +158,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             throw new UserFriendlyException("CurrentUser is null");
         }
 
-        if (CurrentUser.Name != userName)
+        if (CurrentUser.UserName != userName)
         {
             throw new UserFriendlyException("Can only reset your own password");
         }
