@@ -11,13 +11,13 @@ public class ServiceHelper
         return $"service-{appId}-{version}".ToLower();
     }
     
-    public static string GetAppServicePortName(string serviceName)
+    public static string GetAppServicePortName(string version)
     {
-        return $"{serviceName}-port".ToLower();
+        return $"service-{version}-port".ToLower();
     }
     
     public static V1Service CreateAppClusterIPServiceDefinition(string serviceName, 
-        string deploymentLabelName,int targetPort, int port = 80)
+        string deploymentLabelName,string servicePortName,int targetPort, int port = 80)
     {
         var service = new V1Service
         {
