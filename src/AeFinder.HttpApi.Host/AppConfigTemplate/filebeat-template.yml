@@ -4,7 +4,6 @@ filebeat.inputs:
     paths:
       - /app/Logs/*.log
     fields:
-      log_id: ""
       environment: "localTest"
     fields_under_root: true
     processors:
