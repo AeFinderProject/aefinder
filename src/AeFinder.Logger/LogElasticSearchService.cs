@@ -11,6 +11,24 @@ public class LogElasticSearchService:ILogService
     {
         _elasticClient = elasticClient;
     }
+    
+    public async Task<List<AppLogIndex>> GetAppLatestLogAsync(string indexName, int pageSize,
+        int eventId, string appVersion)
+    {
+        var response = await _elasticClient.SearchAsync<AppLogIndex>(s => s
+            .Index(indexName)
+            .Sort(so => so
+                .Descending(f => f.App_log.Time))
+            .Size(pageSize)
+            .Query(q => q
+                .Bool(b => b
+                    .Must(
+                        m => m.Term(t => t.Field(f => f.App_log.EventId).Value(eventId)),
+                        m => m.Term(t => t.Field(f => f.App_log.Version).Value(appVersion))
+                    ))));
+
+        return response.Documents.ToList();
+    }
 
     public async Task<List<AppLogIndex>> GetAppLogByStartTimeAsync(string indexName, int pageSize, string startTime,
         int eventId, string appVersion)
