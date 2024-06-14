@@ -20,6 +20,6 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
     public async Task HandleEventAsync(AppUpgradeEto eventData)
     {
         await _kubernetesAppManager.DestroyAppAsync(eventData.AppId, eventData.CurrentVersion);
-        _logger.LogInformation("destroy app pod, appId: {0}, newVersion: {1} currentVersion: {2}", eventData.AppId, eventData.NewVersion, eventData.CurrentVersion);
+        _logger.LogInformation("destroy app pod, appId: {0}, pendingVersion: {1} currentVersion: {2}", eventData.AppId, eventData.PendingVersion, eventData.CurrentVersion);
     }
 }

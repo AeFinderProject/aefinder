@@ -14,7 +14,7 @@ namespace AeFinder.Grains.Grain.BlockPush;
 
 public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
 {
-    private readonly IBlockFilterProvider _blockFilterProvider;
+    private readonly IBlockFilterAppService _blockFilterAppService;
     private readonly BlockPushOptions _blockPushOptions;
     private readonly ILogger<BlockPusherGrain> _logger;
     private readonly IObjectMapper _objectMapper;
@@ -22,9 +22,9 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
     private IAsyncStream<SubscribedBlockDto> _stream = null!;
 
     public BlockPusherGrain(IOptionsSnapshot<BlockPushOptions> blockPushOptions,
-        IBlockFilterProvider blockFilterProvider, ILogger<BlockPusherGrain> logger, IObjectMapper objectMapper)
+        IBlockFilterAppService blockFilterAppService, ILogger<BlockPusherGrain> logger, IObjectMapper objectMapper)
     {
-        _blockFilterProvider = blockFilterProvider;
+        _blockFilterAppService = blockFilterAppService;
         _logger = logger;
         _objectMapper = objectMapper;
         _blockPushOptions = blockPushOptions.Value;
@@ -92,7 +92,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 var targetHeight = Math.Min(State.PushedConfirmedBlockHeight + _blockPushOptions.BatchPushBlockCount,
                     chainStatus.ConfirmedBlockHeight - _blockPushOptions.PushHistoryBlockThreshold);
 
-                var blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
+                var blocks = await _blockFilterAppService.GetBlocksAsync(new GetSubscriptionTransactionsInput
                 {
                     ChainId = State.Subscription.ChainId,
                     StartBlockHeight = State.PushedConfirmedBlockHeight + 1,
@@ -183,7 +183,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         }
         else if (State.PushedBlocks.Count == 0)
         {
-            blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
+            blocks = await _blockFilterAppService.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
                 ChainId = State.Subscription.ChainId,
                 StartBlockHeight = startHeight,
@@ -203,7 +203,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
             _logger.LogDebug(
                 "Grain: {GrainId} token: {PushToken} found not linked block, block height: {BlockHeight}, block hash: {BlockHash}, from height: {startHeight}",
                 this.GetPrimaryKeyString(), State.PushToken, block.BlockHeight, block.BlockHash, startHeight);
-            blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
+            blocks = await _blockFilterAppService.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
                 ChainId = State.Subscription.ChainId,
                 StartBlockHeight = startHeight,
@@ -232,9 +232,11 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         State.PushedBlockHeight = unPushedBlock.Last().BlockHeight;
         State.PushedBlockHash = unPushedBlock.Last().BlockHash;
 
-        var subscribedBlocks = await _blockFilterProvider.FilterBlocksAsync(unPushedBlock,
-            State.Subscription.TransactionConditions,
-            State.Subscription.LogEventConditions);
+        var subscribedBlocks = await _blockFilterAppService.FilterBlocksAsync(unPushedBlock,
+            _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(State.Subscription
+                .TransactionConditions),
+            _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(State.Subscription
+                .LogEventConditions));
 
         SetConfirmed(subscribedBlocks, false);
         await PushBlocksAsync(subscribedBlocks);
@@ -287,7 +289,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 State.PushedConfirmedBlockHeight);
 
             var startHeight = State.PushedConfirmedBlockHeight + 1;
-            pushedBlocks.AddRange(await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
+            pushedBlocks.AddRange(await _blockFilterAppService.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
                 ChainId = State.Subscription.ChainId,
                 StartBlockHeight = startHeight,
@@ -295,14 +297,17 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 IsOnlyConfirmed = true
             }));
 
-            pushedBlocks = await _blockFilterProvider.FilterIncompleteConfirmedBlocksAsync(State.Subscription.ChainId,
+            pushedBlocks = await _blockFilterAppService.FilterIncompleteConfirmedBlocksAsync(State.Subscription.ChainId,
                 pushedBlocks,
                 State.PushedConfirmedBlockHash, State.PushedConfirmedBlockHeight);
         }
 
         pushedBlocks =
-            await _blockFilterProvider.FilterBlocksAsync(pushedBlocks, State.Subscription.TransactionConditions,
-                State.Subscription.LogEventConditions);
+            await _blockFilterAppService.FilterBlocksAsync(pushedBlocks,
+                _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(State.Subscription
+                    .TransactionConditions),
+                _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(State.Subscription
+                    .LogEventConditions));
 
         if (pushedBlocks.Count == 0)
         {
@@ -375,7 +380,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         {
             if (needCheckIncomplete)
             {
-                blocks = await _blockFilterProvider.FilterIncompleteBlocksAsync(State.Subscription.ChainId, blocks);
+                blocks = await _blockFilterAppService.FilterIncompleteBlocksAsync(State.Subscription.ChainId, blocks);
                 if (blocks.Count == 0)
                 {
                     _logger.LogWarning(
@@ -415,7 +420,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
             }
 
             var startBlockHeight = blocks.Last().BlockHeight + 1;
-            blocks = await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
+            blocks = await _blockFilterAppService.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
                 ChainId = State.Subscription.ChainId,
                 StartBlockHeight = startBlockHeight,

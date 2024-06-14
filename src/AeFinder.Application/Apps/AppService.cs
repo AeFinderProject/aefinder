@@ -61,7 +61,7 @@ public class AppService : AeFinderAppService, IAppService
             _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var versions = await subscriptionGrain.GetAllSubscriptionAsync();
         app.Versions.CurrentVersion = versions.CurrentVersion?.Version;
-        app.Versions.PendingVersion = versions.NewVersion?.Version;
+        app.Versions.PendingVersion = versions.PendingVersion?.Version;
 
         return app;
     }

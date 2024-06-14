@@ -2,23 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.Block.Dtos;
-using AeFinder.Grains.Grain.BlockPush;
+using AeFinder.BlockScan;
 using AeFinder.Grains.Grain.Subscriptions;
 using Force.DeepCloner;
 using Shouldly;
+using Volo.Abp.ObjectMapping;
 using Xunit;
 
 namespace AeFinder.Grains.BlockPush;
 
 public class BlockFilterProviderTests : AeFinderGrainTestBase
 {
-    private readonly IBlockFilterProvider _blockFilterProvider;
+    private readonly IBlockFilterAppService _blockFilterAppService;
     private readonly IBlockDataProvider _blockDataProvider;
+    private readonly IObjectMapper _objectMapper;
 
     public BlockFilterProviderTests()
     {
-        _blockFilterProvider = GetRequiredService<IBlockFilterProvider>();
+        _blockFilterAppService = GetRequiredService<IBlockFilterAppService>();
         _blockDataProvider = GetRequiredService<IBlockDataProvider>();
+        _objectMapper = GetRequiredService<IObjectMapper>();
     }
 
     [Fact]
@@ -52,23 +55,24 @@ public class BlockFilterProviderTests : AeFinderGrainTestBase
         };
 
         var filteredBlock =
-            await _blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null, null);
+            await _blockFilterAppService.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null, null);
         filteredBlock.Count.ShouldBe(1);
 
-        filteredBlock = await _blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block },
-            new List<TransactionCondition>(), new List<LogEventCondition>());
-        filteredBlock.Count.ShouldBe(1);
-
-        filteredBlock =
-            await _blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null, filter);
-        filteredBlock.Count.ShouldBe(1);
-
-        filteredBlock = await _blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null,
-            filterOnlyContractAddress);
+        filteredBlock = await _blockFilterAppService.FilterBlocksAsync(new List<BlockWithTransactionDto> { block },
+            new List<FilterTransactionInput>(), new List<FilterContractEventInput>());
         filteredBlock.Count.ShouldBe(1);
 
         filteredBlock =
-            await _blockFilterProvider.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null, filterNotExist);
+            await _blockFilterAppService.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null, _objectMapper.Map<List<LogEventCondition>,List<FilterContractEventInput>>(filter));
+        filteredBlock.Count.ShouldBe(1);
+
+        filteredBlock = await _blockFilterAppService.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null,
+            _objectMapper.Map<List<LogEventCondition>,List<FilterContractEventInput>>(filterOnlyContractAddress));
+        filteredBlock.Count.ShouldBe(1);
+
+        filteredBlock =
+            await _blockFilterAppService.FilterBlocksAsync(new List<BlockWithTransactionDto> { block }, null,
+                _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(filterNotExist));
         filteredBlock.Count.ShouldBe(1);
     }
 
@@ -81,11 +85,11 @@ public class BlockFilterProviderTests : AeFinderGrainTestBase
         blocks.Add(_blockDataProvider.Blocks[24][0]);
 
 
-        var filteredBlock = await _blockFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+        var filteredBlock = await _blockFilterAppService.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
             _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
         filteredBlock.Count.ShouldBe(2);
 
-        filteredBlock = await _blockFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+        filteredBlock = await _blockFilterAppService.FilterIncompleteBlocksAsync("AELF", blocks);
         filteredBlock.Count.ShouldBe(3);
     }
 
@@ -101,11 +105,11 @@ public class BlockFilterProviderTests : AeFinderGrainTestBase
         blocks.Add(block);
         blocks.Add(_blockDataProvider.Blocks[24][0]);
 
-        var filteredBlock = await _blockFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+        var filteredBlock = await _blockFilterAppService.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
             _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
         filteredBlock.Count.ShouldBe(2);
 
-        filteredBlock = await _blockFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+        filteredBlock = await _blockFilterAppService.FilterIncompleteBlocksAsync("AELF", blocks);
         filteredBlock.Count.ShouldBe(2);
     }
 
@@ -120,11 +124,11 @@ public class BlockFilterProviderTests : AeFinderGrainTestBase
         blocks.Add(block);
         blocks.Add(_blockDataProvider.Blocks[24][0]);
 
-        var filteredBlock = await _blockFilterProvider.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
+        var filteredBlock = await _blockFilterAppService.FilterIncompleteConfirmedBlocksAsync("AELF", blocks,
             _blockDataProvider.Blocks[20][0].BlockHash, _blockDataProvider.Blocks[20][0].BlockHeight);
         filteredBlock.Count.ShouldBe(4);
 
-        filteredBlock = await _blockFilterProvider.FilterIncompleteBlocksAsync("AELF", blocks);
+        filteredBlock = await _blockFilterAppService.FilterIncompleteBlocksAsync("AELF", blocks);
         filteredBlock.Count.ShouldBe(4);
     }
 
@@ -132,7 +136,7 @@ public class BlockFilterProviderTests : AeFinderGrainTestBase
     public async Task GetBlocks_MissingBlock_Test()
     {
         await Assert.ThrowsAsync<ApplicationException>(async () =>
-            await _blockFilterProvider.GetBlocksAsync(new GetSubscriptionTransactionsInput
+            await _blockFilterAppService.GetBlocksAsync(new GetSubscriptionTransactionsInput
             {
                 ChainId = "AELF",
                 StartBlockHeight = 0,

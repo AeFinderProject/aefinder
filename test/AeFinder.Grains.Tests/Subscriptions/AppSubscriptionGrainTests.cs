@@ -74,7 +74,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
 
         var allSubscriptionsAsync = await appGrain.GetAllSubscriptionAsync();
         allSubscriptionsAsync.CurrentVersion.Version.ShouldBe(version1);
-        allSubscriptionsAsync.NewVersion.Version.ShouldBe(version2);
+        allSubscriptionsAsync.PendingVersion.Version.ShouldBe(version2);
 
         var versionStatus = await appGrain.GetSubscriptionStatusAsync(version1);
         versionStatus.ShouldBe(SubscriptionStatus.Initialized);
@@ -102,7 +102,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
         await appGrain.UpgradeVersionAsync();
         allSubscriptionsAsync = await appGrain.GetAllSubscriptionAsync();
         allSubscriptionsAsync.CurrentVersion.Version.ShouldBe(version2);
-        allSubscriptionsAsync.NewVersion.ShouldBeNull();
+        allSubscriptionsAsync.PendingVersion.ShouldBeNull();
     }
 
     [Fact]
@@ -240,6 +240,6 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
         
         await scanAppGrain.StopAsync(version2);
         version = await scanAppGrain.GetAllSubscriptionAsync();
-        version.NewVersion.ShouldBeNull();
+        version.PendingVersion.ShouldBeNull();
     }
 }
