@@ -42,6 +42,10 @@ public class AeFinderLoggerModule: AbpModule
                         Console.WriteLine($"Response: {Encoding.UTF8.GetString(callDetails.ResponseBodyInBytes)}");
                     }
                 });
+            if (!string.IsNullOrWhiteSpace(options.Username) && !string.IsNullOrWhiteSpace(options.Password))
+            {
+                settings.BasicAuthentication(options.Username, options.Password);
+            }
             return new ElasticClient(settings);
         });
         
