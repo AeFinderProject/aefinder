@@ -1,4 +1,5 @@
 ﻿using AeFinder.Localization;
+using AeFinder.Logger;
 using Localization.Resources.AbpUi;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.Account;
@@ -21,13 +22,15 @@ namespace AeFinder;
     typeof(AbpTenantManagementHttpApiModule),
     typeof(AbpFeatureManagementHttpApiModule),
     typeof(AbpSettingManagementHttpApiModule),
-    typeof(AbpAspNetCoreSignalRModule)
+    typeof(AbpAspNetCoreSignalRModule),
+    typeof(AeFinderLoggerModule)
     )]
 public class AeFinderHttpApiModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         ConfigureLocalization();
+        //Remove Account Controller
         Configure<MvcOptions>(options =>
         {
             options.Conventions.Add(new ApplicationDescription());

@@ -1,13 +1,16 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using AeFinder.Block.Dtos;
-using AeFinder.Grains.Grain.Subscriptions;
 
-namespace AeFinder.Grains.Grain.BlockPush;
+namespace AeFinder.BlockScan;
 
-public interface IBlockFilterProvider
+public interface IBlockFilterAppService
 {
     Task<List<BlockWithTransactionDto>> GetBlocksAsync(GetSubscriptionTransactionsInput input);
-    
-    Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks, List<TransactionCondition> transactionConditions, List<LogEventCondition> logEventConditions);
+
+    Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks,
+        List<FilterTransactionInput> transactionConditions = null,
+        List<FilterContractEventInput> logEventConditions = null);
 
     Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId,
         List<BlockWithTransactionDto> blocks);

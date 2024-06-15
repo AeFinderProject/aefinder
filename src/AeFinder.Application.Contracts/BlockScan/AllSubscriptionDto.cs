@@ -4,7 +4,7 @@ public class AllSubscriptionDto
 {
     public SubscriptionDetailDto CurrentVersion { get; set; }
     
-    public SubscriptionDetailDto NewVersion { get; set; }
+    public SubscriptionDetailDto PendingVersion { get; set; }
 }
 
 public class SubscriptionDetailDto

@@ -1,19 +1,25 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using AeFinder.Block;
 using AeFinder.Block.Dtos;
-using AeFinder.Grains.Grain.Subscriptions;
 using Microsoft.Extensions.Logging;
-using Volo.Abp.DependencyInjection;
+using Volo.Abp;
+using Volo.Abp.Auditing;
 using Volo.Abp.ObjectMapping;
 
-namespace AeFinder.Grains.Grain.BlockPush;
+namespace AeFinder.BlockScan;
 
-public class BlockFilterProvider : IBlockFilterProvider, ITransientDependency
+[RemoteService(IsEnabled = false)]
+[DisableAuditing]
+public class BlockFilterAppService : AeFinderAppService, IBlockFilterAppService
 {
     private readonly IBlockAppService _blockAppService;
     private readonly IObjectMapper _objectMapper;
-    private readonly ILogger<BlockFilterProvider> _logger;
+    private readonly ILogger<BlockFilterAppService> _logger;
 
-    public BlockFilterProvider(IBlockAppService blockAppService, ILogger<BlockFilterProvider> logger,
+    public BlockFilterAppService(IBlockAppService blockAppService, ILogger<BlockFilterAppService> logger,
         IObjectMapper objectMapper)
     {
         _blockAppService = blockAppService;
@@ -58,7 +64,7 @@ public class BlockFilterProvider : IBlockFilterProvider, ITransientDependency
     }
 
     public async Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks,
-        List<TransactionCondition> transactionConditions, List<LogEventCondition> logEventConditions)
+        List<FilterTransactionInput> transactionConditions = null, List<FilterContractEventInput> logEventConditions = null)
     {
         if (transactionConditions.IsNullOrEmpty() && logEventConditions.IsNullOrEmpty())
         {

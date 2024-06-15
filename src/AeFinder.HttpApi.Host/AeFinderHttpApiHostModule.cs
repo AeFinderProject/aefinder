@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,6 +37,8 @@ using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.Threading;
 using Volo.Abp.VirtualFileSystem;
+using IdentityRole = Volo.Abp.Identity.IdentityRole;
+using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder;
 
@@ -52,6 +55,13 @@ namespace AeFinder;
 )]
 public class AeFinderHttpApiHostModule : AbpModule
 {
+    public override void PreConfigureServices(ServiceConfigurationContext context)
+    {
+        PreConfigure<IdentityBuilder>(builder =>
+        {
+            builder.AddDefaultTokenProviders();
+        });
+    }
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddHttpClient();
@@ -115,6 +125,7 @@ public class AeFinderHttpApiHostModule : AbpModule
 
     private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
     {
+        // IdentityBuilderExtensions.AddDefaultTokenProviders(context.Services.AddIdentity<IdentityUser, IdentityRole>());
         context.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {

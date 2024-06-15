@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using AeFinder.Grains.State.BlockStates;
 using Shouldly;
 using Xunit;
 
@@ -20,7 +21,11 @@ public class AppStateProviderTests : AeFinderAppTestBase
         var chainId = "AELF";
         for (int i = 0; i < 6; i++)
         {
-            await _appStateProvider.SetLastIrreversibleStateAsync(chainId,key+i, i.ToString());
+            await _appStateProvider.SetLastIrreversibleStateAsync(chainId,key+i,  new AppState
+            {
+                Type = "name,assembly",
+                Value = i.ToString()
+            });
         }
         
         for (int i = 0; i < 6; i++)
@@ -28,13 +33,5 @@ public class AppStateProviderTests : AeFinderAppTestBase
             var value = await _appStateProvider.GetLastIrreversibleStateAsync<string>(chainId,key+i);
             value.ShouldBe(i.ToString());
         }
-
-        // await _appStateProvider.SaveDataAsync();
-        //
-        // for (int i = 0; i < 6; i++)
-        // {
-        //     var value = await _appStateProvider.GetLibValueAsync<string>(key+i);
-        //     value.ShouldBe(i.ToString());
-        // }
     }
 }

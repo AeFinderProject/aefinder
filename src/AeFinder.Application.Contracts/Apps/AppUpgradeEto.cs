@@ -6,7 +6,7 @@ namespace AeFinder.Apps;
 public class AppUpgradeEto
 {
     public string AppId { get; set; }
-    public string NewVersion { get; set; }
+    public string PendingVersion { get; set; }
     public string CurrentVersion { get; set; }
 }
 

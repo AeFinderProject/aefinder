@@ -7,6 +7,8 @@ filebeat.inputs:
       environment: "localTest"
     fields_under_root: true
     processors:
+      - add_id:
+          target_field: log_id
       - add_kubernetes_metadata:
           in_cluster: true
           matchers:
