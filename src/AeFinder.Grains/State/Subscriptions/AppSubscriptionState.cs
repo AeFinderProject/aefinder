@@ -5,7 +5,7 @@ namespace AeFinder.Grains.State.Subscriptions;
 public class AppSubscriptionState
 {
     public string CurrentVersion { get;set; }
-    public string NewVersion { get; set; }
+    public string PendingVersion { get; set; }
     public Dictionary<string, SubscriptionInfo> SubscriptionInfos { get; set; } = new();
 }
 

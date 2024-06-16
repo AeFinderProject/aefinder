@@ -70,7 +70,7 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
             .ShouldBe("CrossChainAddress");
         subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].Transactions[0].MethodNames
             .ShouldContain("CrossChainReceived");
-        subscription.NewVersion.ShouldBeNull();
+        subscription.PendingVersion.ShouldBeNull();
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
         subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems.Count.ShouldBe(1);
         subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(999);
         subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].LogEvents[0].EventNames.Count.ShouldBe(2);
-        subscription.NewVersion.ShouldBeNull();
+        subscription.PendingVersion.ShouldBeNull();
 
         var subscriptionInfo2 = new SubscriptionManifestDto()
         {

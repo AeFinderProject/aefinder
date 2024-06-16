@@ -1,6 +1,8 @@
 using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
 using AeFinder.Grains.Grain.BlockStates;
+using AeFinder.Sdk;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Local;
 
@@ -16,15 +18,23 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IFullBlockProcessor _fullBlockProcessor;
     private readonly IAppDataIndexManagerProvider _appDataIndexManagerProvider;
-    
+    private readonly IAppStateProvider _appStateProvider;
+    private readonly IAppInfoProvider _appInfoProvider;
+    private readonly IGeneralAppDataIndexProvider _generalAppDataIndexProvider;
+    private readonly IRuntimeTypeProvider _runtimeTypeProvider;
     public ILocalEventBus LocalEventBus { get; set; }
 
     public BlockProcessingService(IAppBlockStateSetProvider appBlockStateSetProvider,
-        IFullBlockProcessor fullBlockProcessor, IAppDataIndexManagerProvider appDataIndexManagerProvider)
+        IFullBlockProcessor fullBlockProcessor, IAppDataIndexManagerProvider appDataIndexManagerProvider,
+        IAppStateProvider appStateProvider, IAppInfoProvider appInfoProvider, IGeneralAppDataIndexProvider generalAppDataIndexProvider, IRuntimeTypeProvider runtimeTypeProvider)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _fullBlockProcessor = fullBlockProcessor;
         _appDataIndexManagerProvider = appDataIndexManagerProvider;
+        _appStateProvider = appStateProvider;
+        _appInfoProvider = appInfoProvider;
+        _generalAppDataIndexProvider = generalAppDataIndexProvider;
+        _runtimeTypeProvider = runtimeTypeProvider;
     }
 
     public async Task ProcessAsync(string chainId, string branchBlockHash)
@@ -37,21 +47,36 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
 
         var rollbackBlockStateSets = await GetToBeRollbackBlockStateSetsAsync(chainId, blockStateSets);
 
+        var longestChainBlockStateSet = blockStateSets.Last();
+        
         foreach (var blockStateSet in rollbackBlockStateSets)
         {
-            await _fullBlockProcessor.ProcessAsync(blockStateSet.Block, true);
+            foreach (var change in blockStateSet.Changes)
+            {
+                var longestChainState = await _appStateProvider.GetStateAsync(chainId, change.Key,
+                    new BlockIndex(longestChainBlockStateSet.Block.BlockHash, longestChainBlockStateSet.Block.BlockHeight));
+                
+                var type = _runtimeTypeProvider.GetType(change.Value.Type);
+                if (longestChainState != null)
+                {
+                    await _generalAppDataIndexProvider.AddOrUpdateAsync(longestChainState, type);
+                }
+                else
+                {
+                    var entity = JsonConvert.DeserializeObject(change.Value.Value, type);
+                    await _generalAppDataIndexProvider.DeleteAsync(entity, type);
+                }
+            }
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, false);
         }
 
         foreach (var blockStateSet in blockStateSets)
         {
-            await _fullBlockProcessor.ProcessAsync(blockStateSet.Block, false);
+            await _fullBlockProcessor.ProcessAsync(blockStateSet.Block);
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, true);
         }
 
         await _appDataIndexManagerProvider.SavaDataAsync();
-
-        var longestChainBlockStateSet = blockStateSets.Last();
 
         await _appBlockStateSetProvider.SetBestChainBlockStateSetAsync(chainId,
             longestChainBlockStateSet.Block.BlockHash);
@@ -74,7 +99,7 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
             });
         }
     }
-
+    
     private async Task<List<BlockStateSet>> GetToBeProcessedBlockStateSetsAsync(string chainId, string branchBlockHash)
     {
         var blockStateSets = new List<BlockStateSet>();
@@ -118,7 +143,6 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
             blockHash = blockStateSet.Block.PreviousBlockHash;
         }
 
-        rollbackBlockStateSets.Reverse();
         return rollbackBlockStateSets;
     }
     
