@@ -262,7 +262,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         catch (Exception ex)
         {
             // Handle other potential exceptions
-            _logger.LogError($"List service monitor resource exception: {ex.Message}");
+            _logger.LogError(ex, $"List service monitor resource exception: {ex.Message}");
             return false;
         }
         
