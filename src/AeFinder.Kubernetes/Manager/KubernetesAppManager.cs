@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AeFinder.App.Deploy;
 using AeFinder.Kubernetes.Adapter;
 using AeFinder.Kubernetes.ResourceDefinition;
@@ -238,7 +239,8 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             }
             string json = System.Text.Json.JsonSerializer.Serialize(serviceMonitors);
             _logger.LogInformation($"Serialized serviceMonitors: {json}");
-            var serviceMonitorList = (ServiceMonitorList)serviceMonitors;
+            // var serviceMonitorList = System.Text.Json.JsonSerializer.Deserialize<ServiceMonitorList>(json);
+            var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
             string listJson = System.Text.Json.JsonSerializer.Serialize(serviceMonitorList);
             _logger.LogInformation($"Serialized serviceMonitorList: {json}");
             foreach (var serviceMonitor in serviceMonitorList.Items)
