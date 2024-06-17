@@ -103,7 +103,7 @@ public class AeFinderAppHostBaseModule : AbpModule
                 GraphQLEndPoint = "../graphql",
                 SubscriptionsEndPoint = "../graphql",
             });
-        app.UseOpenTelemetryPrometheusScrapingEndpoint();
+        app.UseOpenTelemetryPrometheusScrapingEndpoint($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/metrics");
         app.UseRouting();
         app.UseCors();
         app.UseConfiguredEndpoints();
