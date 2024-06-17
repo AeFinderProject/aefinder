@@ -239,8 +239,8 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             }
             string json = System.Text.Json.JsonSerializer.Serialize(serviceMonitors);
             _logger.LogInformation($"Serialized serviceMonitors: {json}");
-            // var serviceMonitorList = System.Text.Json.JsonSerializer.Deserialize<ServiceMonitorList>(json);
-            var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
+            var serviceMonitorList = System.Text.Json.JsonSerializer.Deserialize<ServiceMonitorList>(json);
+            // var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
             string listJson = System.Text.Json.JsonSerializer.Serialize(serviceMonitorList);
             _logger.LogInformation($"Serialized serviceMonitorList: {listJson}");
             foreach (var serviceMonitor in serviceMonitorList.Items)
