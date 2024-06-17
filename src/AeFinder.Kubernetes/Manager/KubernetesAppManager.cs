@@ -242,7 +242,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             var serviceMonitorList = System.Text.Json.JsonSerializer.Deserialize<ServiceMonitorList>(json);
             // var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
             string listJson = System.Text.Json.JsonSerializer.Serialize(serviceMonitorList);
-            _logger.LogInformation($"Serialized serviceMonitorList: {json}");
+            _logger.LogInformation($"Serialized serviceMonitorList: {listJson}");
             foreach (var serviceMonitor in serviceMonitorList.Items)
             {
                 if (serviceMonitor.Metadata.Name == serviceMonitorName)
