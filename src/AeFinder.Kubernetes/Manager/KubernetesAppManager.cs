@@ -231,8 +231,23 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         {
             var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
                 KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
+            if (serviceMonitors == null)
+            {
+                _logger.LogError("Failed to retrieve service monitors, the result is null.");
+                return false;
+            }
+            if (!(serviceMonitors as IDictionary<string, dynamic>).ContainsKey("items") || (serviceMonitors as IDictionary<string, dynamic>)["items"] == null)
+            {
+                _logger.LogError("The 'items' key is not present or null in service monitors data.");
+                return false;
+            }
             foreach (var item in (serviceMonitors as IDictionary<string, dynamic>)["items"])
             {
+                if (item == null || item["metadata"] == null || item["metadata"]["name"] == null)
+                {
+                    _logger.LogWarning("One of the service monitor items or its metadata is null.");
+                    continue; // Skip this iteration if the item or required data is null
+                }
                 if (item["metadata"]["name"] == serviceMonitorName)
                     return true;
             }
