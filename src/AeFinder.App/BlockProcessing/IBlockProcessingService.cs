@@ -76,20 +76,14 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, true);
         }
 
-        // TODO: save entity changes 
-        
-        await _appDataIndexManagerProvider.SavaDataAsync();
-
         await _appBlockStateSetProvider.SetBestChainBlockStateSetAsync(chainId,
             longestChainBlockStateSet.Block.BlockHash);
-
-        if (longestChainBlockStateSet.Block.Confirmed)
-        {
-            await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(chainId,
-                longestChainBlockStateSet.Block.BlockHash);
-        }
-
         await _appBlockStateSetProvider.SaveDataAsync(chainId);
+        
+        // TODO: save entity changes 
+        
+        
+        await _appDataIndexManagerProvider.SavaDataAsync();
 
         if (longestChainBlockStateSet.Block.Confirmed)
         {

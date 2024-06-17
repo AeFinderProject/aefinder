@@ -36,6 +36,13 @@ public class LastIrreversibleBlockStateSetFoundHandler : ILocalEventHandler<Last
         }
         
         toMergeBlockStateSets = toMergeBlockStateSets.OrderBy(o => o.Block.BlockHeight).ToList();
+        
+        await _appStateProvider.PreMergeStateAsync(eventData.ChainId, toMergeBlockStateSets);
+
+        await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(eventData.ChainId, eventData.BlockHash);
+        await _appBlockStateSetProvider.SaveDataAsync(eventData.ChainId);
+        
+        // TODO:  clean EntityChange
 
         await _appStateProvider.MergeStateAsync(eventData.ChainId, toMergeBlockStateSets);
         

@@ -155,9 +155,6 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         if (newLastIrreversibleBlockStateSet != null &&
             newLastIrreversibleBlockStateSet.Block.BlockHeight > lastIrreversibleBlockHeight)
         {
-            await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(chainId,
-                newLastIrreversibleBlockStateSet.Block.BlockHash);
-            await _appBlockStateSetProvider.SaveDataAsync(chainId);
             await LocalEventBus.PublishAsync(new LastIrreversibleBlockStateSetFoundEventData
             {
                 ChainId = chainId,
@@ -172,7 +169,6 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         {
             await _appBlockStateSetProvider.SetLongestChainBlockStateSetAsync(chainId,
                 newLongestChainBlockStateSet.Block.BlockHash);
-            await _appBlockStateSetProvider.SaveDataAsync(chainId);
             await LocalEventBus.PublishAsync(new LongestChainFoundEventData()
             {
                 ChainId = chainId,

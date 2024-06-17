@@ -51,9 +51,17 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         return appState != null ? JsonConvert.DeserializeObject(appState.Value, _runtimeTypeProvider.GetType(appState.Type)) : null;
     }
 
-    public Task PreMergeStateAsync(string chainId, List<BlockStateSet> blockStateSets)
+    public async Task PreMergeStateAsync(string chainId, List<BlockStateSet> blockStateSets)
     {
-        throw new NotImplementedException();
+        foreach (var set in blockStateSets)
+        {
+            foreach (var change in set.Changes)
+            {
+                await SetPendingStateAsync(chainId, change.Key, change.Value);
+            }
+        }
+
+        await SaveDataAsync();
     }
     
     public async Task MergeStateAsync(string chainId, List<BlockStateSet> blockStateSets)
@@ -62,7 +70,7 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         {
             foreach (var change in set.Changes)
             {
-                await SetLastIrreversibleStateAsync(chainId, change.Key, change.Value);
+                await MergeStateAsync(chainId, change.Key);
             }
         }
 
@@ -96,9 +104,15 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
 
         if (lastIrreversibleState.PendingState != null)
         {
-            var stateEntity = JsonConvert.DeserializeObject<AeFinderEntity>(lastIrreversibleState.PendingState.Value);
+            var stateEntity = JsonConvert.DeserializeObject<EmptyAeFinderEntity>(lastIrreversibleState.PendingState.Value);
             if (stateEntity.Metadata.Block.BlockHeight <= branchBlockIndex.BlockHeight)
             {
+                var libState = await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
+                if (stateEntity.Metadata.Block.BlockHeight <= libState.Block.BlockHeight)
+                {
+                    await MergeStateAsync(chainId, stateKey);
+                }
+
                 return stateEntity.Metadata.IsDeleted ? null : lastIrreversibleState.PendingState;
             }
         }
@@ -106,7 +120,7 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         if (lastIrreversibleState.LastIrreversibleState != null)
         {
             var lastIrreversibleStateEntity =
-                JsonConvert.DeserializeObject<AeFinderEntity>(lastIrreversibleState.LastIrreversibleState.Value);
+                JsonConvert.DeserializeObject<EmptyAeFinderEntity>(lastIrreversibleState.LastIrreversibleState.Value);
             
             if (lastIrreversibleStateEntity.Metadata.Block.BlockHeight <= branchBlockIndex.BlockHeight)
             {
@@ -144,10 +158,10 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         SetLibValueCache(stateKey, currentState);
     }
 
-    private async Task SetLastIrreversibleStateAsync(string chainId, string key, AppState state)
+    private async Task MergeStateAsync(string chainId, string key)
     {
         var currentState = await GetLibStateAsync(chainId, key);
-        currentState.LastIrreversibleState = state;
+        currentState.LastIrreversibleState = currentState.PendingState;
         var stateKey = GetAppDataKey(chainId, key);
         _toCommitLibValues[stateKey] = currentState;
         SetLibValueCache(stateKey, currentState);
