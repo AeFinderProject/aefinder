@@ -11,7 +11,7 @@ public class ServiceMonitorHelper
     }
 
     public static ServiceMonitor CreateAppServiceMonitorDefinition(string serviceMonitorName, string deploymentName,
-        string deploymentLabelName, string servicePortName)
+        string deploymentLabelName, string servicePortName, string metricsPath)
     {
         var serviceMonitor = new ServiceMonitor
         {
@@ -33,7 +33,7 @@ public class ServiceMonitorHelper
                     {
                         Port = servicePortName,
                         Interval = "15s",
-                        Path = KubernetesConstants.MetricsPath
+                        Path = metricsPath
                     }
                 },
                 NamespaceSelector = new NamespaceSelector

@@ -210,10 +210,11 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         //Create query app service monitor
         var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
         var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
+        var metricsPath = rulePath + KubernetesConstants.MetricsPath;
         if (!serviceMonitorExists)
         {
             var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(serviceMonitorName,
-                deploymentName, deploymentLabelName, servicePortName);
+                deploymentName, deploymentLabelName, servicePortName, metricsPath);
             //Create Service Monitor
             await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
                 KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
