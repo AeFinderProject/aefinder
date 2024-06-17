@@ -238,21 +238,30 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             }
             string json = System.Text.Json.JsonSerializer.Serialize(serviceMonitors);
             _logger.LogInformation($"Serialized serviceMonitors: {json}");
-            if (!(serviceMonitors as IDictionary<string, dynamic>).ContainsKey("items") || (serviceMonitors as IDictionary<string, dynamic>)["items"] == null)
+            var serviceMonitorList = (ServiceMonitorList)serviceMonitors;
+            string listJson = System.Text.Json.JsonSerializer.Serialize(serviceMonitorList);
+            _logger.LogInformation($"Serialized serviceMonitorList: {json}");
+            foreach (var serviceMonitor in serviceMonitorList.Items)
             {
-                _logger.LogError("The 'items' key is not present or null in service monitors data.");
-                return false;
-            }
-            foreach (var item in (serviceMonitors as IDictionary<string, dynamic>)["items"])
-            {
-                if (item == null || item["metadata"] == null || item["metadata"]["name"] == null)
-                {
-                    _logger.LogWarning("One of the service monitor items or its metadata is null.");
-                    continue; // Skip this iteration if the item or required data is null
-                }
-                if (item["metadata"]["name"] == serviceMonitorName)
+                if (serviceMonitor.Metadata.Name == serviceMonitorName)
                     return true;
             }
+
+            // if (!(serviceMonitors as IDictionary<string, dynamic>).ContainsKey("items") || (serviceMonitors as IDictionary<string, dynamic>)["items"] == null)
+            // {
+            //     _logger.LogError("The 'items' key is not present or null in service monitors data.");
+            //     return false;
+            // }
+            // foreach (var item in (serviceMonitors as IDictionary<string, dynamic>)["items"])
+            // {
+            //     if (item == null || item["metadata"] == null || item["metadata"]["name"] == null)
+            //     {
+            //         _logger.LogWarning("One of the service monitor items or its metadata is null.");
+            //         continue; // Skip this iteration if the item or required data is null
+            //     }
+            //     if (item["metadata"]["name"] == serviceMonitorName)
+            //         return true;
+            // }
             return false;
         }
         catch (HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
