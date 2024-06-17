@@ -40,12 +40,7 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
         var status = await appBlockStateSetStatusGrain.GetBlockStateSetStatusAsync();
         var tasks = status.Branches.Select(o => InitializeBranchBlockStateSetsAsync(chainId, o.Key, blockStateSets));
         await tasks.WhenAll();
-
-        if (blockStateSets.Count == 0)
-        {
-            return;
-        }
-
+        
         if (!status.LongestChainBlockHash.IsNullOrWhiteSpace())
         {
             _longestChainBlockStateSets[chainId] = blockStateSets[status.LongestChainBlockHash];

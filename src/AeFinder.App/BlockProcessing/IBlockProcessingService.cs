@@ -75,12 +75,13 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
             await _fullBlockProcessor.ProcessAsync(blockStateSet.Block);
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, true);
         }
+        
+        // TODO: save entity changes 
+
 
         await _appBlockStateSetProvider.SetBestChainBlockStateSetAsync(chainId,
             longestChainBlockStateSet.Block.BlockHash);
         await _appBlockStateSetProvider.SaveDataAsync(chainId);
-        
-        // TODO: save entity changes 
         
         
         await _appDataIndexManagerProvider.SavaDataAsync();
