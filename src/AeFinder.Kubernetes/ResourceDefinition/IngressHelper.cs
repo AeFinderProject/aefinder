@@ -52,22 +52,6 @@ public class IngressHelper
                                             }
                                         }
                                     }
-                                },
-                                new V1HTTPIngressPath()
-                                {
-                                    Path = KubernetesConstants.MetricsPath,
-                                    PathType = "Exact",
-                                    Backend = new V1IngressBackend()
-                                    {
-                                        Service = new V1IngressServiceBackend()
-                                        {
-                                            Name = serviceName,
-                                            Port = new V1ServiceBackendPort
-                                            {
-                                                Number = port
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }
