@@ -236,6 +236,8 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
                 _logger.LogError("Failed to retrieve service monitors, the result is null.");
                 return false;
             }
+            string json = System.Text.Json.JsonSerializer.Serialize(serviceMonitors);
+            _logger.LogInformation($"Serialized serviceMonitors: {json}");
             if (!(serviceMonitors as IDictionary<string, dynamic>).ContainsKey("items") || (serviceMonitors as IDictionary<string, dynamic>)["items"] == null)
             {
                 _logger.LogError("The 'items' key is not present or null in service monitors data.");
