@@ -2,11 +2,12 @@ namespace AeFinder.Grains.State.BlockStates;
 
 public class AppBlockStateChangeState
 {
-    public BlockStateChange BlockStateChange { get; set; }
+    public long BlockHeight { get; set; }
+    public Dictionary<string, BlockStateChange> Changes { get; set; }
 }
 
 public class BlockStateChange
 {
-    public long BlockHeight { get; set; }
-    public HashSet<string> ChangeKeys { get; set; }
+    public string Key { get; set; }
+    public string Type { get; set; }
 }

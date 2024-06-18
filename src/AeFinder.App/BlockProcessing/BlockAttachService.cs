@@ -41,8 +41,6 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
 
     public async Task AttachBlocksAsync(string chainId, List<AppSubscribedBlockDto> blocks)
     {
-        await _appBlockStateSetProvider.InitializeAsync(chainId);
-
         var firstBlock = blocks.First();
         var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, firstBlock.BlockHash);
         var previousBlockStateSet =

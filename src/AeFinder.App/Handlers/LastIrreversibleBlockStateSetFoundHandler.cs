@@ -10,12 +10,14 @@ public class LastIrreversibleBlockStateSetFoundHandler : ILocalEventHandler<Last
 {
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IAppStateProvider _appStateProvider;
+    private readonly IAppBlockStateChangeProvider _appBlockStateChangeProvider;
 
     public LastIrreversibleBlockStateSetFoundHandler(IAppBlockStateSetProvider appBlockStateSetProvider,
-        IAppStateProvider appStateProvider)
+        IAppStateProvider appStateProvider, IAppBlockStateChangeProvider appBlockStateChangeProvider)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _appStateProvider = appStateProvider;
+        _appBlockStateChangeProvider = appBlockStateChangeProvider;
     }
 
     public async Task HandleEventAsync(LastIrreversibleBlockStateSetFoundEventData eventData)
@@ -42,7 +44,7 @@ public class LastIrreversibleBlockStateSetFoundHandler : ILocalEventHandler<Last
         await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(eventData.ChainId, eventData.BlockHash);
         await _appBlockStateSetProvider.SaveDataAsync(eventData.ChainId);
         
-        // TODO:  clean EntityChange
+        await _appBlockStateChangeProvider.CleanBlockStateChangeAsync(eventData.ChainId, eventData.BlockHeight);
 
         await _appStateProvider.MergeStateAsync(eventData.ChainId, toMergeBlockStateSets);
         

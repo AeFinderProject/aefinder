@@ -1,8 +1,10 @@
+using AeFinder.Grains.State.BlockStates;
+
 namespace AeFinder.App.BlockState;
 
 public interface IAppBlockStateChangeProvider
 {
-    Task SetChangeKeysAsync(string chainId, Dictionary<long, HashSet<string>> changeKeys);
-    Task<HashSet<string>> GetChangeKeysAsync(string chainId, long blockHeight);
-    Task CleanAsync(string chainId, long libHeight);
+    Task AddBlockStateChangeAsync(string chainId, Dictionary<long,List<BlockStateChange>> changeKeys);
+    Task<List<BlockStateChange>> GetBlockStateChangeAsync(string chainId, long blockHeight);
+    Task CleanBlockStateChangeAsync(string chainId, long libHeight);
 }

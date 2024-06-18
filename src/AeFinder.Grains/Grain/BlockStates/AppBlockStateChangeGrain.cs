@@ -5,15 +5,16 @@ namespace AeFinder.Grains.Grain.BlockStates;
 
 public class AppBlockStateChangeGrain : Grain<AppBlockStateChangeState>, IAppBlockStateChangeGrain
 {
-    public async Task<BlockStateChange> GetAsync()
+    public async Task<Dictionary<string, BlockStateChange>> GetAsync()
     {
         await ReadStateAsync();
-        return State.BlockStateChange;
+        return State.Changes;
     }
 
-    public async Task SetAsync(BlockStateChange change)
+    public async Task SetAsync(long blockHeight, Dictionary<string, BlockStateChange> changes)
     {
-        State.BlockStateChange = change;
+        State.BlockHeight = blockHeight;
+        State.Changes = changes;
         await WriteStateAsync();
     }
 

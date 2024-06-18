@@ -5,7 +5,7 @@ namespace AeFinder.Grains.Grain.BlockStates;
 
 public interface IAppBlockStateChangeGrain : IGrainWithStringKey
 {
-    Task<BlockStateChange> GetAsync();
-    Task SetAsync(BlockStateChange change);
+    Task<Dictionary<string, BlockStateChange>> GetAsync();
+    Task SetAsync(long blockHeight, Dictionary<string, BlockStateChange> changes);
     Task RemoveAsync();
 }
