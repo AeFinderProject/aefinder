@@ -16,7 +16,13 @@ public class ServiceHelper
         return $"service-{version}-port".ToLower();
     }
 
-    public static V1Service CreateAppClusterIPServiceDefinition(string serviceName,
+    public static string GetAppServiceLabelName(string appId, string version)
+    {
+        appId = appId.Replace("_", "-");
+        return $"service-{appId}-{version}".ToLower();
+    }
+
+    public static V1Service CreateAppClusterIPServiceDefinition(string appId,string serviceName, string serviceLabelName,
         string deploymentLabelName, string servicePortName, int targetPort, int port = 80)
     {
         var service = new V1Service
@@ -24,6 +30,11 @@ public class ServiceHelper
             Metadata = new V1ObjectMeta
             {
                 Name = serviceName,
+                Labels = new Dictionary<string, string>
+                {
+                    { KubernetesConstants.AppLabelKey, serviceLabelName },
+                    { KubernetesConstants.MonitorLabelKey, appId }
+                },
                 NamespaceProperty = KubernetesConstants.AppNameSpace
             },
             Spec = new V1ServiceSpec

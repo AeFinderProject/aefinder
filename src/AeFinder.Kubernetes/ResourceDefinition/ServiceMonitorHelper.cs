@@ -4,14 +4,15 @@ namespace AeFinder.Kubernetes.ResourceDefinition;
 
 public class ServiceMonitorHelper
 {
-    public static string GetAppServiceMonitorName(string appId, string version)
+    public static string GetAppServiceMonitorName(string appId)
     {
         appId = appId.Replace("_", "-");
-        return $"service-monitor-{appId}-{version}".ToLower();
+        return $"service-monitor-{appId}".ToLower();
     }
 
-    public static ServiceMonitor CreateAppServiceMonitorDefinition(string serviceMonitorName, string deploymentName,
-        string deploymentLabelName, string servicePortName, string metricsPath)
+    public static ServiceMonitor CreateAppServiceMonitorDefinition(string appId, string serviceMonitorName,
+        string deploymentName, string serviceLabelName, string servicePortName, 
+        string metricsPath)
     {
         var serviceMonitor = new ServiceMonitor
         {
@@ -20,8 +21,8 @@ public class ServiceMonitorHelper
                 Name = serviceMonitorName,
                 Labels = new Dictionary<string, string>
                 {
-                    { KubernetesConstants.AppLabelKey, deploymentLabelName },
-                    { "release", "prometheus" }
+                    { "release", "prometheus" },
+                    { KubernetesConstants.MonitorLabelKey, appId }
                 },
                 NamespaceProperty = KubernetesConstants.AppNameSpace
             },
@@ -33,19 +34,29 @@ public class ServiceMonitorHelper
                     {
                         Port = servicePortName,
                         Interval = "15s",
-                        Path = metricsPath
+                        Path = metricsPath,
+                        Relabelings = new List<Relabeling>()
+                        {
+                            new Relabeling()
+                            {
+                                Action = "replace",
+                                Replacement = appId,
+                                SourceLabels = new List<string>(),
+                                TargetLabel = KubernetesConstants.MonitorLabelKey
+                            }
+                        }
                     }
                 },
                 NamespaceSelector = new NamespaceSelector
                 {
                     MatchNames = new List<string> { KubernetesConstants.AppNameSpace }
                 },
-                JobLabel = deploymentName,
+                JobLabel = KubernetesConstants.MonitorLabelKey,
                 Selector = new Selector
                 {
                     MatchLabels = new Dictionary<string, string>
                     {
-                        { KubernetesConstants.AppLabelKey, deploymentLabelName }
+                        { KubernetesConstants.MonitorLabelKey, appId }
                     }
                 }
             }
