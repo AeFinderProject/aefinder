@@ -110,8 +110,9 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
-            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(imageName,
-                deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName, sideCarConfigName);
+            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
+                deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
+                sideCarConfigName);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);
@@ -168,7 +169,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
-            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(imageName,
+            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
                 sideCarConfigName);
             // Create Deployment
@@ -185,8 +186,8 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         if (!serviceExists)
         {
             var service =
-                ServiceHelper.CreateAppClusterIPServiceDefinition(serviceName, serviceLabelName, deploymentLabelName,
-                    servicePortName, targetPort);
+                ServiceHelper.CreateAppClusterIPServiceDefinition(appId, serviceName, serviceLabelName,
+                    deploymentLabelName, servicePortName, targetPort);
             // Create Service
             await _kubernetesClientAdapter.CreateServiceAsync(service, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Service {serviceName} created", serviceName);
@@ -210,14 +211,13 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         }
         
         //Create query app service monitor
-        var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
-        var serviceMonitorLabelName = ServiceMonitorHelper.GetAppServiceMonitorLabelName(version);
+        var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId);
         var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
         var metricsPath = rulePath + KubernetesConstants.MetricsPath;
         if (!serviceMonitorExists)
         {
-            var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(serviceMonitorName,
-                serviceMonitorLabelName, deploymentName, serviceLabelName, servicePortName, metricsPath);
+            var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(appId, serviceMonitorName,
+                deploymentName, serviceLabelName, servicePortName, metricsPath);
             //Create Service Monitor
             await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
                 KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
@@ -374,15 +374,15 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         }
         
         //Delete query app service monitor
-        var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
-        var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
-        if (serviceMonitorExists)
-        {
-            await _kubernetesClientAdapter.DeleteServiceMonitorAsync(KubernetesConstants.MonitorGroup,
-                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural,
-                serviceMonitorName);
-            _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} deleted.", serviceMonitorName);
-        }
+        // var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId);
+        // var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
+        // if (serviceMonitorExists)
+        // {
+        //     await _kubernetesClientAdapter.DeleteServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+        //         KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural,
+        //         serviceMonitorName);
+        //     _logger.LogInformation("[KubernetesAppManager]ServiceMonitor {serviceMonitorName} deleted.", serviceMonitorName);
+        // }
     }
 
     public async Task RestartAppAsync(string appId, string version)

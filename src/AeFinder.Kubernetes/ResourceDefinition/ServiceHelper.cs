@@ -22,7 +22,7 @@ public class ServiceHelper
         return $"service-{appId}-{version}".ToLower();
     }
 
-    public static V1Service CreateAppClusterIPServiceDefinition(string serviceName, string serviceLabelName,
+    public static V1Service CreateAppClusterIPServiceDefinition(string appId,string serviceName, string serviceLabelName,
         string deploymentLabelName, string servicePortName, int targetPort, int port = 80)
     {
         var service = new V1Service
@@ -32,7 +32,8 @@ public class ServiceHelper
                 Name = serviceName,
                 Labels = new Dictionary<string, string>
                 {
-                    { KubernetesConstants.AppLabelKey, serviceLabelName }
+                    { KubernetesConstants.AppLabelKey, serviceLabelName },
+                    { KubernetesConstants.MonitorLabelKey, appId }
                 },
                 NamespaceProperty = KubernetesConstants.AppNameSpace
             },

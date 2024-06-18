@@ -31,6 +31,7 @@ public class KubernetesConstants
      public const int AppContainerTargetPort = 8308;
      
      //Prometheus
+     public const string MonitorLabelKey = "monitor";
      public const string MonitorGroup = "monitoring.coreos.com";
      public const string MonitorPlural = "servicemonitors";
      public const string MetricsPath = "/metrics";
