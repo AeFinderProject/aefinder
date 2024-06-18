@@ -67,6 +67,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         var libBlock = libBlockList.OrderBy(x => x.BlockHeight).LastOrDefault();
         if (libBlock != null)
         {
+            await ClearBlockGrainsAsync(libBlockList);
             ClearDictionary(libBlock.BlockHeight, libBlock.BlockHash);
         }
 
@@ -189,7 +190,8 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
             }
             
             var blockBasicItem = State.Blocks[currentLibBlockHash];
-            var primaryKey = GrainIdHelper.GenerateGrainId(blockBasicItem.ChainId,AeFinderApplicationConsts.BlockGrainIdSuffix,blockBasicItem.BlockHash);
+            var primaryKey = GrainIdHelper.GenerateGrainId(blockBasicItem.ChainId,
+                AeFinderApplicationConsts.BlockGrainIdSuffix, blockBasicItem.BlockHash);
             var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
             libBlockTaskList.Add(blockGrain.ConfirmBlock());
             currentLibBlockHash = State.Blocks[currentLibBlockHash].PreviousBlockHash;
@@ -202,5 +204,19 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         State.Blocks.RemoveAll(b => b.Value.BlockHeight < libBlockHeight);
         State.Blocks.RemoveAll(b =>
             b.Value.BlockHeight == libBlockHeight && b.Value.BlockHash != libBlockHash);
+    }
+
+    private async Task ClearBlockGrainsAsync(List<BlockData> blockDatas)
+    {
+        var deleteBlockGrainTaskList = new List<Task>();
+        foreach (var blockData in blockDatas)
+        {
+            var primaryKey = GrainIdHelper.GenerateGrainId(blockData.ChainId,
+                AeFinderApplicationConsts.BlockGrainIdSuffix, blockData.BlockHash);
+            var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
+            deleteBlockGrainTaskList.Add(blockGrain.DeleteGrainStateAsync());
+        }
+
+        await Task.WhenAll(deleteBlockGrainTaskList);
     }
 }
