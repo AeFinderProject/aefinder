@@ -108,10 +108,7 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
         var type = _runtimeTypeProvider.GetType(typeName);
         if (blockIndex == null)
         {
-            var entity = Activator.CreateInstance(type);
-            var propertyInfo = type.GetProperty(nameof(AeFinderEntity.Id));
-            propertyInfo.SetValue(entity, key);
-            
+            var entity = CreateEntity(type,key);
             await _generalAppDataIndexProvider.DeleteAsync(entity, type);
         }
         else
@@ -119,9 +116,7 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
             var libState = await _appStateProvider.GetStateAsync(chainId, key, blockIndex);
             if (libState == null)
             {
-                var entity = Activator.CreateInstance(type);
-                var propertyInfo = type.GetProperty(nameof(AeFinderEntity.Id));
-                propertyInfo.SetValue(entity, key);
+                var entity = CreateEntity(type,key);
                 await _generalAppDataIndexProvider.DeleteAsync(entity, type);
             }
             else
@@ -129,5 +124,14 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
                 await _generalAppDataIndexProvider.AddOrUpdateAsync(libState, type);
             }
         }
+    }
+
+    private object CreateEntity(Type type, string id)
+    {
+        var entity = Activator.CreateInstance(type);
+        var propertyInfo = type.GetProperty(nameof(AeFinderEntity.Id));
+        propertyInfo.SetValue(entity, id);
+
+        return entity;
     }
 }
