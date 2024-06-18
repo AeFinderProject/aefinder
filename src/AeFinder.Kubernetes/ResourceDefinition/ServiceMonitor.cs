@@ -35,6 +35,8 @@ public class Endpoint
     public string Interval { get; set; }
     [JsonPropertyName("path")]
     public string Path { get; set; }
+    [JsonPropertyName("relabelings")]
+    public List<Relabeling> Relabelings { get; set; }
 }
 
 public class NamespaceSelector
@@ -47,4 +49,16 @@ public class Selector
 {
     [JsonPropertyName("matchLabels")]
     public Dictionary<string, string> MatchLabels { get; set; }
+}
+
+public class Relabeling
+{
+    [JsonPropertyName("action")]
+    public string Action { get; set; }
+    [JsonPropertyName("replacement")]
+    public string Replacement { get; set; }
+    [JsonPropertyName("sourceLabels")]
+    public List<string> SourceLabels { get; set; }
+    [JsonPropertyName("targetLabel")]
+    public string TargetLabel { get; set; }
 }

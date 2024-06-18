@@ -34,7 +34,17 @@ public class ServiceMonitorHelper
                     {
                         Port = servicePortName,
                         Interval = "15s",
-                        Path = metricsPath
+                        Path = metricsPath,
+                        Relabelings = new List<Relabeling>()
+                        {
+                            new Relabeling()
+                            {
+                                Action = "replace",
+                                Replacement = appId,
+                                SourceLabels = new List<string>(),
+                                TargetLabel = KubernetesConstants.MonitorLabelKey
+                            }
+                        }
                     }
                 },
                 NamespaceSelector = new NamespaceSelector
