@@ -26,7 +26,10 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
 
     public override async Task OnDeactivateAsync()
     {
-        await WriteStateAsync();
+        if (this.State != null && this.State.Block.BlockHeight > 0)
+        {
+            await WriteStateAsync();
+        }
         await base.OnDeactivateAsync();
     }
     
