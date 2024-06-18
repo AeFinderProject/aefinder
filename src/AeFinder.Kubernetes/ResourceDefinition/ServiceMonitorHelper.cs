@@ -10,8 +10,13 @@ public class ServiceMonitorHelper
         return $"service-monitor-{appId}-{version}".ToLower();
     }
 
-    public static ServiceMonitor CreateAppServiceMonitorDefinition(string serviceMonitorName, string deploymentName,
-        string deploymentLabelName, string servicePortName, string metricsPath)
+    public static string GetAppServiceMonitorLabelName(string version)
+    {
+        return $"service-monitor-{version}".ToLower();
+    }
+    
+    public static ServiceMonitor CreateAppServiceMonitorDefinition(string serviceMonitorName,string serviceMonitorLabelName, 
+        string deploymentName, string serviceLabelName, string servicePortName, string metricsPath)
     {
         var serviceMonitor = new ServiceMonitor
         {
@@ -20,7 +25,7 @@ public class ServiceMonitorHelper
                 Name = serviceMonitorName,
                 Labels = new Dictionary<string, string>
                 {
-                    { KubernetesConstants.AppLabelKey, deploymentLabelName },
+                    { KubernetesConstants.AppLabelKey, serviceMonitorLabelName },
                     { "release", "prometheus" }
                 },
                 NamespaceProperty = KubernetesConstants.AppNameSpace
@@ -40,12 +45,12 @@ public class ServiceMonitorHelper
                 {
                     MatchNames = new List<string> { KubernetesConstants.AppNameSpace }
                 },
-                JobLabel = deploymentName,
+                JobLabel = KubernetesConstants.AppLabelKey,
                 Selector = new Selector
                 {
                     MatchLabels = new Dictionary<string, string>
                     {
-                        { KubernetesConstants.AppLabelKey, deploymentLabelName }
+                        { KubernetesConstants.AppLabelKey, serviceLabelName }
                     }
                 }
             }

@@ -178,14 +178,15 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 
         //Create query app service
         var serviceName = ServiceHelper.GetAppServiceName(appId, version);
+        var serviceLabelName = ServiceHelper.GetAppServiceLabelName(appId, version);
         var servicePortName = ServiceHelper.GetAppServicePortName(version);
         var services = await _kubernetesClientAdapter.ListServiceAsync(KubernetesConstants.AppNameSpace);
         var serviceExists = services.Items.Any(item => item.Metadata.Name == serviceName);
         if (!serviceExists)
         {
             var service =
-                ServiceHelper.CreateAppClusterIPServiceDefinition(serviceName, deploymentLabelName, servicePortName,
-                    targetPort);
+                ServiceHelper.CreateAppClusterIPServiceDefinition(serviceName, serviceLabelName, deploymentLabelName,
+                    servicePortName, targetPort);
             // Create Service
             await _kubernetesClientAdapter.CreateServiceAsync(service, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Service {serviceName} created", serviceName);
@@ -210,12 +211,13 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         
         //Create query app service monitor
         var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId, version);
+        var serviceMonitorLabelName = ServiceMonitorHelper.GetAppServiceMonitorLabelName(version);
         var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
         var metricsPath = rulePath + KubernetesConstants.MetricsPath;
         if (!serviceMonitorExists)
         {
             var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(serviceMonitorName,
-                deploymentName, deploymentLabelName, servicePortName, metricsPath);
+                serviceMonitorLabelName, deploymentName, serviceLabelName, servicePortName, metricsPath);
             //Create Service Monitor
             await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
                 KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
