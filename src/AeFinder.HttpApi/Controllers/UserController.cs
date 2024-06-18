@@ -44,7 +44,7 @@ public class UserController : AeFinderController
     [Authorize]
     public virtual async Task ResetPasswordAsync(ResetPasswordInput input)
     {
-        await _userAppService.ResetPasswordAsync(input.NewPassword);
+        await _userAppService.ResetPasswordAsync(input.UserName, input.NewPassword);
     }
     
     // [HttpGet("client/displayName")]

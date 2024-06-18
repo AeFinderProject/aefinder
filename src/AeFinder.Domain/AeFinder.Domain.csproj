@@ -29,5 +29,9 @@
     <PackageReference Include="Volo.Abp.AuditLogging.Domain" Version="7.0.0" />
     <PackageReference Include="Volo.Abp.SettingManagement.Domain" Version="7.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="App\ES" />
+  </ItemGroup>
     
 </Project>
