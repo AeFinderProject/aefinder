@@ -60,9 +60,9 @@ public class AppController : AeFinderController
         
     [HttpGet]
     [Route("sync-state/{appId}")]
-    public async Task<AppSyncStateDto> GetSyncStateAsync(string appId, string version=null)
+    public async Task<AppSyncStateDto> GetSyncStateAsync(string appId)
     {
-        return await _appService.GetSyncStateAsync(appId, version);
+        return await _appService.GetSyncStateAsync(appId);
     }
 
     [HttpGet("log")]
