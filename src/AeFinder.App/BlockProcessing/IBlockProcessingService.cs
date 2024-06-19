@@ -1,6 +1,7 @@
 using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
 using AeFinder.Grains.Grain.BlockStates;
+using AeFinder.Grains.State.BlockStates;
 using AeFinder.Sdk;
 using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
@@ -22,11 +23,14 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
     private readonly IAppInfoProvider _appInfoProvider;
     private readonly IGeneralAppDataIndexProvider _generalAppDataIndexProvider;
     private readonly IRuntimeTypeProvider _runtimeTypeProvider;
+    private readonly IAppBlockStateChangeProvider _appBlockStateChangeProvider;
     public ILocalEventBus LocalEventBus { get; set; }
 
     public BlockProcessingService(IAppBlockStateSetProvider appBlockStateSetProvider,
         IFullBlockProcessor fullBlockProcessor, IAppDataIndexManagerProvider appDataIndexManagerProvider,
-        IAppStateProvider appStateProvider, IAppInfoProvider appInfoProvider, IGeneralAppDataIndexProvider generalAppDataIndexProvider, IRuntimeTypeProvider runtimeTypeProvider)
+        IAppStateProvider appStateProvider, IAppInfoProvider appInfoProvider,
+        IGeneralAppDataIndexProvider generalAppDataIndexProvider, IRuntimeTypeProvider runtimeTypeProvider,
+        IAppBlockStateChangeProvider appBlockStateChangeProvider)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _fullBlockProcessor = fullBlockProcessor;
@@ -35,6 +39,7 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
         _appInfoProvider = appInfoProvider;
         _generalAppDataIndexProvider = generalAppDataIndexProvider;
         _runtimeTypeProvider = runtimeTypeProvider;
+        _appBlockStateChangeProvider = appBlockStateChangeProvider;
     }
 
     public async Task ProcessAsync(string chainId, string branchBlockHash)
@@ -70,24 +75,23 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, false);
         }
 
+        var changeKeys = new Dictionary<long, List<BlockStateChange>>();
         foreach (var blockStateSet in blockStateSets)
         {
             await _fullBlockProcessor.ProcessAsync(blockStateSet.Block);
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, true);
+            
+            changeKeys[blockStateSet.Block.BlockHeight] = blockStateSet.Changes
+                .Select(o => new BlockStateChange { Key = o.Key, Type = o.Value.Type }).ToList();
         }
-
-        await _appDataIndexManagerProvider.SavaDataAsync();
+        
+        await _appBlockStateChangeProvider.AddBlockStateChangeAsync(chainId, changeKeys);
 
         await _appBlockStateSetProvider.SetBestChainBlockStateSetAsync(chainId,
             longestChainBlockStateSet.Block.BlockHash);
-
-        if (longestChainBlockStateSet.Block.Confirmed)
-        {
-            await _appBlockStateSetProvider.SetLastIrreversibleBlockStateSetAsync(chainId,
-                longestChainBlockStateSet.Block.BlockHash);
-        }
-
         await _appBlockStateSetProvider.SaveDataAsync(chainId);
+        
+        await _appDataIndexManagerProvider.SavaDataAsync();
 
         if (longestChainBlockStateSet.Block.Confirmed)
         {
