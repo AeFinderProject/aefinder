@@ -205,17 +205,5 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
             b.Value.BlockHeight == libBlockHeight && b.Value.BlockHash != libBlockHash);
     }
 
-    public async Task ClearBlockGrainsAsync(List<BlockData> blockDatas)
-    {
-        var deleteBlockGrainTaskList = new List<Task>();
-        foreach (var blockData in blockDatas)
-        {
-            var primaryKey = GrainIdHelper.GenerateGrainId(blockData.ChainId,
-                AeFinderApplicationConsts.BlockGrainIdSuffix, blockData.BlockHash);
-            var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
-            deleteBlockGrainTaskList.Add(blockGrain.DeleteGrainStateAsync());
-        }
-
-        await Task.WhenAll(deleteBlockGrainTaskList);
-    }
+    
 }

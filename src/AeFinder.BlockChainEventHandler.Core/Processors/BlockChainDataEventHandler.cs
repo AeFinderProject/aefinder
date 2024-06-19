@@ -92,7 +92,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                     { ConfirmBlocks = confirmBlockList });
                 
                 //clear block grains data
-                await blockBranchGrain.ClearBlockGrainsAsync(libBlockList);
+                await ClearBlockGrainsAsync(libBlockList);
             }
         }
 
@@ -160,5 +160,17 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         resultEntity.BlockData = block;
 
         return resultEntity;
+    }
+    
+    private async Task ClearBlockGrainsAsync(List<BlockData> blockDatas)
+    {
+        var deleteBlockGrainTaskList = new List<Task>();
+        foreach (var blockData in blockDatas)
+        {
+            var blockGrain = await _blockGrainProvider.GetBlockGrain(blockData.ChainId, blockData.BlockHash);
+            deleteBlockGrainTaskList.Add(blockGrain.DeleteGrainStateAsync());
+        }
+
+        await Task.WhenAll(deleteBlockGrainTaskList);
     }
 }

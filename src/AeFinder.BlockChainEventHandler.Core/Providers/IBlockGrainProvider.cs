@@ -8,6 +8,7 @@ namespace AeFinder.BlockChainEventHandler.Providers;
 
 public interface IBlockGrainProvider
 {
+    Task<IBlockGrain> GetBlockGrain(string chainId, string blockHash);
     Task<IBlockBranchGrain> GetBlockBranchGrain(string chainId);
 }
 
@@ -18,6 +19,14 @@ public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
     public BlockGrainProvider(IClusterClient clusterClient)
     {
         _clusterClient = clusterClient;
+    }
+
+    public async Task<IBlockGrain> GetBlockGrain(string chainId, string blockHash)
+    {
+        var primaryKey = GrainIdHelper.GenerateGrainId(chainId,
+            AeFinderApplicationConsts.BlockGrainIdSuffix, blockHash);
+        var blockGrain = _clusterClient.GetGrain<IBlockGrain>(primaryKey);
+        return blockGrain;
     }
 
     public async Task<IBlockBranchGrain> GetBlockBranchGrain(string chainId)
