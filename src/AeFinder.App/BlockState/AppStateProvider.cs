@@ -107,8 +107,8 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
             var stateEntity = JsonConvert.DeserializeObject<EmptyAeFinderEntity>(lastIrreversibleState.PendingState.Value);
             if (stateEntity.Metadata.Block.BlockHeight <= branchBlockIndex.BlockHeight)
             {
-                var libState = await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
-                if (stateEntity.Metadata.Block.BlockHeight <= libState.Block.BlockHeight)
+                var lastIrreversibleBlockStateSet = await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
+                if (stateEntity.Metadata.Block.BlockHeight <= lastIrreversibleBlockStateSet.Block.BlockHeight)
                 {
                     await MergeStateAsync(chainId, stateKey);
                 }
