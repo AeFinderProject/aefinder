@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
@@ -89,34 +90,46 @@ public class AppService : AeFinderAppService, IAppService
         };
     }
 
-    public async Task<AppSyncStateDto> GetSyncStateAsync(string appId, string version = null)
+    public async Task<AppSyncStateDto> GetSyncStateAsync(string appId)
     {
         var state = new AppSyncStateDto();
         
         var appSubscriptionGrain =
             _clusterClient.GetGrain<IAppSubscriptionGrain>(
                 GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
 
-        var subscriptionManifest = new SubscriptionManifest();
-        if (version.IsNullOrWhiteSpace())
+        if (allSubscription.CurrentVersion != null)
         {
-            // TODO: Get current version from cache
-            var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
-            if (allSubscription.CurrentVersion != null)
+            var syncStateItems = await GetSyncStateItemsAsync(appId, allSubscription.CurrentVersion);
+            state.CurrentVersion = new AppVersionSyncState
             {
-                version = allSubscription.CurrentVersion.Version;
-                subscriptionManifest = allSubscription.CurrentVersion.SubscriptionManifest;
-            }
-        }
-        else
-        {
-            subscriptionManifest = await appSubscriptionGrain.GetSubscriptionAsync(version);
+                Version = allSubscription.CurrentVersion.Version,
+                Items = syncStateItems
+            };
         }
 
-        foreach (var subscriptionItem in subscriptionManifest.SubscriptionItems)
+        if (allSubscription.PendingVersion != null)
+        {
+            var syncStateItems = await GetSyncStateItemsAsync(appId, allSubscription.PendingVersion);
+            state.PendingVersion = new AppVersionSyncState
+            {
+                Version = allSubscription.PendingVersion.Version,
+                Items = syncStateItems
+            };
+        }
+        
+        
+        return state;
+    }
+
+    private async Task<List<AppSyncStateItem>> GetSyncStateItemsAsync(string appId, SubscriptionDetail subscription)
+    {
+        var appSyncStateItems = new List<AppSyncStateItem>();
+        foreach (var subscriptionItem in subscription.SubscriptionManifest.SubscriptionItems)
         {
             var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
-                GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, version, subscriptionItem.ChainId));
+                GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, subscription.Version, subscriptionItem.ChainId));
             var blockStateSetStatus = await appBlockStateSetStatusGrain.GetBlockStateSetStatusAsync();
             var appSyncStateItem = new AppSyncStateItem()
             {
@@ -128,10 +141,10 @@ public class AppService : AeFinderAppService, IAppService
                 LastIrreversibleBlockHash = blockStateSetStatus.LastIrreversibleBlockHash,
                 LastIrreversibleBlockHeight = blockStateSetStatus.LastIrreversibleBlockHeight
             };
-            state.Items.Add(appSyncStateItem);
+            appSyncStateItems.Add(appSyncStateItem);
         }
-        
-        return state;
+
+        return appSyncStateItems;
     }
 
     private async Task CheckPermissionAsync(string appId)
