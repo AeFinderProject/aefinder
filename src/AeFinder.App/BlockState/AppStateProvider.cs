@@ -87,7 +87,7 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
             return null;
         }
 
-        var lastIrreversibleStateEntity = JsonConvert.DeserializeObject<AeFinderEntity>(lastIrreversibleState.Value);
+        var lastIrreversibleStateEntity = JsonConvert.DeserializeObject<EmptyAeFinderEntity>(lastIrreversibleState.Value);
         return lastIrreversibleStateEntity != null &&
                lastIrreversibleStateEntity.Metadata.Block.BlockHeight <= branchBlockIndex.BlockHeight &&
                !lastIrreversibleStateEntity.Metadata.IsDeleted
