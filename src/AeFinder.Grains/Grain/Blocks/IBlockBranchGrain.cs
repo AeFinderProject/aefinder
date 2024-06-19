@@ -8,4 +8,6 @@ public interface IBlockBranchGrain: IGrainWithStringKey
     Task<List<BlockData>> SaveBlocks(List<BlockData> blockEventDataList);
 
     Task<Dictionary<string, BlockBasicData>> GetBlockDictionary();
+
+    Task ClearBlockGrainsAsync(List<BlockData> blockDatas);
 }

@@ -67,7 +67,6 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         var libBlock = libBlockList.OrderBy(x => x.BlockHeight).LastOrDefault();
         if (libBlock != null)
         {
-            await ClearBlockGrainsAsync(libBlockList);
             ClearDictionary(libBlock.BlockHeight, libBlock.BlockHash);
         }
 
@@ -206,7 +205,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
             b.Value.BlockHeight == libBlockHeight && b.Value.BlockHash != libBlockHash);
     }
 
-    private async Task ClearBlockGrainsAsync(List<BlockData> blockDatas)
+    public async Task ClearBlockGrainsAsync(List<BlockData> blockDatas)
     {
         var deleteBlockGrainTaskList = new List<Task>();
         foreach (var blockData in blockDatas)

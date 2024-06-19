@@ -90,6 +90,9 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                     _objectMapper.Map<List<BlockData>, List<ConfirmBlockEto>>(libBlockList);
                 await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                     { ConfirmBlocks = confirmBlockList });
+                
+                //clear block grains data
+                await blockBranchGrain.ClearBlockGrainsAsync(libBlockList);
             }
         }
 
