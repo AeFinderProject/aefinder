@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockStates;
 using Microsoft.Extensions.Logging;
-using Nito.AsyncEx;
 using Orleans;
 using Volo.Abp.DependencyInjection;
 
@@ -25,51 +24,7 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
         _logger = logger;
         _appInfoProvider = appInfoProvider;
     }
-
-    public async Task InitializeAsync(string chainId)
-    {
-        if (_blockStateSets.ContainsKey(chainId))
-        {
-            return;
-        }
-
-        var blockStateSets = new ConcurrentDictionary<string, BlockStateSet>();
-        _blockStateSets[chainId] = blockStateSets;
-        
-        var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(GetBlockStateSetStatusKey(chainId));
-        var status = await appBlockStateSetStatusGrain.GetBlockStateSetStatusAsync();
-        var tasks = status.Branches.Select(o => InitializeBranchBlockStateSetsAsync(chainId, o.Key, blockStateSets));
-        await tasks.WhenAll();
-        
-        if (!status.LongestChainBlockHash.IsNullOrWhiteSpace())
-        {
-            _longestChainBlockStateSets[chainId] = blockStateSets[status.LongestChainBlockHash];
-        }
-
-        if (!status.BestChainBlockHash.IsNullOrWhiteSpace())
-        {
-            _bestChainBlockStateSets[chainId] = blockStateSets[status.BestChainBlockHash];
-        }
-        
-        if (!status.LastIrreversibleBlockHash.IsNullOrWhiteSpace())
-        {
-            _lastIrreversibleBlockStateSets[chainId] = blockStateSets[status.LastIrreversibleBlockHash];
-        }
-    }
     
-    private async Task InitializeBranchBlockStateSetsAsync(string chainId, string blockHash, ConcurrentDictionary<string,BlockStateSet> blockStateSets)
-    {
-        var appBlockStateSetGrain = _clusterClient.GetGrain<IAppBlockStateSetGrain>(GetBlockStateSetKey(chainId, blockHash));
-        var set = await appBlockStateSetGrain.GetBlockStateSetAsync();
-        while (set!= null)
-        {
-            blockStateSets[set.Block.BlockHash] = set;
-            
-            appBlockStateSetGrain = _clusterClient.GetGrain<IAppBlockStateSetGrain>(GetBlockStateSetKey(chainId, set.Block.PreviousBlockHash));
-            set = await appBlockStateSetGrain.GetBlockStateSetAsync();
-        }
-    }
-
     public Task AddBlockStateSetAsync(string chainId, BlockStateSet blockStateSet)
     {
         if (!_blockStateSets.TryGetValue(chainId, out var sets))
@@ -192,12 +147,6 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
         });
         
         _logger.LogDebug("Saved BlockStateSetsStatus. ChainId: {ChainId}", chainId);
-    }
-    
-    private string GetBlockStateSetKey(string chainId, string blockHash)
-    {
-        return GrainIdHelper.GenerateAppBlockStateSetGrainId(_appInfoProvider.AppId, _appInfoProvider.Version,
-            chainId, blockHash);
     }
     
     private string GetBlockStateSetStatusKey(string chainId)

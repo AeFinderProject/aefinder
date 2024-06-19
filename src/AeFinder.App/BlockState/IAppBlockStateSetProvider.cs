@@ -4,7 +4,6 @@ namespace AeFinder.App.BlockState;
 
 public interface IAppBlockStateSetProvider
 {
-    Task InitializeAsync(string chainId);
     Task AddBlockStateSetAsync(string chainId, BlockStateSet blockStateSet);
     Task UpdateBlockStateSetAsync(string chainId, BlockStateSet blockStateSet);
     Task<BlockStateSet> GetLongestChainBlockStateSetAsync(string chainId);

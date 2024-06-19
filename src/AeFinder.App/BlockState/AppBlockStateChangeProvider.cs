@@ -27,7 +27,7 @@ public class AppBlockStateChangeProvider : IAppBlockStateChangeProvider, ISingle
         foreach (var changeKey in changeKeys)
         {
             var stateChange = await AddBlockStateChangeAsync(chainId, changeKey.Key, changeKey.Value);
-            blockStateChanges[changeKey.Key] = stateChange.ToDictionary(o => o.Key, o => o);
+            blockStateChanges[changeKey.Key] = stateChange;
         }
 
         var tasks = blockStateChanges.Select(o =>
@@ -39,7 +39,7 @@ public class AppBlockStateChangeProvider : IAppBlockStateChangeProvider, ISingle
         await Task.WhenAll(tasks);
     }
     
-    private async Task<List<BlockStateChange>> AddBlockStateChangeAsync(string chainId, long blockHeight, List<BlockStateChange> blockStateChanges)
+    private async Task<Dictionary<string, BlockStateChange>> AddBlockStateChangeAsync(string chainId, long blockHeight, List<BlockStateChange> blockStateChanges)
     {
         if(!_blockStateChanges.TryGetValue(chainId, out var changes))
         {
@@ -59,7 +59,7 @@ public class AppBlockStateChangeProvider : IAppBlockStateChangeProvider, ISingle
             blockChange.TryAdd(blockStateChange.Key, blockStateChange);
         }
 
-        return blockChange.Values.ToList();
+        return blockChange;
     }
 
     public async Task<List<BlockStateChange>> GetBlockStateChangeAsync(string chainId, long blockHeight)

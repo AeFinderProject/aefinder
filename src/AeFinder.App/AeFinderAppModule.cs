@@ -13,7 +13,6 @@ using AeFinder.Sdk;
 using AeFinder.Sdk.Entities;
 using AElf.EntityMapping.Elasticsearch.Options;
 using AElf.EntityMapping.Elasticsearch.Services;
-using GraphQL;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NUglify.Helpers;

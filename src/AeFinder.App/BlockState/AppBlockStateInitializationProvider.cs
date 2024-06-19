@@ -4,6 +4,7 @@ using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Sdk;
 using AeFinder.Sdk.Entities;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp.DependencyInjection;
 
@@ -19,11 +20,13 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
     private readonly IClusterClient _clusterClient;
     private readonly IGeneralAppDataIndexProvider _generalAppDataIndexProvider;
     private readonly IRuntimeTypeProvider _runtimeTypeProvider;
+    private readonly ILogger<AppBlockStateInitializationProvider> _logger;
 
     public AppBlockStateInitializationProvider(IAppDataIndexManagerProvider appDataIndexManagerProvider,
         IAppBlockStateChangeProvider appBlockStateChangeProvider, IAppBlockStateSetProvider appBlockStateSetProvider,
         IAppStateProvider appStateProvider, IAppInfoProvider appInfoProvider, IClusterClient clusterClient,
-        IGeneralAppDataIndexProvider generalAppDataIndexProvider, IRuntimeTypeProvider runtimeTypeProvider)
+        IGeneralAppDataIndexProvider generalAppDataIndexProvider, IRuntimeTypeProvider runtimeTypeProvider,
+        ILogger<AppBlockStateInitializationProvider> logger)
     {
         _appDataIndexManagerProvider = appDataIndexManagerProvider;
         _appBlockStateChangeProvider = appBlockStateChangeProvider;
@@ -33,6 +36,7 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
         _clusterClient = clusterClient;
         _generalAppDataIndexProvider = generalAppDataIndexProvider;
         _runtimeTypeProvider = runtimeTypeProvider;
+        _logger = logger;
     }
 
     public async Task InitializeAsync()
@@ -98,6 +102,8 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
                 status.LastIrreversibleBlockHash);
             await _appBlockStateSetProvider.SetLongestChainBlockStateSetAsync(chainId,
                 status.LastIrreversibleBlockHash);
+            _logger.LogInformation("Rollback block state to lib. LibHash: {blockHash}, LibHeight: {libHeight}",
+                status.LastIrreversibleBlockHash, status.LastIrreversibleBlockHeight);
         }
 
         await _appBlockStateSetProvider.SaveDataAsync(chainId);
