@@ -101,60 +101,50 @@ public class AppService : AeFinderAppService, IAppService
 
         if (allSubscription.CurrentVersion != null)
         {
+            var syncStateItems = await GetSyncStateItemsAsync(appId, allSubscription.CurrentVersion);
             state.CurrentVersion = new AppVersionSyncState
             {
                 Version = allSubscription.CurrentVersion.Version,
-                Items = new List<AppSyncStateItem>()
+                Items = syncStateItems
             };
-            
-            foreach (var subscriptionItem in allSubscription.CurrentVersion.SubscriptionManifest.SubscriptionItems)
-            {
-                var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
-                    GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, allSubscription.CurrentVersion.Version, subscriptionItem.ChainId));
-                var blockStateSetStatus = await appBlockStateSetStatusGrain.GetBlockStateSetStatusAsync();
-                var appSyncStateItem = new AppSyncStateItem()
-                {
-                    ChainId = subscriptionItem.ChainId,
-                    LongestChainBlockHash = blockStateSetStatus.LongestChainBlockHash,
-                    LongestChainHeight = blockStateSetStatus.LongestChainHeight,
-                    BestChainBlockHash = blockStateSetStatus.BestChainBlockHash,
-                    BestChainHeight = blockStateSetStatus.BestChainHeight,
-                    LastIrreversibleBlockHash = blockStateSetStatus.LastIrreversibleBlockHash,
-                    LastIrreversibleBlockHeight = blockStateSetStatus.LastIrreversibleBlockHeight
-                };
-                state.CurrentVersion.Items.Add(appSyncStateItem);
-            }
         }
 
         if (allSubscription.PendingVersion != null)
         {
+            var syncStateItems = await GetSyncStateItemsAsync(appId, allSubscription.PendingVersion);
             state.PendingVersion = new AppVersionSyncState
             {
                 Version = allSubscription.PendingVersion.Version,
-                Items = new List<AppSyncStateItem>()
+                Items = syncStateItems
             };
-            
-            foreach (var subscriptionItem in allSubscription.PendingVersion.SubscriptionManifest.SubscriptionItems)
-            {
-                var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
-                    GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, allSubscription.PendingVersion.Version, subscriptionItem.ChainId));
-                var blockStateSetStatus = await appBlockStateSetStatusGrain.GetBlockStateSetStatusAsync();
-                var appSyncStateItem = new AppSyncStateItem()
-                {
-                    ChainId = subscriptionItem.ChainId,
-                    LongestChainBlockHash = blockStateSetStatus.LongestChainBlockHash,
-                    LongestChainHeight = blockStateSetStatus.LongestChainHeight,
-                    BestChainBlockHash = blockStateSetStatus.BestChainBlockHash,
-                    BestChainHeight = blockStateSetStatus.BestChainHeight,
-                    LastIrreversibleBlockHash = blockStateSetStatus.LastIrreversibleBlockHash,
-                    LastIrreversibleBlockHeight = blockStateSetStatus.LastIrreversibleBlockHeight
-                };
-                state.CurrentVersion.Items.Add(appSyncStateItem);
-            }
         }
         
         
         return state;
+    }
+
+    private async Task<List<AppSyncStateItem>> GetSyncStateItemsAsync(string appId, SubscriptionDetail subscription)
+    {
+        var appSyncStateItems = new List<AppSyncStateItem>();
+        foreach (var subscriptionItem in subscription.SubscriptionManifest.SubscriptionItems)
+        {
+            var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
+                GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, subscription.Version, subscriptionItem.ChainId));
+            var blockStateSetStatus = await appBlockStateSetStatusGrain.GetBlockStateSetStatusAsync();
+            var appSyncStateItem = new AppSyncStateItem()
+            {
+                ChainId = subscriptionItem.ChainId,
+                LongestChainBlockHash = blockStateSetStatus.LongestChainBlockHash,
+                LongestChainHeight = blockStateSetStatus.LongestChainHeight,
+                BestChainBlockHash = blockStateSetStatus.BestChainBlockHash,
+                BestChainHeight = blockStateSetStatus.BestChainHeight,
+                LastIrreversibleBlockHash = blockStateSetStatus.LastIrreversibleBlockHash,
+                LastIrreversibleBlockHeight = blockStateSetStatus.LastIrreversibleBlockHeight
+            };
+            appSyncStateItems.Add(appSyncStateItem);
+        }
+
+        return appSyncStateItems;
     }
 
     private async Task CheckPermissionAsync(string appId)
