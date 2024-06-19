@@ -15,7 +15,6 @@ namespace AeFinder.Controllers;
 public class SubscriptionController : AeFinderController
 {
     private readonly ISubscriptionAppService _subscriptionAppService;
-    private const long MaxCodeSize = 5 * 1024 * 1024;
 
     public SubscriptionController(ISubscriptionAppService subscriptionAppService)
     {
@@ -59,11 +58,6 @@ public class SubscriptionController : AeFinderController
         if (file == null || file.Length == 0)
         {
             throw new UserFriendlyException("File is empty.");
-        }
-
-        if (file.Length > MaxCodeSize)
-        {
-            throw new UserFriendlyException("File is too Large.");
         }
     }
 }
