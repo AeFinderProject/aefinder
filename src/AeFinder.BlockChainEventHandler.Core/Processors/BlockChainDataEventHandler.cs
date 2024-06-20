@@ -90,6 +90,9 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
                     _objectMapper.Map<List<BlockData>, List<ConfirmBlockEto>>(libBlockList);
                 await _distributedEventBus.PublishAsync(new ConfirmBlocksEto()
                     { ConfirmBlocks = confirmBlockList });
+                
+                //clear block grains data
+                await ClearBlockGrainsAsync(libBlockList);
             }
         }
 
@@ -157,5 +160,17 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         resultEntity.BlockData = block;
 
         return resultEntity;
+    }
+    
+    private async Task ClearBlockGrainsAsync(List<BlockData> blockDatas)
+    {
+        var deleteBlockGrainTaskList = new List<Task>();
+        foreach (var blockData in blockDatas)
+        {
+            var blockGrain = await _blockGrainProvider.GetBlockGrain(blockData.ChainId, blockData.BlockHash);
+            deleteBlockGrainTaskList.Add(blockGrain.DeleteGrainStateAsync());
+        }
+
+        await Task.WhenAll(deleteBlockGrainTaskList);
     }
 }
