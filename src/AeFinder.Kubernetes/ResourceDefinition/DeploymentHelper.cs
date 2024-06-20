@@ -34,12 +34,14 @@ public class DeploymentHelper
     /// <param name="configMapName"></param>
     /// <param name="sideCarConfigMapName"></param>
     /// <returns></returns>
-    public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string imageName, string deploymentName,
-        string deploymentLabelName, int replicasCount, string containerName, int containerPort, string configMapName, string sideCarConfigMapName)
+    public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string appId, string imageName,
+        string deploymentName, string deploymentLabelName, int replicasCount, string containerName, 
+        int containerPort, string configMapName, string sideCarConfigMapName)
     {
         var labels = new Dictionary<string, string>
         {
-            { KubernetesConstants.AppLabelKey, deploymentLabelName }
+            { KubernetesConstants.AppLabelKey, deploymentLabelName },
+            { KubernetesConstants.MonitorLabelKey, appId }
         };
 
         var deployment = new V1Deployment
