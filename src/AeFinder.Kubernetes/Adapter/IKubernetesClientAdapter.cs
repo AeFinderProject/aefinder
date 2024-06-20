@@ -1,3 +1,4 @@
+using AeFinder.Kubernetes.ResourceDefinition;
 using k8s.Models;
 
 namespace AeFinder.Kubernetes.Adapter;
@@ -21,6 +22,9 @@ public interface IKubernetesClientAdapter
     Task<V1IngressList> ListIngressAsync(string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
 
+    Task<object> ListServiceMonitorAsync(string monitorGroup, string coreApiVersion,
+        string namespaceParameter, string monitorPlural);
+
     Task<V1Namespace> CreateNamespaceAsync(V1Namespace nameSpace,
         CancellationToken cancellationToken = default(CancellationToken));
 
@@ -36,6 +40,10 @@ public interface IKubernetesClientAdapter
     Task<V1Ingress> CreateIngressAsync(V1Ingress ingress, string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
 
+    Task<object> CreateServiceMonitorAsync(ServiceMonitor serviceMonitor, string monitorGroup,
+        string coreApiVersion, string namespaceParameter,
+        string monitorPlural, CancellationToken cancellationToken = default(CancellationToken));
+
     Task<V1Status> DeleteConfigMapAsync(string name, string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
     
@@ -48,6 +56,9 @@ public interface IKubernetesClientAdapter
     Task<V1Status> DeleteIngressAsync(string name, string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
 
+    Task<object> DeleteServiceMonitorAsync(string monitorGroup, string coreApiVersion,
+        string namespaceParameter, string monitorPlural, string serviceMonitorName);
+    
     Task<V1Deployment> ReadNamespacedDeploymentAsync(string name, string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
 

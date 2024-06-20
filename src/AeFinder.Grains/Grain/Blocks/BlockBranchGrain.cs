@@ -189,7 +189,8 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
             }
             
             var blockBasicItem = State.Blocks[currentLibBlockHash];
-            var primaryKey = GrainIdHelper.GenerateGrainId(blockBasicItem.ChainId,AeFinderApplicationConsts.BlockGrainIdSuffix,blockBasicItem.BlockHash);
+            var primaryKey = GrainIdHelper.GenerateGrainId(blockBasicItem.ChainId,
+                AeFinderApplicationConsts.BlockGrainIdSuffix, blockBasicItem.BlockHash);
             var blockGrain = GrainFactory.GetGrain<IBlockGrain>(primaryKey);
             libBlockTaskList.Add(blockGrain.ConfirmBlock());
             currentLibBlockHash = State.Blocks[currentLibBlockHash].PreviousBlockHash;
@@ -203,4 +204,6 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         State.Blocks.RemoveAll(b =>
             b.Value.BlockHeight == libBlockHeight && b.Value.BlockHash != libBlockHash);
     }
+
+    
 }

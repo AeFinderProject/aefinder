@@ -21,14 +21,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="appsettings.json" />
       <Content Include="appsettings.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
-      <Content Update="apollosetting.json">
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <Content Include="appsettings.apollo.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </Content>
     </ItemGroup>
     
