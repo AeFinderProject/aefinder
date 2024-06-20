@@ -65,7 +65,8 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
                 Block = new BlockWithTransactionDto
                 {
                     BlockHash = status.LastIrreversibleBlockHash,
-                    BlockHeight = status.LastIrreversibleBlockHeight
+                    BlockHeight = status.LastIrreversibleBlockHeight,
+                    Confirmed = true
                 },
                 Processed = true
             };
