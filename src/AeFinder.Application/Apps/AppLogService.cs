@@ -23,10 +23,8 @@ public class AppLogService : AeFinderAppService, IAppLogService
     }
 
     public async Task<List<AppLogRecordDto>> GetLatestRealTimeLogs(string nameSpace, string startTime, string appId,
-        string version, string id = null)
+        string version, string level = null, string id = null, string searchKeyWord = null)
     {
-        
-
         if (appId.IsNullOrEmpty())
         {
             throw new UserFriendlyException(
@@ -38,14 +36,16 @@ public class AppLogService : AeFinderAppService, IAppLogService
             throw new UserFriendlyException(
                 $"Invalid version: '{version}'. Please provide a valid version.");
         }
-        
+
         if (startTime.IsNullOrEmpty())
         {
             var indexName = GetLogIndexName(nameSpace, appId, DateTime.Now);
-            var result = await _logService.GetAppLatestLogAsync(indexName, AeFinderLoggerConsts.DefaultAppLogPageSize, 1, version);
+            var result =
+                await _logService.GetAppLatestLogAsync(indexName, AeFinderLoggerConsts.DefaultAppLogPageSize, 1,
+                    version, level, searchKeyWord);
             return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(result);
         }
-        
+
         DateTime startDateTime = DateTime.MaxValue;
         if (!DateTime.TryParse(startTime, out startDateTime) || startDateTime == DateTime.MaxValue)
         {
@@ -55,15 +55,9 @@ public class AppLogService : AeFinderAppService, IAppLogService
 
         var logIndexName = GetLogIndexName(nameSpace, appId, startDateTime);
 
-        if (id.IsNullOrEmpty())
-        {
-            var result = await _logService.GetAppLogByStartTimeAsync(logIndexName, AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version);
-            result = result.OrderByDescending(x => x.App_log.Time).ToList();
-            return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(result);
-        }
-        
-        var appLogs = await _logService.GetAppLogByStartTimeAsync(logIndexName, AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version,id);
-        appLogs = appLogs.OrderByDescending(x => x.App_log.Time).ThenByDescending(x=>x.Log_id).ToList();
+        var appLogs = await _logService.GetAppLogByStartTimeAsync(logIndexName,
+            AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version, level, id, searchKeyWord);
+        appLogs = appLogs.OrderByDescending(x => x.App_log.Time).ThenByDescending(x => x.Log_id).ToList();
         return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(appLogs);
 
     }
