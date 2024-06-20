@@ -66,6 +66,7 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
                 {
                     BlockHash = status.LastIrreversibleBlockHash,
                     BlockHeight = status.LastIrreversibleBlockHeight,
+                    PreviousBlockHash = string.Empty,
                     Confirmed = true
                 },
                 Processed = true
