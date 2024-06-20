@@ -37,7 +37,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code)
     {
         await CheckAppExistAsync(appId);
-        AuditCode(code);
+        CheckCode(code);
         
         var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
         var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
@@ -75,7 +75,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code)
     {
         await CheckAppExistAsync(appId);
-        AuditCode(code);
+        CheckCode(code);
         
         var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         await subscriptionGrain.UpdateCodeAsync(version, code);
@@ -249,5 +249,15 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
                 }
             }
         }
+    }
+    
+    private void CheckCode(byte[] code)
+    {
+        if (code.Length > _appDeployOptions.MaxAppCodeSize)
+        {
+            throw new UserFriendlyException("Code is too Large.");
+        }
+        
+        AuditCode(code);
     }
 }

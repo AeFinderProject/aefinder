@@ -4,6 +4,14 @@ namespace AeFinder.Apps;
 
 public class AppSyncStateDto
 {
+    public AppVersionSyncState CurrentVersion { get; set; }
+    public AppVersionSyncState PendingVersion { get; set; }
+    
+}
+
+public class AppVersionSyncState
+{
+    public string Version { get; set; }
     public List<AppSyncStateItem> Items { get; set; } = new();
 }
 
