@@ -28,6 +28,9 @@ public class LogElasticSearchService:ILogService
             mustQuery.Add(q => q.Wildcard(w => w
                 .Field(f => f.App_log.Message)
                 .Value($"*{searchKeyWord}*")));
+            mustQuery.Add(q => q.Wildcard(w => w
+                .Field(f => f.App_log.Exception)
+                .Value($"*{searchKeyWord}*")));
         }
 
         QueryContainer Filter(QueryContainerDescriptor<AppLogIndex> f) => f.Bool(b => b.Must(mustQuery));
@@ -73,6 +76,9 @@ public class LogElasticSearchService:ILogService
         {
             mustQuery.Add(q => q.Wildcard(w => w
                 .Field(f => f.App_log.Message)
+                .Value($"*{searchKeyWord}*")));
+            mustQuery.Add(q => q.Wildcard(w => w
+                .Field(f => f.App_log.Exception)
                 .Value($"*{searchKeyWord}*")));
         }
 
