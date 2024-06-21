@@ -23,17 +23,31 @@ public class LogElasticSearchService:ILogService
             mustQuery.Add(q => q.Term(i => i.Field(f => f.App_log.Level).Value(level)));
         }
 
+        var shouldQuery = new List<Func<QueryContainerDescriptor<AppLogIndex>, QueryContainer>>();
         if (!string.IsNullOrEmpty(searchKeyWord))
         {
-            mustQuery.Add(q => q.Wildcard(w => w
+            shouldQuery.Add(q => q.Wildcard(w => w
                 .Field(f => f.App_log.Message)
                 .Value($"*{searchKeyWord}*")));
-            mustQuery.Add(q => q.Wildcard(w => w
+
+            shouldQuery.Add(q => q.Wildcard(w => w
                 .Field(f => f.App_log.Exception)
                 .Value($"*{searchKeyWord}*")));
         }
+        QueryContainer Filter(QueryContainerDescriptor<AppLogIndex> f) 
+        {
+            var boolQuery = new BoolQueryDescriptor<AppLogIndex>()
+                .Must(mustQuery);
 
-        QueryContainer Filter(QueryContainerDescriptor<AppLogIndex> f) => f.Bool(b => b.Must(mustQuery));
+            if (shouldQuery.Any())
+            {
+                boolQuery.Should(shouldQuery)
+                    .MinimumShouldMatch(1);
+            }
+
+            return f.Bool(b => boolQuery);
+        }
+        
         var response = await _elasticClient.SearchAsync<AppLogIndex>(s => s
             .Index(indexName)
             .Sort(so => so
@@ -54,9 +68,7 @@ public class LogElasticSearchService:ILogService
         {
             mustQuery.Add(q => q.Term(i => i.Field(f => f.App_log.Level).Value(level)));
         }
-
-        QueryContainer Filter(QueryContainerDescriptor<AppLogIndex> f) => f.Bool(b => b.Must(mustQuery));
-
+        
         Func<SortDescriptor<AppLogIndex>, IPromise<IList<ISort>>> sort = null;
         var searchAfter = new List<string>();
         searchAfter.Add(startTime);
@@ -72,14 +84,29 @@ public class LogElasticSearchService:ILogService
                 s.Ascending(a => a.App_log.Time).Ascending(d => d.Log_id);
         }
 
+        var shouldQuery = new List<Func<QueryContainerDescriptor<AppLogIndex>, QueryContainer>>();
         if (!string.IsNullOrEmpty(searchKeyWord))
         {
-            mustQuery.Add(q => q.Wildcard(w => w
+            shouldQuery.Add(q => q.Wildcard(w => w
                 .Field(f => f.App_log.Message)
                 .Value($"*{searchKeyWord}*")));
-            mustQuery.Add(q => q.Wildcard(w => w
+
+            shouldQuery.Add(q => q.Wildcard(w => w
                 .Field(f => f.App_log.Exception)
                 .Value($"*{searchKeyWord}*")));
+        }
+        QueryContainer Filter(QueryContainerDescriptor<AppLogIndex> f) 
+        {
+            var boolQuery = new BoolQueryDescriptor<AppLogIndex>()
+                .Must(mustQuery);
+
+            if (shouldQuery.Any())
+            {
+                boolQuery.Should(shouldQuery)
+                    .MinimumShouldMatch(1);
+            }
+
+            return f.Bool(b => boolQuery);
         }
 
         var response = await _elasticClient.SearchAsync<AppLogIndex>(s => s

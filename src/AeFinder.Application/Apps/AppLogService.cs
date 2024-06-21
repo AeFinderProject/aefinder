@@ -28,7 +28,7 @@ public class AppLogService : AeFinderAppService, IAppLogService
         if (appId.IsNullOrEmpty())
         {
             throw new UserFriendlyException(
-                $"Invalid appId: '{appId}'. Please provide a valid version.");
+                $"Invalid appId: '{appId}'. Please provide a valid appId.");
         }
 
         if (version.IsNullOrEmpty())
