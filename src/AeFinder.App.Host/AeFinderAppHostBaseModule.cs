@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using AeFinder.App.Metrics;
 using AeFinder.MongoDb;
 using GraphQL;
 using GraphQL.Server.Ui.Playground;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Metrics;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
@@ -38,6 +40,13 @@ public class AeFinderAppHostBaseModule : AbpModule
             .AddSystemTextJson()
             .AddErrorInfoProvider(e => e.ExposeExceptionDetails = true));
 
+        context.Services.AddOpenTelemetry()
+            .WithMetrics(builder =>
+            {
+                builder
+                    .AddMeter("AeFinder.App.Host");
+                builder.AddPrometheusExporter();
+            });
         Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
 
@@ -84,7 +93,9 @@ public class AeFinderAppHostBaseModule : AbpModule
     {
         var app = context.GetApplicationBuilder();
         var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
-        app.UseGraphQL($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/graphql");
+        var graphqlPath = $"/{appInfoOptions.AppId}/{appInfoOptions.Version}/graphql";
+        app.UseGraphQLHttpMetrics(graphqlPath);
+        app.UseGraphQL(graphqlPath);
         app.UseGraphQLPlayground(
             $"/{appInfoOptions.AppId}/{appInfoOptions.Version}/ui/playground",
             new PlaygroundOptions
@@ -92,7 +103,7 @@ public class AeFinderAppHostBaseModule : AbpModule
                 GraphQLEndPoint = "../graphql",
                 SubscriptionsEndPoint = "../graphql",
             });
-        
+        app.UseOpenTelemetryPrometheusScrapingEndpoint($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/metrics");
         app.UseRouting();
         app.UseCors();
         app.UseConfiguredEndpoints();
