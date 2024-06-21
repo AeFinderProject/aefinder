@@ -9,6 +9,8 @@ public interface IBlockGrain : IGrainWithStringKey
     Task SaveBlock(BlockData block);
     
     Task<BlockData> ConfirmBlock();
-    
+
+    Task DeleteGrainStateAsync();
+
 }
 

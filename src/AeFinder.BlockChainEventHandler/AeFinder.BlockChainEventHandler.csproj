@@ -27,9 +27,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="appsettings.json" />
       <Content Include="appsettings.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Include="appsettings.apollo.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
 
