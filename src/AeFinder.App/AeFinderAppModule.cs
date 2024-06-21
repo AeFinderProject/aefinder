@@ -74,9 +74,11 @@ public class AeFinderAppModule : AbpModule
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {        
         var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
+        var blockStateInitializationProvider = context.ServiceProvider.GetRequiredService<IAppBlockStateInitializationProvider>();
         if (appInfoOptions.ClientType == ClientType.Full)
         {
             AsyncHelper.RunSync(async () => await CreateIndexAsync(context.ServiceProvider, appInfoOptions.AppId, appInfoOptions.Version));
+            AsyncHelper.RunSync(blockStateInitializationProvider.InitializeAsync);
             AsyncHelper.RunSync(async () => await InitBlockPushAsync(context, appInfoOptions.AppId, appInfoOptions.Version));
         }
     }
