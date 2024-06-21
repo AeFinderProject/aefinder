@@ -3,6 +3,7 @@ using System.Runtime.Loader;
 using AeFinder.App.BlockChain;
 using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
+using AeFinder.App.Metrics;
 using AeFinder.App.OperationLimits;
 using AeFinder.App.Repositories;
 using AeFinder.BlockScan;
@@ -48,6 +49,7 @@ public class AeFinderAppModule : AbpModule
         context.Services.AddSingleton(typeof(IAppDataIndexProvider<>), typeof(AppDataIndexProvider<>));
         context.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
         context.Services.AddTransient(typeof(IReadOnlyRepository<>), typeof(ReadOnlyRepository<>));
+        context.Services.AddSingleton<Instrumentation>();
     }
     
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
@@ -72,9 +74,11 @@ public class AeFinderAppModule : AbpModule
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {        
         var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
+        var blockStateInitializationProvider = context.ServiceProvider.GetRequiredService<IAppBlockStateInitializationProvider>();
         if (appInfoOptions.ClientType == ClientType.Full)
         {
             AsyncHelper.RunSync(async () => await CreateIndexAsync(context.ServiceProvider, appInfoOptions.AppId, appInfoOptions.Version));
+            AsyncHelper.RunSync(blockStateInitializationProvider.InitializeAsync);
             AsyncHelper.RunSync(async () => await InitBlockPushAsync(context, appInfoOptions.AppId, appInfoOptions.Version));
         }
     }

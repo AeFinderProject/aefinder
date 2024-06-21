@@ -21,8 +21,8 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IRuntimeTypeProvider _runtimeTypeProvider;
 
-    private readonly ConcurrentDictionary<string, AppState> _libValues = new();
-    private readonly ConcurrentDictionary<string, AppState> _toCommitLibValues = new();
+    private readonly ConcurrentDictionary<string, AppStateDto> _libValues = new();
+    private readonly ConcurrentDictionary<string, AppStateDto> _toCommitLibValues = new();
     private readonly ConcurrentQueue<string> _libValueKeys = new();
     
     private readonly ILogger<AppStateProvider> _logger;
@@ -38,18 +38,6 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         _runtimeTypeProvider = runtimeTypeProvider;
         _appStateOptions = appStateOptions.Value;
     }
-
-    public async Task<T> GetLastIrreversibleStateAsync<T>(string chainId, string key)
-    {
-        var state = await GetLibStateAsync(chainId, key);
-        return state != null ? JsonConvert.DeserializeObject<T>(state.Value) : default;
-    }
-
-    public async Task<object> GetLastIrreversibleStateAsync(string chainId, string key)
-    {
-        var state = await GetLibStateAsync(chainId, key);
-        return state != null ? JsonConvert.DeserializeObject(state.Value, _runtimeTypeProvider.GetType(state.Type)) : null;
-    }
     
     public async Task<T> GetStateAsync<T>(string chainId, string stateKey, IBlockIndex branchBlockIndex)
     {
@@ -62,11 +50,37 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         var appState = await GetAppStateAsync(chainId, stateKey, branchBlockIndex);
         return appState != null ? JsonConvert.DeserializeObject(appState.Value, _runtimeTypeProvider.GetType(appState.Type)) : null;
     }
+
+    public async Task PreMergeStateAsync(string chainId, List<BlockStateSet> blockStateSets)
+    {
+        foreach (var set in blockStateSets)
+        {
+            foreach (var change in set.Changes)
+            {
+                await SetPendingStateAsync(chainId, change.Key, change.Value);
+            }
+        }
+
+        await SaveDataAsync();
+    }
     
+    public async Task MergeStateAsync(string chainId, List<BlockStateSet> blockStateSets)
+    {
+        foreach (var set in blockStateSets)
+        {
+            foreach (var change in set.Changes)
+            {
+                await MergeStateAsync(chainId, change.Key);
+            }
+        }
+
+        await SaveDataAsync();
+    }
+
     private async Task<AppState> GetAppStateAsync(string chainId, string stateKey,
         IBlockIndex branchBlockIndex)
     {
-        var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId,branchBlockIndex.BlockHash);
+        var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, branchBlockIndex.BlockHash);
         while (blockStateSet != null)
         {
             if (blockStateSet.Changes.TryGetValue(stateKey, out var state))
@@ -82,20 +96,44 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         // if block state sets don't contain entity, return LIB value
         // lib value's block height should less than min block state set's block height.
         var lastIrreversibleState = await GetLibStateAsync(chainId, stateKey);
-        if (lastIrreversibleState == null)
+        if (lastIrreversibleState == null || (lastIrreversibleState.LastIrreversibleState == null &&
+                                              lastIrreversibleState.PendingState == null))
         {
             return null;
         }
 
-        var lastIrreversibleStateEntity = JsonConvert.DeserializeObject<EmptyAeFinderEntity>(lastIrreversibleState.Value);
-        return lastIrreversibleStateEntity != null &&
-               lastIrreversibleStateEntity.Metadata.Block.BlockHeight <= branchBlockIndex.BlockHeight &&
-               !lastIrreversibleStateEntity.Metadata.IsDeleted
-            ? lastIrreversibleState
-            : null;
+        if (lastIrreversibleState.PendingState != null)
+        {
+            var stateEntity = JsonConvert.DeserializeObject<EmptyAeFinderEntity>(lastIrreversibleState.PendingState.Value);
+            if (stateEntity.Metadata.Block.BlockHeight <= branchBlockIndex.BlockHeight)
+            {
+                var lastIrreversibleBlockStateSet = await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
+                if (stateEntity.Metadata.Block.BlockHeight <= lastIrreversibleBlockStateSet.Block.BlockHeight)
+                {
+                    await MergeStateAsync(chainId, stateKey);
+                }
+
+                return stateEntity.Metadata.IsDeleted ? null : lastIrreversibleState.PendingState;
+            }
+        }
+
+        if (lastIrreversibleState.LastIrreversibleState != null)
+        {
+            var lastIrreversibleStateEntity =
+                JsonConvert.DeserializeObject<EmptyAeFinderEntity>(lastIrreversibleState.LastIrreversibleState.Value);
+            
+            if (lastIrreversibleStateEntity.Metadata.Block.BlockHeight <= branchBlockIndex.BlockHeight)
+            {
+                return lastIrreversibleStateEntity.Metadata.IsDeleted
+                    ? null
+                    : lastIrreversibleState.LastIrreversibleState;
+            }
+        }
+
+        return null;
     }
 
-    private async Task<AppState> GetLibStateAsync(string chainId, string key)
+    private async Task<AppStateDto> GetLibStateAsync(string chainId, string key)
     {
         var stateKey = GetAppDataKey(chainId, key);
         if (!_toCommitLibValues.TryGetValue(stateKey, out var value))
@@ -103,33 +141,30 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
             if (!_libValues.TryGetValue(stateKey, out value))
             {
                 var dataGrain = _clusterClient.GetGrain<IAppStateGrain>(stateKey);
-                value = await dataGrain.GetLastIrreversibleStateAsync();
+                value = await dataGrain.GetStateAsync();
                 SetLibValueCache(stateKey, value, true);
             }
         }
 
         return value;
     }
-
-    public Task SetLastIrreversibleStateAsync(string chainId, string key, Grains.State.BlockStates.AppState state)
+    
+    private async Task SetPendingStateAsync(string chainId, string key, AppState state)
     {
+        var currentState = await GetLibStateAsync(chainId, key);
+        currentState.PendingState = state;
         var stateKey = GetAppDataKey(chainId, key);
-        _toCommitLibValues[stateKey] = state;
-        SetLibValueCache(stateKey, state);
-        return Task.CompletedTask;
+        _toCommitLibValues[stateKey] = currentState;
+        SetLibValueCache(stateKey, currentState);
     }
 
-    public async Task MergeStateAsync(string chainId, List<BlockStateSet> blockStateSets)
+    private async Task MergeStateAsync(string chainId, string key)
     {
-        foreach (var set in blockStateSets)
-        {
-            foreach (var change in set.Changes)
-            {
-                await SetLastIrreversibleStateAsync(chainId, change.Key, change.Value);
-            }
-        }
-
-        await SaveDataAsync();
+        var currentState = await GetLibStateAsync(chainId, key);
+        currentState.LastIrreversibleState = currentState.PendingState;
+        var stateKey = GetAppDataKey(chainId, key);
+        _toCommitLibValues[stateKey] = currentState;
+        SetLibValueCache(stateKey, currentState);
     }
 
     private async Task SaveDataAsync()
@@ -138,14 +173,14 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         var tasks = _toCommitLibValues.Select(async o =>
         {
             var dataGrain = _clusterClient.GetGrain<IAppStateGrain>(o.Key);
-            await dataGrain.SetLastIrreversibleStateAsync(o.Value);
+            await dataGrain.SetStateAsync(o.Value);
         });
         await tasks.WhenAll();
         _toCommitLibValues.Clear();
         _logger.LogDebug("Saved dapp data.");
     }
     
-    private void SetLibValueCache(string key, Grains.State.BlockStates.AppState state, bool isForce = false)
+    private void SetLibValueCache(string key, AppStateDto state, bool isForce = false)
     {
         if (state == null)
         {
