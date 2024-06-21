@@ -22,7 +22,7 @@ public class LogElasticSearchService:ILogService
         {
             mustQuery.Add(q => q.Term(i => i.Field(f => f.App_log.Level).Value(level)));
         }
-        
+
         var shouldQuery = new List<Func<QueryContainerDescriptor<AppLogIndex>, QueryContainer>>();
         if (!string.IsNullOrEmpty(searchKeyWord))
         {
@@ -38,7 +38,6 @@ public class LogElasticSearchService:ILogService
         {
             var boolQuery = new BoolQueryDescriptor<AppLogIndex>()
                 .Must(mustQuery);
-
             if (shouldQuery.Any())
             {
                 boolQuery.Should(shouldQuery)
@@ -47,6 +46,7 @@ public class LogElasticSearchService:ILogService
 
             return f.Bool(b => boolQuery);
         }
+        
         var response = await _elasticClient.SearchAsync<AppLogIndex>(s => s
             .Index(indexName)
             .Sort(so => so
@@ -82,7 +82,7 @@ public class LogElasticSearchService:ILogService
             sort = s =>
                 s.Ascending(a => a.App_log.Time).Ascending(d => d.Log_id);
         }
-        
+
         var shouldQuery = new List<Func<QueryContainerDescriptor<AppLogIndex>, QueryContainer>>();
         if (!string.IsNullOrEmpty(searchKeyWord))
         {
@@ -98,7 +98,6 @@ public class LogElasticSearchService:ILogService
         {
             var boolQuery = new BoolQueryDescriptor<AppLogIndex>()
                 .Must(mustQuery);
-
             if (shouldQuery.Any())
             {
                 boolQuery.Should(shouldQuery)
@@ -107,6 +106,7 @@ public class LogElasticSearchService:ILogService
 
             return f.Bool(b => boolQuery);
         }
+
         var response = await _elasticClient.SearchAsync<AppLogIndex>(s => s
             .Index(indexName)
             .Sort(sort)
