@@ -117,6 +117,14 @@ public class DeploymentHelper
                                         Name = "log-volume",
                                         MountPath = KubernetesConstants.AppLogFileMountPath
                                     }
+                                },
+                                Resources = new V1ResourceRequirements
+                                {
+                                    Requests = new Dictionary<string, ResourceQuantity>()
+                                    {
+                                        {"cpu", new ResourceQuantity("1")},      // request 1 CPU core
+                                        {"memory", new ResourceQuantity("2Gi")}  // request 2 GiB memory
+                                    }
                                 }
                             },
                             new V1Container
