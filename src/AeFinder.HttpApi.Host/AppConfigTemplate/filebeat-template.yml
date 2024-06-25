@@ -27,8 +27,8 @@ setup.template.settings:
 
 setup.template.enabled: true
 setup.template.overwrite: true
-setup.template.name: "[NameSpace]-[AppId]-log-index"
-setup.template.pattern: "[NameSpace]-[AppId]-log-index-*"
+setup.template.name: "[NameSpace]-[AppId]-[Version]-log-index-template"
+setup.template.pattern: "[NameSpace]-[AppId]-[Version]-log-index-*"
 
 setup.ilm.enabled: false
 
