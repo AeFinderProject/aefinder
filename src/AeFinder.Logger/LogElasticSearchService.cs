@@ -128,7 +128,8 @@ public class LogElasticSearchService:ILogService
         string indexPattern = aliasName + "-*";
 
         //Create an empty app log index in case 404 error occurs when creating an index alias
-        await CreateEmptyAppLogIndexAsync(aliasName);
+        var emptyLogIndexName = aliasName + "-empty";
+        await CreateEmptyAppLogIndexAsync(emptyLogIndexName);
         //Create index alias
         var response = await _elasticClient.Indices.BulkAliasAsync(a => a
             .Add(add => add
