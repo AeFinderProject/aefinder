@@ -1,4 +1,5 @@
 using AeFinder.Logger.Entities;
+using Microsoft.Extensions.Logging;
 using Nest;
 
 namespace AeFinder.Logger;
@@ -6,9 +7,11 @@ namespace AeFinder.Logger;
 public class LogElasticSearchService:ILogService
 {
     private readonly ElasticClient _elasticClient;
+    private readonly ILogger<LogElasticSearchService> _logger;
 
-    public LogElasticSearchService(ElasticClient elasticClient)
+    public LogElasticSearchService(ILogger<LogElasticSearchService> logger,ElasticClient elasticClient)
     {
+        _logger = logger;
         _elasticClient = elasticClient;
     }
 
@@ -117,5 +120,31 @@ public class LogElasticSearchService:ILogService
             .Query(Filter));
 
         return response.Documents.ToList();
+    }
+
+    public async Task SetAppLogAliasAsync(string nameSpace, string appId, string version)
+    {
+        string aliasName = GetAppLogIndexAliasName(nameSpace, appId, version);
+        string indexPattern = aliasName + "-*";
+        var response = await _elasticClient.Indices.BulkAliasAsync(a => a
+            .Add(add => add
+                .Index(indexPattern)
+                .Alias(aliasName)
+            )
+        );
+
+        if (!response.IsValid)
+        {
+            _logger.LogError("Error adding alias: " + response.DebugInformation);
+        }
+        else
+        {
+            _logger.LogInformation($"Alias {aliasName} added successfully");
+        }
+    }
+
+    public string GetAppLogIndexAliasName(string nameSpace, string appId, string version)
+    {
+        return $"{nameSpace}-{appId}-{version}-log-index".ToLower();
     }
 }

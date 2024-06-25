@@ -39,7 +39,7 @@ public class AppLogService : AeFinderAppService, IAppLogService
 
         if (startTime.IsNullOrEmpty())
         {
-            var indexName = GetLogIndexName(nameSpace, appId, DateTime.Now);
+            var indexName = _logService.GetAppLogIndexAliasName(nameSpace, appId, version);
             var result =
                 await _logService.GetAppLatestLogAsync(indexName, AeFinderLoggerConsts.DefaultAppLogPageSize, 1,
                     version, level, searchKeyWord);
@@ -52,8 +52,8 @@ public class AppLogService : AeFinderAppService, IAppLogService
             throw new UserFriendlyException(
                 $"Invalid start time format: '{startTime}'. Please provide a valid datetime.");
         }
-
-        var logIndexName = GetLogIndexName(nameSpace, appId, startDateTime);
+        
+        var logIndexName = _logService.GetAppLogIndexAliasName(nameSpace, appId, version);
 
         var appLogs = await _logService.GetAppLogByStartTimeAsync(logIndexName,
             AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version, level, id, searchKeyWord);
@@ -61,9 +61,5 @@ public class AppLogService : AeFinderAppService, IAppLogService
         return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(appLogs);
 
     }
-
-    private string GetLogIndexName(string nameSpace,string appId,DateTime startDateTime)
-    {
-        return $"{nameSpace}-{appId}-log-index-{startDateTime.ToString("yyyy-MM")}".ToLower();
-    }
+    
 }
