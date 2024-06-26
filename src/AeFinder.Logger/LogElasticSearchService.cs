@@ -177,12 +177,7 @@ public class LogElasticSearchService:ILogService
         // var policyName = "my-filebeat-policy";
 
         var getPolicyResponse = await _elasticClient.IndexLifecycleManagement.GetLifecycleAsync(g => g.PolicyId(policyName));
-
-        if (!getPolicyResponse.IsValid)
-        {
-            _logger.LogError($"Failed to query the ILM policy: {getPolicyResponse.DebugInformation}");
-            return;
-        }
+        
         if (getPolicyResponse.IsValid && getPolicyResponse.Policies.ContainsKey(policyName))
         {
             _logger.LogInformation("FileBeat log ILM policy already exists.");
