@@ -169,7 +169,7 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
 
     private async Task SaveDataAsync()
     {
-        _logger.LogDebug("Saving dapp data.");
+        _logger.LogDebug($"Saving dapp data. {_toCommitLibValues.Keys.Count}");
         var tasks = _toCommitLibValues.Select(async o =>
         {
             var dataGrain = _clusterClient.GetGrain<IAppStateGrain>(o.Key);
