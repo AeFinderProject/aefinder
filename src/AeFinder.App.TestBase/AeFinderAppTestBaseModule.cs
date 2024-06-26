@@ -95,7 +95,7 @@ public class AeFinderAppTestBaseModule : AbpModule
         {
             var indexName = GetIndexName(serviceProvider, t);
             await elasticIndexService.CreateIndexAsync(indexName, t, elasticsearchOptions.NumberOfShards,
-                elasticsearchOptions.NumberOfShards);
+                elasticsearchOptions.NumberOfReplicas);
         }
     }
 
