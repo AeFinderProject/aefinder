@@ -180,7 +180,7 @@ public class LogElasticSearchService:ILogService
         
         if (getPolicyResponse.IsValid && getPolicyResponse.Policies.ContainsKey(policyName))
         {
-            _logger.LogInformation("FileBeat log ILM policy already exists.");
+            _logger.LogInformation($"FileBeat log ILM policy {policyName} already exists.");
             return;
         }
 
