@@ -122,51 +122,6 @@ public class LogElasticSearchService:ILogService
         return response.Documents.ToList();
     }
 
-    public async Task SetAppLogAliasAsync(string nameSpace, string appId, string version)
-    {
-        string aliasName = GetAppLogIndexAliasName(nameSpace, appId, version);
-        string indexPattern = aliasName + "-*";
-
-        //Create an empty app log index in case 404 error occurs when creating an index alias
-        var emptyLogIndexName = aliasName + "-empty";
-        await CreateEmptyAppLogIndexAsync(emptyLogIndexName);
-        //Create index alias
-        var response = await _elasticClient.Indices.BulkAliasAsync(a => a
-            .Add(add => add
-                .Index(indexPattern)
-                .Alias(aliasName)
-            )
-        );
-
-        if (!response.IsValid)
-        {
-            _logger.LogError("Error adding alias: " + response.DebugInformation);
-        }
-        else
-        {
-            _logger.LogInformation($"Alias {aliasName} added successfully");
-        }
-    }
-
-    private async Task CreateEmptyAppLogIndexAsync(string indexName)
-    {
-        var createIndexResponse = await _elasticClient.Indices.CreateAsync(indexName, c => c
-            .Settings(s => s
-                    .NumberOfShards(1)
-                    .NumberOfReplicas(1)
-            ).Map(m => m.AutoMap(typeof(AppLogIndex)))
-        );
-
-        if (createIndexResponse.IsValid)
-        {
-            _logger.LogInformation($"Empty index {indexName} is created successfully.");
-        }
-        else
-        {
-            _logger.LogError($"Failed to create an empty index {indexName}：{createIndexResponse.OriginalException.Message}");
-        }
-    }
-
     public string GetAppLogIndexAliasName(string nameSpace, string appId, string version)
     {
         return $"{nameSpace}-{appId}-{version}-log-index".ToLower();
@@ -174,8 +129,6 @@ public class LogElasticSearchService:ILogService
 
     public async Task CreateFileBeatLogILMPolicyAsync(string policyName)
     {
-        // var policyName = "my-filebeat-policy";
-
         var getPolicyResponse = await _elasticClient.IndexLifecycleManagement.GetLifecycleAsync(g => g.PolicyId(policyName));
         
         if (getPolicyResponse.IsValid && getPolicyResponse.Policies.ContainsKey(policyName))
@@ -190,7 +143,7 @@ public class LogElasticSearchService:ILogService
                 .Policy(pd => pd
                     .Phases(ph => ph
                         .Hot(h => h
-                            .MinimumAge("0ms") // 直接从0开始
+                            .MinimumAge("0ms") 
                             .Actions(a => a
                                 .Rollover(ro => ro
                                     .MaximumSize("50GB")
