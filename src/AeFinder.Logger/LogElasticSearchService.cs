@@ -129,8 +129,6 @@ public class LogElasticSearchService:ILogService
 
     public async Task CreateFileBeatLogILMPolicyAsync(string policyName)
     {
-        // var policyName = "my-filebeat-policy";
-
         var getPolicyResponse = await _elasticClient.IndexLifecycleManagement.GetLifecycleAsync(g => g.PolicyId(policyName));
         
         if (getPolicyResponse.IsValid && getPolicyResponse.Policies.ContainsKey(policyName))
@@ -145,7 +143,7 @@ public class LogElasticSearchService:ILogService
                 .Policy(pd => pd
                     .Phases(ph => ph
                         .Hot(h => h
-                            .MinimumAge("0ms") // 直接从0开始
+                            .MinimumAge("0ms") 
                             .Actions(a => a
                                 .Rollover(ro => ro
                                     .MaximumSize("50GB")
