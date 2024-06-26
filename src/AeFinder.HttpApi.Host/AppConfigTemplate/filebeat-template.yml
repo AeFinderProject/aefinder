@@ -30,7 +30,12 @@ setup.template.overwrite: true
 setup.template.name: "[NameSpace]-[AppId]-[Version]-log-index-template"
 setup.template.pattern: "[NameSpace]-[AppId]-[Version]-log-index-*"
 
-setup.ilm.enabled: false
+#setup.ilm.enabled: false
+
+setup.ilm.enabled: true
+setup.ilm.rollover_alias: "[NameSpace]-[AppId]-[Version]-log-index"
+setup.ilm.pattern: "{now/d}-000001"
+setup.ilm.policy_name: "[NameSpace]-filebeat-log-policy"
 
 output.elasticsearch:
   hosts: [

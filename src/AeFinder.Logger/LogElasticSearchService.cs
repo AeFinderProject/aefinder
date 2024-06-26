@@ -154,7 +154,7 @@ public class LogElasticSearchService:ILogService
             .Settings(s => s
                     .NumberOfShards(1)
                     .NumberOfReplicas(1)
-            )
+            ).Map(m => m.AutoMap(typeof(AppLogIndex)))
         );
 
         if (createIndexResponse.IsValid)
@@ -170,5 +170,64 @@ public class LogElasticSearchService:ILogService
     public string GetAppLogIndexAliasName(string nameSpace, string appId, string version)
     {
         return $"{nameSpace}-{appId}-{version}-log-index".ToLower();
+    }
+
+    public async Task CreateFileBeatLogILMPolicyAsync(string policyName)
+    {
+        // var policyName = "my-filebeat-policy";
+
+        var getPolicyResponse = await _elasticClient.IndexLifecycleManagement.GetLifecycleAsync(g => g.PolicyId(policyName));
+
+        if (!getPolicyResponse.IsValid)
+        {
+            _logger.LogError($"Failed to query the ILM policy: {getPolicyResponse.DebugInformation}");
+            return;
+        }
+        if (getPolicyResponse.IsValid && getPolicyResponse.Policies.ContainsKey(policyName))
+        {
+            _logger.LogInformation("FileBeat log ILM policy already exists.");
+            return;
+        }
+
+        if (!getPolicyResponse.Policies.ContainsKey(policyName))
+        {
+            var putPolicyResponse = await _elasticClient.IndexLifecycleManagement.PutLifecycleAsync(policyName, p => p
+                .Policy(pd => pd
+                    .Phases(ph => ph
+                        .Hot(h => h
+                            .MinimumAge("0ms") // 直接从0开始
+                            .Actions(a => a
+                                .Rollover(ro => ro
+                                    .MaximumSize("50GB")
+                                    .MaximumAge("7d"))
+                                .SetPriority(pp => pp.Priority(100))
+                            )
+                        )
+                        .Cold(c => c
+                            .MinimumAge("7d")
+                            .Actions(a => a
+                                .Freeze(f=>f)
+                                .SetPriority(pp => pp.Priority(50))
+                            )
+                        )
+                        .Delete(d => d
+                            .MinimumAge("30d")
+                            .Actions(a => a
+                                .Delete(de => de)
+                            )
+                        )
+                    )
+                )
+            );
+
+            if (putPolicyResponse.IsValid)
+            {
+                _logger.LogInformation("ILM policy is created successfully. ");
+            }
+            else
+            {
+                _logger.LogError($"Failed to create an ILM policy: {putPolicyResponse.DebugInformation}");
+            }
+        }
     }
 }
