@@ -36,7 +36,9 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         
         await CreateFullClientTypeAppPodAsync(appId, version, imageName);
         
-        await _logService.SetAppLogAliasAsync(KubernetesConstants.AppNameSpace, appId, version);
+        // await _logService.SetAppLogAliasAsync(KubernetesConstants.AppNameSpace, appId, version);
+        await _logService.CreateFileBeatLogILMPolicyAsync(KubernetesConstants.AppNameSpace + "-" +
+                                                          KubernetesConstants.FileBeatLogILMPolicyName);
         
         return await CreateQueryClientTypeAppPodAsync(appId, version, imageName);
     }

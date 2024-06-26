@@ -13,4 +13,6 @@ public interface ILogService
     Task SetAppLogAliasAsync(string nameSpace, string appId, string version);
 
     string GetAppLogIndexAliasName(string nameSpace, string appId, string version);
+
+    Task CreateFileBeatLogILMPolicyAsync(string policyName);
 }
