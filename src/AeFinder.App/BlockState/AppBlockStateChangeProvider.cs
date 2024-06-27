@@ -23,23 +23,11 @@ public class AppBlockStateChangeProvider : IAppBlockStateChangeProvider, ISingle
 
     public async Task AddBlockStateChangeAsync(string chainId, Dictionary<long,List<BlockStateChange>> changeKeys)
     {
-        var blockStateChanges = new Dictionary<long,Dictionary<string, BlockStateChange>>();
-        foreach (var changeKey in changeKeys)
-        {
-            var stateChange = await AddBlockStateChangeAsync(chainId, changeKey.Key, changeKey.Value);
-            blockStateChanges[changeKey.Key] = stateChange;
-        }
-
-        var tasks = blockStateChanges.Select(o =>
-        {
-            var grain = _clusterClient.GetGrain<IAppBlockStateChangeGrain>(
-                GetBlockStateChangeKey(chainId, o.Key));
-            return grain.SetAsync(o.Key, o.Value);
-        });
+        var tasks = changeKeys.Select(o => AddBlockStateChangeAsync(chainId, o.Key, o.Value));
         await Task.WhenAll(tasks);
     }
     
-    private async Task<Dictionary<string, BlockStateChange>> AddBlockStateChangeAsync(string chainId, long blockHeight, List<BlockStateChange> blockStateChanges)
+    private async Task AddBlockStateChangeAsync(string chainId, long blockHeight, List<BlockStateChange> blockStateChanges)
     {
         if(!_blockStateChanges.TryGetValue(chainId, out var changes))
         {
@@ -58,8 +46,9 @@ public class AppBlockStateChangeProvider : IAppBlockStateChangeProvider, ISingle
         {
             blockChange.TryAdd(blockStateChange.Key, blockStateChange);
         }
-
-        return blockChange;
+        
+        var grain = _clusterClient.GetGrain<IAppBlockStateChangeGrain>(GetBlockStateChangeKey(chainId, blockHeight));
+        await grain.SetAsync(blockHeight, blockChange);
     }
 
     public async Task<List<BlockStateChange>> GetBlockStateChangeAsync(string chainId, long blockHeight)
