@@ -10,7 +10,6 @@ using Volo.Abp.Threading;
 
 namespace AeFinder.Kubernetes;
 
-[DependsOn(typeof(AeFinderLoggerModule))]
 public class AeFinderKubernetesModule: AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -33,10 +32,5 @@ public class AeFinderKubernetesModule: AbpModule
     {
         var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
         KubernetesConstants.Initialize(configuration);
-        //Set filebeat log index ILM policy
-        var logService = context.ServiceProvider.GetRequiredService<ILogService>();
-        AsyncHelper.RunSync(async ()=> await logService.CreateFileBeatLogILMPolicyAsync(KubernetesConstants.AppNameSpace + "-" +
-            KubernetesConstants.FileBeatLogILMPolicyName));
-        
     }
 }
