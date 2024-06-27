@@ -1,5 +1,6 @@
 using AeFinder.Logger.Entities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nest;
 
 namespace AeFinder.Logger;
@@ -8,11 +9,14 @@ public class LogElasticSearchService:ILogService
 {
     private readonly ElasticClient _elasticClient;
     private readonly ILogger<LogElasticSearchService> _logger;
+    private readonly LogElasticSearchOptions _logElasticSearchOptions;
 
-    public LogElasticSearchService(ILogger<LogElasticSearchService> logger,ElasticClient elasticClient)
+    public LogElasticSearchService(ILogger<LogElasticSearchService> logger, ElasticClient elasticClient,
+        IOptionsSnapshot<LogElasticSearchOptions> logElasticSearchOptions)
     {
         _logger = logger;
         _elasticClient = elasticClient;
+        _logElasticSearchOptions = logElasticSearchOptions.Value;
     }
 
     public async Task<List<AppLogIndex>> GetAppLatestLogAsync(string indexName, int pageSize,
@@ -137,45 +141,42 @@ public class LogElasticSearchService:ILogService
         //     return;
         // }
 
-        // if (!getPolicyResponse.Policies.ContainsKey(policyName))
-        // {
-            var putPolicyResponse = await _elasticClient.IndexLifecycleManagement.PutLifecycleAsync(policyName, p => p
-                .Policy(pd => pd
-                    .Phases(ph => ph
-                        .Hot(h => h
-                            .MinimumAge("0ms") 
-                            .Actions(a => a
-                                .Rollover(ro => ro
-                                    .MaximumSize("50GB")
-                                    .MaximumAge("2h"))
-                                .SetPriority(pp => pp.Priority(100))
-                            )
+        var putPolicyResponse = await _elasticClient.IndexLifecycleManagement.PutLifecycleAsync(policyName, p => p
+            .Policy(pd => pd
+                .Phases(ph => ph
+                    .Hot(h => h
+                        .MinimumAge("0ms")
+                        .Actions(a => a
+                            .Rollover(ro => ro
+                                .MaximumSize(_logElasticSearchOptions.ILMPolicy.HotMaxSize)
+                                .MaximumAge(_logElasticSearchOptions.ILMPolicy.HotMaxAge))
+                            .SetPriority(pp => pp.Priority(100))
                         )
-                        .Cold(c => c
-                            .MinimumAge("1d")
-                            .Actions(a => a
-                                .Freeze(f=>f)
-                                .SetPriority(pp => pp.Priority(50))
-                            )
+                    )
+                    .Cold(c => c
+                        .MinimumAge(_logElasticSearchOptions.ILMPolicy.ColdMinAge)
+                        .Actions(a => a
+                            .Freeze(f => f)
+                            .SetPriority(pp => pp.Priority(50))
                         )
-                        .Delete(d => d
-                            .MinimumAge("7d")
-                            .Actions(a => a
-                                .Delete(de => de)
-                            )
+                    )
+                    .Delete(d => d
+                        .MinimumAge(_logElasticSearchOptions.ILMPolicy.DeleteMinAge)
+                        .Actions(a => a
+                            .Delete(de => de)
                         )
                     )
                 )
-            );
+            )
+        );
 
-            if (putPolicyResponse.IsValid)
-            {
-                _logger.LogInformation("ILM policy is created successfully. ");
-            }
-            else
-            {
-                _logger.LogError($"Failed to create an ILM policy: {putPolicyResponse.DebugInformation}");
-            }
-        // }
+        if (putPolicyResponse.IsValid)
+        {
+            _logger.LogInformation("ILM policy is created successfully. ");
+        }
+        else
+        {
+            _logger.LogError($"Failed to create an ILM policy: {putPolicyResponse.DebugInformation}");
+        }
     }
 }
