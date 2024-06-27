@@ -147,19 +147,19 @@ public class LogElasticSearchService:ILogService
                             .Actions(a => a
                                 .Rollover(ro => ro
                                     .MaximumSize("50GB")
-                                    .MaximumAge("7d"))
+                                    .MaximumAge("2h"))
                                 .SetPriority(pp => pp.Priority(100))
                             )
                         )
                         .Cold(c => c
-                            .MinimumAge("7d")
+                            .MinimumAge("1d")
                             .Actions(a => a
                                 .Freeze(f=>f)
                                 .SetPriority(pp => pp.Priority(50))
                             )
                         )
                         .Delete(d => d
-                            .MinimumAge("30d")
+                            .MinimumAge("7d")
                             .Actions(a => a
                                 .Delete(de => de)
                             )
