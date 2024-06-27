@@ -19,7 +19,6 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
     private readonly IAppInfoProvider _appInfoProvider;
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IClusterClient _clusterClient;
-    private readonly IDistributedEventBus _distributedEventBus;
     private const long UpgradeHeightThreshold = 1000;
 
     private string _currentVersion = null;

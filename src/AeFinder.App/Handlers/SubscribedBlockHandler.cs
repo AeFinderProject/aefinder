@@ -35,7 +35,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
             subscribedBlock.Version, subscribedBlock.PushToken);
         if (!isRunning)
         {
-            Logger.LogWarning(
+            Logger.LogTrace(
                 "SubscribedBlockHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} subscribedToken: {subscribedToken} clientId: {clientId} , ChainId: {ChainId}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
                 subscribedBlock.AppId, subscribedBlock.Version, subscribedBlock.PushToken,_appInfoProvider.AppId,
                 subscribedBlock.Blocks.First().ChainId,
