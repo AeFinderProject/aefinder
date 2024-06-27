@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
 using Volo.Abp.Modularity;
+using Volo.Abp.Threading;
 
 namespace AeFinder.Kubernetes;
 
@@ -33,7 +34,8 @@ public class AeFinderKubernetesModule: AbpModule
         KubernetesConstants.Initialize(configuration);
         //Set filebeat log index ILM policy
         var logService = context.ServiceProvider.GetRequiredService<ILogService>();
-        logService.CreateFileBeatLogILMPolicyAsync(KubernetesConstants.AppNameSpace + "-" +
-                                                   KubernetesConstants.FileBeatLogILMPolicyName);
+        AsyncHelper.RunSync(async ()=> await logService.CreateFileBeatLogILMPolicyAsync(KubernetesConstants.AppNameSpace + "-" +
+            KubernetesConstants.FileBeatLogILMPolicyName));
+        
     }
 }

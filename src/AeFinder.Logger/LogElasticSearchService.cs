@@ -141,6 +141,11 @@ public class LogElasticSearchService:ILogService
         //     return;
         // }
 
+        if (_logElasticSearchOptions == null || _logElasticSearchOptions.Uris == null)
+        {
+            return;
+        }
+
         var putPolicyResponse = await _elasticClient.IndexLifecycleManagement.PutLifecycleAsync(policyName, p => p
             .Policy(pd => pd
                 .Phases(ph => ph
