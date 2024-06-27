@@ -38,7 +38,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             subscribedBlock.Version, subscribedBlock.PushToken);
         if (!isRunning)
         {
-            _logger.LogWarning(
+            _logger.LogTrace(
                 "DAppSubscribedDataHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} , ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
                 subscribedBlock.AppId, subscribedBlock.Version,
                 subscribedBlock.Blocks.First().ChainId,
@@ -49,7 +49,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
 
         _logger.LogInformation(
             AeFinderApplicationConsts.AppLogEventId,
-            "Processing blocks. ChainId: {ChainId}, block height: {FirstBlockHeight}-{LastBlockHeight}, confirmed: {Confirmed}",
+            "Processing blocks. ChainId: {ChainId}, BlockHeight: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
             subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,
             subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
         
