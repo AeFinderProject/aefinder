@@ -45,6 +45,8 @@ output.elasticsearch:
   # password: "your_password"
   
 processors:
-  - add_host_metadata:
-      when.not.contains.tags: forwarded
-  - add_docker_metadata: ~
+  - drop_fields:
+      fields: [ "agent", "ecs","input","log","message" ]
+#  - add_host_metadata:
+#      when.not.contains.tags: forwarded
+#  - add_docker_metadata: ~
