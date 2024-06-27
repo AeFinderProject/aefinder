@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackageId>AeFinder.App.TestBase</PackageId>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Orleans.TestingHost" Version="3.6.5" />
+        <PackageReference Include="Moq" Version="4.20.70" />
+        <PackageReference Include="Volo.Abp.TestBase" Version="7.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AeFinder.App\AeFinder.App.csproj" />
+    </ItemGroup>
+
+</Project>
