@@ -129,16 +129,16 @@ public class LogElasticSearchService:ILogService
 
     public async Task CreateFileBeatLogILMPolicyAsync(string policyName)
     {
-        var getPolicyResponse = await _elasticClient.IndexLifecycleManagement.GetLifecycleAsync(g => g.PolicyId(policyName));
-        
-        if (getPolicyResponse.IsValid && getPolicyResponse.Policies.ContainsKey(policyName))
-        {
-            _logger.LogInformation($"FileBeat log ILM policy {policyName} already exists.");
-            return;
-        }
+        // var getPolicyResponse = await _elasticClient.IndexLifecycleManagement.GetLifecycleAsync(g => g.PolicyId(policyName));
+        //
+        // if (getPolicyResponse.IsValid && getPolicyResponse.Policies.ContainsKey(policyName))
+        // {
+        //     _logger.LogInformation($"FileBeat log ILM policy {policyName} already exists.");
+        //     return;
+        // }
 
-        if (!getPolicyResponse.Policies.ContainsKey(policyName))
-        {
+        // if (!getPolicyResponse.Policies.ContainsKey(policyName))
+        // {
             var putPolicyResponse = await _elasticClient.IndexLifecycleManagement.PutLifecycleAsync(policyName, p => p
                 .Policy(pd => pd
                     .Phases(ph => ph
@@ -176,6 +176,6 @@ public class LogElasticSearchService:ILogService
             {
                 _logger.LogError($"Failed to create an ILM policy: {putPolicyResponse.DebugInformation}");
             }
-        }
+        // }
     }
 }
