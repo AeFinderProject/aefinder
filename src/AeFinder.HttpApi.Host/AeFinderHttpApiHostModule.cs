@@ -5,6 +5,7 @@ using AeFinder.App.Deploy;
 using AeFinder.Grains;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
+using AeFinder.Logger;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -51,6 +52,7 @@ namespace AeFinder;
     typeof(AeFinderMongoDbModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AeFinderKubernetesModule),
+    typeof(AeFinderLoggerModule),
     typeof(AbpSwashbuckleModule)
 )]
 public class AeFinderHttpApiHostModule : AbpModule
@@ -311,6 +313,11 @@ public class AeFinderHttpApiHostModule : AbpModule
         app.UseConfiguredEndpoints();
 
         StartOrleans(context.ServiceProvider);
+        
+        //Set filebeat log index ILM policy
+        var logService = context.ServiceProvider.GetRequiredService<ILogService>();
+        AsyncHelper.RunSync(async ()=> await logService.CreateFileBeatLogILMPolicyAsync(KubernetesConstants.AppNameSpace + "-" +
+            KubernetesConstants.FileBeatLogILMPolicyName));
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
