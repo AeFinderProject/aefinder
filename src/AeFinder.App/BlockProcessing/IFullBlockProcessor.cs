@@ -46,7 +46,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         var blockProcessor = _blockProcessors.FirstOrDefault();
         if (blockProcessor != null)
         {
-            _logger.LogInformation(
+            _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
                 "Processing block. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}.",
                 block.ChainId, block.BlockHash, block.BlockHeight);
             try
@@ -68,7 +68,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         {
             if (transactionProcessor != null)
             {
-                _logger.LogInformation(
+                _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
                     "Processing transaction. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}, TransactionHash: {TransactionHash}.",
                     block.ChainId, block.BlockHash, block.BlockHeight, transaction.TransactionId);
                 try
@@ -95,7 +95,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
 
                 if (logEventProcessor != null)
                 {
-                    _logger.LogInformation(
+                    _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
                         "Processing log event. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}, TransactionHash: {TransactionHash}, ContractAddress: {ContractAddress}, EventName: {EventName}.",
                         block.ChainId, block.BlockHash, block.BlockHeight, transaction.TransactionId,
                         logEvent.ContractAddress,
