@@ -10,6 +10,7 @@ using Volo.Abp.Threading;
 
 namespace AeFinder.Kubernetes;
 
+[DependsOn(typeof(AeFinderLoggerModule))]
 public class AeFinderKubernetesModule: AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
