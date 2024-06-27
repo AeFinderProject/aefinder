@@ -17,15 +17,12 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
     private readonly KubernetesOptions _kubernetesOptions;
     private readonly ILogger<KubernetesAppManager> _logger;
     private readonly IKubernetesClientAdapter _kubernetesClientAdapter;
-    private readonly ILogService _logService;
-    
+
     public KubernetesAppManager(ILogger<KubernetesAppManager> logger,
-        ILogService logService,
         IKubernetesClientAdapter kubernetesClientAdapter,
         IOptionsSnapshot<KubernetesOptions> kubernetesOptions)
     {
         _logger = logger;
-        _logService = logService;
         _kubernetesClientAdapter = kubernetesClientAdapter;
         _kubernetesOptions = kubernetesOptions.Value;
     }
@@ -35,10 +32,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         // await CheckNameSpaceAsync();
         
         await CreateFullClientTypeAppPodAsync(appId, version, imageName);
-        
-        await _logService.CreateFileBeatLogILMPolicyAsync(KubernetesConstants.AppNameSpace + "-" +
-                                                          KubernetesConstants.FileBeatLogILMPolicyName);
-        
+
         return await CreateQueryClientTypeAppPodAsync(appId, version, imageName);
     }
 

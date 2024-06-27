@@ -1,4 +1,5 @@
 ﻿using AeFinder.Kubernetes.Manager;
+using AeFinder.Logger;
 using k8s;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,5 +31,9 @@ public class AeFinderKubernetesModule: AbpModule
     {
         var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
         KubernetesConstants.Initialize(configuration);
+        //Set filebeat log index ILM policy
+        var logService = context.ServiceProvider.GetRequiredService<ILogService>();
+        logService.CreateFileBeatLogILMPolicyAsync(KubernetesConstants.AppNameSpace + "-" +
+                                                   KubernetesConstants.FileBeatLogILMPolicyName);
     }
 }

@@ -36,12 +36,12 @@ public class AppLogService : AeFinderAppService, IAppLogService
             throw new UserFriendlyException(
                 $"Invalid version: '{version}'. Please provide a valid version.");
         }
+        var logIndexName = _logService.GetAppLogIndexAliasName(nameSpace, appId, version);
 
         if (startTime.IsNullOrEmpty())
         {
-            var indexName = _logService.GetAppLogIndexAliasName(nameSpace, appId, version);
             var result =
-                await _logService.GetAppLatestLogAsync(indexName, AeFinderLoggerConsts.DefaultAppLogPageSize, 1,
+                await _logService.GetAppLatestLogAsync(logIndexName, AeFinderLoggerConsts.DefaultAppLogPageSize, 1,
                     version, level, searchKeyWord);
             return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(result);
         }
@@ -53,8 +53,6 @@ public class AppLogService : AeFinderAppService, IAppLogService
                 $"Invalid start time format: '{startTime}'. Please provide a valid datetime.");
         }
         
-        var logIndexName = _logService.GetAppLogIndexAliasName(nameSpace, appId, version);
-
         var appLogs = await _logService.GetAppLogByStartTimeAsync(logIndexName,
             AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version, level, id, searchKeyWord);
         appLogs = appLogs.OrderByDescending(x => x.App_log.Time).ThenByDescending(x => x.Log_id).ToList();
