@@ -19,6 +19,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AeFinder.App.Deploy\AeFinder.App.Deploy.csproj" />
+      <ProjectReference Include="..\AeFinder.Logger\AeFinder.Logger.csproj" />
     </ItemGroup>
 
 </Project>

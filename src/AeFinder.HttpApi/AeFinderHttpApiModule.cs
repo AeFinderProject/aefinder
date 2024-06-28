@@ -22,9 +22,8 @@ namespace AeFinder;
     typeof(AbpTenantManagementHttpApiModule),
     typeof(AbpFeatureManagementHttpApiModule),
     typeof(AbpSettingManagementHttpApiModule),
-    typeof(AbpAspNetCoreSignalRModule),
-    typeof(AeFinderLoggerModule)
-    )]
+    typeof(AbpAspNetCoreSignalRModule)
+)]
 public class AeFinderHttpApiModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

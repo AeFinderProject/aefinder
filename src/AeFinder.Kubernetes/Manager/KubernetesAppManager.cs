@@ -2,6 +2,7 @@ using System.Text.Json;
 using AeFinder.App.Deploy;
 using AeFinder.Kubernetes.Adapter;
 using AeFinder.Kubernetes.ResourceDefinition;
+using AeFinder.Logger;
 using k8s;
 using k8s.Autorest;
 using Microsoft.Extensions.Logging;
@@ -85,6 +86,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeFull);
         var sideCarConfigContent = File.ReadAllText(KubernetesConstants.AppFileBeatConfigTemplateFilePath);
         sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderAppId, appId.ToLower());
+        sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderVersion, version.ToLower());
         sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderNameSpace,
             KubernetesConstants.AppNameSpace.ToLower());
         var sideCarConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == sideCarConfigName);
@@ -144,6 +146,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var sideCarConfigName = ConfigMapHelper.GetAppFileBeatConfigMapName(appId,version,KubernetesConstants.AppClientTypeQuery);
         var sideCarConfigContent = File.ReadAllText(KubernetesConstants.AppFileBeatConfigTemplateFilePath);
         sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderAppId, appId.ToLower());
+        sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderVersion, version.ToLower());
         sideCarConfigContent = sideCarConfigContent.Replace(KubernetesConstants.PlaceHolderNameSpace,
             KubernetesConstants.AppNameSpace.ToLower());
         var sideCarConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == sideCarConfigName);
