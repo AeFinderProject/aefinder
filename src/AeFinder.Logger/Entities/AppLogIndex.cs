@@ -13,7 +13,7 @@ public class AppLogIndex
 
     public string Environment { get; set; }
 
-    public string Message { get; set; }
+    // public string Message { get; set; }
 
     // public FileBeatLogHostInfo Host { get; set; }
     //

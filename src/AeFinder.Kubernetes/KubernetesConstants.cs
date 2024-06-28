@@ -15,9 +15,11 @@ public class KubernetesConstants
      public const string AppSettingFileMountPath = "/app/appsettings.json";
      public const string AppLogFileMountPath = "/app/Logs";
      
+     //FileBeat
      public const string FileBeatImage = "docker.elastic.co/beats/filebeat:7.16.2";
      public const string FileBeatConfigMountPath = "/etc/filebeat/filebeat.yml";
      public const string FileBeatConfigFileName = "filebeat.yml";
+     public const string FileBeatLogILMPolicyName = "filebeat-log-policy";
      
      //manager
      public const string AppClientTypeFull = "Full";
