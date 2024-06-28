@@ -37,8 +37,7 @@ public class AppBlockStateChangeProvider : IAppBlockStateChangeProvider, ISingle
 
         if (!changes.TryGetValue(blockHeight, out var blockChange))
         {
-            var stateChange = await GetBlockStateChangeFromGrainAsync(chainId, blockHeight);
-            blockChange = stateChange ?? new Dictionary<string, BlockStateChange>();
+            blockChange = new Dictionary<string, BlockStateChange>();
             _blockStateChanges[chainId][blockHeight] = blockChange;
         }
 
