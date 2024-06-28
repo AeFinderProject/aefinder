@@ -1,4 +1,6 @@
 using AeFinder.Logger.Entities;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nest;
 
 namespace AeFinder.Logger;
@@ -6,10 +8,15 @@ namespace AeFinder.Logger;
 public class LogElasticSearchService:ILogService
 {
     private readonly ElasticClient _elasticClient;
+    private readonly ILogger<LogElasticSearchService> _logger;
+    private readonly LogElasticSearchOptions _logElasticSearchOptions;
 
-    public LogElasticSearchService(ElasticClient elasticClient)
+    public LogElasticSearchService(ILogger<LogElasticSearchService> logger, ElasticClient elasticClient,
+        IOptionsSnapshot<LogElasticSearchOptions> logElasticSearchOptions)
     {
+        _logger = logger;
         _elasticClient = elasticClient;
+        _logElasticSearchOptions = logElasticSearchOptions.Value;
     }
 
     public async Task<List<AppLogIndex>> GetAppLatestLogAsync(string indexName, int pageSize,
@@ -117,5 +124,64 @@ public class LogElasticSearchService:ILogService
             .Query(Filter));
 
         return response.Documents.ToList();
+    }
+
+    public string GetAppLogIndexAliasName(string nameSpace, string appId, string version)
+    {
+        return $"{nameSpace}-{appId}-{version}-log-index".ToLower();
+    }
+
+    public async Task CreateFileBeatLogILMPolicyAsync(string policyName)
+    {
+        // var getPolicyResponse = await _elasticClient.IndexLifecycleManagement.GetLifecycleAsync(g => g.PolicyId(policyName));
+        //
+        // if (getPolicyResponse.IsValid && getPolicyResponse.Policies.ContainsKey(policyName))
+        // {
+        //     _logger.LogInformation($"FileBeat log ILM policy {policyName} already exists.");
+        //     return;
+        // }
+
+        if (_logElasticSearchOptions == null || _logElasticSearchOptions.Uris == null)
+        {
+            return;
+        }
+
+        var putPolicyResponse = await _elasticClient.IndexLifecycleManagement.PutLifecycleAsync(policyName, p => p
+            .Policy(pd => pd
+                .Phases(ph => ph
+                    .Hot(h => h
+                        .MinimumAge("0ms")
+                        .Actions(a => a
+                            .Rollover(ro => ro
+                                .MaximumSize(_logElasticSearchOptions.ILMPolicy.HotMaxSize)
+                                .MaximumAge(_logElasticSearchOptions.ILMPolicy.HotMaxAge))
+                            .SetPriority(pp => pp.Priority(100))
+                        )
+                    )
+                    .Cold(c => c
+                        .MinimumAge(_logElasticSearchOptions.ILMPolicy.ColdMinAge)
+                        .Actions(a => a
+                            .Freeze(f => f)
+                            .SetPriority(pp => pp.Priority(50))
+                        )
+                    )
+                    .Delete(d => d
+                        .MinimumAge(_logElasticSearchOptions.ILMPolicy.DeleteMinAge)
+                        .Actions(a => a
+                            .Delete(de => de)
+                        )
+                    )
+                )
+            )
+        );
+
+        if (putPolicyResponse.IsValid)
+        {
+            _logger.LogInformation("ILM policy is created successfully. ");
+        }
+        else
+        {
+            _logger.LogError($"Failed to create an ILM policy: {putPolicyResponse.DebugInformation}");
+        }
     }
 }

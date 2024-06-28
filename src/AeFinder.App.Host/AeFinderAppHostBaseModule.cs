@@ -3,6 +3,7 @@ using System.Linq;
 using AeFinder.App.Metrics;
 using AeFinder.MongoDb;
 using GraphQL;
+using GraphQL.Server.Ui.GraphiQL;
 using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -103,6 +104,14 @@ public class AeFinderAppHostBaseModule : AbpModule
                 GraphQLEndPoint = "../graphql",
                 SubscriptionsEndPoint = "../graphql",
             });
+        app.UseGraphQLGraphiQL(
+            $"/{appInfoOptions.AppId}/{appInfoOptions.Version}/ui/graphiql",
+            new GraphiQLOptions()
+            {
+                GraphQLEndPoint = "../graphql",
+                SubscriptionsEndPoint = "../graphql",
+            }
+        );
         app.UseOpenTelemetryPrometheusScrapingEndpoint($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/metrics");
         app.UseRouting();
         app.UseCors();
