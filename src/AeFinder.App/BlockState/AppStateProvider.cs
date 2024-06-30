@@ -105,9 +105,28 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         if (lastIrreversibleState.PendingState != null)
         {
             var stateEntity = JsonConvert.DeserializeObject<EmptyAeFinderEntity>(lastIrreversibleState.PendingState.Value);
+            if (stateEntity == null)
+            {
+                _logger.LogError($"stateEntity is null.chainId {chainId} stateKey {stateKey}");
+            }
+            if (stateEntity.Metadata == null)
+            {
+                _logger.LogError($"stateEntity.Metadata is null.chainId {chainId} stateKey {stateKey}");
+            }
             if (stateEntity.Metadata.Block.BlockHeight <= branchBlockIndex.BlockHeight)
             {
                 var lastIrreversibleBlockStateSet = await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
+                if (lastIrreversibleBlockStateSet == null)
+                {
+                    _logger.LogError($"lastIrreversibleBlockStateSet is null.chainId {chainId} stateKey {stateKey}");
+                }
+
+                if (lastIrreversibleBlockStateSet.Block == null)
+                {
+                    _logger.LogError(
+                        $"lastIrreversibleBlockStateSet.Block is null.chainId {chainId} stateKey {stateKey}");
+                }
+
                 if (stateEntity.Metadata.Block.BlockHeight <= lastIrreversibleBlockStateSet.Block.BlockHeight)
                 {
                     await MergeStateAsync(chainId, stateKey);
