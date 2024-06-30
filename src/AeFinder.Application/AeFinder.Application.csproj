@@ -3,7 +3,7 @@
   <Import Project="..\..\common.props" />
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>AeFinder</RootNamespace>
     <PackageId>AeFinder.Application</PackageId>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -28,16 +28,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.6.5" />
-    <PackageReference Include="NUglify" Version="1.20.0" />
+    <PackageReference Include="NUglify" Version="1.21.8" />
     <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />
     <PackageReference Include="Remotion.Linq" Version="2.2.0" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
-    <PackageReference Include="Volo.Abp.Account.Application" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.FeatureManagement.Application" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.Identity.Application" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.PermissionManagement.Application" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.TenantManagement.Application" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.Account.Application" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.Application" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.Identity.Application" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Application" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.TenantManagement.Application" Version="8.1.4" />
   </ItemGroup>
     
 </Project>

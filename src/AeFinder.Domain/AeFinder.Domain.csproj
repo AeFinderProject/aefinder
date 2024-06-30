@@ -3,7 +3,7 @@
   <Import Project="..\..\common.props" />
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>AeFinder</RootNamespace>
     <PackageId>AeFinder.Domain</PackageId>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -17,17 +17,17 @@
     <PackageReference Include="AElf.EntityMapping" Version="1.0.0-rc12" />
     <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.0.0-rc12" />
     <PackageReference Include="AElf.Types" Version="1.6.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.4.1" />
-    <PackageReference Include="Volo.Abp.Emailing" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.FeatureManagement.Domain" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.FeatureManagement.Domain.Shared" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.IdentityServer.Domain" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.OpenIddict.Domain" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.PermissionManagement.Domain.OpenIddict" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.BackgroundJobs.Domain" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.AuditLogging.Domain" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.SettingManagement.Domain" Version="7.0.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0-preview1" />
+    <PackageReference Include="Volo.Abp.Emailing" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.Domain" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.Domain.Shared" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.IdentityServer.Domain" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.OpenIddict.Domain" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Domain.OpenIddict" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.BackgroundJobs.Domain" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.AuditLogging.Domain" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.SettingManagement.Domain" Version="8.1.4" />
   </ItemGroup>
 
   <ItemGroup>

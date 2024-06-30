@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using Volo.Abp;
 using Volo.Abp.Auditing;
+using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Identity;
 using Volo.Abp.OpenIddict.Applications;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
@@ -31,8 +32,9 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         IOptions<IdentityOptions> identityOptions,
         IOpenIddictApplicationManager applicationManager,
         IOrganizationAppService organizationAppService,
-        IOrganizationUnitRepository organizationUnitRepository)
-        : base(userManager, userRepository, roleRepository, identityOptions)
+        IOrganizationUnitRepository organizationUnitRepository,
+        IPermissionChecker permissionChecker)
+        : base(userManager, userRepository, roleRepository, identityOptions, permissionChecker)
     {
         _organizationUnitRepository = organizationUnitRepository;
         _lookupNormalizer = lookupNormalizer;
@@ -107,7 +109,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             ClientId = appId,
             ClientSecret = deployKey,
             ConsentType=OpenIddictConstants.ConsentTypes.Implicit,
-            Type = OpenIddictConstants.ClientTypes.Confidential,
+            ClientType = OpenIddictConstants.ClientTypes.Confidential,
             DisplayName = "AeFinder Apps",
             Permissions =
             {
