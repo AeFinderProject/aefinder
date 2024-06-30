@@ -42,9 +42,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
+  
   <ItemGroup>
-    <Folder Include="DevTemplate\" />
+    <Content Include="../../templates/AeFinderAppTemplate/**" CopyToPublishDirectory="PreserveNewest" Link="DevTemplate/template/%(RecursiveDir)/%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>
