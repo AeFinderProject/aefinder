@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AeFinder.Apps;
 using AeFinder.User;
 using AeFinder.User.Dto;
 using Microsoft.AspNetCore.Authorization;
@@ -16,11 +17,14 @@ namespace AeFinder.Controllers;
 public class OrganizationUnitsController : AeFinderController
 {
     private readonly IOrganizationAppService _organizationAppService;
-    public OrganizationUnitsController(IOrganizationAppService organizationAppService)
+    private readonly IAppService _appService;
+
+    public OrganizationUnitsController(IOrganizationAppService organizationAppService, IAppService appService)
     {
         _organizationAppService = organizationAppService;
+        _appService = appService;
     }
-    
+
     [HttpPost]
     [Authorize(Policy = "OnlyAdminAccess")]
     public virtual async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(CreateOrganizationUnitInput input)
@@ -57,5 +61,21 @@ public class OrganizationUnitsController : AeFinderController
             throw new UserFriendlyException("Invalid OrganizationUnitId string");
         }
         return await _organizationAppService.GetUsersInOrganizationUnitAsync(organizationUnitGuid);
+    }
+        
+    [HttpPut]
+    [Route("{orgId}/max-app-count")]
+    //[Authorize(Policy = "OnlyAdminAccess")]
+    public async Task SetMaxAppCountAsync(Guid orgId, int maxAppCount)
+    {
+        await _appService.SetMaxAppCountAsync(orgId, maxAppCount);
+    }
+    
+    [HttpGet]
+    [Route("{orgId}/max-app-count")]
+    //[Authorize(Policy = "OnlyAdminAccess")]
+    public async Task GetMaxAppCountAsync(Guid orgId)
+    {
+        await _appService.GetMaxAppCountAsync(orgId);
     }
 }
