@@ -40,7 +40,7 @@ jobs:
       - task: UseDotNet@2
         displayName: 'Install .NET Core SDK'
         inputs:
-          version: 7.0.x
+          version: 8.0.x
       - script: cd scripts && bash elasticsearch-linux.sh
         displayName: 'Start an elasticsearch'
       - script: bash build.sh --target=Test-with-Codecov
