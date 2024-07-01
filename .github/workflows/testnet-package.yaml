@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: ['release/*'] # if you want to trigger the Github Action on another branch add or change this
+    branches: ['feature/abp-8.1.4'] # if you want to trigger the Github Action on another branch add or change this
 env:
   DOTNET_INSTALL_DIR: "./.dotnet"
 
@@ -25,8 +25,6 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0' # which dotnet version is required?
-      - name: Create temporary global.json
-        run: echo '{"sdk":{"version":"8.0.6"}}' > ./global.json
       - run: dotnet publish src/${{ matrix.servicename }}/${{ matrix.servicename }}.csproj -c Release -o out/${{ matrix.servicename }}
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
