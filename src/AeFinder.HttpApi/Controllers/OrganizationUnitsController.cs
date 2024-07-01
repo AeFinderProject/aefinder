@@ -64,18 +64,18 @@ public class OrganizationUnitsController : AeFinderController
     }
         
     [HttpPut]
-    [Route("{orgId}/max-app-count")]
-    //[Authorize(Policy = "OnlyAdminAccess")]
-    public async Task SetMaxAppCountAsync(Guid orgId, int maxAppCount)
+    [Route("{id}/max-app-count")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task SetMaxAppCountAsync(Guid id, int maxAppCount)
     {
-        await _appService.SetMaxAppCountAsync(orgId, maxAppCount);
+        await _appService.SetMaxAppCountAsync(id, maxAppCount);
     }
     
     [HttpGet]
-    [Route("{orgId}/max-app-count")]
-    //[Authorize(Policy = "OnlyAdminAccess")]
-    public async Task GetMaxAppCountAsync(Guid orgId)
+    [Route("{id}/max-app-count")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task<int> GetMaxAppCountAsync(Guid id)
     {
-        await _appService.GetMaxAppCountAsync(orgId);
+        return await _appService.GetMaxAppCountAsync(id);
     }
 }
