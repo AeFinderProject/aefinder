@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using AeFinder.BlockScan;
 using AeFinder.Models;
 using AeFinder.Subscriptions;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

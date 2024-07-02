@@ -25,7 +25,7 @@ public class LoginTokenExtensionGrant : ITokenExtensionGrant, ITransientDependen
     {
         var scopeManager = context.HttpContext.RequestServices.GetRequiredService<IOpenIddictScopeManager>();
         var abpOpenIddictClaimDestinationsManager = context.HttpContext.RequestServices
-            .GetRequiredService<AbpOpenIddictClaimDestinationsManager>();
+            .GetRequiredService<AbpOpenIddictClaimsPrincipalManager>();
         var signInManager = context.HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Identity.SignInManager<IdentityUser>>();
         var identityUserManager = context.HttpContext.RequestServices.GetRequiredService<IdentityUserManager>();
         var name = context.Request.GetParameter("name")?.ToString();
@@ -72,7 +72,7 @@ public class LoginTokenExtensionGrant : ITokenExtensionGrant, ITransientDependen
         principal.SetResources(await GetResourcesAsync(context.Request.GetScopes(), scopeManager));
         principal.SetAudiences("AeFinder");
 
-        await abpOpenIddictClaimDestinationsManager.SetAsync(principal);
+        await abpOpenIddictClaimDestinationsManager.HandleAsync(context.Request, principal);
 
         return new SignInResult(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, principal);
     }

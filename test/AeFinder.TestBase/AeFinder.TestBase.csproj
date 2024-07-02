@@ -3,7 +3,7 @@
   <Import Project="..\..\common.props" />
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>AeFinder</RootNamespace>
   </PropertyGroup>
 
@@ -16,8 +16,8 @@
     <PackageReference Include="Moq" Version="4.20.70" />
     <PackageReference Include="NSubstitute" Version="4.3.0" />
     <PackageReference Include="Shouldly" Version="4.0.3" />
-    <PackageReference Include="Volo.Abp.Autofac" Version="7.0.0" />
-    <PackageReference Include="Volo.Abp.TestBase" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.Autofac" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.TestBase" Version="8.1.4" />
     <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="xunit.extensibility.core" Version="2.4.2" />
     <PackageReference Include="xunit.extensibility.execution" Version="2.4.2" />

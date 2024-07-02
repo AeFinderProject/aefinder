@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using AeFinder.GraphQL;
 using AeFinder.GraphQL.Dto;
 using AeFinder.Kubernetes;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
