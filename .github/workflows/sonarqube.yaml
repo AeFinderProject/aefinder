@@ -1,8 +1,6 @@
 on:
-  #pull_request:
-  #  types: [opened, synchronize, reopened]
-  push:
-    branches: ['feature/sonarqube']
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 name: PR Static Code Analysis
 jobs:
