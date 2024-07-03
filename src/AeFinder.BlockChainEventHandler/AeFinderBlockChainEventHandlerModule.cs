@@ -42,36 +42,36 @@ public class AeFinderBlockChainEventHandlerModule:AbpModule
         // context.Services.AddSingleton<IGrainFactory>(sp =>
         //     sp.GetService<AeFinderClientHostedService>().OrleansClient);
         
-        context.Services.AddSingleton<IClusterClient>(o =>
-        {
-            return new ClientBuilder()
-                .ConfigureDefaults()
-                // .UseRedisClustering(opt =>
-                // {
-                //     opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
-                //     opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
-                // })
-                .UseMongoDBClient(configuration["Orleans:MongoDBClient"])
-                .UseMongoDBClustering(options =>
-                {
-                    options.DatabaseName = configuration["Orleans:DataBase"];;
-                    options.Strategy = MongoDBMembershipStrategy.SingleDocument;
-                })
-                .Configure<ClusterOptions>(options =>
-                {
-                    options.ClusterId = configuration["Orleans:ClusterId"];
-                    options.ServiceId = configuration["Orleans:ServiceId"];
-                })
-                .Configure<ClientMessagingOptions>(options =>
-                {
-                    options.ResponseTimeout = TimeSpan.FromSeconds(Convert.ToInt32(configuration["Orleans:GrainResponseTimeOut"]));
-                    options.MaxMessageBodySize = Convert.ToInt32(configuration["Orleans:GrainMaxMessageBodySize"]);
-                })
-                .ConfigureApplicationParts(parts =>
-                    parts.AddApplicationPart(typeof(AeFinderGrainsModule).Assembly).WithReferences())
-                .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
-                .Build();
-        });
+        // context.Services.AddSingleton<IClusterClient>(o =>
+        // {
+        //     return new ClientBuilder()
+        //         .ConfigureDefaults()
+        //         // .UseRedisClustering(opt =>
+        //         // {
+        //         //     opt.ConnectionString = configuration["Orleans:ClusterDbConnection"];
+        //         //     opt.Database = Convert.ToInt32(configuration["Orleans:ClusterDbNumber"]);
+        //         // })
+        //         .UseMongoDBClient(configuration["Orleans:MongoDBClient"])
+        //         .UseMongoDBClustering(options =>
+        //         {
+        //             options.DatabaseName = configuration["Orleans:DataBase"];;
+        //             options.Strategy = MongoDBMembershipStrategy.SingleDocument;
+        //         })
+        //         .Configure<ClusterOptions>(options =>
+        //         {
+        //             options.ClusterId = configuration["Orleans:ClusterId"];
+        //             options.ServiceId = configuration["Orleans:ServiceId"];
+        //         })
+        //         .Configure<ClientMessagingOptions>(options =>
+        //         {
+        //             options.ResponseTimeout = TimeSpan.FromSeconds(Convert.ToInt32(configuration["Orleans:GrainResponseTimeOut"]));
+        //             options.MaxMessageBodySize = Convert.ToInt32(configuration["Orleans:GrainMaxMessageBodySize"]);
+        //         })
+        //         .ConfigureApplicationParts(parts =>
+        //             parts.AddApplicationPart(typeof(AeFinderGrainsModule).Assembly).WithReferences())
+        //         .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
+        //         .Build();
+        // });
     }
     
     private void ConfigureCache(IConfiguration configuration)
@@ -81,14 +81,14 @@ public class AeFinderBlockChainEventHandlerModule:AbpModule
     
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
-        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        AsyncHelper.RunSync(async ()=> await client.Connect());
+        // var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        // AsyncHelper.RunSync(async ()=> await client.Connect());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        AsyncHelper.RunSync(client.Close);
+        // var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        // AsyncHelper.RunSync(client.Close);
     }
 
     

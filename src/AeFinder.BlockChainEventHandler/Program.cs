@@ -59,6 +59,7 @@ namespace AeFinder.BlockChainEventHandler
                 {
                     services.AddApplication<AeFinderBlockChainEventHandlerModule>();
                 })
+                .UseOrleansClient()
                 .UseAutofac()
                 .UseSerilog();
     }

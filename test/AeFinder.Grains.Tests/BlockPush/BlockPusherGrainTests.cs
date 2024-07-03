@@ -8,6 +8,7 @@ using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Chains;
 using AeFinder.Grains.Grain.Subscriptions;
+using Orleans;
 using Orleans.Streams;
 using Shouldly;
 using Xunit;
@@ -62,7 +63,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var stream =
             Cluster.Client
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
+                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
@@ -150,7 +151,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var stream =
             Cluster.Client
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
+                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
@@ -267,7 +268,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var stream =
             Cluster.Client
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
+                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
@@ -335,7 +336,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var stream =
             Cluster.Client
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
+                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
@@ -405,7 +406,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var stream =
             Cluster.Client
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
+                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>
@@ -469,7 +470,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var stream =
             Cluster.Client
                 .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
+                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
         await stream.SubscribeAsync((v, t) =>

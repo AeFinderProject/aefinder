@@ -18,19 +18,19 @@ public class BlockGrain:Grain<BlockState>,IBlockGrain
         _logger = logger;
     }
     
-    public override async Task OnActivateAsync()
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await ReadStateAsync();
-        await base.OnActivateAsync();
+        await base.OnActivateAsync(cancellationToken);
     }
 
-    public override async Task OnDeactivateAsync()
+    public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
         if (this.State != null && this.State.Block.BlockHeight > 0)
         {
             await WriteStateAsync();
         }
-        await base.OnDeactivateAsync();
+        await base.OnDeactivateAsync(reason, cancellationToken);
     }
     
     public Task<BlockData> GetBlock()

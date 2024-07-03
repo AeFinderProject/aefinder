@@ -6,6 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.Orleans.Client" Version="8.1.0" />
+        <PackageReference Include="Orleans.Streams.Kafka" Version="8.0.2" />
         <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
         <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
         <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
@@ -13,8 +15,7 @@
         <PackageReference Include="Volo.Abp.Autofac" Version="8.1.4" />
         <PackageReference Include="Volo.Abp.AspNetCore.Mvc" Version="8.1.4" />
         <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="7.1.1" />
-        <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />
-        <PackageReference Include="AElf.Orleans.Streams.Kafka" Version="1.0.0" />
+        <PackageReference Include="Orleans.Providers.MongoDB" Version="8.0.3" />
         <PackageReference Include="Volo.Abp.EventBus.RabbitMQ" Version="8.1.4" />
     </ItemGroup>
 

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Orleans;
 using Orleans.Streams.Kafka.Utils;
 using Volo.Abp.Modularity;
 
@@ -15,10 +16,12 @@ namespace AeFinder.App;
 public class Startup
 {
     private readonly IConfiguration _configuration;
+    private readonly IClusterClient _clusterClient;
 
-    public Startup(IConfiguration configuration)
+    public Startup(IConfiguration configuration,IClusterClient clusterClient)
     {
         _configuration = configuration;
+        _clusterClient = clusterClient;
     }
 
     // This method gets called by the runtime. Use this method to add services to the container.
@@ -64,9 +67,9 @@ public class Startup
         var appId = _configuration["AppInfo:AppId"];
         var version = _configuration["AppInfo:Version"];
         
-        var client = OrleansClusterClientFactory.GetClusterClient(_configuration);
-        await client.Connect();
-        var appSubscriptionGrain = client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        // var client = OrleansClusterClientFactory.GetClusterClient(_configuration);
+        // await client.Connect();
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         return await appSubscriptionGrain.GetCodeAsync(version);
     }
 }

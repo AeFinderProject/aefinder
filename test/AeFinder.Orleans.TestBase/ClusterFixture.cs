@@ -1,18 +1,13 @@
 using AeFinder.BlockScan;
-using Microsoft.Extensions.DependencyInjection;
-using AElf.Orleans.EventSourcing.Snapshot.Hosting;
-using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Blocks;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
-using Orleans;
-using Orleans.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;
 using Moq;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.EventBus.Distributed;
-using Volo.Abp.EventBus.Local;
 using Volo.Abp.ObjectMapping;
 using Volo.Abp.Reflection;
 
@@ -36,12 +31,14 @@ public class ClusterFixture:IDisposable,ISingletonDependency
 
     public TestCluster Cluster { get; private set; }
     
-    private class TestSiloConfigurations : ISiloBuilderConfigurator 
+    private class TestSiloConfigurations : ISiloConfigurator 
     {
-        public void Configure(ISiloHostBuilder hostBuilder) {
-            hostBuilder.ConfigureServices(services => {
+        public void Configure(ISiloBuilder hostBuilder)
+        {
+            hostBuilder.ConfigureServices(services =>
+                {
                     services.AddSingleton<IBlockGrain, BlockGrain>();
-                    services.AddTransient(p=>Mock.Of<IBlockFilterAppService>());
+                    services.AddTransient(p => Mock.Of<IBlockFilterAppService>());
                     services.AddAutoMapper(typeof(AeFinderApplicationModule).Assembly);
                     services.OnExposing(onServiceExposingContext =>
                     {
@@ -89,31 +86,33 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                 //     options.UseJson = true;
                 //     options.DatabaseNumber = 0;
                 // }))
-                .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
+                // .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
+                .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
-                .AddMemoryGrainStorageAsDefault()
-                .AddSnapshotStorageBasedLogConsistencyProviderAsDefault((op, name) => 
-                {
-                    op.UseIndependentEventStorage = false;
-                    // op.UseIndependentEventStorage = true;
-                    // // Should configure event storage when set UseIndependentEventStorage true
-                    // op.ConfigureIndependentEventStorage = (services, name) =>
-                    // {
-                    //     var eventStoreConnectionString = "ConnectTo=tcp://admin:changeit@localhost:1113; HeartBeatTimeout=500";
-                    //     var eventStoreConnection = EventStoreConnection.Create(eventStoreConnectionString);
-                    //     eventStoreConnection.ConnectAsync().Wait();
-                    //
-                    //     services.AddSingleton(eventStoreConnection);
-                    //     services.AddSingleton<IGrainEventStorage, EventStoreGrainEventStorage>();
-                    // };
-                });
+                .AddMemoryGrainStorageAsDefault();
+            // .AddSnapshotStorageBasedLogConsistencyProviderAsDefault((op, name) => 
+            // {
+            //     op.UseIndependentEventStorage = false;
+            //     // op.UseIndependentEventStorage = true;
+            //     // // Should configure event storage when set UseIndependentEventStorage true
+            //     // op.ConfigureIndependentEventStorage = (services, name) =>
+            //     // {
+            //     //     var eventStoreConnectionString = "ConnectTo=tcp://admin:changeit@localhost:1113; HeartBeatTimeout=500";
+            //     //     var eventStoreConnection = EventStoreConnection.Create(eventStoreConnectionString);
+            //     //     eventStoreConnection.ConnectAsync().Wait();
+            //     //
+            //     //     services.AddSingleton(eventStoreConnection);
+            //     //     services.AddSingleton<IGrainEventStorage, EventStoreGrainEventStorage>();
+            //     // };
+            // });
         }
     }
     
     private class TestClientBuilderConfigurator : IClientBuilderConfigurator
     {
         public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) => clientBuilder
-            .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName);
+            .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName);
+            // .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName);
     }
 }
 

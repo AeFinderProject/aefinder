@@ -10,19 +10,20 @@
     <ItemGroup>
         <PackageReference Include="Com.Ctrip.Framework.Apollo.Configuration" Version="2.10.2" />  
       <PackageReference Include="JsonNet.PrivateSettersContractResolvers" Version="1.0.0" />
-      <PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Linux" Version="3.6.5" />
-      <PackageReference Include="Microsoft.Orleans.Server" Version="3.6.5" />
-      <PackageReference Include="Orleans.Clustering.Redis" Version="3.2.2" />
-      <PackageReference Include="Orleans.Persistence.Redis" Version="3.2.2" />
-      <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />
-      <PackageReference Include="Orleans.Reminders.Redis" Version="3.2.2" />
-      <PackageReference Include="OrleansDashboard" Version="3.6.2" />
+<!--      <PackageReference Include="Microsoft.Orleans.OrleansTelemetryConsumers.Linux" Version="3.6.5" />-->
+      <PackageReference Include="Microsoft.Orleans.Server" Version="8.1.0" />
+<!--      <PackageReference Include="Orleans.Clustering.Redis" Version="3.2.2" />-->
+<!--      <PackageReference Include="Orleans.Persistence.Redis" Version="3.2.2" />-->
+      <PackageReference Include="Orleans.Providers.MongoDB" Version="8.0.3" />
+      <PackageReference Include="Orleans.Streams.Kafka" Version="8.0.2" />
+<!--      <PackageReference Include="Orleans.Reminders.Redis" Version="3.2.2" />-->
+      <PackageReference Include="OrleansDashboard" Version="8.0.0" />
       <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
       <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
         <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
       <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="8.1.4" />
       <PackageReference Include="Volo.Abp.Autofac" Version="8.1.4" />
-        <PackageReference Include="AElf.Orleans.Streams.Kafka" Version="1.0.0" />
+<!--        <PackageReference Include="AElf.Orleans.Streams.Kafka" Version="1.0.0" />-->
         <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="8.1.4" />
         <PackageReference Include="Volo.Abp.EventBus.RabbitMQ" Version="8.1.4" />
     </ItemGroup>

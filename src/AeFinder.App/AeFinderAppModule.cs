@@ -121,7 +121,7 @@ public class AeFinderAppModule : AbpModule
             var stream =
                 clusterClient
                     .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                    .GetStream<SubscribedBlockDto>(streamId, AeFinderApplicationConsts.MessageStreamNamespace);
+                    .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
             var subscriptionHandles = await stream.GetAllSubscriptionHandles();
             if (!subscriptionHandles.IsNullOrEmpty())

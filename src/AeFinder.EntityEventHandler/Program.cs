@@ -59,6 +59,7 @@ namespace AeFinder.EntityEventHandler
                 {
                     services.AddApplication<AeFinderEntityEventHandlerModule>();
                 })
+                .UseOrleansClient()
                 .UseAutofac()
                 .UseSerilog();
     }

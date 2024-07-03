@@ -54,6 +54,7 @@ public class Program
     private static IHostBuilder CreateHostBuilder(string[] args)
     {
         return Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
+            .UseOrleansClient()
             .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); })
             .UseAutofac()
             .UseSerilog();

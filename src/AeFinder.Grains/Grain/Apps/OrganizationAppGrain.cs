@@ -17,9 +17,9 @@ public class OrganizationAppGrain : Grain<OrganizationAppState>, IOrganizationAp
         return Task.FromResult(State.AppIds);
     }
     
-    public override async Task OnActivateAsync()
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await ReadStateAsync();
-        await base.OnActivateAsync();
+        await base.OnActivateAsync(cancellationToken);
     }
 }
