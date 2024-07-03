@@ -13,6 +13,7 @@ public class AppDto
     public AppStatus Status { get; set; }
     public long CreateTime { get; set; }
     public long UpdateTime { get; set; }
+    public string TestId { get; set; }
     public AppVersion Versions { get; set; } = new();
 }
 

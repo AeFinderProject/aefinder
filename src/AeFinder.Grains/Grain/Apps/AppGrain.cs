@@ -31,6 +31,7 @@ public class AppGrain : Grain<AppState>, IAppGrain
         State.Status = AppStatus.UnDeployed;
         State.CreateTime = DateTime.UtcNow;
         State.UpdateTime = State.CreateTime;
+        State.TestId = this.GetPrimaryKeyString();
 
         await WriteStateAsync();
         return _objectMapper.Map<AppState, AppDto>(State);
