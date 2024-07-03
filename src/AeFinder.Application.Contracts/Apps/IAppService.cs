@@ -15,6 +15,6 @@ public interface IAppService
     Task SetMaxAppCountAsync(Guid organizationId, int appCount);
     Task<int> GetMaxAppCountAsync(Guid organizationId);
 
-    Task<int> GetCountAsync();
-    Task CountAsync();
+    Task<int> GetCountAsync(string id);
+    Task CountAsync(string id);
 }

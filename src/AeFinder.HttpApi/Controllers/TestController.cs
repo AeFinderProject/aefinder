@@ -24,14 +24,16 @@ public class TestController : AeFinderController
     }
 
     [HttpPost]
-    public async Task CountAsync()
+    [Route("{id}")]
+    public async Task CountAsync(string id)
     {
-        await _appService.CountAsync();
+        await _appService.CountAsync(id);
     }
 
     [HttpGet]
-    public async Task<int> GetCountAsync()
+    [Route("{id}")]
+    public async Task<int> GetCountAsync(string id)
     {
-        return await _appService.GetCountAsync();
+        return await _appService.GetCountAsync(id);
     }
 }

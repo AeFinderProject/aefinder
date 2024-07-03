@@ -140,17 +140,17 @@ public class AppService : AeFinderAppService, IAppService
         return await organizationAppGrain.GetMaxAppCountAsync();
     }
 
-    public async Task<int> GetCountAsync()
+    public async Task<int> GetCountAsync(string id)
     {
         var grain =
-            _clusterClient.GetGrain<ITestGrain>("1");
+            _clusterClient.GetGrain<ITestGrain>(id);
         return await grain.GetCountAsync();
     }
 
-    public async Task CountAsync()
+    public async Task CountAsync(string id)
     {
         var grain =
-            _clusterClient.GetGrain<ITestGrain>("1");
+            _clusterClient.GetGrain<ITestGrain>(id);
         await grain.CountAsync();
     }
 
