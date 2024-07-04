@@ -55,11 +55,11 @@ namespace AeFinder.EntityEventHandler
                 })
                 .InitAppConfiguration(true)
                 .UseApolloForHostBuilder()
+                .UseOrleansClient()
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddApplication<AeFinderEntityEventHandlerModule>();
                 })
-                .UseOrleansClient()
                 .UseAutofac()
                 .UseSerilog();
     }
