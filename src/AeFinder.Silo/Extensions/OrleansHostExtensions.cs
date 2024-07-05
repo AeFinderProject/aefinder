@@ -47,6 +47,19 @@ public static class OrleansHostExtensions
                 {
                     op.CollectionPrefix = "GrainStorage";
                     op.DatabaseName = configSection.GetValue<string>("DataBase");
+                    
+                    var grainIdPrefix = configSection
+                        .GetSection("GrainSpecificIdPrefix").GetChildren().ToDictionary(o => o.Key, o => o.Value);
+                    op.KeyGenerator = id =>
+                    {
+                        var grainType = id.Type.ToString();
+                        if (grainIdPrefix.TryGetValue(grainType, out var prefix))
+                        {
+                            return $"{prefix}+{id.Key}";
+                        }
+
+                        return id.ToString();
+                    };
                 })
                 .Configure<GrainCollectionOptions>(options =>
                 {
@@ -60,12 +73,9 @@ public static class OrleansHostExtensions
                 })
                 .Configure<GrainCollectionNameOptions>(options =>
                 {
-                    var collection = configSection
+                    var collectionName = configSection
                         .GetSection(nameof(GrainCollectionNameOptions.GrainSpecificCollectionName)).GetChildren();
-                    if (collection != null)
-                    {
-                        options.GrainSpecificCollectionName = collection.ToDictionary(o => o.Key, o => o.Value);
-                    }
+                    options.GrainSpecificCollectionName = collectionName.ToDictionary(o => o.Key, o => o.Value);
                 })
                 .UseMongoDBReminders(options =>
                 {
