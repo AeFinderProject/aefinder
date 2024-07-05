@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Orleans;
 
 namespace AeFinder.Block.Dtos;
 
+[GenerateSerializer]
 public class BlockWithTransactionDto : BlockDto
 {
-    public List<TransactionDto> Transactions { get; set; } = new();
+    [Id(0)] public List<TransactionDto> Transactions { get; set; } = new();
 }

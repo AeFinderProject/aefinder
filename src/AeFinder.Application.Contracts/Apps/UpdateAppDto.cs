@@ -1,13 +1,15 @@
 using System.ComponentModel.DataAnnotations;
+using Orleans;
 
 namespace AeFinder.Apps;
 
+[GenerateSerializer]
 public class UpdateAppDto
 {
     [MaxLength(200)]
-    public string ImageUrl { get; set; }
+    [Id(0)] public string ImageUrl { get; set; }
     [MaxLength(500)]
-    public string Description { get; set; }
+    [Id(1)] public string Description { get; set; }
     [MaxLength(200)]
-    public string SourceCodeUrl { get; set; }
+    [Id(2)] public string SourceCodeUrl { get; set; }
 }

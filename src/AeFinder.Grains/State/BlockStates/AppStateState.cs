@@ -1,8 +1,9 @@
 namespace AeFinder.Grains.State.BlockStates;
 
+[GenerateSerializer]
 public class AppStateState
 {
-    public AppState LastIrreversibleState { get; set; }
+    [Id(0)] public AppState LastIrreversibleState { get; set; }
     
-    public AppState PendingState { get; set; }
+    [Id(1)] public AppState PendingState { get; set; }
 }

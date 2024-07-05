@@ -2,7 +2,8 @@ using AeFinder.Grains.Grain.BlockStates;
 
 namespace AeFinder.Grains.State.BlockStates;
 
+[GenerateSerializer]
 public class AppBlockStateSetState
 {
-    public BlockStateSet BlockStateSet { get; set; }
+    [Id(0)] public BlockStateSet BlockStateSet { get; set; }
 }
