@@ -55,11 +55,11 @@ namespace AeFinder.BlockChainEventHandler
                 })
                 .InitAppConfiguration(true)
                 .UseApolloForHostBuilder()
+                .UseOrleansClient()
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddApplication<AeFinderBlockChainEventHandlerModule>();
                 })
-                .UseOrleansClient()
                 .UseAutofac()
                 .UseSerilog();
     }

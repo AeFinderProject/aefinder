@@ -1,5 +1,6 @@
 namespace AeFinder.Grains.State.Chains;
 
+[GenerateSerializer]
 public class ChainState
 {
     public long BlockHeight { get; set; }
