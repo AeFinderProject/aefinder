@@ -1,4 +1,5 @@
 using System.Net;
+using AeFinder.Silo.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -42,7 +43,7 @@ public static class OrleansHostExtensions
                     options.DatabaseName = configSection.GetValue<string>("DataBase");
                     options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
-                .AddMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
+                .AddAeFinderMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
                 {
                     op.CollectionPrefix = "GrainStorage";
                     op.DatabaseName = configSection.GetValue<string>("DataBase");
@@ -50,10 +51,20 @@ public static class OrleansHostExtensions
                 .Configure<GrainCollectionOptions>(options =>
                 {
                     // Override the value of CollectionAge to
-                    var collection = configSection.GetSection("ClassSpecificCollectionAge").GetChildren();
+                    var collection = configSection.GetSection(nameof(GrainCollectionOptions.ClassSpecificCollectionAge))
+                        .GetChildren();
                     foreach (var item in collection)
                     {
                         options.ClassSpecificCollectionAge[item.Key] = TimeSpan.FromSeconds(int.Parse(item.Value));
+                    }
+                })
+                .Configure<GrainCollectionNameOptions>(options =>
+                {
+                    var collection = configSection
+                        .GetSection(nameof(GrainCollectionNameOptions.GrainSpecificCollectionName)).GetChildren();
+                    if (collection != null)
+                    {
+                        options.GrainSpecificCollectionName = collection.ToDictionary(o => o.Key, o => o.Value);
                     }
                 })
                 .UseMongoDBReminders(options =>
@@ -73,7 +84,7 @@ public static class OrleansHostExtensions
                     options.MaxForwardCount = configSection.GetValue<int>("MaxForwardCount");
                 })
                 //.AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .AddMongoDBGrainStorage("PubSubStore", options =>
+                .AddAeFinderMongoDBGrainStorage("PubSubStore", options =>
                 {
                     // Config PubSubStore Storage for Persistent Stream 
                     options.CollectionPrefix = "StreamStorage";
@@ -97,23 +108,23 @@ public static class OrleansHostExtensions
                 })
                 // .UseLinuxEnvironmentStatistics()
                 .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); })
-                .AddKafka(AeFinderApplicationConsts.MessageStreamName)
-                .WithOptions(options =>
-                {
-                    options.BrokerList = configuration.GetSection("Kafka:Brokers").Get<List<string>>();
-                    options.ConsumerGroupId = "AeFinder";
-                    options.ConsumeMode = ConsumeMode.LastCommittedMessage;
-                    options.AddTopic(AeFinderApplicationConsts.MessageStreamNamespace,
-                        new TopicCreationConfig
-                        {
-                            AutoCreate = true,
-                            Partitions = configuration.GetSection("Kafka:Partitions").Get<int>(),
-                            ReplicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>()
-                        });
-                })
-                .AddJson()
-                .AddLoggingTracker()
-                .Build();
+            .AddKafka(AeFinderApplicationConsts.MessageStreamName)
+            .WithOptions(options =>
+            {
+                options.BrokerList = configuration.GetSection("Kafka:Brokers").Get<List<string>>();
+                options.ConsumerGroupId = "AeFinder";
+                options.ConsumeMode = ConsumeMode.LastCommittedMessage;
+                options.AddTopic(AeFinderApplicationConsts.MessageStreamNamespace,
+                    new TopicCreationConfig
+                    {
+                        AutoCreate = true,
+                        Partitions = configuration.GetSection("Kafka:Partitions").Get<int>(),
+                        ReplicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>()
+                    });
+            })
+            .AddJson()
+            .AddLoggingTracker()
+            .Build();
         });
     }
 }
