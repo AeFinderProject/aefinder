@@ -28,11 +28,6 @@ public static class OrleansHostExtensions
                 {
                     options.ClusterId = configSection.GetValue<string>("ClusterId");
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
-                })
-                .Configure<ClientMessagingOptions>(options =>
-                {
-                    options.ResponseTimeout = TimeSpan.FromSeconds(configSection.GetValue<int>("GrainResponseTimeOut"));
-                    options.MaxMessageBodySize = configSection.GetValue<int>("GrainMaxMessageBodySize");
                 });
         });
     }
