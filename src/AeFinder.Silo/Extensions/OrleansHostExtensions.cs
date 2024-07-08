@@ -47,9 +47,9 @@ public static class OrleansHostExtensions
                 {
                     op.CollectionPrefix = "GrainStorage";
                     op.DatabaseName = configSection.GetValue<string>("DataBase");
-                    
+
                     var grainIdPrefix = configSection
-                        .GetSection("GrainSpecificIdPrefix").GetChildren().ToDictionary(o => o.Key, o => o.Value);
+                        .GetSection("GrainSpecificIdPrefix").GetChildren().ToDictionary(o => o.Key.ToLower(), o => o.Value);
                     op.KeyGenerator = id =>
                     {
                         var grainType = id.Type.ToString();
@@ -118,23 +118,23 @@ public static class OrleansHostExtensions
                 })
                 // .UseLinuxEnvironmentStatistics()
                 .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); })
-            .AddKafka(AeFinderApplicationConsts.MessageStreamName)
-            .WithOptions(options =>
-            {
-                options.BrokerList = configuration.GetSection("Kafka:Brokers").Get<List<string>>();
-                options.ConsumerGroupId = "AeFinder";
-                options.ConsumeMode = ConsumeMode.LastCommittedMessage;
-                options.AddTopic(AeFinderApplicationConsts.MessageStreamNamespace,
-                    new TopicCreationConfig
-                    {
-                        AutoCreate = true,
-                        Partitions = configuration.GetSection("Kafka:Partitions").Get<int>(),
-                        ReplicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>()
-                    });
-            })
-            .AddJson()
-            .AddLoggingTracker()
-            .Build();
+                .AddKafka(AeFinderApplicationConsts.MessageStreamName)
+                .WithOptions(options =>
+                {
+                    options.BrokerList = configuration.GetSection("Kafka:Brokers").Get<List<string>>();
+                    options.ConsumerGroupId = "AeFinder";
+                    options.ConsumeMode = ConsumeMode.LastCommittedMessage;
+                    options.AddTopic(AeFinderApplicationConsts.MessageStreamNamespace,
+                        new TopicCreationConfig
+                        {
+                            AutoCreate = true,
+                            Partitions = configuration.GetSection("Kafka:Partitions").Get<int>(),
+                            ReplicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>()
+                        });
+                })
+                .AddJson()
+                .AddLoggingTracker()
+                .Build();
         });
     }
 }
