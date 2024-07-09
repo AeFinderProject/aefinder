@@ -16,7 +16,7 @@ namespace AeFinder.App;
 public class Startup
 {
     private readonly IConfiguration _configuration;
-    // private readonly IClusterClient _clusterClient;
+    private readonly IClusterClient _clusterClient;
 
     public Startup(IConfiguration configuration)
     {
@@ -28,6 +28,11 @@ public class Startup
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services)
     {
+        services.AddSingleton<IClusterClient>(serviceProvider =>
+        {
+            var client = serviceProvider.GetRequiredService<IClusterClient>();
+            return client;
+        });
         var clientType = _configuration.GetValue("AppInfo:ClientType", ClientType.Full);
         switch (clientType)
         {
