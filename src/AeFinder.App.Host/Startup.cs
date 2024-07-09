@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Streams.Kafka.Utils;
+using Serilog;
 using Volo.Abp.Modularity;
 
 namespace AeFinder.App;
@@ -23,13 +24,13 @@ public class Startup
 {
     private readonly IConfiguration _configuration;
     // private readonly IClusterClient _clusterClient;
-    private readonly ILogger<Startup> _logger;
+    // private readonly ILogger<Startup> _logger;
 
-    public Startup(IConfiguration configuration,ILogger<Startup> logger)
+    public Startup(IConfiguration configuration)
     {
         _configuration = configuration;
         // _clusterClient = clusterClient;
-        _logger = logger;
+        // _logger = logger;
     }
 
     // This method gets called by the runtime. Use this method to add services to the container.
@@ -54,9 +55,10 @@ public class Startup
         {
             // var clusterClientFactory = services.GetRequiredService<IClusterClientFactory>();
             var code = AsyncHelper.RunSync(async () => await GetPluginCodeAsync());
-            _logger.LogInformation("already get app code " + code.Length);
+            Log.Information("already get app code"+ code.Length);
+            // _logger.LogInformation("already get app code " + code.Length);
             options.PlugInSources.AddCode(code);
-            _logger.LogInformation("add code complete");
+            Log.Information("add code complete");
         });
     }
     
@@ -94,7 +96,7 @@ public class Startup
             try
             {
                 string requestUrl = $"api/apps/code?appId={HttpUtility.UrlEncode(appId)}&version={HttpUtility.UrlEncode(version)}";
-                _logger.LogInformation("start request app code:" + requestUrl);
+                Log.Information("start request app code:" + requestUrl);
                 HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
                 response.EnsureSuccessStatusCode();
 
