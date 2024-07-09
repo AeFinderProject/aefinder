@@ -102,7 +102,7 @@ public class Startup
 
                 string responseBody = await response.Content.ReadAsStringAsync();
                 Log.Information("response data length:" + responseBody.Length.ToString());
-                string base64EncodedData = responseBody.Replace("\n", "").Replace("\r", "").Replace(" ", "");
+                string base64EncodedData = responseBody.Replace("\n", "").Replace("\r", "").Replace(" ", "").Trim('"');
                 Log.Information("base64EncodedData data length:" + base64EncodedData.Length.ToString());
                 byte[] decodedBytes = Convert.FromBase64String(base64EncodedData);
                 Log.Information("decodedBytes data length:" + decodedBytes.Length.ToString());
