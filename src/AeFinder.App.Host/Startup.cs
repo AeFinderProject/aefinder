@@ -83,8 +83,7 @@ public class Startup
         {
             throw new Exception("api host url config is missing!");
         }
-        // var client = OrleansClusterClientFactory.GetClusterClient(_configuration);
-        // await client.Connect();
+
         using (var httpClient = new HttpClient())
         {
             httpClient.BaseAddress = new Uri(apiServiceUrl);
@@ -96,16 +95,12 @@ public class Startup
             try
             {
                 string requestUrl = $"api/apps/code?appId={HttpUtility.UrlEncode(appId)}&version={HttpUtility.UrlEncode(version)}";
-                Log.Information("start request app code:" + requestUrl);
                 HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
                 response.EnsureSuccessStatusCode();
 
                 string responseBody = await response.Content.ReadAsStringAsync();
-                Log.Information("response data length:" + responseBody.Length.ToString());
-                string base64EncodedData = responseBody.Replace("\n", "").Replace("\r", "").Replace(" ", "").Trim('"');
-                Log.Information("base64EncodedData data length:" + base64EncodedData.Length.ToString());
+                string base64EncodedData = responseBody.Trim('"');
                 byte[] decodedBytes = Convert.FromBase64String(base64EncodedData);
-                Log.Information("decodedBytes data length:" + decodedBytes.Length.ToString());
                 return decodedBytes;
             }
             catch (Exception e)
