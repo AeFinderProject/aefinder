@@ -101,12 +101,14 @@ public class Startup
                 response.EnsureSuccessStatusCode();
 
                 string base64EncodedData = await response.Content.ReadAsStringAsync();
+                Log.Information("response data length:" + base64EncodedData.Length.ToString());
                 byte[] decodedBytes = Convert.FromBase64String(base64EncodedData);
+                Log.Information("decodedBytes data length:" + decodedBytes.Length.ToString());
                 return decodedBytes;
             }
             catch (HttpRequestException e)
             {
-                Console.WriteLine($"Request error: {e.Message}");
+                Log.Error($"Request error: {e.Message}");
                 throw e;
             }
         }
