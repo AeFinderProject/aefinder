@@ -106,9 +106,9 @@ public class Startup
                 Log.Information("decodedBytes data length:" + decodedBytes.Length.ToString());
                 return decodedBytes;
             }
-            catch (HttpRequestException e)
+            catch (Exception e)
             {
-                Log.Error($"Request error: {e.Message}");
+                Log.Error($"Request app code error: {e.Message}");
                 throw e;
             }
         }
