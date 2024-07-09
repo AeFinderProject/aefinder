@@ -70,11 +70,11 @@ public class Startup
     {
         var appId = _configuration["AppInfo:AppId"];
         var version = _configuration["AppInfo:Version"];
-        var apiServiceUrl = "";
+        var apiServiceUrl = _configuration["ApiHostUrl"];
 
         if (apiServiceUrl.IsNullOrEmpty())
         {
-            throw new Exception("api service url config is missing!");
+            throw new Exception("api host url config is missing!");
         }
         // var client = OrleansClusterClientFactory.GetClusterClient(_configuration);
         // await client.Connect();
