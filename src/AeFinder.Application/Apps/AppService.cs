@@ -186,4 +186,12 @@ public class AppService : AeFinderAppService, IAppService
     {
         return GrainIdHelper.GenerateOrganizationAppGrainId(orgId.ToString("N"));
     }
+    
+    public async Task<string> GetAppCodeAsync(string appId,string version)
+    {
+        var appSubscriptionGrain =
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var codeBytes = await appSubscriptionGrain.GetCodeAsync(version);
+        return Convert.ToBase64String(codeBytes);
+    }
 }

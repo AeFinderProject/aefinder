@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using AeFinder.Grains;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
@@ -11,30 +13,10 @@ using Orleans.Streams.Kafka.Config;
 
 namespace AeFinder.App;
 
-public interface IClusterClientFactory
-{
-    IClusterClient GetClusterClient();
-}
 
-public class OrleansClusterClientFactory:IClusterClientFactory
+public class OrleansClusterClientFactory
 {
-    private readonly Lazy<IClusterClient> _lazyClient;
-    
-    public OrleansClusterClientFactory(IServiceProvider serviceProvider)
-    {
-        _lazyClient = new Lazy<IClusterClient>(() =>
-        {
-            var client = serviceProvider.GetRequiredService<IClusterClient>();
-            return client;
-        });
-    }
-
-    public IClusterClient GetClusterClient()
-    {
-        return _lazyClient.Value;
-    }
-    
-    // public static IClusterClient GetClusterClient(IConfiguration configuration)
+    // public static IClusterClient GetClusterClient(IServiceCollection services,IConfiguration configuration)
     // {
     //     return new ClientBuilder()
     //         .ConfigureDefaults()
@@ -64,7 +46,7 @@ public class OrleansClusterClientFactory:IClusterClientFactory
     //                 Partitions = configuration.GetSection("Kafka:Partitions").Get<int>(),
     //                 ReplicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>()
     //             });
-    //             options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
+    //             // options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
     //         })
     //         .AddJson()
     //         .Build()
