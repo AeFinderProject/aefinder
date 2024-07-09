@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using AeFinder.Grains;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
@@ -9,8 +11,29 @@ using Orleans.Streams.Kafka.Config;
 
 namespace AeFinder.App;
 
-public class OrleansClusterClientFactory
+public interface IClusterClientFactory
 {
+    IClusterClient GetClusterClient();
+}
+
+public class OrleansClusterClientFactory:IClusterClientFactory
+{
+    private readonly Lazy<IClusterClient> _lazyClient;
+    
+    public OrleansClusterClientFactory(IServiceProvider serviceProvider)
+    {
+        _lazyClient = new Lazy<IClusterClient>(() =>
+        {
+            var client = serviceProvider.GetRequiredService<IClusterClient>();
+            return client;
+        });
+    }
+
+    public IClusterClient GetClusterClient()
+    {
+        return _lazyClient.Value;
+    }
+    
     // public static IClusterClient GetClusterClient(IConfiguration configuration)
     // {
     //     return new ClientBuilder()
