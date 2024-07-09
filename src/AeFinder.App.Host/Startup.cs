@@ -100,8 +100,10 @@ public class Startup
                 HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
                 response.EnsureSuccessStatusCode();
 
-                string base64EncodedData = await response.Content.ReadAsStringAsync();
-                Log.Information("response data length:" + base64EncodedData.Length.ToString());
+                string responseBody = await response.Content.ReadAsStringAsync();
+                Log.Information("response data length:" + responseBody.Length.ToString());
+                string base64EncodedData = responseBody.Replace("\n", "").Replace("\r", "").Replace(" ", "");
+                Log.Information("base64EncodedData data length:" + base64EncodedData.Length.ToString());
                 byte[] decodedBytes = Convert.FromBase64String(base64EncodedData);
                 Log.Information("decodedBytes data length:" + decodedBytes.Length.ToString());
                 return decodedBytes;
