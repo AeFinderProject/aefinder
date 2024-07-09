@@ -16,12 +16,12 @@ namespace AeFinder.App;
 public class Startup
 {
     private readonly IConfiguration _configuration;
-    private readonly IClusterClient _clusterClient;
+    // private readonly IClusterClient _clusterClient;
 
-    public Startup(IConfiguration configuration,IClusterClient clusterClient)
+    public Startup(IConfiguration configuration)
     {
         _configuration = configuration;
-        _clusterClient = clusterClient;
+        // _clusterClient = clusterClient;
     }
 
     // This method gets called by the runtime. Use this method to add services to the container.
@@ -44,7 +44,8 @@ public class Startup
     {
         services.AddApplicationAsync<T>(options =>
         {
-            var code = AsyncHelper.RunSync(async () => await GetPluginCodeAsync());
+            var orleansClient = services.GetRequiredService<IClusterClient>();
+            var code = AsyncHelper.RunSync(async () => await GetPluginCodeAsync(orleansClient));
             options.PlugInSources.AddCode(code);
         });
     }
@@ -62,14 +63,14 @@ public class Startup
             
     }
     
-    private async Task<byte[]> GetPluginCodeAsync()
+    private async Task<byte[]> GetPluginCodeAsync(IClusterClient clusterClient)
     {
         var appId = _configuration["AppInfo:AppId"];
         var version = _configuration["AppInfo:Version"];
         
         // var client = OrleansClusterClientFactory.GetClusterClient(_configuration);
         // await client.Connect();
-        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var appSubscriptionGrain = clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         return await appSubscriptionGrain.GetCodeAsync(version);
     }
 }
