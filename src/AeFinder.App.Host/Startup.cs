@@ -23,14 +23,10 @@ namespace AeFinder.App;
 public class Startup
 {
     private readonly IConfiguration _configuration;
-    // private readonly IClusterClient _clusterClient;
-    // private readonly ILogger<Startup> _logger;
 
     public Startup(IConfiguration configuration)
     {
         _configuration = configuration;
-        // _clusterClient = clusterClient;
-        // _logger = logger;
     }
 
     // This method gets called by the runtime. Use this method to add services to the container.
@@ -53,12 +49,8 @@ public class Startup
     {
         services.AddApplicationAsync<T>(options =>
         {
-            // var clusterClientFactory = services.GetRequiredService<IClusterClientFactory>();
             var code = AsyncHelper.RunSync(async () => await GetPluginCodeAsync());
-            Log.Information("already get app code"+ code.Length);
-            // _logger.LogInformation("already get app code " + code.Length);
             options.PlugInSources.AddCode(code);
-            Log.Information("add code complete");
         });
     }
     

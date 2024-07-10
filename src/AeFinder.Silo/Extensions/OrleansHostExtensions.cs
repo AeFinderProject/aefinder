@@ -94,7 +94,6 @@ public static class OrleansHostExtensions
                     options.MaxMessageBodySize = configSection.GetValue<int>("GrainMaxMessageBodySize");
                     options.MaxForwardCount = configSection.GetValue<int>("MaxForwardCount");
                 })
-                //.AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .AddAeFinderMongoDBGrainStorage("PubSubStore", options =>
                 {
                     // Config PubSubStore Storage for Persistent Stream 
