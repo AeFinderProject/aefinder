@@ -85,7 +85,8 @@ public static class OrleansHostExtensions
                         settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
                         settings.DefaultValueHandling = DefaultValueHandling.Populate;
                         settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-                        settings.PreserveReferencesHandling = PreserveReferencesHandling.None;
+                        settings.PreserveReferencesHandling = PreserveReferencesHandling.Objects;
+                        settings.TypeNameHandling = TypeNameHandling.Auto;
                     })
                 .UseDashboard(options =>
                 {
