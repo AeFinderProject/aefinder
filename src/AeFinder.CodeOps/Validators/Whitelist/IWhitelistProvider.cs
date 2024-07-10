@@ -75,6 +75,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type("Action`2", Permission.Allowed)
                 .Type("Action`3", Permission.Allowed) 
                 .Type("Nullable`1", Permission.Allowed) // Required for protobuf generated code
+                .Type("Predicate`1",Permission.Allowed)
                 .Type(typeof(BitConverter), Permission.Allowed)
                 .Type(typeof(Uri), Permission.Allowed)
                 .Type(typeof(NotImplementedException), Permission.Allowed) // Required for protobuf generated code

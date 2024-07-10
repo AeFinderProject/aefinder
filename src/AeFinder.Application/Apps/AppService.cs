@@ -123,6 +123,22 @@ public class AppService : AeFinderAppService, IAppService
         return state;
     }
 
+    public async Task SetMaxAppCountAsync(Guid organizationId, int appCount)
+    {
+        var orgId = GetOrganizationGrainId(organizationId);
+        var organizationAppGrain =
+            _clusterClient.GetGrain<IOrganizationAppGrain>(orgId);
+        await organizationAppGrain.SetMaxAppCountAsync(appCount);
+    }
+
+    public async Task<int> GetMaxAppCountAsync(Guid organizationId)
+    {
+        var orgId = GetOrganizationGrainId(organizationId);
+        var organizationAppGrain =
+            _clusterClient.GetGrain<IOrganizationAppGrain>(orgId);
+        return await organizationAppGrain.GetMaxAppCountAsync();
+    }
+
     private async Task<List<AppSyncStateItem>> GetSyncStateItemsAsync(string appId, SubscriptionDetail subscription)
     {
         var appSyncStateItems = new List<AppSyncStateItem>();
@@ -164,5 +180,18 @@ public class AppService : AeFinderAppService, IAppService
     {
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
         return organizationIds.First().Id.ToString("N");
+    }
+
+    private string GetOrganizationGrainId(Guid orgId)
+    {
+        return GrainIdHelper.GenerateOrganizationAppGrainId(orgId.ToString("N"));
+    }
+    
+    public async Task<string> GetAppCodeAsync(string appId,string version)
+    {
+        var appSubscriptionGrain =
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var codeBytes = await appSubscriptionGrain.GetCodeAsync(version);
+        return Convert.ToBase64String(codeBytes);
     }
 }

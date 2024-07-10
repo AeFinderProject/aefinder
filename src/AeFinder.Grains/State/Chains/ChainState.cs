@@ -3,8 +3,8 @@ namespace AeFinder.Grains.State.Chains;
 [GenerateSerializer]
 public class ChainState
 {
-    public long BlockHeight { get; set; }
-    public string BlockHash { get; set; }
-    public long ConfirmedBlockHeight { get; set; }
-    public string ConfirmedBlockHash { get; set; }
+    [Id(0)]public long BlockHeight { get; set; }
+    [Id(1)]public string BlockHash { get; set; }
+    [Id(2)]public long ConfirmedBlockHeight { get; set; }
+    [Id(3)]public string ConfirmedBlockHash { get; set; }
 }

@@ -82,6 +82,11 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
             {
                 var json = JsonConvert.SerializeObject(block);
                 var time = DateTimeOffset.FromUnixTimeMilliseconds(1).UtcDateTime;
+
+                var sets = new HashSet<string>();
+                var list = new List<string>();
+                var address = list.RemoveAll(o => sets.Contains(o));
+                
                 throw new NotImplementedException();
             }
         }
