@@ -37,6 +37,8 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         using AeFinder.Sdk.Entities;
         using AElf.EntityMapping.Elasticsearch.Linq;
         using Newtonsoft.Json;
+        using AutoMapper;
+        using AutoMapper.Configuration;
 
         namespace TestApp;
 
@@ -52,7 +54,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         
         public class TestAppEntityDto
         {
-            
+            public int IntValue { get; set; }
         }
 
         public class Query
@@ -91,6 +93,16 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
             }
         }
 
+        public class TestAutoMapperProfile : AutoMapper.Profile
+        {
+            public TestAutoMapperProfile()
+            {
+                CreateMap<TestAppEntityDto, TestAppEntity>()
+                    .ForMember(destination => destination.IntValue, opt => opt.MapFrom(source => source.IntValue))
+                    .ForPath(destination => destination.IntValue, opt => opt.MapFrom(source => source.IntValue));
+            }
+        }
+
         public class TestAppModule:AbpModule
         {
             public override void ConfigureServices(ServiceConfigurationContext context)
@@ -102,7 +114,8 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
             typeof(AbpModule).Assembly.Location, typeof(KeywordAttribute).Assembly.Location,
             typeof(AElfEntityMappingModule).Assembly.Location,
             typeof(AElfEntityMappingElasticsearchModule).Assembly.Location,
-            typeof(JsonConvert).Assembly.Location);
+            typeof(JsonConvert).Assembly.Location,
+            typeof(AutoMapper.Profile).Assembly.Location);
         var assemblyDefinition = CompileToAssemblyDefinition(sourceCode);
 
         var validationResult = _whitelistValidator.Validate(assemblyDefinition.MainModule, CancellationToken.None);
