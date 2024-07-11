@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using AeFinder.Block;
 using AeFinder.BlockScan;
 using AeFinder.Grains.BlockPush;
@@ -50,6 +51,8 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                         o.BatchPushNewBlockCount = 2;
                         o.MaxHistoricalBlockPushThreshold = 30;
                         o.MaxNewBlockPushThreshold = 30;
+                        o.MessageStreamNamespaces = new List<string> { "MessageStreamNamespace" };
+                        o.HistoricalMessageStreamNamespaces = new List<string> { "HistoricalMessageStreamNamespace" };
                     });
                     services.AddAutoMapper(typeof(AeFinderApplicationModule).Assembly);
                     services.OnExposing(onServiceExposingContext =>

@@ -38,12 +38,30 @@ public static class OrleansHostExtensions
                     options.BrokerList = configuration.GetSection("Kafka:Brokers").Get<List<string>>();
                     options.ConsumerGroupId = "AeFinder";
                     options.ConsumeMode = ConsumeMode.LastCommittedMessage;
-                    options.AddTopic(AeFinderApplicationConsts.MessageStreamNamespace,new TopicCreationConfig
+                    
+                    var partitions = configuration.GetSection("Kafka:Partitions").Get<int>();
+                    var replicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>();
+
+                    foreach (var n in configuration.GetSection("BlockPush:MessageStreamNamespaces").Get<List<string>>())
                     {
-                        AutoCreate = true, 
-                        Partitions = configuration.GetSection("Kafka:Partitions").Get<int>(),
-                        ReplicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>()
-                    });
+                        options.AddTopic(n, new TopicCreationConfig
+                        {
+                            AutoCreate = true,
+                            Partitions = partitions,
+                            ReplicationFactor = replicationFactor
+                        });
+                    }
+
+                    foreach (var n in configuration.GetSection("BlockPush:HistoricalMessageStreamNamespaces")
+                                 .Get<List<string>>())
+                    {
+                        options.AddTopic(n, new TopicCreationConfig
+                        {
+                            AutoCreate = true,
+                            Partitions = partitions,
+                            ReplicationFactor = replicationFactor
+                        });
+                    }
                 })
                 .AddJson();
         });
