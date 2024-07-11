@@ -43,6 +43,15 @@ public static class OrleansHostExtensions
                     options.DatabaseName = configSection.GetValue<string>("DataBase");
                     options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
+                .Configure<JsonGrainStateSerializerOptions>(options => options.ConfigureJsonSerializerSettings =
+                    settings =>
+                    {
+                        settings.NullValueHandling = NullValueHandling.Include;
+                        settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
+                        settings.DefaultValueHandling = DefaultValueHandling.Populate;
+                        // settings.PreserveReferencesHandling = PreserveReferencesHandling.Objects;
+                        // settings.TypeNameHandling = TypeNameHandling.Auto;
+                    })
                 .AddMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
                 {
                     op.CollectionPrefix = "GrainStorage";
@@ -79,15 +88,6 @@ public static class OrleansHostExtensions
                     options.CollectionPrefix = "StreamStorage";
                     options.DatabaseName = configSection.GetValue<string>("DataBase");
                 })
-                .Configure<JsonGrainStateSerializerOptions>(options => options.ConfigureJsonSerializerSettings =
-                    settings =>
-                    {
-                        settings.NullValueHandling = NullValueHandling.Include;
-                        settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
-                        settings.DefaultValueHandling = DefaultValueHandling.Populate;
-                        settings.PreserveReferencesHandling = PreserveReferencesHandling.Objects;
-                        settings.TypeNameHandling = TypeNameHandling.Auto;
-                    })
                 .Configure<ExceptionSerializationOptions>(options=>
                 {
                     options.SupportedNamespacePrefixes.Add("Volo.Abp");
