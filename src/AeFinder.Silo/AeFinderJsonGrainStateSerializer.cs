@@ -7,9 +7,9 @@ using Orleans.Providers.MongoDB.StorageProviders;
 using Orleans.Providers.MongoDB.StorageProviders.Serializers;
 using Orleans.Serialization;
 
-namespace AeFinder.Grains.Serializer;
+namespace AeFinder.Silo;
 
-public class AeFinderJsonGrainStateSerializer : IGrainStateSerializer
+public class AeFinderJsonGrainStateSerializer: IGrainStateSerializer
 {
     private readonly JsonSerializerSettings jsonSettings;
 
