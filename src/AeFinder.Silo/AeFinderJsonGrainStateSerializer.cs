@@ -16,7 +16,7 @@ public class AeFinderJsonGrainStateSerializer: IGrainStateSerializer
     public AeFinderJsonGrainStateSerializer(IOptions<JsonGrainStateSerializerOptions> options, IServiceProvider serviceProvider)
     {
         jsonSettings = OrleansJsonSerializerSettings.GetDefaultSerializerSettings(serviceProvider);
-        options.Value.ConfigureJsonSerializerSettings?.Invoke(jsonSettings);
+        options.Value.ConfigureJsonSerializerSettings(jsonSettings);
     }
 
     public T Deserialize<T>(BsonValue value)
