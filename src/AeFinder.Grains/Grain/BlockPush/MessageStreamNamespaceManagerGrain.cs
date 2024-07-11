@@ -27,6 +27,11 @@ public class MessageStreamNamespaceManagerGrain : Orleans.Grain, IMessageStreamN
 
     private async Task<string> GetMessageStreamNamespaceAsync(string appId, ConcurrentDictionary<string, int> namespaceAppCount)
     {
+        if (namespaceAppCount.Count == 0)
+        {
+            return AeFinderApplicationConsts.MessageStreamNamespace;
+        }
+
         foreach (var n in namespaceAppCount)
         {
             var grain = GrainFactory.GetGrain<IMessageStreamNamespaceGrain>(n.Key);
