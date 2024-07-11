@@ -26,7 +26,6 @@ public class AeFinderOrleansSiloModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         context.Services.AddHostedService<AeFinderHostedService>();
-        context.Services.AddSingleton<IGrainStateSerializer, AeFinderJsonGrainStateSerializer>();
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
         // context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
