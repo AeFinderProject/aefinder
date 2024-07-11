@@ -53,7 +53,7 @@ public static class OrleansHostExtensions
                         // settings.PreserveReferencesHandling = PreserveReferencesHandling.Objects;
                         // settings.TypeNameHandling = TypeNameHandling.Auto;
                     })
-                .AddMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
+                .AddAeFinderMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
                 {
                     op.CollectionPrefix = "GrainStorage";
                     op.DatabaseName = configSection.GetValue<string>("DataBase");
