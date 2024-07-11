@@ -1,8 +1,10 @@
 using AeFinder.App.Deploy;
 using AeFinder.Grains;
+using AeFinder.Grains.Serializer;
 using AeFinder.MongoDb;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Orleans.Providers.MongoDB.StorageProviders.Serializers;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
@@ -26,6 +28,7 @@ public class AeFinderOrleansSiloModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         context.Services.AddHostedService<AeFinderHostedService>();
+        context.Services.AddSingleton<IGrainStateSerializer, AeFinderJsonGrainStateSerializer>();
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
         // context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();

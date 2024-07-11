@@ -77,10 +77,14 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         });
 
         await blockPusherGrain.HandleBlockAsync(new BlockWithTransactionDto());
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 1), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(0);
 
         await blockPusherGrain.HandleHistoricalBlockAsync();
         
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 50), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(50);
         subscribedBlock.Count(o => o.Confirmed).ShouldBe(25);
 
@@ -88,25 +92,37 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         pushMode.ShouldBe(BlockPushMode.NewBlock);
         
         await blockPusherGrain.HandleHistoricalBlockAsync();
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 51), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(50);
         
         await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 55), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 56), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[49].First());
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 56), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[51].First());
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 56), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
         
         await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[53].First());
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 61), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(61);
         subscribedBlock.Last().BlockHeight.ShouldBe(53);
     }
@@ -165,6 +181,9 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         });
 
         await blockPusherGrain.HandleBlockAsync(new BlockWithTransactionDto());
+        
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 1), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(0);
 
         await appGrain.StopAsync(version);
@@ -282,10 +301,15 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         });
 
         await blockPusherGrain.HandleConfirmedBlockAsync(new BlockWithTransactionDto());
+        
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 1), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(0);
 
         await blockPusherGrain.HandleHistoricalBlockAsync();
         
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 25), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(25);
         var number = 21;
         foreach (var block in subscribedBlock)
@@ -348,12 +372,18 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
             subscribedBlock.AddRange(v.Blocks);
             return Task.CompletedTask;
         });
-        
+
         await blockPusherGrain.HandleHistoricalBlockAsync();
+        
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 50), TimeSpan.FromSeconds(5));
         
         subscribedBlock.Count.ShouldBe(50);
         
         await blockPusherGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[46].First());
+        
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 51), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(50);
     }
 
@@ -420,14 +450,20 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         });
 
         await blockPusherGrain.HandleHistoricalBlockAsync();
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 50), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(50);
         subscribedBlock.Last().BlockHeight.ShouldBe(45);
 
         await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 55), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
 
         await blockPusherGrain.HandleConfirmedBlockAsync( _blockDataProvider.Blocks[50].First() );
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 56), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(55);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
     }
@@ -491,6 +527,8 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         });
         
         await blockPusherGrain.HandleHistoricalBlockAsync();
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 80), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(80);
         
         await blockStateSetInfoGrain.SetBlockStateSetStatusAsync(new BlockStateSetStatus
@@ -499,14 +537,53 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         });
         
         await blockPusherGrain.HandleHistoricalBlockAsync();
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 90), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(90);
         
         await pusherInfoGrain.SetNewBlockStartHeightAsync(9);
         
         await blockPusherGrain.HandleBlockAsync(_blockDataProvider.Blocks[50].First());
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 91), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(90);
         
         await blockPusherGrain.HandleConfirmedBlockAsync(_blockDataProvider.Blocks[50].First());
+        //Wait for asynchronous processing stream message to complete
+        await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 91), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(90);
+    }
+    
+    private async Task WaitUntilAsync(Func<bool, Task<bool>> predicate, TimeSpan timeout, TimeSpan? delayOnFail = null)
+    {
+        delayOnFail ??= TimeSpan.FromSeconds(1);
+        var keepGoing = new[] { true };
+        async Task Loop()
+        {
+            bool passed;
+            do
+            {
+                // need to wait a bit to before re-checking the condition.
+                await Task.Delay(delayOnFail.Value);
+                passed = await predicate(false);
+            }
+            while (!passed && keepGoing[0]);
+            if (!passed)
+            {
+                await predicate(true);
+            }
+        }
+
+        var task = Loop();
+        try
+        {
+            await Task.WhenAny(task, Task.Delay(timeout));
+        }
+        finally
+        {
+            keepGoing[0] = false;
+        }
+
+        await task;
     }
 }
