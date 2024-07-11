@@ -110,8 +110,11 @@ public static class OrleansHostExtensions
                         settings.PreserveReferencesHandling = PreserveReferencesHandling.Objects;
                         settings.TypeNameHandling = TypeNameHandling.Auto;
                     })
-                .Configure<ExceptionSerializationOptions>(options=>options.SupportedNamespacePrefixes.Add("Volo.Abp"))
-                .Configure<ExceptionSerializationOptions>(options=>options.SupportedNamespacePrefixes.Add("Newtonsoft.Json"))
+                .Configure<ExceptionSerializationOptions>(options=>
+                {
+                    options.SupportedNamespacePrefixes.Add("Volo.Abp");
+                    options.SupportedNamespacePrefixes.Add("Newtonsoft.Json");
+                })
                 .UseDashboard(options =>
                 {
                     options.Username = configSection.GetValue<string>("DashboardUserName");
