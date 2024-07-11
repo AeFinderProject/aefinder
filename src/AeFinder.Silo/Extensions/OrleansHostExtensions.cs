@@ -1,6 +1,7 @@
 using System.Net;
 using AeFinder.Silo.MongoDB;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -8,6 +9,7 @@ using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
+using Orleans.Providers.MongoDB.StorageProviders.Serializers;
 using Orleans.Serialization;
 using Orleans.Statistics;
 using Orleans.Streams.Kafka.Config;
@@ -50,16 +52,17 @@ public static class OrleansHostExtensions
                         settings.NullValueHandling = NullValueHandling.Include;
                         settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
                         settings.DefaultValueHandling = DefaultValueHandling.Populate;
-                        // settings.PreserveReferencesHandling = PreserveReferencesHandling.Objects;
-                        // settings.TypeNameHandling = TypeNameHandling.Auto;
                     })
+                .ConfigureServices(services =>
+                    services.AddSingleton<IGrainStateSerializer, AeFinderJsonGrainStateSerializer>())
                 .AddAeFinderMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
                 {
                     op.CollectionPrefix = "GrainStorage";
                     op.DatabaseName = configSection.GetValue<string>("DataBase");
 
                     var grainIdPrefix = configSection
-                        .GetSection("GrainSpecificIdPrefix").GetChildren().ToDictionary(o => o.Key.ToLower(), o => o.Value);
+                        .GetSection("GrainSpecificIdPrefix").GetChildren()
+                        .ToDictionary(o => o.Key.ToLower(), o => o.Value);
                     op.KeyGenerator = id =>
                     {
                         var grainType = id.Type.ToString();
@@ -110,7 +113,7 @@ public static class OrleansHostExtensions
                     options.CollectionPrefix = "StreamStorage";
                     options.DatabaseName = configSection.GetValue<string>("DataBase");
                 })
-                .Configure<ExceptionSerializationOptions>(options=>
+                .Configure<ExceptionSerializationOptions>(options =>
                 {
                     options.SupportedNamespacePrefixes.Add("Volo.Abp");
                     options.SupportedNamespacePrefixes.Add("Newtonsoft.Json");
