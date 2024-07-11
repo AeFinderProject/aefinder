@@ -7,6 +7,7 @@ using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
+using Orleans.Serialization;
 using Orleans.Statistics;
 using Orleans.Streams.Kafka.Config;
 
@@ -84,10 +85,10 @@ public static class OrleansHostExtensions
                         settings.NullValueHandling = NullValueHandling.Include;
                         settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
                         settings.DefaultValueHandling = DefaultValueHandling.Populate;
-                        settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
                         settings.PreserveReferencesHandling = PreserveReferencesHandling.Objects;
                         settings.TypeNameHandling = TypeNameHandling.Auto;
                     })
+                .Configure<ExceptionSerializationOptions>(options=>options.SupportedNamespacePrefixes.Add("Volo.Abp"))
                 .UseDashboard(options =>
                 {
                     options.Username = configSection.GetValue<string>("DashboardUserName");
