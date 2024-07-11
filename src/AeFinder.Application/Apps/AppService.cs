@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
@@ -137,6 +138,20 @@ public class AppService : AeFinderAppService, IAppService
         var organizationAppGrain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(orgId);
         return await organizationAppGrain.GetMaxAppCountAsync();
+    }
+
+    public async Task<int> GetCountAsync(string id)
+    {
+        var grain =
+            _clusterClient.GetGrain<ITestGrain>(id);
+        return await grain.GetCountAsync();
+    }
+
+    public async Task CountAsync(string id)
+    {
+        var grain =
+            _clusterClient.GetGrain<ITestGrain>(id);
+        await grain.CountAsync();
     }
 
     private async Task<List<AppSyncStateItem>> GetSyncStateItemsAsync(string appId, SubscriptionDetail subscription)
