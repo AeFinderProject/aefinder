@@ -5,15 +5,10 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
 using AeFinder.App.PlugIns;
-using AeFinder.Grains;
-using AeFinder.Grains.Grain.Subscriptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Orleans;
-using Orleans.Concurrency;
 using Orleans.Streams.Kafka.Utils;
 using Serilog;
 using Volo.Abp.Modularity;
@@ -101,8 +96,5 @@ public class Startup
                 throw e;
             }
         }
-
-        // var appSubscriptionGrain = clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        // return await appSubscriptionGrain.GetCodeAsync(version);
     }
 }
