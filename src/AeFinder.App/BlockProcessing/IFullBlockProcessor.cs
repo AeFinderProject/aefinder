@@ -89,31 +89,34 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
 
             foreach (var logEvent in transaction.LogEvents)
             {
-                var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>
-                    p.GetContractAddress(block.ChainId) == logEvent.ContractAddress &&
-                    p.GetEventName() == logEvent.EventName);
-
-                if (logEventProcessor != null)
+                try
                 {
+                    var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>
+                        p.GetContractAddress(block.ChainId) == logEvent.ContractAddress &&
+                        p.GetEventName() == logEvent.EventName);
+
+                    if (logEventProcessor == null)
+                    {
+                        continue;
+                    }
+
                     _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
                         "Processing log event. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}, TransactionHash: {TransactionHash}, ContractAddress: {ContractAddress}, EventName: {EventName}.",
                         block.ChainId, block.BlockHash, block.BlockHeight, transaction.TransactionId,
                         logEvent.ContractAddress,
                         logEvent.EventName);
-                    try
+                        
+                    await logEventProcessor.ProcessAsync(new LogEventContext
                     {
-                        await logEventProcessor.ProcessAsync(new LogEventContext
-                        {
-                            ChainId = block.ChainId,
-                            Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block),
-                            Transaction = _objectMapper.Map<TransactionDto, Transaction>(transaction),
-                            LogEvent = _objectMapper.Map<LogEventDto, LogEvent>(logEvent)
-                        });
-                    }
-                    catch (Exception e)
-                    {
-                        throw new AppProcessingException("Log event processing failed!", e);
-                    }
+                        ChainId = block.ChainId,
+                        Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block),
+                        Transaction = _objectMapper.Map<TransactionDto, Transaction>(transaction),
+                        LogEvent = _objectMapper.Map<LogEventDto, LogEvent>(logEvent)
+                    });
+                }
+                catch (Exception e)
+                {
+                    throw new AppProcessingException("Log event processing failed!", e);
                 }
             }
         }

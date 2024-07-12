@@ -12,7 +12,7 @@ namespace AppTemplate.Processors;
 //         {
 //             "AELF" => "MainChainContractAddress",
 //             "tDVV" => "SideChainContractAddress",
-//             _ => throw new Exception("Unknown chain id")
+//             _ => string.Empty
 //         };
 //     }
 //

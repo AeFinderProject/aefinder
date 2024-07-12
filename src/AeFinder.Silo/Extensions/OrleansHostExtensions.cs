@@ -1,4 +1,5 @@
 using System.Net;
+using AeFinder.Silo.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -53,19 +54,40 @@ public static class OrleansHostExtensions
                         settings.DefaultValueHandling = DefaultValueHandling.Populate;
                     })
                 .ConfigureServices(services => services.AddSingleton<IGrainStateSerializer,AeFinderJsonGrainStateSerializer>())
-                .AddMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
+                .AddAeFinderMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
                 {
                     op.CollectionPrefix = "GrainStorage";
                     op.DatabaseName = configSection.GetValue<string>("DataBase");
+
+                    var grainIdPrefix = configSection
+                        .GetSection("GrainSpecificIdPrefix").GetChildren().ToDictionary(o => o.Key.ToLower(), o => o.Value);
+                    op.KeyGenerator = id =>
+                    {
+                        var grainType = id.Type.ToString();
+                        if (grainIdPrefix.TryGetValue(grainType, out var prefix))
+                        {
+                            return $"{prefix}+{id.Key}";
+                        }
+
+                        return id.ToString();
+                    };
+                    op.CreateShardKeyForCosmos = configSection.GetValue<bool>("CreateShardKeyForMongoDB", false);
                 })
                 .Configure<GrainCollectionOptions>(options =>
                 {
                     // Override the value of CollectionAge to
-                    var collection = configSection.GetSection("ClassSpecificCollectionAge").GetChildren();
+                    var collection = configSection.GetSection(nameof(GrainCollectionOptions.ClassSpecificCollectionAge))
+                        .GetChildren();
                     foreach (var item in collection)
                     {
                         options.ClassSpecificCollectionAge[item.Key] = TimeSpan.FromSeconds(int.Parse(item.Value));
                     }
+                })
+                .Configure<GrainCollectionNameOptions>(options =>
+                {
+                    var collectionName = configSection
+                        .GetSection(nameof(GrainCollectionNameOptions.GrainSpecificCollectionName)).GetChildren();
+                    options.GrainSpecificCollectionName = collectionName.ToDictionary(o => o.Key, o => o.Value);
                 })
                 .UseMongoDBReminders(options =>
                 {
@@ -83,7 +105,7 @@ public static class OrleansHostExtensions
                     options.MaxMessageBodySize = configSection.GetValue<int>("GrainMaxMessageBodySize");
                     options.MaxForwardCount = configSection.GetValue<int>("MaxForwardCount");
                 })
-                .AddMongoDBGrainStorage("PubSubStore", options =>
+                .AddAeFinderMongoDBGrainStorage("PubSubStore", options =>
                 {
                     // Config PubSubStore Storage for Persistent Stream 
                     options.CollectionPrefix = "StreamStorage";
