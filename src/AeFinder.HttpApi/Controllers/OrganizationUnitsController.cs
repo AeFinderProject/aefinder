@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AeFinder.Apps;
 using AeFinder.User;
 using AeFinder.User.Dto;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;

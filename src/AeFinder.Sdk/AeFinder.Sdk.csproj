@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <PackageId>AeFinder.Sdk</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -13,8 +13,8 @@
       <PackageReference Include="Google.Protobuf" Version="3.19.4" />
       <PackageReference Include="GraphQL" Version="7.0.2" />
       <PackageReference Include="NEST" Version="7.17.5" />
-      <PackageReference Include="Volo.Abp.Core" Version="7.0.0" />
-      <PackageReference Include="Volo.Abp.Ddd.Domain" Version="7.0.0" />
+      <PackageReference Include="Volo.Abp.Core" Version="8.1.4" />
+      <PackageReference Include="Volo.Abp.Ddd.Domain" Version="8.1.4" />
         <PackageReference Include="AElf.Sdk.CSharp" Version="1.6.0" />
     </ItemGroup>
 
