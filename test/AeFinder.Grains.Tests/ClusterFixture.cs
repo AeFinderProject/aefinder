@@ -7,7 +7,6 @@ using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using Orleans;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 using Volo.Abp.AutoMapper;
@@ -55,12 +54,6 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     services.OnExposing(onServiceExposingContext =>
                     {
                         //Register types for IObjectMapper<TSource, TDestination> if implements
-                        // onServiceExposingContext.ExposedTypes.AddRange(
-                        //     ReflectionHelper.GetImplementedGenericTypes(
-                        //         onServiceExposingContext.ImplementationType,
-                        //         typeof(IObjectMapper<,>)
-                        //     )
-                        // );
                         var implementedTypes = ReflectionHelper.GetImplementedGenericTypes(
                             onServiceExposingContext.ImplementationType,
                             typeof(IObjectMapper<,>)
@@ -90,7 +83,6 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     // mock IDistributedEventBus
                     services.AddSingleton<IDistributedEventBus>(mockDistributedEventBus.Object);
                 })
-                // .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
                 .AddMemoryGrainStorageAsDefault();
@@ -101,7 +93,6 @@ public class ClusterFixture:IDisposable,ISingletonDependency
     {
         public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) => clientBuilder
             .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName);
-        // .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName);
     }
 }
 

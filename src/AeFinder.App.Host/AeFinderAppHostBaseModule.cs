@@ -34,7 +34,6 @@ public class AeFinderAppHostBaseModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         ConfigureCors(context, configuration);
-        // ConfigureOrleans(context, configuration);
         ConfigureTokenCleanupService();
         context.Services.AddGraphQL(b => b
             .AddAutoClrMappings()
@@ -50,11 +49,6 @@ public class AeFinderAppHostBaseModule : AbpModule
             });
         Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
     }
-
-    // private static void ConfigureOrleans(ServiceConfigurationContext context, IConfiguration configuration)
-    // {
-    //     context.Services.AddSingleton<IClusterClient>(o => OrleansClusterClientFactory.GetClusterClient(configuration));
-    // }
 
     private void ConfigureCors(ServiceConfigurationContext context, IConfiguration configuration)
     {
@@ -86,8 +80,7 @@ public class AeFinderAppHostBaseModule : AbpModule
 
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
     {
-        // var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        // AsyncHelper.RunSync(async ()=> await client.Connect());
+
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
@@ -120,7 +113,6 @@ public class AeFinderAppHostBaseModule : AbpModule
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        // var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        // AsyncHelper.RunSync(client.Close);
+
     }
 }

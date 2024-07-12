@@ -14,7 +14,6 @@ public static class OrleansHostExtensions
     {
         return hostBuilder.UseOrleansClient((context, clientBuilder) =>
         {
-            var configuration = context.Configuration;
             var configSection = context.Configuration.GetSection("Orleans");
             if (configSection == null)
                 throw new ArgumentNullException(nameof(configSection), "The Orleans config node is missing");
@@ -29,7 +28,6 @@ public static class OrleansHostExtensions
                     options.ClusterId = configSection.GetValue<string>("ClusterId");
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
                 })
-                // .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName);
         });
     }

@@ -78,7 +78,6 @@ public class AeFinderHttpApiHostModule : AbpModule
         ConfigureDataProtection(context, configuration, hostingEnvironment);
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
-        // ConfigureOrleans(context, configuration);
         context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
         Configure<AbpAuditingOptions>(options =>
         {
@@ -184,33 +183,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         //         options.CustomSchemaIds(type => type.FullName);
         //     });
     }
-
-    // private static void ConfigureOrleans(ServiceConfigurationContext context, IConfiguration configuration)
-    // {
-    //     context.Services.AddSingleton<IClusterClient>(o =>
-    //     {
-    //         return new ClientBuilder()
-    //             .ConfigureDefaults()
-    //             .UseMongoDBClient(configuration["Orleans:MongoDBClient"])
-    //             .UseMongoDBClustering(options =>
-    //             {
-    //                 options.DatabaseName = configuration["Orleans:DataBase"];
-    //                 ;
-    //                 options.Strategy = MongoDBMembershipStrategy.SingleDocument;
-    //             })
-    //             .Configure<ClusterOptions>(options =>
-    //             {
-    //                 options.ClusterId = configuration["Orleans:ClusterId"];
-    //                 options.ServiceId = configuration["Orleans:ServiceId"];
-    //             })
-    //             .ConfigureApplicationParts(parts =>
-    //                 parts.AddApplicationPart(typeof(AeFinderGrainsModule).Assembly).WithReferences())
-    //             .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-    //             .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
-    //             .Build();
-    //     });
-    // }
-
+    
     private void ConfigureLocalization()
     {
         Configure<AbpLocalizationOptions>(options =>
@@ -311,8 +284,6 @@ public class AeFinderHttpApiHostModule : AbpModule
         app.UseAbpSerilogEnrichers();
         app.UseUnitOfWork();
         app.UseConfiguredEndpoints();
-
-        // StartOrleans(context.ServiceProvider);
         
         //Set filebeat log index ILM policy
         var logService = context.ServiceProvider.GetRequiredService<ILogService>();
@@ -322,18 +293,7 @@ public class AeFinderHttpApiHostModule : AbpModule
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        // StopOrleans(context.ServiceProvider);
+
     }
-
-    // private static void StartOrleans(IServiceProvider serviceProvider)
-    // {
-    //     var client = serviceProvider.GetRequiredService<IClusterClient>();
-    //     AsyncHelper.RunSync(async () => await client.Connect());
-    // }
-
-    // private static void StopOrleans(IServiceProvider serviceProvider)
-    // {
-    //     var client = serviceProvider.GetRequiredService<IClusterClient>();
-    //     AsyncHelper.RunSync(client.Close);
-    // }
+    
 }
