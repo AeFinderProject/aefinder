@@ -22,11 +22,6 @@
   <ItemGroup>
     <PackageReference Include="GraphQL.Client" Version="6.0.3" />
     <PackageReference Include="IdentityModel.OidcClient" Version="5.2.1" />
-<!--    <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">-->
-<!--      <PrivateAssets>all</PrivateAssets>-->
-<!--      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
-<!--    </PackageReference>-->
-<!--    <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.6.5" />-->
     <PackageReference Include="NUglify" Version="1.21.8" />
     <PackageReference Include="Remotion.Linq" Version="2.2.0" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />

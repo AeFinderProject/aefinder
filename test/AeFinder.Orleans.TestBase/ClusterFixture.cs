@@ -43,12 +43,6 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     services.OnExposing(onServiceExposingContext =>
                     {
                         //Register types for IObjectMapper<TSource, TDestination> if implements
-                        // onServiceExposingContext.ExposedTypes.AddRange(
-                        //     ReflectionHelper.GetImplementedGenericTypes(
-                        //         onServiceExposingContext.ImplementationType,
-                        //         typeof(IObjectMapper<,>)
-                        //     )
-                        // );
                         var implementedTypes = ReflectionHelper.GetImplementedGenericTypes(
                             onServiceExposingContext.ImplementationType,
                             typeof(IObjectMapper<,>)
@@ -80,31 +74,9 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     // mock IDistributedEventBus
                     services.AddSingleton<IDistributedEventBus>(mockDistributedEventBus.Object);
                 })
-                // .AddRedisGrainStorageAsDefault(optionsBuilder => optionsBuilder.Configure(options =>
-                // {
-                //     options.DataConnectionString = "localhost:6379"; // This is the deafult
-                //     options.UseJson = true;
-                //     options.DatabaseNumber = 0;
-                // }))
-                // .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
                 .AddMemoryGrainStorageAsDefault();
-            // .AddSnapshotStorageBasedLogConsistencyProviderAsDefault((op, name) => 
-            // {
-            //     op.UseIndependentEventStorage = false;
-            //     // op.UseIndependentEventStorage = true;
-            //     // // Should configure event storage when set UseIndependentEventStorage true
-            //     // op.ConfigureIndependentEventStorage = (services, name) =>
-            //     // {
-            //     //     var eventStoreConnectionString = "ConnectTo=tcp://admin:changeit@localhost:1113; HeartBeatTimeout=500";
-            //     //     var eventStoreConnection = EventStoreConnection.Create(eventStoreConnectionString);
-            //     //     eventStoreConnection.ConnectAsync().Wait();
-            //     //
-            //     //     services.AddSingleton(eventStoreConnection);
-            //     //     services.AddSingleton<IGrainEventStorage, EventStoreGrainEventStorage>();
-            //     // };
-            // });
         }
     }
     
@@ -112,7 +84,6 @@ public class ClusterFixture:IDisposable,ISingletonDependency
     {
         public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) => clientBuilder
             .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName);
-            // .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName);
     }
 }
 
