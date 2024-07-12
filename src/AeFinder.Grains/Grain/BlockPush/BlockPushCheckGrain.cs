@@ -36,7 +36,7 @@ public class BlockPushCheckGrain : global::Orleans.Grain, IBlockPushCheckGrain
         {
             return;
         }
-        _reminder = await RegisterOrUpdateReminder(
+        _reminder = await this.RegisterOrUpdateReminder(
             this.GetPrimaryKeyString(),
             TimeSpan.FromSeconds(3),
             TimeSpan.FromMinutes(1) 
@@ -48,7 +48,7 @@ public class BlockPushCheckGrain : global::Orleans.Grain, IBlockPushCheckGrain
         {
             return;
         }
-        await UnregisterReminder(_reminder);
+        await this.UnregisterReminder(_reminder);
         _reminder = null;
     }
 }

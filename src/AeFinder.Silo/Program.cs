@@ -36,9 +36,7 @@ public class Program
             .InitAppConfiguration(true)
             .UseApolloForHostBuilder()
             .ConfigureServices((hostcontext, services) => { services.AddApplication<AeFinderOrleansSiloModule>(); })
-
-            // .UseOrleans<BlockGrain>()
-            .UseOrleansSnapshot<BlockGrain>()
+            .UseOrleansSnapshot()
             .UseAutofac()
             .UseSerilog();
 }

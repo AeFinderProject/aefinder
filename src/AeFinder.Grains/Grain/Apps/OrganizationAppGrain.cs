@@ -32,6 +32,12 @@ public class OrganizationAppGrain : Grain<OrganizationAppState>, IOrganizationAp
         return State.AppIds;
     }
 
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        await ReadStateAsync();
+        await base.OnActivateAsync(cancellationToken);
+    }
+
     public async Task<int> GetMaxAppCountAsync()
     {
         await ReadStateAsync();

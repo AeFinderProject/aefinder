@@ -1,27 +1,31 @@
 using System.Collections.Generic;
+using Orleans;
 
 namespace AeFinder.Apps;
 
+[GenerateSerializer]
 public class AppSyncStateDto
 {
-    public AppVersionSyncState CurrentVersion { get; set; }
-    public AppVersionSyncState PendingVersion { get; set; }
+    [Id(0)] public AppVersionSyncState CurrentVersion { get; set; }
+    [Id(1)] public AppVersionSyncState PendingVersion { get; set; }
     
 }
 
+[GenerateSerializer]
 public class AppVersionSyncState
 {
-    public string Version { get; set; }
-    public List<AppSyncStateItem> Items { get; set; } = new();
+    [Id(0)] public string Version { get; set; }
+    [Id(1)] public List<AppSyncStateItem> Items { get; set; } = new();
 }
 
+[GenerateSerializer]
 public class AppSyncStateItem
 {
-    public string ChainId { get; set; }
-    public string LongestChainBlockHash { get; set; }
-    public long LongestChainHeight { get; set; }
-    public string BestChainBlockHash { get; set; }
-    public long BestChainHeight { get; set; }
-    public string LastIrreversibleBlockHash { get; set; }
-    public long LastIrreversibleBlockHeight { get; set; }
+    [Id(0)] public string ChainId { get; set; }
+    [Id(1)] public string LongestChainBlockHash { get; set; }
+    [Id(2)] public long LongestChainHeight { get; set; }
+    [Id(3)] public string BestChainBlockHash { get; set; }
+    [Id(4)] public long BestChainHeight { get; set; }
+    [Id(5)] public string LastIrreversibleBlockHash { get; set; }
+    [Id(6)] public long LastIrreversibleBlockHeight { get; set; }
 }

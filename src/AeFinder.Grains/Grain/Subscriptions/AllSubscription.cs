@@ -1,14 +1,16 @@
 namespace AeFinder.Grains.Grain.Subscriptions;
 
+[GenerateSerializer]
 public class AllSubscription
 {
-    public SubscriptionDetail CurrentVersion { get; set; }
-    public SubscriptionDetail PendingVersion { get; set; }
+    [Id(0)]public SubscriptionDetail CurrentVersion { get; set; }
+    [Id(1)]public SubscriptionDetail PendingVersion { get; set; }
 }
 
+[GenerateSerializer]
 public class SubscriptionDetail
 {
-    public string Version { get; set; }
-    public SubscriptionStatus Status { get; set; }
-    public SubscriptionManifest SubscriptionManifest { get; set; }
+    [Id(0)]public string Version { get; set; }
+    [Id(1)]public SubscriptionStatus Status { get; set; }
+    [Id(2)]public SubscriptionManifest SubscriptionManifest { get; set; }
 }

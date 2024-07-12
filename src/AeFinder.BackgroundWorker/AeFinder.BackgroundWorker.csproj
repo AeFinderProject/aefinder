@@ -9,12 +9,8 @@
 
     <ItemGroup>
         <PackageReference Include="Hangfire.Core" Version="1.8.14" />
-        <PackageReference Include="Microsoft.Orleans.Client" Version="3.6.5" />
-        <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Orleans.Providers.MongoDB" Version="3.8.0" />
+        <PackageReference Include="Microsoft.Orleans.Client" Version="8.1.0" />
+        <PackageReference Include="Orleans.Providers.MongoDB" Version="8.0.3" />
         <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
         <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
         <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
@@ -49,6 +45,10 @@
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      </Content>
+      <None Remove="appsettings.apollo.json" />
+      <Content Include="appsettings.apollo.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
 
