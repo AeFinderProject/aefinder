@@ -6,6 +6,7 @@ using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
+using Orleans.Serialization;
 using Orleans.Streams.Kafka.Config;
 
 namespace AeFinder.App;
@@ -30,6 +31,11 @@ public static class OrleansHostExtensions
                 {
                     options.ClusterId = configSection.GetValue<string>("ClusterId");
                     options.ServiceId = configSection.GetValue<string>("ServiceId");
+                })
+                .Configure<ExceptionSerializationOptions>(options=>
+                {
+                    options.SupportedNamespacePrefixes.Add("Volo.Abp");
+                    options.SupportedNamespacePrefixes.Add("Newtonsoft.Json");
                 })
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddKafka(AeFinderApplicationConsts.MessageStreamName)

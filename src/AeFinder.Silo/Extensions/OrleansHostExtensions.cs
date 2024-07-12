@@ -1,6 +1,7 @@
 using System.Net;
 using AeFinder.Silo.MongoDB;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -8,6 +9,8 @@ using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Providers.MongoDB.Configuration;
+using Orleans.Providers.MongoDB.StorageProviders.Serializers;
+using Orleans.Serialization;
 using Orleans.Statistics;
 using Orleans.Streams.Kafka.Config;
 
@@ -43,6 +46,14 @@ public static class OrleansHostExtensions
                     options.DatabaseName = configSection.GetValue<string>("DataBase");
                     options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
+                .Configure<JsonGrainStateSerializerOptions>(options => options.ConfigureJsonSerializerSettings =
+                    settings =>
+                    {
+                        settings.NullValueHandling = NullValueHandling.Include;
+                        settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
+                        settings.DefaultValueHandling = DefaultValueHandling.Populate;
+                    })
+                .ConfigureServices(services => services.AddSingleton<IGrainStateSerializer,AeFinderJsonGrainStateSerializer>())
                 .AddAeFinderMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
                 {
                     op.CollectionPrefix = "GrainStorage";
@@ -100,13 +111,11 @@ public static class OrleansHostExtensions
                     options.CollectionPrefix = "StreamStorage";
                     options.DatabaseName = configSection.GetValue<string>("DataBase");
                 })
-                .Configure<JsonGrainStateSerializerOptions>(options => options.ConfigureJsonSerializerSettings =
-                    settings =>
-                    {
-                        settings.NullValueHandling = NullValueHandling.Include;
-                        settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
-                        settings.DefaultValueHandling = DefaultValueHandling.Populate;
-                    })
+                .Configure<ExceptionSerializationOptions>(options=>
+                {
+                    options.SupportedNamespacePrefixes.Add("Volo.Abp");
+                    options.SupportedNamespacePrefixes.Add("Newtonsoft.Json");
+                })
                 .UseDashboard(options =>
                 {
                     options.Username = configSection.GetValue<string>("DashboardUserName");
