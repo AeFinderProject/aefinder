@@ -47,7 +47,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Assembly(System.Reflection.Assembly.Load("Google.Protobuf"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("GraphQL"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("Nest"), Trust.Partial)
-            .Assembly(System.Reflection.Assembly.Load("AutoMapper"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("AutoMapper"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.ObjectMapping"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.AutoMapper"), Trust.Full)
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.Core"), Trust.Partial)
