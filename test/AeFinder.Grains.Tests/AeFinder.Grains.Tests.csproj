@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>AeFinder.Grains</RootNamespace>
     </PropertyGroup>
 
@@ -18,7 +18,7 @@
         </PackageReference>
         <PackageReference Include="DeepCloner" Version="0.10.2" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
-        <PackageReference Include="Microsoft.Orleans.TestingHost" Version="3.6.5" />
+        <PackageReference Include="Microsoft.Orleans.TestingHost" Version="8.1.0" />
         <PackageReference Include="Moq" Version="4.20.70" />
     </ItemGroup>
 

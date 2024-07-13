@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Kubernetes;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -72,5 +73,12 @@ public class AppController : AeFinderController
     {
         return await _appLogService.GetLatestRealTimeLogs(_kubernetesOption.AppNameSpace, startTime, appId, version,
             level, logId, searchKeyWord);
+    }
+
+    [HttpGet("code")]
+    // [Authorize]
+    public async Task<string> GetAppCodeAsync(string appId, string version)
+    {
+        return await _appService.GetAppCodeAsync(appId, version);
     }
 }

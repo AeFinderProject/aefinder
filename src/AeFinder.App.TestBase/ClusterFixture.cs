@@ -21,12 +21,12 @@ public class ClusterFixture
         Cluster.Deploy();
     }
     
-    private class TestSiloConfigurations : ISiloBuilderConfigurator
+    private class TestSiloConfigurations : ISiloConfigurator
     {
-        public void Configure(ISiloHostBuilder hostBuilder)
+        public void Configure(ISiloBuilder hostBuilder)
         {
             hostBuilder.ConfigureServices(services => { })
-                .AddSimpleMessageStreamProvider(MessageStreamName)
+                .AddMemoryStreams(MessageStreamName)
                 .AddMemoryGrainStorage(GrainStorageName)
                 .AddMemoryGrainStorageAsDefault();
         }
@@ -34,7 +34,7 @@ public class ClusterFixture
 
     private class TestClientBuilderConfigurator : IClientBuilderConfigurator
     {
-        public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) => clientBuilder
-            .AddSimpleMessageStreamProvider(MessageStreamName);
+        public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) =>
+            clientBuilder.AddMemoryStreams(MessageStreamName);
     }
 }

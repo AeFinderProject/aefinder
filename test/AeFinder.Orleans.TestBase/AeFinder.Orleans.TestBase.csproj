@@ -1,23 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="AElf.Orleans.EventSourcing.Snapshot" Version="1.0.3" />
-      <PackageReference Include="EventStore.Client" Version="5.0.2" />
-      <PackageReference Include="JsonNet.PrivateSettersContractResolvers" Version="1.0.0" />
-      <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="Microsoft.Orleans.Server" Version="3.6.5" />
-      <PackageReference Include="Microsoft.Orleans.TestingHost" Version="3.6.5" />
+      <PackageReference Include="Microsoft.Orleans.TestingHost" Version="8.1.0" />
       <PackageReference Include="Moq" Version="4.20.70" />
-      <PackageReference Include="Orleans.Persistence.Redis" Version="3.2.2" />
       <PackageReference Include="xunit" Version="2.4.2" />
       <PackageReference Include="xunit.runner.console" Version="2.4.2">
         <PrivateAssets>all</PrivateAssets>

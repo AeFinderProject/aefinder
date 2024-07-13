@@ -3,6 +3,7 @@ using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Subscriptions;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.EventBus.Distributed;
@@ -13,10 +14,12 @@ namespace AeFinder.Grains.Grain.Subscriptions;
 public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptionGrain
 {
     private readonly IDistributedEventBus _distributedEventBus;
+    private readonly ILogger<AppSubscriptionGrain> _logger;
 
-    public AppSubscriptionGrain(IDistributedEventBus distributedEventBus)
+    public AppSubscriptionGrain(IDistributedEventBus distributedEventBus, ILogger<AppSubscriptionGrain> logger)
     {
         _distributedEventBus = distributedEventBus;
+        _logger = logger;
     }
 
     public async Task<AddSubscriptionDto> AddSubscriptionAsync(SubscriptionManifest subscriptionManifest, byte[] code)
@@ -152,6 +155,9 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
                 PendingVersion = State.PendingVersion
             });
         }
+        
+        _logger.LogInformation("Upgrade CurrentVersion from {currentVersion} to {pendingVersion}", State.CurrentVersion,
+            State.PendingVersion);
 
         State.CurrentVersion = State.PendingVersion;
         await _distributedEventBus.PublishAsync(new AppCurrentVersionSetEto()
@@ -203,7 +209,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         await WriteStateAsync();
     }
 
-    public override async Task OnActivateAsync()
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await ReadStateAsync();
     }

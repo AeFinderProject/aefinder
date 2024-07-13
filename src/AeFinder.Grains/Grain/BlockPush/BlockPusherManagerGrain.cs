@@ -44,9 +44,9 @@ public class BlockPusherManagerGrain : Grain<BlockPusherManagerState>, IBlockPus
         }
     }
 
-    public override async Task OnActivateAsync()
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await this.ReadStateAsync();
-        await base.OnActivateAsync();
+        await base.OnActivateAsync(cancellationToken);
     }
 }

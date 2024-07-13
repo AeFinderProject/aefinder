@@ -1,27 +1,31 @@
 namespace AeFinder.Grains.Grain.Subscriptions;
 
+[GenerateSerializer]
 public class SubscriptionManifest
 {
-    public List<Subscription> SubscriptionItems { get; set; } = new();
+    [Id(0)]public List<Subscription> SubscriptionItems { get; set; } = new();
 }
 
+[GenerateSerializer]
 public class Subscription
 {
-    public string ChainId { get; set; }
-    public long StartBlockNumber { get; set; }
-    public bool OnlyConfirmed { get; set; }
-    public List<TransactionCondition> TransactionConditions { get; set; } = new();
-    public List<LogEventCondition> LogEventConditions { get; set; } = new();
+    [Id(0)]public string ChainId { get; set; }
+    [Id(1)]public long StartBlockNumber { get; set; }
+    [Id(2)]public bool OnlyConfirmed { get; set; }
+    [Id(3)]public List<TransactionCondition> TransactionConditions { get; set; } = new();
+    [Id(4)]public List<LogEventCondition> LogEventConditions { get; set; } = new();
 }
 
+[GenerateSerializer]
 public class TransactionCondition
 {
-    public string To { get; set; }
-    public List<string> MethodNames { get; set; } = new();
+    [Id(0)]public string To { get; set; }
+    [Id(1)]public List<string> MethodNames { get; set; } = new();
 }
 
+[GenerateSerializer]
 public class LogEventCondition
 {
-    public string ContractAddress { get; set; }
-    public List<string> EventNames { get; set; } = new();
+    [Id(0)]public string ContractAddress { get; set; }
+    [Id(1)]public List<string> EventNames { get; set; } = new();
 }

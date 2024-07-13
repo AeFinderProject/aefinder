@@ -122,7 +122,7 @@ public class DeploymentHelper
                                 {
                                     Requests = new Dictionary<string, ResourceQuantity>()
                                     {
-                                        {"cpu", new ResourceQuantity("1")},      // request 1 CPU core
+                                        {"cpu", new ResourceQuantity("2")},      // request 2 CPU core
                                         {"memory", new ResourceQuantity("2Gi")}  // request 2 GiB memory
                                     }
                                 }

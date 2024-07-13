@@ -496,16 +496,16 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         return clientConfirmedHeight >= pushedHeight - maxPushThreshold;
     }
 
-    public override async Task OnActivateAsync()
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await ReadStateAsync();
 
         var pusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
         var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
-        var streamProvider = GetStreamProvider(AeFinderApplicationConsts.MessageStreamName);
-        _stream = streamProvider.GetStream<SubscribedBlockDto>(
-            streamId, AeFinderApplicationConsts.MessageStreamNamespace);
+        var streamProvider = this.GetStreamProvider(AeFinderApplicationConsts.MessageStreamName);
+        _stream = streamProvider.GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace,
+            streamId);
 
-        await base.OnActivateAsync();
+        await base.OnActivateAsync(cancellationToken);
     }
 }

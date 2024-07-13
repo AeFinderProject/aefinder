@@ -51,6 +51,7 @@ namespace AeFinder.BackgroundWorker
                 .InitAppConfiguration(true)
                 .UseApolloForHostBuilder()
                 .ConfigureServices((hostContext, services) => { services.AddApplication<AeFinderBackGroundModule>(); })
+                .UseOrleansClient()
                 .UseAutofac()
                 .UseSerilog();
     }
