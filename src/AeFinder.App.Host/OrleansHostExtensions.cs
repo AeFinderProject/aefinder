@@ -50,6 +50,7 @@ public static class OrleansHostExtensions
                         Partitions = configuration.GetSection("Kafka:Partitions").Get<int>(),
                         ReplicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>()
                     });
+                    options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
                 })
                 .AddJson();
         });
