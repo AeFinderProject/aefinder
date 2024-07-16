@@ -15,7 +15,7 @@ public class ChainGrainTests : AeFinderGrainTestBase
         var blockHash = "blockHash";
         var blockHeight = 100;
 
-        var grain = Cluster.Client.GetGrain<IChainGrain>("AELF");
+        var grain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await grain.SetLatestBlockAsync(blockHash, blockHeight);
         
         var chainStatus = await grain.GetChainStatusAsync();
@@ -36,7 +36,7 @@ public class ChainGrainTests : AeFinderGrainTestBase
         var confirmedBlockHash = "confirmedBlockHash";;
         var confirmedBlockHeight = 80;
         
-        var grain = Cluster.Client.GetGrain<IChainGrain>("AELF");
+        var grain = Cluster.Client.GetGrain<IChainGrain>(chainId);
         await grain.SetLatestConfirmedBlockAsync(confirmedBlockHash, confirmedBlockHeight);
         
         var chainStatus = await grain.GetChainStatusAsync();

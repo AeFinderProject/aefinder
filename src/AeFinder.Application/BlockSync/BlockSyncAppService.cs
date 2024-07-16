@@ -17,13 +17,13 @@ public class BlockSyncAppService : ApplicationService, IBlockSyncAppService
         _blockSyncOptions = blockSyncOptions.Value;
     }
 
-    public async Task<BlockSyncMode> GetBlockSyncModeAsync(string chainId, long blockHeight)
+    public Task<BlockSyncMode> GetBlockSyncModeAsync(string chainId, long blockHeight)
     {
         if (_blockSyncOptions.FastSyncEndHeight.TryGetValue(chainId, out var endHeight) && blockHeight <= endHeight)
         {
-            return BlockSyncMode.FastSyncMode;
+            return Task.FromResult(BlockSyncMode.FastSyncMode);
         }
 
-        return BlockSyncMode.NormalMode;
+        return Task.FromResult(BlockSyncMode.NormalMode);
     }
 }

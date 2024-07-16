@@ -28,9 +28,10 @@ public class PrimaryKeyGrain: global::Orleans.Grain<PrimaryKeyState>, IPrimaryKe
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
 
-    public async Task SetCounter(int blocksCount)
+    public Task SetCounter(int blocksCount)
     {
         this.State.Counter = this.State.Counter + blocksCount;
+        return Task.CompletedTask;
     }
 
     public async Task<string> GetCurrentGrainPrimaryKey(string chainId)
@@ -54,8 +55,8 @@ public class PrimaryKeyGrain: global::Orleans.Grain<PrimaryKeyState>, IPrimaryKe
         return this.State.GrainPrimaryKey;
     }
 
-    private async Task<string> CreatePrimaryKey(string chainId)
+    private Task<string> CreatePrimaryKey(string chainId)
     {
-        return chainId + "_" + this.State.SerialNumber; 
+        return Task.FromResult(chainId + "_" + this.State.SerialNumber); 
     }
 }

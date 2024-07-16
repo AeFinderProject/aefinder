@@ -112,13 +112,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         var blockIndex_903= queryable.Where(expression).ToList();
         
         blockIndex_903.FirstOrDefault().BlockHash.ShouldBe(block_903.BlockHash);
-
-        // await _blockIndexRepository.DeleteAsync(block_900);
-        // await _blockIndexRepository.DeleteAsync(block_901);
-        // await _blockIndexRepository.DeleteAsync(block_902);
-        // await _blockIndexRepository.DeleteAsync(block_903);
-        _blockIndexRepository.DeleteManyAsync(blockList);
-        Thread.Sleep(2000);
     }
 
     [Fact]
