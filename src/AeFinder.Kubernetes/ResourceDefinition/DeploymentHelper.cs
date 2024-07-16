@@ -35,8 +35,8 @@ public class DeploymentHelper
     /// <param name="sideCarConfigMapName"></param>
     /// <returns></returns>
     public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string appId, string imageName,
-        string deploymentName, string deploymentLabelName, int replicasCount, string containerName, 
-        int containerPort, string configMapName, string sideCarConfigMapName)
+        string deploymentName, string deploymentLabelName, int replicasCount, string containerName,
+        int containerPort, string configMapName, string sideCarConfigMapName, string requestCpu, string requestMemory)
     {
         var labels = new Dictionary<string, string>
         {
@@ -122,8 +122,8 @@ public class DeploymentHelper
                                 {
                                     Requests = new Dictionary<string, ResourceQuantity>()
                                     {
-                                        {"cpu", new ResourceQuantity("2")},      // request 2 CPU core
-                                        {"memory", new ResourceQuantity("2Gi")}  // request 2 GiB memory
+                                        { "cpu", new ResourceQuantity(requestCpu) }, // request 1 CPU core
+                                        { "memory", new ResourceQuantity(requestMemory) } // request 2 GiB memory
                                     }
                                 }
                             },
