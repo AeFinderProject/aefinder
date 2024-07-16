@@ -52,7 +52,7 @@ public class AeFinderOpenIddictTokenStore:AbpOpenIddictTokenStore
     //         }
     //     }
     // }
-    public virtual async ValueTask<long> PruneAsync(DateTimeOffset threshold, CancellationToken cancellationToken)
+    public override async ValueTask<long> PruneAsync(DateTimeOffset threshold, CancellationToken cancellationToken)
     {
         //Set isTransactional false
         using (var uow = UnitOfWorkManager.Begin(requiresNew: true, isTransactional: false, isolationLevel: IsolationLevel.RepeatableRead))
