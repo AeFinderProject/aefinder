@@ -7,7 +7,6 @@ using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using Orleans;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 using Volo.Abp.AutoMapper;
@@ -36,9 +35,9 @@ public class ClusterFixture:IDisposable,ISingletonDependency
 
     public TestCluster Cluster { get; private set; }
 
-    private class TestSiloConfigurations : ISiloBuilderConfigurator 
+    private class TestSiloConfigurations : ISiloConfigurator 
     {
-        public void Configure(ISiloHostBuilder hostBuilder) {
+        public void Configure(Orleans.Hosting.ISiloBuilder hostBuilder) {
             hostBuilder.ConfigureServices(services => {
                     services.AddSingleton<IBlockAppService, MockBlockAppService>();
                     services.AddSingleton<IBlockDataProvider, BlockDataProvider>();
@@ -55,12 +54,15 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     services.OnExposing(onServiceExposingContext =>
                     {
                         //Register types for IObjectMapper<TSource, TDestination> if implements
-                        onServiceExposingContext.ExposedTypes.AddRange(
-                            ReflectionHelper.GetImplementedGenericTypes(
-                                onServiceExposingContext.ImplementationType,
-                                typeof(IObjectMapper<,>)
-                            )
+                        var implementedTypes = ReflectionHelper.GetImplementedGenericTypes(
+                            onServiceExposingContext.ImplementationType,
+                            typeof(IObjectMapper<,>)
                         );
+
+                        foreach (var type in implementedTypes)
+                        {
+                            onServiceExposingContext.ExposedTypes.Add(new ServiceIdentifier(type));
+                        }
                     });
                     services.AddTransient(
                         typeof(IObjectMapper<>),
@@ -81,7 +83,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     // mock IDistributedEventBus
                     services.AddSingleton<IDistributedEventBus>(mockDistributedEventBus.Object);
                 })
-                .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName)
+                .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
                 .AddMemoryGrainStorageAsDefault();
         }
@@ -90,7 +92,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
     private class TestClientBuilderConfigurator : IClientBuilderConfigurator
     {
         public void Configure(IConfiguration configuration, IClientBuilder clientBuilder) => clientBuilder
-            .AddSimpleMessageStreamProvider(AeFinderApplicationConsts.MessageStreamName);
+            .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName);
     }
 }
 

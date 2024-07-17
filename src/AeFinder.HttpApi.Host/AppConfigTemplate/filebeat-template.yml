@@ -27,19 +27,26 @@ setup.template.settings:
 
 setup.template.enabled: true
 setup.template.overwrite: true
-setup.template.name: "[NameSpace]-[AppId]-log-index"
-setup.template.pattern: "[NameSpace]-[AppId]-log-index-*"
+setup.template.name: "[NameSpace]-[AppId]-[Version]-log-index-template"
+setup.template.pattern: "[NameSpace]-[AppId]-[Version]-log-index-*"
 
-setup.ilm.enabled: false
+#setup.ilm.enabled: false
+
+setup.ilm.enabled: true
+setup.ilm.rollover_alias: "[NameSpace]-[AppId]-[Version]-log-index"
+setup.ilm.pattern: "{now/d}-000001"
+setup.ilm.policy_name: "[NameSpace]-filebeat-log-policy"
 
 output.elasticsearch:
   hosts: [
           "http://localhost:9200"]
-  index: "[NameSpace]-[AppId]-log-index-%{+yyyy-MM}"
+  index: "[NameSpace]-[AppId]-[Version]-log-index-%{+yyyy-MM-dd}"
   # username: "your_username"
   # password: "your_password"
   
 processors:
-  - add_host_metadata:
-      when.not.contains.tags: forwarded
-  - add_docker_metadata: ~
+  - drop_fields:
+      fields: [ "agent", "ecs","input","log","message" ]
+#  - add_host_metadata:
+#      when.not.contains.tags: forwarded
+#  - add_docker_metadata: ~

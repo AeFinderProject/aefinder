@@ -1,0 +1,80 @@
+name: build and package
+on:
+  push:
+    tags:
+      - "v*.*.*"
+env:
+  DOTNET_INSTALL_DIR: "./.dotnet"
+jobs:
+  publish:
+    runs-on: aefinder-runner
+    strategy:
+      matrix:
+        servicename: [
+          AeFinder.App.Host,
+          AeFinder.AuthServer,
+          AeFinder.BackgroundWorker,
+          AeFinder.BlockChainEventHandler,
+          AeFinder.EntityEventHandler,
+          AeFinder.HttpApi.Host,
+          AeFinder.Silo
+        ] # This should be the app that needs to be deploy.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0' # which dotnet version is required?
+      - run: dotnet publish src/${{ matrix.servicename }}/${{ matrix.servicename }}.csproj -c Release -o out/${{ matrix.servicename }}
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.servicename }}
+          path: out/${{ matrix.servicename }}
+          retention-days: 1
+  build-and-push-image:
+    needs: publish
+    runs-on: aefinder-runner
+    strategy:
+      matrix:
+        servicename: [
+          AeFinder.App.Host,
+          AeFinder.AuthServer,
+          AeFinder.BackgroundWorker,
+          AeFinder.BlockChainEventHandler,
+          AeFinder.EntityEventHandler,
+          AeFinder.HttpApi.Host,
+          AeFinder.Silo
+        ] # This should be the list of app that needs to be deploy.
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download a single artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.servicename }}
+          path: out/${{ matrix.servicename }}
+      - name: Create image tag
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.REPOSITORY_REGION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/${{ matrix.servicename }}
+          tags: |
+            type=ref,event=tag
+      - # Setting up Docker Buildx with docker-container driver is required
+        # at the moment to be able to use a subdirectory with Git context
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          build-args: |
+            servicename=${{ matrix.servicename }}
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

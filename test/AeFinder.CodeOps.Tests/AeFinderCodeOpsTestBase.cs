@@ -149,7 +149,7 @@ public class AeFinderCodeOpsTestBase : AeFinderTestBase<AeFinderCodeOpsTestModul
     
     public static void AddNetReferences()
     {
-        foreach (var portableExecutableReference in Basic.Reference.Assemblies.Net70.References.All)
+        foreach (var portableExecutableReference in Basic.Reference.Assemblies.Net80.References.All)
         {
             References.Add(portableExecutableReference);
         }

@@ -8,7 +8,7 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
 {
     private readonly ILogger<ChainGrain> _logger;
 
-    public override async Task OnActivateAsync()
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await ReadStateAsync();
     }

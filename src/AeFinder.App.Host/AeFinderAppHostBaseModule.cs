@@ -3,6 +3,7 @@ using System.Linq;
 using AeFinder.App.Metrics;
 using AeFinder.MongoDb;
 using GraphQL;
+using GraphQL.Server.Ui.GraphiQL;
 using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -33,7 +34,6 @@ public class AeFinderAppHostBaseModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         ConfigureCors(context, configuration);
-        ConfigureOrleans(context, configuration);
         ConfigureTokenCleanupService();
         context.Services.AddGraphQL(b => b
             .AddAutoClrMappings()
@@ -48,11 +48,6 @@ public class AeFinderAppHostBaseModule : AbpModule
                 builder.AddPrometheusExporter();
             });
         Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
-    }
-
-    private static void ConfigureOrleans(ServiceConfigurationContext context, IConfiguration configuration)
-    {
-        context.Services.AddSingleton<IClusterClient>(o => OrleansClusterClientFactory.GetClusterClient(configuration));
     }
 
     private void ConfigureCors(ServiceConfigurationContext context, IConfiguration configuration)
@@ -85,8 +80,7 @@ public class AeFinderAppHostBaseModule : AbpModule
 
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
     {
-        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        AsyncHelper.RunSync(async ()=> await client.Connect());
+
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
@@ -103,6 +97,14 @@ public class AeFinderAppHostBaseModule : AbpModule
                 GraphQLEndPoint = "../graphql",
                 SubscriptionsEndPoint = "../graphql",
             });
+        app.UseGraphQLGraphiQL(
+            $"/{appInfoOptions.AppId}/{appInfoOptions.Version}/ui/graphiql",
+            new GraphiQLOptions()
+            {
+                GraphQLEndPoint = "../graphql",
+                SubscriptionsEndPoint = "../graphql",
+            }
+        );
         app.UseOpenTelemetryPrometheusScrapingEndpoint($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/metrics");
         app.UseRouting();
         app.UseCors();
@@ -111,7 +113,6 @@ public class AeFinderAppHostBaseModule : AbpModule
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        AsyncHelper.RunSync(client.Close);
+
     }
 }

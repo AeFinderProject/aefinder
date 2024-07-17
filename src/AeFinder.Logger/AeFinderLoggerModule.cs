@@ -25,23 +25,23 @@ public class AeFinderLoggerModule: AbpModule
             var nodes = options.Uris.Select(uri => new Uri(uri)).ToArray();
             var connectionPool = new StaticConnectionPool(nodes);
             var settings = new ConnectionSettings(connectionPool)
-                .EnableHttpCompression() // Enable HTTP compression
+                .EnableHttpCompression(); // Enable HTTP compression
                 // .PrettyJson();            // Set the requested JSON to formatted output
-                .OnRequestCompleted(callDetails =>
-                {
-                    // Displays the request and response details
-                    Console.WriteLine(
-                        $"Method: {callDetails.HttpMethod} Path: {callDetails.Uri} Status: {callDetails.HttpStatusCode}");
-                    if (callDetails.RequestBodyInBytes != null)
-                    {
-                        Console.WriteLine($"Request: {Encoding.UTF8.GetString(callDetails.RequestBodyInBytes)}");
-                    }
-
-                    if (callDetails.ResponseBodyInBytes != null)
-                    {
-                        Console.WriteLine($"Response: {Encoding.UTF8.GetString(callDetails.ResponseBodyInBytes)}");
-                    }
-                });
+                // .OnRequestCompleted(callDetails =>
+                // {
+                //     // Displays the request and response details
+                //     Console.WriteLine(
+                //         $"Method: {callDetails.HttpMethod} Path: {callDetails.Uri} Status: {callDetails.HttpStatusCode}");
+                //     if (callDetails.RequestBodyInBytes != null)
+                //     {
+                //         Console.WriteLine($"Request: {Encoding.UTF8.GetString(callDetails.RequestBodyInBytes)}");
+                //     }
+                //
+                //     if (callDetails.ResponseBodyInBytes != null)
+                //     {
+                //         Console.WriteLine($"Response: {Encoding.UTF8.GetString(callDetails.ResponseBodyInBytes)}");
+                //     }
+                // });
             if (!string.IsNullOrWhiteSpace(options.Username) && !string.IsNullOrWhiteSpace(options.Password))
             {
                 settings.BasicAuthentication(options.Username, options.Password);

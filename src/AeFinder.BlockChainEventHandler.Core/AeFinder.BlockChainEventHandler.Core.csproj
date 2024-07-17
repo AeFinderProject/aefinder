@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>AeFinder.BlockChainEventHandler</RootNamespace>
     </PropertyGroup>
 
@@ -12,11 +12,6 @@
 
     <ItemGroup>
       <PackageReference Include="AElf.CSharp.Core" Version="1.6.0" />
-      <PackageReference Include="Microsoft.Orleans.Client" Version="3.6.5" />
-      <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.5">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
     </ItemGroup>
 
 </Project>

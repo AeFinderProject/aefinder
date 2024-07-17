@@ -2,6 +2,7 @@ using AeFinder.App.BlockState;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
@@ -19,18 +20,20 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
     private readonly IAppInfoProvider _appInfoProvider;
     private readonly IAppBlockStateSetProvider _appBlockStateSetProvider;
     private readonly IClusterClient _clusterClient;
-    private readonly IDistributedEventBus _distributedEventBus;
+    private readonly ILogger<VersionUpgradeProvider> _logger;
     private const long UpgradeHeightThreshold = 1000;
 
     private string _currentVersion = null;
     private readonly Dictionary<string, long> _currentVersionConfirmedBlockHeights = new();
     private List<string> _pendingVersionChains = new();
 
-    public VersionUpgradeProvider(IAppInfoProvider appInfoProvider, IClusterClient clusterClient, IAppBlockStateSetProvider appBlockStateSetProvider)
+    public VersionUpgradeProvider(IAppInfoProvider appInfoProvider, IClusterClient clusterClient,
+        IAppBlockStateSetProvider appBlockStateSetProvider, ILogger<VersionUpgradeProvider> logger)
     {
         _appInfoProvider = appInfoProvider;
         _clusterClient = clusterClient;
         _appBlockStateSetProvider = appBlockStateSetProvider;
+        _logger = logger;
 
         AsyncHelper.RunSync(InitAsync);
     }
@@ -53,10 +56,14 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
         {
             return;
         }
-
+        
         await _clusterClient
             .GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId))
             .UpgradeVersionAsync();
+        
+        _logger.LogInformation("Upgrade CurrentVersion from {currentVersion} to {pendingVersion}", _currentVersion,
+            _appInfoProvider.Version);
+        
         _currentVersion = _appInfoProvider.Version;
     }
 

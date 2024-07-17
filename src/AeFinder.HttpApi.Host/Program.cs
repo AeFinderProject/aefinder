@@ -38,6 +38,7 @@ public class Program
             builder.Host.AddAppSettingsSecretsJson()
                 .InitAppConfiguration(false)
                 .UseApolloForConfigureHostBuilder()
+                .UseOrleansClient()
                 .UseAutofac()
                 .UseSerilog();
             await builder.AddApplicationAsync<AeFinderHttpApiHostModule>();

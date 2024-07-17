@@ -1,38 +1,39 @@
 namespace AeFinder.Grains.EventData;
 
+[GenerateSerializer]
 public class Transaction
 {
-    public string TransactionId { get; set; }
+    [Id(0)] public string TransactionId { get; set; }
     
-    public string ChainId { get; set; }
+    [Id(1)] public string ChainId { get; set; }
     
-    public string From { get; set; }
+    [Id(2)] public string From { get; set; }
     
-    public string To { get; set; }
+    [Id(3)] public string To { get; set; }
     
-    public string BlockHash { get; set; }
+    [Id(4)] public string BlockHash { get; set; }
     
-    public string PreviousBlockHash { get; set; }
-    public long BlockHeight { get; set; }
+    [Id(5)] public string PreviousBlockHash { get; set; }
+    [Id(6)] public long BlockHeight { get; set; }
     
-    public DateTime BlockTime { get; set; }
+    [Id(7)] public DateTime BlockTime { get; set; }
     
-    public string MethodName { get; set; }
+    [Id(8)] public string MethodName { get; set; }
 
-    public string Params { get; set; }
+    [Id(9)] public string Params { get; set; }
     
-    public string Signature { get; set; }
+    [Id(10)] public string Signature { get; set; }
     
     /// <summary>
     /// The ranking position of transactions within a block
     /// </summary>
-    public int Index{get;set;}
+    [Id(11)] public int Index{get;set;}
     
-    public TransactionStatus Status { get; set; }
+    [Id(12)] public TransactionStatus Status { get; set; }
     
-    public bool Confirmed{get;set;}
+    [Id(13)] public bool Confirmed{get;set;}
     
-    public Dictionary<string,string> ExtraProperties {get;set;}
+    [Id(14)] public Dictionary<string,string> ExtraProperties {get;set;}
     
-    public List<LogEvent> LogEvents{get;set;}
+    [Id(15)] public List<LogEvent> LogEvents{get;set;}
 }

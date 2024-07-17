@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <PackageId>AeFinder.Kubernetes</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -9,7 +9,7 @@
 
     <ItemGroup>
       <PackageReference Include="KubernetesClient" Version="13.0.11" />
-      <PackageReference Include="Volo.Abp.Core" Version="7.0.0" />
+      <PackageReference Include="Volo.Abp.Core" Version="8.1.4" />
     </ItemGroup>
 
     <ItemGroup>
@@ -19,6 +19,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AeFinder.App.Deploy\AeFinder.App.Deploy.csproj" />
+      <ProjectReference Include="..\AeFinder.Logger\AeFinder.Logger.csproj" />
     </ItemGroup>
 
 </Project>

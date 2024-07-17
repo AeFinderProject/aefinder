@@ -1,13 +1,16 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Web;
 using AeFinder.App.PlugIns;
-using AeFinder.Grains;
-using AeFinder.Grains.Grain.Subscriptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Streams.Kafka.Utils;
+using Serilog;
 using Volo.Abp.Modularity;
 
 namespace AeFinder.App;
@@ -55,18 +58,43 @@ public class Startup
         
         app.UseCors();
         app.InitializeApplication();
-        
-            
     }
     
     private async Task<byte[]> GetPluginCodeAsync()
     {
         var appId = _configuration["AppInfo:AppId"];
         var version = _configuration["AppInfo:Version"];
-        
-        var client = OrleansClusterClientFactory.GetClusterClient(_configuration);
-        await client.Connect();
-        var appSubscriptionGrain = client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        return await appSubscriptionGrain.GetCodeAsync(version);
+        var apiServiceUrl = _configuration["ApiHostUrl"];
+
+        if (apiServiceUrl.IsNullOrEmpty())
+        {
+            throw new Exception("api host url config is missing!");
+        }
+
+        using (var httpClient = new HttpClient())
+        {
+            httpClient.BaseAddress = new Uri(apiServiceUrl);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            // httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_TOKEN");
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            try
+            {
+                string requestUrl = $"api/apps/code?appId={HttpUtility.UrlEncode(appId)}&version={HttpUtility.UrlEncode(version)}";
+                HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
+                response.EnsureSuccessStatusCode();
+
+                string responseBody = await response.Content.ReadAsStringAsync();
+                string base64EncodedData = responseBody.Trim('"');
+                byte[] decodedBytes = Convert.FromBase64String(base64EncodedData);
+                return decodedBytes;
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Request app code error: {e.Message}");
+                throw e;
+            }
+        }
     }
 }
