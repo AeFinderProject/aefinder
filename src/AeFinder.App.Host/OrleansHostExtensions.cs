@@ -57,17 +57,6 @@ public static class OrleansHostExtensions
                             ReplicationFactor = replicationFactor
                         });
                     }
-
-                    foreach (var n in configuration.GetSection("BlockPush:HistoricalMessageStreamNamespaces")
-                                 .Get<List<string>>())
-                    {
-                        options.AddTopic(n, new TopicCreationConfig
-                        {
-                            AutoCreate = true,
-                            Partitions = partitions,
-                            ReplicationFactor = replicationFactor
-                        });
-                    }
                 })
                 .AddJson();
         });

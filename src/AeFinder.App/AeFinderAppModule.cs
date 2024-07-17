@@ -119,28 +119,19 @@ public class AeFinderAppModule : AbpModule
         var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(appId, version);
         foreach (var streamId in messageStreamIds)
         {
-            await SubscribeStreamAsync(appId, streamId, subscribedBlockHandler, clusterClient, false);
-            await SubscribeStreamAsync(appId, streamId, subscribedBlockHandler, clusterClient, true);
+            await SubscribeStreamAsync(appId, streamId, subscribedBlockHandler, clusterClient);
         }
 
         await blockScanService.StartScanAsync(appId, version);
     }
 
     private async Task SubscribeStreamAsync(string appId, Guid streamId,
-        ISubscribedBlockHandler subscribedBlockHandler, IClusterClient clusterClient, bool historical)
+        ISubscribedBlockHandler subscribedBlockHandler, IClusterClient clusterClient)
     {
         var streamNamespaceGrain =
             clusterClient.GetGrain<IMessageStreamNamespaceManagerGrain>(GrainIdHelper
                 .GenerateMessageStreamNamespaceManagerGrainId());
-        string streamNamespace;
-        if (historical)
-        {
-            streamNamespace = await streamNamespaceGrain.GetHistoricalMessageStreamNamespaceAsync(appId);
-        }
-        else
-        {
-            streamNamespace = await streamNamespaceGrain.GetMessageStreamNamespaceAsync(appId);
-        }
+        var streamNamespace = await streamNamespaceGrain.GetMessageStreamNamespaceAsync(appId);
 
         var stream =
             clusterClient

@@ -31,7 +31,6 @@ public class AeFinderApplicationTestModule : AbpModule
         context.Services.Configure<BlockPushOptions>(o =>
         {
             o.MessageStreamNamespaces = new List<string> { "MessageStreamNamespace" };
-            o.HistoricalMessageStreamNamespaces = new List<string> { "HistoricalMessageStreamNamespace" };
         });
     }
 }

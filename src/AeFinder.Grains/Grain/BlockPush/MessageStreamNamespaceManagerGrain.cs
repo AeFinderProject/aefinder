@@ -6,7 +6,6 @@ namespace AeFinder.Grains.Grain.BlockPush;
 public class MessageStreamNamespaceManagerGrain : Orleans.Grain, IMessageStreamNamespaceManagerGrain
 {
     private readonly ConcurrentDictionary<string, int> _messageStreamNamespaceAppCount = new();
-    private readonly ConcurrentDictionary<string, int> _historicalMessageStreamNamespaceAppCount = new();
 
     private readonly BlockPushOptions _blockPushOptions;
 
@@ -18,11 +17,6 @@ public class MessageStreamNamespaceManagerGrain : Orleans.Grain, IMessageStreamN
     public async Task<string> GetMessageStreamNamespaceAsync(string appId)
     {
         return await GetMessageStreamNamespaceAsync(appId, _messageStreamNamespaceAppCount);
-    }
-
-    public async Task<string> GetHistoricalMessageStreamNamespaceAsync(string appId)
-    {
-        return await GetMessageStreamNamespaceAsync(appId, _historicalMessageStreamNamespaceAppCount);
     }
 
     private async Task<string> GetMessageStreamNamespaceAsync(string appId, ConcurrentDictionary<string, int> namespaceAppCount)
@@ -57,13 +51,6 @@ public class MessageStreamNamespaceManagerGrain : Orleans.Grain, IMessageStreamN
             var appCount = await grain.GetAppCountAsync();
             _messageStreamNamespaceAppCount[o] = appCount;
         }).ToList();
-        
-        tasks.AddRange(_blockPushOptions.HistoricalMessageStreamNamespaces.Select(async o =>
-        {
-            var grain = GrainFactory.GetGrain<IMessageStreamNamespaceGrain>(o);
-            var appCount = await grain.GetAppCountAsync();
-            _historicalMessageStreamNamespaceAppCount[o] = appCount;
-        }).ToList());
 
         await Task.WhenAll(tasks);
     }

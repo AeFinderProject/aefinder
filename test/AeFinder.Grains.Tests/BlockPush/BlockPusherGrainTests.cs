@@ -20,7 +20,6 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
 {
     private readonly IBlockDataProvider _blockDataProvider;
     private IAsyncStream<SubscribedBlockDto> _stream = null!;
-    private IAsyncStream<SubscribedBlockDto> _historicalStream = null!;
 
     public BlockPusherGrainTests()
     {
@@ -491,21 +490,9 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
             Cluster.Client.GetGrain<IMessageStreamNamespaceManagerGrain>(GrainIdHelper
                 .GenerateMessageStreamNamespaceManagerGrainId());
         var streamNamespace = await streamNamespaceGrain.GetMessageStreamNamespaceAsync(appId);
-        var historicalStreamNamespace = await streamNamespaceGrain.GetHistoricalMessageStreamNamespaceAsync(appId);
        
         _stream = streamProvider.GetStream<SubscribedBlockDto>(streamNamespace, streamId);
         await _stream.SubscribeAsync((v, t) =>
-        {
-            v.ChainId.ShouldBe(chainId);
-            v.AppId.ShouldBe(appId);
-            v.Version.ShouldBe(version);
-            v.PushToken.ShouldBe(pushToken);
-            subscribedBlock.AddRange(v.Blocks);
-            return Task.CompletedTask;
-        });
-        
-        _historicalStream = streamProvider.GetStream<SubscribedBlockDto>(historicalStreamNamespace, streamId);
-        await _historicalStream.SubscribeAsync((v, t) =>
         {
             v.ChainId.ShouldBe(chainId);
             v.AppId.ShouldBe(appId);

@@ -51,7 +51,6 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                         o.MaxHistoricalBlockPushThreshold = 30;
                         o.MaxNewBlockPushThreshold = 30;
                         o.MessageStreamNamespaces = new List<string> { "MessageStreamNamespace" };
-                        o.HistoricalMessageStreamNamespaces = new List<string> { "HistoricalMessageStreamNamespace" };
                     });
                     services.AddAutoMapper(typeof(AeFinderApplicationModule).Assembly);
                     services.OnExposing(onServiceExposingContext =>

@@ -20,7 +20,6 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
     private readonly IObjectMapper _objectMapper;
 
     private IAsyncStream<SubscribedBlockDto> _stream = null!;
-    private IAsyncStream<SubscribedBlockDto> _historicalStream = null!;
 
     public BlockPusherGrain(IOptionsSnapshot<BlockPushOptions> blockPushOptions,
         IBlockFilterAppService blockFilterAppService, ILogger<BlockPusherGrain> logger, IObjectMapper objectMapper)
@@ -48,7 +47,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         State.Version = pushInfo.Version;
         State.Subscription = await blockPusherInfoGrain.GetSubscriptionAsync();
         
-        if (_stream == null || _historicalStream == null)
+        if (_stream == null)
         {
             await InitializeStreamAsync();
         }
@@ -121,11 +120,11 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 if (!State.Subscription.OnlyConfirmed)
                 {
                     SetConfirmed(blocks, false);
-                    await PushBlocksAsync(blocks, _historicalStream);
+                    await PushBlocksAsync(blocks, _stream);
                 }
 
                 SetConfirmed(blocks, true);
-                await PushBlocksAsync(blocks, _historicalStream);
+                await PushBlocksAsync(blocks, _stream);
 
                 State.PushedBlockHeight = blocks.Last().BlockHeight;
                 State.PushedBlockHash = blocks.Last().BlockHash;
@@ -512,10 +511,8 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
             GrainFactory.GetGrain<IMessageStreamNamespaceManagerGrain>(GrainIdHelper
                 .GenerateMessageStreamNamespaceManagerGrainId());
        var streamNamespace = await streamNamespaceGrain.GetMessageStreamNamespaceAsync(State.AppId);
-       var historicalStreamNamespace = await streamNamespaceGrain.GetHistoricalMessageStreamNamespaceAsync(State.AppId);
        
         _stream = streamProvider.GetStream<SubscribedBlockDto>(streamNamespace, streamId);
-        _historicalStream = streamProvider.GetStream<SubscribedBlockDto>(historicalStreamNamespace, streamId);
     }
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
