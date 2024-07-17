@@ -29,6 +29,7 @@ public class AeFinderLogger : IAeFinderLogger, ISingletonDependency
         _logOperationLimitProvider = logOperationLimitProvider;
         _blockProcessingContext = blockProcessingContext;
         _configuration = configuration;
+        _loggers = new ConcurrentDictionary<string, ILogger<AeFinderLogger>>();
     }
 
     public void Log(LogLevel logLevel, Exception exception, string message, params object[] args)
