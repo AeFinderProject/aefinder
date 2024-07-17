@@ -13,6 +13,7 @@ public class AeFinderJsonFormatter : ITextFormatter
   private static string _appIdKey = "AppId";
   private static string _versionKey = "Version";
   private static string _eventIdKey = "EventId";
+  private static string _chainIdKey = "ChainId";
   
   /// <summary>
   /// Construct a <see cref="T:Serilog.Formatting.Compact.CompactJsonFormatter" />, optionally supplying a formatter for
@@ -78,6 +79,18 @@ public class AeFinderJsonFormatter : ITextFormatter
     if (logEvent.Properties.TryGetValue(_versionKey, out var version))
     {
       valueFormatter.Format(version, output);
+    }
+    else
+    {
+      JsonValueFormatter.WriteQuotedJsonString(string.Empty, output);
+    }
+    
+    output.Write(',');
+    JsonValueFormatter.WriteQuotedJsonString("chainId", output);
+    output.Write(':');
+    if (logEvent.Properties.TryGetValue(_chainIdKey, out var chainId))
+    {
+      valueFormatter.Format(chainId, output);
     }
     else
     {
