@@ -57,6 +57,8 @@ public static class OrleansHostExtensions
                             ReplicationFactor = replicationFactor
                         });
                     }
+                    
+                    options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
                 })
                 .AddJson();
         });
