@@ -20,7 +20,7 @@ public class AeFinderLogger : IAeFinderLogger, ISingletonDependency
     private readonly AppInfoOptions _appInfoOptions;
     private readonly IConfiguration _configuration;
 
-    public AeFinderLogger(ConcurrentDictionary<string, ILogger<AeFinderLogger>> loggers, IConfiguration configuration,
+    public AeFinderLogger(IConfiguration configuration,
         IOptionsSnapshot<AppInfoOptions> appInfoOptions, ILogOperationLimitProvider logOperationLimitProvider,
         IBlockProcessingContext blockProcessingContext)
     {
@@ -28,7 +28,6 @@ public class AeFinderLogger : IAeFinderLogger, ISingletonDependency
         _appInfoOptions = appInfoOptions.Value;
         _logOperationLimitProvider = logOperationLimitProvider;
         _blockProcessingContext = blockProcessingContext;
-        _loggers = loggers;
         _configuration = configuration;
     }
 
