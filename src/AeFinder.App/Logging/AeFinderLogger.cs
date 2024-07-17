@@ -44,7 +44,6 @@ public class AeFinderLogger : IAeFinderLogger, ISingletonDependency
         if (!_loggers.TryGetValue(_blockProcessingContext.ChainId, out var logger))
         {
             logger = LoggerFactory.Create(c => new LoggerConfiguration()
-                    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                     .Enrich.FromLogContext()
                     .Enrich.WithProperty("AppId", _appInfoOptions.AppId)
                     .Enrich.WithProperty("Version", _appInfoOptions.Version)
