@@ -37,7 +37,7 @@ public class Program
         try
         {
             Log.Information("Starting AeFinder.App.Host.");
-            CreateHostBuilder(args).Build().Run();
+            await CreateHostBuilder(args).Build().RunAsync();
             return 0;
         }
         catch (Exception ex)

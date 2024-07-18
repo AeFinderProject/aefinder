@@ -108,13 +108,15 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeFull);
         var targetPort = KubernetesConstants.AppContainerTargetPort;
         var replicasCount = 1;//Only one pod instance is allowed
+        var requestCpuCore = _kubernetesOptions.AppFullPodRequestCpuCore;
+        var requestMemory = _kubernetesOptions.AppFullPodRequestMemory;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
-                sideCarConfigName);
+                sideCarConfigName, requestCpuCore, requestMemory);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);
@@ -168,13 +170,15 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeQuery);
         var targetPort = KubernetesConstants.AppContainerTargetPort;
         var replicasCount = _kubernetesOptions.AppPodReplicas;
+        var requestCpuCore = _kubernetesOptions.AppQueryPodRequestCpuCore;
+        var requestMemory = _kubernetesOptions.AppQueryPodRequestMemory;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
-                sideCarConfigName);
+                sideCarConfigName, requestCpuCore, requestMemory);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);

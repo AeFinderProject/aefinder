@@ -59,7 +59,8 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
             }
             catch (Exception e)
             {
-                Logger.LogError(e, "Publish subscribedBlock event failed, retrying..." + retryCount);
+                Logger.LogError(e, "[{ChainId}] Publish subscribedBlock event failed, retrying..." + retryCount,
+                    subscribedBlock.ChainId);
                 retryCount++;
                 await Task.Delay(_messageQueueOptions.RetryInterval);
 
