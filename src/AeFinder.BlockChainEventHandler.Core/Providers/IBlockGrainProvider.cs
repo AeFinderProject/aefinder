@@ -21,20 +21,20 @@ public class BlockGrainProvider : IBlockGrainProvider, ISingletonDependency
         _clusterClient = clusterClient;
     }
 
-    public async Task<IBlockGrain> GetBlockGrain(string chainId, string blockHash)
+    public Task<IBlockGrain> GetBlockGrain(string chainId, string blockHash)
     {
         var primaryKey = GrainIdHelper.GenerateGrainId(chainId,
             AeFinderApplicationConsts.BlockGrainIdSuffix, blockHash);
         var blockGrain = _clusterClient.GetGrain<IBlockGrain>(primaryKey);
-        return blockGrain;
+        return Task.FromResult(blockGrain);
     }
 
-    public async Task<IBlockBranchGrain> GetBlockBranchGrain(string chainId)
+    public Task<IBlockBranchGrain> GetBlockBranchGrain(string chainId)
     {
         var primaryKey =
             GrainIdHelper.GenerateGrainId(chainId, AeFinderApplicationConsts.BlockBranchGrainIdSuffix);
         var grain = _clusterClient.GetGrain<IBlockBranchGrain>(primaryKey);
 
-        return grain;
+        return Task.FromResult(grain);
     }
 }

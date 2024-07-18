@@ -29,9 +29,9 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
 
-    public async Task<Dictionary<string, BlockBasicData>> GetBlockDictionary()
+    public Task<Dictionary<string, BlockBasicData>> GetBlockDictionary()
     {
-        return this.State.Blocks;
+        return Task.FromResult(this.State.Blocks);
     }
 
     public async Task<List<BlockData>> SaveBlocks(List<BlockData> blockEventDataList)
@@ -100,7 +100,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
     //     await Task.WhenAll(grainTaskList.ToArray());
     // }
 
-    public async Task<List<BlockData>> FilterBlockList(List<BlockData> blockEventDataList)
+    public Task<List<BlockData>> FilterBlockList(List<BlockData> blockEventDataList)
     {
         if (State.Blocks.Count > 0)
         {
@@ -113,7 +113,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
                 if (dicLibBlock.BlockHeight >= blockEventDataList.OrderBy(x => x.BlockHeight).Last().BlockHeight)
                 {
                     // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
-                    return null;
+                    return Task.FromResult<List<BlockData>>(null);
                 }
             
                 blockEventDataList = blockEventDataList.Where(b =>
@@ -122,7 +122,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
                 
                 if (blockEventDataList.Count == 0)
                 {
-                    return null;
+                    return Task.FromResult<List<BlockData>>(null);
                 }
             }
 
@@ -138,7 +138,7 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
 
         }
 
-        return blockEventDataList;
+        return Task.FromResult(blockEventDataList);
     }
 
     private async Task<List<BlockData>> GetLibBlockListAsync(List<BlockData> blockEventDataList)

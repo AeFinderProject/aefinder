@@ -81,4 +81,9 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(appId, version, chainId, blockHeight);
     }
+    
+    public static int GenerateMessageStreamNamespaceManagerGrainId()
+    {
+        return 0;
+    }
 }

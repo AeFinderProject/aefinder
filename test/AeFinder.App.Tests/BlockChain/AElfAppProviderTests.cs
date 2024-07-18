@@ -15,7 +15,7 @@ public class AElfAppProviderTests : AeFinderAppTestBase
     }
 
     [Fact]
-    public async Task ClientTest()
+    public Task ClientTest()
     {
         var client = _clientProvider.GetClient("AELF");
         client.ShouldNotBeNull();
@@ -24,5 +24,6 @@ public class AElfAppProviderTests : AeFinderAppTestBase
         client.ShouldNotBeNull();
         
         Assert.Throws<KeyNotFoundException>(()=>_clientProvider.GetClient("tDVW"));
+        return Task.CompletedTask;
     }
 }

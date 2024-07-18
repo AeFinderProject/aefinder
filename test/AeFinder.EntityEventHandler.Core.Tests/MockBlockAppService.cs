@@ -6,7 +6,7 @@ namespace AeFinder.EntityEventHandler;
 
 public class MockBlockAppService : IBlockAppService, ISingletonDependency
 {
-    public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
+    public Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
         var blocks = new List<BlockDto>();
         for (long i = input.StartBlockHeight; i <= input.EndBlockHeight; i++)
@@ -19,17 +19,17 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
             });
         }
 
-        return blocks;
+        return Task.FromResult(blocks);
     }
 
-    public async Task<long> GetBlockCountAsync(GetBlocksInput input)
+    public Task<long> GetBlockCountAsync(GetBlocksInput input)
     {
         if (input.StartBlockHeight == 112)
         {
-            return 5;
+            return Task.FromResult<long>(5);
         }
 
-        return input.EndBlockHeight - input.StartBlockHeight + 1;
+        return Task.FromResult(input.EndBlockHeight - input.StartBlockHeight + 1);
     }
 
     public Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)

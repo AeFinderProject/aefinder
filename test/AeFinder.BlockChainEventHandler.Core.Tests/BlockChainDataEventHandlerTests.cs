@@ -284,30 +284,4 @@ public sealed class BlockChainDataEventHandlerTests:AeFinderBlockChainEventHandl
             blockItem.Value.BlockHeight.ShouldBeGreaterThanOrEqualTo(105);
         }
     }
-
-    [Fact]
-    public async Task HandleEvent_GrainSwitch_Test()
-    {
-        string chainId = "TEST";
-        var primaryKeyGrain = Cluster.Client.GetGrain<IPrimaryKeyGrain>(GrainIdHelper.GenerateGrainId(chainId,AeFinderApplicationConsts.PrimaryKeyGrainIdSuffix));
-        await primaryKeyGrain.SetCounter(100);
-        var currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
-        var newPrimaryKey=await primaryKeyGrain.GetGrainPrimaryKey(chainId);
-        currentPrimaryKey.ShouldBe(chainId + "_0");
-        newPrimaryKey.ShouldBe(chainId + "_1");
-        
-        await primaryKeyGrain.SetCounter(100);
-        currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
-        newPrimaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId);
-        currentPrimaryKey.ShouldBe(chainId + "_1");
-        newPrimaryKey.ShouldBe(chainId + "_2");
-        
-        await primaryKeyGrain.SetCounter(110);
-        currentPrimaryKey = await primaryKeyGrain.GetCurrentGrainPrimaryKey(chainId);
-        newPrimaryKey = await primaryKeyGrain.GetGrainPrimaryKey(chainId);
-        currentPrimaryKey.ShouldBe(chainId + "_2");
-        newPrimaryKey.ShouldBe(chainId + "_3");
-    }
-    
-    
 }

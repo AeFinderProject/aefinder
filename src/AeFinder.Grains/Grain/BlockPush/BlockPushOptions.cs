@@ -8,4 +8,5 @@ public class BlockPushOptions
     public int BatchPushNewBlockCount { get; set; } = 10;
     public int MaxHistoricalBlockPushThreshold { get; set; } = 10000;
     public int MaxNewBlockPushThreshold { get; set; }  = 5000;
+    public List<string> MessageStreamNamespaces { get; set; } = new();
 }

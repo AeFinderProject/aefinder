@@ -39,14 +39,14 @@ public class MockOrganizationAppService: AeFinderAppService, IOrganizationAppSer
         throw new NotImplementedException();
     }
     
-    public async Task<List<OrganizationUnitDto>> GetOrganizationUnitsByUserIdAsync(Guid userId)
+    public Task<List<OrganizationUnitDto>> GetOrganizationUnitsByUserIdAsync(Guid userId)
     {
-        return new List<OrganizationUnitDto>
+        return Task.FromResult(new List<OrganizationUnitDto>
         {
             new OrganizationUnitDto
             {
                 Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1")
             }
-        };
+        });
     }
 }
