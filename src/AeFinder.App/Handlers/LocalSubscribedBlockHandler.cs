@@ -60,14 +60,15 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         }
         catch (AppProcessingException e)
         {
-            _logger.LogError(AeFinderApplicationConsts.AppLogEventId, e, "Data processing failed!");
+            _logger.LogError(AeFinderApplicationConsts.AppLogEventId, e, "Data processing failed! ChainId: {ChainId}",
+                subscribedBlock.ChainId);
             _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.Failed);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Data processing failed!");
+            _logger.LogError(e, "Data processing failed! ChainId: {ChainId}", subscribedBlock.ChainId);
             _logger.LogError(AeFinderApplicationConsts.AppLogEventId, null,
-                "Data processing failed, please contact the AeFinder!");
+                "Data processing failed, please contact the AeFinder! ChainId: {ChainId}", subscribedBlock.ChainId);
             _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.Failed);
         }
     }

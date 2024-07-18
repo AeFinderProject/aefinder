@@ -23,7 +23,8 @@ public class AppLogService : AeFinderAppService, IAppLogService
     }
 
     public async Task<List<AppLogRecordDto>> GetLatestRealTimeLogs(string nameSpace, string startTime, string appId,
-        string version, string level = null, string id = null, string searchKeyWord = null)
+        string version, List<string> levels = null, string id = null, string searchKeyWord = null,
+        string chainId = null)
     {
         if (appId.IsNullOrEmpty())
         {
@@ -36,13 +37,14 @@ public class AppLogService : AeFinderAppService, IAppLogService
             throw new UserFriendlyException(
                 $"Invalid version: '{version}'. Please provide a valid version.");
         }
+
         var logIndexName = _logService.GetAppLogIndexAliasName(nameSpace, appId, version);
 
         if (startTime.IsNullOrEmpty())
         {
             var result =
                 await _logService.GetAppLatestLogAsync(logIndexName, AeFinderLoggerConsts.DefaultAppLogPageSize, 1,
-                    version, level, searchKeyWord);
+                    version, levels, searchKeyWord, chainId);
             return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(result);
         }
 
@@ -52,12 +54,12 @@ public class AppLogService : AeFinderAppService, IAppLogService
             throw new UserFriendlyException(
                 $"Invalid start time format: '{startTime}'. Please provide a valid datetime.");
         }
-        
+
         var appLogs = await _logService.GetAppLogByStartTimeAsync(logIndexName,
-            AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version, level, id, searchKeyWord);
+            AeFinderLoggerConsts.DefaultAppLogPageSize, startTime, 1, version, levels, id, searchKeyWord, chainId);
         appLogs = appLogs.OrderByDescending(x => x.App_log.Time).ThenByDescending(x => x.Log_id).ToList();
         return ObjectMapper.Map<List<AppLogIndex>, List<AppLogRecordDto>>(appLogs);
 
     }
-    
+
 }

@@ -69,10 +69,10 @@ public class AppController : AeFinderController
     [HttpGet("log")]
     [Authorize]
     public async Task<List<AppLogRecordDto>> GetLatestRealTimeLogs(string startTime, string appId, string version,
-        string level = null, string logId = null, string searchKeyWord = null)
+        List<string> levels = null, string logId = null, string searchKeyWord = null, string chainId = null)
     {
         return await _appLogService.GetLatestRealTimeLogs(_kubernetesOption.AppNameSpace, startTime, appId, version,
-            level, logId, searchKeyWord);
+            levels, logId, searchKeyWord, chainId);
     }
 
     [HttpGet("code")]
