@@ -63,12 +63,12 @@ public class BlockFilterAppService : AeFinderAppService, IBlockFilterAppService
         return blockDic.Values.ToList();
     }
 
-    public async Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks,
+    public Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks,
         List<FilterTransactionInput> transactionConditions = null, List<FilterContractEventInput> logEventConditions = null)
     {
         if (transactionConditions.IsNullOrEmpty() && logEventConditions.IsNullOrEmpty())
         {
-            return blocks;
+            return Task.FromResult(blocks);
         }
 
         var transactionToFilter = new HashSet<string>();
@@ -140,10 +140,10 @@ public class BlockFilterAppService : AeFinderAppService, IBlockFilterAppService
             block.Transactions = filteredTransactions;
         }
 
-        return blocks;
+        return Task.FromResult(blocks);
     }
 
-    public async Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId,
+    public Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId,
         List<BlockWithTransactionDto> blocks)
     {
         var filteredBlocks = new List<BlockWithTransactionDto>();
@@ -161,10 +161,10 @@ public class BlockFilterAppService : AeFinderAppService, IBlockFilterAppService
             filteredBlocks.Add(block);
         }
 
-        return filteredBlocks;
+        return Task.FromResult(filteredBlocks);
     }
 
-    public async Task<List<BlockWithTransactionDto>> FilterIncompleteConfirmedBlocksAsync(string chainId,
+    public Task<List<BlockWithTransactionDto>> FilterIncompleteConfirmedBlocksAsync(string chainId,
         List<BlockWithTransactionDto> blocks, string previousBlockHash, long previousBlockHeight)
     {
         var filteredBlocks = new List<BlockWithTransactionDto>();
@@ -194,6 +194,6 @@ public class BlockFilterAppService : AeFinderAppService, IBlockFilterAppService
             previousBlockHeight = block.BlockHeight;
         }
 
-        return filteredBlocks;
+        return Task.FromResult(filteredBlocks);
     }
 }

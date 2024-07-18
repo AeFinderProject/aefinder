@@ -15,29 +15,29 @@ public class MockBlockFilterAppService : IBlockFilterAppService
         _objectMapper = objectMapper;
     }
 
-    public async Task<List<BlockWithTransactionDto>> GetBlocksAsync(GetSubscriptionTransactionsInput input)
+    public Task<List<BlockWithTransactionDto>> GetBlocksAsync(GetSubscriptionTransactionsInput input)
     {
         var blocks = BlockCreationHelper.CreateBlock(110, 10, "BlockHash", input.ChainId, "BlockHash109");
-        return _objectMapper.Map<List<AppSubscribedBlockDto>, List<BlockWithTransactionDto>>(blocks);
+        return Task.FromResult(_objectMapper.Map<List<AppSubscribedBlockDto>, List<BlockWithTransactionDto>>(blocks));
     }
 
-    public async Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks,
+    public Task<List<BlockWithTransactionDto>> FilterBlocksAsync(List<BlockWithTransactionDto> blocks,
         List<FilterTransactionInput> transactionConditions = null,
         List<FilterContractEventInput> logEventConditions = null)
     {
-        return blocks;
+        return Task.FromResult(blocks);
     }
 
-    public async Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId,
+    public Task<List<BlockWithTransactionDto>> FilterIncompleteBlocksAsync(string chainId,
         List<BlockWithTransactionDto> blocks)
     {
-        return blocks;
+        return Task.FromResult(blocks);
     }
 
-    public async Task<List<BlockWithTransactionDto>> FilterIncompleteConfirmedBlocksAsync(string chainId,
+    public Task<List<BlockWithTransactionDto>> FilterIncompleteConfirmedBlocksAsync(string chainId,
         List<BlockWithTransactionDto> blocks, string previousBlockHash,
         long previousBlockHeight)
     {
-        return blocks;
+        return Task.FromResult(blocks);
     }
 }

@@ -12,7 +12,7 @@
       <PackageReference Include="JsonNet.PrivateSettersContractResolvers" Version="1.0.0" />
       <PackageReference Include="Microsoft.Orleans.Server" Version="8.1.0" />
       <PackageReference Include="Orleans.Providers.MongoDB" Version="8.0.3" />
-      <PackageReference Include="Orleans.Streams.Kafka" Version="8.0.2" />
+      <PackageReference Include="AeFinder.Orleans.Streams.Kafka" Version="0.0.1" />
       <PackageReference Include="OrleansDashboard" Version="8.0.0" />
       <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
       <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />

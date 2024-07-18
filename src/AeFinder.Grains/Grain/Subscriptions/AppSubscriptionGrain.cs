@@ -71,13 +71,13 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         await WriteStateAsync();
     }
 
-    public async Task<SubscriptionManifest> GetSubscriptionAsync(string version)
+    public Task<SubscriptionManifest> GetSubscriptionAsync(string version)
     {
         CheckVersion(version);
-        return State.SubscriptionInfos[version].SubscriptionManifest;
+        return Task.FromResult(State.SubscriptionInfos[version].SubscriptionManifest);
     }
 
-    public async Task<AllSubscription> GetAllSubscriptionAsync()
+    public Task<AllSubscription> GetAllSubscriptionAsync()
     {
         var result = new AllSubscription();
         if (State.CurrentVersion != null)
@@ -100,7 +100,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
             };
         }
 
-        return result;
+        return Task.FromResult(result);
     }
 
     public async Task<byte[]> GetCodeAsync(string version)
