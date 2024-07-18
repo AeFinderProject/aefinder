@@ -39,7 +39,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         if (!isRunning)
         {
             _logger.LogTrace(
-                "DAppSubscribedDataHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} , ChainId: {subscribedBlock}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
+                "DAppSubscribedDataHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} , ChainId: {ChainId}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
                 subscribedBlock.AppId, subscribedBlock.Version,
                 subscribedBlock.Blocks.First().ChainId,
                 subscribedBlock.Blocks.First().BlockHeight,
@@ -60,15 +60,15 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         }
         catch (AppProcessingException e)
         {
-            _logger.LogError(AeFinderApplicationConsts.AppLogEventId, e, "Data processing failed! ChainId: {ChainId}",
+            _logger.LogError(AeFinderApplicationConsts.AppLogEventId, e, "[{ChainId}] Data processing failed!",
                 subscribedBlock.ChainId);
             _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.Failed);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Data processing failed! ChainId: {ChainId}", subscribedBlock.ChainId);
+            _logger.LogError(e, "[{ChainId}] Data processing failed!", subscribedBlock.ChainId);
             _logger.LogError(AeFinderApplicationConsts.AppLogEventId, null,
-                "Data processing failed, please contact the AeFinder! ChainId: {ChainId}", subscribedBlock.ChainId);
+                "[{ChainId}] Data processing failed, please contact the AeFinder!", subscribedBlock.ChainId);
             _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.Failed);
         }
     }
