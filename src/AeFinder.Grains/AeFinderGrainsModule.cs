@@ -13,7 +13,6 @@ public class AeFinderGrainsModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         Configure<BlockPushOptions>(configuration.GetSection("BlockPush"));
-        Configure<PrimaryKeyOptions>(configuration.GetSection("GrainPrimaryKey"));
         Configure<AppSettingOptions>(configuration.GetSection("AppSetting"));
 
         context.Services.AddSingleton<IBlockGrain, BlockGrain>();

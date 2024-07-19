@@ -104,8 +104,9 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
                 status.LastIrreversibleBlockHash);
             await _appBlockStateSetProvider.SetLongestChainBlockStateSetAsync(chainId,
                 status.LastIrreversibleBlockHash);
-            _logger.LogInformation("Rollback block state to lib. LibHash: {blockHash}, LibHeight: {libHeight}",
-                status.LastIrreversibleBlockHash, status.LastIrreversibleBlockHeight);
+            _logger.LogInformation(
+                "Rollback block state to lib. ChainId: {ChainId} LibHash: {blockHash}, LibHeight: {libHeight}",
+                chainId, status.LastIrreversibleBlockHash, status.LastIrreversibleBlockHeight);
         }
 
         await _appBlockStateSetProvider.SaveDataAsync(chainId);

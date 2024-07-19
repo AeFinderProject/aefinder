@@ -17,7 +17,7 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
         _blockDataProvider = blockDataProvider;
     }
 
-    public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
+    public Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
     {
         var result = new List<BlockDto>();
         for (var i = input.StartBlockHeight; i <= input.EndBlockHeight; i++)
@@ -45,15 +45,15 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
                 }));
         }
 
-        return result;
+        return Task.FromResult(result);
     }
 
-    public async Task<long> GetBlockCountAsync(GetBlocksInput input)
+    public Task<long> GetBlockCountAsync(GetBlocksInput input)
     {
-        return input.EndBlockHeight - input.StartBlockHeight + 1;
+        return Task.FromResult(input.EndBlockHeight - input.StartBlockHeight + 1);
     }
 
-    public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
+    public Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
     {
         var result = new List<TransactionDto>();
         var filter = GetContractEventFilter(input.Events);
@@ -76,10 +76,10 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
             }
         }
 
-        return result;
+        return Task.FromResult(result);
     }
 
-    public async Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
+    public Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
     {
         var result = new List<LogEventDto>();
         var filter = GetContractEventFilter(input.Events);
@@ -99,10 +99,10 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
             }
         }
 
-        return result;
+        return Task.FromResult(result);
     }
 
-    public async Task<List<TransactionDto>> GetSubscriptionTransactionsAsync(GetSubscriptionTransactionsInput input)
+    public Task<List<TransactionDto>> GetSubscriptionTransactionsAsync(GetSubscriptionTransactionsInput input)
     {
         var result = new List<TransactionDto>();
         var transactionFilter = GetTransactionFilter(input.TransactionFilters);
@@ -140,7 +140,7 @@ public class MockBlockAppService : IBlockAppService, ISingletonDependency
             }
         }
 
-        return result;
+        return Task.FromResult(result);
     }
 
     public Task<List<SummaryDto>> GetSummariesAsync(GetSummariesInput input)

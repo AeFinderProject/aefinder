@@ -42,7 +42,6 @@ public class BlockHandlerTests:AeFinderEntityEventHandlerCoreTestBase
     
         await _newBlockEventHandler.HandleEventAsync(new NewBlocksEto() { NewBlocks = newBlockEtoList_1 });
     
-        Thread.Sleep(2000);
         var queryable = await _blockIndexRepository.GetQueryableAsync();
         
         // var blockIndex_h1 = await _blockIndexRepository.GetAsync(q =>
@@ -78,14 +77,11 @@ public class BlockHandlerTests:AeFinderEntityEventHandlerCoreTestBase
         newBlockEtoList_2.Add(newBlockEto_h7);
         newBlockEtoList_2.Add(newBlockEto_h8);
         await _newBlockEventHandler.HandleEventAsync(new NewBlocksEto() { NewBlocks = newBlockEtoList_2 });
-        Thread.Sleep(2000);
         List<NewBlockEto> newBlockEtoList_3 = new List<NewBlockEto>();
         newBlockEtoList_3.Add(newBlockEto_h9);
         newBlockEtoList_3.Add(newBlockEto_h10);
         await _newBlockEventHandler.HandleEventAsync(new NewBlocksEto() { NewBlocks = newBlockEtoList_3 });
-    
-        Thread.Sleep(2000);
-
+        
         // var blockIndex_h9 = await _blockIndexRepository.GetAsync(q =>
         //     q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h9.BlockHash)) &&
         //     q.Term(i => i.Field(f => f.BlockHeight).Value(newBlockEto_h9.BlockHeight)));
@@ -110,7 +106,6 @@ public class BlockHandlerTests:AeFinderEntityEventHandlerCoreTestBase
         newBlockEtoList_4.Add(newBlockEto_h15);
         await _newBlockEventHandler.HandleEventAsync(new NewBlocksEto() { NewBlocks = newBlockEtoList_4 });
     
-        Thread.Sleep(1500);
         var queryable = await _blockIndexRepository.GetQueryableAsync();
         
         // var blockIndex_h11 = await _blockIndexRepository.GetAsync(q =>
@@ -161,9 +156,7 @@ public class BlockHandlerTests:AeFinderEntityEventHandlerCoreTestBase
         newBlockEtoList_5.Add(newBlockEto_h30);
         
         await _newBlockEventHandler.HandleEventAsync(new NewBlocksEto() { NewBlocks = newBlockEtoList_5 });
-    
-        Thread.Sleep(2000);
-
+        
         var confirmBlockEto_h21 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h21);
         var confirmBlockEto_h22 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h22);
         var confirmBlockEto_h23 = _mockDataHelper.MockConfirmBlockEtoData(newBlockEto_h23);
@@ -188,7 +181,6 @@ public class BlockHandlerTests:AeFinderEntityEventHandlerCoreTestBase
         };
         await _confirmBlockEventHandler.HandleEventAsync(confirmBlocksEto);
         
-        Thread.Sleep(2000);
         var queryable = await _blockIndexRepository.GetQueryableAsync();
         
         // var blockIndex_h27_fork = await _blockIndexRepository.GetAsync(q =>
@@ -243,7 +235,6 @@ public class BlockHandlerTests:AeFinderEntityEventHandlerCoreTestBase
             Console.WriteLine(e);
         }
         
-        Thread.Sleep(1000);
         // blockIndex_h30 = await _blockIndexRepository.GetAsync(q =>
         //     q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h30.BlockHash)));
         blockIndex_h30 = queryable.Where(p => p.BlockHash == newBlockEto_h30.BlockHash).ToList()[0];

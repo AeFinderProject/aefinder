@@ -18,10 +18,6 @@ public class AeFinderBlockChainEventHandlerCoreTestModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.Configure<PrimaryKeyOptions>(o =>
-        {
-            o.BlockGrainSwitchInterval = 100;
-        });
         // context.Services.Configure<AElfEntityMappingOptions>(options =>
         //                 {
         //                     options.CollectionPrefix = "AeFinderTestV1";

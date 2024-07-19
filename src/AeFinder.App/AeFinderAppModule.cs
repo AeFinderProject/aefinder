@@ -8,6 +8,7 @@ using AeFinder.App.OperationLimits;
 using AeFinder.App.Repositories;
 using AeFinder.BlockScan;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Subscriptions;
 using AElf.EntityMapping.Elasticsearch;
 using AeFinder.Sdk;
@@ -118,23 +119,34 @@ public class AeFinderAppModule : AbpModule
         var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(appId, version);
         foreach (var streamId in messageStreamIds)
         {
-            var stream =
-                clusterClient
-                    .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                    .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
-
-            var subscriptionHandles = await stream.GetAllSubscriptionHandles();
-            if (!subscriptionHandles.IsNullOrEmpty())
-            {
-                subscriptionHandles.ForEach(async x =>
-                    await x.ResumeAsync(subscribedBlockHandler.HandleAsync));
-            }
-            else
-            {
-                await stream.SubscribeAsync(subscribedBlockHandler.HandleAsync);
-            }
+            await SubscribeStreamAsync(appId, streamId, subscribedBlockHandler, clusterClient);
         }
 
         await blockScanService.StartScanAsync(appId, version);
+    }
+
+    private async Task SubscribeStreamAsync(string appId, Guid streamId,
+        ISubscribedBlockHandler subscribedBlockHandler, IClusterClient clusterClient)
+    {
+        var streamNamespaceGrain =
+            clusterClient.GetGrain<IMessageStreamNamespaceManagerGrain>(GrainIdHelper
+                .GenerateMessageStreamNamespaceManagerGrainId());
+        var streamNamespace = await streamNamespaceGrain.GetMessageStreamNamespaceAsync(appId);
+
+        var stream =
+            clusterClient
+                .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
+                .GetStream<SubscribedBlockDto>(streamNamespace, streamId);
+
+        var subscriptionHandles = await stream.GetAllSubscriptionHandles();
+        if (!subscriptionHandles.IsNullOrEmpty())
+        {
+            subscriptionHandles.ForEach(async x =>
+                await x.ResumeAsync(subscribedBlockHandler.HandleAsync));
+        }
+        else
+        {
+            await stream.SubscribeAsync(subscribedBlockHandler.HandleAsync);
+        }
     }
 }

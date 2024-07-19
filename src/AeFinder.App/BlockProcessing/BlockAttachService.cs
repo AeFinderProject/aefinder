@@ -50,8 +50,8 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
             firstBlock.PreviousBlockHash != Hash.Empty.ToHex() && blockStateSet == null)
         {
             _logger.LogWarning(
-                "Handle unlinked block. BlockHeight: {BlockHeight}, BlockHash: {BlockHash}, Previous BlockHash: {PreviousBlockHash}.",
-                firstBlock.BlockHeight, firstBlock.BlockHash, firstBlock.PreviousBlockHash);
+                "Handle unlinked block. ChainId: {ChainId} BlockHeight: {BlockHeight}, BlockHash: {BlockHash}, Previous BlockHash: {PreviousBlockHash}.",
+                chainId, firstBlock.BlockHeight, firstBlock.BlockHash, firstBlock.PreviousBlockHash);
 
             await HandleUnlinkedBlockAsync(chainId, firstBlock);
         }
@@ -97,8 +97,8 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 block.PreviousBlockHash != Hash.Empty.ToHex() && blockStateSet == null)
             {
                 _logger.LogWarning(
-                    "Previous block {PreviousBlockHash} not found. BlockHeight: {BlockHeight}, BlockHash: {BlockHash}.",
-                    block.PreviousBlockHash, block.BlockHeight, block.BlockHash);
+                    "Previous block {PreviousBlockHash} not found. ChainId: {ChainId} BlockHeight: {BlockHeight}, BlockHash: {BlockHash}.",
+                    block.PreviousBlockHash, chainId, block.BlockHeight, block.BlockHash);
                 continue;
             }
 
@@ -114,8 +114,8 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                         !previousBlockStateSet.Block.Confirmed)
                     {
                         _logger.LogWarning(
-                            "Missing previous confirmed block. Confirmed block height: {BlockHeight}, lib block height: {lastIrreversibleBlockHeight}.",
-                            block.BlockHeight, newLibHeight);
+                            "Missing previous confirmed block. ChainId: {ChainId} Confirmed block height: {BlockHeight}, lib block height: {lastIrreversibleBlockHeight}.",
+                            chainId, block.BlockHeight, newLibHeight);
                         continue;
                     }
 
