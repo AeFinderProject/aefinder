@@ -27,24 +27,10 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         _transactionIndexRepository = GetRequiredService<IEntityMappingRepository<TransactionIndex, string>>();
         _logEventIndexRepository = GetRequiredService<IEntityMappingRepository<LogEventIndex, string>>();
     }
-
-    private async Task ClearBlockIndex(string chainId,long startBlockNumber,long endBlockNumber)
-    {
-        Expression<Func<BlockIndex, bool>> expression = p => p.ChainId == chainId && p.BlockHeight >= startBlockNumber && p.BlockHeight <= endBlockNumber;
-        var queryable = await _blockIndexRepository.GetQueryableAsync();
-        var filterList= queryable.Where(expression).ToList();
-        foreach (var deleteBlock in filterList)
-        {
-            await _blockIndexRepository.DeleteAsync(deleteBlock);
-        }
-    }
     
     [Fact]
     public async Task ElasticSearchBulkAllIndexTest()
     {
-        //clear data for unit test
-       // await ClearBlockIndex("AELF", 900, 999);
-        
         var block_900 =
             MockDataHelper.MockNewBlockEtoData(900, "900",false);
         var block_901 =
@@ -84,8 +70,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
     [Fact]
     public async Task ElasticSearchBulkAllDeleteTest()
     {
-        //clear data for unit test
-        // await ClearBlockIndex("AELF", 0, 99999);
         var block_900 =
             MockDataHelper.MockNewBlockEtoData(900, "900",false);
         var block_901 =
@@ -107,34 +91,19 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         blockList.Add(block_8000);
         var queryable = await _blockIndexRepository.GetQueryableAsync();
         await _blockIndexRepository.AddOrUpdateManyAsync(blockList);
-        Thread.Sleep(2000);
         Expression<Func<BlockIndex, bool>> expression = p => p.Id == "903" && p.ChainId == block_900.ChainId;
         var blockIndex_903= queryable.Where(expression).ToList();
         
         blockIndex_903.FirstOrDefault().BlockHash.ShouldBe(block_903.BlockHash);
-
-        // await _blockIndexRepository.DeleteAsync(block_900);
-        // await _blockIndexRepository.DeleteAsync(block_901);
-        // await _blockIndexRepository.DeleteAsync(block_902);
-        // await _blockIndexRepository.DeleteAsync(block_903);
-        _blockIndexRepository.DeleteManyAsync(blockList);
-        Thread.Sleep(2000);
     }
 
     [Fact]
     public async Task GetBlocksAsync_Test1_13_30()
     {
-        //clear data for unit test
-        await ClearBlockIndex("AELF", 100, 300);
-        await ClearBlockIndex("AELF", 1000, 5000);
-        await ClearBlockIndex("AELF", 0, 99999);
-        Thread.Sleep(2000);
-        //Unit Test 1
         var block_100 =
             MockDataHelper.MockNewBlockEtoData(100, MockDataHelper.CreateBlockHash(),false);
         // block_100.Transactions = new List<Transaction>();
         await _blockIndexRepository.AddAsync(block_100);
-        Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test1 = new GetBlocksInput()
         {
             ChainId = "AELF",
@@ -172,7 +141,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         var block_200 =
             MockDataHelper.MockNewBlockEtoData(200, MockDataHelper.CreateBlockHash(),false);
         await _blockIndexRepository.AddAsync(block_200);
-        Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test4 = new GetBlocksInput()
         {
             ChainId = "AELF",
@@ -192,7 +160,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         var block_180_fork = MockDataHelper.MockNewBlockEtoData(180, MockDataHelper.CreateBlockHash(),false);
         await _blockIndexRepository.AddAsync(block_180);
         await _blockIndexRepository.AddAsync(block_180_fork);
-        Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test5 = new GetBlocksInput()
         {
             ChainId = "AELF",
@@ -221,7 +188,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         await _blockIndexRepository.AddAsync(block_4000);
         await _blockIndexRepository.AddAsync(block_4999);
         await _blockIndexRepository.AddAsync(block_5000);
-        Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test6 = new GetBlocksInput()
         {
             ChainId = "AELF",
@@ -287,7 +253,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         //     MockDataHelper.CreateBlockHash(), true, "consensus_contract_address", "");
         // block_110.Transactions = new List<Transaction>() { transaction_110 };
         await _blockIndexRepository.AddAsync(block_110);
-        Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test10 = new GetBlocksInput()
         {
             ChainId = "AELF",
@@ -322,7 +287,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         // block_106.Transactions = new List<Transaction>() { transaction_106 };
         await _blockIndexRepository.AddAsync(block_105);
         await _blockIndexRepository.AddAsync(block_106);
-        Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test11 = new GetBlocksInput()
         {
             ChainId = "AELF",
@@ -353,7 +317,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         //     MockDataHelper.CreateBlockHash(), true, "consensus_contract_address", "UpdateTinyBlockInformation");
         // block_107.Transactions = new List<Transaction>() { transaction_107 };
         await _blockIndexRepository.AddAsync(block_107);
-        Thread.Sleep(2000);
         GetBlocksInput getBlocksInput_test12 = new GetBlocksInput()
         {
             ChainId = "AELF",
@@ -421,29 +384,11 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         List<BlockDto> blockDtos_test30 =await _blockAppService.GetBlocksAsync(getBlocksInput_test30);
         // blockDtos_test30.Count.ShouldBe(1);
         blockDtos_test30.ShouldContain(x=>x.BlockHash==block_107.BlockHash);
-        await ClearBlockIndex("AELF", 100, 300);
-        await ClearBlockIndex("AELF", 1000, 5000);
-        await ClearBlockIndex("AELF", 0, 99999);
-    }
-
-    private async Task ClearTransactionIndex(string chainId,long startBlockNumber,long endBlockNumber)
-    {
-        Expression<Func<TransactionIndex, bool>> expression = p => p.ChainId == chainId && p.BlockHeight >= startBlockNumber && p.BlockHeight <= endBlockNumber;
-        var queryable = await _transactionIndexRepository.GetQueryableAsync();
-        var filterList= queryable.Where(expression).ToList();
-        foreach (var deleteTransaction in filterList)
-        {
-            await _transactionIndexRepository.DeleteAsync(deleteTransaction);
-        }
     }
     
     [Fact]
     public async Task GetTransactionAsync_Test14_20_32()
     {
-        //clear data for unit test
-        ClearTransactionIndex("AELF", 100, 110);
-
-        Thread.Sleep(2000);
         //Unit Test 14
         var transaction_100_1 = MockDataHelper.MockNewTransactionEtoData(100, false, "token_contract_address", "DonateResourceToken");
         var transaction_100_2 = MockDataHelper.MockNewTransactionEtoData(100, false, "", "");
@@ -453,7 +398,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         await _transactionIndexRepository.AddAsync(transaction_100_2);
         await _transactionIndexRepository.AddAsync(transaction_100_3);
         await _transactionIndexRepository.AddAsync(transaction_110);
-        Thread.Sleep(2000);
         GetTransactionsInput getTransactionsInput_test14 = new GetTransactionsInput()
         {
             ChainId = "AELF",
@@ -609,8 +553,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
     [Fact]
     public async Task GetTransactionAsync_Test31()
     {
-        await ClearTransactionIndex("AELF", 1000, 5000);
-        
         //Unit Test 31
         var transaction_1000 = MockDataHelper.MockNewTransactionEtoData(1000, false,"","");
         var transaction_1500 = MockDataHelper.MockNewTransactionEtoData(1500, false,"","");
@@ -628,7 +570,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         await _transactionIndexRepository.AddAsync(transaction_4000);
         await _transactionIndexRepository.AddAsync(transaction_4999);
         await _transactionIndexRepository.AddAsync(transaction_5000);
-        Thread.Sleep(2000);
         GetTransactionsInput getTransactionsInput_test31 = new GetTransactionsInput()
         {
             ChainId = "AELF",
@@ -639,25 +580,9 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         getBlocksInput_test31.Max(x=>x.BlockHeight).ShouldBe(1999);
     }
     
-    private async Task ClearLogEventIndex(string chainId,long startBlockNumber,long endBlockNumber)
-    {
-        Expression<Func<LogEventIndex, bool>> expression = p => p.ChainId == chainId && p.BlockHeight >= startBlockNumber && p.BlockHeight <= endBlockNumber;
-        var queryable = await _logEventIndexRepository.GetQueryableAsync();
-        var filterList= queryable.Where(expression).ToList();
-        foreach (var deleteLogEvent in filterList)
-        {
-            await _logEventIndexRepository.DeleteAsync(deleteLogEvent);
-        }
-    }
-    
     [Fact]
     public async Task GetLogEventAsync_Test21_29()
     {
-        //clear data for unit test
-        await ClearLogEventIndex("AELF", 0, 99999);
-
-        Thread.Sleep(2000);
-        
         //Unit Test 21
         GetLogEventsInput getLogEventsInput_test21 = new GetLogEventsInput()
         {
@@ -676,7 +601,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
             "consensus_contract_address", "UpdateValue");
         await _logEventIndexRepository.AddAsync(logEvent_105_1);
         await _logEventIndexRepository.AddAsync(logEvent_105_2);
-        Thread.Sleep(2000);
         GetLogEventsInput getLogEventsInput_test22 = new GetLogEventsInput()
         {
             ChainId = "AELF",
@@ -691,7 +615,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         var logEvent_106 = MockDataHelper.MockNewLogEventEtoData(106, MockDataHelper.CreateBlockHash(), 0, false,
             "consensus_contract_address", "UpdateTinyBlockInformation");
         await _logEventIndexRepository.AddAsync(logEvent_106);
-        Thread.Sleep(2000);
         GetLogEventsInput getLogEventsInput_test23 = new GetLogEventsInput()
         {
             ChainId = "AELF",
@@ -736,7 +659,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
             "Iptoken_contract_address", "Approve");
         await _logEventIndexRepository.AddAsync(logEvent_107);
         await _logEventIndexRepository.AddAsync(logEvent_108);
-        Thread.Sleep(2000);
         GetLogEventsInput getLogEventsInput_test25 = new GetLogEventsInput()
         {
             ChainId = "AELF",
@@ -773,7 +695,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         var logEvent_104 = MockDataHelper.MockNewLogEventEtoData(104, MockDataHelper.CreateBlockHash(), 0, false,
             "token_contract_address", "DonateResourceToken");
         await _logEventIndexRepository.AddAsync(logEvent_104);
-        Thread.Sleep(2000);
         GetLogEventsInput getLogEventsInput_test26 = new GetLogEventsInput()
         {
             ChainId = "AELF",
@@ -848,15 +769,11 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         List<LogEventDto> logEventDtos_test29 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test29);
         logEventDtos_test29.Count.ShouldBe(1);
         logEventDtos_test29.ShouldContain(x=>x.BlockHeight==108);
-        await ClearLogEventIndex("AELF", 0, 99999);
-
-
     }
 
     [Fact]
     public async Task GetLogEventAsync_Test33()
     {
-        await ClearBlockIndex("AELF", 0, 99999);
         //Unit Test 33
         var logEvent_1000 = MockDataHelper.MockNewLogEventEtoData(1000,  MockDataHelper.CreateBlockHash(),0,false,"","");
         var logEvent_1500 = MockDataHelper.MockNewLogEventEtoData(1500, MockDataHelper.CreateBlockHash(),0,false,"","");
@@ -874,7 +791,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         await _logEventIndexRepository.AddAsync(logEvent_4000);
         await _logEventIndexRepository.AddAsync(logEvent_4999);
         await _logEventIndexRepository.AddAsync(logEvent_5000);
-        Thread.Sleep(2000);
         GetLogEventsInput getLogEventsInput_test33 = new GetLogEventsInput()
         {
             ChainId = "AELF",
@@ -883,13 +799,11 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         };
         List<LogEventDto> logEventDtos_test33 =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test33);
         logEventDtos_test33.Max(x=>x.BlockHeight).ShouldBe(1999);
-        await ClearBlockIndex("AELF", 0, 99999);
     }
 
     [Fact]
     public async Task GetBlockCountTest()
     {
-        await ClearBlockIndex("AELF", 0, 99999);
         for (int i = 0; i < 20; i++)
         {
             var block = MockDataHelper.MockNewBlockEtoData(100+i, MockDataHelper.CreateBlockHash(),true);
@@ -897,7 +811,6 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
             block = MockDataHelper.MockNewBlockEtoData(120+i, MockDataHelper.CreateBlockHash(),false);
             await _blockIndexRepository.AddAsync(block);
         }
-        Thread.Sleep(1000);
         var count = await _blockAppService.GetBlockCountAsync(new GetBlocksInput
         {
             ChainId = "AELF",
@@ -915,6 +828,5 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
             IsOnlyConfirmed = true
         });
         count.ShouldBe(10);
-        await ClearBlockIndex("AELF", 0, 99999);
     }
 }

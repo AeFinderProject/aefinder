@@ -94,7 +94,7 @@ public abstract class AeFinderAppTestBase<TStartupModule> : AbpIntegratedTest<TS
         return context;
     }
     
-    protected TransactionContext GenerateTransactionContext(Transaction transaction)
+    protected TransactionContext GenerateTransactionContext()
     {
         return new TransactionContext()
         {
@@ -109,7 +109,7 @@ public abstract class AeFinderAppTestBase<TStartupModule> : AbpIntegratedTest<TS
         };
     }
     
-    protected BlockContext GenerateBlockContext(Transaction transaction)
+    protected BlockContext GenerateBlockContext()
     {
         return new BlockContext()
         {

@@ -107,8 +107,8 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
         return await _appCurrentVersionCache.GetAsync(cacheKey);;
     }
 
-    public async Task<string> GetAppCurrentVersionCacheNameAsync(string appId)
+    public Task<string> GetAppCurrentVersionCacheNameAsync(string appId)
     {
-        return AeFinderApplicationConsts.AppCurrentVersionCacheKeyPrefix + appId;
+        return Task.FromResult(AeFinderApplicationConsts.AppCurrentVersionCacheKeyPrefix + appId);
     }
 }

@@ -46,6 +46,11 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         State.AppId = pushInfo.AppId;
         State.Version = pushInfo.Version;
         State.Subscription = await blockPusherInfoGrain.GetSubscriptionAsync();
+        
+        if (_stream == null)
+        {
+            await InitializeStreamAsync();
+        }
 
         await WriteStateAsync();
     }
@@ -115,11 +120,11 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 if (!State.Subscription.OnlyConfirmed)
                 {
                     SetConfirmed(blocks, false);
-                    await PushBlocksAsync(blocks);
+                    await PushBlocksAsync(blocks, _stream);
                 }
 
                 SetConfirmed(blocks, true);
-                await PushBlocksAsync(blocks);
+                await PushBlocksAsync(blocks, _stream);
 
                 State.PushedBlockHeight = blocks.Last().BlockHeight;
                 State.PushedBlockHash = blocks.Last().BlockHash;
@@ -239,7 +244,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 .LogEventConditions));
 
         SetConfirmed(subscribedBlocks, false);
-        await PushBlocksAsync(subscribedBlocks);
+        await PushBlocksAsync(subscribedBlocks, _stream);
 
         await WriteStateAsync();
         _logger.LogInformation("Grain: {GrainId} token: {PushToken} pushed block from {First} to {Last}",
@@ -323,7 +328,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         }
 
         SetConfirmed(pushedBlocks, true);
-        await PushBlocksAsync(pushedBlocks);
+        await PushBlocksAsync(pushedBlocks, _stream);
 
         State.PushedConfirmedBlockHeight = pushedBlocks.Last().BlockHeight;
         State.PushedConfirmedBlockHash = pushedBlocks.Last().BlockHash;
@@ -359,10 +364,10 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         return true;
     }
 
-    private async Task PushBlocksAsync(List<BlockWithTransactionDto> blocks)
+    private async Task PushBlocksAsync(List<BlockWithTransactionDto> blocks, IAsyncStream<SubscribedBlockDto> stream)
     {
         var subscribedBlockDtos = _objectMapper.Map<List<BlockWithTransactionDto>, List<AppSubscribedBlockDto>>(blocks);
-        await _stream.OnNextAsync(new SubscribedBlockDto
+        await stream.OnNextAsync(new SubscribedBlockDto
         {
             AppId = State.AppId,
             ChainId = State.Subscription.ChainId,
@@ -496,15 +501,28 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         return clientConfirmedHeight >= pushedHeight - maxPushThreshold;
     }
 
+    private async Task InitializeStreamAsync()
+    {
+        var pusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
+        var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
+        var streamProvider = this.GetStreamProvider(AeFinderApplicationConsts.MessageStreamName);
+        
+        var streamNamespaceGrain =
+            GrainFactory.GetGrain<IMessageStreamNamespaceManagerGrain>(GrainIdHelper
+                .GenerateMessageStreamNamespaceManagerGrainId());
+       var streamNamespace = await streamNamespaceGrain.GetMessageStreamNamespaceAsync(State.AppId);
+       
+        _stream = streamProvider.GetStream<SubscribedBlockDto>(streamNamespace, streamId);
+    }
+
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await ReadStateAsync();
 
-        var pusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
-        var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
-        var streamProvider = this.GetStreamProvider(AeFinderApplicationConsts.MessageStreamName);
-        _stream = streamProvider.GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace,
-            streamId);
+        if (!State.AppId.IsNullOrWhiteSpace())
+        {
+            await InitializeStreamAsync();
+        }
 
         await base.OnActivateAsync(cancellationToken);
     }

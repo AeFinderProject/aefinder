@@ -14,7 +14,7 @@ public class TokenTransferredProcessor : LogEventProcessorBase<Transferred>, ITr
         {
             "AELF" => "MainChainTokenContractAddress",
             "tDVV" => "SideChainTokenContractAddress",
-            _ => throw new Exception("Unknown chain id")
+            _ => string.Empty
         };
     }
 

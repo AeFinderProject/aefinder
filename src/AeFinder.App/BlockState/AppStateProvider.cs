@@ -61,7 +61,7 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
             }
         }
 
-        await SaveDataAsync();
+        await SaveDataAsync(chainId);
     }
     
     public async Task MergeStateAsync(string chainId, List<BlockStateSet> blockStateSets)
@@ -74,7 +74,7 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
             }
         }
 
-        await SaveDataAsync();
+        await SaveDataAsync(chainId);
     }
 
     private async Task<AppState> GetAppStateAsync(string chainId, string stateKey,
@@ -167,9 +167,9 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         SetLibValueCache(stateKey, currentState);
     }
 
-    private async Task SaveDataAsync()
+    private async Task SaveDataAsync(string chainId)
     {
-        _logger.LogDebug("Saving dapp data.");
+        _logger.LogDebug("[{ChainId}] Saving dapp data.", chainId);
         var tasks = _toCommitLibValues.Select(async o =>
         {
             var dataGrain = _clusterClient.GetGrain<IAppStateGrain>(o.Key);
@@ -177,7 +177,7 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         });
         await tasks.WhenAll();
         _toCommitLibValues.Clear();
-        _logger.LogDebug("Saved dapp data.");
+        _logger.LogDebug("[{ChainId}] Saved dapp data.", chainId);
     }
     
     private void SetLibValueCache(string key, AppStateDto state, bool isForce = false)
