@@ -128,7 +128,7 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
 
     public async Task SaveDataAsync(string chainId)
     {
-        _logger.LogTrace("Saving BlockStateSetsStatus. ChainId: {ChainId}.", chainId);
+        _logger.LogTrace("[{ChainId}] Saving BlockStateSetsStatus.", chainId);
 
         _bestChainBlockStateSets.TryGetValue(chainId, out var bestChainBlockStateSet);
         _longestChainBlockStateSets.TryGetValue(chainId, out var longestChainBlockStateSet);
@@ -146,7 +146,7 @@ public class AppBlockStateSetProvider : IAppBlockStateSetProvider, ISingletonDep
             Branches = new Dictionary<string, long>()
         });
         
-        _logger.LogTrace("Saved BlockStateSetsStatus. ChainId: {ChainId}", chainId);
+        _logger.LogTrace("[{ChainId}] Saved BlockStateSetsStatus.", chainId);
     }
     
     private string GetBlockStateSetStatusKey(string chainId)

@@ -1,4 +1,6 @@
-﻿using AeFinder.CodeOps;
+﻿using System.Collections.Generic;
+using AeFinder.CodeOps;
+using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Orleans.TestBase;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,5 +27,10 @@ public class AeFinderApplicationTestModule : AbpModule
         });
         
         context.Services.AddTransient<ICodeAuditor>(o=>Mock.Of<ICodeAuditor>());
+        
+        context.Services.Configure<BlockPushOptions>(o =>
+        {
+            o.MessageStreamNamespaces = new List<string> { "MessageStreamNamespace" };
+        });
     }
 }

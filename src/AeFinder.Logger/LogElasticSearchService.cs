@@ -20,14 +20,20 @@ public class LogElasticSearchService:ILogService
     }
 
     public async Task<List<AppLogIndex>> GetAppLatestLogAsync(string indexName, int pageSize,
-        int eventId, string appVersion, string level, string searchKeyWord)
+        int eventId, string appVersion, List<string> levels, string searchKeyWord, string chainId)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<AppLogIndex>, QueryContainer>>();
         mustQuery.Add(m => m.Term(t => t.Field(f => f.App_log.EventId).Value(eventId)));
         mustQuery.Add(m => m.Term(t => t.Field(f => f.App_log.Version).Value(appVersion)));
-        if (!level.IsNullOrEmpty())
+        if (!levels.IsNullOrEmpty())
         {
-            mustQuery.Add(q => q.Term(i => i.Field(f => f.App_log.Level).Value(level)));
+            // mustQuery.Add(q => q.Term(i => i.Field(f => f.App_log.Level).Value(level)));
+            mustQuery.Add(q => q.Terms(i => i.Field(f => f.App_log.Level).Terms(levels)));
+        }
+        
+        if (!chainId.IsNullOrEmpty())
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.App_log.ChainId).Value(chainId)));
         }
 
         var shouldQuery = new List<Func<QueryContainerDescriptor<AppLogIndex>, QueryContainer>>();
@@ -66,14 +72,19 @@ public class LogElasticSearchService:ILogService
     }
 
     public async Task<List<AppLogIndex>> GetAppLogByStartTimeAsync(string indexName, int pageSize, string startTime,
-        int eventId, string appVersion, string level, string logId, string searchKeyWord)
+        int eventId, string appVersion, List<string> levels, string logId, string searchKeyWord, string chainId)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<AppLogIndex>, QueryContainer>>();
         mustQuery.Add(m => m.Term(t => t.Field(f => f.App_log.EventId).Value(eventId)));
         mustQuery.Add(m => m.Term(t => t.Field(f => f.App_log.Version).Value(appVersion)));
-        if (!level.IsNullOrEmpty())
+        if (!levels.IsNullOrEmpty())
         {
-            mustQuery.Add(q => q.Term(i => i.Field(f => f.App_log.Level).Value(level)));
+            mustQuery.Add(q => q.Terms(i => i.Field(f => f.App_log.Level).Terms(levels)));
+        }
+        
+        if (!chainId.IsNullOrEmpty())
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.App_log.ChainId).Value(chainId)));
         }
         
         Func<SortDescriptor<AppLogIndex>, IPromise<IList<ISort>>> sort = null;

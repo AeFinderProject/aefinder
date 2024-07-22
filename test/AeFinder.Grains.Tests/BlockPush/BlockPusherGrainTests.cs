@@ -19,6 +19,7 @@ namespace AeFinder.Grains.BlockPush;
 public class BlockPusherGrainTests : AeFinderGrainTestBase
 {
     private readonly IBlockDataProvider _blockDataProvider;
+    private IAsyncStream<SubscribedBlockDto> _stream = null!;
 
     public BlockPusherGrainTests()
     {
@@ -60,21 +61,9 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
         await blockPusherGrain.InitializeAsync(pushToken, 21);
         var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
-        var stream =
-            Cluster.Client
-                .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
-
+        
         var subscribedBlock = new List<AppSubscribedBlockDto>();
-        await stream.SubscribeAsync((v, t) =>
-            {
-                v.ChainId.ShouldBe(chainId);
-                v.AppId.ShouldBe(appId);
-                v.Version.ShouldBe(version);
-                v.PushToken.ShouldBe(pushToken);
-                subscribedBlock.AddRange(v.Blocks);
-           return Task.CompletedTask;
-        });
+        await SubscribeStreamAsync(streamId, chainId, appId, version, pushToken, subscribedBlock);
 
         await blockPusherGrain.HandleBlockAsync(new BlockWithTransactionDto());
         //Wait for asynchronous processing stream message to complete
@@ -164,21 +153,9 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
         await blockPusherGrain.InitializeAsync(pushToken, 21);
         var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
-        var stream =
-            Cluster.Client
-                .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
-        await stream.SubscribeAsync((v, t) =>
-        {
-            v.ChainId.ShouldBe(chainId);
-            v.AppId.ShouldBe(appId);
-            v.Version.ShouldBe(version);
-            v.PushToken.ShouldBe(pushToken);
-            subscribedBlock.AddRange(v.Blocks);
-            return Task.CompletedTask;
-        });
+        await SubscribeStreamAsync(streamId, chainId, appId, version, pushToken, subscribedBlock);
 
         await blockPusherGrain.HandleBlockAsync(new BlockWithTransactionDto());
         
@@ -284,21 +261,9 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
         await blockPusherGrain.InitializeAsync(pushToken, 21);
         var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
-        var stream =
-            Cluster.Client
-                .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
-        await stream.SubscribeAsync((v, t) =>
-        {
-            v.ChainId.ShouldBe(chainId);
-            v.AppId.ShouldBe(appId);
-            v.Version.ShouldBe(version);
-            v.PushToken.ShouldBe(pushToken);
-            subscribedBlock.AddRange(v.Blocks);
-            return Task.CompletedTask;
-        });
+        await SubscribeStreamAsync(streamId, chainId, appId, version, pushToken, subscribedBlock);
 
         await blockPusherGrain.HandleConfirmedBlockAsync(new BlockWithTransactionDto());
         
@@ -357,22 +322,10 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
         await blockPusherGrain.InitializeAsync(pushToken, 21);
         var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
-        var stream =
-            Cluster.Client
-                .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
-        await stream.SubscribeAsync((v, t) =>
-        {
-            v.ChainId.ShouldBe(chainId);
-            v.AppId.ShouldBe(appId);
-            v.Version.ShouldBe(version);
-            v.PushToken.ShouldBe(pushToken);
-            subscribedBlock.AddRange(v.Blocks);
-            return Task.CompletedTask;
-        });
-
+        await SubscribeStreamAsync(streamId, chainId, appId, version, pushToken, subscribedBlock);
+        
         await blockPusherGrain.HandleHistoricalBlockAsync();
         
         //Wait for asynchronous processing stream message to complete
@@ -433,21 +386,9 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
         await blockPusherGrain.InitializeAsync(pushToken, 21);
         var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
-        var stream =
-            Cluster.Client
-                .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
-        await stream.SubscribeAsync((v, t) =>
-        {
-            v.ChainId.ShouldBe(chainId);
-            v.AppId.ShouldBe(appId);
-            v.Version.ShouldBe(version);
-            v.PushToken.ShouldBe(pushToken);
-            subscribedBlock.AddRange(v.Blocks);
-            return Task.CompletedTask;
-        });
+        await SubscribeStreamAsync(streamId, chainId, appId, version, pushToken, subscribedBlock);
 
         await blockPusherGrain.HandleHistoricalBlockAsync();
         //Wait for asynchronous processing stream message to complete
@@ -503,21 +444,9 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         var blockPusherGrain = Cluster.Client.GetGrain<IBlockPusherGrain>(id);
         await blockPusherGrain.InitializeAsync(pushToken, 1);
         var streamId = await pusherInfoGrain.GetMessageStreamIdAsync();
-        var stream =
-            Cluster.Client
-                .GetStreamProvider(AeFinderApplicationConsts.MessageStreamName)
-                .GetStream<SubscribedBlockDto>(AeFinderApplicationConsts.MessageStreamNamespace, streamId);
 
         var subscribedBlock = new List<AppSubscribedBlockDto>();
-        await stream.SubscribeAsync((v, t) =>
-            {
-                v.ChainId.ShouldBe(chainId);
-                v.AppId.ShouldBe(appId);
-                v.Version.ShouldBe(version);
-                v.PushToken.ShouldBe(pushToken);
-                subscribedBlock.AddRange(v.Blocks);
-           return Task.CompletedTask;
-        });
+        await SubscribeStreamAsync(streamId, chainId, appId, version, pushToken, subscribedBlock);
 
         var blockStateSetInfoGrain = Cluster.Client.GetGrain<IAppBlockStateSetStatusGrain>(
             GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, version, chainId));
@@ -552,6 +481,26 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         //Wait for asynchronous processing stream message to complete
         await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 91), TimeSpan.FromSeconds(5));
         subscribedBlock.Count.ShouldBe(90);
+    }
+
+    private async Task SubscribeStreamAsync(Guid streamId, string chainId, string appId, string version, string pushToken, List<AppSubscribedBlockDto> subscribedBlock)
+    {
+        var streamProvider = Cluster.Client.GetStreamProvider(AeFinderApplicationConsts.MessageStreamName);
+        var streamNamespaceGrain =
+            Cluster.Client.GetGrain<IMessageStreamNamespaceManagerGrain>(GrainIdHelper
+                .GenerateMessageStreamNamespaceManagerGrainId());
+        var streamNamespace = await streamNamespaceGrain.GetMessageStreamNamespaceAsync(appId);
+       
+        _stream = streamProvider.GetStream<SubscribedBlockDto>(streamNamespace, streamId);
+        await _stream.SubscribeAsync((v, t) =>
+        {
+            v.ChainId.ShouldBe(chainId);
+            v.AppId.ShouldBe(appId);
+            v.Version.ShouldBe(version);
+            v.PushToken.ShouldBe(pushToken);
+            subscribedBlock.AddRange(v.Blocks);
+            return Task.CompletedTask;
+        });
     }
     
     private async Task WaitUntilAsync(Func<bool, Task<bool>> predicate, TimeSpan timeout, TimeSpan? delayOnFail = null)
