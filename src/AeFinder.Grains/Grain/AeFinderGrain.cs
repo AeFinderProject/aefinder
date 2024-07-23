@@ -2,29 +2,29 @@ namespace AeFinder.Grains.Grain;
 
 public class AeFinderGrain<TGrainState>: Grain<TGrainState>
 {
-    private bool _changingState = true;
+    private bool _isStateConsistent = false;
     
     protected override async Task ReadStateAsync()
     {
-        if (!_changingState)
+        if (_isStateConsistent)
         {
             return;
         }
 
         await base.ReadStateAsync();
-        _changingState = false;
+        _isStateConsistent = true;
     }
 
     protected override async Task WriteStateAsync()
     {
         await BeginChangingStateAsync();
         await base.WriteStateAsync();
-        _changingState = false;
+        _isStateConsistent = true;
     }
 
     protected Task BeginChangingStateAsync()
     {
-        _changingState = true;
+        _isStateConsistent = false;
         return Task.CompletedTask;
     }
 }
