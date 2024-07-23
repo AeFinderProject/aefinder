@@ -82,8 +82,9 @@ public class BlockProcessingServiceTests: AeFinderAppTestBase
             i++;
         }
         
-        var transactionEntities = (await _transactionEntityRepository.GetQueryableAsync()).ToList();
+        var transactionEntities = (await _transactionEntityRepository.GetQueryableAsync()).OrderBy(o=>o.Id).ToList();
         transactionEntities.Count.ShouldBe(4);
+
         var j= 0;
         foreach (var transactionEntity in transactionEntities)
         {

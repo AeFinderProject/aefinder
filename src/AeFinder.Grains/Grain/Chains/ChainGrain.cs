@@ -4,14 +4,9 @@ using Orleans;
 
 namespace AeFinder.Grains.Grain.Chains;
 
-public class ChainGrain : Grain<ChainState>, IChainGrain
+public class ChainGrain : AeFinderGrain<ChainState>, IChainGrain
 {
     private readonly ILogger<ChainGrain> _logger;
-
-    public override async Task OnActivateAsync(CancellationToken cancellationToken)
-    {
-        await ReadStateAsync();
-    }
 
     public ChainGrain(ILogger<ChainGrain> logger)
     {
@@ -21,6 +16,7 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
 
     public async Task SetLatestBlockAsync(string blockHash, long blockHeight)
     {
+        await ReadStateAsync();
         if (blockHeight <= State.BlockHeight)
         {
             return;
@@ -33,6 +29,7 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
 
     public async Task SetLatestConfirmedBlockAsync(string blockHash, long blockHeight)
     {
+        await ReadStateAsync();
         if (blockHeight <= State.ConfirmedBlockHeight)
         {
             return;
@@ -43,8 +40,9 @@ public class ChainGrain : Grain<ChainState>, IChainGrain
         await WriteStateAsync();
     }
 
-    public Task<ChainState> GetChainStatusAsync()
+    public async Task<ChainState> GetChainStatusAsync()
     {
-        return Task.FromResult(State);
+        await ReadStateAsync();
+        return State;
     }
 }

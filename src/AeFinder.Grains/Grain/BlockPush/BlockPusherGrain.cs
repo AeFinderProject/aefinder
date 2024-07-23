@@ -12,7 +12,7 @@ using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.BlockPush;
 
-public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
+public class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockPusherGrain
 {
     private readonly IBlockFilterAppService _blockFilterAppService;
     private readonly BlockPushOptions _blockPushOptions;
@@ -129,7 +129,6 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
                 State.PushedBlockHeight = blocks.Last().BlockHeight;
                 State.PushedBlockHash = blocks.Last().BlockHash;
                 State.PushedConfirmedBlockHeight = blocks.Last().BlockHeight;
-                ;
                 State.PushedConfirmedBlockHash = blocks.Last().BlockHash;
 
                 await WriteStateAsync();
@@ -225,6 +224,8 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
             throw new ApplicationException(message);
         }
 
+        await BeginChangingStateAsync();
+        
         var unPushedBlock = await GetUnPushedBlocksAsync(blocks, needCheckIncomplete);
         if (unPushedBlock.Count == 0)
         {
@@ -322,6 +323,8 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
             throw new ApplicationException(message);
         }
 
+        await BeginChangingStateAsync();
+        
         if (!State.Subscription.OnlyConfirmed && !await IsUnConfirmedBlockPushedAsync(pushedBlocks))
         {
             return;

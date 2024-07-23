@@ -3,7 +3,7 @@ using Orleans;
 
 namespace AeFinder.Grains.Grain.BlockStates;
 
-public class AppBlockStateSetGrain : Grain<AppBlockStateSetState>, IAppBlockStateSetGrain
+public class AppBlockStateSetGrain : AeFinderGrain<AppBlockStateSetState>, IAppBlockStateSetGrain
 {
     public async Task<BlockStateSet> GetBlockStateSetAsync()
     {

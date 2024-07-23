@@ -3,20 +3,23 @@ using Orleans;
 
 namespace AeFinder.Grains.Grain.BlockPush;
 
-public class BlockPusherManagerGrain : Grain<BlockPusherManagerState>, IBlockPusherManagerGrain
+public class BlockPusherManagerGrain : AeFinderGrain<BlockPusherManagerState>, IBlockPusherManagerGrain
 {
-    public Task<List<string>> GetBlockPusherIdsByChainAsync(string chainId)
+    public async Task<List<string>> GetBlockPusherIdsByChainAsync(string chainId)
     {
-        return Task.FromResult(State.BlockPusherIds.TryGetValue(chainId, out var ids) ? ids.ToList() : new List<string>());
+        await ReadStateAsync();
+        return State.BlockPusherIds.TryGetValue(chainId, out var ids) ? ids.ToList() : new List<string>();
     }
 
-    public Task<Dictionary<string, HashSet<string>>> GetAllBlockPusherIdsAsync()
+    public async Task<Dictionary<string, HashSet<string>>> GetAllBlockPusherIdsAsync()
     {
-        return Task.FromResult(State.BlockPusherIds);
+        await ReadStateAsync();
+        return State.BlockPusherIds;
     }
 
     public async Task AddBlockPusherAsync(string chainId, string blockPusherId)
     {
+        await ReadStateAsync();
         if (!State.BlockPusherIds.TryGetValue(chainId, out var clientIds))
         {
             clientIds = new HashSet<string>();
@@ -33,6 +36,8 @@ public class BlockPusherManagerGrain : Grain<BlockPusherManagerState>, IBlockPus
         {
             return;
         }
+        
+        await ReadStateAsync();
 
         if (State.BlockPusherIds.TryGetValue(chainId, out var clientIds))
         {
@@ -42,11 +47,5 @@ public class BlockPusherManagerGrain : Grain<BlockPusherManagerState>, IBlockPus
                 await WriteStateAsync();
             }
         }
-    }
-
-    public override async Task OnActivateAsync(CancellationToken cancellationToken)
-    {
-        await this.ReadStateAsync();
-        await base.OnActivateAsync(cancellationToken);
     }
 }

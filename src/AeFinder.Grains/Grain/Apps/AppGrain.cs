@@ -6,7 +6,7 @@ using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.Apps;
 
-public class AppGrain : Grain<AppState>, IAppGrain
+public class AppGrain : AeFinderGrain<AppState>, IAppGrain
 {
     private readonly IObjectMapper _objectMapper;
 
@@ -17,6 +17,8 @@ public class AppGrain : Grain<AppState>, IAppGrain
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
     {
+        await ReadStateAsync();
+        
         if (!State.AppId.IsNullOrWhiteSpace())
         {
             throw new UserFriendlyException($"App: {dto.AppName} already exists!");
@@ -38,6 +40,8 @@ public class AppGrain : Grain<AppState>, IAppGrain
 
     public async Task<AppDto> UpdateAsync(UpdateAppDto dto)
     {
+        await ReadStateAsync();
+        
         State.Description = dto.Description;
         State.ImageUrl = dto.ImageUrl;
         State.SourceCodeUrl = dto.SourceCodeUrl;
@@ -49,19 +53,17 @@ public class AppGrain : Grain<AppState>, IAppGrain
 
     public async Task SetStatusAsync(AppStatus status)
     {
+        await ReadStateAsync();
+        
         State.Status = status;
         State.UpdateTime = DateTime.UtcNow;
         await WriteStateAsync();
     }
 
-    public Task<AppDto> GetAsync()
-    {
-        return Task.FromResult(_objectMapper.Map<AppState, AppDto>(State));
-    }
-    
-    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    public async Task<AppDto> GetAsync()
     {
         await ReadStateAsync();
-        await base.OnActivateAsync(cancellationToken);
+        
+        return _objectMapper.Map<AppState, AppDto>(State);
     }
 }

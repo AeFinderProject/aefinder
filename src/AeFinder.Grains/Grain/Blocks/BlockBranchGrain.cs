@@ -7,7 +7,7 @@ using Orleans;
 namespace AeFinder.Grains.Grain.Blocks;
 
 [StorageProvider(ProviderName= "Default")]
-public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
+public class BlockBranchGrain:AeFinderGrain<BlockBranchState>,IBlockBranchGrain
 {
     private readonly ILogger<BlockBranchGrain> _logger;
 
@@ -29,13 +29,16 @@ public class BlockBranchGrain:Grain<BlockBranchState>,IBlockBranchGrain
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
 
-    public Task<Dictionary<string, BlockBasicData>> GetBlockDictionary()
+    public async Task<Dictionary<string, BlockBasicData>> GetBlockDictionary()
     {
-        return Task.FromResult(this.State.Blocks);
+        await ReadStateAsync();
+        return State.Blocks;
     }
 
     public async Task<List<BlockData>> SaveBlocks(List<BlockData> blockEventDataList)
     {
+        await ReadStateAsync();
+        
         blockEventDataList = await FilterBlockList(blockEventDataList);
         if (blockEventDataList == null) return null;
         
