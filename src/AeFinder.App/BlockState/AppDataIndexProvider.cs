@@ -35,7 +35,7 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
 
         _logger.LogTrace("Saving app index. IndexName: {indexName}", indexName);
         var addOrUpdateData = new List<TEntity>();
-        var deleteDate = new  List<TEntity>();
+        var deleteData = new  List<TEntity>();
         foreach (var indexData in _indexData.Values)
         {
             switch (indexData.OperationType)
@@ -44,7 +44,7 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
                     addOrUpdateData.Add(indexData.Entity);
                     break;
                 case DataOperationType.Delete:
-                    deleteDate.Add(indexData.Entity);
+                    deleteData.Add(indexData.Entity);
                     break;
             }
         }
@@ -55,16 +55,16 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
             tasks.Add(_entityMappingRepository.AddOrUpdateManyAsync(addOrUpdateData, indexName));
         }
 
-        if (deleteDate.Count > 0)
+        if (deleteData.Count > 0)
         {
-            tasks.Add(_entityMappingRepository.DeleteManyAsync(deleteDate, indexName));
+            tasks.Add(_entityMappingRepository.DeleteManyAsync(deleteData, indexName));
         }
 
         await tasks.WhenAll();
         
         _indexData.Clear();
         _logger.LogTrace("Saved app index. IndexName: {indexName}, Count: {count}", indexName,
-            addOrUpdateData.Count + deleteDate.Count);
+            addOrUpdateData.Count + deleteData.Count);
     }
 
     public Task AddOrUpdateAsync(TEntity entity, string indexName)
