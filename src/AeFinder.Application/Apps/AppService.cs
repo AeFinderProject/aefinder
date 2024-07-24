@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.Apps.Dto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockStates;
@@ -193,5 +194,62 @@ public class AppService : AeFinderAppService, IAppService
             _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var codeBytes = await appSubscriptionGrain.GetCodeAsync(version);
         return Convert.ToBase64String(codeBytes);
+    }
+
+    public async Task<AppResourceLimitDto> SetAppResourceLimitAsync(string appId, SetAppResourceLimitDto dto)
+    {
+        if (dto == null)
+        {
+            throw new UserFriendlyException("please input limit parameters");
+        }
+        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
+            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
+
+        if (dto.MaxEntityCallCount > 0)
+        {
+            await appResourceLimitGrain.SetMaxEntityCallCountAsync(dto.MaxEntityCallCount);
+        }
+
+        if (dto.MaxEntitySize > 0)
+        {
+            await appResourceLimitGrain.SetMaxEntitySizeAsync(dto.MaxEntitySize);
+        }
+
+        if (dto.MaxLogCallCount > 0)
+        {
+            await appResourceLimitGrain.SetMaxLogCallCountAsync(dto.MaxLogCallCount);
+        }
+        
+        if (dto.MaxLogSize > 0)
+        {
+            await appResourceLimitGrain.SetMaxLogSizeAsync(dto.MaxLogSize);
+        }
+        
+        if (dto.MaxContractCallCount > 0)
+        {
+            await appResourceLimitGrain.SetMaxContractCallCountAsync(dto.MaxContractCallCount);
+        }
+
+        if (!string.IsNullOrEmpty(dto.AppFullPodRequestCpuCore))
+        {
+            await appResourceLimitGrain.SetAppFullPodRequestCpuCoreAsync(dto.AppFullPodRequestCpuCore);
+        }
+        
+        if (!string.IsNullOrEmpty(dto.AppFullPodRequestMemory))
+        {
+            await appResourceLimitGrain.SetAppFullPodRequestMemoryAsync(dto.AppFullPodRequestMemory);
+        }
+        
+        if (!string.IsNullOrEmpty(dto.AppQueryPodRequestCpuCore))
+        {
+            await appResourceLimitGrain.SetAppQueryPodRequestCpuCoreAsync(dto.AppQueryPodRequestCpuCore);
+        }
+        
+        if (!string.IsNullOrEmpty(dto.AppQueryPodRequestMemory))
+        {
+            await appResourceLimitGrain.SetAppQueryPodRequestMemoryAsync(dto.AppQueryPodRequestMemory);
+        }
+
+        return await appResourceLimitGrain.GetAsync();
     }
 }

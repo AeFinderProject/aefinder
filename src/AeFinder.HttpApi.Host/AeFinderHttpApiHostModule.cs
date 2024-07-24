@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using AeFinder.App.Deploy;
-using AeFinder.Grains;
+using AeFinder.Apps;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.Logger;
@@ -18,12 +18,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using Orleans;
-using Orleans.Configuration;
-using Orleans.Hosting;
-using Orleans.Providers.MongoDB.Configuration;
 using StackExchange.Redis;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
@@ -38,8 +33,6 @@ using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.Threading;
 using Volo.Abp.VirtualFileSystem;
-using IdentityRole = Volo.Abp.Identity.IdentityRole;
-using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder;
 
@@ -79,6 +72,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
         context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
+        context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
         Configure<AbpAuditingOptions>(options =>
         {
             options.IsEnabled = false; //Disables the auditing system
