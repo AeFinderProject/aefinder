@@ -17,12 +17,6 @@ public class BlockGrain:AeFinderGrain<BlockState>,IBlockGrain
     {
         _logger = logger;
     }
-    
-    public override async Task OnActivateAsync(CancellationToken cancellationToken)
-    {
-        await ReadStateAsync();
-        await base.OnActivateAsync(cancellationToken);
-    }
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
@@ -32,16 +26,9 @@ public class BlockGrain:AeFinderGrain<BlockState>,IBlockGrain
         }
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
-    
-    public async Task<BlockData> GetBlock()
-    {
-        await ReadStateAsync();
-        return State.Block;
-    }
 
     public async Task SaveBlock(BlockData block)
     {
-        await ReadStateAsync();
         State.Block = block;
         await WriteStateAsync();
         _logger.LogInformation($"save block {State.Block.BlockHeight} success");
