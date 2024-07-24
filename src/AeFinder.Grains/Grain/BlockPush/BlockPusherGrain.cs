@@ -151,7 +151,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
 
     public async Task HandleBlockAsync(BlockWithTransactionDto block)
     {
-        if (!CheckPushThreshold(block.BlockHeight))
+        if (!CheckPushThreshold(State.PushedBlockHeight, block.BlockHeight))
         {
             return;
         }
@@ -254,7 +254,7 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
 
     public async Task HandleConfirmedBlockAsync(BlockWithTransactionDto block)
     {
-        if (!CheckPushThreshold(block.BlockHeight))
+        if (!CheckPushThreshold(State.PushedConfirmedBlockHeight, block.BlockHeight))
         {
             return;
         }
@@ -441,9 +441,9 @@ public class BlockPusherGrain : Grain<BlockPusherState>, IBlockPusherGrain
         return unPushedBlock;
     }
 
-    private bool CheckPushThreshold(long blockHeight)
+    private bool CheckPushThreshold(long pushedBlockHeight, long blockHeight)
     {
-        if (blockHeight < State.PushedBlockHeight + _blockPushOptions.BatchPushNewBlockCount)
+        if (blockHeight < pushedBlockHeight + _blockPushOptions.BatchPushNewBlockCount)
         {
             return false;
         }
