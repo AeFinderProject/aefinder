@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.App.Deploy;
 using AeFinder.Apps.Dto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
@@ -23,13 +24,16 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IClusterClient _clusterClient;
     private readonly IUserAppService _userAppService;
     private readonly IOrganizationAppService _organizationAppService;
+    private readonly IAppResourceLimitProvider _appResourceLimitProvider;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
+        IAppResourceLimitProvider appResourceLimitProvider,
         IOrganizationAppService organizationAppService)
     {
         _clusterClient = clusterClient;
         _userAppService = userAppService;
         _organizationAppService = organizationAppService;
+        _appResourceLimitProvider = appResourceLimitProvider;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -251,5 +255,23 @@ public class AppService : AeFinderAppService, IAppService
         }
 
         return await appResourceLimitGrain.GetAsync();
+    }
+
+    public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
+    {
+        var result = new AppResourceLimitDto();
+        
+        result.MaxEntityCallCount = await _appResourceLimitProvider.GetMaxEntityCallCountAsync(appId);
+        result.MaxEntitySize = await _appResourceLimitProvider.GetMaxEntitySizeAsync(appId);
+        result.MaxLogCallCount = await _appResourceLimitProvider.GetMaxLogCallCountAsync(appId);
+        result.MaxLogSize = await _appResourceLimitProvider.GetMaxLogSizeAsync(appId);
+        result.MaxContractCallCount = await _appResourceLimitProvider.GetMaxContractCallCountAsync(appId);
+
+        result.AppFullPodRequestCpuCore = await _appResourceLimitProvider.GetAppFullPodRequestCpuCoreAsync(appId);
+        result.AppFullPodRequestMemory = await _appResourceLimitProvider.GetAppFullPodRequestMemoryAsync(appId);
+        result.AppQueryPodRequestCpuCore = await _appResourceLimitProvider.GetAppQueryPodRequestCpuCoreAsync(appId);
+        result.AppQueryPodRequestMemory = await _appResourceLimitProvider.GetAppQueryPodRequestMemoryAsync(appId);
+
+        return result;
     }
 }

@@ -90,4 +90,11 @@ public class AppController : AeFinderController
     {
         return await _appService.SetAppResourceLimitAsync(appId, dto);
     }
+    
+    [HttpGet]
+    [Route("limit/{appId}")]
+    public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
+    {
+        return await _appService.GetAppResourceLimitAsync(appId);
+    }
 }

@@ -17,4 +17,5 @@ public interface IAppService
     Task<int> GetMaxAppCountAsync(Guid organizationId);
     Task<string> GetAppCodeAsync(string appId, string version);
     Task<AppResourceLimitDto> SetAppResourceLimitAsync(string appId, SetAppResourceLimitDto dto);
+    Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId);
 }
