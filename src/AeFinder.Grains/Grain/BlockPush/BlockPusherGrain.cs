@@ -150,7 +150,7 @@ public class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockPusherGra
 
     public async Task HandleBlockAsync(BlockWithTransactionDto block)
     {
-        if (!CheckPushThreshold(block.BlockHeight))
+        if (!CheckPushThreshold(State.PushedBlockHeight, block.BlockHeight))
         {
             return;
         }
@@ -255,13 +255,13 @@ public class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockPusherGra
 
     public async Task HandleConfirmedBlockAsync(BlockWithTransactionDto block)
     {
-        if (!CheckPushThreshold(block.BlockHeight))
+        await ReadStateAsync();
+
+        if (!CheckPushThreshold(State.PushedConfirmedBlockHeight, block.BlockHeight))
         {
             return;
         }
-
-        await ReadStateAsync();
-
+        
         var appSubscriptionGrain =
             GrainFactory.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(State.AppId));
         var pusherInfoGrain = GrainFactory.GetGrain<IBlockPusherInfoGrain>(this.GetPrimaryKeyString());
@@ -444,9 +444,9 @@ public class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockPusherGra
         return unPushedBlock;
     }
 
-    private bool CheckPushThreshold(long blockHeight)
+    private bool CheckPushThreshold(long pushedBlockHeight, long blockHeight)
     {
-        if (blockHeight < State.PushedBlockHeight + _blockPushOptions.BatchPushNewBlockCount)
+        if (blockHeight < pushedBlockHeight + _blockPushOptions.BatchPushNewBlockCount)
         {
             return false;
         }
