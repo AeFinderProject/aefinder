@@ -53,26 +53,28 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
 
     public async Task PreMergeStateAsync(string chainId, List<BlockStateSet> blockStateSets)
     {
-        foreach (var set in blockStateSets)
+        var toMergeStates = new Dictionary<string, AppState>();
+        foreach (var change in blockStateSets.SelectMany(set => set.Changes))
         {
-            foreach (var change in set.Changes)
-            {
-                await SetPendingStateAsync(chainId, change.Key, change.Value);
-            }
+            toMergeStates[change.Key] = change.Value;
         }
+
+        var tasks = toMergeStates.Select(async o => await SetPendingStateAsync(chainId, o.Key, o.Value));
+        await tasks.WhenAll();
 
         await SaveDataAsync(chainId);
     }
     
     public async Task MergeStateAsync(string chainId, List<BlockStateSet> blockStateSets)
     {
-        foreach (var set in blockStateSets)
+        var toMergeKeys = new HashSet<string>();
+        foreach (var change in blockStateSets.SelectMany(set => set.Changes))
         {
-            foreach (var change in set.Changes)
-            {
-                await MergeStateAsync(chainId, change.Key);
-            }
+            toMergeKeys.Add(change.Key);
         }
+        
+        var tasks = toMergeKeys.Select(async o => await MergeStateAsync(chainId, o));
+        await tasks.WhenAll();
 
         await SaveDataAsync(chainId);
     }

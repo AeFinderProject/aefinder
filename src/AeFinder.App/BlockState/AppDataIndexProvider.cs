@@ -2,13 +2,14 @@ using System.Collections.Concurrent;
 using AElf.EntityMapping.Repositories;
 using AeFinder.Sdk.Entities;
 using Microsoft.Extensions.Logging;
+using Nito.AsyncEx;
 
 namespace AeFinder.App.BlockState;
 
 public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
     where TEntity : AeFinderEntity, new()
 {
-    private readonly ConcurrentQueue<IndexData<TEntity>> _indexDataQueue = new();
+    private readonly ConcurrentDictionary<string, IndexData<TEntity>> _indexData = new();
     private bool _isRegister = false;
     
     private readonly IEntityMappingRepository<TEntity, string> _entityMappingRepository;
@@ -25,38 +26,57 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
 
     public async Task SaveDataAsync()
     {
-        var indexName= string.Empty;
-        DataOperationType operationType = DataOperationType.AddOrUpdate;
-        var toCommitData = new List<TEntity>();
-
-        while (_indexDataQueue.TryDequeue(out var data))
+        if (_indexData.Count <= 0)
         {
-            if (toCommitData.Count > 0 && (indexName != data.IndexName || operationType != data.OperationType))
-            {
-                await SaveIndexAsync(indexName,operationType, toCommitData);
-            }
-            
-            indexName = data.IndexName;
-            operationType = data.OperationType;
-            toCommitData.Add(data.Entity);
+            return;
         }
         
-        if (toCommitData.Count > 0)
+        var indexName = _indexData.First().Value.IndexName;
+
+        _logger.LogTrace("Saving app index. IndexName: {indexName}", indexName);
+        var addOrUpdateData = new List<TEntity>();
+        var deleteData = new  List<TEntity>();
+        foreach (var indexData in _indexData.Values)
         {
-            await SaveIndexAsync(indexName,operationType, toCommitData);
+            switch (indexData.OperationType)
+            {
+                case DataOperationType.AddOrUpdate:
+                    addOrUpdateData.Add(indexData.Entity);
+                    break;
+                case DataOperationType.Delete:
+                    deleteData.Add(indexData.Entity);
+                    break;
+            }
         }
+        
+        var tasks = new List<Task>();
+        if (addOrUpdateData.Count > 0)
+        {
+            tasks.Add(_entityMappingRepository.AddOrUpdateManyAsync(addOrUpdateData, indexName));
+        }
+
+        if (deleteData.Count > 0)
+        {
+            tasks.Add(_entityMappingRepository.DeleteManyAsync(deleteData, indexName));
+        }
+
+        await tasks.WhenAll();
+        
+        _indexData.Clear();
+        _logger.LogTrace("Saved app index. IndexName: {indexName}, Count: {count}", indexName,
+            addOrUpdateData.Count + deleteData.Count);
     }
 
     public Task AddOrUpdateAsync(TEntity entity, string indexName)
     {
         Register();
 
-        _indexDataQueue.Enqueue(new IndexData<TEntity>
+        _indexData[entity.Id] = new IndexData<TEntity>
         {
             IndexName = indexName,
             OperationType = DataOperationType.AddOrUpdate,
             Entity = entity
-        });
+        };
         
         return Task.CompletedTask;
     }
@@ -65,33 +85,14 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
     {
         Register();
         
-        _indexDataQueue.Enqueue(new IndexData<TEntity>
+        _indexData[entity.Id] = new IndexData<TEntity>
         {
             IndexName = indexName,
             OperationType = DataOperationType.Delete,
             Entity = entity
-        });
+        };
+        
         return Task.CompletedTask;
-    }
-
-    private async Task SaveIndexAsync(string indexName, DataOperationType operationType, List<TEntity> toCommitData)
-    {
-        _logger.LogTrace("Saving app index. IndexName: {indexName}, OperationType: {operationType}", indexName,
-            operationType);
-        switch (operationType)
-        {
-            case DataOperationType.AddOrUpdate:
-                await _entityMappingRepository.AddOrUpdateManyAsync(toCommitData, indexName);
-                toCommitData.Clear();
-                break;
-            case DataOperationType.Delete:
-                await _entityMappingRepository.DeleteManyAsync(toCommitData, indexName);
-                toCommitData.Clear();
-                break;
-        }
-
-        _logger.LogTrace("Saved app index. IndexName: {indexName}, OperationType: {operationType}", indexName,
-            operationType);
     }
 
     private void Register()

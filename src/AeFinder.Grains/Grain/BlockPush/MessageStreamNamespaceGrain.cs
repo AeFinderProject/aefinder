@@ -3,10 +3,11 @@ using Orleans;
 
 namespace AeFinder.Grains.Grain.BlockPush;
 
-public class MessageStreamNamespaceGrain : Grain<MessageStreamNamespaceState>, IMessageStreamNamespaceGrain
+public class MessageStreamNamespaceGrain : AeFinderGrain<MessageStreamNamespaceState>, IMessageStreamNamespaceGrain
 {
     public async Task AddAppAsync(string appId)
     {
+        await ReadStateAsync();
         State.AppIds.Add(appId);
         await WriteStateAsync();
     }
@@ -17,13 +18,9 @@ public class MessageStreamNamespaceGrain : Grain<MessageStreamNamespaceState>, I
         return State.AppIds.Contains(appId);
     }
 
-    public Task<int> GetAppCountAsync()
-    {
-        return Task.FromResult(State.AppIds.Count);
-    }
-
-    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    public async Task<int> GetAppCountAsync()
     {
         await ReadStateAsync();
+        return State.AppIds.Count;
     }
 }

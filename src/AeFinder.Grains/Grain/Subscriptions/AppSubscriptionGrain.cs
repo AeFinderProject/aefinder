@@ -11,7 +11,7 @@ using SubscriptionInfo = AeFinder.Grains.State.Subscriptions.SubscriptionInfo;
 
 namespace AeFinder.Grains.Grain.Subscriptions;
 
-public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptionGrain
+public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSubscriptionGrain
 {
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly ILogger<AppSubscriptionGrain> _logger;
@@ -27,6 +27,9 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         var addSubscriptionDto = new AddSubscriptionDto();
         var newVersion = Guid.NewGuid().ToString("N");
 
+        await ReadStateAsync();
+        await BeginChangingStateAsync();
+        
         State.SubscriptionInfos[newVersion] = new SubscriptionInfo
         {
             SubscriptionManifest = subscriptionManifest,
@@ -65,20 +68,26 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
 
     public async Task UpdateSubscriptionAsync(string version, SubscriptionManifest subscriptionManifest)
     {
+        await ReadStateAsync();
+
         CheckVersion(version);
 
         State.SubscriptionInfos[version].SubscriptionManifest = subscriptionManifest;
         await WriteStateAsync();
     }
 
-    public Task<SubscriptionManifest> GetSubscriptionAsync(string version)
+    public async Task<SubscriptionManifest> GetSubscriptionAsync(string version)
     {
+        await ReadStateAsync();
+
         CheckVersion(version);
-        return Task.FromResult(State.SubscriptionInfos[version].SubscriptionManifest);
+        return State.SubscriptionInfos[version].SubscriptionManifest;
     }
 
-    public Task<AllSubscription> GetAllSubscriptionAsync()
+    public async Task<AllSubscription> GetAllSubscriptionAsync()
     {
+        await ReadStateAsync();
+
         var result = new AllSubscription();
         if (State.CurrentVersion != null)
         {
@@ -100,7 +109,7 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
             };
         }
 
-        return Task.FromResult(result);
+        return result;
     }
 
     public async Task<byte[]> GetCodeAsync(string version)
@@ -119,6 +128,8 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
 
     public async Task<bool> IsRunningAsync(string version, string chainId, string pushToken)
     {
+        await ReadStateAsync();
+
         if (string.IsNullOrWhiteSpace(version) ||
             !State.SubscriptionInfos.TryGetValue(version, out var subscriptionInfo) ||
             subscriptionInfo.Status != SubscriptionStatus.Started)
@@ -139,6 +150,9 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
 
     public async Task UpgradeVersionAsync()
     {
+        await ReadStateAsync();
+        await BeginChangingStateAsync();
+
         if (State.PendingVersion == null)
         {
             return;
@@ -171,25 +185,31 @@ public class AppSubscriptionGrain : Grain<AppSubscriptionState>, IAppSubscriptio
         await GrainFactory.GetGrain<IAppGrain>(this.GetPrimaryKeyString()).SetStatusAsync(AppStatus.Deployed);
     }
 
-    public Task<SubscriptionStatus> GetSubscriptionStatusAsync(string version)
+    public async Task<SubscriptionStatus> GetSubscriptionStatusAsync(string version)
     {
-        return Task.FromResult(State.SubscriptionInfos[version].Status);
+        await ReadStateAsync();
+        return State.SubscriptionInfos[version].Status;
     }
 
     public async Task StartAsync(string version)
     {
+        await ReadStateAsync();
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Started;
         await WriteStateAsync();
     }
 
     public async Task PauseAsync(string version)
     {
+        await ReadStateAsync();
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Paused;
         await WriteStateAsync();
     }
 
     public async Task StopAsync(string version)
     {
+        await ReadStateAsync();
+        await BeginChangingStateAsync();
+        
         if (version == State.CurrentVersion)
         {
             State.CurrentVersion = null;

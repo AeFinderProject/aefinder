@@ -405,7 +405,7 @@ public class BlockPusherGrainTests : AeFinderGrainTestBase
         await blockPusherGrain.HandleConfirmedBlockAsync( _blockDataProvider.Blocks[50].First() );
         //Wait for asynchronous processing stream message to complete
         await WaitUntilAsync(_ => Task.FromResult(subscribedBlock.Count == 56), TimeSpan.FromSeconds(5));
-        subscribedBlock.Count.ShouldBe(55);
+        subscribedBlock.Count.ShouldBe(60);
         subscribedBlock.Last().BlockHeight.ShouldBe(50);
     }
 

@@ -3,7 +3,7 @@ using Orleans;
 
 namespace AeFinder.Grains.Grain.Subscriptions;
 
-public class AppCodeGrain : Grain<AppCodeState>, IAppCodeGrain
+public class AppCodeGrain : AeFinderGrain<AppCodeState>, IAppCodeGrain
 {
     public async Task SetCodeAsync(byte[] code)
     {

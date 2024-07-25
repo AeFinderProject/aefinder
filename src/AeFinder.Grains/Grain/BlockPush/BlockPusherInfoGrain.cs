@@ -5,7 +5,7 @@ using Orleans;
 
 namespace AeFinder.Grains.Grain.BlockPush;
 
-public class BlockPusherInfoGrain : Grain<BlockPusherInfoState>, IBlockPusherInfoGrain
+public class BlockPusherInfoGrain : AeFinderGrain<BlockPusherInfoState>, IBlockPusherInfoGrain
 {
     private readonly BlockPushOptions _blockPushOptions;
 
@@ -28,6 +28,7 @@ public class BlockPusherInfoGrain : Grain<BlockPusherInfoState>, IBlockPusherInf
 
     public async Task SetNewBlockStartHeightAsync(long height)
     {
+        await ReadStateAsync();
         State.BlockPushMode = BlockPushMode.NewBlock;
         State.NewBlockStartHeight = height;
         await WriteStateAsync();
@@ -35,6 +36,7 @@ public class BlockPusherInfoGrain : Grain<BlockPusherInfoState>, IBlockPusherInf
     
     public async Task SetHistoricalBlockPushModeAsync()
     {
+        await ReadStateAsync();
         State.BlockPushMode = BlockPushMode.HistoricalBlock;
         State.NewBlockStartHeight = 0;
         await WriteStateAsync();
@@ -42,12 +44,16 @@ public class BlockPusherInfoGrain : Grain<BlockPusherInfoState>, IBlockPusherInf
     
     public async Task SetHandleHistoricalBlockTimeAsync(DateTime time)
     {
+        await ReadStateAsync();
+        
         State.LastHandleHistoricalBlockTime = time;
         await WriteStateAsync();
     }
 
     public async Task InitializeAsync(string appId, string version, Subscription item, string pushToken)
     {
+        await ReadStateAsync();
+        
         var pusherManagerGrain = GrainFactory.GetGrain<IBlockPusherManagerGrain>(0);
         await pusherManagerGrain.AddBlockPusherAsync(item.ChainId, this.GetPrimaryKeyString());
 
@@ -66,6 +72,8 @@ public class BlockPusherInfoGrain : Grain<BlockPusherInfoState>, IBlockPusherInf
 
     public async Task UpdateSubscriptionInfoAsync(Subscription item)
     {
+        await ReadStateAsync();
+        
         State.Subscription = item;
         await WriteStateAsync();
     }
@@ -78,6 +86,8 @@ public class BlockPusherInfoGrain : Grain<BlockPusherInfoState>, IBlockPusherInf
     
     public async Task<Guid> GetMessageStreamIdAsync()
     {
+        await ReadStateAsync();
+        
         if (State.MessageStreamId == Guid.Empty)
         {
             State.MessageStreamId = Guid.NewGuid();
