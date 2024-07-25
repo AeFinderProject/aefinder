@@ -1,15 +1,18 @@
+using Orleans;
+
 namespace AeFinder.Apps.Dto;
 
+[GenerateSerializer]
 public class AppResourceLimitDto
 {
-    public int MaxEntityCallCount { get; set; }
-    public int MaxEntitySize { get; set; }
-    public int MaxLogCallCount { get; set; }
-    public int MaxLogSize { get; set; }
-    public int MaxContractCallCount { get; set; }
+    [Id(0)] public int MaxEntityCallCount { get; set; }
+    [Id(1)] public int MaxEntitySize { get; set; }
+    [Id(2)] public int MaxLogCallCount { get; set; }
+    [Id(3)] public int MaxLogSize { get; set; }
+    [Id(4)] public int MaxContractCallCount { get; set; }
 
-    public string AppFullPodRequestCpuCore { get; set; }
-    public string AppFullPodRequestMemory { get; set; }
-    public string AppQueryPodRequestCpuCore { get; set; }
-    public string AppQueryPodRequestMemory { get; set; }
+    [Id(5)] public string AppFullPodRequestCpuCore { get; set; }
+    [Id(6)] public string AppFullPodRequestMemory { get; set; }
+    [Id(7)] public string AppQueryPodRequestCpuCore { get; set; }
+    [Id(8)] public string AppQueryPodRequestMemory { get; set; }
 }
