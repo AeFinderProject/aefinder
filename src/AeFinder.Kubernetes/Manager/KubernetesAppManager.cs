@@ -75,21 +75,17 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderVersion, version);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderClientType,
             KubernetesConstants.AppClientTypeFull);
-        var maxEntityCallCount = await _appResourceLimitProvider.GetMaxEntityCallCountAsync(appId);
-        var maxEntitySize = await _appResourceLimitProvider.GetMaxEntitySizeAsync(appId);
-        var maxLogCallCount = await _appResourceLimitProvider.GetMaxLogCallCountAsync(appId);
-        var MaxLogSize = await _appResourceLimitProvider.GetMaxLogSizeAsync(appId);
-        var MaxContractCallCount = await _appResourceLimitProvider.GetMaxContractCallCountAsync(appId);
+        var resourceLimitInfo = await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxEntityCallCount,
-            maxEntityCallCount.ToString());
+            resourceLimitInfo.MaxEntityCallCount.ToString());
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxEntitySize,
-            maxEntitySize.ToString());
+            resourceLimitInfo.MaxEntitySize.ToString());
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxLogCallCount,
-            maxLogCallCount.ToString());
+            resourceLimitInfo.MaxLogCallCount.ToString());
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxLogSize,
-            MaxLogSize.ToString());
+            resourceLimitInfo.MaxLogSize.ToString());
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxContractCallCount,
-            MaxContractCallCount.ToString());
+            resourceLimitInfo.MaxContractCallCount.ToString());
         var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
         var configMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == configMapName);
         if (!configMapExists)
@@ -127,8 +123,8 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeFull);
         var targetPort = KubernetesConstants.AppContainerTargetPort;
         var replicasCount = 1;//Only one pod instance is allowed
-        var requestCpuCore = await _appResourceLimitProvider.GetAppFullPodRequestCpuCoreAsync(appId);
-        var requestMemory = await _appResourceLimitProvider.GetAppFullPodRequestMemoryAsync(appId);
+        var requestCpuCore = resourceLimitInfo.AppFullPodRequestCpuCore;
+        var requestMemory = resourceLimitInfo.AppFullPodRequestMemory;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
@@ -138,7 +134,9 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
                 sideCarConfigName, requestCpuCore, requestMemory);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
-            _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);
+            _logger.LogInformation(
+                "[KubernetesAppManager]Deployment {deploymentName} created, requestCpuCore: {requestCpuCore} requestMemory: {requestMemory}",
+                deploymentName, requestCpuCore, requestMemory);
         }
     }
 
@@ -152,21 +150,17 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderVersion, version);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderClientType,
             KubernetesConstants.AppClientTypeQuery);
-        var maxEntityCallCount = await _appResourceLimitProvider.GetMaxEntityCallCountAsync(appId);
-        var maxEntitySize = await _appResourceLimitProvider.GetMaxEntitySizeAsync(appId);
-        var maxLogCallCount = await _appResourceLimitProvider.GetMaxLogCallCountAsync(appId);
-        var MaxLogSize = await _appResourceLimitProvider.GetMaxLogSizeAsync(appId);
-        var MaxContractCallCount = await _appResourceLimitProvider.GetMaxContractCallCountAsync(appId);
+        var resourceLimitInfo = await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxEntityCallCount,
-            maxEntityCallCount.ToString());
+            resourceLimitInfo.MaxEntityCallCount.ToString());
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxEntitySize,
-            maxEntitySize.ToString());
+            resourceLimitInfo.MaxEntitySize.ToString());
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxLogCallCount,
-            maxLogCallCount.ToString());
+            resourceLimitInfo.MaxLogCallCount.ToString());
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxLogSize,
-            MaxLogSize.ToString());
+            resourceLimitInfo.MaxLogSize.ToString());
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxContractCallCount,
-            MaxContractCallCount.ToString());
+            resourceLimitInfo.MaxContractCallCount.ToString());
         var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
         var configMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == configMapName);
         if (!configMapExists)
@@ -204,8 +198,8 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeQuery);
         var targetPort = KubernetesConstants.AppContainerTargetPort;
         var replicasCount = _kubernetesOptions.AppPodReplicas;
-        var requestCpuCore = await _appResourceLimitProvider.GetAppQueryPodRequestCpuCoreAsync(appId);
-        var requestMemory = await _appResourceLimitProvider.GetAppQueryPodRequestMemoryAsync(appId);
+        var requestCpuCore = resourceLimitInfo.AppFullPodRequestCpuCore;
+        var requestMemory = resourceLimitInfo.AppFullPodRequestMemory;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
@@ -215,7 +209,9 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
                 sideCarConfigName, requestCpuCore, requestMemory);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
-            _logger.LogInformation("[KubernetesAppManager]Deployment {deploymentName} created", deploymentName);
+            _logger.LogInformation(
+                "[KubernetesAppManager]Deployment {deploymentName} created, requestCpuCore: {requestCpuCore} requestMemory: {requestMemory}",
+                deploymentName, requestCpuCore, requestMemory);
         }
 
         //Create query app service

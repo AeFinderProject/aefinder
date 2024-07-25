@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
+using AeFinder.Apps.Dto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Options;
@@ -23,129 +24,66 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider
         _kubernetesOptions = kubernetesOptions.Value;
     }
 
-    public async Task<int> GetMaxEntityCallCountAsync(string appId)
+    public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
     {
         var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
             GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
         var resourceLimitDto = await appResourceLimitGrain.GetAsync();
+        
         //Use grain value first
-        if (resourceLimitDto.MaxEntityCallCount > 0)
+        if (resourceLimitDto.MaxEntityCallCount <= 0)
         {
-            return resourceLimitDto.MaxEntityCallCount;
+            resourceLimitDto.MaxEntityCallCount = _operationLimitOptions.MaxEntityCallCount;
+        }
+        
+        //Use grain value first
+        if (resourceLimitDto.MaxEntitySize <= 0)
+        {
+            resourceLimitDto.MaxEntitySize = _operationLimitOptions.MaxEntitySize;
+        }
+        
+        //Use grain value first
+        if (resourceLimitDto.MaxLogCallCount <= 0)
+        {
+            resourceLimitDto.MaxLogCallCount = _operationLimitOptions.MaxLogCallCount;
+        }
+        
+        //Use grain value first
+        if (resourceLimitDto.MaxLogSize <= 0)
+        {
+            resourceLimitDto.MaxLogSize = _operationLimitOptions.MaxLogSize;
+        }
+        
+        //Use grain value first
+        if (resourceLimitDto.MaxContractCallCount <= 0)
+        {
+            resourceLimitDto.MaxContractCallCount = _operationLimitOptions.MaxContractCallCount;
+        }
+        
+        //Use grain value first
+        if (resourceLimitDto.AppFullPodRequestCpuCore.IsNullOrEmpty())
+        {
+            resourceLimitDto.AppFullPodRequestCpuCore = _kubernetesOptions.AppFullPodRequestCpuCore;
+        }
+        
+        //Use grain value first
+        if (resourceLimitDto.AppFullPodRequestMemory.IsNullOrEmpty())
+        {
+            resourceLimitDto.AppFullPodRequestMemory = _kubernetesOptions.AppFullPodRequestMemory;
+        }
+        
+        //Use grain value first
+        if (resourceLimitDto.AppQueryPodRequestCpuCore.IsNullOrEmpty())
+        {
+            resourceLimitDto.AppQueryPodRequestCpuCore = _kubernetesOptions.AppQueryPodRequestCpuCore;
+        }
+        
+        //Use grain value first
+        if (resourceLimitDto.AppQueryPodRequestMemory.IsNullOrEmpty())
+        {
+            resourceLimitDto.AppQueryPodRequestMemory = _kubernetesOptions.AppQueryPodRequestMemory;
         }
 
-        return _operationLimitOptions.MaxEntityCallCount;
-    }
-
-    public async Task<int> GetMaxEntitySizeAsync(string appId)
-    {
-        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
-            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
-        var resourceLimitDto = await appResourceLimitGrain.GetAsync();
-        //Use grain value first
-        if (resourceLimitDto.MaxEntitySize > 0)
-        {
-            return resourceLimitDto.MaxEntitySize;
-        }
-
-        return _operationLimitOptions.MaxEntitySize;
-    }
-
-    public async Task<int> GetMaxLogCallCountAsync(string appId)
-    {
-        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
-            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
-        var resourceLimitDto = await appResourceLimitGrain.GetAsync();
-        //Use grain value first
-        if (resourceLimitDto.MaxLogCallCount > 0)
-        {
-            return resourceLimitDto.MaxLogCallCount;
-        }
-
-        return _operationLimitOptions.MaxLogCallCount;
-    }
-
-    public async Task<int> GetMaxLogSizeAsync(string appId)
-    {
-        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
-            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
-        var resourceLimitDto = await appResourceLimitGrain.GetAsync();
-        //Use grain value first
-        if (resourceLimitDto.MaxLogSize > 0)
-        {
-            return resourceLimitDto.MaxLogSize;
-        }
-
-        return _operationLimitOptions.MaxLogSize;
-    }
-
-    public async Task<int> GetMaxContractCallCountAsync(string appId)
-    {
-        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
-            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
-        var resourceLimitDto = await appResourceLimitGrain.GetAsync();
-        //Use grain value first
-        if (resourceLimitDto.MaxContractCallCount > 0)
-        {
-            return resourceLimitDto.MaxContractCallCount;
-        }
-
-        return _operationLimitOptions.MaxContractCallCount;
-    }
-
-    public async Task<string> GetAppFullPodRequestCpuCoreAsync(string appId)
-    {
-        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
-            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
-        var resourceLimitDto = await appResourceLimitGrain.GetAsync();
-        //Use grain value first
-        if (!resourceLimitDto.AppFullPodRequestCpuCore.IsNullOrEmpty())
-        {
-            return resourceLimitDto.AppFullPodRequestCpuCore;
-        }
-
-        return _kubernetesOptions.AppFullPodRequestCpuCore;
-    }
-
-    public async Task<string> GetAppFullPodRequestMemoryAsync(string appId)
-    {
-        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
-            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
-        var resourceLimitDto = await appResourceLimitGrain.GetAsync();
-        //Use grain value first
-        if (!resourceLimitDto.AppFullPodRequestMemory.IsNullOrEmpty())
-        {
-            return resourceLimitDto.AppFullPodRequestMemory;
-        }
-
-        return _kubernetesOptions.AppFullPodRequestMemory;
-    }
-
-    public async Task<string> GetAppQueryPodRequestCpuCoreAsync(string appId)
-    {
-        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
-            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
-        var resourceLimitDto = await appResourceLimitGrain.GetAsync();
-        //Use grain value first
-        if (!resourceLimitDto.AppQueryPodRequestCpuCore.IsNullOrEmpty())
-        {
-            return resourceLimitDto.AppQueryPodRequestCpuCore;
-        }
-
-        return _kubernetesOptions.AppQueryPodRequestCpuCore;
-    }
-
-    public async Task<string> GetAppQueryPodRequestMemoryAsync(string appId)
-    {
-        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
-            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
-        var resourceLimitDto = await appResourceLimitGrain.GetAsync();
-        //Use grain value first
-        if (!resourceLimitDto.AppQueryPodRequestMemory.IsNullOrEmpty())
-        {
-            return resourceLimitDto.AppQueryPodRequestMemory;
-        }
-
-        return _kubernetesOptions.AppQueryPodRequestMemory;
+        return resourceLimitDto;
     }
 }

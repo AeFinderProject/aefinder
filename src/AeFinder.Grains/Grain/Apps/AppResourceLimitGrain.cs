@@ -24,57 +24,53 @@ public class AppResourceLimitGrain : Grain<AppResourceLimitState>, IAppResourceL
         return Task.FromResult(_objectMapper.Map<AppResourceLimitState, AppResourceLimitDto>(State));
     }
 
-    public async Task SetMaxEntityCallCountAsync(int maxEntityCallCount)
+    public async Task SetAsync(SetAppResourceLimitDto dto)
     {
-        State.MaxEntityCallCount = maxEntityCallCount;
-        await WriteStateAsync();
-    }
-    
-    public async Task SetMaxEntitySizeAsync(int maxEntitySize)
-    {
-        State.MaxEntitySize = maxEntitySize;
-        await WriteStateAsync();
-    }
-    
-    public async Task SetMaxLogCallCountAsync(int maxLogCallCount)
-    {
-        State.MaxLogCallCount = maxLogCallCount;
-        await WriteStateAsync();
-    }
-    
-    public async Task SetMaxLogSizeAsync(int maxLogSize)
-    {
-        State.MaxLogSize = maxLogSize;
-        await WriteStateAsync();
-    }
-    
-    public async Task SetMaxContractCallCountAsync(int maxContractCallCount)
-    {
-        State.MaxContractCallCount = maxContractCallCount;
-        await WriteStateAsync();
-    }
-    
-    public async Task SetAppFullPodRequestCpuCoreAsync(string requestCpuCore)
-    {
-        State.AppFullPodRequestCpuCore = requestCpuCore;
-        await WriteStateAsync();
-    }
-    
-    public async Task SetAppFullPodRequestMemoryAsync(string requestMemory)
-    {
-        State.AppFullPodRequestMemory = requestMemory;
-        await WriteStateAsync();
-    }
-    
-    public async Task SetAppQueryPodRequestCpuCoreAsync(string requestCpuCore)
-    {
-        State.AppQueryPodRequestCpuCore = requestCpuCore;
-        await WriteStateAsync();
-    }
-    
-    public async Task SetAppQueryPodRequestMemoryAsync(string requestMemory)
-    {
-        State.AppQueryPodRequestMemory = requestMemory;
+        if (dto.MaxEntityCallCount > 0)
+        {
+            State.MaxEntityCallCount = dto.MaxEntityCallCount;
+        }
+
+        if (dto.MaxEntitySize > 0)
+        {
+            State.MaxEntitySize = dto.MaxEntitySize;
+        }
+
+        if (dto.MaxLogCallCount > 0)
+        {
+            State.MaxLogCallCount = dto.MaxLogCallCount;
+        }
+
+        if (dto.MaxLogSize > 0)
+        {
+            State.MaxLogSize = dto.MaxLogSize;
+        }
+
+        if (dto.MaxContractCallCount > 0)
+        {
+            State.MaxContractCallCount = dto.MaxContractCallCount;
+        }
+
+        if (!dto.AppFullPodRequestCpuCore.IsNullOrEmpty())
+        {
+            State.AppFullPodRequestCpuCore = dto.AppFullPodRequestCpuCore;
+        }
+
+        if (!dto.AppFullPodRequestMemory.IsNullOrEmpty())
+        {
+            State.AppFullPodRequestMemory = dto.AppFullPodRequestMemory;
+        }
+
+        if (!dto.AppQueryPodRequestCpuCore.IsNullOrEmpty())
+        {
+            State.AppQueryPodRequestCpuCore = dto.AppQueryPodRequestCpuCore;
+        }
+
+        if (!dto.AppQueryPodRequestMemory.IsNullOrEmpty())
+        {
+            State.AppQueryPodRequestMemory = dto.AppQueryPodRequestMemory;
+        }
+        
         await WriteStateAsync();
     }
 }
