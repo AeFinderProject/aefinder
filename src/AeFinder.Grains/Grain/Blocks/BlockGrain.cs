@@ -8,7 +8,7 @@ namespace AeFinder.Grains.Grain.Blocks;
 
 // public class BlockGrain:JournaledSnapshotGrain<BlockState>,IBlockGrain
 [StorageProvider(ProviderName= "Default")]
-public class BlockGrain:AeFinderGrain<BlockState>,IBlockGrain
+public class BlockGrain:Grain<BlockState>,IBlockGrain
 {
     private readonly ILogger<BlockGrain> _logger;
     
@@ -16,6 +16,12 @@ public class BlockGrain:AeFinderGrain<BlockState>,IBlockGrain
         ILogger<BlockGrain> logger)
     {
         _logger = logger;
+    }
+    
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        await ReadStateAsync();
+        await base.OnActivateAsync(cancellationToken);
     }
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
@@ -38,7 +44,6 @@ public class BlockGrain:AeFinderGrain<BlockState>,IBlockGrain
 
     public async Task<BlockData> ConfirmBlock()
     {
-        await ReadStateAsync();
         State.Block.Confirmed = true;
         foreach (var transaction in State.Block.Transactions)
         {
