@@ -8,6 +8,7 @@ using AeFinder.App.BlockState;
 using AeFinder.App.MockApp;
 using AeFinder.App.OperationLimits;
 using AeFinder.Grains.Grain.BlockPush;
+using AeFinder.Options;
 using AeFinder.Orleans.TestBase;
 using AeFinder.Sdk.Entities;
 using AeFinder.Sdk.Processor;
@@ -54,11 +55,11 @@ public class AeFinderAppTestModule : AbpModule
         });
         context.Services.Configure<OperationLimitOptions>(o =>
         {
-            o.MaxContractCallCount = 3;
-            o.MaxEntitySize = 10000;
-            o.MaxEntityCallCount = 100;
-            o.MaxLogSize = 10;
-            o.MaxLogCallCount = 3;
+            o.MaxContractCallCountString = "3";
+            o.MaxEntitySizeString = "10000";
+            o.MaxEntityCallCountString = "100";
+            o.MaxLogSizeString = "10";
+            o.MaxLogCallCountString = "3";
         });
         
         context.Services.AddTransient<ILogEventProcessor, TokenTransferredProcessor>();

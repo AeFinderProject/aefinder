@@ -31,6 +31,11 @@ public class KubernetesConstants
      public const string PlaceHolderClientType = "[ClientType]";
      public const string PlaceHolderNameSpace = "[NameSpace]";
      public const int AppContainerTargetPort = 8308;
+     public const string PlaceHolderMaxEntityCallCount = "[MaxEntityCallCount]";
+     public const string PlaceHolderMaxEntitySize = "[MaxEntitySize]";
+     public const string PlaceHolderMaxLogCallCount = "[MaxLogCallCount]";
+     public const string PlaceHolderMaxLogSize = "[MaxLogSize]";
+     public const string PlaceHolderMaxContractCallCount = "[MaxContractCallCount]";
      
      //Prometheus
      public const string MonitorLabelKey = "monitor";
