@@ -55,11 +55,11 @@ public class AeFinderAppTestModule : AbpModule
         });
         context.Services.Configure<OperationLimitOptions>(o =>
         {
-            o.MaxContractCallCountString = "3";
-            o.MaxEntitySizeString = "10000";
-            o.MaxEntityCallCountString = "100";
-            o.MaxLogSizeString = "10";
-            o.MaxLogCallCountString = "3";
+            o.MaxContractCallCount = 3;
+            o.MaxEntitySize = 10000;
+            o.MaxEntityCallCount = 100;
+            o.MaxLogSize = 10;
+            o.MaxLogCallCount = 3;
         });
         
         context.Services.AddTransient<ILogEventProcessor, TokenTransferredProcessor>();

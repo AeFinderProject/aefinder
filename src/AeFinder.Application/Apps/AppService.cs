@@ -209,69 +209,13 @@ public class AppService : AeFinderAppService, IAppService
         var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
             GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
 
-        if (dto.MaxEntityCallCount > 0)
-        {
-            await appResourceLimitGrain.SetMaxEntityCallCountAsync(dto.MaxEntityCallCount);
-        }
-
-        if (dto.MaxEntitySize > 0)
-        {
-            await appResourceLimitGrain.SetMaxEntitySizeAsync(dto.MaxEntitySize);
-        }
-
-        if (dto.MaxLogCallCount > 0)
-        {
-            await appResourceLimitGrain.SetMaxLogCallCountAsync(dto.MaxLogCallCount);
-        }
-        
-        if (dto.MaxLogSize > 0)
-        {
-            await appResourceLimitGrain.SetMaxLogSizeAsync(dto.MaxLogSize);
-        }
-        
-        if (dto.MaxContractCallCount > 0)
-        {
-            await appResourceLimitGrain.SetMaxContractCallCountAsync(dto.MaxContractCallCount);
-        }
-
-        if (!string.IsNullOrEmpty(dto.AppFullPodRequestCpuCore))
-        {
-            await appResourceLimitGrain.SetAppFullPodRequestCpuCoreAsync(dto.AppFullPodRequestCpuCore);
-        }
-        
-        if (!string.IsNullOrEmpty(dto.AppFullPodRequestMemory))
-        {
-            await appResourceLimitGrain.SetAppFullPodRequestMemoryAsync(dto.AppFullPodRequestMemory);
-        }
-        
-        if (!string.IsNullOrEmpty(dto.AppQueryPodRequestCpuCore))
-        {
-            await appResourceLimitGrain.SetAppQueryPodRequestCpuCoreAsync(dto.AppQueryPodRequestCpuCore);
-        }
-        
-        if (!string.IsNullOrEmpty(dto.AppQueryPodRequestMemory))
-        {
-            await appResourceLimitGrain.SetAppQueryPodRequestMemoryAsync(dto.AppQueryPodRequestMemory);
-        }
+        await appResourceLimitGrain.SetAsync(dto);
 
         return await appResourceLimitGrain.GetAsync();
     }
 
     public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
     {
-        var result = new AppResourceLimitDto();
-        
-        result.MaxEntityCallCount = await _appResourceLimitProvider.GetMaxEntityCallCountAsync(appId);
-        result.MaxEntitySize = await _appResourceLimitProvider.GetMaxEntitySizeAsync(appId);
-        result.MaxLogCallCount = await _appResourceLimitProvider.GetMaxLogCallCountAsync(appId);
-        result.MaxLogSize = await _appResourceLimitProvider.GetMaxLogSizeAsync(appId);
-        result.MaxContractCallCount = await _appResourceLimitProvider.GetMaxContractCallCountAsync(appId);
-
-        result.AppFullPodRequestCpuCore = await _appResourceLimitProvider.GetAppFullPodRequestCpuCoreAsync(appId);
-        result.AppFullPodRequestMemory = await _appResourceLimitProvider.GetAppFullPodRequestMemoryAsync(appId);
-        result.AppQueryPodRequestCpuCore = await _appResourceLimitProvider.GetAppQueryPodRequestCpuCoreAsync(appId);
-        result.AppQueryPodRequestMemory = await _appResourceLimitProvider.GetAppQueryPodRequestMemoryAsync(appId);
-
-        return result;
+        return await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
     }
 }
