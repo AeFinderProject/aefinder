@@ -1,5 +1,6 @@
 ﻿using AeFinder.Kubernetes.Manager;
 using AeFinder.Logger;
+using AeFinder.Options;
 using k8s;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
