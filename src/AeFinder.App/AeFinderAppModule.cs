@@ -10,6 +10,7 @@ using AeFinder.BlockScan;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Options;
 using AElf.EntityMapping.Elasticsearch;
 using AeFinder.Sdk;
 using AeFinder.Sdk.Entities;

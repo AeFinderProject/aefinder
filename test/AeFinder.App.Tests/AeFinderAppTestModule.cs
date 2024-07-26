@@ -8,6 +8,7 @@ using AeFinder.App.BlockState;
 using AeFinder.App.MockApp;
 using AeFinder.App.OperationLimits;
 using AeFinder.Grains.Grain.BlockPush;
+using AeFinder.Options;
 using AeFinder.Orleans.TestBase;
 using AeFinder.Sdk.Entities;
 using AeFinder.Sdk.Processor;

@@ -72,5 +72,6 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<LogEventDto, AppSubscribedLogEventDto>();
         
         CreateMap<AppLogIndex, AppLogRecordDto>();
+        CreateMap<AppResourceLimitState, AppResourceLimitDto>();
     }
 }
