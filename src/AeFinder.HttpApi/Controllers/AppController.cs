@@ -93,6 +93,7 @@ public class AppController : AeFinderController
     
     [HttpGet]
     [Route("limit/{appId}")]
+    [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
     {
         return await _appService.GetAppResourceLimitAsync(appId);

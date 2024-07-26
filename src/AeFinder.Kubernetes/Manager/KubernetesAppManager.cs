@@ -198,8 +198,8 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeQuery);
         var targetPort = KubernetesConstants.AppContainerTargetPort;
         var replicasCount = _kubernetesOptions.AppPodReplicas;
-        var requestCpuCore = resourceLimitInfo.AppFullPodRequestCpuCore;
-        var requestMemory = resourceLimitInfo.AppFullPodRequestMemory;
+        var requestCpuCore = resourceLimitInfo.AppQueryPodRequestCpuCore;
+        var requestMemory = resourceLimitInfo.AppQueryPodRequestMemory;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
