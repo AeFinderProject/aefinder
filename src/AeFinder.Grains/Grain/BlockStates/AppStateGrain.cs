@@ -3,7 +3,7 @@ using Orleans;
 
 namespace AeFinder.Grains.Grain.BlockStates;
 
-public class AppStateGrain : Grain<AppStateState>, IAppStateGrain
+public class AppStateGrain : AeFinderGrain<AppStateState>, IAppStateGrain
 {
     public async Task<AppState> GetLastIrreversibleStateAsync()
     {

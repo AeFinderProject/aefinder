@@ -5,7 +5,7 @@ using Volo.Abp;
 
 namespace AeFinder.Grains.Grain.Apps;
 
-public class OrganizationAppGrain : Grain<OrganizationAppState>, IOrganizationAppGrain
+public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrganizationAppGrain
 {
     private readonly AppSettingOptions _appSettingOptions;
 
@@ -16,6 +16,7 @@ public class OrganizationAppGrain : Grain<OrganizationAppState>, IOrganizationAp
 
     public async Task AddAppAsync(string appId)
     {
+        await ReadStateAsync();
         var maxAppCount = State.MaxAppCount == 0 ? _appSettingOptions.MaxOrganizationAppCount : State.MaxAppCount;
         if (State.AppIds.Count >= maxAppCount)
         {
@@ -32,12 +33,6 @@ public class OrganizationAppGrain : Grain<OrganizationAppState>, IOrganizationAp
         return State.AppIds;
     }
 
-    public override async Task OnActivateAsync(CancellationToken cancellationToken)
-    {
-        await ReadStateAsync();
-        await base.OnActivateAsync(cancellationToken);
-    }
-
     public async Task<int> GetMaxAppCountAsync()
     {
         await ReadStateAsync();
@@ -46,6 +41,8 @@ public class OrganizationAppGrain : Grain<OrganizationAppState>, IOrganizationAp
 
     public async Task SetMaxAppCountAsync(int maxAppCount)
     {
+        await ReadStateAsync();
+        
         State.MaxAppCount = maxAppCount;
         await WriteStateAsync();
     }
