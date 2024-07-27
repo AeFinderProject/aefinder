@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Kubernetes;
+using AeFinder.Options;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -80,5 +81,21 @@ public class AppController : AeFinderController
     public async Task<string> GetAppCodeAsync(string appId, string version)
     {
         return await _appService.GetAppCodeAsync(appId, version);
+    }
+    
+    [HttpPut]
+    [Route("set-limit/{appId}")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task<AppResourceLimitDto> SetAppResourceLimitAsync(string appId,SetAppResourceLimitDto dto)
+    {
+        return await _appService.SetAppResourceLimitAsync(appId, dto);
+    }
+    
+    [HttpGet]
+    [Route("limit/{appId}")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
+    {
+        return await _appService.GetAppResourceLimitAsync(appId);
     }
 }

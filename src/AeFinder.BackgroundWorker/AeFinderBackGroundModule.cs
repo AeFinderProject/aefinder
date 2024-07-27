@@ -1,14 +1,10 @@
 using AeFinder.App.Deploy;
-using AeFinder.Grains;
+using AeFinder.Apps;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.MongoDb;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Orleans;
-using Orleans.Configuration;
-using Orleans.Providers.MongoDB.Configuration;
 using Volo.Abp;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
@@ -17,7 +13,6 @@ using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict.Tokens;
-using Volo.Abp.Threading;
 
 namespace AeFinder.BackgroundWorker;
 
@@ -36,6 +31,7 @@ public class AeFinderBackGroundModule : AbpModule
         context.Services.AddHostedService<AeFinderHostedService>();
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AeFinderBackGroundModule>(); });
         context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
+        context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
     }

@@ -1,4 +1,4 @@
-namespace AeFinder.App.OperationLimits;
+namespace AeFinder.Options;
 
 public class OperationLimitOptions
 {

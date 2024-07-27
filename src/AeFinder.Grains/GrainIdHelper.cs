@@ -86,4 +86,9 @@ public static class GrainIdHelper
     {
         return 0;
     }
+    
+    public static string GenerateAppResourceLimitGrainId(string appId)
+    {
+        return GenerateGrainId(appId);
+    }
 }

@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using AeFinder.App.Deploy;
+using AeFinder.Apps;
 using AeFinder.CodeOps;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Orleans.TestBase;
@@ -32,5 +34,6 @@ public class AeFinderApplicationTestModule : AbpModule
         {
             o.MessageStreamNamespaces = new List<string> { "MessageStreamNamespace" };
         });
+        context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
     }
 }

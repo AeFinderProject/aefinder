@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.App.Deploy;
+using AeFinder.Apps.Dto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockStates;
@@ -22,13 +24,16 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IClusterClient _clusterClient;
     private readonly IUserAppService _userAppService;
     private readonly IOrganizationAppService _organizationAppService;
+    private readonly IAppResourceLimitProvider _appResourceLimitProvider;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
+        IAppResourceLimitProvider appResourceLimitProvider,
         IOrganizationAppService organizationAppService)
     {
         _clusterClient = clusterClient;
         _userAppService = userAppService;
         _organizationAppService = organizationAppService;
+        _appResourceLimitProvider = appResourceLimitProvider;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -193,5 +198,24 @@ public class AppService : AeFinderAppService, IAppService
             _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var codeBytes = await appSubscriptionGrain.GetCodeAsync(version);
         return Convert.ToBase64String(codeBytes);
+    }
+
+    public async Task<AppResourceLimitDto> SetAppResourceLimitAsync(string appId, SetAppResourceLimitDto dto)
+    {
+        if (dto == null)
+        {
+            throw new UserFriendlyException("please input limit parameters");
+        }
+        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
+            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
+
+        await appResourceLimitGrain.SetAsync(dto);
+
+        return await appResourceLimitGrain.GetAsync();
+    }
+
+    public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
+    {
+        return await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
     }
 }
