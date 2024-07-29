@@ -25,8 +25,7 @@ public class AppBlockStateSetStatusGrain : AeFinderGrain<AppBlockStateSetStatusS
     {
         await ReadStateAsync();
 
-        if (State.LastIrreversibleBlockHeight > 0 &&
-            State.LastIrreversibleBlockHeight > status.LastIrreversibleBlockHeight)
+        if (State.LastIrreversibleBlockHeight > status.LastIrreversibleBlockHeight)
         {
             throw new ApplicationException(
                 $"Cannot set status, new lib {status.LastIrreversibleBlockHeight} less then current lib {State.LastIrreversibleBlockHeight}.");
