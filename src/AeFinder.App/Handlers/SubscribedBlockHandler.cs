@@ -30,19 +30,19 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
     public async Task HandleAsync(SubscribedBlockDto subscribedBlock, StreamSequenceToken token = null)
     {
         if (subscribedBlock.Blocks.Count == 0) return;
-        if (subscribedBlock.AppId != _appInfoProvider.AppId) return;
-        var isRunning = await _blockScanAppService.IsRunningAsync(subscribedBlock.ChainId, subscribedBlock.AppId,
-            subscribedBlock.Version, subscribedBlock.PushToken);
-        if (!isRunning)
-        {
-            Logger.LogTrace(
-                "SubscribedBlockHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} subscribedToken: {subscribedToken} clientId: {clientId} , ChainId: {ChainId}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
-                subscribedBlock.AppId, subscribedBlock.Version, subscribedBlock.PushToken,_appInfoProvider.AppId,
-                subscribedBlock.Blocks.First().ChainId,
-                subscribedBlock.Blocks.First().BlockHeight,
-                subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
-            return;
-        }
+        if (subscribedBlock.AppId != _appInfoProvider.AppId || subscribedBlock.Version != _appInfoProvider.Version) return;
+        // var isRunning = await _blockScanAppService.IsRunningAsync(subscribedBlock.ChainId, subscribedBlock.AppId,
+        //     subscribedBlock.Version, subscribedBlock.PushToken);
+        // if (!isRunning)
+        // {
+        //     Logger.LogTrace(
+        //         "SubscribedBlockHandler Version is not running! subscribedClientId: {subscribedClientId} subscribedVersion: {subscribedVersion} subscribedToken: {subscribedToken} clientId: {clientId} , ChainId: {ChainId}, Block height: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
+        //         subscribedBlock.AppId, subscribedBlock.Version, subscribedBlock.PushToken,_appInfoProvider.AppId,
+        //         subscribedBlock.Blocks.First().ChainId,
+        //         subscribedBlock.Blocks.First().BlockHeight,
+        //         subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
+        //     return;
+        // }
 
         await PublishMessageAsync(subscribedBlock);
     }
