@@ -41,7 +41,7 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
 
     public async Task InitializeAsync()
     {
-        await Task.Delay(10000);
+        await Task.Delay(60000);
         var appSubscriptionGrain =
             _clusterClient.GetGrain<IAppSubscriptionGrain>(
                 GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
