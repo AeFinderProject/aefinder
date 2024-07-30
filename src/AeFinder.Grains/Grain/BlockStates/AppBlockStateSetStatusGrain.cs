@@ -31,4 +31,10 @@ public class AppBlockStateSetStatusGrain : AeFinderGrain<AppBlockStateSetStatusS
         State.Branches = status.Branches;
         await WriteStateAsync();
     }
+    
+    public async Task ClearGrainStateAsync()
+    {
+        await base.ClearStateAsync();
+        DeactivateOnIdle();
+    }
 }
