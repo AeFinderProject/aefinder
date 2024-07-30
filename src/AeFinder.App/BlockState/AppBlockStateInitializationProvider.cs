@@ -1,3 +1,4 @@
+using AeFinder.App.BlockProcessing;
 using AeFinder.Block.Dtos;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockStates;
@@ -21,12 +22,13 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
     private readonly IGeneralAppDataIndexProvider _generalAppDataIndexProvider;
     private readonly IRuntimeTypeProvider _runtimeTypeProvider;
     private readonly ILogger<AppBlockStateInitializationProvider> _logger;
+    private readonly IProcessingStatusProvider _processingStatusProvider;
 
     public AppBlockStateInitializationProvider(IAppDataIndexManagerProvider appDataIndexManagerProvider,
         IAppBlockStateChangeProvider appBlockStateChangeProvider, IAppBlockStateSetProvider appBlockStateSetProvider,
         IAppStateProvider appStateProvider, IAppInfoProvider appInfoProvider, IClusterClient clusterClient,
         IGeneralAppDataIndexProvider generalAppDataIndexProvider, IRuntimeTypeProvider runtimeTypeProvider,
-        ILogger<AppBlockStateInitializationProvider> logger)
+        ILogger<AppBlockStateInitializationProvider> logger, IProcessingStatusProvider processingStatusProvider)
     {
         _appDataIndexManagerProvider = appDataIndexManagerProvider;
         _appBlockStateChangeProvider = appBlockStateChangeProvider;
@@ -37,6 +39,7 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
         _generalAppDataIndexProvider = generalAppDataIndexProvider;
         _runtimeTypeProvider = runtimeTypeProvider;
         _logger = logger;
+        _processingStatusProvider = processingStatusProvider;
     }
 
     public async Task InitializeAsync()
@@ -49,6 +52,8 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
         foreach (var item in subscription.SubscriptionItems)
         {
             await RollbackToLibAsync(item.ChainId);
+            _processingStatusProvider.SetStatus(item.ChainId, ProcessingStatus.Running);
+
         }
     }
 
