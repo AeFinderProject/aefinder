@@ -33,6 +33,12 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             return;
         }
 
+        if (subscribedBlock.Blocks.First().Confirmed)
+        {
+            _logger.LogDebug("Drop confirmed blocks.");
+            return;
+        }
+
         // TODO: Maybe no need check from silo
         var isRunning = await _blockScanAppService.IsRunningAsync(subscribedBlock.ChainId, subscribedBlock.AppId,
             subscribedBlock.Version, subscribedBlock.PushToken);
