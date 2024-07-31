@@ -176,6 +176,11 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
                 CurrentVersionChainIds = currentVersionChainIds
             });
             State.SubscriptionInfos.Remove(State.CurrentVersion);
+            //Clear elastic search indexes of current version
+            await GrainFactory
+                .GetGrain<IAppIndexManagerGrain>(
+                    GrainIdHelper.GenerateAppIndexManagerGrainId(this.GetPrimaryKeyString(), State.CurrentVersion))
+                .ClearVersionIndexAsync();
         }
         
         _logger.LogInformation("Upgrade CurrentVersion from {currentVersion} to {pendingVersion}", State.CurrentVersion,
@@ -191,6 +196,7 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         await WriteStateAsync();
 
         await GrainFactory.GetGrain<IAppGrain>(this.GetPrimaryKeyString()).SetStatusAsync(AppStatus.Deployed);
+        
     }
 
     public async Task<SubscriptionStatus> GetSubscriptionStatusAsync(string version)

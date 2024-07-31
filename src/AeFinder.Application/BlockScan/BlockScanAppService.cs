@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
@@ -112,10 +113,40 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
     public async Task StopAsync(string clientId, string version)
     {
         var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
+       
+        var subscriptionManifest = await clientGrain.GetSubscriptionAsync(version);
+        //remove AppBlockStateSetStatusGrain、BlockPusherInfo、BlockPusher Grain data
+        foreach (var subscriptionItem in subscriptionManifest.SubscriptionItems)
+        {
+            var chainId = subscriptionItem.ChainId;
+            var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
+                GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(clientId, version, chainId));
+            await appBlockStateSetStatusGrain.ClearGrainStateAsync();
+            
+            var blockPusherGrainId = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version, chainId);
+            var blockPusherGrain = _clusterClient.GetGrain<IBlockPusherGrain>(blockPusherGrainId);
+            await blockPusherGrain.ClearGrainStateAsync();
+            
+            var blockPusherInfoGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(blockPusherGrainId);
+            await blockPusherInfoGrain.ClearGrainStateAsync();
+        }
+        
         Logger.LogInformation("ScanApp: {clientId} start stop scan, version: {version}", clientId, version);
         await clientGrain.StopAsync(version);
         Logger.LogInformation("ScanApp: {clientId} stopped , version: {version}", clientId, version);
+
+        //remove AppCodeGrain
+        var codeId = GrainIdHelper.GenerateGetAppCodeGrainId(clientId, version);
+        var appCodeGrain= _clusterClient.GetGrain<IAppCodeGrain>(codeId);
+        await appCodeGrain.RemoveAsync();
+
         await _kubernetesAppManager.DestroyAppAsync(clientId, version);
+        
+        //Clear elastic search indexes of current version
+        await _clusterClient
+            .GetGrain<IAppIndexManagerGrain>(
+                GrainIdHelper.GenerateAppIndexManagerGrainId(clientId, version))
+            .ClearVersionIndexAsync();
     }
 
     public async Task<bool> IsRunningAsync(string chainId, string clientId, string version, string token)

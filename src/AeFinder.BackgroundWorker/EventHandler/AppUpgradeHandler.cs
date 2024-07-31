@@ -30,14 +30,13 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
 
         var appId = eventData.AppId;
         var historyVersion = eventData.CurrentVersion;
-        //Todo remove AppCodeGrain、AppBlockStateSetStatusGrain、BlockPusherInfo、BlockPusher Grain data
-        
+
         //remove AppCodeGrain
         var codeId = GrainIdHelper.GenerateGetAppCodeGrainId(appId, historyVersion);
         var appCodeGrain= _clusterClient.GetGrain<IAppCodeGrain>(codeId);
         await appCodeGrain.RemoveAsync();
         
-        //remove AppBlockStateSetStatusGrain
+        //remove AppBlockStateSetStatusGrain、BlockPusherInfo、BlockPusher Grain data
         foreach (var chainId in eventData.CurrentVersionChainIds)
         {
             var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
