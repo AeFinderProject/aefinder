@@ -20,7 +20,7 @@ public class ProcessingStatusProvider : IProcessingStatusProvider, ISingletonDep
 
     public bool IsRunning(string chainId)
     {
-        return !_status.TryGetValue(chainId, out var status) || status == ProcessingStatus.Running;
+        return _status.TryGetValue(chainId, out var status) && status == ProcessingStatus.Running;
     }
 }
 
