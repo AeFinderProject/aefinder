@@ -68,5 +68,6 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
                 GrainIdHelper.GenerateAppIndexManagerGrainId(appId, historyVersion));
         await appIndexManagerGrain.ClearVersionIndexAsync();
         await appIndexManagerGrain.ClearGrainStateAsync();
+        _logger.LogInformation("Elasticsearch index cleared, appId: {0}, historyVersion: {1}", appId, historyVersion);
     }
 }
