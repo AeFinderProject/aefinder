@@ -3,8 +3,8 @@ using Volo.Abp.Modularity;
 
 namespace AeFinder.App;
 
-[DependsOn(typeof(AbpEventBusRabbitMqModule),
-    typeof(AeFinderAppHostBaseModule))]
+[DependsOn(typeof(AeFinderAppHostBaseModule),
+    typeof(AbpEventBusRabbitMqModule))]
 public class AeFinderAppHostModule : AbpModule
 {
     
