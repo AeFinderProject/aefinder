@@ -23,7 +23,7 @@ public class AppIndexManagerGrain : Grain<AppIndexManagerState>, IAppIndexManage
     
     public async Task AddIndexNameAsync(string indexName)
     {
-        if (State.IndexNameList.Contains(indexName))
+        if (State.IndexNameList != null && State.IndexNameList.Contains(indexName))
         {
             return;
         }
