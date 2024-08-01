@@ -1,6 +1,7 @@
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
@@ -35,6 +36,7 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
         var codeId = GrainIdHelper.GenerateGetAppCodeGrainId(appId, historyVersion);
         var appCodeGrain= _clusterClient.GetGrain<IAppCodeGrain>(codeId);
         await appCodeGrain.RemoveAsync();
+        _logger.LogInformation("AppCodeGrain state cleared, appId: {0}, historyVersion: {1}", appId, historyVersion);
         
         //remove AppBlockStateSetStatusGrain、BlockPusherInfo、BlockPusher Grain data
         foreach (var chainId in eventData.CurrentVersionChainIds)
@@ -42,17 +44,29 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
             var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
                 GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, historyVersion, chainId));
             await appBlockStateSetStatusGrain.ClearGrainStateAsync();
+            _logger.LogInformation("AppBlockStateSetStatusGrain state cleared, appId: {0}, historyVersion: {1}", appId, historyVersion);
             
             var blockPusherGrainId = GrainIdHelper.GenerateBlockPusherGrainId(appId, historyVersion, chainId);
             var blockPusherGrain = _clusterClient.GetGrain<IBlockPusherGrain>(blockPusherGrainId);
             await blockPusherGrain.ClearGrainStateAsync();
+            _logger.LogInformation("BlockPusherGrain state cleared, appId: {0}, historyVersion: {1}", appId, historyVersion);
             
             var blockPusherInfoGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(blockPusherGrainId);
             await blockPusherInfoGrain.ClearGrainStateAsync();
+            _logger.LogInformation("BlockPusherInfoGrain state cleared, appId: {0}, historyVersion: {1}", appId, historyVersion);
         }
         
         
         //Todo remove AppStateGrain、AppBlockStateChangeGrain grain data
-
+        
+        
+        
+        
+        //Clear elastic search indexes of current version
+        var appIndexManagerGrain=_clusterClient
+            .GetGrain<IAppIndexManagerGrain>(
+                GrainIdHelper.GenerateAppIndexManagerGrainId(appId, historyVersion));
+        await appIndexManagerGrain.ClearVersionIndexAsync();
+        await appIndexManagerGrain.ClearGrainStateAsync();
     }
 }

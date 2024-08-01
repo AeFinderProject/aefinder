@@ -142,11 +142,14 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
 
         await _kubernetesAppManager.DestroyAppAsync(clientId, version);
         
+
         //Clear elastic search indexes of current version
-        await _clusterClient
+        var appIndexManagerGrain=_clusterClient
             .GetGrain<IAppIndexManagerGrain>(
-                GrainIdHelper.GenerateAppIndexManagerGrainId(clientId, version))
-            .ClearVersionIndexAsync();
+                GrainIdHelper.GenerateAppIndexManagerGrainId(clientId, version));
+        await appIndexManagerGrain.ClearVersionIndexAsync();
+        await appIndexManagerGrain.ClearGrainStateAsync();
+        Logger.LogInformation("ScanApp: {clientId} elastic index cleared , version: {version}", clientId, version);
     }
 
     public async Task<bool> IsRunningAsync(string chainId, string clientId, string version, string token)
