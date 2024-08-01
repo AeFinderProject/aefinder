@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using Volo.Abp.AuditLogging.MongoDB;
 using Volo.Abp.BackgroundJobs.MongoDB;
 using Volo.Abp.FeatureManagement.MongoDB;
@@ -37,5 +39,16 @@ public class AeFinderMongoDbModule : AbpModule
         {
             options.TransactionBehavior = UnitOfWorkTransactionBehavior.Disabled;
         });
+        //Initial mongodb client for MongoDbService
+        var configuration = context.Services.GetConfiguration();
+        // Register MongoDB Settings
+        context.Services.Configure<MongoOrleansDbOptions>(configuration.GetSection("Orleans"));
+        // Register MongoClient
+        context.Services.AddSingleton<IMongoClient>(serviceProvider =>
+        {
+            var mongoDbSettings = serviceProvider.GetRequiredService<IOptions<MongoOrleansDbOptions>>().Value;
+            return new MongoClient(mongoDbSettings.MongoDBClient);
+        });
+        context.Services.AddSingleton<IMongoDbService, MongoDbService>();
     }
 }

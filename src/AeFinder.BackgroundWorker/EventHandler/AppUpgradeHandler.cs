@@ -16,12 +16,15 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
     private readonly ILogger<AppUpgradeHandler> _logger;
     private readonly IAppDeployManager _kubernetesAppManager;
     private readonly IClusterClient _clusterClient;
+    private readonly IAppService _appService;
 
-    public AppUpgradeHandler(ILogger<AppUpgradeHandler> logger, IAppDeployManager kubernetesAppManager,IClusterClient clusterClient)
+    public AppUpgradeHandler(ILogger<AppUpgradeHandler> logger, IAppDeployManager kubernetesAppManager,
+        IAppService appService, IClusterClient clusterClient)
     {
         _logger = logger;
         _kubernetesAppManager = kubernetesAppManager;
         _clusterClient = clusterClient;
+        _appService = appService;
     }
 
     public async Task HandleEventAsync(AppUpgradeEto eventData)
@@ -56,11 +59,8 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
             _logger.LogInformation("BlockPusherInfoGrain state cleared, appId: {0}, historyVersion: {1}", appId, historyVersion);
         }
         
-        
-        //Todo remove AppStateGrain、AppBlockStateChangeGrain grain data
-        
-        
-        
+        //remove AppStateGrain、AppBlockStateChangeGrain grain data
+        await _appService.ClearAppHistoryVersionGrainStateAsync(appId, historyVersion);
         
         //Clear elastic search indexes of current version
         var appIndexManagerGrain=_clusterClient
