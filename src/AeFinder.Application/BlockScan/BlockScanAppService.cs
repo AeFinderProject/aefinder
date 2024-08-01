@@ -117,10 +117,10 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
     public async Task StopAsync(string clientId, string version)
     {
         var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
+        var subscriptionManifest = await clientGrain.GetSubscriptionAsync(version);
         
         await _kubernetesAppManager.DestroyAppAsync(clientId, version);
         
-        var subscriptionManifest = await clientGrain.GetSubscriptionAsync(version);
         //remove AppBlockStateSetStatusGrain、BlockPusherInfo、BlockPusher Grain data
         foreach (var subscriptionItem in subscriptionManifest.SubscriptionItems)
         {

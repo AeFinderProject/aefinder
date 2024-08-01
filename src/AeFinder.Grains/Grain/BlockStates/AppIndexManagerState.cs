@@ -1,6 +1,7 @@
 namespace AeFinder.Grains.Grain.BlockStates;
 
+[GenerateSerializer]
 public class AppIndexManagerState
 {
-    public List<string> IndexNameList { get; set; }
+    [Id(0)] public List<string> IndexNameList { get; set; }
 }
