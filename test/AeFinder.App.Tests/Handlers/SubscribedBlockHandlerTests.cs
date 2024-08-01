@@ -60,6 +60,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                 chainId));
         
         var blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", chainId);
+        _processingStatusProvider.SetStatus(chainId,ProcessingStatus.Running);
         
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {

@@ -43,6 +43,7 @@ public class Transaction
     public int Index { get; set; } 
     public TransactionStatus Status { get; set; } 
     public Dictionary<string, string> ExtraProperties { get; set; } 
+    public List<LogEvent> LogEvents{get;set;}
 }
 
 public class LogEvent
