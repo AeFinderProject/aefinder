@@ -11,6 +11,7 @@ using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.MongoDb;
 using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
 using Orleans;
@@ -241,14 +242,18 @@ public class AppService : AeFinderAppService, IAppService
         var appBlockStateChangeGrainCollectionName = OrleansConstants.GrainCollectionPrefix + typeof(AppBlockStateChangeGrain).Name;
         var appBlockStateChangeGrainIdPrefix =
             $"{_mongoOrleansDbOptions.AppBlockStateChangeGrainIdPrefix}+{appId}-{version}";
+        Logger.LogInformation("Start clear AppBlockStateChangeGrain: {collectionName}  idPrefix: {idPrefix}", appBlockStateChangeGrainCollectionName, appBlockStateChangeGrainIdPrefix);
         await _mongoDbService.DeleteRecordsWithPrefixAsync(appBlockStateChangeGrainCollectionName,
             appBlockStateChangeGrainIdPrefix);
+        Logger.LogInformation("AppBlockStateChangeGrain cleared: {collectionName}  idPrefix: {idPrefix}", appBlockStateChangeGrainCollectionName, appBlockStateChangeGrainIdPrefix);
 
         var appStateGrainCollectionName = OrleansConstants.GrainCollectionPrefix + typeof(AppStateGrain).Name;
         var appStateGrainIdPrefix =
             $"{_mongoOrleansDbOptions.AppStateGrainIdPrefix}+{appId}-{version}";
+        Logger.LogInformation("Start clear AppStateGrain: {collectionName}  idPrefix: {idPrefix}", appStateGrainCollectionName, appStateGrainIdPrefix);
         await _mongoDbService.DeleteRecordsWithPrefixAsync(appStateGrainCollectionName,
             appStateGrainIdPrefix);
+        Logger.LogInformation("AppStateGrain cleared: {collectionName}  idPrefix: {idPrefix}", appStateGrainCollectionName, appStateGrainIdPrefix);
     }
     
 }
