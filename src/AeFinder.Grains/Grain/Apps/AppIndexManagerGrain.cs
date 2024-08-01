@@ -39,6 +39,10 @@ public class AppIndexManagerGrain : Grain<AppIndexManagerState>, IAppIndexManage
 
     public async Task ClearVersionIndexAsync()
     {
+        if (State.IndexNameList == null)
+        {
+            return;
+        }
         foreach (var indexName in State.IndexNameList)
         {
             await _appService.DeleteAppIndexAsync(indexName);
