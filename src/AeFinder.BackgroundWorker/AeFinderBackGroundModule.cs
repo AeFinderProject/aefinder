@@ -1,5 +1,6 @@
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.BackgroundWorker.ScheduledTask;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.MongoDb;
@@ -8,11 +9,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
+using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict.Tokens;
+using Volo.Abp.Threading;
 
 namespace AeFinder.BackgroundWorker;
 
@@ -21,7 +24,8 @@ namespace AeFinder.BackgroundWorker;
     typeof(AeFinderKubernetesModule),
     typeof(AbpEventBusRabbitMqModule),
     typeof(AeFinderMongoDbModule),
-    typeof(AeFinderApplicationModule))]
+    typeof(AeFinderApplicationModule),
+    typeof(AbpBackgroundWorkersModule))]
 public class AeFinderBackGroundModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -49,7 +53,7 @@ public class AeFinderBackGroundModule : AbpModule
     
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
-
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<GrainDataClearWorker>());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)

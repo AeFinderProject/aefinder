@@ -128,16 +128,22 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
             var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
                 GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(clientId, version, chainId));
             await appBlockStateSetStatusGrain.ClearGrainStateAsync();
-            Logger.LogInformation("AppBlockStateSetStatusGrain state cleared, appId: {appId}, historyVersion: {version}", clientId, version);
+            Logger.LogInformation(
+                "AppBlockStateSetStatusGrain state cleared, appId: {appId}, historyVersion: {version}, chainId:{chainId}",
+                clientId, version, chainId);
             
             var blockPusherGrainId = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version, chainId);
             var blockPusherGrain = _clusterClient.GetGrain<IBlockPusherGrain>(blockPusherGrainId);
             await blockPusherGrain.ClearGrainStateAsync();
-            Logger.LogInformation("BlockPusherGrain state cleared, appId: {appId}, historyVersion: {version}", clientId, version);
+            Logger.LogInformation(
+                "BlockPusherGrain state cleared, appId: {appId}, historyVersion: {version}, chainId:{chainId}",
+                clientId, version, chainId);
             
             var blockPusherInfoGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(blockPusherGrainId);
             await blockPusherInfoGrain.ClearGrainStateAsync();
-            Logger.LogInformation("BlockPusherInfoGrain state cleared, appId: {appId}, historyVersion: {version}", clientId, version);
+            Logger.LogInformation(
+                "BlockPusherInfoGrain state cleared, appId: {appId}, historyVersion: {version}, chainId:{chainId}",
+                clientId, version, chainId);
         }
         
         //remove AppCodeGrain
