@@ -30,14 +30,10 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
     private readonly IElasticIndexService _elasticIndexService;
-    private readonly IMongoDbService _mongoDbService;
-    private readonly MongoOrleansDbOptions _mongoOrleansDbOptions;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
         IElasticIndexService elasticIndexService,
-        IMongoDbService mongoDbService,
-        IOptionsSnapshot<MongoOrleansDbOptions> mongoOrleansDbOptions,
         IOrganizationAppService organizationAppService)
     {
         _clusterClient = clusterClient;
@@ -45,8 +41,6 @@ public class AppService : AeFinderAppService, IAppService
         _organizationAppService = organizationAppService;
         _appResourceLimitProvider = appResourceLimitProvider;
         _elasticIndexService = elasticIndexService;
-        _mongoDbService = mongoDbService;
-        _mongoOrleansDbOptions = mongoOrleansDbOptions.Value;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -235,25 +229,6 @@ public class AppService : AeFinderAppService, IAppService
     public async Task DeleteAppIndexAsync(string indexName)
     {
         await _elasticIndexService.DeleteIndexAsync(indexName);
-    }
-
-    public async Task ClearAppHistoryVersionGrainStateAsync(string appId, string version)
-    {
-        var appBlockStateChangeGrainCollectionName = OrleansConstants.GrainCollectionPrefix + typeof(AppBlockStateChangeGrain).Name;
-        var appBlockStateChangeGrainIdPrefix =
-            $"{_mongoOrleansDbOptions.AppBlockStateChangeGrainIdPrefix}+{appId}-{version}";
-        Logger.LogInformation("Start clear AppBlockStateChangeGrain: {collectionName}  idPrefix: {idPrefix}", appBlockStateChangeGrainCollectionName, appBlockStateChangeGrainIdPrefix);
-        await _mongoDbService.DeleteRecordsWithPrefixAsync(appBlockStateChangeGrainCollectionName,
-            appBlockStateChangeGrainIdPrefix);
-        Logger.LogInformation("AppBlockStateChangeGrain cleared: {collectionName}  idPrefix: {idPrefix}", appBlockStateChangeGrainCollectionName, appBlockStateChangeGrainIdPrefix);
-
-        var appStateGrainCollectionName = OrleansConstants.GrainCollectionPrefix + typeof(AppStateGrain).Name;
-        var appStateGrainIdPrefix =
-            $"{_mongoOrleansDbOptions.AppStateGrainIdPrefix}+{appId}-{version}";
-        Logger.LogInformation("Start clear AppStateGrain: {collectionName}  idPrefix: {idPrefix}", appStateGrainCollectionName, appStateGrainIdPrefix);
-        await _mongoDbService.DeleteRecordsWithPrefixAsync(appStateGrainCollectionName,
-            appStateGrainIdPrefix);
-        Logger.LogInformation("AppStateGrain cleared: {collectionName}  idPrefix: {idPrefix}", appStateGrainCollectionName, appStateGrainIdPrefix);
     }
     
 }

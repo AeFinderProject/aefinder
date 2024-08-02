@@ -146,8 +146,10 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
         await appCodeGrain.RemoveAsync();
         Logger.LogInformation("AppCodeGrain state cleared, appId: {0}, historyVersion: {1}", clientId, version);
         
-        //remove AppStateGrain、AppBlockStateChangeGrain grain data
-        await _appService.ClearAppHistoryVersionGrainStateAsync(clientId, version);
+        //Record version info for remove AppStateGrain、AppBlockStateChangeGrain grain data
+        var appDataClearManagerGrain =
+            _clusterClient.GetGrain<IAppDataClearManagerGrain>(GrainIdHelper.GenerateAppDataClearManagerGrainId());
+        await appDataClearManagerGrain.AddVersionClearTaskAsync(clientId, version);
 
         //Clear elastic search indexes of current version
         var appIndexManagerGrain=_clusterClient

@@ -19,5 +19,4 @@ public interface IAppService
     Task<AppResourceLimitDto> SetAppResourceLimitAsync(string appId, SetAppResourceLimitDto dto);
     Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId);
     Task DeleteAppIndexAsync(string indexName);
-    Task ClearAppHistoryVersionGrainStateAsync(string appId, string version);
 }

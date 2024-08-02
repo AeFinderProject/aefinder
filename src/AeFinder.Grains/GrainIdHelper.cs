@@ -96,4 +96,9 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(appId, version);
     }
+    
+    public static int GenerateAppDataClearManagerGrainId()
+    {
+        return 0;
+    }
 }

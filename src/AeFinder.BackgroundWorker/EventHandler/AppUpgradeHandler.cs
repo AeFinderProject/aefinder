@@ -59,8 +59,10 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
             _logger.LogInformation("BlockPusherInfoGrain state cleared, appId: {0}, historyVersion: {1}", appId, historyVersion);
         }
         
-        //remove AppStateGrain、AppBlockStateChangeGrain grain data
-        await _appService.ClearAppHistoryVersionGrainStateAsync(appId, historyVersion);
+        //Record version info for remove AppStateGrain、AppBlockStateChangeGrain grain data
+        var appDataClearManagerGrain =
+            _clusterClient.GetGrain<IAppDataClearManagerGrain>(GrainIdHelper.GenerateAppDataClearManagerGrainId());
+        await appDataClearManagerGrain.AddVersionClearTaskAsync(appId, historyVersion);
         
         //Clear elastic search indexes of current version
         var appIndexManagerGrain=_clusterClient
