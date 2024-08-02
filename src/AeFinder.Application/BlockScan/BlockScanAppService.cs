@@ -21,14 +21,12 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
 {
     private readonly IClusterClient _clusterClient;
     private readonly IAppDeployManager _kubernetesAppManager;
-    private readonly IAppService _appService;
 
-    public BlockScanAppService(IClusterClient clusterClient, IAppService appService,
+    public BlockScanAppService(IClusterClient clusterClient,
         IAppDeployManager kubernetesAppManager)
     {
         _clusterClient = clusterClient;
         _kubernetesAppManager = kubernetesAppManager;
-        _appService = appService;
     }
 
     public async Task<List<Guid>> GetMessageStreamIdsAsync(string clientId, string version)
