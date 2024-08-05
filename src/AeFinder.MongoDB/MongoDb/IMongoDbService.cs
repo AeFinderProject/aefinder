@@ -10,5 +10,4 @@ public interface IMongoDbService
         int limitCount);
 
     Task<long> DeleteRecordsWithIdsAsync(string collectionName, List<BsonValue> recordIdList);
-    // Task DeleteRecordsWithPrefixAsync(string collectionName, string idPrefix);
 }
