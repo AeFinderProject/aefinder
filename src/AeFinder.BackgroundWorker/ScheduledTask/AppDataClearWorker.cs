@@ -15,52 +15,52 @@ using Volo.Abp.Uow;
 
 namespace AeFinder.BackgroundWorker.ScheduledTask;
 
-public class GrainDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDependency
+public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDependency
 {
-    private readonly ILogger<GrainDataClearWorker> _logger;
+    private readonly ILogger<AppDataClearWorker> _logger;
     private readonly IClusterClient _clusterClient;
     private readonly IMongoDbService _mongoDbService;
-    private readonly MongoOrleansDbOptions _mongoOrleansDbOptions;
+    private readonly OrleansDataClearOptions _orleansDataClearOptions;
 
-    public GrainDataClearWorker(AbpTimer timer, IMongoDbService mongoDbService,
-        ILogger<GrainDataClearWorker> logger, IClusterClient clusterClient,
-        IOptionsSnapshot<MongoOrleansDbOptions> mongoOrleansDbOptions,
+    public AppDataClearWorker(AbpTimer timer, IMongoDbService mongoDbService,
+        ILogger<AppDataClearWorker> logger, IClusterClient clusterClient,
+        IOptionsSnapshot<OrleansDataClearOptions> mongoOrleansDbOptions,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
         _clusterClient = clusterClient;
         _mongoDbService = mongoDbService;
-        _mongoOrleansDbOptions = mongoOrleansDbOptions.Value;
-        Timer.Period = _mongoOrleansDbOptions.ClearTaskPeriodMilliSeconds; // 180000 milliseconds = 3 minutes
+        _orleansDataClearOptions = mongoOrleansDbOptions.Value;
+        Timer.Period = _orleansDataClearOptions.ClearTaskPeriodMilliSeconds; // 180000 milliseconds = 3 minutes
     }
 
     [UnitOfWork]
     protected override void DoWork(PeriodicBackgroundWorkerContext workerContext)
     {
-        AsyncHelper.RunSync(() => ProcessDeletion());
+        AsyncHelper.RunSync(() => ProcessDeletionAsync());
     }
     
-    private async Task ProcessDeletion()
+    private async Task ProcessDeletionAsync()
     {
         var appDataClearManagerGrain =
             _clusterClient.GetGrain<IAppDataClearManagerGrain>(GrainIdHelper.GenerateAppDataClearManagerGrainId());
 
         var versionClearTasks = await appDataClearManagerGrain.GetVersionClearTasksAsync();
-
+        _logger.LogInformation("[AppDataClearWorker] Process Deletion Async, Task count: {0}", versionClearTasks.Count);
         if (versionClearTasks.Count == 0)
         {
             return;
         }
 
-        var taskInfo = versionClearTasks.FirstOrDefault();
+        var taskInfo = versionClearTasks.First();
         var appId = taskInfo.Value;
         var version = taskInfo.Key;
-        var limitCount = _mongoOrleansDbOptions.PeriodClearLimitCount;
+        var limitCount = _orleansDataClearOptions.PeriodClearLimitCount;
 
         //remove AppBlockStateChangeGrain grain data
         var appBlockStateChangeGrainCollectionName = OrleansConstants.GrainCollectionPrefix + typeof(AppBlockStateChangeGrain).Name;
         var appBlockStateChangeGrainIdPrefix =
-            $"{_mongoOrleansDbOptions.AppBlockStateChangeGrainIdPrefix}+{appId}-{version}";
+            $"{_orleansDataClearOptions.AppBlockStateChangeGrainIdPrefix}+{appId}-{version}";
         var appBlockStateChangeGrainDeleteIdList =
             await _mongoDbService.QueryRecordIdsWithPrefixAsync(appBlockStateChangeGrainCollectionName, appBlockStateChangeGrainIdPrefix, limitCount);
         _logger.LogInformation(
@@ -77,7 +77,7 @@ public class GrainDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepe
         //remove AppStateGrain grain data
         var appStateGrainCollectionName = OrleansConstants.GrainCollectionPrefix + typeof(AppStateGrain).Name;
         var appStateGrainIdPrefix =
-            $"{_mongoOrleansDbOptions.AppStateGrainIdPrefix}+{appId}-{version}";
+            $"{_orleansDataClearOptions.AppStateGrainIdPrefix}+{appId}-{version}";
         var appStateGrainDeleteIdList =
             await _mongoDbService.QueryRecordIdsWithPrefixAsync(appStateGrainCollectionName, appStateGrainIdPrefix,
                 limitCount);

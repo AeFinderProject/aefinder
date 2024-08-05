@@ -2,7 +2,7 @@ using AeFinder.Grains.State.Apps;
 
 namespace AeFinder.Grains.Grain.Apps;
 
-public class AppDataClearManagerGrain: Grain<AppDataClearManagerState>, IAppDataClearManagerGrain
+public class AppDataClearManagerGrain: AeFinderGrain<AppDataClearManagerState>, IAppDataClearManagerGrain
 {
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {

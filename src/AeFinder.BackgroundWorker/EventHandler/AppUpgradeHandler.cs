@@ -27,6 +27,9 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
 
     public async Task HandleEventAsync(AppUpgradeEto eventData)
     {
+        _logger.LogInformation("[AppUpgradeHandler] Start upgrade appId: {0}, pendingVersion: {1} currentVersion: {2}",
+            eventData.AppId, eventData.PendingVersion, eventData.CurrentVersion);
+        
         var appId = eventData.AppId;
         var historyVersion = eventData.CurrentVersion;
         

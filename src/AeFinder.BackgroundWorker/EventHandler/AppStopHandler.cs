@@ -28,6 +28,9 @@ public class AppStopHandler : IDistributedEventHandler<AppStopEto>, ITransientDe
 
     public async Task HandleEventAsync(AppStopEto eventData)
     {
+        _logger.LogInformation("[AppStopHandler] Start stop appId: {0}, stopVersion: {1}",
+            eventData.AppId, eventData.StopVersion);
+        
         var appId = eventData.AppId;
         var version = eventData.StopVersion;
         

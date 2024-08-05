@@ -12,16 +12,16 @@ namespace AeFinder.MongoDb;
 public class MongoDbService : IMongoDbService
 {
     private readonly IMongoClient _mongoClient;
-    private readonly MongoOrleansDbOptions _mongoOrleansDbOptions;
+    private readonly OrleansDataClearOptions _orleansDataClearOptions;
     private readonly IMongoDatabase _database;
     private readonly ILogger<MongoDbService> _logger;
 
-    public MongoDbService(IMongoClient mongoClient, IOptions<MongoOrleansDbOptions> mongoDbOptions,
+    public MongoDbService(IMongoClient mongoClient, IOptions<OrleansDataClearOptions> mongoDbOptions,
         ILogger<MongoDbService> logger)
     {
         _mongoClient = mongoClient;
-        _mongoOrleansDbOptions = mongoDbOptions.Value;
-        _database = _mongoClient.GetDatabase(_mongoOrleansDbOptions.DataBase);
+        _orleansDataClearOptions = mongoDbOptions.Value;
+        _database = _mongoClient.GetDatabase(_orleansDataClearOptions.DataBase);
         _logger = logger;
     }
 
