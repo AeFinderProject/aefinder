@@ -53,9 +53,11 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         {
             if (State.PendingVersion != null)
             {
+                //Stop current pending version
                 addSubscriptionDto.StopVersion = State.PendingVersion;
-                await StopBlockPushAsync(State.PendingVersion);
-                State.SubscriptionInfos.Remove(State.PendingVersion);
+                // await StopBlockPushAsync(State.PendingVersion);
+                // State.SubscriptionInfos.Remove(State.PendingVersion);
+                await StopAsync(addSubscriptionDto.StopVersion);
             }
 
             State.PendingVersion = newVersion;

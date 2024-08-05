@@ -12,23 +12,18 @@ using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.BackgroundWorker.EventHandler;
 
-public class AppStopHandler : IDistributedEventHandler<AppStopEto>, ITransientDependency
+public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto>, ITransientDependency
 {
-    private readonly ILogger<AppStopHandler> _logger;
     private readonly IAppDeployManager _kubernetesAppManager;
-    private readonly IClusterClient _clusterClient;
 
-    public AppStopHandler(ILogger<AppStopHandler> logger, IAppDeployManager kubernetesAppManager,
-        IClusterClient clusterClient)
+    public AppStopHandler(IAppDeployManager kubernetesAppManager)
     {
-        _logger = logger;
         _kubernetesAppManager = kubernetesAppManager;
-        _clusterClient = clusterClient;
     }
 
     public async Task HandleEventAsync(AppStopEto eventData)
     {
-        _logger.LogInformation("[AppStopHandler] Start stop appId: {0}, stopVersion: {1}",
+        Logger.LogInformation("[AppStopHandler] Start stop appId: {0}, stopVersion: {1}",
             eventData.AppId, eventData.StopVersion);
         
         var appId = eventData.AppId;
@@ -36,10 +31,8 @@ public class AppStopHandler : IDistributedEventHandler<AppStopEto>, ITransientDe
         
         await _kubernetesAppManager.DestroyAppAsync(appId, version);
 
-        await HandlerHelper.ClearStoppedVersionAppDataAsync(_clusterClient, appId, version,
-            eventData.StopVersionChainIds, _logger);
+        await ClearStoppedVersionAppDataAsync(appId, version,
+            eventData.StopVersionChainIds);
     }
-
-    
 
 }

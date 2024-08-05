@@ -4,56 +4,63 @@ using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
 using Microsoft.Extensions.Logging;
+using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.BackgroundWorker.EventHandler;
 
-public class HandlerHelper
+public abstract class AppHandlerBase
 {
-    public static async Task ClearStoppedVersionAppDataAsync(IClusterClient clusterClient, string appId, string version,
-        List<string> chainIds, ILogger logger)
+    public IAbpLazyServiceProvider LazyServiceProvider { get; set; }
+
+    protected IClusterClient ClusterClient => LazyServiceProvider.LazyGetRequiredService<IClusterClient>();
+
+    protected ILogger<AppHandlerBase> Logger => LazyServiceProvider.LazyGetService<ILogger<AppHandlerBase>>();
+
+    protected async Task ClearStoppedVersionAppDataAsync(string appId, string version,
+        List<string> chainIds)
     {
         //remove AppCodeGrain
         var codeId = GrainIdHelper.GenerateGetAppCodeGrainId(appId, version);
-        var appCodeGrain = clusterClient.GetGrain<IAppCodeGrain>(codeId);
+        var appCodeGrain = ClusterClient.GetGrain<IAppCodeGrain>(codeId);
         await appCodeGrain.RemoveAsync();
-        logger.LogInformation("AppCodeGrain state cleared, appId: {0}, historyVersion: {1}", appId, version);
-        
+        Logger.LogInformation("AppCodeGrain state cleared, appId: {0}, historyVersion: {1}", appId, version);
+
         //remove AppBlockStateSetStatusGrain、BlockPusherInfo、BlockPusher Grain data
         foreach (var chainId in chainIds)
         {
-            var appBlockStateSetStatusGrain = clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
+            var appBlockStateSetStatusGrain = ClusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
                 GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(appId, version, chainId));
             await appBlockStateSetStatusGrain.ClearGrainStateAsync();
-            logger.LogInformation(
+            Logger.LogInformation(
                 "AppBlockStateSetStatusGrain state cleared, appId: {appId}, historyVersion: {version}, chainId:{chainId}",
                 appId, version, chainId);
 
             var blockPusherGrainId = GrainIdHelper.GenerateBlockPusherGrainId(appId, version, chainId);
-            var blockPusherGrain = clusterClient.GetGrain<IBlockPusherGrain>(blockPusherGrainId);
+            var blockPusherGrain = ClusterClient.GetGrain<IBlockPusherGrain>(blockPusherGrainId);
             await blockPusherGrain.ClearGrainStateAsync();
-            logger.LogInformation(
+            Logger.LogInformation(
                 "BlockPusherGrain state cleared, appId: {appId}, historyVersion: {version}, chainId:{chainId}",
                 appId, version, chainId);
 
-            var blockPusherInfoGrain = clusterClient.GetGrain<IBlockPusherInfoGrain>(blockPusherGrainId);
+            var blockPusherInfoGrain = ClusterClient.GetGrain<IBlockPusherInfoGrain>(blockPusherGrainId);
             await blockPusherInfoGrain.ClearGrainStateAsync();
-            logger.LogInformation(
+            Logger.LogInformation(
                 "BlockPusherInfoGrain state cleared, appId: {appId}, historyVersion: {version}, chainId:{chainId}",
                 appId, version, chainId);
         }
 
         //Record version info for remove AppStateGrain、AppBlockStateChangeGrain grain data
         var appDataClearManagerGrain =
-            clusterClient.GetGrain<IAppDataClearManagerGrain>(GrainIdHelper.GenerateAppDataClearManagerGrainId());
+            ClusterClient.GetGrain<IAppDataClearManagerGrain>(GrainIdHelper.GenerateAppDataClearManagerGrainId());
         await appDataClearManagerGrain.AddVersionClearTaskAsync(appId, version);
-        logger.LogInformation("Added version clear task, appId: {0}, historyVersion: {1}", appId, version);
+        Logger.LogInformation("Added version clear task, appId: {0}, historyVersion: {1}", appId, version);
 
         //Clear elastic search indexes of current version
-        var appIndexManagerGrain = clusterClient
+        var appIndexManagerGrain = ClusterClient
             .GetGrain<IAppIndexManagerGrain>(
                 GrainIdHelper.GenerateAppIndexManagerGrainId(appId, version));
         await appIndexManagerGrain.ClearVersionIndexAsync();
         await appIndexManagerGrain.ClearGrainStateAsync();
-        logger.LogInformation("Elasticsearch index cleared, appId: {0}, historyVersion: {1}", appId, version);
+        Logger.LogInformation("Elasticsearch index cleared, appId: {0}, historyVersion: {1}", appId, version);
     }
 }
