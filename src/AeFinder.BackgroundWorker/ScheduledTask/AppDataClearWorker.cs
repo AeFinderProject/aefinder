@@ -95,7 +95,7 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
         if (appBlockStateChangeGrainDeleteIdList.Count == 0 && appStateGrainDeleteIdList.Count == 0)
         {
             await appDataClearManagerGrain.RemoveVersionClearTaskAsync(version);
-            _logger.LogInformation("$[GrainDataClearWorker]Task {version} removed");
+            _logger.LogInformation($"[GrainDataClearWorker]Task {version} removed");
             return;
         }
     }

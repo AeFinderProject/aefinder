@@ -44,11 +44,11 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 
         var addResult = await appSubscriptionGrain.AddSubscriptionAsync(subscription, code);
         
-        if (!addResult.StopVersion.IsNullOrEmpty())
-        {
-            await _appDeployManager.DestroyAppAsync(appId, addResult.StopVersion);
-            Logger.LogInformation("App stopped. AppId: {appId}, Version: {version}", appId, addResult.StopVersion);
-        }
+        // if (!addResult.StopVersion.IsNullOrEmpty())
+        // {
+        //     await _appDeployManager.DestroyAppAsync(appId, addResult.StopVersion);
+        //     Logger.LogInformation("App stopped. AppId: {appId}, Version: {version}", appId, addResult.StopVersion);
+        // }
         
         var rulePath = await _appDeployManager.CreateNewAppAsync(appId, addResult.NewVersion, _appDeployOptions.AppImageName);
         Logger.LogInformation("App deployed. AppId: {appId}, Version: {version}, RulePath: {rulePath}", appId, addResult.NewVersion, rulePath);
