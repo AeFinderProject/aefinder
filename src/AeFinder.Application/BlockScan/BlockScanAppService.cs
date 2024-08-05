@@ -115,59 +115,10 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
     public async Task StopAsync(string clientId, string version)
     {
         var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
-        var subscriptionManifest = await clientGrain.GetSubscriptionAsync(version);
         
         Logger.LogInformation("ScanApp: {clientId} start stop scan, version: {version}", clientId, version);
         await clientGrain.StopAsync(version);
         Logger.LogInformation("ScanApp: {clientId} stopped , version: {version}", clientId, version);
-        
-        // await _kubernetesAppManager.DestroyAppAsync(clientId, version);
-        //
-        // //remove AppBlockStateSetStatusGrain、BlockPusherInfo、BlockPusher Grain data
-        // foreach (var subscriptionItem in subscriptionManifest.SubscriptionItems)
-        // {
-        //     var chainId = subscriptionItem.ChainId;
-        //     var appBlockStateSetStatusGrain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
-        //         GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(clientId, version, chainId));
-        //     await appBlockStateSetStatusGrain.ClearGrainStateAsync();
-        //     Logger.LogInformation(
-        //         "AppBlockStateSetStatusGrain state cleared, appId: {appId}, historyVersion: {version}, chainId:{chainId}",
-        //         clientId, version, chainId);
-        //     
-        //     var blockPusherGrainId = GrainIdHelper.GenerateBlockPusherGrainId(clientId, version, chainId);
-        //     var blockPusherGrain = _clusterClient.GetGrain<IBlockPusherGrain>(blockPusherGrainId);
-        //     await blockPusherGrain.ClearGrainStateAsync();
-        //     Logger.LogInformation(
-        //         "BlockPusherGrain state cleared, appId: {appId}, historyVersion: {version}, chainId:{chainId}",
-        //         clientId, version, chainId);
-        //     
-        //     var blockPusherInfoGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(blockPusherGrainId);
-        //     await blockPusherInfoGrain.ClearGrainStateAsync();
-        //     Logger.LogInformation(
-        //         "BlockPusherInfoGrain state cleared, appId: {appId}, historyVersion: {version}, chainId:{chainId}",
-        //         clientId, version, chainId);
-        // }
-        //
-        // //remove AppCodeGrain
-        // var codeId = GrainIdHelper.GenerateGetAppCodeGrainId(clientId, version);
-        // var appCodeGrain= _clusterClient.GetGrain<IAppCodeGrain>(codeId);
-        // await appCodeGrain.RemoveAsync();
-        // Logger.LogInformation("AppCodeGrain state cleared, appId: {0}, historyVersion: {1}", clientId, version);
-        //
-        // //Record version info for remove AppStateGrain、AppBlockStateChangeGrain grain data
-        // var appDataClearManagerGrain =
-        //     _clusterClient.GetGrain<IAppDataClearManagerGrain>(GrainIdHelper.GenerateAppDataClearManagerGrainId());
-        // await appDataClearManagerGrain.AddVersionClearTaskAsync(clientId, version);
-        //
-        // //Clear elastic search indexes of current version
-        // var appIndexManagerGrain=_clusterClient
-        //     .GetGrain<IAppIndexManagerGrain>(
-        //         GrainIdHelper.GenerateAppIndexManagerGrainId(clientId, version));
-        // await appIndexManagerGrain.ClearVersionIndexAsync();
-        // await appIndexManagerGrain.ClearGrainStateAsync();
-        // Logger.LogInformation("ScanApp: {clientId} elastic index cleared , version: {version}", clientId, version);
-        //
-        
     }
 
     public async Task<bool> IsRunningAsync(string chainId, string clientId, string version, string token)
