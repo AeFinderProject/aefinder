@@ -55,8 +55,6 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             {
                 //Stop current pending version
                 addSubscriptionDto.StopVersion = State.PendingVersion;
-                // await StopBlockPushAsync(State.PendingVersion);
-                // State.SubscriptionInfos.Remove(State.PendingVersion);
                 await StopAsync(addSubscriptionDto.StopVersion);
             }
 
@@ -167,18 +165,12 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             await StopBlockPushAsync(State.CurrentVersion);
             
             //Publish app upgrade eto to background worker
-            var currentVersionSubscriptionInfo = State.SubscriptionInfos[State.CurrentVersion];
-            var currentVersionChainIds = new List<string>();
-            foreach (var subscriptionItem in currentVersionSubscriptionInfo.SubscriptionManifest.SubscriptionItems)
-            {
-                currentVersionChainIds.Add(subscriptionItem.ChainId);
-            }
             await _distributedEventBus.PublishAsync(new AppUpgradeEto()
             {
                 AppId = this.GetPrimaryKeyString(),
                 CurrentVersion = State.CurrentVersion,
                 PendingVersion = State.PendingVersion,
-                CurrentVersionChainIds = currentVersionChainIds
+                CurrentVersionChainIds = GetVersionSubscribedChainIds(State.CurrentVersion)
             });
             
             State.SubscriptionInfos.Remove(State.CurrentVersion);
@@ -241,17 +233,11 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         await StopBlockPushAsync(version);
         
         //Publish app stop eto to background worker
-        var currentVersionSubscriptionInfo = State.SubscriptionInfos[version];
-        var currentVersionChainIds = new List<string>();
-        foreach (var subscriptionItem in currentVersionSubscriptionInfo.SubscriptionManifest.SubscriptionItems)
-        {
-            currentVersionChainIds.Add(subscriptionItem.ChainId);
-        }
         await _distributedEventBus.PublishAsync(new AppStopEto()
         {
             AppId = this.GetPrimaryKeyString(),
             StopVersion = version,
-            StopVersionChainIds = currentVersionChainIds
+            StopVersionChainIds = GetVersionSubscribedChainIds(version)
         });
         
         State.SubscriptionInfos.Remove(version);
@@ -285,5 +271,17 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         {
             throw new UserFriendlyException($"Invalid version: {version}");
         }
+    }
+
+    private List<string> GetVersionSubscribedChainIds(string version)
+    {
+        var currentVersionSubscriptionInfo = State.SubscriptionInfos[version];
+        var currentVersionChainIds = new List<string>();
+        foreach (var subscriptionItem in currentVersionSubscriptionInfo.SubscriptionManifest.SubscriptionItems)
+        {
+            currentVersionChainIds.Add(subscriptionItem.ChainId);
+        }
+
+        return currentVersionChainIds;
     }
 }

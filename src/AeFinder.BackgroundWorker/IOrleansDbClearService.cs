@@ -1,10 +1,8 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using MongoDB.Bson;
 
-namespace AeFinder.MongoDb;
+namespace AeFinder.BackgroundWorker;
 
-public interface IMongoDbService
+public interface IOrleansDbClearService
 {
     Task<List<BsonValue>> QueryRecordIdsWithPrefixAsync(string collectionName, string idPrefix,
         int limitCount);
