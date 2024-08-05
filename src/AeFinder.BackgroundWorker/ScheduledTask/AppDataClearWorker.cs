@@ -61,7 +61,7 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
         //remove AppBlockStateChangeGrain grain data
         var appBlockStateChangeGrainCollectionName = OrleansConstants.GrainCollectionPrefix + typeof(AppBlockStateChangeGrain).Name;
         var appBlockStateChangeGrainIdPrefix =
-            $"{_orleansDataClearOptions.AppBlockStateChangeGrainIdPrefix}+{appId}-{version}";
+            $"{_orleansDataClearOptions.AppBlockStateChangeGrainIdPrefix}\\+{appId}-{version}";
         var appBlockStateChangeGrainDeleteIdList =
             await _orleansDbClearService.QueryRecordIdsWithPrefixAsync(appBlockStateChangeGrainCollectionName, appBlockStateChangeGrainIdPrefix, limitCount);
         _logger.LogInformation(
@@ -78,7 +78,7 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
         //remove AppStateGrain grain data
         var appStateGrainCollectionName = OrleansConstants.GrainCollectionPrefix + typeof(AppStateGrain).Name;
         var appStateGrainIdPrefix =
-            $"{_orleansDataClearOptions.AppStateGrainIdPrefix}+{appId}-{version}";
+            $"{_orleansDataClearOptions.AppStateGrainIdPrefix}\\+{appId}-{version}";
         var appStateGrainDeleteIdList =
             await _orleansDbClearService.QueryRecordIdsWithPrefixAsync(appStateGrainCollectionName, appStateGrainIdPrefix,
                 limitCount);
