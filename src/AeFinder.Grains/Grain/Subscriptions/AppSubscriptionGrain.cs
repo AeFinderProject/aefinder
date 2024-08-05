@@ -1,4 +1,5 @@
 using AeFinder.Apps;
+using AeFinder.Apps.Eto;
 using AeFinder.BlockScan;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockPush;
@@ -233,6 +234,19 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         }
 
         await StopBlockPushAsync(version);
+        
+        var currentVersionSubscriptionInfo = State.SubscriptionInfos[version];
+        var currentVersionChainIds = new List<string>();
+        foreach (var subscriptionItem in currentVersionSubscriptionInfo.SubscriptionManifest.SubscriptionItems)
+        {
+            currentVersionChainIds.Add(subscriptionItem.ChainId);
+        }
+        await _distributedEventBus.PublishAsync(new AppStopEto()
+        {
+            AppId = this.GetPrimaryKeyString(),
+            StopVersion = version,
+            StopVersionChainIds = currentVersionChainIds
+        });
         State.SubscriptionInfos.Remove(version);
 
         await WriteStateAsync();

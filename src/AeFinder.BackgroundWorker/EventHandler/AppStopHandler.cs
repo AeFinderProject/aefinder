@@ -1,5 +1,6 @@
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.Apps.Eto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockPush;
@@ -11,13 +12,13 @@ using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.BackgroundWorker.EventHandler;
 
-public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITransientDependency
+public class AppStopHandler : IDistributedEventHandler<AppStopEto>, ITransientDependency
 {
-    private readonly ILogger<AppUpgradeHandler> _logger;
+    private readonly ILogger<AppStopHandler> _logger;
     private readonly IAppDeployManager _kubernetesAppManager;
     private readonly IClusterClient _clusterClient;
 
-    public AppUpgradeHandler(ILogger<AppUpgradeHandler> logger, IAppDeployManager kubernetesAppManager,
+    public AppStopHandler(ILogger<AppStopHandler> logger, IAppDeployManager kubernetesAppManager,
         IClusterClient clusterClient)
     {
         _logger = logger;
@@ -25,14 +26,17 @@ public class AppUpgradeHandler : IDistributedEventHandler<AppUpgradeEto>, ITrans
         _clusterClient = clusterClient;
     }
 
-    public async Task HandleEventAsync(AppUpgradeEto eventData)
+    public async Task HandleEventAsync(AppStopEto eventData)
     {
         var appId = eventData.AppId;
-        var historyVersion = eventData.CurrentVersion;
+        var version = eventData.StopVersion;
         
-        await _kubernetesAppManager.DestroyAppAsync(eventData.AppId, eventData.CurrentVersion);
+        await _kubernetesAppManager.DestroyAppAsync(appId, version);
 
-        await HandlerHelper.ClearStoppedVersionAppDataAsync(_clusterClient, appId, historyVersion,
-            eventData.CurrentVersionChainIds, _logger);
+        await HandlerHelper.ClearStoppedVersionAppDataAsync(_clusterClient, appId, version,
+            eventData.StopVersionChainIds, _logger);
     }
+
+    
+
 }
