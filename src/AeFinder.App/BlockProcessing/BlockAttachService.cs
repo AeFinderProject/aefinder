@@ -42,12 +42,8 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
     public async Task AttachBlocksAsync(string chainId, List<AppSubscribedBlockDto> blocks)
     {
         var firstBlock = blocks.First();
-        var blockStateSet = await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, firstBlock.BlockHash);
-        var previousBlockStateSet =
-            await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, firstBlock.PreviousBlockHash);
-        var currentBlockStateSetCount = await _appBlockStateSetProvider.GetBlockStateSetCountAsync(chainId);
-        if (currentBlockStateSetCount != 0 && previousBlockStateSet == null &&
-            firstBlock.PreviousBlockHash != Hash.Empty.ToHex() && blockStateSet == null)
+
+        if (!await IsBlockLinkedAsync(chainId, firstBlock))
         {
             _logger.LogWarning(
                 "Handle unlinked block. ChainId: {ChainId} BlockHeight: {BlockHeight}, BlockHash: {BlockHash}, Previous BlockHash: {PreviousBlockHash}.",
@@ -174,6 +170,31 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
                 BlockHeight = newLongestChainBlockStateSet.Block.BlockHeight
             });
         }
+    }
+    
+    private async Task<bool> IsBlockLinkedAsync(string chainId, AppSubscribedBlockDto firstBlock)
+    {
+        var previousBlockStateSet =
+            await _appBlockStateSetProvider.GetBlockStateSetAsync(chainId, firstBlock.PreviousBlockHash);
+        var currentBlockStateSetCount = await _appBlockStateSetProvider.GetBlockStateSetCountAsync(chainId);
+        if (currentBlockStateSetCount == 0)
+        {
+            var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
+            var subscription = await client.GetSubscriptionAsync(_appInfoProvider.Version);
+            var subscriptionItem = subscription.SubscriptionItems.First(o => o.ChainId == chainId);
+            if (subscriptionItem.StartBlockNumber != firstBlock.BlockHeight)
+            {
+                return false;
+            }
+
+        }
+        else if (firstBlock.BlockHeight != 1 &&
+                 (previousBlockStateSet == null || (firstBlock.Confirmed && previousBlockStateSet.Block.Confirmed == false)))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private async Task HandleUnlinkedBlockAsync(string chainId, AppSubscribedBlockDto block)
