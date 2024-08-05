@@ -6,6 +6,8 @@ using AeFinder.Kubernetes.Manager;
 using AeFinder.MongoDb;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using Volo.Abp;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
@@ -38,6 +40,7 @@ public class AeFinderBackGroundModule : AbpModule
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
+        ConfigureMongoDbService(configuration, context);
     }
     
     //Disable TokenCleanupBackgroundWorker
@@ -49,6 +52,19 @@ public class AeFinderBackGroundModule : AbpModule
     private void ConfigureCache(IConfiguration configuration)
     {
         Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "AeFinder:"; });
+    }
+
+    private void ConfigureMongoDbService(IConfiguration configuration,ServiceConfigurationContext context)
+    {
+        // Register MongoDB Settings
+        context.Services.Configure<OrleansDataClearOptions>(configuration.GetSection("OrleansDataClear"));
+        // Register MongoClient
+        context.Services.AddSingleton<IMongoClient>(serviceProvider =>
+        {
+            var mongoDbSettings = serviceProvider.GetRequiredService<IOptions<OrleansDataClearOptions>>().Value;
+            return new MongoClient(mongoDbSettings.MongoDBClient);
+        });
+        context.Services.AddSingleton<IMongoDbService, MongoDbService>();
     }
     
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
