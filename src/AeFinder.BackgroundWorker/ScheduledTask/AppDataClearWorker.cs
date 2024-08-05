@@ -1,4 +1,5 @@
 using AeFinder.Apps;
+using AeFinder.BackgroundWorker.Options;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockStates;
@@ -19,17 +20,17 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
 {
     private readonly ILogger<AppDataClearWorker> _logger;
     private readonly IClusterClient _clusterClient;
-    private readonly IMongoDbService _mongoDbService;
+    private readonly IOrleansDbClearService _orleansDbClearService;
     private readonly OrleansDataClearOptions _orleansDataClearOptions;
 
-    public AppDataClearWorker(AbpTimer timer, IMongoDbService mongoDbService,
+    public AppDataClearWorker(AbpTimer timer, IOrleansDbClearService orleansDbClearService,
         ILogger<AppDataClearWorker> logger, IClusterClient clusterClient,
         IOptionsSnapshot<OrleansDataClearOptions> mongoOrleansDbOptions,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
         _clusterClient = clusterClient;
-        _mongoDbService = mongoDbService;
+        _orleansDbClearService = orleansDbClearService;
         _orleansDataClearOptions = mongoOrleansDbOptions.Value;
         Timer.Period = _orleansDataClearOptions.ClearTaskPeriodMilliSeconds; // 180000 milliseconds = 3 minutes
     }
@@ -62,7 +63,7 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
         var appBlockStateChangeGrainIdPrefix =
             $"{_orleansDataClearOptions.AppBlockStateChangeGrainIdPrefix}+{appId}-{version}";
         var appBlockStateChangeGrainDeleteIdList =
-            await _mongoDbService.QueryRecordIdsWithPrefixAsync(appBlockStateChangeGrainCollectionName, appBlockStateChangeGrainIdPrefix, limitCount);
+            await _orleansDbClearService.QueryRecordIdsWithPrefixAsync(appBlockStateChangeGrainCollectionName, appBlockStateChangeGrainIdPrefix, limitCount);
         _logger.LogInformation(
             $"[GrainDataClearWorker]Start clear AppBlockStateChangeGrain recordCount:{appBlockStateChangeGrainDeleteIdList.Count} CollectionName: {appBlockStateChangeGrainCollectionName} IdPrefix: {appBlockStateChangeGrainIdPrefix}");
         
@@ -70,7 +71,7 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
         if (appBlockStateChangeGrainDeleteIdList.Count > 0)
         {
             appBlockStateChangeGrainDeletedCount =
-                await _mongoDbService.DeleteRecordsWithIdsAsync(appBlockStateChangeGrainCollectionName,
+                await _orleansDbClearService.DeleteRecordsWithIdsAsync(appBlockStateChangeGrainCollectionName,
                     appBlockStateChangeGrainDeleteIdList);
         }
         
@@ -79,7 +80,7 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
         var appStateGrainIdPrefix =
             $"{_orleansDataClearOptions.AppStateGrainIdPrefix}+{appId}-{version}";
         var appStateGrainDeleteIdList =
-            await _mongoDbService.QueryRecordIdsWithPrefixAsync(appStateGrainCollectionName, appStateGrainIdPrefix,
+            await _orleansDbClearService.QueryRecordIdsWithPrefixAsync(appStateGrainCollectionName, appStateGrainIdPrefix,
                 limitCount);
         _logger.LogInformation(
             $"[GrainDataClearWorker]Start clear AppStateGrain recordCount:{appStateGrainDeleteIdList.Count} CollectionName: {appStateGrainCollectionName} IdPrefix: {appStateGrainIdPrefix}");
@@ -88,7 +89,7 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
         if (appStateGrainDeleteIdList.Count > 0)
         {
             appStateGrainDeletedCount =
-                await _mongoDbService.DeleteRecordsWithIdsAsync(appStateGrainCollectionName, appStateGrainDeleteIdList);
+                await _orleansDbClearService.DeleteRecordsWithIdsAsync(appStateGrainCollectionName, appStateGrainDeleteIdList);
         }
 
         //only both AppBlockStateChangeGrain & AppStateGrain all cleared can do remove

@@ -1,5 +1,6 @@
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.BackgroundWorker.Options;
 using AeFinder.BackgroundWorker.ScheduledTask;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
@@ -64,7 +65,7 @@ public class AeFinderBackGroundModule : AbpModule
             var mongoDbSettings = serviceProvider.GetRequiredService<IOptions<OrleansDataClearOptions>>().Value;
             return new MongoClient(mongoDbSettings.MongoDBClient);
         });
-        context.Services.AddSingleton<IMongoDbService, MongoDbService>();
+        context.Services.AddSingleton<IOrleansDbClearService, OrleansDbClearService>();
     }
     
     public override void OnApplicationInitialization(ApplicationInitializationContext context)

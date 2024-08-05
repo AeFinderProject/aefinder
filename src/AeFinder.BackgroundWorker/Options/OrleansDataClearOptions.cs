@@ -1,4 +1,4 @@
-namespace AeFinder.MongoDb;
+namespace AeFinder.BackgroundWorker.Options;
 
 public class OrleansDataClearOptions
 {

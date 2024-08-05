@@ -1,30 +1,27 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using AeFinder.BackgroundWorker.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace AeFinder.MongoDb;
+namespace AeFinder.BackgroundWorker;
 
-public class MongoDbService : IMongoDbService
+public class OrleansDbClearService : IOrleansDbClearService
 {
     private readonly IMongoClient _mongoClient;
     private readonly OrleansDataClearOptions _orleansDataClearOptions;
     private readonly IMongoDatabase _database;
-    private readonly ILogger<MongoDbService> _logger;
+    private readonly ILogger<OrleansDbClearService> _logger;
 
-    public MongoDbService(IMongoClient mongoClient, IOptions<OrleansDataClearOptions> mongoDbOptions,
-        ILogger<MongoDbService> logger)
+    public OrleansDbClearService(IMongoClient mongoClient, IOptions<OrleansDataClearOptions> orleansDataClearOptions,
+        ILogger<OrleansDbClearService> logger)
     {
         _mongoClient = mongoClient;
-        _orleansDataClearOptions = mongoDbOptions.Value;
+        _orleansDataClearOptions = orleansDataClearOptions.Value;
         _database = _mongoClient.GetDatabase(_orleansDataClearOptions.DataBase);
         _logger = logger;
     }
-
+    
     public async Task<List<BsonValue>> QueryRecordIdsWithPrefixAsync(string collectionName, string idPrefix,
         int limitCount)
     {
@@ -48,7 +45,7 @@ public class MongoDbService : IMongoDbService
         var ids = resultList.Select(doc => doc["_id"]).ToList();
         return ids;
     }
-
+    
     public async Task<long> DeleteRecordsWithIdsAsync(string collectionName, List<BsonValue> recordIdList)
     {
         var collection = _database.GetCollection<BsonDocument>(collectionName);
