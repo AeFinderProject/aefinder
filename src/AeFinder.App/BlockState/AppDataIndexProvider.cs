@@ -52,12 +52,18 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
         var tasks = new List<Task>();
         if (addOrUpdateData.Count > 0)
         {
-            tasks.Add(_entityMappingRepository.AddOrUpdateManyAsync(addOrUpdateData, indexName));
+            var groupedAddOrUpdateData = GroupCommitData(addOrUpdateData);
+
+            tasks.AddRange(groupedAddOrUpdateData.Select(data =>
+                _entityMappingRepository.AddOrUpdateManyAsync(data.ToList(), indexName)));
         }
 
         if (deleteData.Count > 0)
         {
-            tasks.Add(_entityMappingRepository.DeleteManyAsync(deleteData, indexName));
+            var groupedDeleteData = GroupCommitData(deleteData);
+
+            tasks.AddRange(groupedDeleteData.Select(data =>
+                _entityMappingRepository.DeleteManyAsync(data.ToList(), indexName)));
         }
 
         await tasks.WhenAll();
@@ -93,6 +99,13 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
         };
         
         return Task.CompletedTask;
+    }
+    
+    private IEnumerable<IGrouping<int, TEntity>> GroupCommitData(List<TEntity> entities)
+    {
+        return entities
+            .Select((entity, index) => new { Entity = entity, GroupIndex = index / 100 })
+            .GroupBy(x => x.GroupIndex, x => x.Entity);
     }
 
     private void Register()

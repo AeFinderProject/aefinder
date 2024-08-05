@@ -172,12 +172,21 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
     private async Task SaveDataAsync(string chainId)
     {
         _logger.LogDebug("[{ChainId}] Saving dapp data.", chainId);
-        var tasks = _toCommitLibValues.Select(async o =>
+        
+        var groupedLibValues = _toCommitLibValues
+            .Select((pair, index) => new { pair, groupIndex = index / 100 })
+            .GroupBy(x => x.groupIndex, x => x.pair);
+        
+        foreach (var items in groupedLibValues)
         {
-            var dataGrain = _clusterClient.GetGrain<IAppStateGrain>(o.Key);
-            await dataGrain.SetStateAsync(o.Value);
-        });
-        await tasks.WhenAll();
+            var tasks = items.Select(async o =>
+            {
+                var dataGrain = _clusterClient.GetGrain<IAppStateGrain>(o.Key);
+                await dataGrain.SetStateAsync(o.Value);
+            });
+            await tasks.WhenAll();
+        }
+
         _toCommitLibValues.Clear();
         _logger.LogDebug("[{ChainId}] Saved dapp data.", chainId);
     }
