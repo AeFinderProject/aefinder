@@ -39,16 +39,5 @@ public class AeFinderMongoDbModule : AbpModule
         {
             options.TransactionBehavior = UnitOfWorkTransactionBehavior.Disabled;
         });
-        //Initial mongodb client for MongoDbService
-        var configuration = context.Services.GetConfiguration();
-        // Register MongoDB Settings
-        context.Services.Configure<OrleansDataClearOptions>(configuration.GetSection("OrleansDataClear"));
-        // Register MongoClient
-        context.Services.AddSingleton<IMongoClient>(serviceProvider =>
-        {
-            var mongoDbSettings = serviceProvider.GetRequiredService<IOptions<OrleansDataClearOptions>>().Value;
-            return new MongoClient(mongoDbSettings.MongoDBClient);
-        });
-        context.Services.AddSingleton<IMongoDbService, MongoDbService>();
     }
 }
