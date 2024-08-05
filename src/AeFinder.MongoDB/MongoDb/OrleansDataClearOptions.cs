@@ -1,6 +1,6 @@
 namespace AeFinder.MongoDb;
 
-public class MongoOrleansDbOptions
+public class OrleansDataClearOptions
 {
     public string MongoDBClient { get; set; }
     public string DataBase { get; set; }

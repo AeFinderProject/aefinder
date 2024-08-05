@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AeFinder.Grains.Grain.Apps;
 
-public class AppIndexManagerGrain : Grain<AppIndexManagerState>, IAppIndexManagerGrain
+public class AppIndexManagerGrain : AeFinderGrain<AppIndexManagerState>, IAppIndexManagerGrain
 {
     private readonly IAppService _appService;
     private readonly ILogger<AppIndexManagerGrain> _logger;

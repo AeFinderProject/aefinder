@@ -42,11 +42,11 @@ public class AeFinderMongoDbModule : AbpModule
         //Initial mongodb client for MongoDbService
         var configuration = context.Services.GetConfiguration();
         // Register MongoDB Settings
-        context.Services.Configure<MongoOrleansDbOptions>(configuration.GetSection("Orleans"));
+        context.Services.Configure<OrleansDataClearOptions>(configuration.GetSection("OrleansDataClear"));
         // Register MongoClient
         context.Services.AddSingleton<IMongoClient>(serviceProvider =>
         {
-            var mongoDbSettings = serviceProvider.GetRequiredService<IOptions<MongoOrleansDbOptions>>().Value;
+            var mongoDbSettings = serviceProvider.GetRequiredService<IOptions<OrleansDataClearOptions>>().Value;
             return new MongoClient(mongoDbSettings.MongoDBClient);
         });
         context.Services.AddSingleton<IMongoDbService, MongoDbService>();

@@ -30,8 +30,6 @@ public class AeFinderOrleansSiloModule : AbpModule
         context.Services.AddHostedService<AeFinderHostedService>();
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
-        // context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
-        context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
     }
 
     //Disable TokenCleanupService
