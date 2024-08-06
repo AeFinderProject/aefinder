@@ -93,6 +93,7 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
             {
                 foreach (var blockStateChange in blockStateChanges)
                 {
+                    _logger.LogDebug("Rollback block state. ChainId: {ChainId}, BlockHeight: {BlockHeight}.", chainId, height);
                     await RollbackStateAsync(chainId, blockStateChange.Key, blockStateChange.Type, libBlockIndex);
                 }
 
@@ -124,6 +125,7 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
         {
             var entity = CreateEntity(type,key);
             await _generalAppDataIndexProvider.DeleteAsync(entity, type);
+            _logger.LogDebug("Rollback block state.  Delete Key: {Key}, Type: {Type}, without lib.", key, typeName);
         }
         else
         {
@@ -132,10 +134,12 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
             {
                 var entity = CreateEntity(type,key);
                 await _generalAppDataIndexProvider.DeleteAsync(entity, type);
+                _logger.LogDebug("Rollback block state. Delete Key: {Key}, Type: {Type}.", key, typeName);
             }
             else
             {
                 await _generalAppDataIndexProvider.AddOrUpdateAsync(libState, type);
+                _logger.LogDebug("Rollback block state. Update Key: {Key}, Type: {Type}.", key, typeName);
             }
         }
     }
