@@ -240,6 +240,7 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             StopVersionChainIds = GetVersionSubscribedChainIds(version)
         });
         
+        _logger.LogInformation("Remove version {stopVersion} SubscriptionInfos", version);
         State.SubscriptionInfos.Remove(version);
 
         await WriteStateAsync();
