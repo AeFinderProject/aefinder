@@ -32,11 +32,7 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         await ReadStateAsync();
         await BeginChangingStateAsync();
         
-        State.SubscriptionInfos[newVersion] = new SubscriptionInfo
-        {
-            SubscriptionManifest = subscriptionManifest,
-            Status = SubscriptionStatus.Initialized
-        };
+        
 
         if (State.CurrentVersion == null)
         {
@@ -60,6 +56,12 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
 
             State.PendingVersion = newVersion;
         }
+        
+        State.SubscriptionInfos[newVersion] = new SubscriptionInfo
+        {
+            SubscriptionManifest = subscriptionManifest,
+            Status = SubscriptionStatus.Initialized
+        };
 
         await UpdateCodeAsync(newVersion, code);
         await WriteStateAsync();
