@@ -51,6 +51,7 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             {
                 //Stop current pending version
                 addSubscriptionDto.StopVersion = State.PendingVersion;
+                //Note: the state is re-read from the database in StopAsync(), so setting the state needs to be left behind
                 await StopAsync(addSubscriptionDto.StopVersion);
             }
 
