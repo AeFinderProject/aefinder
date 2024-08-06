@@ -29,7 +29,7 @@ public class OrleansDbClearService : IOrleansDbClearService
 
         // Step 1: Query the ids of all records with matching _id prefixes
         var filter = Builders<BsonDocument>.Filter.Regex("_id", new BsonRegularExpression($"^{idPrefix}"));
-        var projection = Builders<BsonDocument>.Projection.Include("_id").Exclude("_id");
+        var projection = Builders<BsonDocument>.Projection.Include("_id");
         var resultList =
             await collection.Find(filter).Limit(limitCount).Project<BsonDocument>(projection).ToListAsync();
 
