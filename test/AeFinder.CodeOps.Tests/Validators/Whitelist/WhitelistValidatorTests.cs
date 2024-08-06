@@ -55,6 +55,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         public class TestAppEntityDto
         {
             public int IntValue { get; set; }
+            public TimeSpan TimeSpan { get; set; }
         }
 
         public class Query
