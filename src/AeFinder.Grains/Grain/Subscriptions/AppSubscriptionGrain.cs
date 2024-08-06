@@ -62,6 +62,9 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         }
 
         await UpdateCodeAsync(newVersion, code);
+
+        _logger.LogInformation("SubscriptionInfos contains {newVersion} {isContain}", newVersion,
+            State.SubscriptionInfos.Keys.Contains(newVersion));
         await WriteStateAsync();
         addSubscriptionDto.NewVersion = newVersion;
         return addSubscriptionDto;
