@@ -9,4 +9,5 @@ public interface IBlockPusherGrain : IGrainWithStringKey
     Task HandleBlockAsync(BlockWithTransactionDto block);
     Task HandleConfirmedBlockAsync(BlockWithTransactionDto block);
     Task InitializeAsync(string pushToken, long startHeight);
+    Task ClearGrainStateAsync();
 }
