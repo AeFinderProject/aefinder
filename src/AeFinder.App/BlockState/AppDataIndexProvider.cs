@@ -58,6 +58,9 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
         if (addOrUpdateData.Count > 0)
         {
             var groupedAddOrUpdateData = GroupCommitData(addOrUpdateData);
+            
+            _logger.LogTrace("Adding app index. IndexName: {indexName}, Group count: {count}", indexName,
+                groupedAddOrUpdateData.Count());
 
             tasks.AddRange(groupedAddOrUpdateData.Select(data =>
                 _entityMappingRepository.AddOrUpdateManyAsync(data.ToList(), indexName)));
@@ -66,6 +69,9 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
         if (deleteData.Count > 0)
         {
             var groupedDeleteData = GroupCommitData(deleteData);
+            
+            _logger.LogTrace("Deleting app index. IndexName: {indexName}, Group count: {count}", indexName,
+                groupedDeleteData.Count());
 
             tasks.AddRange(groupedDeleteData.Select(data =>
                 _entityMappingRepository.DeleteManyAsync(data.ToList(), indexName)));

@@ -171,11 +171,13 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
 
     private async Task SaveDataAsync(string chainId)
     {
-        _logger.LogDebug("[{ChainId}] Saving dapp data.", chainId);
+        _logger.LogTrace("[{ChainId}] Saving dapp data.", chainId);
         
         var groupedLibValues = _toCommitLibValues
             .Select((pair, index) => new { pair, groupIndex = index / _appStateOptions.MaxAppStateBatchCommitCount })
             .GroupBy(x => x.groupIndex, x => x.pair);
+        
+        _logger.LogTrace("[{ChainId}] Saving dapp data. Group count: {Count}", chainId, groupedLibValues.Count());
         
         foreach (var items in groupedLibValues)
         {
@@ -185,10 +187,11 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
                 await dataGrain.SetStateAsync(o.Value);
             });
             await tasks.WhenAll();
+            
         }
 
         _toCommitLibValues.Clear();
-        _logger.LogDebug("[{ChainId}] Saved dapp data.", chainId);
+        _logger.LogTrace("[{ChainId}] Saved dapp data.", chainId);
     }
     
     private void SetLibValueCache(string key, AppStateDto state, bool isForce = false)
