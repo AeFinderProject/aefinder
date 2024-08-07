@@ -7,5 +7,5 @@ public class AccountBalanceEntity: AeFinderEntity, IAeFinderEntity
 {
     [Keyword] public string Account { get; set; }
     [Keyword] public string Symbol { get; set; }
-    [Keyword] public long Amount { get; set; }
+    public long Amount { get; set; }
 }

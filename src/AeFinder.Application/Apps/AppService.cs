@@ -9,6 +9,7 @@ using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.User;
+using AElf.EntityMapping.Elasticsearch.Services;
 using Nito.AsyncEx;
 using Orleans;
 using Volo.Abp;
@@ -25,15 +26,18 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IUserAppService _userAppService;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
+    private readonly IElasticIndexService _elasticIndexService;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
+        IElasticIndexService elasticIndexService,
         IOrganizationAppService organizationAppService)
     {
         _clusterClient = clusterClient;
         _userAppService = userAppService;
         _organizationAppService = organizationAppService;
         _appResourceLimitProvider = appResourceLimitProvider;
+        _elasticIndexService = elasticIndexService;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -218,4 +222,10 @@ public class AppService : AeFinderAppService, IAppService
     {
         return await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
     }
+
+    public async Task DeleteAppIndexAsync(string indexName)
+    {
+        await _elasticIndexService.DeleteIndexAsync(indexName);
+    }
+    
 }

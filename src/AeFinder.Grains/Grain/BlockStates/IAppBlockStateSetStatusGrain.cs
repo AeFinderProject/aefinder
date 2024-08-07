@@ -6,4 +6,5 @@ public interface IAppBlockStateSetStatusGrain : IGrainWithStringKey
 {
     Task<BlockStateSetStatus> GetBlockStateSetStatusAsync();
     Task SetBlockStateSetStatusAsync(BlockStateSetStatus status);
+    Task ClearGrainStateAsync();
 }

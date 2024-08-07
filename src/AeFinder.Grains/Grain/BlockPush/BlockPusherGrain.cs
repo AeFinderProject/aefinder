@@ -529,4 +529,10 @@ public class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockPusherGra
 
         await base.OnActivateAsync(cancellationToken);
     }
+    
+    public async Task ClearGrainStateAsync()
+    {
+        await base.ClearStateAsync();
+        DeactivateOnIdle();
+    }
 }

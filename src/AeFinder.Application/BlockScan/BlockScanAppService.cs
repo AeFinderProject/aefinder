@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
+using AeFinder.Apps;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
@@ -20,12 +22,13 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
     private readonly IClusterClient _clusterClient;
     private readonly IAppDeployManager _kubernetesAppManager;
 
-    public BlockScanAppService(IClusterClient clusterClient, IAppDeployManager kubernetesAppManager)
+    public BlockScanAppService(IClusterClient clusterClient,
+        IAppDeployManager kubernetesAppManager)
     {
         _clusterClient = clusterClient;
         _kubernetesAppManager = kubernetesAppManager;
     }
-    
+
     public async Task<List<Guid>> GetMessageStreamIdsAsync(string clientId, string version)
     {
         var client = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
@@ -112,10 +115,10 @@ public class BlockScanAppService : AeFinderAppService, IBlockScanAppService
     public async Task StopAsync(string clientId, string version)
     {
         var clientGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(clientId));
+        
         Logger.LogInformation("ScanApp: {clientId} start stop scan, version: {version}", clientId, version);
         await clientGrain.StopAsync(version);
         Logger.LogInformation("ScanApp: {clientId} stopped , version: {version}", clientId, version);
-        await _kubernetesAppManager.DestroyAppAsync(clientId, version);
     }
 
     public async Task<bool> IsRunningAsync(string chainId, string clientId, string version, string token)
