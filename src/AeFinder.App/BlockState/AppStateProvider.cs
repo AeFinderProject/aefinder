@@ -174,7 +174,7 @@ public class AppStateProvider : IAppStateProvider, ISingletonDependency
         _logger.LogDebug("[{ChainId}] Saving dapp data.", chainId);
         
         var groupedLibValues = _toCommitLibValues
-            .Select((pair, index) => new { pair, groupIndex = index / 100 })
+            .Select((pair, index) => new { pair, groupIndex = index / _appStateOptions.MaxAppStateBatchCommitCount })
             .GroupBy(x => x.groupIndex, x => x.pair);
         
         foreach (var items in groupedLibValues)

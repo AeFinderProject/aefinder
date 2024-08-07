@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using AElf.EntityMapping.Repositories;
 using AeFinder.Sdk.Entities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
 
 namespace AeFinder.App.BlockState;
@@ -13,15 +14,19 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
     private bool _isRegister = false;
     
     private readonly IEntityMappingRepository<TEntity, string> _entityMappingRepository;
-
+    private readonly AppStateOptions _appStateOptions;
     private readonly IAppDataIndexManagerProvider _appDataIndexManagerProvider;
     private readonly ILogger<AppDataIndexProvider<TEntity>> _logger;
 
-    public AppDataIndexProvider(IAppDataIndexManagerProvider appDataIndexManagerProvider, ILogger<AppDataIndexProvider<TEntity>> logger, IEntityMappingRepository<TEntity, string> entityMappingRepository)
+    public AppDataIndexProvider(IAppDataIndexManagerProvider appDataIndexManagerProvider,
+        ILogger<AppDataIndexProvider<TEntity>> logger,
+        IEntityMappingRepository<TEntity, string> entityMappingRepository,
+        IOptionsSnapshot<AppStateOptions> appStateOptions)
     {
         _appDataIndexManagerProvider = appDataIndexManagerProvider;
         _logger = logger;
         _entityMappingRepository = entityMappingRepository;
+        _appStateOptions = appStateOptions.Value;
     }
 
     public async Task SaveDataAsync()
@@ -104,7 +109,7 @@ public class AppDataIndexProvider<TEntity> : IAppDataIndexProvider<TEntity>
     private IEnumerable<IGrouping<int, TEntity>> GroupCommitData(List<TEntity> entities)
     {
         return entities
-            .Select((entity, index) => new { Entity = entity, GroupIndex = index / 100 })
+            .Select((entity, index) => new { Entity = entity, GroupIndex = index / _appStateOptions.MaxAppIndexBatchCommitCount })
             .GroupBy(x => x.GroupIndex, x => x.Entity);
     }
 
