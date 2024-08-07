@@ -8,6 +8,7 @@ using AeFinder.Kubernetes.Manager;
 using AeFinder.Logger;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
+using AeFinder.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -82,6 +83,7 @@ public class AeFinderHttpApiHostModule : AbpModule
             option.KeyLengthLimit = 60480;
             option.MultipartBodyLengthLimit = 60485760;
         });
+        Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
     }
 
     private void ConfigureCache(IConfiguration configuration)
