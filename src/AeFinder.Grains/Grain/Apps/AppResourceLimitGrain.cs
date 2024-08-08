@@ -4,7 +4,7 @@ using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.Apps;
 
-public class AppResourceLimitGrain : Grain<AppResourceLimitState>, IAppResourceLimitGrain
+public class AppResourceLimitGrain : AeFinderGrain<AppResourceLimitState>, IAppResourceLimitGrain
 {
     private readonly IObjectMapper _objectMapper;
     

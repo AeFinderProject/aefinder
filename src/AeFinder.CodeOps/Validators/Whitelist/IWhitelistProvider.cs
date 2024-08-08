@@ -83,6 +83,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type(typeof(ArgumentOutOfRangeException), Permission.Allowed) // From AEDPoS
                 .Type(nameof(DateTime), Permission.Allowed)
                 .Type(nameof(DateTimeOffset), Permission.Allowed)
+                .Type(nameof(TimeSpan), Permission.Allowed)
                 .Type(typeof(void).Name, Permission.Allowed)
                 .Type(nameof(Object), Permission.Allowed)
                 .Type(nameof(Type), Permission.Allowed)

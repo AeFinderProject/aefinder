@@ -122,7 +122,7 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
         var type = _runtimeTypeProvider.GetType(typeName);
         if (blockIndex == null)
         {
-            var entity = CreateEntity(type,key);
+            var entity = CreateEntity(type, GetEntityId(key, type));
             await _generalAppDataIndexProvider.DeleteAsync(entity, type);
         }
         else
@@ -130,7 +130,7 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
             var libState = await _appStateProvider.GetStateAsync(chainId, key, blockIndex);
             if (libState == null)
             {
-                var entity = CreateEntity(type,key);
+                var entity = CreateEntity(type, GetEntityId(key, type));
                 await _generalAppDataIndexProvider.DeleteAsync(entity, type);
             }
             else
@@ -147,5 +147,10 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
         propertyInfo.SetValue(entity, id);
 
         return entity;
+    }
+
+    private string GetEntityId(string stateKey, Type entityType)
+    {
+        return stateKey.RemovePreFix($"{entityType.Name}-");
     }
 }
