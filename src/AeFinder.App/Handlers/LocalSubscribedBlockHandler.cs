@@ -53,6 +53,48 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,
             subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
         
+        //first
+        if (subscribedBlock.Blocks.First().ChainId.Equals("AELF"))
+        {
+            //block
+            if (subscribedBlock.Blocks.First().BlockHeight > 4172896  && subscribedBlock.Blocks.First().BlockHeight < 4173096)
+            {
+                _logger.LogError("drop first block");
+                return;
+            }
+            
+            //confirm
+            foreach (var blockDt in subscribedBlock.Blocks)
+            {
+                if (blockDt.Confirmed)
+                {
+                    _logger.LogError("drop first confirm block");
+                    return;
+                }
+            }
+        }
+        
+        //not first
+        if (subscribedBlock.Blocks.First().ChainId.Equals("AELF"))
+        {
+            //block
+            if (subscribedBlock.Blocks.First().BlockHeight > 4973096  && subscribedBlock.Blocks.First().BlockHeight < 4973296)
+            {
+                _logger.LogError("drop block");
+                return;
+            }
+            
+            //confirm
+            foreach (var blockDt in subscribedBlock.Blocks)
+            {
+                if (blockDt.Confirmed)
+                {
+                    _logger.LogError("drop confirm block");
+                    return;
+                }
+            }
+        }
+        
         try
         {
             await _blockAttachService.AttachBlocksAsync(subscribedBlock.ChainId, subscribedBlock.Blocks);
