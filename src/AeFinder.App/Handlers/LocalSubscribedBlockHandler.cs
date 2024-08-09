@@ -113,7 +113,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             // }
             
             //confirm
-            if (subscribedBlock.Blocks.First().BlockHeight > 4573096  && subscribedBlock.Blocks.First().BlockHeight < 4573196)
+            if (subscribedBlock.Blocks.First().BlockHeight > 4192896  && subscribedBlock.Blocks.First().BlockHeight < 4193096)
             {
                 foreach (var blockDt in subscribedBlock.Blocks)
                 {
