@@ -71,19 +71,19 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
                 // return;
             }
             
-            // if (subscribedBlock.Blocks.First().BlockHeight > 4174696  && subscribedBlock.Blocks.First().BlockHeight < 4174996)
-            // {
-            //     foreach (var blockDt in subscribedBlock.Blocks)
-            //     {
-            //         if (!blockDt.Confirmed)
-            //         {
-            //             _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop block {0}", blockDt.BlockHeight);
-            //             return;
-            //         }
-            //     }
-            //     // _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop first block {0}", subscribedBlock.Blocks.First().BlockHeight);
-            //     // return;
-            // }
+            if (subscribedBlock.Blocks.First().BlockHeight > 4174696  && subscribedBlock.Blocks.First().BlockHeight < 4174799)
+            {
+                foreach (var blockDt in subscribedBlock.Blocks)
+                {
+                    if (!blockDt.Confirmed)
+                    {
+                        _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop block {0}", blockDt.BlockHeight);
+                        return;
+                    }
+                }
+                // _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop first block {0}", subscribedBlock.Blocks.First().BlockHeight);
+                // return;
+            }
             
             //confirm
             // foreach (var blockDt in subscribedBlock.Blocks)
@@ -100,20 +100,20 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         if (subscribedBlock.Blocks.First().ChainId.Equals("AELF"))
         {
             //block
-            // if (subscribedBlock.Blocks.First().BlockHeight > 4295196  && subscribedBlock.Blocks.First().BlockHeight < 4295396)
-            // {
-            //     foreach (var blockDt in subscribedBlock.Blocks)
-            //     {
-            //         if (!blockDt.Confirmed)
-            //         {
-            //             _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop block {0}", blockDt.BlockHeight);
-            //             return;
-            //         }
-            //     }
-            // }
+            if (subscribedBlock.Blocks.First().BlockHeight > 4235196  && subscribedBlock.Blocks.First().BlockHeight < 4235296)
+            {
+                foreach (var blockDt in subscribedBlock.Blocks)
+                {
+                    if (!blockDt.Confirmed)
+                    {
+                        _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop block {0}", blockDt.BlockHeight);
+                        return;
+                    }
+                }
+            }
             
             //confirm
-            if (subscribedBlock.Blocks.First().BlockHeight > 4192896  && subscribedBlock.Blocks.First().BlockHeight < 4192996)
+            if (subscribedBlock.Blocks.First().BlockHeight > 4255196  && subscribedBlock.Blocks.First().BlockHeight < 4255396)
             {
                 foreach (var blockDt in subscribedBlock.Blocks)
                 {
