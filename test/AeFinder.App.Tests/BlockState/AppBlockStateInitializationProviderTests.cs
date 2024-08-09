@@ -83,7 +83,7 @@ public class AppBlockStateInitializationProviderTests : AeFinderAppTestBase
                     {
                         new BlockStateChange
                         {
-                            Key = id, Type = $"{typeof(BlockEntity).FullName},{typeof(BlockEntity).Assembly.FullName}",
+                            Key = $"{typeof(BlockEntity).Name}-{id}", Type = $"{typeof(BlockEntity).FullName},{typeof(BlockEntity).Assembly.FullName}",
                         }
                     }
                 }

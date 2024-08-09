@@ -205,17 +205,18 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
 
         var lastIrreversibleBlockState = await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId);
         var startBlockHeight = 0L;
+        string previousBlockHash = null;
         if (lastIrreversibleBlockState != null)
         {
             startBlockHeight = lastIrreversibleBlockState.Block.BlockHeight + 1;
+            previousBlockHash = lastIrreversibleBlockState.Block.BlockHash;
         }
         else
         {
             startBlockHeight = subscriptionItem.StartBlockNumber;
         }
 
-        var previousBlockHash = block.PreviousBlockHash;
-        var previousBlockHeight = block.BlockHeight - 1;
+        var previousBlockHeight = startBlockHeight - 1;
 
         while (true)
         {
