@@ -57,7 +57,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         if (subscribedBlock.Blocks.First().ChainId.Equals("AELF"))
         {
             //block
-            if (subscribedBlock.Blocks.First().BlockHeight > 4172896  && subscribedBlock.Blocks.First().BlockHeight < 4172999)
+            if (subscribedBlock.Blocks.First().BlockHeight > 4172896  && subscribedBlock.Blocks.First().BlockHeight < 4173099)
             {
                 foreach (var blockDt in subscribedBlock.Blocks)
                 {
