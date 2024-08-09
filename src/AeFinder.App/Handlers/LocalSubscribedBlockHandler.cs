@@ -113,17 +113,17 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             // }
             
             //confirm
-            // if (subscribedBlock.Blocks.First().BlockHeight > 4573096  && subscribedBlock.Blocks.First().BlockHeight < 4573296)
-            // {
-            //     foreach (var blockDt in subscribedBlock.Blocks)
-            //     {
-            //         if (blockDt.Confirmed)
-            //         {
-            //             _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop confirm block {0}", blockDt.BlockHeight);
-            //             return;
-            //         }
-            //     }
-            // }
+            if (subscribedBlock.Blocks.First().BlockHeight > 4573096  && subscribedBlock.Blocks.First().BlockHeight < 4573196)
+            {
+                foreach (var blockDt in subscribedBlock.Blocks)
+                {
+                    if (blockDt.Confirmed)
+                    {
+                        _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop confirm block {0}", blockDt.BlockHeight);
+                        return;
+                    }
+                }
+            }
            
         }
         
