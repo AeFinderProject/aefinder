@@ -57,7 +57,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         if (subscribedBlock.Blocks.First().ChainId.Equals("AELF"))
         {
             //block
-            if (subscribedBlock.Blocks.First().BlockHeight > 4172896  && subscribedBlock.Blocks.First().BlockHeight < 4172996)
+            if (subscribedBlock.Blocks.First().BlockHeight > 4172896  && subscribedBlock.Blocks.First().BlockHeight < 4174196)
             {
                 foreach (var blockDt in subscribedBlock.Blocks)
                 {
@@ -71,7 +71,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
                 // return;
             }
             
-            if (subscribedBlock.Blocks.First().BlockHeight > 4173996  && subscribedBlock.Blocks.First().BlockHeight < 4174196)
+            if (subscribedBlock.Blocks.First().BlockHeight > 4174696  && subscribedBlock.Blocks.First().BlockHeight < 4174996)
             {
                 foreach (var blockDt in subscribedBlock.Blocks)
                 {
@@ -100,7 +100,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         if (subscribedBlock.Blocks.First().ChainId.Equals("AELF"))
         {
             //block
-            if (subscribedBlock.Blocks.First().BlockHeight > 4175196  && subscribedBlock.Blocks.First().BlockHeight < 4175296)
+            if (subscribedBlock.Blocks.First().BlockHeight > 4295196  && subscribedBlock.Blocks.First().BlockHeight < 4295396)
             {
                 foreach (var blockDt in subscribedBlock.Blocks)
                 {
