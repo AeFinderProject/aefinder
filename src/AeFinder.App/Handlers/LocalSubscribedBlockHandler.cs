@@ -57,60 +57,104 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         if (subscribedBlock.Blocks.First().ChainId.Equals("AELF"))
         {
             //block
-            if (subscribedBlock.Blocks.First().BlockHeight > 4172896  && subscribedBlock.Blocks.First().BlockHeight < 4173096)
+            if (subscribedBlock.Blocks.First().BlockHeight > 4172896  && subscribedBlock.Blocks.First().BlockHeight < 4172996)
             {
-                _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop first block {0}", subscribedBlock.Blocks.First().BlockHeight);
-                return;
+                foreach (var blockDt in subscribedBlock.Blocks)
+                {
+                    if (blockDt.Confirmed)
+                    {
+                        _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop first confirm block {0}", blockDt.BlockHeight);
+                        return;
+                    }
+                }
+                // _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop first block {0}", subscribedBlock.Blocks.First().BlockHeight);
+                // return;
+            }
+            
+            if (subscribedBlock.Blocks.First().BlockHeight > 4173996  && subscribedBlock.Blocks.First().BlockHeight < 4174196)
+            {
+                foreach (var blockDt in subscribedBlock.Blocks)
+                {
+                    if (!blockDt.Confirmed)
+                    {
+                        _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop block {0}", blockDt.BlockHeight);
+                        return;
+                    }
+                }
+                // _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop first block {0}", subscribedBlock.Blocks.First().BlockHeight);
+                // return;
             }
             
             //confirm
-            foreach (var blockDt in subscribedBlock.Blocks)
-            {
-                if (blockDt.Confirmed)
-                {
-                    _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop first confirm block {0}", blockDt.BlockHeight);
-                    return;
-                }
-            }
+            // foreach (var blockDt in subscribedBlock.Blocks)
+            // {
+            //     if (blockDt.Confirmed)
+            //     {
+            //         _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop first confirm block {0}", blockDt.BlockHeight);
+            //         return;
+            //     }
+            // }
         }
         
         //not first
         if (subscribedBlock.Blocks.First().ChainId.Equals("AELF"))
         {
             //block
-            if (subscribedBlock.Blocks.First().BlockHeight > 4573096  && subscribedBlock.Blocks.First().BlockHeight < 4573296)
+            if (subscribedBlock.Blocks.First().BlockHeight > 4175196  && subscribedBlock.Blocks.First().BlockHeight < 4175296)
             {
-                _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop block {0}", subscribedBlock.Blocks.First().BlockHeight);
-                return;
+                foreach (var blockDt in subscribedBlock.Blocks)
+                {
+                    if (!blockDt.Confirmed)
+                    {
+                        _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop block {0}", blockDt.BlockHeight);
+                        return;
+                    }
+                }
             }
             
             //confirm
-            foreach (var blockDt in subscribedBlock.Blocks)
+            if (subscribedBlock.Blocks.First().BlockHeight > 4573096  && subscribedBlock.Blocks.First().BlockHeight < 4573296)
             {
-                if (blockDt.Confirmed)
+                foreach (var blockDt in subscribedBlock.Blocks)
                 {
-                    _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop confirm block {0}", blockDt.BlockHeight);
-                    return;
+                    if (blockDt.Confirmed)
+                    {
+                        _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop confirm block {0}", blockDt.BlockHeight);
+                        return;
+                    }
                 }
             }
+           
         }
         
         if (subscribedBlock.Blocks.First().ChainId.Equals("tDVV"))
         {
+           
+            
+            
             //block
-            if (subscribedBlock.Blocks.First().BlockHeight > 10472087  && subscribedBlock.Blocks.First().BlockHeight < 10472287)
+            if (subscribedBlock.Blocks.First().BlockHeight > 10572087  && subscribedBlock.Blocks.First().BlockHeight < 10572187)
             {
-                _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop block {0}", subscribedBlock.Blocks.First().BlockHeight);
-                return;
+                foreach (var blockDt in subscribedBlock.Blocks)
+                {
+                    if (!blockDt.Confirmed)
+                    {
+                        _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop block {0}", blockDt.BlockHeight);
+                        return;
+                    }
+                }
             }
             
             //confirm
-            foreach (var blockDt in subscribedBlock.Blocks)
+            if (subscribedBlock.Blocks.First().BlockHeight > 10672087  && subscribedBlock.Blocks.First().BlockHeight < 10672187)
             {
-                if (blockDt.Confirmed)
+                foreach (var blockDt in subscribedBlock.Blocks)
                 {
-                    _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop confirm block {0}", blockDt.BlockHeight);
-                    return;
+                    if (blockDt.Confirmed)
+                    {
+                        _logger.LogWarning(AeFinderApplicationConsts.AppLogEventId, "drop confirm block {0}", blockDt.BlockHeight);
+                        return;
+                    }
                 }
             }
         }
