@@ -17,7 +17,9 @@ public class MockBlockFilterAppService : IBlockFilterAppService
 
     public Task<List<BlockWithTransactionDto>> GetBlocksAsync(GetSubscriptionTransactionsInput input)
     {
-        var blocks = BlockCreationHelper.CreateBlock(110, 10, "BlockHash", input.ChainId, "BlockHash109");
+        var blocks = BlockCreationHelper.CreateBlock(input.StartBlockHeight,
+            input.EndBlockHeight - input.StartBlockHeight + 1, "BlockHash", input.ChainId,
+            $"BlockHash{input.StartBlockHeight - 1}", confirmed: input.IsOnlyConfirmed);
         return Task.FromResult(_objectMapper.Map<List<AppSubscribedBlockDto>, List<BlockWithTransactionDto>>(blocks));
     }
 

@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <PackageId>AeFinder.Sdk</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Version>1.1.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
