@@ -59,7 +59,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             //block
             if (subscribedBlock.Blocks.First().BlockHeight > 4172896  && subscribedBlock.Blocks.First().BlockHeight < 4173096)
             {
-                _logger.LogError("drop first block");
+                _logger.LogError("drop first block {0}", subscribedBlock.Blocks.First().BlockHeight);
                 return;
             }
             
@@ -68,7 +68,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             {
                 if (blockDt.Confirmed)
                 {
-                    _logger.LogError("drop first confirm block");
+                    _logger.LogError("drop first confirm block {0}", blockDt.BlockHeight);
                     return;
                 }
             }
@@ -80,7 +80,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             //block
             if (subscribedBlock.Blocks.First().BlockHeight > 4973096  && subscribedBlock.Blocks.First().BlockHeight < 4973296)
             {
-                _logger.LogError("drop block");
+                _logger.LogError("drop block {0}", subscribedBlock.Blocks.First().BlockHeight);
                 return;
             }
             
@@ -89,7 +89,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             {
                 if (blockDt.Confirmed)
                 {
-                    _logger.LogError("drop confirm block");
+                    _logger.LogError("drop confirm block {0}", blockDt.BlockHeight);
                     return;
                 }
             }
