@@ -25,7 +25,7 @@ jobs:
       - name: Get current branch name
         run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
       - name: Extract version number from branch name
-        run: echo "VERSION=${branch_name#release/}" >> $GITHUB_ENV
+        run: echo "VERSION=${BRANCH_NAME#release/}" >> $GITHUB_ENV
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0' # which dotnet version is required?
