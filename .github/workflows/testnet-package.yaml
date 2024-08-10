@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: ['release/*','hotfix/*'] # if you want to trigger the Github Action on another branch add or change this
+    branches: ['release/*'] # if you want to trigger the Github Action on another branch add or change this
 env:
   DOTNET_INSTALL_DIR: "./.dotnet"
 
@@ -25,7 +25,7 @@ jobs:
       - name: Get current branch name
         run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
       - name: Extract version number from branch name
-        run: echo "VERSION=$(echo ${{ env.BRANCH_NAME }} | sed -e 's/release\/v//')" >> $GITHUB_ENV
+        run: echo "VERSION=${branch_name#release/}" >> $GITHUB_ENV
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0' # which dotnet version is required?
