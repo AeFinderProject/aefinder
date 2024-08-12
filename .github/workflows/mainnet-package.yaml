@@ -21,10 +21,15 @@ jobs:
         ] # This should be the app that needs to be deploy.
     steps:
       - uses: actions/checkout@v4
+      - name: Get the version from git tags
+        run: |
+          TAG=$(git describe --tags --abbrev=0)
+          VERSION=${TAG#v}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0' # which dotnet version is required?
-      - run: dotnet publish src/${{ matrix.servicename }}/${{ matrix.servicename }}.csproj -c Release -o out/${{ matrix.servicename }}
+      - run: dotnet publish src/${{ matrix.servicename }}/${{ matrix.servicename }}.csproj -c Release -o out/${{ matrix.servicename }} -p:Version=${{ env.VERSION }}
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
