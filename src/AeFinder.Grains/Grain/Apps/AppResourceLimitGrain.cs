@@ -70,6 +70,11 @@ public class AppResourceLimitGrain : AeFinderGrain<AppResourceLimitState>, IAppR
         {
             State.AppQueryPodRequestMemory = dto.AppQueryPodRequestMemory;
         }
+
+        if (dto.AppPodReplicas > 0)
+        {
+            State.AppPodReplicas = dto.AppPodReplicas;
+        }
         
         await WriteStateAsync();
     }
