@@ -1,6 +1,8 @@
 using System.Linq;
+using AeFinder.App.Es;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
+using AeFinder.Apps.Eto;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
 using AeFinder.Entities.Es;
@@ -62,6 +64,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
             .ForMember(destination => destination.UpdateTime,
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.UpdateTime)));
         CreateMap<CreateAppDto, AppState>();
+        CreateMap<CreateAppDto, AppCreateEto>();
         CreateMap<OrganizationUnit, OrganizationUnitDto>();
 
         CreateMap<BlockWithTransactionDto, AppSubscribedBlockDto>();
@@ -73,5 +76,8 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         
         CreateMap<AppLogIndex, AppLogRecordDto>();
         CreateMap<AppResourceLimitState, AppResourceLimitDto>();
+        
+        CreateMap<AppCreateEto, AppInfoIndex>();
+        CreateMap<AppCreateEto, AppLimitInfoIndex>();
     }
 }

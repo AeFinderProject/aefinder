@@ -51,6 +51,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         await CurrentUnitOfWork.SaveChangesAsync();
         var organizationUnitDto = ObjectMapper.Map<OrganizationUnit, OrganizationUnitDto>(organizationUnit);
         
+        //Synchronize organization info into grain & es
         var organizationAppGain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(
                 GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id.ToString()));

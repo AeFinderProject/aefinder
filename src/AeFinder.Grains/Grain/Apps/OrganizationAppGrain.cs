@@ -23,15 +23,16 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
         await ReadStateAsync();
         State.OrganizationId = this.GetPrimaryKeyString();
         State.OrganizationName = organizationName;
-        await WriteStateAsync();
         
-        //Publish app stop eto to background worker
+        //Publish organization create eto to background worker
         await _distributedEventBus.PublishAsync(new OrganizationCreateEto()
         {
             OrganizationId = State.OrganizationId,
             OrganizationName = State.OrganizationName,
             MaxAppCount = await GetMaxAppCountAsync()
         });
+        
+        await WriteStateAsync();
     }
 
     public async Task AddAppAsync(string appId)

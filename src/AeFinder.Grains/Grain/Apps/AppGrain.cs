@@ -1,17 +1,21 @@
 using AeFinder.Apps;
+using AeFinder.Apps.Eto;
 using AeFinder.Grains.State.Apps;
 using Orleans;
 using Volo.Abp;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.Apps;
 
 public class AppGrain : AeFinderGrain<AppState>, IAppGrain
 {
+    private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
 
-    public AppGrain(IObjectMapper objectMapper)
+    public AppGrain(IDistributedEventBus distributedEventBus, IObjectMapper objectMapper)
     {
+        _distributedEventBus = distributedEventBus;
         _objectMapper = objectMapper;
     }
 
@@ -34,6 +38,11 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         State.CreateTime = DateTime.UtcNow;
         State.UpdateTime = State.CreateTime;
 
+        //Publish app create eto to background worker
+        var appCreateEto = _objectMapper.Map<CreateAppDto, AppCreateEto>(dto);
+        appCreateEto.CreateTime = DateTime.UtcNow;
+        await _distributedEventBus.PublishAsync(appCreateEto);
+        
         await WriteStateAsync();
         return _objectMapper.Map<AppState, AppDto>(State);
     }

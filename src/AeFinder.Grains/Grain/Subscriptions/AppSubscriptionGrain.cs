@@ -31,9 +31,10 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
 
         await ReadStateAsync();
         await BeginChangingStateAsync();
-        
-        
 
+        var appSubscriptionCreateEto = new AppSubscriptionCreateEto();
+        appSubscriptionCreateEto.AppId = this.GetPrimaryKeyString();
+        
         if (State.CurrentVersion == null)
         {
             State.CurrentVersion = newVersion;
@@ -42,8 +43,13 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
                 CurrentVersion = newVersion,
                 AppId = this.GetPrimaryKeyString()
             });
-            
             await GrainFactory.GetGrain<IAppGrain>(this.GetPrimaryKeyString()).SetStatusAsync(AppStatus.Deployed);
+            
+            //Publish app subscription create eto to background worker
+            appSubscriptionCreateEto.CurrentVersion = new AppVersionInfoEto();
+            appSubscriptionCreateEto.CurrentVersion.Version = State.CurrentVersion;
+            appSubscriptionCreateEto.CurrentVersion.CreateTime = DateTime.UtcNow;
+            await _distributedEventBus.PublishAsync(appSubscriptionCreateEto);
         }
         else
         {
