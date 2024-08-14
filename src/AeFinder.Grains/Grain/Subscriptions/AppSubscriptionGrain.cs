@@ -176,7 +176,7 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         {
             return;
         }
-
+        
         if (State.CurrentVersion != null)
         {
             await StopBlockPushAsync(State.CurrentVersion);
@@ -191,7 +191,6 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             });
             
             State.SubscriptionInfos.Remove(State.CurrentVersion);
-            
         }
         
         _logger.LogInformation("Upgrade CurrentVersion from {currentVersion} to {pendingVersion}", State.CurrentVersion,
