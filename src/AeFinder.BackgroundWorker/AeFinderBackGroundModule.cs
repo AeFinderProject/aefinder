@@ -71,6 +71,7 @@ public class AeFinderBackGroundModule : AbpModule
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppDataClearWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppInfoSyncWorker>());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
