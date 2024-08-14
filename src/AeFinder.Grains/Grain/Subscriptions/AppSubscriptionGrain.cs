@@ -86,6 +86,13 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
 
         State.SubscriptionInfos[version].SubscriptionManifest = subscriptionManifest;
         await WriteStateAsync();
+        
+        //Publish app subscription update eto to background worker
+        await _distributedEventBus.PublishAsync(new AppSubscriptionUpdateEto()
+        {
+            AppId = this.GetPrimaryKeyString(),
+            Version = version
+        });
     }
 
     public async Task<SubscriptionManifest> GetSubscriptionAsync(string version)
@@ -220,6 +227,13 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         await ReadStateAsync();
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Paused;
         await WriteStateAsync();
+        
+        //Publish app subscription update eto to background worker
+        await _distributedEventBus.PublishAsync(new AppSubscriptionUpdateEto()
+        {
+            AppId = this.GetPrimaryKeyString(),
+            Version = version
+        });
     }
 
     public async Task StopAsync(string version)

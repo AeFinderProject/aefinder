@@ -16,7 +16,6 @@ public class AppSubscriptionCreateHandler: AppHandlerBase, IDistributedEventHand
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _appSubscriptionEntityMappingRepository;
     
-
     public AppSubscriptionCreateHandler(IClusterClient clusterClient,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
         IEntityMappingRepository<AppSubscriptionIndex, string> appSubscriptionEntityMappingRepository)

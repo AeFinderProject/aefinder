@@ -37,12 +37,12 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         State.Status = AppStatus.UnDeployed;
         State.CreateTime = DateTime.UtcNow;
         State.UpdateTime = State.CreateTime;
-
+        await WriteStateAsync();
+        
         //Publish app create eto to background worker
         var appCreateEto = _objectMapper.Map<AppState, AppCreateEto>(State);
         await _distributedEventBus.PublishAsync(appCreateEto);
         
-        await WriteStateAsync();
         return _objectMapper.Map<AppState, AppDto>(State);
     }
 
@@ -55,6 +55,10 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         State.SourceCodeUrl = dto.SourceCodeUrl;
         State.UpdateTime = DateTime.UtcNow;
         await WriteStateAsync();
+        
+        //Publish app update eto to background worker
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
         
         return _objectMapper.Map<AppState, AppDto>(State);
     }
