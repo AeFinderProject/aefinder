@@ -40,7 +40,7 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
 
         //Publish app create eto to background worker
         var appCreateEto = _objectMapper.Map<CreateAppDto, AppCreateEto>(dto);
-        appCreateEto.CreateTime = DateTime.UtcNow;
+        appCreateEto.CreateTime = State.CreateTime;
         await _distributedEventBus.PublishAsync(appCreateEto);
         
         await WriteStateAsync();

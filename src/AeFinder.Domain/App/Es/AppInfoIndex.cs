@@ -1,4 +1,5 @@
 using System;
+using AeFinder.Apps;
 using AeFinder.Entities;
 using AElf.EntityMapping.Entities;
 using Nest;
@@ -20,7 +21,9 @@ public class AppInfoIndex : AeFinderEntity<string>, IEntityMappingEntity
     [Keyword] public string Description { get; set; }
     [Keyword] public string DeployKey { get; set; }
     [Keyword] public string SourceCodeUrl { get; set; }
+    public AppStatus Status { get; set; }
     public DateTime CreateTime { get; set; }
+    public DateTime UpdateTime { get; set; }
     public AppVersionInfo CurrentVersion { get; set; }
     public AppVersionInfo PendingVersion { get; set; }
 }
