@@ -16,4 +16,7 @@ public class AppCreateEto
     [Id(5)] public string Description { get; set; }
     [Id(6)] public string SourceCodeUrl { get; set; }
     [Id(7)] public DateTime CreateTime { get; set; }
+    [Id(8)] public DateTime UpdateTime { get; set; }
+    [Id(9)] public AppStatus Status { get; set; }
+    
 }

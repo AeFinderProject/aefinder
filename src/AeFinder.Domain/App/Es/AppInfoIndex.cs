@@ -24,6 +24,5 @@ public class AppInfoIndex : AeFinderEntity<string>, IEntityMappingEntity
     public AppStatus Status { get; set; }
     public DateTime CreateTime { get; set; }
     public DateTime UpdateTime { get; set; }
-    public AppVersionInfo CurrentVersion { get; set; }
-    public AppVersionInfo PendingVersion { get; set; }
+    public AppVersionInfo Versions { get; set; }
 }

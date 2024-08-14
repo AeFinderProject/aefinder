@@ -64,7 +64,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
             .ForMember(destination => destination.UpdateTime,
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.UpdateTime)));
         CreateMap<CreateAppDto, AppState>();
-        CreateMap<CreateAppDto, AppCreateEto>();
+        CreateMap<AppState, AppCreateEto>();
         CreateMap<OrganizationUnit, OrganizationUnitDto>();
 
         CreateMap<BlockWithTransactionDto, AppSubscribedBlockDto>();
