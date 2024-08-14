@@ -1,4 +1,8 @@
+using System;
+using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.App.Es;
+using AElf.EntityMapping.Repositories;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Validation;
@@ -9,10 +13,14 @@ namespace AeFinder.Apps;
 public class AppServiceTests : AeFinderApplicationAppTestBase
 {
     private readonly IAppService _appService;
+    private readonly IEntityMappingRepository<AppInfoIndex, string> _appIndexRepository;
+    private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitIndexRepository;
 
     public AppServiceTests()
     {
         _appService = GetRequiredService<IAppService>();
+        _appIndexRepository = GetRequiredService<IEntityMappingRepository<AppInfoIndex, string>>();
+        _appLimitIndexRepository = GetRequiredService<IEntityMappingRepository<AppLimitInfoIndex, string>>();
     }
 
     [Fact]
@@ -64,5 +72,93 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         apps.TotalCount.ShouldBe(2);
         apps.Items[0].AppId.ShouldBe("my_test_app");
         apps.Items[1].AppId.ShouldBe("my_app");
+    }
+
+    [Fact]
+    public async Task AppIndex_Test()
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            await _appIndexRepository.AddAsync(new AppInfoIndex
+            {
+                AppId = "AppId" + i,
+                AppName = "App" + i,
+                OrganizationId = "OrganizationId",
+                OrganizationName = "OrganizationName",
+                CreateTime = DateTime.Now,
+                UpdateTime = DateTime.Now,
+                Id = "AppId" + i
+            });
+        }
+
+        var app = await _appService.GetIndexAsync("App");
+        app.ShouldBeNull();
+        
+        app = await _appService.GetIndexAsync("AppId2");
+        app.AppName.ShouldBe("App2");
+
+        var apps = await _appService.GetIndexListAsync(new GetAppInput
+        {
+            AppId = "App",
+            SkipCount = 0,
+            MaxResultCount = 5
+        });
+        apps.Items.Count.ShouldBe(0);
+        apps.TotalCount.ShouldBe(0);
+        
+        apps = await _appService.GetIndexListAsync(new GetAppInput
+        {
+            SkipCount = 0,
+            MaxResultCount = 5
+        });
+        apps.Items.Count.ShouldBe(5);
+        apps.TotalCount.ShouldBe(6);
+    }
+
+    [Fact]
+    public async Task ResourceLimitIndex_Test()
+    {
+        var index = new AppLimitInfoIndex
+        {
+            AppId = "AppId",
+            AppName = "AppName",
+            OrganizationId = "OrganizationId",
+            OrganizationName = "OrganizationName",
+            OperationLimit = new OperationLimitInfo
+            {
+                MaxEntitySize = 1,
+                MaxLogSize = 2,
+                MaxContractCallCount = 3,
+                MaxEntityCallCount = 4,
+                MaxLogCallCount = 5
+            },
+            ResourceLimit = new ResourceLimitInfo
+            {
+                AppPodReplicas = 1,
+                AppFullPodRequestMemory = "AppFullPodRequestMemory",
+                AppQueryPodRequestMemory = "AppQueryPodRequestMemory",
+                AppFullPodRequestCpuCore = "AppFullPodRequestCpuCore",
+                AppQueryPodRequestCpuCore = "AppQueryPodRequestCpuCore"
+            }
+        };
+        await _appLimitIndexRepository.AddAsync(index);
+
+        var limit = await _appService.GetAppResourceLimitIndexListAsync(new GetAppResourceLimitInput());
+        limit.TotalCount.ShouldBe(1);
+        limit.Items.Count().ShouldBe(1);
+        limit.Items[0].AppId.ShouldBe(index.AppId);
+        limit.Items[0].AppName.ShouldBe(index.AppName);
+        limit.Items[0].OrganizationId.ShouldBe(index.OrganizationId);
+        limit.Items[0].OrganizationName.ShouldBe(index.OrganizationName);
+        limit.Items[0].OperationLimit.MaxEntitySize.ShouldBe(index.OperationLimit.MaxEntitySize);
+        limit.Items[0].OperationLimit.MaxLogSize.ShouldBe(index.OperationLimit.MaxLogSize);
+        limit.Items[0].OperationLimit.MaxContractCallCount.ShouldBe(index.OperationLimit.MaxContractCallCount);
+        limit.Items[0].OperationLimit.MaxEntityCallCount.ShouldBe(index.OperationLimit.MaxEntityCallCount);
+        limit.Items[0].OperationLimit.MaxLogCallCount.ShouldBe(index.OperationLimit.MaxLogCallCount);
+        limit.Items[0].ResourceLimit.AppPodReplicas.ShouldBe(index.ResourceLimit.AppPodReplicas);
+        limit.Items[0].ResourceLimit.AppFullPodRequestMemory.ShouldBe(index.ResourceLimit.AppFullPodRequestMemory);
+        limit.Items[0].ResourceLimit.AppQueryPodRequestMemory.ShouldBe(index.ResourceLimit.AppQueryPodRequestMemory);
+        limit.Items[0].ResourceLimit.AppFullPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppFullPodRequestCpuCore);
+        limit.Items[0].ResourceLimit.AppQueryPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppQueryPodRequestCpuCore);
     }
 }
