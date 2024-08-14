@@ -35,7 +35,7 @@ public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCrea
         var organizationIndex = await _organizationEntityMappingRepository.GetAsync(eventData.OrganizationId);
         if (organizationIndex == null || organizationIndex.OrganizationId.IsNullOrEmpty())
         {
-            Logger.LogError($"Organization {eventData.OrganizationId} info is missing.");
+            Logger.LogError($"[AppCreateHandler]Organization {eventData.OrganizationId} info is missing.");
             organizationIndex = new OrganizationIndex();
             organizationIndex.OrganizationId = eventData.OrganizationId;
             Guid organizationUnitGuid;

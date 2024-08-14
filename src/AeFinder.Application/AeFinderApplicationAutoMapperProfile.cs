@@ -79,5 +79,9 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         
         CreateMap<AppCreateEto, AppInfoIndex>();
         CreateMap<AppCreateEto, AppLimitInfoIndex>();
+        CreateMap<SubscriptionManifest, SubscriptionManifestInfo>();
+        CreateMap<Subscription, SubscriptionInfo>();
+        CreateMap<TransactionCondition, TransactionConditionInfo>();
+        CreateMap<LogEventCondition, LogEventConditionInfo>();
     }
 }
