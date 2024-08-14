@@ -42,6 +42,7 @@ public class AeFinderBackGroundModule : AbpModule
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
         ConfigureMongoDbService(configuration, context);
+        context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
     }
     
     //Disable TokenCleanupBackgroundWorker

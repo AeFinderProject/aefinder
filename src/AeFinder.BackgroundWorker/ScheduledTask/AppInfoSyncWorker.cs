@@ -1,5 +1,6 @@
 using AeFinder.App.Es;
 using AeFinder.Apps;
+using AeFinder.BackgroundWorker.Options;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
@@ -7,6 +8,7 @@ using AeFinder.User;
 using AElf.EntityMapping.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
@@ -20,6 +22,7 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
     private readonly ILogger<AppInfoSyncWorker> _logger;
     private readonly IClusterClient _clusterClient;
     private readonly IObjectMapper _objectMapper;
+    private readonly ScheduledTaskOptions _scheduledTaskOptions;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppService _appService;
     private readonly IEntityMappingRepository<OrganizationIndex, string> _organizationEntityMappingRepository;
@@ -28,8 +31,8 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _appSubscriptionEntityMappingRepository;
 
     public AppInfoSyncWorker(AbpTimer timer, IOrganizationAppService organizationAppService,
-        ILogger<AppInfoSyncWorker> logger, IClusterClient clusterClient,IObjectMapper objectMapper,
-        IAppService appService,
+        ILogger<AppInfoSyncWorker> logger, IClusterClient clusterClient, IObjectMapper objectMapper,
+        IAppService appService, IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
         IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitInfoEntityMappingRepository,
@@ -39,13 +42,15 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
         _logger = logger;
         _clusterClient = clusterClient;
         _objectMapper = objectMapper;
+        _scheduledTaskOptions = scheduledTaskOptions.Value;
         _organizationAppService = organizationAppService;
         _appService = appService;
         _organizationEntityMappingRepository = organizationEntityMappingRepository;
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
         _appLimitInfoEntityMappingRepository = appLimitInfoEntityMappingRepository;
         _appSubscriptionEntityMappingRepository = appSubscriptionEntityMappingRepository;
-        Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
+        // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
+        Timer.Period = _scheduledTaskOptions.AppInfoSyncTaskPeriodMilliSeconds;
     }
 
     [UnitOfWork]
