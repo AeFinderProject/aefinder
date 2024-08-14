@@ -31,6 +31,8 @@ public class AppDeployController : AeFinderController
     {
 
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(input.AppId, input.Version, input.ImageName);
+        
+        //Publish app pod update eto to background worker
         _distributedEventBus.PublishAsync(new AppPodUpdateEto()
         {
             AppId = input.AppId,
