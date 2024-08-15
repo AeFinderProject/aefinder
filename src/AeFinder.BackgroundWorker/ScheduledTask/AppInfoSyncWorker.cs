@@ -61,14 +61,17 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
 
     private async Task ProcessSynchronizationAsync()
     {
+        _logger.LogInformation("[AppInfoSyncWorker] Process Synchronization Async.");
         var organizationUnitList = await _organizationAppService.GetAllOrganizationUnitsAsync();
         foreach (var organizationUnitDto in organizationUnitList)
         {
             //Sync organization
             var organizationId = organizationUnitDto.Id.ToString();
+            _logger.LogInformation("[AppInfoSyncWorker] Check organization: {0}.", organizationId);
             var organizationIndex = await _organizationEntityMappingRepository.GetAsync(organizationId);
             if (organizationIndex == null)
             {
+                _logger.LogWarning("[AppInfoSyncWorker] organization {0} is null.", organizationId);
                 organizationIndex = new OrganizationIndex();
                 organizationIndex.OrganizationId = organizationId;
             }
@@ -84,20 +87,28 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
                 organizationIndex.MaxAppCount = await _appService.GetMaxAppCountAsync(organizationUnitDto.Id);
                 organizationIndex.AppIds = appIds.ToList();
                 await _organizationEntityMappingRepository.AddOrUpdateAsync(organizationIndex);
+                _logger.LogInformation(
+                    "[AppInfoSyncWorker] Sync organization: {0} max app count: {1} appids count: {2}.",
+                    organizationIndex.OrganizationName, organizationIndex.MaxAppCount, organizationIndex.AppIds.Count);
             }
             
             if (organizationIndex.AppIds == null || appIds.Count > organizationIndex.AppIds.Count)
             {
                 organizationIndex.AppIds = appIds.ToList();
                 await _organizationEntityMappingRepository.AddOrUpdateAsync(organizationIndex);
+                _logger.LogInformation(
+                    "[AppInfoSyncWorker] Sync organization: {0} appids count: {1}.",
+                    organizationIndex.OrganizationName, organizationIndex.AppIds.Count);
             }
 
             foreach (var appId in appIds)
             {
+                _logger.LogInformation("[AppInfoSyncWorker] Check appId: {0}.", appId);
                 //Sync app info
                 var appInfoIndex = await _appInfoEntityMappingRepository.GetAsync(appId);
                 if (appInfoIndex == null)
                 {
+                    _logger.LogWarning("[AppInfoSyncWorker] app info {0} is null.", appId);
                     appInfoIndex = new AppInfoIndex();
                     appInfoIndex.AppId = appId;
                 }
@@ -128,12 +139,14 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
                     }
 
                     await _appInfoEntityMappingRepository.AddOrUpdateAsync(appInfoIndex);
+                    _logger.LogInformation("[AppInfoSyncWorker] Sync app info: {0}.", appInfoIndex.AppName);
                 }
 
                 //Sync app limit info
                 var appLimitInfoIndex = await _appLimitInfoEntityMappingRepository.GetAsync(appId);
                 if (appLimitInfoIndex == null)
                 {
+                    _logger.LogWarning("[AppInfoSyncWorker] app limit info {0} is null.", appId);
                     appLimitInfoIndex = new AppLimitInfoIndex();
                     appLimitInfoIndex.AppId = appId;
                 }
@@ -174,6 +187,7 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
                     }
 
                     await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
+                    _logger.LogInformation("[AppInfoSyncWorker] Sync app limit info: {0}.", appLimitInfoIndex.AppName);
                 }
 
                 if (appInfoIndex.Versions == null)
@@ -190,6 +204,8 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
                     {
                         appSubscriptionIndex = await CreateAppSubscriptionEntityAsync(appId, currentVersion);
                         await _appSubscriptionEntityMappingRepository.AddOrUpdateAsync(appSubscriptionIndex);
+                        _logger.LogInformation("[AppInfoSyncWorker] Sync app {0} currentVersion: {1}.",
+                            appSubscriptionIndex.AppId, currentVersion);
                     }
                 }
 
@@ -202,6 +218,8 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
                     {
                         appSubscriptionIndex = await CreateAppSubscriptionEntityAsync(appId, pendingVersion);
                         await _appSubscriptionEntityMappingRepository.AddOrUpdateAsync(appSubscriptionIndex);
+                        _logger.LogInformation("[AppInfoSyncWorker] Sync app {0} pendingVersion: {1}.",
+                            appSubscriptionIndex.AppId, pendingVersion);
                     }
                 }
             }
