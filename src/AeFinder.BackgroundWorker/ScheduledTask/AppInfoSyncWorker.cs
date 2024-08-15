@@ -133,8 +133,10 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
                     appInfoIndex.DeployKey = appDto.DeployKey;
                     appInfoIndex.SourceCodeUrl = appDto.SourceCodeUrl;
                     appInfoIndex.Status = appDto.Status;
-                    appInfoIndex.CreateTime = Convert.ToDateTime(appDto.CreateTime);
-                    appInfoIndex.UpdateTime = Convert.ToDateTime(appDto.UpdateTime);
+                    DateTimeOffset createTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(appDto.CreateTime);
+                    appInfoIndex.CreateTime = createTimeOffset.UtcDateTime;
+                    DateTimeOffset updateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(appDto.UpdateTime);
+                    appInfoIndex.UpdateTime = updateTimeOffset.UtcDateTime;
                     if (appDto.Versions != null)
                     {
                         appInfoIndex.Versions = new AppVersionInfo()
