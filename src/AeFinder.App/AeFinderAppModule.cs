@@ -8,6 +8,7 @@ using AeFinder.App.OperationLimits;
 using AeFinder.App.Repositories;
 using AeFinder.BlockScan;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Options;
@@ -95,11 +96,14 @@ public class AeFinderAppModule : AbpModule
         var types = GetTypesAssignableFrom<IAeFinderEntity>(assembly);
         var elasticIndexService = serviceProvider.GetRequiredService<IElasticIndexService>();
         var appIndexOptions = serviceProvider.GetRequiredService<IOptionsSnapshot<AppIndexOptions>>().Value;
+        var appIndexManagerGrain = clusterClient.GetGrain<IAppIndexManagerGrain>(
+                GrainIdHelper.GenerateAppIndexManagerGrainId(appId, version));
         foreach (var t in types)
         {
             var indexName = $"{appId}-{version}.{t.Name}".ToLower();
             await elasticIndexService.CreateIndexAsync(indexName, t, esOptions.NumberOfShards,
                 esOptions.NumberOfReplicas, appIndexOptions.IndexSettings);
+            await appIndexManagerGrain.AddIndexNameAsync(indexName);
         }
     }
 

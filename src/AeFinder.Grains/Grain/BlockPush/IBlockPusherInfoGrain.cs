@@ -20,4 +20,5 @@ public interface IBlockPusherInfoGrain : IGrainWithStringKey
     Task<bool> IsNeedRecoverAsync();
     Task<bool> IsRunningAsync(string pushToken);
     Task<string> GetPushTokenAsync();
+    Task ClearGrainStateAsync();
 }

@@ -6,7 +6,9 @@ using AeFinder.App.Handlers;
 using AeFinder.App.MockApp;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
+using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockStates;
+using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Sdk;
 using Shouldly;
 using Volo.Abp.EventBus.Local;
@@ -27,6 +29,7 @@ public class BlockProcessingServiceTests: AeFinderAppTestBase
     private readonly IBlockAttachService _blockAttachService;
     private readonly ILocalEventBus _localEventBus;
     private readonly IObjectMapper _objectMapper;
+    private readonly IAppInfoProvider _appInfoProvider;
 
     public BlockProcessingServiceTests()
     {
@@ -40,6 +43,7 @@ public class BlockProcessingServiceTests: AeFinderAppTestBase
         _blockAttachService = GetRequiredService<IBlockAttachService>();
         _localEventBus = GetRequiredService<ILocalEventBus>();
         _objectMapper = GetRequiredService<IObjectMapper>();
+        _appInfoProvider = GetRequiredService<IAppInfoProvider>();
     }
 
     [Fact]
@@ -186,6 +190,22 @@ public class BlockProcessingServiceTests: AeFinderAppTestBase
     {
         var chainId = "AELF";
         LastIrreversibleBlockStateSetFoundEventData lastIrreversibleBlockStateSetFoundEventData = null;
+        
+        var subscriptionManifest1 = new SubscriptionManifest
+        {
+            SubscriptionItems = new List<Subscription>()
+            {
+                new()
+                {
+                    ChainId = chainId,
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 100
+                }
+            }
+        };
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
+        var version = (await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { })).NewVersion;
+        _appInfoProvider.SetVersion(version); 
 
         _localEventBus.Subscribe<LastIrreversibleBlockStateSetFoundEventData>(d =>
         {
@@ -405,6 +425,22 @@ public class BlockProcessingServiceTests: AeFinderAppTestBase
     public async Task Process_Fork_Delete_Test()
     {
         var chainId = "AELF";
+        var subscriptionManifest1 = new SubscriptionManifest
+        {
+            SubscriptionItems = new List<Subscription>()
+            {
+                new()
+                {
+                    ChainId = chainId,
+                    OnlyConfirmed = false,
+                    StartBlockNumber = 100
+                }
+            }
+        };
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
+        var version = (await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { })).NewVersion;
+        _appInfoProvider.SetVersion(version); 
+        
         {
             var blocks = BlockCreationHelper.CreateBlockWithTransactionAndTransferredLogEvents(100, 5, "BlockHash",
                 chainId, 1, "TransactionId", TransactionStatus.Mined, 1);

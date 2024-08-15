@@ -129,4 +129,10 @@ public class BlockPusherInfoGrain : AeFinderGrain<BlockPusherInfoState>, IBlockP
         await ReadStateAsync();
         return State.BlockPushInfo.PushToken;
     }
+    
+    public async Task ClearGrainStateAsync()
+    {
+        await base.ClearStateAsync();
+        DeactivateOnIdle();
+    }
 }

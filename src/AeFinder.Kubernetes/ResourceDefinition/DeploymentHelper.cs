@@ -96,6 +96,7 @@ public class DeploymentHelper
                             {
                                 Name = containerName,
                                 Image = imageName,
+                                Command = new List<string> { "dotnet", "AeFinder.App.Host.dll" },
                                 // Add your specific configuration here based on index
                                 // For example, you can mount different config files as volumes
                                 // or set different environment variables

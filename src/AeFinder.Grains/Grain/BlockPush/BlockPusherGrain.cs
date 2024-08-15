@@ -102,15 +102,18 @@ public class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockPusherGra
                     ChainId = State.Subscription.ChainId,
                     StartBlockHeight = State.PushedConfirmedBlockHeight + 1,
                     EndBlockHeight = targetHeight,
-                    IsOnlyConfirmed = true,
-                    TransactionFilters =
-                        _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(State.Subscription
-                            .TransactionConditions),
-                    LogEventFilters =
-                        _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(State.Subscription
-                            .LogEventConditions)
+                    IsOnlyConfirmed = true
                 });
-
+                
+                blocks = await _blockFilterAppService.FilterIncompleteConfirmedBlocksAsync(State.Subscription.ChainId, blocks, State.PushedConfirmedBlockHash,
+                    State.PushedConfirmedBlockHeight);
+                
+                blocks = await _blockFilterAppService.FilterBlocksAsync(blocks,
+                    _objectMapper.Map<List<TransactionCondition>, List<FilterTransactionInput>>(State.Subscription
+                        .TransactionConditions),
+                    _objectMapper.Map<List<LogEventCondition>, List<FilterContractEventInput>>(State.Subscription
+                        .LogEventConditions));
+                
                 if (blocks.Count != targetHeight - State.PushedConfirmedBlockHeight)
                 {
                     throw new ApplicationException(
@@ -528,5 +531,11 @@ public class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockPusherGra
         }
 
         await base.OnActivateAsync(cancellationToken);
+    }
+    
+    public async Task ClearGrainStateAsync()
+    {
+        await base.ClearStateAsync();
+        DeactivateOnIdle();
     }
 }

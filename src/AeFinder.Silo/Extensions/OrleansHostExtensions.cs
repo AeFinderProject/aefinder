@@ -1,4 +1,5 @@
 using System.Net;
+using AeFinder.Grains;
 using AeFinder.Silo.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,7 +57,7 @@ public static class OrleansHostExtensions
                 .ConfigureServices(services => services.AddSingleton<IGrainStateSerializer,AeFinderJsonGrainStateSerializer>())
                 .AddAeFinderMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
                 {
-                    op.CollectionPrefix = "GrainStorage";
+                    op.CollectionPrefix = OrleansConstants.GrainCollectionPrefix;
                     op.DatabaseName = configSection.GetValue<string>("DataBase");
 
                     var grainIdPrefix = configSection
@@ -108,7 +109,7 @@ public static class OrleansHostExtensions
                 .AddAeFinderMongoDBGrainStorage("PubSubStore", options =>
                 {
                     // Config PubSubStore Storage for Persistent Stream 
-                    options.CollectionPrefix = "StreamStorage";
+                    options.CollectionPrefix = OrleansConstants.StreamCollectionPrefix;
                     options.DatabaseName = configSection.GetValue<string>("DataBase");
                 })
                 .Configure<ExceptionSerializationOptions>(options=>
