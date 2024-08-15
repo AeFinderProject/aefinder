@@ -26,15 +26,12 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     private readonly ICodeAuditor _codeAuditor;
     private readonly IAppDeployManager _appDeployManager;
     private readonly AppDeployOptions _appDeployOptions;
-    private readonly IDistributedEventBus _distributedEventBus;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
-        IDistributedEventBus distributedEventBus,
         IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions)
     {
         _clusterClient = clusterClient;
         _codeAuditor = codeAuditor;
-        _distributedEventBus = distributedEventBus;
         _appDeployManager = appDeployManager;
         _appDeployOptions = appDeployOptions.Value;
     }
