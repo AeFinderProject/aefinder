@@ -52,6 +52,13 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = _scheduledTaskOptions.AppInfoSyncTaskPeriodMilliSeconds;
     }
+    
+    public override async Task StartAsync(CancellationToken cancellationToken)
+    {
+        await base.StartAsync(cancellationToken);
+        Timer.Start(cancellationToken);
+        await ProcessSynchronizationAsync();
+    }
 
     [UnitOfWork]
     protected override void DoWork(PeriodicBackgroundWorkerContext workerContext)
