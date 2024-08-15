@@ -181,7 +181,7 @@ public class AppInfoSyncWorker : AsyncPeriodicBackgroundWorkerBase, ISingletonDe
                     continue;
                 }
 
-                if (versions.CurrentVersion != null)
+                if (versions.CurrentVersion != null && !versions.CurrentVersion.Version.IsNullOrEmpty())
                 {
                     var currentVersion = versions.CurrentVersion.Version;
                     //Sync current version subscription
@@ -195,7 +195,7 @@ public class AppInfoSyncWorker : AsyncPeriodicBackgroundWorkerBase, ISingletonDe
                     }
                 }
 
-                if (versions.PendingVersion != null)
+                if (versions.PendingVersion != null && !versions.PendingVersion.Version.IsNullOrEmpty())
                 {
                     var pendingVersion = versions.PendingVersion.Version;
                     //Sync pending version subscription
