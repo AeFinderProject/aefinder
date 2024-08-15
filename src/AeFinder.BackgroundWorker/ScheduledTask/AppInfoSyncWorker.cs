@@ -17,7 +17,7 @@ using Volo.Abp.Uow;
 
 namespace AeFinder.BackgroundWorker.ScheduledTask;
 
-public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDependency
+public class AppInfoSyncWorker : AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
 {
     private readonly ILogger<AppInfoSyncWorker> _logger;
     private readonly IClusterClient _clusterClient;
@@ -30,7 +30,7 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitInfoEntityMappingRepository;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _appSubscriptionEntityMappingRepository;
 
-    public AppInfoSyncWorker(AbpTimer timer, IOrganizationAppService organizationAppService,
+    public AppInfoSyncWorker(AbpAsyncTimer timer, IOrganizationAppService organizationAppService,
         ILogger<AppInfoSyncWorker> logger, IClusterClient clusterClient, IObjectMapper objectMapper,
         IAppService appService, IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
         IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
@@ -61,9 +61,9 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
     // }
 
     [UnitOfWork]
-    protected override void DoWork(PeriodicBackgroundWorkerContext workerContext)
+    protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
-        AsyncHelper.RunSync(() => ProcessSynchronizationAsync());
+        await ProcessSynchronizationAsync();
     }
 
     private async Task ProcessSynchronizationAsync()
@@ -74,37 +74,27 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
         {
             //Sync organization
             var organizationId = organizationUnitDto.Id.ToString();
+            var organizationName = organizationUnitDto.DisplayName;
             _logger.LogInformation("[AppInfoSyncWorker] Check organization: {0}.", organizationId);
             var organizationIndex = await _organizationEntityMappingRepository.GetAsync(organizationId);
+            
+            var organizationGrainId = GetOrganizationGrainId(organizationUnitDto.Id);
+            var organizationAppGrain =
+                _clusterClient.GetGrain<IOrganizationAppGrain>(organizationGrainId);
+            var appIds = await organizationAppGrain.GetAppsAsync();
+            
             if (organizationIndex == null)
             {
                 _logger.LogWarning("[AppInfoSyncWorker] organization {0} is null.", organizationId);
                 organizationIndex = new OrganizationIndex();
                 organizationIndex.OrganizationId = organizationId;
-            }
-
-            var organizationGrainId = GetOrganizationGrainId(organizationUnitDto.Id);
-            var organizationAppGrain =
-                _clusterClient.GetGrain<IOrganizationAppGrain>(organizationGrainId);
-            var appIds = await organizationAppGrain.GetAppsAsync();
-            if (organizationIndex.OrganizationName.IsNullOrEmpty())
-            {
-                organizationIndex.OrganizationName = organizationUnitDto.DisplayName;
+                organizationIndex.OrganizationName = organizationName;
                 organizationIndex.MaxAppCount = await _appService.GetMaxAppCountAsync(organizationUnitDto.Id);
                 organizationIndex.AppIds = appIds.ToList();
                 await _organizationEntityMappingRepository.AddOrUpdateAsync(organizationIndex);
                 _logger.LogInformation(
-                    "[AppInfoSyncWorker] Sync organization: {0} max app count: {1} appids count: {2}.",
+                    "[AppInfoSyncWorker] Organization Synchronized: {0} max app count: {1} appids count: {2}.",
                     organizationIndex.OrganizationName, organizationIndex.MaxAppCount, organizationIndex.AppIds.Count);
-            }
-            
-            if (organizationIndex.AppIds == null || appIds.Count > organizationIndex.AppIds.Count)
-            {
-                organizationIndex.AppIds = appIds.ToList();
-                await _organizationEntityMappingRepository.AddOrUpdateAsync(organizationIndex);
-                _logger.LogInformation(
-                    "[AppInfoSyncWorker] Sync organization: {0} appids count: {1}.",
-                    organizationIndex.OrganizationName, organizationIndex.AppIds.Count);
             }
 
             foreach (var appId in appIds)
@@ -112,21 +102,21 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
                 _logger.LogInformation("[AppInfoSyncWorker] Check appId: {0}.", appId);
                 //Sync app info
                 var appInfoIndex = await _appInfoEntityMappingRepository.GetAsync(appId);
+                
+                var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+                var appDto = await appGrain.GetAsync();
+                var appName = appDto.AppName;
+                var subscriptionGrain =
+                    _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+                var versions = await subscriptionGrain.GetAllSubscriptionAsync();
+                
                 if (appInfoIndex == null)
                 {
                     _logger.LogWarning("[AppInfoSyncWorker] app info {0} is null.", appId);
                     appInfoIndex = new AppInfoIndex();
                     appInfoIndex.AppId = appId;
-                }
-
-                if (appInfoIndex.OrganizationId.IsNullOrEmpty()
-                    || appInfoIndex.OrganizationName.IsNullOrEmpty() 
-                    || appInfoIndex.AppName.IsNullOrEmpty())
-                {
-                    appInfoIndex.OrganizationId = organizationIndex.OrganizationId;
-                    appInfoIndex.OrganizationName = organizationIndex.OrganizationName;
-                    var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
-                    var appDto = await appGrain.GetAsync();
+                    appInfoIndex.OrganizationId = organizationId;
+                    appInfoIndex.OrganizationName = organizationName;
                     appInfoIndex.AppName = appDto.AppName;
                     appInfoIndex.Description = appDto.Description;
                     appInfoIndex.ImageUrl = appDto.ImageUrl;
@@ -137,96 +127,84 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
                     appInfoIndex.CreateTime = createTimeOffset.UtcDateTime;
                     DateTimeOffset updateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(appDto.UpdateTime);
                     appInfoIndex.UpdateTime = updateTimeOffset.UtcDateTime;
-                    if (appDto.Versions != null)
+                    appInfoIndex.Versions = new AppVersionInfo()
                     {
-                        appInfoIndex.Versions = new AppVersionInfo()
-                        {
-                            CurrentVersion = appDto.Versions.CurrentVersion,
-                            PendingVersion = appDto.Versions.PendingVersion
-                        };
-                    }
-
+                        CurrentVersion = versions.CurrentVersion?.Version,
+                        PendingVersion = versions.PendingVersion?.Version
+                    };
                     await _appInfoEntityMappingRepository.AddOrUpdateAsync(appInfoIndex);
-                    _logger.LogInformation("[AppInfoSyncWorker] Sync app info: {0}.", appInfoIndex.AppName);
+                    _logger.LogInformation("[AppInfoSyncWorker] App info Synchronized: {0}.", appInfoIndex.AppName);
                 }
 
                 //Sync app limit info
-                var appLimitInfoIndex = await _appLimitInfoEntityMappingRepository.GetAsync(appId);
-                if (appLimitInfoIndex == null)
-                {
-                    _logger.LogWarning("[AppInfoSyncWorker] app limit info {0} is null.", appId);
-                    appLimitInfoIndex = new AppLimitInfoIndex();
-                    appLimitInfoIndex.AppId = appId;
-                }
+                // var appLimitInfoIndex = await _appLimitInfoEntityMappingRepository.GetAsync(appId);
+                // if (appLimitInfoIndex == null)
+                // {
+                //     _logger.LogWarning("[AppInfoSyncWorker] app limit info {0} is null.", appId);
+                //     appLimitInfoIndex = new AppLimitInfoIndex();
+                //     appLimitInfoIndex.AppId = appId;
+                //     appLimitInfoIndex.OrganizationId = organizationId;
+                //     appLimitInfoIndex.OrganizationName = organizationName;
+                //     appLimitInfoIndex.AppName = appName;
+                //     var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
+                //         GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
+                //     var resourceLimitDto = await appResourceLimitGrain.GetAsync();
+                //     if (appLimitInfoIndex.ResourceLimit == null)
+                //     {
+                //         appLimitInfoIndex.ResourceLimit = new ResourceLimitInfo()
+                //         {
+                //             AppPodReplicas = resourceLimitDto.AppPodReplicas,
+                //             AppFullPodRequestCpuCore = resourceLimitDto.AppFullPodRequestCpuCore,
+                //             AppFullPodRequestMemory=resourceLimitDto.AppFullPodRequestMemory,
+                //             AppQueryPodRequestCpuCore = resourceLimitDto.AppQueryPodRequestCpuCore,
+                //             AppQueryPodRequestMemory = resourceLimitDto.AppQueryPodRequestMemory
+                //         };
+                //     }
+                //
+                //     if (appLimitInfoIndex.OperationLimit == null)
+                //     {
+                //         appLimitInfoIndex.OperationLimit = new OperationLimitInfo()
+                //         {
+                //             MaxEntityCallCount = resourceLimitDto.MaxEntityCallCount,
+                //             MaxEntitySize = resourceLimitDto.MaxEntitySize,
+                //             MaxLogCallCount = resourceLimitDto.MaxLogCallCount,
+                //             MaxLogSize = resourceLimitDto.MaxLogSize,
+                //             MaxContractCallCount = resourceLimitDto.MaxContractCallCount
+                //         };
+                //     }
+                //     await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
+                //     _logger.LogInformation("[AppInfoSyncWorker] App limit info Synchronized: {0}.", appLimitInfoIndex.AppName);
+                // }
 
-                if (appLimitInfoIndex.OrganizationId.IsNullOrEmpty()
-                    || appLimitInfoIndex.OrganizationName.IsNullOrEmpty()
-                    || appLimitInfoIndex.AppName.IsNullOrEmpty())
-                {
-                    appLimitInfoIndex.OrganizationId = organizationIndex.OrganizationId;
-                    appLimitInfoIndex.OrganizationName = organizationIndex.OrganizationName;
-                    appLimitInfoIndex.AppName = appInfoIndex.AppName;
-                    
-                    var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
-                        GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
-                    var resourceLimitDto = await appResourceLimitGrain.GetAsync();
-                    if (appLimitInfoIndex.ResourceLimit == null)
-                    {
-                        appLimitInfoIndex.ResourceLimit = new ResourceLimitInfo()
-                        {
-                            AppPodReplicas = resourceLimitDto.AppPodReplicas,
-                            AppFullPodRequestCpuCore = resourceLimitDto.AppFullPodRequestCpuCore,
-                            AppFullPodRequestMemory=resourceLimitDto.AppFullPodRequestMemory,
-                            AppQueryPodRequestCpuCore = resourceLimitDto.AppQueryPodRequestCpuCore,
-                            AppQueryPodRequestMemory = resourceLimitDto.AppQueryPodRequestMemory
-                        };
-                    }
-
-                    if (appLimitInfoIndex.OperationLimit == null)
-                    {
-                        appLimitInfoIndex.OperationLimit = new OperationLimitInfo()
-                        {
-                            MaxEntityCallCount = resourceLimitDto.MaxEntityCallCount,
-                            MaxEntitySize = resourceLimitDto.MaxEntitySize,
-                            MaxLogCallCount = resourceLimitDto.MaxLogCallCount,
-                            MaxLogSize = resourceLimitDto.MaxLogSize,
-                            MaxContractCallCount = resourceLimitDto.MaxContractCallCount
-                        };
-                    }
-
-                    await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
-                    _logger.LogInformation("[AppInfoSyncWorker] Sync app limit info: {0}.", appLimitInfoIndex.AppName);
-                }
-
-                if (appInfoIndex.Versions == null)
+                if (versions == null)
                 {
                     continue;
                 }
 
-                if (!appInfoIndex.Versions.CurrentVersion.IsNullOrEmpty())
+                if (versions.CurrentVersion != null)
                 {
-                    var currentVersion = appInfoIndex.Versions.CurrentVersion;
+                    var currentVersion = versions.CurrentVersion.Version;
                     //Sync current version subscription
                     var appSubscriptionIndex = await _appSubscriptionEntityMappingRepository.GetAsync(currentVersion);
                     if (appSubscriptionIndex == null)
                     {
                         appSubscriptionIndex = await CreateAppSubscriptionEntityAsync(appId, currentVersion);
                         await _appSubscriptionEntityMappingRepository.AddOrUpdateAsync(appSubscriptionIndex);
-                        _logger.LogInformation("[AppInfoSyncWorker] Sync app {0} currentVersion: {1}.",
+                        _logger.LogInformation("[AppInfoSyncWorker] App {0} currentVersion: {1} Synchronized.",
                             appSubscriptionIndex.AppId, currentVersion);
                     }
                 }
 
-                if (!appInfoIndex.Versions.PendingVersion.IsNullOrEmpty())
+                if (versions.PendingVersion != null)
                 {
-                    var pendingVersion = appInfoIndex.Versions.PendingVersion;
+                    var pendingVersion = versions.PendingVersion.Version;
                     //Sync pending version subscription
                     var appSubscriptionIndex = await _appSubscriptionEntityMappingRepository.GetAsync(pendingVersion);
                     if (appSubscriptionIndex == null)
                     {
                         appSubscriptionIndex = await CreateAppSubscriptionEntityAsync(appId, pendingVersion);
                         await _appSubscriptionEntityMappingRepository.AddOrUpdateAsync(appSubscriptionIndex);
-                        _logger.LogInformation("[AppInfoSyncWorker] Sync app {0} pendingVersion: {1}.",
+                        _logger.LogInformation("[AppInfoSyncWorker] App {0} pendingVersion: {1} Synchronized.",
                             appSubscriptionIndex.AppId, pendingVersion);
                     }
                 }
