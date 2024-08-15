@@ -82,6 +82,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.UpdateTime)));
         CreateMap<CreateAppDto, AppState>();
         CreateMap<AppState, AppCreateEto>();
+        CreateMap<AppState, AppUpdateEto>();
         CreateMap<OrganizationUnit, OrganizationUnitDto>();
         CreateMap<AppVersionInfo, AppVersion>();
 
@@ -103,5 +104,9 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         
         CreateMap<AppCreateEto, AppInfoIndex>();
         CreateMap<AppCreateEto, AppLimitInfoIndex>();
+        CreateMap<SubscriptionManifest, SubscriptionManifestInfo>();
+        CreateMap<Subscription, SubscriptionInfo>();
+        CreateMap<TransactionCondition, TransactionConditionInfo>();
+        CreateMap<LogEventCondition, LogEventConditionInfo>();
     }
 }

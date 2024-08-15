@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
 using AeFinder.App.Es;
+using AeFinder.Apps.Eto;
 using AeFinder.BlockScan;
 using AeFinder.CodeOps;
 using AeFinder.Grains;
@@ -15,6 +16,7 @@ using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Subscriptions;
 
@@ -27,13 +29,16 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     private readonly IAppDeployManager _appDeployManager;
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _subscriptionIndexRepository;
+    private readonly IDistributedEventBus _distributedEventBus;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
         IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions,
-        IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository)
+        IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository,
+        IDistributedEventBus distributedEventBus)
     {
         _clusterClient = clusterClient;
         _codeAuditor = codeAuditor;
+        _distributedEventBus = distributedEventBus;
         _appDeployManager = appDeployManager;
         _subscriptionIndexRepository = subscriptionIndexRepository;
         _appDeployOptions = appDeployOptions.Value;
@@ -50,6 +55,12 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         var addResult = await appSubscriptionGrain.AddSubscriptionAsync(subscription, code);
         
         var rulePath = await _appDeployManager.CreateNewAppAsync(appId, addResult.NewVersion, _appDeployOptions.AppImageName);
+        _distributedEventBus.PublishAsync(new AppPodUpdateEto()
+        {
+            AppId = appId,
+            Version = addResult.NewVersion,
+            DockerImage = _appDeployOptions.AppImageName
+        });
         Logger.LogInformation("App deployed. AppId: {appId}, Version: {version}, RulePath: {rulePath}", appId, addResult.NewVersion, rulePath);
         return addResult.NewVersion;
     }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Kubernetes;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Controllers;
 
@@ -91,7 +93,8 @@ public class AppController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<AppResourceLimitDto> SetAppResourceLimitAsync(string appId,SetAppResourceLimitDto dto)
     {
-        return await _appService.SetAppResourceLimitAsync(appId, dto);
+        var appResourceLimitDto = await _appService.SetAppResourceLimitAsync(appId, dto);
+        return appResourceLimitDto;
     }
     
     [HttpGet]

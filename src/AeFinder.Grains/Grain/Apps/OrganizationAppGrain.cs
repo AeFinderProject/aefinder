@@ -23,6 +23,7 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
         await ReadStateAsync();
         State.OrganizationId = this.GetPrimaryKeyString();
         State.OrganizationName = organizationName;
+        await WriteStateAsync();
         
         //Publish organization create eto to background worker
         await _distributedEventBus.PublishAsync(new OrganizationCreateEto()
@@ -31,8 +32,6 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
             OrganizationName = State.OrganizationName,
             MaxAppCount = await GetMaxAppCountAsync()
         });
-        
-        await WriteStateAsync();
     }
 
     public async Task AddAppAsync(string appId)
@@ -67,5 +66,12 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
         
         State.MaxAppCount = maxAppCount;
         await WriteStateAsync();
+        
+        //Publish organization max app count update eto to background worker
+        await _distributedEventBus.PublishAsync(new MaxAppCountUpdateEto()
+        {
+            OrganizationId = State.OrganizationId,
+            MaxAppCount = State.MaxAppCount
+        });
     }
 }

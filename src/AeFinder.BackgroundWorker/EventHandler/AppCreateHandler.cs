@@ -15,18 +15,16 @@ public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCrea
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitInfoEntityMappingRepository;
     private readonly IOrganizationAppService _organizationAppService;
-    private readonly IAppResourceLimitProvider _appResourceLimitProvider;
 
     public AppCreateHandler(IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitInfoEntityMappingRepository,
-        IOrganizationAppService organizationAppService, IAppResourceLimitProvider appResourceLimitProvider)
+        IOrganizationAppService organizationAppService)
     {
         _organizationEntityMappingRepository = organizationEntityMappingRepository;
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
         _appLimitInfoEntityMappingRepository = appLimitInfoEntityMappingRepository;
         _organizationAppService = organizationAppService;
-        _appResourceLimitProvider = appResourceLimitProvider;
     }
 
     public async Task HandleEventAsync(AppCreateEto eventData)
@@ -35,7 +33,7 @@ public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCrea
         var organizationIndex = await _organizationEntityMappingRepository.GetAsync(eventData.OrganizationId);
         if (organizationIndex == null || organizationIndex.OrganizationId.IsNullOrEmpty())
         {
-            Logger.LogError($"Organization {eventData.OrganizationId} info is missing.");
+            Logger.LogError($"[AppCreateHandler]Organization {eventData.OrganizationId} info is missing.");
             organizationIndex = new OrganizationIndex();
             organizationIndex.OrganizationId = eventData.OrganizationId;
             Guid organizationUnitGuid;
@@ -68,19 +66,14 @@ public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCrea
         //Add app resource limit info index
         var appLimitInfoIndex = ObjectMapper.Map<AppCreateEto, AppLimitInfoIndex>(eventData);
         appLimitInfoIndex.OrganizationName = organizationIndex.OrganizationName;
-        var appResourceLimitDto = await _appResourceLimitProvider.GetAppResourceLimitAsync(eventData.AppId);
-        appLimitInfoIndex.ResourceLimit = new ResourceLimitInfo();
-        appLimitInfoIndex.ResourceLimit.AppFullPodRequestCpuCore = appResourceLimitDto.AppFullPodRequestCpuCore;
-        appLimitInfoIndex.ResourceLimit.AppFullPodRequestMemory = appResourceLimitDto.AppFullPodRequestMemory;
-        appLimitInfoIndex.ResourceLimit.AppQueryPodRequestCpuCore = appResourceLimitDto.AppQueryPodRequestCpuCore;
-        appLimitInfoIndex.ResourceLimit.AppQueryPodRequestMemory = appResourceLimitDto.AppQueryPodRequestMemory;
-        appLimitInfoIndex.ResourceLimit.AppPodReplicas = appResourceLimitDto.AppPodReplicas;
-        appLimitInfoIndex.OperationLimit = new OperationLimitInfo();
-        appLimitInfoIndex.OperationLimit.MaxEntityCallCount = appResourceLimitDto.MaxEntityCallCount;
-        appLimitInfoIndex.OperationLimit.MaxEntitySize = appResourceLimitDto.MaxEntitySize;
-        appLimitInfoIndex.OperationLimit.MaxLogCallCount = appResourceLimitDto.MaxLogCallCount;
-        appLimitInfoIndex.OperationLimit.MaxLogSize = appResourceLimitDto.MaxLogSize;
-        appLimitInfoIndex.OperationLimit.MaxContractCallCount = appResourceLimitDto.MaxContractCallCount;
+        var appLimitInfo = await _appLimitInfoEntityMappingRepository.GetAsync(eventData.AppId);
+        if (appLimitInfo != null && appLimitInfo.OperationLimit != null &&
+            appLimitInfo.OperationLimit.MaxEntityCallCount > 0)
+        {
+            appLimitInfoIndex.OperationLimit = appLimitInfo.OperationLimit;
+            appLimitInfoIndex.ResourceLimit = appLimitInfo.ResourceLimit;
+        }
+        
         await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
     }
 }

@@ -2,12 +2,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.Apps.Eto;
 using AeFinder.Models;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nito.AsyncEx;
 using Volo.Abp;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Controllers;
 
@@ -18,19 +20,31 @@ public class AppDeployController : AeFinderController
 {
     private readonly IAppDeployManager _appDeployManager;
     private readonly IAppService _appService;
+    private readonly IDistributedEventBus _distributedEventBus;
 
-    public AppDeployController(IAppDeployManager appDeployManager, IAppService appService)
+    public AppDeployController(IAppDeployManager appDeployManager, IDistributedEventBus distributedEventBus, IAppService appService)
     {
         _appDeployManager = appDeployManager;
+        _distributedEventBus = distributedEventBus;
         _appService = appService;
     }
-    
+
     [HttpPost]
     [Route("deploy")]
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<string> CreateNewAppAsync(CreateNewAppInput input)
     {
-        return await _appDeployManager.CreateNewAppAsync(input.AppId, input.Version, input.ImageName);
+
+        var graphqlUrl = await _appDeployManager.CreateNewAppAsync(input.AppId, input.Version, input.ImageName);
+        
+        //Publish app pod update eto to background worker
+        _distributedEventBus.PublishAsync(new AppPodUpdateEto()
+        {
+            AppId = input.AppId,
+            Version = input.Version,
+            DockerImage = input.ImageName
+        });
+        return graphqlUrl;
     }
     
     [HttpPost]
