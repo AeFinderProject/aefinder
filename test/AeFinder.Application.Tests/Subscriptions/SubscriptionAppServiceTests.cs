@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.App.Es;
 using AeFinder.Apps;
 using AeFinder.BlockScan;
+using AElf.EntityMapping.Repositories;
 using Shouldly;
 using Volo.Abp.Validation;
 using Xunit;
@@ -12,11 +15,13 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
 {
     private readonly ISubscriptionAppService _subscriptionAppService;
     private readonly IAppService _appService;
+    private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _subscriptionIndexRepository;
 
     public SubscriptionAppServiceTests()
     {
         _subscriptionAppService = GetRequiredService<ISubscriptionAppService>();
         _appService = GetRequiredService<IAppService>();
+        _subscriptionIndexRepository = GetRequiredService<IEntityMappingRepository<AppSubscriptionIndex, string>>();
     }
 
     [Fact]
@@ -282,5 +287,128 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
         subscription3.CurrentVersion.SubscriptionManifest.SubscriptionItems.Count.ShouldBe(1);
         subscription3.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].Transactions[0].MethodNames.Count.ShouldBe(3);
         subscription3.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].LogEvents[0].EventNames.Count.ShouldBe(4);
+    }
+
+    [Fact]
+    public async Task SubscriptionIndex_Test()
+    {
+        await _subscriptionIndexRepository.AddAsync(new AppSubscriptionIndex
+        {
+            AppId = "AppId",
+            Version = "Version1",
+            SubscriptionStatus = SubscriptionStatus.Initialized,
+            SubscriptionManifest = new SubscriptionManifestInfo
+            {
+                SubscriptionItems = new List<SubscriptionInfo>()
+                {
+                    new SubscriptionInfo()
+                    {
+                        ChainId = "AELF",
+                        OnlyConfirmed = true,
+                        StartBlockNumber = 999,
+                        TransactionConditions = new List<TransactionConditionInfo>()
+                        {
+                            new TransactionConditionInfo()
+                            {
+                                To = "ToAddress",
+                                MethodNames = new List<string>()
+                                {
+                                    "Method1"
+                                }
+                            }
+                        },
+                        LogEventConditions = new List<LogEventConditionInfo>()
+                        {
+                            new LogEventConditionInfo()
+                            {
+                                ContractAddress = "TokenAddress1",
+                                EventNames = new List<string>()
+                                {
+                                    "Transfer"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        await _subscriptionIndexRepository.AddAsync(new AppSubscriptionIndex
+        {
+            AppId = "AppId",
+            Version = "Version2",
+            SubscriptionStatus = SubscriptionStatus.Paused,
+            SubscriptionManifest = new SubscriptionManifestInfo
+            {
+                SubscriptionItems = new List<SubscriptionInfo>()
+                {
+                    new SubscriptionInfo()
+                    {
+                        ChainId = "tDVV",
+                        OnlyConfirmed = false,
+                        StartBlockNumber = 10,
+                        TransactionConditions = new List<TransactionConditionInfo>()
+                        {
+                            new TransactionConditionInfo()
+                            {
+                                To = "ToAddress",
+                                MethodNames = new List<string>()
+                                {
+                                    "Method"
+                                }
+                            },
+                            new TransactionConditionInfo()
+                            {
+                                To = "ToAddress2",
+                                MethodNames = new List<string>()
+                                {
+                                    "Method2"
+                                }
+                            }
+                        },
+                        LogEventConditions = new List<LogEventConditionInfo>()
+                        {
+                            new LogEventConditionInfo()
+                            {
+                                ContractAddress = "TokenAddress",
+                                EventNames = new List<string>()
+                                {
+                                    "Transfer"
+                                }
+                            },
+                            new LogEventConditionInfo()
+                            {
+                                ContractAddress = "TokenAddress2",
+                                EventNames = new List<string>()
+                                {
+                                    "Transfer"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        var subscription = await _subscriptionAppService.GetSubscriptionManifestIndexAsync("AppId");
+        subscription.Count.ShouldBe(2);
+        var subscriptionVersion1 = subscription.First(o => o.Version == "Version1");
+        subscriptionVersion1.AppId.ShouldBe("AppId");
+        subscriptionVersion1.SubscriptionStatus.ShouldBe(SubscriptionStatus.Initialized);
+        subscriptionVersion1.SubscriptionManifest.SubscriptionItems.Count().ShouldBe(1);
+        subscriptionVersion1.SubscriptionManifest.SubscriptionItems[0].ChainId.ShouldBe("AELF");
+        subscriptionVersion1.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(999);
+        subscriptionVersion1.SubscriptionManifest.SubscriptionItems[0].OnlyConfirmed.ShouldBeTrue();
+        subscriptionVersion1.SubscriptionManifest.SubscriptionItems[0].LogEvents.Count().ShouldBe(1);
+        subscriptionVersion1.SubscriptionManifest.SubscriptionItems[0].Transactions.Count().ShouldBe(1);
+        var subscriptionVersion2 = subscription.First(o => o.Version == "Version2");
+        subscriptionVersion2.AppId.ShouldBe("AppId");
+        subscriptionVersion2.SubscriptionStatus.ShouldBe(SubscriptionStatus.Paused);
+        subscriptionVersion2.SubscriptionManifest.SubscriptionItems.Count().ShouldBe(1);
+        subscriptionVersion2.SubscriptionManifest.SubscriptionItems[0].ChainId.ShouldBe("tDVV");
+        subscriptionVersion2.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(10);
+        subscriptionVersion2.SubscriptionManifest.SubscriptionItems[0].OnlyConfirmed.ShouldBeFalse();
+        subscriptionVersion2.SubscriptionManifest.SubscriptionItems[0].LogEvents.Count().ShouldBe(2);
+        subscriptionVersion2.SubscriptionManifest.SubscriptionItems[0].Transactions.Count().ShouldBe(2);
     }
 }

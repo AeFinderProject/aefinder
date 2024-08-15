@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
 using AeFinder.Models;
@@ -52,6 +53,14 @@ public class SubscriptionController : AeFinderController
     public async Task<AllSubscriptionDto> GetSubscriptionAsync()
     {
         return await _subscriptionAppService.GetSubscriptionManifestAsync(ClientId);
+    }
+    
+    [HttpGet]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    [Route("manifest/{appId}")]
+    public async Task<List<SubscriptionIndexDto>> GetSubscriptionManifestIndexAsync(string appId)
+    {
+        return await _subscriptionAppService.GetSubscriptionManifestIndexAsync(appId);
     }
 
     private void CheckFile(IFormFile file)

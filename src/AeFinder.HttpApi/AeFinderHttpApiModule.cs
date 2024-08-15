@@ -4,6 +4,7 @@ using Localization.Resources.AbpUi;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.Account;
 using Volo.Abp.AspNetCore.SignalR;
+using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
 using Volo.Abp.Localization;
@@ -34,6 +35,8 @@ public class AeFinderHttpApiModule : AbpModule
         {
             options.Conventions.Add(new ApplicationDescription());
         });
+        
+        Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AeFinderHttpApiModule>(); });
     }
 
     private void ConfigureLocalization()

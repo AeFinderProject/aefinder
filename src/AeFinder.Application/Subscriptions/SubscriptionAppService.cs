@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
+using AeFinder.App.Es;
 using AeFinder.Apps.Eto;
 using AeFinder.BlockScan;
 using AeFinder.CodeOps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using AElf.EntityMapping.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -26,16 +28,19 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     private readonly ICodeAuditor _codeAuditor;
     private readonly IAppDeployManager _appDeployManager;
     private readonly AppDeployOptions _appDeployOptions;
+    private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _subscriptionIndexRepository;
     private readonly IDistributedEventBus _distributedEventBus;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
-        IDistributedEventBus distributedEventBus,
-        IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions)
+        IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions,
+        IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository,
+        IDistributedEventBus distributedEventBus)
     {
         _clusterClient = clusterClient;
         _codeAuditor = codeAuditor;
         _distributedEventBus = distributedEventBus;
         _appDeployManager = appDeployManager;
+        _subscriptionIndexRepository = subscriptionIndexRepository;
         _appDeployOptions = appDeployOptions.Value;
     }
 
@@ -90,6 +95,13 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
             _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var allSubscription = await clientGrain.GetAllSubscriptionAsync();
         return ObjectMapper.Map<AllSubscription, AllSubscriptionDto>(allSubscription);
+    }
+    
+    public async Task<List<SubscriptionIndexDto>> GetSubscriptionManifestIndexAsync(string appId)
+    {
+        var queryable = await _subscriptionIndexRepository.GetQueryableAsync();
+        var subscriptions = queryable.Where(o => o.AppId == appId).ToList();
+        return ObjectMapper.Map<List<AppSubscriptionIndex>, List<SubscriptionIndexDto>>(subscriptions);
     }
 
     private async Task CheckAppExistAsync(string appId)
