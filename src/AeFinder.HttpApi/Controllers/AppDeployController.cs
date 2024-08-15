@@ -16,12 +16,10 @@ namespace AeFinder.Controllers;
 public class AppDeployController : AeFinderController
 {
     private readonly IAppDeployManager _appDeployManager;
-    private readonly IDistributedEventBus _distributedEventBus;
 
-    public AppDeployController(IAppDeployManager appDeployManager, IDistributedEventBus distributedEventBus)
+    public AppDeployController(IAppDeployManager appDeployManager)
     {
         _appDeployManager = appDeployManager;
-        _distributedEventBus = distributedEventBus;
     }
 
     [HttpPost]
@@ -29,16 +27,7 @@ public class AppDeployController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<string> CreateNewAppAsync(CreateNewAppInput input)
     {
-
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(input.AppId, input.Version, input.ImageName);
-        
-        //Publish app pod update eto to background worker
-        _distributedEventBus.PublishAsync(new AppPodUpdateEto()
-        {
-            AppId = input.AppId,
-            Version = input.Version,
-            DockerImage = input.ImageName
-        });
         return graphqlUrl;
     }
 
