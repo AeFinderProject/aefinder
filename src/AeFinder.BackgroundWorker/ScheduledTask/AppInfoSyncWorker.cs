@@ -85,8 +85,7 @@ public class AppInfoSyncWorker : PeriodicBackgroundWorkerBase, ISingletonDepende
 
             var organizationGrainId = GetOrganizationGrainId(organizationUnitDto.Id);
             var organizationAppGrain =
-                _clusterClient.GetGrain<IOrganizationAppGrain>(
-                    GrainIdHelper.GenerateOrganizationAppGrainId(organizationId));
+                _clusterClient.GetGrain<IOrganizationAppGrain>(organizationGrainId);
             var appIds = await organizationAppGrain.GetAppsAsync();
             if (organizationIndex.OrganizationName.IsNullOrEmpty())
             {
