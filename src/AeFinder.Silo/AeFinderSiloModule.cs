@@ -1,5 +1,6 @@
 using AeFinder.Grains;
 using AeFinder.MongoDb;
+using AElf.OpenTelemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Providers.MongoDB.StorageProviders.Serializers;
@@ -19,7 +20,8 @@ namespace AeFinder.Silo;
     typeof(AeFinderApplicationModule),
     typeof(AbpEventBusRabbitMqModule),
     typeof(AeFinderGrainsModule),
-    typeof(AbpCachingStackExchangeRedisModule))]
+    typeof(AbpCachingStackExchangeRedisModule),
+    typeof(OpenTelemetryModule))]
 public class AeFinderOrleansSiloModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

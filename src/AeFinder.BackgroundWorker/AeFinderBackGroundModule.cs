@@ -3,6 +3,7 @@ using AeFinder.Apps;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.MongoDb;
+using AElf.OpenTelemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
@@ -21,7 +22,8 @@ namespace AeFinder.BackgroundWorker;
     typeof(AeFinderKubernetesModule),
     typeof(AbpEventBusRabbitMqModule),
     typeof(AeFinderMongoDbModule),
-    typeof(AeFinderApplicationModule))]
+    typeof(AeFinderApplicationModule),
+    typeof(OpenTelemetryModule))]
 public class AeFinderBackGroundModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

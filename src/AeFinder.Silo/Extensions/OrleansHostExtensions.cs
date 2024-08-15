@@ -18,7 +18,7 @@ namespace AeFinder.Silo.Extensions;
 
 public static class OrleansHostExtensions
 {
-    public static IHostBuilder UseOrleansSnapshot(this IHostBuilder hostBuilder)
+    public static IHostBuilder UseOrleans(this IHostBuilder hostBuilder)
     {
         return hostBuilder.UseOrleans((context, siloBuilder) =>
         {
@@ -126,6 +126,7 @@ public static class OrleansHostExtensions
                     options.CounterUpdateIntervalMs = configSection.GetValue<int>("DashboardCounterUpdateIntervalMs");
                 })
                 .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); })
+                .AddActivityPropagation()
                 .AddKafka(AeFinderApplicationConsts.MessageStreamName)
                 .WithOptions(options =>
                 {
