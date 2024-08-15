@@ -4,6 +4,7 @@ namespace AeFinder.Grains.Grain.Apps;
 
 public interface IOrganizationAppGrain : IGrainWithStringKey
 {
+    Task AddOrganizationAsync(string organizationName);
     Task AddAppAsync(string appId);
     Task<HashSet<string>> GetAppsAsync();
     Task<int> GetMaxAppCountAsync();

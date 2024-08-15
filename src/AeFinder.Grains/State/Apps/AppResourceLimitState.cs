@@ -13,4 +13,5 @@ public class AppResourceLimitState
     [Id(6)] public string AppFullPodRequestMemory { get; set; }
     [Id(7)] public string AppQueryPodRequestCpuCore { get; set; }
     [Id(8)] public string AppQueryPodRequestMemory { get; set; }
+    [Id(9)] public int AppPodReplicas { get; set; }
 }

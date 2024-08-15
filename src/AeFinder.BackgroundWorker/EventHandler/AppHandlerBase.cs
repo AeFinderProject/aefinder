@@ -5,6 +5,7 @@ using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.BackgroundWorker.EventHandler;
 
@@ -15,6 +16,8 @@ public abstract class AppHandlerBase
     protected IClusterClient ClusterClient => LazyServiceProvider.LazyGetRequiredService<IClusterClient>();
 
     protected ILogger<AppHandlerBase> Logger => LazyServiceProvider.LazyGetService<ILogger<AppHandlerBase>>();
+
+    protected IObjectMapper ObjectMapper => LazyServiceProvider.LazyGetRequiredService<IObjectMapper>();
 
     protected async Task ClearStoppedVersionAppDataAsync(string appId, string version,
         List<string> chainIds)

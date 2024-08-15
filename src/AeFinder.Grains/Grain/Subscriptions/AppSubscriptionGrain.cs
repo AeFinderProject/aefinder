@@ -31,9 +31,10 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
 
         await ReadStateAsync();
         await BeginChangingStateAsync();
-        
-        
 
+        var appSubscriptionCreateEto = new AppSubscriptionCreateEto();
+        appSubscriptionCreateEto.AppId = this.GetPrimaryKeyString();
+        
         if (State.CurrentVersion == null)
         {
             State.CurrentVersion = newVersion;
@@ -42,8 +43,9 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
                 CurrentVersion = newVersion,
                 AppId = this.GetPrimaryKeyString()
             });
-            
             await GrainFactory.GetGrain<IAppGrain>(this.GetPrimaryKeyString()).SetStatusAsync(AppStatus.Deployed);
+            
+            appSubscriptionCreateEto.CurrentVersion = State.CurrentVersion;
         }
         else
         {
@@ -56,6 +58,7 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             }
 
             State.PendingVersion = newVersion;
+            appSubscriptionCreateEto.PendingVersion = State.PendingVersion;
         }
         
         State.SubscriptionInfos[newVersion] = new SubscriptionInfo
@@ -67,6 +70,10 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         await UpdateCodeAsync(newVersion, code);
         await WriteStateAsync();
         addSubscriptionDto.NewVersion = newVersion;
+        
+        //Publish app subscription create eto to background worker
+        await _distributedEventBus.PublishAsync(appSubscriptionCreateEto);
+        
         return addSubscriptionDto;
     }
 
@@ -79,6 +86,13 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
 
         State.SubscriptionInfos[version].SubscriptionManifest = subscriptionManifest;
         await WriteStateAsync();
+        
+        //Publish app subscription update eto to background worker
+        await _distributedEventBus.PublishAsync(new AppSubscriptionUpdateEto()
+        {
+            AppId = this.GetPrimaryKeyString(),
+            Version = version
+        });
     }
 
     public async Task<SubscriptionManifest> GetSubscriptionAsync(string version)
@@ -162,7 +176,7 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         {
             return;
         }
-
+        
         if (State.CurrentVersion != null)
         {
             await StopBlockPushAsync(State.CurrentVersion);
@@ -177,7 +191,6 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             });
             
             State.SubscriptionInfos.Remove(State.CurrentVersion);
-            
         }
         
         _logger.LogInformation("Upgrade CurrentVersion from {currentVersion} to {pendingVersion}", State.CurrentVersion,
@@ -213,6 +226,13 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         await ReadStateAsync();
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Paused;
         await WriteStateAsync();
+        
+        //Publish app subscription update eto to background worker
+        await _distributedEventBus.PublishAsync(new AppSubscriptionUpdateEto()
+        {
+            AppId = this.GetPrimaryKeyString(),
+            Version = version
+        });
     }
 
     public async Task StopAsync(string version)

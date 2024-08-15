@@ -84,6 +84,11 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider
             resourceLimitDto.AppQueryPodRequestMemory = _kubernetesOptions.AppQueryPodRequestMemory;
         }
 
+        if (resourceLimitDto.AppPodReplicas <= 0)
+        {
+            resourceLimitDto.AppPodReplicas = _kubernetesOptions.AppPodReplicas;
+        }
+
         return resourceLimitDto;
     }
 }

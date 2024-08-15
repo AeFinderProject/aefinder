@@ -29,6 +29,7 @@ using Volo.Abp.Auditing;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
+using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
@@ -45,6 +46,7 @@ namespace AeFinder;
     typeof(AeFinderApplicationModule),
     typeof(AeFinderMongoDbModule),
     typeof(AbpAspNetCoreSerilogModule),
+    typeof(AbpEventBusRabbitMqModule),
     typeof(AeFinderKubernetesModule),
     typeof(AeFinderLoggerModule),
     typeof(AbpSwashbuckleModule)

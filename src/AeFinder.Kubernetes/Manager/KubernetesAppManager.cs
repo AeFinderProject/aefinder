@@ -197,7 +197,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var containerName =
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeQuery);
         var targetPort = KubernetesConstants.AppContainerTargetPort;
-        var replicasCount = _kubernetesOptions.AppPodReplicas;
+        var replicasCount = resourceLimitInfo.AppPodReplicas;
         var requestCpuCore = resourceLimitInfo.AppQueryPodRequestCpuCore;
         var requestMemory = resourceLimitInfo.AppQueryPodRequestMemory;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);

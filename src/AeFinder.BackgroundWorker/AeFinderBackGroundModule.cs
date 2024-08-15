@@ -42,6 +42,7 @@ public class AeFinderBackGroundModule : AbpModule
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
         ConfigureMongoDbService(configuration, context);
+        context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
     }
     
     //Disable TokenCleanupBackgroundWorker
@@ -71,6 +72,7 @@ public class AeFinderBackGroundModule : AbpModule
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppDataClearWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppInfoSyncWorker>());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
