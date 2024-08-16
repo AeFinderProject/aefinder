@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AeFinder.App.Es;
 using AeFinder.AppResources;
@@ -103,10 +104,16 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppResourceLimitState, AppResourceLimitDto>();
         
         CreateMap<AppCreateEto, AppInfoIndex>();
-        CreateMap<AppCreateEto, AppLimitInfoIndex>();
+        CreateMap<AppDto, AppInfoIndex>()
+            .ForMember(destination => destination.CreateTime,
+                opt => opt.MapFrom(source => DateTimeOffset.FromUnixTimeMilliseconds(source.CreateTime).UtcDateTime))
+            .ForMember(destination => destination.UpdateTime,
+                opt => opt.MapFrom(source => DateTimeOffset.FromUnixTimeMilliseconds(source.UpdateTime).UtcDateTime));
+        CreateMap<AppVersion, AppVersionInfo>();
         CreateMap<SubscriptionManifest, SubscriptionManifestInfo>();
         CreateMap<Subscription, SubscriptionInfo>();
         CreateMap<TransactionCondition, TransactionConditionInfo>();
         CreateMap<LogEventCondition, LogEventConditionInfo>();
+        CreateMap<AppResourceLimitDto, AppLimitUpdateEto>();
     }
 }

@@ -77,6 +77,11 @@ public static class GrainIdHelper
         return GenerateGrainId(organizationId);
     }
     
+    public static string GenerateOrganizationAppGrainId(Guid orgId)
+    {
+        return GenerateGrainId(orgId.ToString("N"));
+    }
+    
     public static string GenerateAppBlockStateChangeGrainId(string appId, string version, string chainId, long blockHeight)
     {
         return GenerateGrainId(appId, version, chainId, blockHeight);
