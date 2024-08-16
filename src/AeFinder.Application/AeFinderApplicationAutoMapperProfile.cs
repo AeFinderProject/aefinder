@@ -109,6 +109,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
                 opt => opt.MapFrom(source => DateTimeOffset.FromUnixTimeMilliseconds(source.CreateTime).UtcDateTime))
             .ForMember(destination => destination.UpdateTime,
                 opt => opt.MapFrom(source => DateTimeOffset.FromUnixTimeMilliseconds(source.UpdateTime).UtcDateTime));
+        CreateMap<AppVersion, AppVersionInfo>();
         CreateMap<SubscriptionManifest, SubscriptionManifestInfo>();
         CreateMap<Subscription, SubscriptionInfo>();
         CreateMap<TransactionCondition, TransactionConditionInfo>();
