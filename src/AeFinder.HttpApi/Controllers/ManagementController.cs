@@ -32,7 +32,7 @@ public class ManagementController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<AppDto> GetAsync(string appId)
     {
-        return await _appService.GetAsync(appId);
+        return await _appService.GetIndexAsync(appId);
     }
 
     [HttpGet]
