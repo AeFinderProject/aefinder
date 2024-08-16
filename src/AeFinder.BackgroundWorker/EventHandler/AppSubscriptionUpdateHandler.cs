@@ -23,15 +23,9 @@ public class AppSubscriptionUpdateHandler: AppHandlerBase, IDistributedEventHand
 
     public async Task HandleEventAsync(AppSubscriptionUpdateEto eventData)
     {
-        var appSubscriptionIndex = await _appSubscriptionEntityMappingRepository.GetAsync(eventData.Version);
-        if (appSubscriptionIndex == null)
-        {
-            Logger.LogError(
-                $"[AppSubscriptionUpdateHandler]App {eventData.AppId} Version {eventData.Version} info is missing.");
-            appSubscriptionIndex = new AppSubscriptionIndex();
-            appSubscriptionIndex.AppId = eventData.AppId;
-            appSubscriptionIndex.Version = eventData.Version;
-        }
+        var appSubscriptionIndex = new AppSubscriptionIndex();
+        appSubscriptionIndex.AppId = eventData.AppId;
+        appSubscriptionIndex.Version = eventData.Version;
 
         var appSubscriptionGrain =
             _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));

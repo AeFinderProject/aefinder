@@ -17,18 +17,10 @@ public class OrganizationCreateHandler: IDistributedEventHandler<OrganizationCre
     
     public async Task HandleEventAsync(OrganizationCreateEto eventData)
     {
-        var organizationIndex = await _entityMappingRepository.GetAsync(eventData.OrganizationId);
-        if (organizationIndex == null || organizationIndex.OrganizationId.IsNullOrEmpty())
-        {
-            organizationIndex = new OrganizationIndex();
-        }
-        else
-        {
-            return;
-        }
+        var organizationIndex = new OrganizationIndex();
         organizationIndex.OrganizationId = eventData.OrganizationId;
         organizationIndex.OrganizationName = eventData.OrganizationName;
         organizationIndex.MaxAppCount = eventData.MaxAppCount;
-        await _entityMappingRepository.AddAsync(organizationIndex);
+        await _entityMappingRepository.AddOrUpdateAsync(organizationIndex);
     }
 }

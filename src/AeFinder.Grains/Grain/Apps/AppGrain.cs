@@ -78,4 +78,9 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         
         return _objectMapper.Map<AppState, AppDto>(State);
     }
+
+    public async Task<string> GetOrganizationIdAsync()
+    {
+        return State.OrganizationId;
+    }
 }
