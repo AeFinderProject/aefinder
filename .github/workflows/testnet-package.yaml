@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: ['release/*'] # if you want to trigger the Github Action on another branch add or change this
+    branches: ['release/*','feature/integrate-opentelemetry'] # if you want to trigger the Github Action on another branch add or change this
 env:
   DOTNET_INSTALL_DIR: "./.dotnet"
 
