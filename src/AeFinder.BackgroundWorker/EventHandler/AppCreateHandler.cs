@@ -1,6 +1,8 @@
 using AeFinder.App.Deploy;
 using AeFinder.App.Es;
 using AeFinder.Apps.Eto;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.User;
 using AElf.EntityMapping.Repositories;
 using Microsoft.Extensions.Logging;
@@ -11,16 +13,19 @@ namespace AeFinder.BackgroundWorker.EventHandler;
 
 public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCreateEto>, ITransientDependency
 {
+    private readonly IClusterClient _clusterClient;
     private readonly IEntityMappingRepository<OrganizationIndex, string> _organizationEntityMappingRepository;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitInfoEntityMappingRepository;
     private readonly IOrganizationAppService _organizationAppService;
 
-    public AppCreateHandler(IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
+    public AppCreateHandler(IClusterClient clusterClient,
+        IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitInfoEntityMappingRepository,
         IOrganizationAppService organizationAppService)
     {
+        _clusterClient = clusterClient;
         _organizationEntityMappingRepository = organizationEntityMappingRepository;
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
         _appLimitInfoEntityMappingRepository = appLimitInfoEntityMappingRepository;
@@ -30,50 +35,33 @@ public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCrea
     public async Task HandleEventAsync(AppCreateEto eventData)
     {
         //Update organization app ids
-        var organizationIndex = await _organizationEntityMappingRepository.GetAsync(eventData.OrganizationId);
-        if (organizationIndex == null || organizationIndex.OrganizationId.IsNullOrEmpty())
+        var organizationIndex = new OrganizationIndex();
+        organizationIndex.OrganizationId = eventData.OrganizationId;
+        Guid organizationUnitGuid;
+        if (!Guid.TryParse(eventData.OrganizationId, out organizationUnitGuid))
         {
-            Logger.LogError($"[AppCreateHandler]Organization {eventData.OrganizationId} info is missing.");
-            organizationIndex = new OrganizationIndex();
-            organizationIndex.OrganizationId = eventData.OrganizationId;
-            Guid organizationUnitGuid;
-            if (!Guid.TryParse(eventData.OrganizationId, out organizationUnitGuid))
-            {
-                throw new Exception($"Invalid OrganizationUnitId string: {eventData.OrganizationId}");
-            }
-
-            var organizationUnitDto= await _organizationAppService.GetOrganizationUnitAsync(organizationUnitGuid);
-            organizationIndex.OrganizationName = organizationUnitDto.DisplayName;
+            throw new Exception($"Invalid OrganizationUnitId string: {eventData.OrganizationId}");
         }
 
+        var organizationUnitDto = await _organizationAppService.GetOrganizationUnitAsync(organizationUnitGuid);
+        organizationIndex.OrganizationName = organizationUnitDto.DisplayName;
+
+        var orgId = GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id);
+        var organizationAppGrain =
+            _clusterClient.GetGrain<IOrganizationAppGrain>(orgId);
+        var maxAppCount = await organizationAppGrain.GetMaxAppCountAsync();
+        organizationIndex.MaxAppCount = maxAppCount;
+        var appIds = await organizationAppGrain.GetAppsAsync();
         if (organizationIndex.AppIds == null)
         {
             organizationIndex.AppIds = new List<string>();
         }
-
-        if (!organizationIndex.AppIds.Contains(eventData.AppId))
-        {
-            organizationIndex.AppIds.Add(eventData.AppId);
-        }
-
+        organizationIndex.AppIds = appIds.ToList();
         await _organizationEntityMappingRepository.AddOrUpdateAsync(organizationIndex);
 
         //Add app info index
         var appInfoIndex = ObjectMapper.Map<AppCreateEto, AppInfoIndex>(eventData);
         appInfoIndex.OrganizationName = organizationIndex.OrganizationName;
         await _appInfoEntityMappingRepository.AddOrUpdateAsync(appInfoIndex);
-        
-        //Add app resource limit info index
-        var appLimitInfoIndex = ObjectMapper.Map<AppCreateEto, AppLimitInfoIndex>(eventData);
-        appLimitInfoIndex.OrganizationName = organizationIndex.OrganizationName;
-        var appLimitInfo = await _appLimitInfoEntityMappingRepository.GetAsync(eventData.AppId);
-        if (appLimitInfo != null && appLimitInfo.OperationLimit != null &&
-            appLimitInfo.OperationLimit.MaxEntityCallCount > 0)
-        {
-            appLimitInfoIndex.OperationLimit = appLimitInfo.OperationLimit;
-            appLimitInfoIndex.ResourceLimit = appLimitInfo.ResourceLimit;
-        }
-        
-        await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
     }
 }
