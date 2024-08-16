@@ -29,16 +29,13 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     private readonly IAppDeployManager _appDeployManager;
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _subscriptionIndexRepository;
-    private readonly IDistributedEventBus _distributedEventBus;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
         IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions,
-        IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository,
-        IDistributedEventBus distributedEventBus)
+        IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository)
     {
         _clusterClient = clusterClient;
         _codeAuditor = codeAuditor;
-        _distributedEventBus = distributedEventBus;
         _appDeployManager = appDeployManager;
         _subscriptionIndexRepository = subscriptionIndexRepository;
         _appDeployOptions = appDeployOptions.Value;
