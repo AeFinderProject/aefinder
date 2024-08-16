@@ -65,7 +65,7 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
         var appBlockStateChangeGrainDeleteIdList =
             await _orleansDbClearService.QueryRecordIdsWithPrefixAsync(appBlockStateChangeGrainCollectionName, appBlockStateChangeGrainIdPrefix, limitCount);
         _logger.LogInformation(
-            $"[GrainDataClearWorker]Start clear AppBlockStateChangeGrain recordCount:{appBlockStateChangeGrainDeleteIdList.Count} CollectionName: {appBlockStateChangeGrainCollectionName} IdPrefix: {appBlockStateChangeGrainIdPrefix}");
+            $"[AppDataClearWorker]Start clear AppBlockStateChangeGrain recordCount:{appBlockStateChangeGrainDeleteIdList.Count} CollectionName: {appBlockStateChangeGrainCollectionName} IdPrefix: {appBlockStateChangeGrainIdPrefix}");
         
         var appBlockStateChangeGrainDeletedCount = 0L;
         if (appBlockStateChangeGrainDeleteIdList.Count > 0)
@@ -83,7 +83,7 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
             await _orleansDbClearService.QueryRecordIdsWithPrefixAsync(appStateGrainCollectionName, appStateGrainIdPrefix,
                 limitCount);
         _logger.LogInformation(
-            $"[GrainDataClearWorker]Start clear AppStateGrain recordCount:{appStateGrainDeleteIdList.Count} CollectionName: {appStateGrainCollectionName} IdPrefix: {appStateGrainIdPrefix}");
+            $"[AppDataClearWorker]Start clear AppStateGrain recordCount:{appStateGrainDeleteIdList.Count} CollectionName: {appStateGrainCollectionName} IdPrefix: {appStateGrainIdPrefix}");
         
         var appStateGrainDeletedCount = 0L;
         if (appStateGrainDeleteIdList.Count > 0)
@@ -96,7 +96,7 @@ public class AppDataClearWorker : PeriodicBackgroundWorkerBase, ISingletonDepend
         if (appBlockStateChangeGrainDeleteIdList.Count == 0 && appStateGrainDeleteIdList.Count == 0)
         {
             await appDataClearManagerGrain.RemoveVersionClearTaskAsync(version);
-            _logger.LogInformation($"[GrainDataClearWorker]Task {version} removed");
+            _logger.LogInformation($"[AppDataClearWorker]Task {version} removed");
             return;
         }
     }

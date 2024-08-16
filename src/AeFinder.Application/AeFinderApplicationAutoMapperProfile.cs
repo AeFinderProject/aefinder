@@ -113,5 +113,6 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<Subscription, SubscriptionInfo>();
         CreateMap<TransactionCondition, TransactionConditionInfo>();
         CreateMap<LogEventCondition, LogEventConditionInfo>();
+        CreateMap<AppResourceLimitDto, AppLimitUpdateEto>();
     }
 }
