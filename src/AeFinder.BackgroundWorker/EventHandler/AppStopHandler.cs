@@ -70,6 +70,8 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
         appInfoIndex.Versions = new AppVersionInfo();
         appInfoIndex.Versions.CurrentVersion = versions.CurrentVersion?.Version;
         appInfoIndex.Versions.PendingVersion = versions.PendingVersion?.Version;
+        Logger.LogInformation("[AppStopHandler] CurrentVersion: {0},PendingVersion: {1}, stopVersion: {2}",
+            appInfoIndex.Versions.CurrentVersion, appInfoIndex.Versions.PendingVersion, version);
         if (appInfoIndex.Versions.CurrentVersion == version)
         {
             appInfoIndex.Versions.CurrentVersion = null;
