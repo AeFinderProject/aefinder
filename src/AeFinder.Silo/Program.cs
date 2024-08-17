@@ -1,10 +1,9 @@
-﻿using AeFinder.Commons;
-using AeFinder.Grains.Grain.Blocks;
-using AeFinder.Silo.Extensions;
+﻿using AeFinder.Silo.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
+using Serilog.Sinks.OpenTelemetry;
 
 namespace AeFinder.Silo;
 
@@ -12,7 +11,22 @@ public class Program
 {
     public async static Task<int> Main(string[] args)
     {
-        Log.Logger = LogHelper.CreateLogger(LogEventLevel.Debug);
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Is(LogEventLevel.Debug)
+            .Enrich.FromLogContext()
+            .WriteTo.Async(c =>
+                c.Console(
+                    outputTemplate:
+                    "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}{Offset:zzz}][{Level:u3}] [{SourceContext}] {Message}{NewLine}{Exception}"))
+            .WriteTo.Async(c => c.File("Logs/log-.log", rollingInterval: RollingInterval.Day,
+                outputTemplate:
+                "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}{Offset:zzz}][{Level:u3}] [{SourceContext}] {Message}{NewLine}{Exception}"))
+#if DEBUG
+            .WriteTo.OpenTelemetry(
+                endpoint: "http://localhost:4316/v1/logs",
+                protocol: OtlpProtocol.HttpProtobuf)
+#endif
+            .CreateLogger();
 
         try
         {
@@ -36,7 +50,7 @@ public class Program
             .InitAppConfiguration(true)
             .UseApolloForHostBuilder()
             .ConfigureServices((hostcontext, services) => { services.AddApplication<AeFinderOrleansSiloModule>(); })
-            .UseOrleansSnapshot()
+            .UseOrleans()
             .UseAutofac()
             .UseSerilog();
 }

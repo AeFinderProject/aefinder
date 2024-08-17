@@ -1,6 +1,7 @@
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AElf.EntityMapping.Options;
+using AElf.OpenTelemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,8 @@ namespace AeFinder.EntityEventHandler;
     typeof(AeFinderEntityEventHandlerCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpEventBusRabbitMqModule),
-    typeof(AbpCachingStackExchangeRedisModule))]
+    typeof(AbpCachingStackExchangeRedisModule),
+    typeof(OpenTelemetryModule))]
 public class AeFinderEntityEventHandlerModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

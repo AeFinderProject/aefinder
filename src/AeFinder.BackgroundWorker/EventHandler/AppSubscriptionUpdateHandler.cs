@@ -11,13 +11,11 @@ namespace AeFinder.BackgroundWorker.EventHandler;
 
 public class AppSubscriptionUpdateHandler: AppHandlerBase, IDistributedEventHandler<AppSubscriptionUpdateEto>, ITransientDependency
 {
-    private readonly IClusterClient _clusterClient;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _appSubscriptionEntityMappingRepository;
     
-    public AppSubscriptionUpdateHandler(IClusterClient clusterClient,
+    public AppSubscriptionUpdateHandler(
         IEntityMappingRepository<AppSubscriptionIndex, string> appSubscriptionEntityMappingRepository)
     {
-        _clusterClient = clusterClient;
         _appSubscriptionEntityMappingRepository = appSubscriptionEntityMappingRepository;
     }
 
@@ -28,7 +26,7 @@ public class AppSubscriptionUpdateHandler: AppHandlerBase, IDistributedEventHand
         appSubscriptionIndex.Version = eventData.Version;
 
         var appSubscriptionGrain =
-            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
+            ClusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
         var subscriptionManifest = await appSubscriptionGrain.GetSubscriptionAsync(eventData.Version);
         var subscriptionStatus = await appSubscriptionGrain.GetSubscriptionStatusAsync(eventData.Version);
         var subscriptionManifestInfo =
