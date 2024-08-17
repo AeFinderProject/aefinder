@@ -1,17 +1,37 @@
 using AeFinder.Grains.State.Apps;
+using AeFinder.User.Eto;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Grains.Grain.Apps;
 
 public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrganizationAppGrain
 {
+    private readonly IDistributedEventBus _distributedEventBus;
     private readonly AppSettingOptions _appSettingOptions;
 
-    public OrganizationAppGrain(IOptionsSnapshot<AppSettingOptions> appSettingOptions)
+    public OrganizationAppGrain(IDistributedEventBus distributedEventBus, IOptionsSnapshot<AppSettingOptions> appSettingOptions)
     {
+        _distributedEventBus = distributedEventBus;
         _appSettingOptions = appSettingOptions.Value;
+    }
+
+    public async Task AddOrganizationAsync(string organizationName)
+    {
+        await ReadStateAsync();
+        State.OrganizationId = this.GetPrimaryKeyString();
+        State.OrganizationName = organizationName;
+        await WriteStateAsync();
+        
+        //Publish organization create eto to background worker
+        await _distributedEventBus.PublishAsync(new OrganizationCreateEto()
+        {
+            OrganizationId = State.OrganizationId,
+            OrganizationName = State.OrganizationName,
+            MaxAppCount = await GetMaxAppCountAsync()
+        });
     }
 
     public async Task AddAppAsync(string appId)
@@ -24,6 +44,7 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
         }
 
         State.AppIds.Add(appId);
+
         await WriteStateAsync();
     }
 
@@ -45,5 +66,12 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
         
         State.MaxAppCount = maxAppCount;
         await WriteStateAsync();
+        
+        //Publish organization max app count update eto to background worker
+        await _distributedEventBus.PublishAsync(new MaxAppCountUpdateEto()
+        {
+            OrganizationId = State.OrganizationId,
+            MaxAppCount = State.MaxAppCount
+        });
     }
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AeFinder.App.Deploy;
+using AeFinder.Apps.Eto;
 using AeFinder.Kubernetes.Adapter;
 using AeFinder.Kubernetes.ResourceDefinition;
 using AeFinder.Logger;
@@ -9,6 +10,7 @@ using k8s.Autorest;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Kubernetes.Manager;
 
@@ -19,16 +21,19 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
     private readonly ILogger<KubernetesAppManager> _logger;
     private readonly IKubernetesClientAdapter _kubernetesClientAdapter;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
+    private readonly IDistributedEventBus _distributedEventBus;
 
     public KubernetesAppManager(ILogger<KubernetesAppManager> logger,
         IKubernetesClientAdapter kubernetesClientAdapter,
         IAppResourceLimitProvider appResourceLimitProvider,
+        IDistributedEventBus distributedEventBus,
         IOptionsSnapshot<KubernetesOptions> kubernetesOptions)
     {
         _logger = logger;
         _kubernetesClientAdapter = kubernetesClientAdapter;
         _kubernetesOptions = kubernetesOptions.Value;
         _appResourceLimitProvider = appResourceLimitProvider;
+        _distributedEventBus = distributedEventBus;
     }
 
     public async Task<string> CreateNewAppAsync(string appId, string version, string imageName)
@@ -36,6 +41,14 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         // await CheckNameSpaceAsync();
         
         await CreateFullClientTypeAppPodAsync(appId, version, imageName);
+        
+        //Publish app pod update eto to background worker
+        await _distributedEventBus.PublishAsync(new AppPodUpdateEto()
+        {
+            AppId = appId,
+            Version = version,
+            DockerImage = imageName
+        });
 
         return await CreateQueryClientTypeAppPodAsync(appId, version, imageName);
     }
@@ -197,7 +210,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var containerName =
             ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeQuery);
         var targetPort = KubernetesConstants.AppContainerTargetPort;
-        var replicasCount = _kubernetesOptions.AppPodReplicas;
+        var replicasCount = resourceLimitInfo.AppPodReplicas;
         var requestCpuCore = resourceLimitInfo.AppQueryPodRequestCpuCore;
         var requestMemory = resourceLimitInfo.AppQueryPodRequestMemory;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);

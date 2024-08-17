@@ -9,6 +9,7 @@ using AeFinder.Logger;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
 using AeFinder.Options;
+using AeFinder.ScheduledTask;
 using AElf.OpenTelemetry;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -28,8 +29,10 @@ using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Auditing;
 using Volo.Abp.Autofac;
+using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
+using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.Swashbuckle;
@@ -46,9 +49,11 @@ namespace AeFinder;
     typeof(AeFinderApplicationModule),
     typeof(AeFinderMongoDbModule),
     typeof(AbpAspNetCoreSerilogModule),
+    typeof(AbpEventBusRabbitMqModule),
     typeof(AeFinderKubernetesModule),
     typeof(AeFinderLoggerModule),
     typeof(AbpSwashbuckleModule),
+    typeof(AbpBackgroundWorkersModule),
     typeof(OpenTelemetryModule)
 )]
 public class AeFinderHttpApiHostModule : AbpModule
@@ -85,6 +90,7 @@ public class AeFinderHttpApiHostModule : AbpModule
             option.MultipartBodyLengthLimit = 60485760;
         });
         Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
+        context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
     }
 
     private void ConfigureCache(IConfiguration configuration)
@@ -286,6 +292,9 @@ public class AeFinderHttpApiHostModule : AbpModule
         var logService = context.ServiceProvider.GetRequiredService<ILogService>();
         AsyncHelper.RunSync(async ()=> await logService.CreateFileBeatLogILMPolicyAsync(KubernetesConstants.AppNameSpace + "-" +
             KubernetesConstants.FileBeatLogILMPolicyName));
+        
+        //Sync app limit info into es
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppExtensionInfoSyncWorker>());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)

@@ -1,10 +1,12 @@
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
+using AeFinder.Apps.Eto;
 using AeFinder.Models;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Controllers;
 
@@ -19,13 +21,14 @@ public class AppDeployController : AeFinderController
     {
         _appDeployManager = appDeployManager;
     }
-    
+
     [HttpPost]
     [Route("deploy")]
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<string> CreateNewAppAsync(CreateNewAppInput input)
     {
-        return await _appDeployManager.CreateNewAppAsync(input.AppId, input.Version, input.ImageName);
+        var graphqlUrl = await _appDeployManager.CreateNewAppAsync(input.AppId, input.Version, input.ImageName);
+        return graphqlUrl;
     }
 
     [HttpPost]

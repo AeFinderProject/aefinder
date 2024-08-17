@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
 using AeFinder.Apps.Dto;
+using AeFinder.Apps.Eto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockStates;
@@ -15,6 +16,7 @@ using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Auditing;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Apps;
 
@@ -27,9 +29,11 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
     private readonly IElasticIndexService _elasticIndexService;
+    private readonly IDistributedEventBus _distributedEventBus;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
+        IDistributedEventBus distributedEventBus,
         IElasticIndexService elasticIndexService,
         IOrganizationAppService organizationAppService)
     {
@@ -38,6 +42,7 @@ public class AppService : AeFinderAppService, IAppService
         _organizationAppService = organizationAppService;
         _appResourceLimitProvider = appResourceLimitProvider;
         _elasticIndexService = elasticIndexService;
+        _distributedEventBus = distributedEventBus;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -49,6 +54,13 @@ public class AppService : AeFinderAppService, IAppService
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(dto.AppId));
         var appDto = await appGrain.CreateAsync(dto);
         await _userAppService.RegisterAppAuthentication(dto.AppId, dto.DeployKey);
+        
+        //Publish app limit update eto to background worker
+        var appLimit = await _appResourceLimitProvider.GetAppResourceLimitAsync(dto.AppId);
+        var appLimitUpdateEto = ObjectMapper.Map<AppResourceLimitDto, AppLimitUpdateEto>(appLimit);
+        appLimitUpdateEto.AppId = dto.AppId;
+        await _distributedEventBus.PublishAsync(appLimitUpdateEto);
+        
         return appDto;
     }
 
@@ -210,11 +222,18 @@ public class AppService : AeFinderAppService, IAppService
         {
             throw new UserFriendlyException("please input limit parameters");
         }
+
         var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
             GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
 
         await appResourceLimitGrain.SetAsync(dto);
 
+        //Publish app limit update eto to background worker
+        var appLimit = await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
+        var appLimitUpdateEto = ObjectMapper.Map<AppResourceLimitDto, AppLimitUpdateEto>(appLimit);
+        appLimitUpdateEto.AppId = appId;
+        await _distributedEventBus.PublishAsync(appLimitUpdateEto);
+        
         return await appResourceLimitGrain.GetAsync();
     }
 

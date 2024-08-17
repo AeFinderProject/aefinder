@@ -5,6 +5,7 @@ using AeFinder.BackgroundWorker.ScheduledTask;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.MongoDb;
+using AElf.EntityMapping.Options;
 using AElf.OpenTelemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,8 +43,10 @@ public class AeFinderBackGroundModule : AbpModule
         context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
         ConfigureTokenCleanupService();
+        ConfigureEsIndexCreation();
         ConfigureCache(configuration);
         ConfigureMongoDbService(configuration, context);
+        context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
     }
     
     //Disable TokenCleanupBackgroundWorker
@@ -70,9 +73,15 @@ public class AeFinderBackGroundModule : AbpModule
         context.Services.AddSingleton<IOrleansDbClearService, OrleansDbClearService>();
     }
     
+    private void ConfigureEsIndexCreation()
+    {
+        Configure<CollectionCreateOptions>(x => { x.AddModule(typeof(AeFinderDomainModule)); });
+    }
+    
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppDataClearWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppInfoSyncWorker>());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)

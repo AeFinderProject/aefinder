@@ -26,6 +26,7 @@
     <PackageReference Include="Volo.Abp.Autofac" Version="8.1.4" />
     <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="8.1.4" />
     <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.EventBus.RabbitMQ" Version="8.1.4" />
     <PackageReference Include="Volo.Abp.Swashbuckle" Version="8.1.4" />
     <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="7.1.1" />
   </ItemGroup>

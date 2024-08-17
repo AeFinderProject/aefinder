@@ -1,3 +1,5 @@
+using AeFinder.BackgroundWorker.ScheduledTask;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Volo.Abp;
 
@@ -19,6 +21,8 @@ public class AeFinderHostedService:IHostedService
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _application.Initialize(_serviceProvider);
+        // var appInfoSyncWorker = _serviceProvider.GetRequiredService<AppInfoSyncWorker>();
+        // appInfoSyncWorker.StartAsync();
         return Task.CompletedTask;
     }
 
