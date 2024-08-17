@@ -14,12 +14,14 @@ namespace AeFinder.BackgroundWorker.EventHandler;
 
 public class AppUpdateHandler : AppHandlerBase, IDistributedEventHandler<AppUpdateEto>, ITransientDependency
 {
+    private readonly IClusterClient _clusterClient;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
     
-    public AppUpdateHandler(IOrganizationAppService organizationAppService,
+    public AppUpdateHandler(IOrganizationAppService organizationAppService,IClusterClient clusterClient,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository)
     {
+        _clusterClient = clusterClient;
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
         _organizationAppService = organizationAppService;
     }
@@ -27,7 +29,7 @@ public class AppUpdateHandler : AppHandlerBase, IDistributedEventHandler<AppUpda
     public async Task HandleEventAsync(AppUpdateEto eventData)
     {
         var appId = eventData.AppId;
-        var appGrain = ClusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
         var appDto = await appGrain.GetAsync();
         var appInfoIndex = ObjectMapper.Map<AppDto, AppInfoIndex>(appDto);
         
@@ -42,7 +44,7 @@ public class AppUpdateHandler : AppHandlerBase, IDistributedEventHandler<AppUpda
         appInfoIndex.OrganizationId = organizationId;
         appInfoIndex.OrganizationName = organizationUnitDto.DisplayName;
         var subscriptionGrain =
-            ClusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var versions = await subscriptionGrain.GetAllSubscriptionAsync();
         appInfoIndex.Versions = new AppVersionInfo();
         appInfoIndex.Versions.CurrentVersion = versions.CurrentVersion?.Version;
