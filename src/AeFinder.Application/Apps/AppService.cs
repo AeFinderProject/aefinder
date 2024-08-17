@@ -134,9 +134,10 @@ public class AppService : AeFinderAppService, IAppService
         {
             queryable = queryable.Where(o => o.AppId == input.AppId);
         }
-        if(input.OrganizationId.HasValue)
+
+        if (!input.OrganizationId.IsNullOrWhiteSpace())
         {
-            queryable = queryable.Where(o => o.OrganizationId == input.OrganizationId.Value.ToString("N"));
+            queryable = queryable.Where(o => o.OrganizationId == input.OrganizationId);
         }
 
         var apps = queryable.OrderBy(o => o.AppName).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
@@ -288,9 +289,9 @@ public class AppService : AeFinderAppService, IAppService
             queryable = queryable.Where(o => o.AppId == input.AppId);
         }
 
-        if (input.OrganizationId.HasValue)
+        if (!input.OrganizationId.IsNullOrWhiteSpace())
         {
-            queryable = queryable.Where(o => o.OrganizationId == input.OrganizationId.Value.ToString("N"));
+            queryable = queryable.Where(o => o.OrganizationId == input.OrganizationId);
         }
 
         var apps = queryable.OrderBy(o => o.AppName).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();

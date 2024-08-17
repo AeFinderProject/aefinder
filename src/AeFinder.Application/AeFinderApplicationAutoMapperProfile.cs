@@ -80,9 +80,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
             .ForMember(destination => destination.CreateTime,
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.CreateTime)))
             .ForMember(destination => destination.UpdateTime,
-                opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.UpdateTime)))
-            .ForMember(destination => destination.OrganizationId,
-                opt => opt.MapFrom(source => Guid.Parse(source.OrganizationId).ToString()));
+                opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.UpdateTime)));
         CreateMap<CreateAppDto, AppState>();
         CreateMap<AppState, AppCreateEto>();
         CreateMap<AppState, AppUpdateEto>();
@@ -96,9 +94,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
                     AeFinderApplicationConsts.AppInterestedExtraPropertiesKey.Contains(o.Key))));
         CreateMap<LogEventDto, AppSubscribedLogEventDto>();
         
-        CreateMap<AppLimitInfoIndex, AppResourceLimitIndexDto>()
-            .ForMember(destination => destination.OrganizationId,
-                opt => opt.MapFrom(source => Guid.Parse(source.OrganizationId).ToString()));
+        CreateMap<AppLimitInfoIndex, AppResourceLimitIndexDto>();
         CreateMap<ResourceLimitInfo, ResourceLimitDto>();
         CreateMap<OperationLimitInfo, OperationLimitDto>();
         
