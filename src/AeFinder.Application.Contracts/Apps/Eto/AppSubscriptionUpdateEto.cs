@@ -3,7 +3,7 @@ using Volo.Abp.EventBus;
 
 namespace AeFinder.Apps.Eto;
 
-[EventName("AeFinder.AppSubscriptionCreateEto")]
+[EventName("AeFinder.AppSubscriptionUpdateEto")]
 [GenerateSerializer]
 public class AppSubscriptionUpdateEto
 {
