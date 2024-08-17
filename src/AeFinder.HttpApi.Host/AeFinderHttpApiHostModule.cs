@@ -10,6 +10,7 @@ using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
 using AeFinder.Options;
 using AeFinder.ScheduledTask;
+using AElf.OpenTelemetry;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -52,7 +53,8 @@ namespace AeFinder;
     typeof(AeFinderKubernetesModule),
     typeof(AeFinderLoggerModule),
     typeof(AbpSwashbuckleModule),
-    typeof(AbpBackgroundWorkersModule)
+    typeof(AbpBackgroundWorkersModule),
+    typeof(OpenTelemetryModule)
 )]
 public class AeFinderHttpApiHostModule : AbpModule
 {
@@ -68,7 +70,6 @@ public class AeFinderHttpApiHostModule : AbpModule
         context.Services.AddHttpClient();
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
-
         ConfigureConventionalControllers();
         ConfigureAuthentication(context, configuration);
         ConfigureLocalization();
