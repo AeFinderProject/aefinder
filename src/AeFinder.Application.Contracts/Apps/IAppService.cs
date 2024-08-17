@@ -12,8 +12,8 @@ public interface IAppService
     Task<AppDto> UpdateAsync(string appId, UpdateAppDto dto);
     Task<AppDto> GetAsync(string appId);
     Task<PagedResultDto<AppDto>> GetListAsync();
-    Task<AppDto> GetIndexAsync(string appId);
-    Task<PagedResultDto<AppDto>> GetIndexListAsync(GetAppInput input);
+    Task<AppIndexDto> GetIndexAsync(string appId);
+    Task<PagedResultDto<AppIndexDto>> GetIndexListAsync(GetAppInput input);
     Task<AppSyncStateDto> GetSyncStateAsync(string appId);
     Task SetMaxAppCountAsync(Guid organizationId, int appCount);
     Task<int> GetMaxAppCountAsync(Guid organizationId);
