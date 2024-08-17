@@ -5,6 +5,7 @@ using AeFinder.BackgroundWorker.ScheduledTask;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.MongoDb;
+using AElf.OpenTelemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -28,7 +29,8 @@ namespace AeFinder.BackgroundWorker;
     typeof(AbpEventBusRabbitMqModule),
     typeof(AeFinderMongoDbModule),
     typeof(AeFinderApplicationModule),
-    typeof(AbpBackgroundWorkersModule))]
+    typeof(AbpBackgroundWorkersModule),
+    typeof(OpenTelemetryModule))]
 public class AeFinderBackGroundModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

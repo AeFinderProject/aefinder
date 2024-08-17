@@ -1,6 +1,7 @@
 using System;
 using AeFinder.Grains;
 using AeFinder.MongoDb;
+using AElf.OpenTelemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -25,7 +26,8 @@ namespace AeFinder.BlockChainEventHandler;
     typeof(AbpEventBusRabbitMqModule),
     typeof(AeFinderMongoDbModule),
     typeof(AeFinderApplicationModule),
-    typeof(AbpCachingStackExchangeRedisModule))]
+    typeof(AbpCachingStackExchangeRedisModule),
+    typeof(OpenTelemetryModule))]
 public class AeFinderBlockChainEventHandlerModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
