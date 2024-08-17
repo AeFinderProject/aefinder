@@ -48,10 +48,6 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
         
         //destroy app pod
         await _kubernetesAppManager.DestroyAppAsync(appId, version);
-
-        //clear stopped version grain data
-        await ClearStoppedVersionAppDataAsync(appId, version,
-            eventData.StopVersionChainIds);
         
         //update app info index of stopped version
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
@@ -76,12 +72,12 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
         appInfoIndex.Versions.PendingVersion = versions.PendingVersion?.Version;
         if (appInfoIndex.Versions.CurrentVersion == version)
         {
-            appInfoIndex.Versions.CurrentVersion = String.Empty;
+            appInfoIndex.Versions.CurrentVersion = null;
         }
 
         if (appInfoIndex.Versions.PendingVersion == version)
         {
-            appInfoIndex.Versions.PendingVersion = String.Empty;
+            appInfoIndex.Versions.PendingVersion = null;
         }
         await _appInfoEntityMappingRepository.AddOrUpdateAsync(appInfoIndex);
         Logger.LogInformation("[AppStopHandler] App info index updated: {0}, stopVersion: {1}",
@@ -96,6 +92,10 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
         await _appSubscriptionPodEntityMappingRepository.DeleteAsync(version);
         Logger.LogInformation("[AppStopHandler] App pod index deleted: {0}, stopVersion: {1}",
             eventData.AppId, eventData.StopVersion);
+        
+        //clear stopped version grain data
+        await ClearStoppedVersionAppDataAsync(appId, version,
+            eventData.StopVersionChainIds);
     }
 
 }
