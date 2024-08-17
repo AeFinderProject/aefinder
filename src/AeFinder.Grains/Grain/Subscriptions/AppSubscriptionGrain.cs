@@ -219,6 +219,13 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         await ReadStateAsync();
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Started;
         await WriteStateAsync();
+        
+        //Publish app subscription update eto to background worker
+        await _distributedEventBus.PublishAsync(new AppSubscriptionUpdateEto()
+        {
+            AppId = this.GetPrimaryKeyString(),
+            Version = version
+        });
     }
 
     public async Task PauseAsync(string version)
@@ -254,19 +261,20 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         }
 
         await StopBlockPushAsync(version);
+
+        var stopVersionChainIds = GetVersionSubscribedChainIds(version);
+        _logger.LogInformation("Remove version {stopVersion} SubscriptionInfos", version);
+        State.SubscriptionInfos.Remove(version);
+
+        await WriteStateAsync();
         
         //Publish app stop eto to background worker
         await _distributedEventBus.PublishAsync(new AppStopEto()
         {
             AppId = this.GetPrimaryKeyString(),
             StopVersion = version,
-            StopVersionChainIds = GetVersionSubscribedChainIds(version)
+            StopVersionChainIds = stopVersionChainIds
         });
-        
-        _logger.LogInformation("Remove version {stopVersion} SubscriptionInfos", version);
-        State.SubscriptionInfos.Remove(version);
-
-        await WriteStateAsync();
     }
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
