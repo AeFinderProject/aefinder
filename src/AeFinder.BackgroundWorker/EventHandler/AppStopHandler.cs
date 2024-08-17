@@ -70,17 +70,18 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
         appInfoIndex.Versions = new AppVersionInfo();
         appInfoIndex.Versions.CurrentVersion = versions.CurrentVersion?.Version;
         appInfoIndex.Versions.PendingVersion = versions.PendingVersion?.Version;
-        Logger.LogInformation("[AppStopHandler] CurrentVersion: {0},PendingVersion: {1}, stopVersion: {2}",
-            appInfoIndex.Versions.CurrentVersion, appInfoIndex.Versions.PendingVersion, version);
-        if (appInfoIndex.Versions.CurrentVersion == version)
+        if (appInfoIndex.Versions.CurrentVersion == version || appInfoIndex.Versions.CurrentVersion.IsNullOrEmpty())
         {
-            appInfoIndex.Versions.CurrentVersion = null;
+            appInfoIndex.Versions.CurrentVersion = "";
         }
 
-        if (appInfoIndex.Versions.PendingVersion == version)
+        if (appInfoIndex.Versions.PendingVersion == version || appInfoIndex.Versions.PendingVersion.IsNullOrEmpty())
         {
-            appInfoIndex.Versions.PendingVersion = null;
+            appInfoIndex.Versions.PendingVersion = "";
         }
+
+        Logger.LogInformation("[AppStopHandler] CurrentVersion: {0},PendingVersion: {1}, stopVersion: {2}",
+            appInfoIndex.Versions.CurrentVersion, appInfoIndex.Versions.PendingVersion, version);
         await _appInfoEntityMappingRepository.AddOrUpdateAsync(appInfoIndex);
         Logger.LogInformation("[AppStopHandler] App info index updated: {0}, stopVersion: {1}",
             eventData.AppId, eventData.StopVersion);
