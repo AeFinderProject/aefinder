@@ -5,6 +5,6 @@ namespace AeFinder.Apps;
 
 public class GetAppInput : PagedResultRequestDto
 {
-    public Guid? OrganizationId { get; set; }
+    public string OrganizationId { get; set; }
     public string AppId { get; set; }
 }
