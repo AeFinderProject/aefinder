@@ -15,18 +15,16 @@ namespace AeFinder.BackgroundWorker.EventHandler;
 
 public class AppSubscriptionCreateHandler: AppHandlerBase, IDistributedEventHandler<AppSubscriptionCreateEto>, ITransientDependency
 {
-    private readonly IClusterClient _clusterClient;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _appSubscriptionEntityMappingRepository;
     private readonly IOrganizationAppService _organizationAppService;
     
-    public AppSubscriptionCreateHandler(IClusterClient clusterClient,IOrganizationAppService organizationAppService,
+    public AppSubscriptionCreateHandler(IOrganizationAppService organizationAppService,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
         IEntityMappingRepository<AppSubscriptionIndex, string> appSubscriptionEntityMappingRepository)
     {
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
         _appSubscriptionEntityMappingRepository = appSubscriptionEntityMappingRepository;
-        _clusterClient = clusterClient;
         _organizationAppService = organizationAppService;
     }
     
@@ -36,7 +34,7 @@ public class AppSubscriptionCreateHandler: AppHandlerBase, IDistributedEventHand
         string version = eventData.CurrentVersion.IsNullOrEmpty() ? eventData.PendingVersion : eventData.CurrentVersion;
         
         //Update app info index
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
+        var appGrain = ClusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
         var appDto = await appGrain.GetAsync();
         var appInfoIndex = ObjectMapper.Map<AppDto, AppInfoIndex>(appDto);
         
@@ -51,7 +49,7 @@ public class AppSubscriptionCreateHandler: AppHandlerBase, IDistributedEventHand
         appInfoIndex.OrganizationId = organizationId;
         appInfoIndex.OrganizationName = organizationUnitDto.DisplayName;
         var subscriptionGrain =
-            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+            ClusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var versions = await subscriptionGrain.GetAllSubscriptionAsync();
         appInfoIndex.Versions = new AppVersionInfo();
         appInfoIndex.Versions.CurrentVersion = versions.CurrentVersion?.Version;
