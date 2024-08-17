@@ -16,7 +16,6 @@ namespace AeFinder.BackgroundWorker.EventHandler;
 
 public class AppUpgradeHandler : AppHandlerBase,IDistributedEventHandler<AppUpgradeEto>, ITransientDependency
 {
-    private readonly IClusterClient _clusterClient;
     private readonly IAppDeployManager _kubernetesAppManager;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _appSubscriptionEntityMappingRepository;
@@ -45,13 +44,9 @@ public class AppUpgradeHandler : AppHandlerBase,IDistributedEventHandler<AppUpgr
         
         //destory old version pod
         await _kubernetesAppManager.DestroyAppAsync(appId, eventData.CurrentVersion);
-
-        //clear old version grain data
-        await ClearStoppedVersionAppDataAsync(appId, historyVersion,
-            eventData.CurrentVersionChainIds);
         
         //update app info index
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
+        var appGrain = ClusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
         var appDto = await appGrain.GetAsync();
         var appInfoIndex = ObjectMapper.Map<AppDto, AppInfoIndex>(appDto);
         
@@ -75,5 +70,9 @@ public class AppUpgradeHandler : AppHandlerBase,IDistributedEventHandler<AppUpgr
 
         //clear app pod index
         await _appSubscriptionPodEntityMappingRepository.DeleteAsync(historyVersion);
+        
+        //clear old version grain data
+        await ClearStoppedVersionAppDataAsync(appId, historyVersion,
+            eventData.CurrentVersionChainIds);
     }
 }

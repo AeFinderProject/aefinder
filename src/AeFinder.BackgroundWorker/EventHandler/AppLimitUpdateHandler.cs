@@ -11,14 +11,12 @@ namespace AeFinder.BackgroundWorker.EventHandler;
 
 public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<AppLimitUpdateEto>, ITransientDependency
 {
-    private readonly IClusterClient _clusterClient;
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitInfoEntityMappingRepository;
     private readonly IOrganizationAppService _organizationAppService;
 
-    public AppLimitUpdateHandler(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
+    public AppLimitUpdateHandler(IOrganizationAppService organizationAppService,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitInfoEntityMappingRepository)
     {
-        _clusterClient = clusterClient;
         _appLimitInfoEntityMappingRepository = appLimitInfoEntityMappingRepository;
         _organizationAppService = organizationAppService;
     }
@@ -29,7 +27,7 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
         //Add app resource limit info index
         var appLimitInfoIndex = new AppLimitInfoIndex();
         appLimitInfoIndex.AppId = eventData.AppId;
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
+        var appGrain = ClusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
         var appDto = await appGrain.GetAsync();
 
         var organizationId = await appGrain.GetOrganizationIdAsync();
