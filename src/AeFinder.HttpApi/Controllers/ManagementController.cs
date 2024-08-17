@@ -30,7 +30,7 @@ public class ManagementController : AeFinderController
     [HttpGet]
     [Route("apps/{appId}")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public async Task<AppDto> GetAsync(string appId)
+    public async Task<AppIndexDto> GetAsync(string appId)
     {
         return await _appService.GetIndexAsync(appId);
     }
@@ -38,7 +38,7 @@ public class ManagementController : AeFinderController
     [HttpGet]
     [Route("apps")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public async Task<PagedResultDto<AppDto>> GetListAsync(GetAppInput input)
+    public async Task<PagedResultDto<AppIndexDto>> GetListAsync(GetAppInput input)
     {
         return await _appService.GetIndexListAsync(input);
     }

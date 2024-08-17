@@ -120,31 +120,31 @@ public class AppService : AeFinderAppService, IAppService
         };
     }
     
-    public async Task<AppDto> GetIndexAsync(string appId)
+    public async Task<AppIndexDto> GetIndexAsync(string appId)
     {
         var queryable = await _appIndexRepository.GetQueryableAsync();
         var app = queryable.FirstOrDefault(o => o.AppId == appId);
-        return ObjectMapper.Map<AppInfoIndex,AppDto>(app);
+        return ObjectMapper.Map<AppInfoIndex,AppIndexDto>(app);
     }
 
-    public async Task<PagedResultDto<AppDto>> GetIndexListAsync(GetAppInput input)
+    public async Task<PagedResultDto<AppIndexDto>> GetIndexListAsync(GetAppInput input)
     {
         var queryable = await _appIndexRepository.GetQueryableAsync();
         if (!input.AppId.IsNullOrWhiteSpace())
         {
             queryable = queryable.Where(o => o.AppId == input.AppId);
         }
-        if(!input.OrganizationId.IsNullOrWhiteSpace())
+        if(input.OrganizationId.HasValue)
         {
-            queryable = queryable.Where(o => o.OrganizationId == input.OrganizationId);
+            queryable = queryable.Where(o => o.OrganizationId == input.OrganizationId.Value.ToString("N"));
         }
 
         var apps = queryable.OrderBy(o => o.AppName).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
         var totalCount = queryable.Count();
-        return new PagedResultDto<AppDto>
+        return new PagedResultDto<AppIndexDto>
         {
             TotalCount = totalCount,
-            Items = ObjectMapper.Map<List<AppInfoIndex>,List<AppDto>>(apps)
+            Items = ObjectMapper.Map<List<AppInfoIndex>,List<AppIndexDto>>(apps)
         };
     }
 
@@ -288,9 +288,9 @@ public class AppService : AeFinderAppService, IAppService
             queryable = queryable.Where(o => o.AppId == input.AppId);
         }
 
-        if (!input.OrganizationId.IsNullOrWhiteSpace())
+        if (input.OrganizationId.HasValue)
         {
-            queryable = queryable.Where(o => o.OrganizationId == input.OrganizationId);
+            queryable = queryable.Where(o => o.OrganizationId == input.OrganizationId.Value.ToString("N"));
         }
 
         var apps = queryable.OrderBy(o => o.AppName).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();

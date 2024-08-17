@@ -83,7 +83,7 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
             {
                 AppId = "AppId" + i,
                 AppName = "App" + i,
-                OrganizationId = "OrganizationId",
+                OrganizationId = Guid.NewGuid().ToString("N"),
                 OrganizationName = "OrganizationName",
                 CreateTime = DateTime.Now,
                 UpdateTime = DateTime.Now,
@@ -122,7 +122,7 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         {
             AppId = "AppId",
             AppName = "AppName",
-            OrganizationId = "OrganizationId",
+            OrganizationId = Guid.NewGuid().ToString("N"),
             OrganizationName = "OrganizationName",
             OperationLimit = new OperationLimitInfo
             {
@@ -148,7 +148,7 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         limit.Items.Count().ShouldBe(1);
         limit.Items[0].AppId.ShouldBe(index.AppId);
         limit.Items[0].AppName.ShouldBe(index.AppName);
-        limit.Items[0].OrganizationId.ShouldBe(index.OrganizationId);
+        limit.Items[0].OrganizationId.ShouldBe(Guid.Parse(index.OrganizationId).ToString());
         limit.Items[0].OrganizationName.ShouldBe(index.OrganizationName);
         limit.Items[0].OperationLimit.MaxEntitySize.ShouldBe(index.OperationLimit.MaxEntitySize);
         limit.Items[0].OperationLimit.MaxLogSize.ShouldBe(index.OperationLimit.MaxLogSize);
