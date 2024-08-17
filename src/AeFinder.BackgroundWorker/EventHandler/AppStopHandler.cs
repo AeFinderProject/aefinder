@@ -17,6 +17,7 @@ namespace AeFinder.BackgroundWorker.EventHandler;
 
 public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto>, ITransientDependency
 {
+    private readonly IClusterClient _clusterClient;
     private readonly IAppDeployManager _kubernetesAppManager;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _appSubscriptionEntityMappingRepository;
@@ -24,11 +25,12 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
     private readonly IOrganizationAppService _organizationAppService;
 
     public AppStopHandler(IAppDeployManager kubernetesAppManager,
-        IOrganizationAppService organizationAppService,
+        IOrganizationAppService organizationAppService,IClusterClient clusterClient,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
         IEntityMappingRepository<AppSubscriptionIndex, string> appSubscriptionEntityMappingRepository,
         IEntityMappingRepository<AppSubscriptionPodIndex, string> appSubscriptionPodEntityMappingRepository)
     {
+        _clusterClient = clusterClient;
         _kubernetesAppManager = kubernetesAppManager;
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
         _appSubscriptionEntityMappingRepository = appSubscriptionEntityMappingRepository;
@@ -52,7 +54,7 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
             eventData.StopVersionChainIds);
         
         //update app info index of stopped version
-        var appGrain = ClusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
         var appDto = await appGrain.GetAsync();
         var appInfoIndex = ObjectMapper.Map<AppDto, AppInfoIndex>(appDto);
         
@@ -67,7 +69,7 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
         appInfoIndex.OrganizationId = organizationId;
         appInfoIndex.OrganizationName = organizationUnitDto.DisplayName;
         var subscriptionGrain =
-            ClusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var versions = await subscriptionGrain.GetAllSubscriptionAsync();
         appInfoIndex.Versions = new AppVersionInfo();
         appInfoIndex.Versions.CurrentVersion = versions.CurrentVersion?.Version;

@@ -81,6 +81,11 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
 
     public async Task<string> GetOrganizationIdAsync()
     {
-        return State.OrganizationId;
+        if (State.OrganizationId.IsNullOrEmpty())
+        {
+            return State.OrganizationId;
+        }
+        Guid guid = Guid.ParseExact(State.OrganizationId, "N");
+        return guid.ToString();
     }
 }
