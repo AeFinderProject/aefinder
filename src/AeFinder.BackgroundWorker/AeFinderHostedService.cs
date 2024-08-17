@@ -21,8 +21,8 @@ public class AeFinderHostedService:IHostedService
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _application.Initialize(_serviceProvider);
-        var appInfoSyncWorker = _serviceProvider.GetRequiredService<AppInfoSyncWorker>();
-        appInfoSyncWorker.StartAsync();
+        // var appInfoSyncWorker = _serviceProvider.GetRequiredService<AppInfoSyncWorker>();
+        // appInfoSyncWorker.StartAsync();
         return Task.CompletedTask;
     }
 

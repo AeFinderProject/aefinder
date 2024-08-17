@@ -16,17 +16,20 @@ namespace AeFinder.BackgroundWorker.EventHandler;
 
 public class AppUpgradeHandler : AppHandlerBase,IDistributedEventHandler<AppUpgradeEto>, ITransientDependency
 {
+    private readonly IClusterClient _clusterClient;
     private readonly IAppDeployManager _kubernetesAppManager;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _appSubscriptionEntityMappingRepository;
     private readonly IEntityMappingRepository<AppSubscriptionPodIndex, string> _appSubscriptionPodEntityMappingRepository;
     private readonly IOrganizationAppService _organizationAppService;
 
-    public AppUpgradeHandler(IAppDeployManager kubernetesAppManager,IOrganizationAppService organizationAppService,
+    public AppUpgradeHandler(IAppDeployManager kubernetesAppManager,
+        IOrganizationAppService organizationAppService,IClusterClient clusterClient,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
         IEntityMappingRepository<AppSubscriptionIndex, string> appSubscriptionEntityMappingRepository,
         IEntityMappingRepository<AppSubscriptionPodIndex, string> appSubscriptionPodEntityMappingRepository)
     {
+        _clusterClient = clusterClient;
         _organizationAppService = organizationAppService;
         _kubernetesAppManager = kubernetesAppManager;
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
@@ -46,7 +49,7 @@ public class AppUpgradeHandler : AppHandlerBase,IDistributedEventHandler<AppUpgr
         await _kubernetesAppManager.DestroyAppAsync(appId, eventData.CurrentVersion);
         
         //update app info index
-        var appGrain = ClusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
         var appDto = await appGrain.GetAsync();
         var appInfoIndex = ObjectMapper.Map<AppDto, AppInfoIndex>(appDto);
         

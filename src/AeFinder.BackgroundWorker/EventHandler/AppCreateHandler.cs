@@ -13,20 +13,19 @@ namespace AeFinder.BackgroundWorker.EventHandler;
 
 public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCreateEto>, ITransientDependency
 {
+    private readonly IClusterClient _clusterClient;
     private readonly IEntityMappingRepository<OrganizationIndex, string> _organizationEntityMappingRepository;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
-    private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitInfoEntityMappingRepository;
     private readonly IOrganizationAppService _organizationAppService;
 
-    public AppCreateHandler(
+    public AppCreateHandler(IClusterClient clusterClient,
         IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
-        IEntityMappingRepository<AppLimitInfoIndex, string> appLimitInfoEntityMappingRepository,
         IOrganizationAppService organizationAppService)
     {
+        _clusterClient = clusterClient;
         _organizationEntityMappingRepository = organizationEntityMappingRepository;
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
-        _appLimitInfoEntityMappingRepository = appLimitInfoEntityMappingRepository;
         _organizationAppService = organizationAppService;
     }
 
@@ -46,7 +45,7 @@ public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCrea
 
         var orgId = GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id);
         var organizationAppGrain =
-            ClusterClient.GetGrain<IOrganizationAppGrain>(orgId);
+            _clusterClient.GetGrain<IOrganizationAppGrain>(orgId);
         var maxAppCount = await organizationAppGrain.GetMaxAppCountAsync();
         organizationIndex.MaxAppCount = maxAppCount;
         var appIds = await organizationAppGrain.GetAppsAsync();
