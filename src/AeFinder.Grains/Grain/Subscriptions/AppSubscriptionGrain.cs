@@ -219,6 +219,13 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         await ReadStateAsync();
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Started;
         await WriteStateAsync();
+        
+        //Publish app subscription update eto to background worker
+        await _distributedEventBus.PublishAsync(new AppSubscriptionUpdateEto()
+        {
+            AppId = this.GetPrimaryKeyString(),
+            Version = version
+        });
     }
 
     public async Task PauseAsync(string version)
