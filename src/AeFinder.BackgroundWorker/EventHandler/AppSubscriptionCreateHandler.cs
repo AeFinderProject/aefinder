@@ -8,6 +8,7 @@ using AeFinder.Subscriptions;
 using AeFinder.User;
 using AElf.EntityMapping.Repositories;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 
@@ -34,6 +35,12 @@ public class AppSubscriptionCreateHandler: AppHandlerBase, IDistributedEventHand
     {
         var appId = eventData.AppId;
         string version = eventData.CurrentVersion.IsNullOrEmpty() ? eventData.PendingVersion : eventData.CurrentVersion;
+
+        if (version.IsNullOrEmpty())
+        {
+            Logger.LogError($"[AppSubscriptionCreateHandler]Invalid event data. {eventData.ToJson()}");
+            return;
+        }
         
         //Update app info index
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
@@ -44,7 +51,7 @@ public class AppSubscriptionCreateHandler: AppHandlerBase, IDistributedEventHand
         Guid organizationUnitGuid;
         if (!Guid.TryParse(organizationId, out organizationUnitGuid))
         {
-            throw new Exception($"Invalid OrganizationUnitId string: {organizationId}");
+            throw new Exception($"[AppSubscriptionCreateHandler]Invalid OrganizationUnitId string: {organizationId}");
         }
         var organizationUnitDto = await _organizationAppService.GetOrganizationUnitAsync(organizationUnitGuid);
         
