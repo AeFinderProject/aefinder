@@ -3,6 +3,7 @@ using AeFinder.App.Handlers;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.State.BlockStates;
 using AeFinder.Sdk;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Local;
@@ -20,26 +21,26 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
     private readonly IFullBlockProcessor _fullBlockProcessor;
     private readonly IAppDataIndexManagerProvider _appDataIndexManagerProvider;
     private readonly IAppStateProvider _appStateProvider;
-    private readonly IAppInfoProvider _appInfoProvider;
     private readonly IGeneralAppDataIndexProvider _generalAppDataIndexProvider;
     private readonly IRuntimeTypeProvider _runtimeTypeProvider;
     private readonly IAppBlockStateChangeProvider _appBlockStateChangeProvider;
+    private readonly ILogger<BlockProcessingService> _logger;
     public ILocalEventBus LocalEventBus { get; set; }
 
     public BlockProcessingService(IAppBlockStateSetProvider appBlockStateSetProvider,
         IFullBlockProcessor fullBlockProcessor, IAppDataIndexManagerProvider appDataIndexManagerProvider,
-        IAppStateProvider appStateProvider, IAppInfoProvider appInfoProvider,
+        IAppStateProvider appStateProvider, 
         IGeneralAppDataIndexProvider generalAppDataIndexProvider, IRuntimeTypeProvider runtimeTypeProvider,
-        IAppBlockStateChangeProvider appBlockStateChangeProvider)
+        IAppBlockStateChangeProvider appBlockStateChangeProvider, ILogger<BlockProcessingService> logger)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _fullBlockProcessor = fullBlockProcessor;
         _appDataIndexManagerProvider = appDataIndexManagerProvider;
         _appStateProvider = appStateProvider;
-        _appInfoProvider = appInfoProvider;
         _generalAppDataIndexProvider = generalAppDataIndexProvider;
         _runtimeTypeProvider = runtimeTypeProvider;
         _appBlockStateChangeProvider = appBlockStateChangeProvider;
+        _logger = logger;
     }
 
     public async Task ProcessAsync(string chainId, string branchBlockHash)
@@ -80,9 +81,19 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
         {
             await _fullBlockProcessor.ProcessAsync(blockStateSet.Block);
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, true);
-            
-            changeKeys[blockStateSet.Block.BlockHeight] = blockStateSet.Changes
-                .Select(o => new BlockStateChange { Key = o.Key, Type = o.Value.Type }).ToList();
+
+            try
+            {
+                changeKeys[blockStateSet.Block.BlockHeight] = blockStateSet.Changes
+                    .Select(o => new BlockStateChange { Key = o.Key, Type = o.Value.Type }).ToList();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "BlockStateSet exception. ChainId: {ChainId}, BlockStateSet: {BlockStateSet}", chainId,
+                    JsonConvert.SerializeObject(blockStateSet));
+                throw;
+            }
+
         }
         
         await _appBlockStateChangeProvider.AddBlockStateChangeAsync(chainId, changeKeys);

@@ -3,18 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
+using AeFinder.App.Es;
 using AeFinder.Apps.Dto;
+using AeFinder.Apps.Eto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch.Services;
+using AElf.EntityMapping.Repositories;
 using Nito.AsyncEx;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Auditing;
+using Volo.Abp.ObjectMapping;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Apps;
 
@@ -27,17 +32,26 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
     private readonly IElasticIndexService _elasticIndexService;
+    private readonly IEntityMappingRepository<AppInfoIndex, string> _appIndexRepository;
+    private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitIndexRepository;
+    private readonly IDistributedEventBus _distributedEventBus;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
+        IDistributedEventBus distributedEventBus,
         IElasticIndexService elasticIndexService,
-        IOrganizationAppService organizationAppService)
+        IOrganizationAppService organizationAppService,
+        IEntityMappingRepository<AppInfoIndex, string> appIndexRepository,
+        IEntityMappingRepository<AppLimitInfoIndex, string> appLimitIndexRepository)
     {
         _clusterClient = clusterClient;
         _userAppService = userAppService;
         _organizationAppService = organizationAppService;
+        _appIndexRepository = appIndexRepository;
+        _appLimitIndexRepository = appLimitIndexRepository;
         _appResourceLimitProvider = appResourceLimitProvider;
         _elasticIndexService = elasticIndexService;
+        _distributedEventBus = distributedEventBus;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -49,6 +63,13 @@ public class AppService : AeFinderAppService, IAppService
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(dto.AppId));
         var appDto = await appGrain.CreateAsync(dto);
         await _userAppService.RegisterAppAuthentication(dto.AppId, dto.DeployKey);
+        
+        //Publish app limit update eto to background worker
+        var appLimit = await _appResourceLimitProvider.GetAppResourceLimitAsync(dto.AppId);
+        var appLimitUpdateEto = ObjectMapper.Map<AppResourceLimitDto, AppLimitUpdateEto>(appLimit);
+        appLimitUpdateEto.AppId = dto.AppId;
+        await _distributedEventBus.PublishAsync(appLimitUpdateEto);
+        
         return appDto;
     }
 
@@ -75,7 +96,7 @@ public class AppService : AeFinderAppService, IAppService
 
         return app;
     }
-
+    
     public async Task<PagedResultDto<AppDto>> GetListAsync()
     {
         var organizationId = await GetOrganizationIdAsync();
@@ -96,6 +117,35 @@ public class AppService : AeFinderAppService, IAppService
         {
             TotalCount = apps.Length,
             Items = apps.OrderByDescending(o => o.UpdateTime).ToList()
+        };
+    }
+    
+    public async Task<AppIndexDto> GetIndexAsync(string appId)
+    {
+        var queryable = await _appIndexRepository.GetQueryableAsync();
+        var app = queryable.FirstOrDefault(o => o.AppId == appId);
+        return ObjectMapper.Map<AppInfoIndex,AppIndexDto>(app);
+    }
+
+    public async Task<PagedResultDto<AppIndexDto>> GetIndexListAsync(GetAppInput input)
+    {
+        var queryable = await _appIndexRepository.GetQueryableAsync();
+        if (!input.AppId.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.AppId == input.AppId);
+        }
+
+        if (!input.OrganizationId.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.OrganizationId == input.OrganizationId);
+        }
+
+        var apps = queryable.OrderBy(o => o.AppName).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
+        var totalCount = queryable.Count();
+        return new PagedResultDto<AppIndexDto>
+        {
+            TotalCount = totalCount,
+            Items = ObjectMapper.Map<List<AppInfoIndex>,List<AppIndexDto>>(apps)
         };
     }
 
@@ -210,17 +260,47 @@ public class AppService : AeFinderAppService, IAppService
         {
             throw new UserFriendlyException("please input limit parameters");
         }
+
         var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
             GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
 
         await appResourceLimitGrain.SetAsync(dto);
 
+        //Publish app limit update eto to background worker
+        var appLimit = await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
+        var appLimitUpdateEto = ObjectMapper.Map<AppResourceLimitDto, AppLimitUpdateEto>(appLimit);
+        appLimitUpdateEto.AppId = appId;
+        await _distributedEventBus.PublishAsync(appLimitUpdateEto);
+        
         return await appResourceLimitGrain.GetAsync();
     }
 
     public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
     {
         return await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
+    }
+
+    public async Task<PagedResultDto<AppResourceLimitIndexDto>> GetAppResourceLimitIndexListAsync(
+        GetAppResourceLimitInput input)
+    {
+        var queryable = await _appLimitIndexRepository.GetQueryableAsync();
+        if (!input.AppId.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.AppId == input.AppId);
+        }
+
+        if (!input.OrganizationId.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.OrganizationId == input.OrganizationId);
+        }
+
+        var apps = queryable.OrderBy(o => o.AppName).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
+        var totalCount = queryable.Count();
+        return new PagedResultDto<AppResourceLimitIndexDto>
+        {
+            TotalCount = totalCount,
+            Items = ObjectMapper.Map<List<AppLimitInfoIndex>, List<AppResourceLimitIndexDto>>(apps)
+        };
     }
 
     public async Task DeleteAppIndexAsync(string indexName)

@@ -151,6 +151,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type("AsyncTaskMethodBuilder`1", Permission.Allowed)
                 .Type("TaskAwaiter", Permission.Allowed)
                 .Type("TaskAwaiter`1", Permission.Allowed)
+                .Type(nameof(SwitchExpressionException), Permission.Allowed)
             )
             .Namespace("System.Text", Permission.Allowed)
             .Namespace("System.Numerics", Permission.Allowed)

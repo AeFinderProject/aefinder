@@ -16,6 +16,8 @@ public class AppDto
     [Id(7)] public long CreateTime { get; set; }
     [Id(8)] public long UpdateTime { get; set; }
     [Id(9)] public AppVersion Versions { get; set; } = new();
+    [Id(10)] public string OrganizationId { get; set; }
+    [Id(11)] public string OrganizationName { get; set; }
 }
 
 [GenerateSerializer]

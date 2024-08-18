@@ -1,17 +1,21 @@
 using AeFinder.Apps;
+using AeFinder.Apps.Eto;
 using AeFinder.Grains.State.Apps;
 using Orleans;
 using Volo.Abp;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.Apps;
 
 public class AppGrain : AeFinderGrain<AppState>, IAppGrain
 {
+    private readonly IDistributedEventBus _distributedEventBus;
     private readonly IObjectMapper _objectMapper;
 
-    public AppGrain(IObjectMapper objectMapper)
+    public AppGrain(IDistributedEventBus distributedEventBus, IObjectMapper objectMapper)
     {
+        _distributedEventBus = distributedEventBus;
         _objectMapper = objectMapper;
     }
 
@@ -33,8 +37,12 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         State.Status = AppStatus.UnDeployed;
         State.CreateTime = DateTime.UtcNow;
         State.UpdateTime = State.CreateTime;
-
         await WriteStateAsync();
+        
+        //Publish app create eto to background worker
+        var appCreateEto = _objectMapper.Map<AppState, AppCreateEto>(State);
+        await _distributedEventBus.PublishAsync(appCreateEto);
+        
         return _objectMapper.Map<AppState, AppDto>(State);
     }
 
@@ -47,6 +55,10 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         State.SourceCodeUrl = dto.SourceCodeUrl;
         State.UpdateTime = DateTime.UtcNow;
         await WriteStateAsync();
+        
+        //Publish app update eto to background worker
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
         
         return _objectMapper.Map<AppState, AppDto>(State);
     }
@@ -65,5 +77,15 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         await ReadStateAsync();
         
         return _objectMapper.Map<AppState, AppDto>(State);
+    }
+
+    public async Task<string> GetOrganizationIdAsync()
+    {
+        if (State.OrganizationId.IsNullOrEmpty())
+        {
+            return State.OrganizationId;
+        }
+        Guid guid = Guid.ParseExact(State.OrganizationId, "N");
+        return guid.ToString();
     }
 }

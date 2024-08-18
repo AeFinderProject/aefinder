@@ -1,15 +1,20 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Kubernetes;
+using AeFinder.Models;
 using AeFinder.Options;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Nito.AsyncEx;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Controllers;
 
@@ -88,7 +93,8 @@ public class AppController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<AppResourceLimitDto> SetAppResourceLimitAsync(string appId,SetAppResourceLimitDto dto)
     {
-        return await _appService.SetAppResourceLimitAsync(appId, dto);
+        var appResourceLimitDto = await _appService.SetAppResourceLimitAsync(appId, dto);
+        return appResourceLimitDto;
     }
     
     [HttpGet]
@@ -97,5 +103,25 @@ public class AppController : AeFinderController
     public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
     {
         return await _appService.GetAppResourceLimitAsync(appId);
+    }
+
+    [HttpGet]
+    [Route("resource-limits")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task<PagedResultDto<AppResourceLimitIndexDto>> GetAppResourceLimitListAsync(
+        GetAppResourceLimitInput input)
+    {
+        return await _appService.GetAppResourceLimitIndexListAsync(input);
+    }
+
+    [HttpPut]
+    [Route("resource-limits")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task SetAppResourceLimitsAsync(SetAppResourceLimitsInput input)
+    {
+        var resourceLimitDto = ObjectMapper.Map<SetAppResourceLimitsInput, SetAppResourceLimitDto>(input);
+        var tasks = input.AppIds.Select(id => _appService.SetAppResourceLimitAsync(id, resourceLimitDto));
+
+        await tasks.WhenAll();
     }
 }

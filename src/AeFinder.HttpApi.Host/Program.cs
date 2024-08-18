@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
+using Serilog.Sinks.OpenTelemetry;
 
 namespace AeFinder;
 
@@ -28,6 +29,9 @@ public class Program
             .ReadFrom.Configuration(configuration)
 #if DEBUG
             .WriteTo.Async(c => c.Console())
+            .WriteTo.OpenTelemetry(
+                endpoint: "http://localhost:4316/v1/logs",
+                protocol: OtlpProtocol.HttpProtobuf)
 #endif
             .CreateLogger();
 
