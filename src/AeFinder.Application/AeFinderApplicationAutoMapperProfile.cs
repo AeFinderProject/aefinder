@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using AeFinder.App.Es;
+using AeFinder.AppResources;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Apps.Eto;
@@ -11,6 +12,7 @@ using AeFinder.Etos;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.Apps;
 using AeFinder.Logger.Entities;
+using AeFinder.Subscriptions;
 using AeFinder.User.Dto;
 using AutoMapper;
 using Volo.Abp.Identity;
@@ -54,6 +56,16 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<TransactionCondition, TransactionConditionDto>();
         CreateMap<LogEventCondition, LogEventConditionDto>();
 
+        CreateMap<AppSubscriptionIndex, SubscriptionIndexDto>();
+        CreateMap<SubscriptionManifestInfo, SubscriptionManifestDto>();
+        CreateMap<SubscriptionInfo, SubscriptionDto>()
+            .ForMember(destination => destination.Transactions,
+                opt => opt.MapFrom(source => source.TransactionConditions))
+            .ForMember(destination => destination.LogEvents,
+                opt => opt.MapFrom(source => source.LogEventConditions));
+        CreateMap<TransactionConditionInfo, TransactionConditionDto>();
+        CreateMap<LogEventConditionInfo, LogEventConditionDto>();
+        
         CreateMap<AllSubscription, AllSubscriptionDto>();
         CreateMap<SubscriptionDetail, SubscriptionDetailDto>();
 
@@ -64,10 +76,16 @@ public class AeFinderApplicationAutoMapperProfile : Profile
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.CreateTime)))
             .ForMember(destination => destination.UpdateTime,
                 opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.UpdateTime)));
+        CreateMap<AppInfoIndex, AppIndexDto>()
+            .ForMember(destination => destination.CreateTime,
+                opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.CreateTime)))
+            .ForMember(destination => destination.UpdateTime,
+                opt => opt.MapFrom(source => DateTimeHelper.ToUnixTimeMilliseconds(source.UpdateTime)));
         CreateMap<CreateAppDto, AppState>();
         CreateMap<AppState, AppCreateEto>();
         CreateMap<AppState, AppUpdateEto>();
         CreateMap<OrganizationUnit, OrganizationUnitDto>();
+        CreateMap<AppVersionInfo, AppVersion>();
 
         CreateMap<BlockWithTransactionDto, AppSubscribedBlockDto>();
         CreateMap<TransactionDto, AppSubscribedTransactionDto>()
@@ -75,6 +93,12 @@ public class AeFinderApplicationAutoMapperProfile : Profile
                 opt => opt.MapFrom(source => source.ExtraProperties.Where(o =>
                     AeFinderApplicationConsts.AppInterestedExtraPropertiesKey.Contains(o.Key))));
         CreateMap<LogEventDto, AppSubscribedLogEventDto>();
+        
+        CreateMap<AppLimitInfoIndex, AppResourceLimitIndexDto>();
+        CreateMap<ResourceLimitInfo, ResourceLimitDto>();
+        CreateMap<OperationLimitInfo, OperationLimitDto>();
+        
+        CreateMap<AppSubscriptionPodIndex, AppResourceDto>();
         
         CreateMap<AppLogIndex, AppLogRecordDto>();
         CreateMap<AppResourceLimitState, AppResourceLimitDto>();

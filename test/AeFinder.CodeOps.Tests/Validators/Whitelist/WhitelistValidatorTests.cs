@@ -39,6 +39,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         using Newtonsoft.Json;
         using AutoMapper;
         using AutoMapper.Configuration;
+        using System.Runtime.CompilerServices;
 
         namespace TestApp;
 
@@ -91,6 +92,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
                 var address = list.RemoveAll(o => sets.Contains(o));
                 
                 throw new NotImplementedException();
+                throw new SwitchExpressionException();
             }
         }
 
