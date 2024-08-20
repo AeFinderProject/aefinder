@@ -1,9 +1,11 @@
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.AmazonCloud;
@@ -35,7 +37,7 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         _amazonS3Client = new AmazonS3Client(accessKeyID, secretKey, config);
     }
 
-    public async Task<PutObjectResponse> UpLoadJsonFileAsync(Stream stream, string directory, string fileName)
+    public async Task<string> UpLoadJsonFileAsync(Stream stream, string directory, string fileName)
     {
         string s3Key = await GenerateJsonFileS3Key(directory, fileName);
         var putObjectRequest = new PutObjectRequest
@@ -45,16 +47,31 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
             Key = s3Key
             // CannedACL = S3CannedACL.PublicRead,
         };
-        return await _amazonS3Client.PutObjectAsync(putObjectRequest);
+        var putObjectResponse = await _amazonS3Client.PutObjectAsync(putObjectRequest);
+        if (putObjectResponse.HttpStatusCode != HttpStatusCode.OK)
+        {
+            _logger.LogError("Upload json file failed with HTTP status code: {StatusCode}", putObjectResponse.HttpStatusCode);
+            return string.Empty;
+        }
+        
+        return s3Key;
     }
 
     public async Task<string> GenerateJsonFileS3Key(string directory, string fileName)
     {
+        if (directory.IsNullOrEmpty())
+        {
+            return fileName + ".json";
+        }
         return directory + "/" + fileName + ".json";
     }
 
     public async Task<string> GetJsonFileS3Url(string directory, string fileName)
     {
+        if (directory.IsNullOrEmpty())
+        {
+            return $"https://{_awsS3Option.BucketName}.s3.amazonaws.com/{fileName}.json";
+        }
         return $"https://{_awsS3Option.BucketName}.s3.amazonaws.com/{directory}/{fileName}.json";
     }
 }
