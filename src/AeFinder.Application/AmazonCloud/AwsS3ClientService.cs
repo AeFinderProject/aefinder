@@ -57,6 +57,32 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         return s3Key;
     }
 
+    public async Task<string> GetJsonFileAsync(string directory, string fileName)
+    {
+        var key = await GenerateJsonFileS3Key(directory, fileName);
+        var getObjectRequest = new GetObjectRequest
+        {
+            BucketName = _awsS3Option.BucketName,
+            Key = key
+        };
+
+        using var response = await _amazonS3Client.GetObjectAsync(getObjectRequest);
+        var reader = new StreamReader( response.ResponseStream );
+        return await reader.ReadToEndAsync();
+    }
+
+    public async Task DeleteJsonFileAsync(string directory, string fileName)
+    {
+        var key = await GenerateJsonFileS3Key(directory, fileName);
+        var request = new DeleteObjectRequest
+        {
+            BucketName = _awsS3Option.BucketName,
+            Key = key
+        };
+
+        await _amazonS3Client.DeleteObjectAsync(request);
+    }
+
     public async Task<string> GenerateJsonFileS3Key(string directory, string fileName)
     {
         if (directory.IsNullOrEmpty())
