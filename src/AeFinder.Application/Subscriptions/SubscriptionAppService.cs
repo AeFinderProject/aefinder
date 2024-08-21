@@ -12,6 +12,7 @@ using AeFinder.CodeOps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Subscriptions.Dto;
 using AElf.EntityMapping.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -382,5 +383,13 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         }
         
         AuditCode(code);
+    }
+
+    public async Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string appId, string version)
+    {
+        var appAttachmentGrain =
+            _clusterClient.GetGrain<IAppAttachmentGrain>(
+                GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+        return await appAttachmentGrain.GetAllAttachmentsInfoAsync();
     }
 }

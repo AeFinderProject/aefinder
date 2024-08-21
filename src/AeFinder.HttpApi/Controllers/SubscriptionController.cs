@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AeFinder.BlockScan;
 using AeFinder.Models;
 using AeFinder.Subscriptions;
+using AeFinder.Subscriptions.Dto;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -80,5 +81,13 @@ public class SubscriptionController : AeFinderController
         {
             throw new UserFriendlyException("File is empty.");
         }
+    }
+
+    [HttpGet]
+    [Authorize]
+    [Route("attachments/{version}")]
+    public async Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string version)
+    {
+        return await _subscriptionAppService.GetSubscriptionAttachmentsAsync(ClientId, version);
     }
 }

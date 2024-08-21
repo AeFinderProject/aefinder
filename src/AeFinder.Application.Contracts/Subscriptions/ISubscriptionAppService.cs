@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
+using AeFinder.Subscriptions.Dto;
 using Microsoft.AspNetCore.Http;
 
 namespace AeFinder.Subscriptions;
@@ -17,4 +18,5 @@ public interface ISubscriptionAppService
         IFormFile attachment5);
     Task<AllSubscriptionDto> GetSubscriptionManifestAsync(string appId);
     Task<List<SubscriptionIndexDto>> GetSubscriptionManifestIndexAsync(string appId);
+    Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string appId, string version);
 }
