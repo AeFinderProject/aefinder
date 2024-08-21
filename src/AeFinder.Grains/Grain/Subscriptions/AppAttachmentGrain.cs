@@ -7,12 +7,10 @@ namespace AeFinder.Grains.Grain.Subscriptions;
 
 public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachmentGrain
 {
-    private readonly ILogger<AppAttachmentGrain> _logger;
     private readonly IObjectMapper _objectMapper;
 
     public AppAttachmentGrain(ILogger<AppAttachmentGrain> logger, IObjectMapper objectMapper)
     {
-        _logger = logger;
         _objectMapper = objectMapper;
     }
 
@@ -77,5 +75,11 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
         }
 
         return resultList;
+    }
+
+    public async Task RemoveAllAttachmentsAsync()
+    {
+        State.AttachmentInfos.Clear();
+        await WriteStateAsync();
     }
 }

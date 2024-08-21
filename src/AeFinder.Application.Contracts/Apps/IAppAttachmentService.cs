@@ -7,4 +7,5 @@ public interface IAppAttachmentService
 {
     Task UploadAppAttachmentAsync(IFormFile file, string appId, string version);
     Task DeleteAppAttachmentAsync(string appId, string version, string fileKey);
+    Task DeleteAllAppAttachmentsAsync(string appId, string version);
 }

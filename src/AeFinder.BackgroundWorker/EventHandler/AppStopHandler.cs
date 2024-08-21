@@ -96,6 +96,8 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
         Logger.LogInformation("[AppStopHandler] App pod index deleted: {0}, stopVersion: {1}",
             eventData.AppId, eventData.StopVersion);
         
+        await AppAttachmentService.DeleteAllAppAttachmentsAsync(eventData.AppId, eventData.StopVersion);
+
         //clear stopped version grain data
         await ClearStoppedVersionAppDataAsync(appId, version,
             eventData.StopVersionChainIds);
