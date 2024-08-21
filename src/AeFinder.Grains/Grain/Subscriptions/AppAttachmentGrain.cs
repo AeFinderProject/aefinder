@@ -11,6 +11,11 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
     {
         _logger = logger;
     }
+    
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        await ReadStateAsync();
+    }
 
     public async Task AddAttachmentAsync(string appId, string version, string fileKey, string fileName, string s3Key)
     {
@@ -39,5 +44,19 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
         await WriteStateAsync();
     }
 
+    public async Task RemoveAttachmentAsync(string fileKey)
+    {
+        State.AttachmentInfos.Remove(fileKey);
+        await WriteStateAsync();
+    }
 
+    public async Task<string> GetAttachmentAwsS3keyAsync(string fileKey)
+    {
+        if (State.AttachmentInfos.Keys.Contains(fileKey))
+        {
+            return State.AttachmentInfos[fileKey].AwsS3Key;
+        }
+
+        return string.Empty;
+    }
 }

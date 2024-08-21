@@ -29,8 +29,7 @@ public class SubscriptionController : AeFinderController
     {
         CheckFile(input.Code);
         return await _subscriptionAppService.AddSubscriptionAsync(ClientId, input.Manifest, input.Code.GetAllBytes(),
-            input.Attachment1, input.Attachment2, input.Attachment3, input.Attachment4, input.Attachment5,
-            input.Attachments);
+            input.Attachment1, input.Attachment2, input.Attachment3, input.Attachment4, input.Attachment5);
     }
     
     [HttpPut]
@@ -48,6 +47,16 @@ public class SubscriptionController : AeFinderController
     {
         CheckFile(input.Code);
         await _subscriptionAppService.UpdateSubscriptionCodeAsync(ClientId, version, input.Code.GetAllBytes());
+    }
+
+    [HttpPut]
+    [Authorize]
+    [Route("attachments/{version}")]
+    public async Task UpdateAttachmentsAsync(string version, [FromForm]UpdateAttachmentInput input)
+    {
+        await _subscriptionAppService.UpdateSubscriptionAttachmentAsync(ClientId, version,
+            input.AttachmentDeleteFileKeyList, input.Attachment1, input.Attachment2, input.Attachment3,
+            input.Attachment4, input.Attachment5);
     }
     
     [HttpGet]

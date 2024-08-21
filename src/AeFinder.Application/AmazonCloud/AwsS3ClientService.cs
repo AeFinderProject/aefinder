@@ -71,13 +71,13 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         return await reader.ReadToEndAsync();
     }
 
-    public async Task DeleteJsonFileAsync(string directory, string fileName)
+    public async Task DeleteJsonFileAsync(string s3Key)
     {
-        var key = GenerateJsonFileS3Key(directory, fileName);
+        // var key = GenerateJsonFileS3Key(directory, fileName);
         var request = new DeleteObjectRequest
         {
             BucketName = _awsS3Option.BucketName,
-            Key = key
+            Key = s3Key
         };
 
         await _amazonS3Client.DeleteObjectAsync(request);
