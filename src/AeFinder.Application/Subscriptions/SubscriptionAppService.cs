@@ -50,8 +50,8 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     }
 
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code,
-        IFormFile attachment1, IFormFile attachment2, IFormFile attachment3, IFormFile attachment4,
-        IFormFile attachment5)
+        IFormFile attachment1 = null, IFormFile attachment2 = null, IFormFile attachment3 = null, IFormFile attachment4 = null,
+        IFormFile attachment5 = null)
     {
         await CheckAppExistAsync(appId);
         CheckCode(code);

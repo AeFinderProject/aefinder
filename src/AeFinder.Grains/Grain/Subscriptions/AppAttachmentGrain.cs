@@ -51,14 +51,14 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
         await WriteStateAsync();
     }
 
-    public async Task<string> GetAttachmentFileNameAsync(string fileKey)
+    public Task<string> GetAttachmentFileNameAsync(string fileKey)
     {
         if (State.AttachmentInfos.Keys.Contains(fileKey))
         {
-            return State.AttachmentInfos[fileKey].FileName;
+            return Task.FromResult(State.AttachmentInfos[fileKey].FileName);
         }
 
-        return string.Empty;
+        return Task.FromResult(string.Empty);
     }
 
     public async Task<List<AttachmentInfoDto>> GetAllAttachmentsInfoAsync()

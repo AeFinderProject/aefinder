@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.Loader;
+using AeFinder.App.Attachments;
 using AeFinder.App.BlockChain;
 using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
@@ -81,8 +82,18 @@ public class AeFinderAppModule : AbpModule
         if (appInfoOptions.ClientType == ClientType.Full)
         {
             AsyncHelper.RunSync(async () => await CreateIndexAsync(context.ServiceProvider, appInfoOptions.AppId, appInfoOptions.Version));
+            AsyncHelper.RunSync(async () => await InitAppAttachmentValuesAsync(context.ServiceProvider));
             AsyncHelper.RunSync(blockStateInitializationProvider.InitializeAsync);
             AsyncHelper.RunSync(async () => await InitBlockPushAsync(context, appInfoOptions.AppId, appInfoOptions.Version));
+        }
+    }
+
+    private async Task InitAppAttachmentValuesAsync(IServiceProvider serviceProvider)
+    {
+        var appAttachmentValueProviders = serviceProvider.GetServices<IAppAttachmentValueProvider>();
+        foreach (var appAttachmentValueProvider in appAttachmentValueProviders)
+        {
+            await appAttachmentValueProvider.InitValueAsync();
         }
     }
 

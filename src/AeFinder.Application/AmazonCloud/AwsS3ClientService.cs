@@ -5,7 +5,6 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.AmazonCloud;
@@ -39,13 +38,12 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
 
     public async Task<string> UpLoadJsonFileAsync(Stream stream, string directory, string fileName)
     {
-        string s3Key = directory + "/" + fileName;
+        var s3Key = GetS3Key(directory, fileName);
         var putObjectRequest = new PutObjectRequest
         {
             InputStream = stream,
             BucketName = _awsS3Option.BucketName,
             Key = s3Key
-            // CannedACL = S3CannedACL.PublicRead,
         };
         var putObjectResponse = await _amazonS3Client.PutObjectAsync(putObjectRequest);
         if (putObjectResponse.HttpStatusCode != HttpStatusCode.OK)
@@ -58,9 +56,9 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         return s3Key;
     }
 
-    public async Task<string> GetJsonFileAsync(string directory, string fileName)
+    public async Task<string> GetJsonFileContentAsync(string directory, string fileName)
     {
-        string s3Key = directory + "/" + fileName;
+        var s3Key = GetS3Key(directory, fileName);
         var getObjectRequest = new GetObjectRequest
         {
             BucketName = _awsS3Option.BucketName,
@@ -74,7 +72,7 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
 
     public async Task DeleteJsonFileAsync(string directory, string fileName)
     {
-        string s3Key = directory + "/" + fileName;
+        var s3Key = GetS3Key(directory, fileName);
         var request = new DeleteObjectRequest
         {
             BucketName = _awsS3Option.BucketName,
@@ -84,12 +82,8 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         await _amazonS3Client.DeleteObjectAsync(request);
     }
 
-    public string GetJsonFileS3Url(string directory, string fileName)
+    private string GetS3Key(string directory, string fileName)
     {
-        if (directory.IsNullOrEmpty())
-        {
-            return $"https://{_awsS3Option.BucketName}.s3.amazonaws.com/{fileName}";
-        }
-        return $"https://{_awsS3Option.BucketName}.s3.amazonaws.com/{directory}/{fileName}";
+        return $"{directory}/{fileName}";
     }
 }

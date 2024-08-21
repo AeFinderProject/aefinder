@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Http;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
-
 namespace AeFinder.Apps;
 
 [RemoteService(IsEnabled = false)]
@@ -84,5 +83,18 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         }
 
         await appAttachmentGrain.RemoveAllAttachmentsAsync();
+    }
+
+    public async Task<string> GetAppAttachmentContentAsync(string appId, string version, string fileKey)
+    {
+        var appAttachmentGrain = _clusterClient.GetGrain<IAppAttachmentGrain>(
+            GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+        var fileName = await appAttachmentGrain.GetAttachmentFileNameAsync(fileKey);
+        if (fileName.IsNullOrWhiteSpace())
+        {
+            throw new BusinessException("No attachment for key： {Key}", fileKey);
+        }
+
+        return await _awsS3ClientService.GetJsonFileContentAsync(appId, GenerateAppAwsS3FileName(version, fileName));
     }
 }
