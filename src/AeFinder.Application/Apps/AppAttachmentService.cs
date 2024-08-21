@@ -25,9 +25,9 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         _awsS3ClientService = awsS3ClientService;
     }
 
-    public string GenerateAppJsonFileS3Key(string appId, string version, string fileName)
+    private string GenerateAppAwsS3FileName(string version, string fileName)
     {
-        return appId + "/" + version + "-" + fileName;
+        return version + "-" + fileName;
     }
 
     public async Task UploadAppAttachmentAsync(IFormFile file, string appId, string version)
@@ -48,8 +48,8 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                 throw new UserFriendlyException("Invalid file. only support json file.");
             }
 
-            var s3Key = GenerateAppJsonFileS3Key(appId, version, fileNameWithExtension);
-            await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, s3Key);
+            var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithExtension);
+            await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
 
             string fileKey = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
             var appAttachmentGrain =
@@ -66,8 +66,8 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             _clusterClient.GetGrain<IAppAttachmentGrain>(
                 GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
         var fileName = await appAttachmentGrain.GetAttachmentFileNameAsync(fileKey);
-        var s3Key = GenerateAppJsonFileS3Key(appId, version, fileName);
-        await _awsS3ClientService.DeleteJsonFileAsync(s3Key);
+        var s3FileName = GenerateAppAwsS3FileName(version, fileName);
+        await _awsS3ClientService.DeleteJsonFileAsync(appId, s3FileName);
         await appAttachmentGrain.RemoveAttachmentAsync(fileKey);
     }
 }

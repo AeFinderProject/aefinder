@@ -37,9 +37,9 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         _amazonS3Client = new AmazonS3Client(accessKeyID, secretKey, config);
     }
 
-    public async Task<string> UpLoadJsonFileAsync(Stream stream, string s3Key)
+    public async Task<string> UpLoadJsonFileAsync(Stream stream, string directory, string fileName)
     {
-        // string s3Key = GenerateJsonFileS3Key(directory, fileName);
+        string s3Key = directory + "/" + fileName;
         var putObjectRequest = new PutObjectRequest
         {
             InputStream = stream,
@@ -50,16 +50,17 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         var putObjectResponse = await _amazonS3Client.PutObjectAsync(putObjectRequest);
         if (putObjectResponse.HttpStatusCode != HttpStatusCode.OK)
         {
-            _logger.LogError("Upload json file failed with HTTP status code: {StatusCode}", putObjectResponse.HttpStatusCode);
+            _logger.LogError("Upload json file failed with HTTP status code: {StatusCode}",
+                putObjectResponse.HttpStatusCode);
             return string.Empty;
         }
-        
+
         return s3Key;
     }
 
-    public async Task<string> GetJsonFileAsync(string s3Key)
+    public async Task<string> GetJsonFileAsync(string directory, string fileName)
     {
-        // var key = GenerateJsonFileS3Key(directory, fileName);
+        string s3Key = directory + "/" + fileName;
         var getObjectRequest = new GetObjectRequest
         {
             BucketName = _awsS3Option.BucketName,
@@ -67,13 +68,13 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         };
 
         using var response = await _amazonS3Client.GetObjectAsync(getObjectRequest);
-        var reader = new StreamReader( response.ResponseStream );
+        var reader = new StreamReader(response.ResponseStream);
         return await reader.ReadToEndAsync();
     }
 
-    public async Task DeleteJsonFileAsync(string s3Key)
+    public async Task DeleteJsonFileAsync(string directory, string fileName)
     {
-        // var key = GenerateJsonFileS3Key(directory, fileName);
+        string s3Key = directory + "/" + fileName;
         var request = new DeleteObjectRequest
         {
             BucketName = _awsS3Option.BucketName,

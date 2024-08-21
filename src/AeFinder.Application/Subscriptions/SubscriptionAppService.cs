@@ -62,29 +62,18 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         var addResult = await appSubscriptionGrain.AddSubscriptionAsync(subscription, code);
 
         var version = addResult.NewVersion;
-        if (attachment1 != null)
+        var attachmentList = new List<IFormFile>()
         {
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment1, appId, version);
-        }
+            attachment1, attachment2, attachment3, attachment4, attachment5
+        };
+        foreach (var attachment in attachmentList)
+        {
+            if (attachment == null)
+            {
+                continue;
+            }
 
-        if (attachment2 != null)
-        {
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment2, appId, version);
-        }
-        
-        if (attachment3 != null)
-        {
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment3, appId, version);
-        }
-        
-        if (attachment4 != null)
-        {
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment4, appId, version);
-        }
-        
-        if (attachment5 != null)
-        {
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment5, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
         }
 
         var rulePath =
@@ -139,29 +128,18 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         }
         
         //Upload new attach file
-        if (attachment1 != null)
+        var attachmentList = new List<IFormFile>()
         {
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment1, appId, version);
-        }
+            attachment1, attachment2, attachment3, attachment4, attachment5
+        };
+        foreach (var attachment in attachmentList)
+        {
+            if (attachment == null)
+            {
+                continue;
+            }
 
-        if (attachment2 != null)
-        {
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment2, appId, version);
-        }
-        
-        if (attachment3 != null)
-        {
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment3, appId, version);
-        }
-        
-        if (attachment4 != null)
-        {
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment4, appId, version);
-        }
-        
-        if (attachment5 != null)
-        {
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment5, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
         }
         await _appDeployManager.RestartAppAsync(appId, version);
         Logger.LogInformation("App attachment updated. AppId: {appId}, Version: {version}", appId, version);
