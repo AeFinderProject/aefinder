@@ -10,4 +10,6 @@ public interface IAwsS3ClientService
     Task<string> GetJsonFileAsync(string directory, string fileName);
 
     Task DeleteJsonFileAsync(string directory, string fileName);
+    string GenerateJsonFileS3Key(string directory, string fileName);
+    string GenerateAppAttachmentS3FileName(string appId, string version, string fileName);
 }

@@ -39,7 +39,7 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
 
     public async Task<string> UpLoadJsonFileAsync(Stream stream, string directory, string fileName)
     {
-        string s3Key = await GenerateJsonFileS3Key(directory, fileName);
+        string s3Key = GenerateJsonFileS3Key(directory, fileName);
         var putObjectRequest = new PutObjectRequest
         {
             InputStream = stream,
@@ -59,7 +59,7 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
 
     public async Task<string> GetJsonFileAsync(string directory, string fileName)
     {
-        var key = await GenerateJsonFileS3Key(directory, fileName);
+        var key = GenerateJsonFileS3Key(directory, fileName);
         var getObjectRequest = new GetObjectRequest
         {
             BucketName = _awsS3Option.BucketName,
@@ -73,7 +73,7 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
 
     public async Task DeleteJsonFileAsync(string directory, string fileName)
     {
-        var key = await GenerateJsonFileS3Key(directory, fileName);
+        var key = GenerateJsonFileS3Key(directory, fileName);
         var request = new DeleteObjectRequest
         {
             BucketName = _awsS3Option.BucketName,
@@ -83,21 +83,26 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         await _amazonS3Client.DeleteObjectAsync(request);
     }
 
-    public async Task<string> GenerateJsonFileS3Key(string directory, string fileName)
+    public string GenerateAppAttachmentS3FileName(string appId, string version, string fileName)
     {
-        if (directory.IsNullOrEmpty())
-        {
-            return fileName + ".json";
-        }
-        return directory + "/" + fileName + ".json";
+        return $"{appId}-{version}-{fileName}";
     }
 
-    public async Task<string> GetJsonFileS3Url(string directory, string fileName)
+    public string GenerateJsonFileS3Key(string directory, string fileName)
     {
         if (directory.IsNullOrEmpty())
         {
-            return $"https://{_awsS3Option.BucketName}.s3.amazonaws.com/{fileName}.json";
+            return fileName;
         }
-        return $"https://{_awsS3Option.BucketName}.s3.amazonaws.com/{directory}/{fileName}.json";
+        return directory + "/" + fileName;
+    }
+
+    public string GetJsonFileS3Url(string directory, string fileName)
+    {
+        if (directory.IsNullOrEmpty())
+        {
+            return $"https://{_awsS3Option.BucketName}.s3.amazonaws.com/{fileName}";
+        }
+        return $"https://{_awsS3Option.BucketName}.s3.amazonaws.com/{directory}/{fileName}";
     }
 }

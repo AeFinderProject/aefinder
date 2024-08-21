@@ -28,7 +28,9 @@ public class SubscriptionController : AeFinderController
     public async Task<string> AddSubscriptionAsync([FromForm]AddSubscriptionInput input)
     {
         CheckFile(input.Code);
-        return await _subscriptionAppService.AddSubscriptionAsync(ClientId, input.Manifest,input.Code.GetAllBytes());
+        return await _subscriptionAppService.AddSubscriptionAsync(ClientId, input.Manifest, input.Code.GetAllBytes(),
+            input.Attachment1, input.Attachment2, input.Attachment3, input.Attachment4, input.Attachment5,
+            input.Attachments);
     }
     
     [HttpPut]

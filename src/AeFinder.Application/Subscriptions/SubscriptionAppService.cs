@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.AmazonCloud;
 using AeFinder.App.Deploy;
 using AeFinder.App.Es;
 using AeFinder.Apps.Eto;
@@ -10,7 +12,9 @@ using AeFinder.CodeOps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Subscriptions.Dto;
 using AElf.EntityMapping.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -29,9 +33,11 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     private readonly IAppDeployManager _appDeployManager;
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _subscriptionIndexRepository;
+    private readonly IAwsS3ClientService _awsS3ClientService;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
         IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions,
+        IAwsS3ClientService awsS3ClientService,
         IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository)
     {
         _clusterClient = clusterClient;
@@ -39,21 +45,90 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         _appDeployManager = appDeployManager;
         _subscriptionIndexRepository = subscriptionIndexRepository;
         _appDeployOptions = appDeployOptions.Value;
+        _awsS3ClientService = awsS3ClientService;
     }
 
-    public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code)
+    public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code,
+        IFormFile attachment1, IFormFile attachment2, IFormFile attachment3, IFormFile attachment4,
+        IFormFile attachment5, AddAttachmentInput attachments)
     {
         await CheckAppExistAsync(appId);
         CheckCode(code);
-        
-        var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
-        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
 
+        var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
+        var appSubscriptionGrain =
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var addResult = await appSubscriptionGrain.AddSubscriptionAsync(subscription, code);
+
+        var version = addResult.NewVersion;
+        if (attachment1 != null)
+        {
+            await UploadAppAttachmentAsync(attachment1, appId, version, attachments.AttachmentFileKey1);
+        }
+
+        if (attachment2 != null)
+        {
+            await UploadAppAttachmentAsync(attachment2, appId, version, attachments.AttachmentFileKey2);
+        }
         
-        var rulePath = await _appDeployManager.CreateNewAppAsync(appId, addResult.NewVersion, _appDeployOptions.AppImageName);
-        Logger.LogInformation("App deployed. AppId: {appId}, Version: {version}, RulePath: {rulePath}", appId, addResult.NewVersion, rulePath);
+        if (attachment3 != null)
+        {
+            await UploadAppAttachmentAsync(attachment3, appId, version, attachments.AttachmentFileKey3);
+        }
+        
+        if (attachment4 != null)
+        {
+            await UploadAppAttachmentAsync(attachment4, appId, version, attachments.AttachmentFileKey4);
+        }
+        
+        if (attachment5 != null)
+        {
+            await UploadAppAttachmentAsync(attachment5, appId, version, attachments.AttachmentFileKey5);
+        }
+
+        var rulePath =
+            await _appDeployManager.CreateNewAppAsync(appId, addResult.NewVersion, _appDeployOptions.AppImageName);
+        Logger.LogInformation("App deployed. AppId: {appId}, Version: {version}, RulePath: {rulePath}", appId,
+            addResult.NewVersion, rulePath);
         return addResult.NewVersion;
+    }
+
+    private async Task UploadAppAttachmentAsync(IFormFile file, string appId, string version, string fileKey)
+    {
+        if (fileKey.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("Please set attachment file key.");
+        }
+        using (Stream fileStream = file.OpenReadStream())
+        {
+            string fileNameWithExtension = file.FileName;
+            string extension = Path.GetExtension(fileNameWithExtension);
+            bool hasExtension = !string.IsNullOrEmpty(extension);
+            if (!hasExtension)
+            {
+                throw new UserFriendlyException("Invalid file. only support json file.");
+            }
+
+            bool isJsonFile = extension.Equals(".json", StringComparison.OrdinalIgnoreCase);
+            if (isJsonFile)
+            {
+                throw new UserFriendlyException("Invalid file. only support json file.");
+            }
+
+            var s3FileName = _awsS3ClientService.GenerateAppAttachmentS3FileName(appId, version,
+                fileNameWithExtension);
+            var s3Key = await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
+            if (s3Key.IsNullOrEmpty())
+            {
+                throw new UserFriendlyException("Upload json file failed:" + s3FileName);
+            }
+
+            var appAttachmentGrain =
+                _clusterClient.GetGrain<IAppAttachmentGrain>(
+                    GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+            await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
+                fileNameWithExtension, s3Key);
+        }
     }
 
     public async Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest)

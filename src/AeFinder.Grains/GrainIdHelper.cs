@@ -106,4 +106,9 @@ public static class GrainIdHelper
     {
         return 0;
     }
+    
+    public static string GenerateAppAttachmentGrainId(string appId, string version)
+    {
+        return GenerateGrainId(appId, version);
+    }
 }
