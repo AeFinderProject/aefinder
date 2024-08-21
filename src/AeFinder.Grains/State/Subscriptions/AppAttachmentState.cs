@@ -11,5 +11,4 @@ public class AttachmentInfo
     public string AppId { get; set; }
     public string Version { get; set; }
     public string FileName { get; set; }
-    public string AwsS3Key { get; set; }
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AeFinder.AmazonCloud;
 using AeFinder.App.Deploy;
 using AeFinder.App.Es;
+using AeFinder.Apps;
 using AeFinder.Apps.Eto;
 using AeFinder.BlockScan;
 using AeFinder.CodeOps;
@@ -33,11 +34,11 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     private readonly IAppDeployManager _appDeployManager;
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _subscriptionIndexRepository;
-    private readonly IAwsS3ClientService _awsS3ClientService;
+    private readonly IAppAttachmentService _appAttachmentService;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
         IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions,
-        IAwsS3ClientService awsS3ClientService,
+        IAppAttachmentService appAttachmentService,
         IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository)
     {
         _clusterClient = clusterClient;
@@ -45,7 +46,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         _appDeployManager = appDeployManager;
         _subscriptionIndexRepository = subscriptionIndexRepository;
         _appDeployOptions = appDeployOptions.Value;
-        _awsS3ClientService = awsS3ClientService;
+        _appAttachmentService = appAttachmentService;
     }
 
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code,
@@ -63,27 +64,27 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         var version = addResult.NewVersion;
         if (attachment1 != null)
         {
-            await UploadAppAttachmentAsync(attachment1, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment1, appId, version);
         }
 
         if (attachment2 != null)
         {
-            await UploadAppAttachmentAsync(attachment2, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment2, appId, version);
         }
         
         if (attachment3 != null)
         {
-            await UploadAppAttachmentAsync(attachment3, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment3, appId, version);
         }
         
         if (attachment4 != null)
         {
-            await UploadAppAttachmentAsync(attachment4, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment4, appId, version);
         }
         
         if (attachment5 != null)
         {
-            await UploadAppAttachmentAsync(attachment5, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment5, appId, version);
         }
 
         var rulePath =
@@ -93,40 +94,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         return addResult.NewVersion;
     }
 
-    private async Task UploadAppAttachmentAsync(IFormFile file, string appId, string version)
-    {
-        using (Stream fileStream = file.OpenReadStream())
-        {
-            string fileNameWithExtension = file.FileName;
-            string extension = Path.GetExtension(fileNameWithExtension);
-            bool hasExtension = !string.IsNullOrEmpty(extension);
-            if (!hasExtension)
-            {
-                throw new UserFriendlyException("Invalid file. only support json file.");
-            }
-
-            bool isJsonFile = extension.Equals(".json", StringComparison.OrdinalIgnoreCase);
-            if (isJsonFile)
-            {
-                throw new UserFriendlyException("Invalid file. only support json file.");
-            }
-            
-            string fileKey = Path.GetFileNameWithoutExtension(fileNameWithExtension);//Use file name as file key
-            var s3FileName = _awsS3ClientService.GenerateAppAttachmentS3FileName(appId, version,
-                fileNameWithExtension);
-            var s3Key = await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
-            if (s3Key.IsNullOrEmpty())
-            {
-                throw new UserFriendlyException("Upload json file failed:" + s3FileName);
-            }
-
-            var appAttachmentGrain =
-                _clusterClient.GetGrain<IAppAttachmentGrain>(
-                    GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
-            await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
-                fileNameWithExtension, s3Key);
-        }
-    }
+    
 
     public async Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest)
     {
@@ -160,44 +128,40 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         List<string> attachmentDeleteFileKeyList,
         IFormFile attachment1, IFormFile attachment2, IFormFile attachment3, IFormFile attachment4, IFormFile attachment5)
     {
-        var appAttachmentGrain =
-            _clusterClient.GetGrain<IAppAttachmentGrain>(
-                GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+        
         //Delete attach file
         if (attachmentDeleteFileKeyList != null && attachmentDeleteFileKeyList.Count > 0)
         {
             foreach (var fileKey in attachmentDeleteFileKeyList)
             {
-                var s3Key = await appAttachmentGrain.GetAttachmentAwsS3keyAsync(fileKey);
-                await _awsS3ClientService.DeleteJsonFileAsync(s3Key);
-                await appAttachmentGrain.RemoveAttachmentAsync(fileKey);
+                await _appAttachmentService.DeleteAppAttachmentAsync(appId, version, fileKey);
             }
         }
         
         //Upload new attach file
         if (attachment1 != null)
         {
-            await UploadAppAttachmentAsync(attachment1, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment1, appId, version);
         }
 
         if (attachment2 != null)
         {
-            await UploadAppAttachmentAsync(attachment2, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment2, appId, version);
         }
         
         if (attachment3 != null)
         {
-            await UploadAppAttachmentAsync(attachment3, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment3, appId, version);
         }
         
         if (attachment4 != null)
         {
-            await UploadAppAttachmentAsync(attachment4, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment4, appId, version);
         }
         
         if (attachment5 != null)
         {
-            await UploadAppAttachmentAsync(attachment5, appId, version);
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment5, appId, version);
         }
         await _appDeployManager.RestartAppAsync(appId, version);
         Logger.LogInformation("App attachment updated. AppId: {appId}, Version: {version}", appId, version);

@@ -58,7 +58,8 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
             }
         };
 
-        var version1 = await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1]);
+        var version1 = await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1], null,
+            null, null, null, null);
 
         var subscription = await _subscriptionAppService.GetSubscriptionManifestAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
@@ -96,7 +97,8 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
         };
 
         await Assert.ThrowsAsync<AbpValidationException>(async () =>
-            await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1]));
+            await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1], null, null, null,
+                null, null));
 
         subscriptionInput = new SubscriptionManifestDto()
         {
@@ -112,7 +114,8 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
         };
 
         await Assert.ThrowsAsync<AbpValidationException>(async () =>
-            await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1]));
+            await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1], null, null, null,
+                null, null));
 
         subscriptionInput = new SubscriptionManifestDto()
         {
@@ -122,7 +125,8 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
         };
 
         await Assert.ThrowsAsync<AbpValidationException>(async () =>
-            await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1]));
+            await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1], null, null, null,
+                null, null));
 
         subscriptionInput = new SubscriptionManifestDto()
         {
@@ -144,7 +148,8 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
         };
 
         await Assert.ThrowsAsync<AbpValidationException>(async () =>
-            await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1]));
+            await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1], null, null, null,
+                null, null));
     }
     
     [Fact]
@@ -189,7 +194,9 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
             }
         };
         var dll = System.Text.Encoding.UTF8.GetBytes("Program codes");
-        var version1 = await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInfo1, dll);
+        var version1 =
+            await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInfo1, dll, null, null, null, null,
+                null);
         
         var subscription = await _subscriptionAppService.GetSubscriptionManifestAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version1);

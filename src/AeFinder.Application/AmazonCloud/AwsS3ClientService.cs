@@ -37,9 +37,9 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         _amazonS3Client = new AmazonS3Client(accessKeyID, secretKey, config);
     }
 
-    public async Task<string> UpLoadJsonFileAsync(Stream stream, string directory, string fileName)
+    public async Task<string> UpLoadJsonFileAsync(Stream stream, string s3Key)
     {
-        string s3Key = GenerateJsonFileS3Key(directory, fileName);
+        // string s3Key = GenerateJsonFileS3Key(directory, fileName);
         var putObjectRequest = new PutObjectRequest
         {
             InputStream = stream,
@@ -57,13 +57,13 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         return s3Key;
     }
 
-    public async Task<string> GetJsonFileAsync(string directory, string fileName)
+    public async Task<string> GetJsonFileAsync(string s3Key)
     {
-        var key = GenerateJsonFileS3Key(directory, fileName);
+        // var key = GenerateJsonFileS3Key(directory, fileName);
         var getObjectRequest = new GetObjectRequest
         {
             BucketName = _awsS3Option.BucketName,
-            Key = key
+            Key = s3Key
         };
 
         using var response = await _amazonS3Client.GetObjectAsync(getObjectRequest);
@@ -81,20 +81,6 @@ public class AwsS3ClientService : IAwsS3ClientService, ISingletonDependency
         };
 
         await _amazonS3Client.DeleteObjectAsync(request);
-    }
-
-    public string GenerateAppAttachmentS3FileName(string appId, string version, string fileName)
-    {
-        return $"{appId}-{version}-{fileName}";
-    }
-
-    public string GenerateJsonFileS3Key(string directory, string fileName)
-    {
-        if (directory.IsNullOrEmpty())
-        {
-            return fileName;
-        }
-        return directory + "/" + fileName;
     }
 
     public string GetJsonFileS3Url(string directory, string fileName)

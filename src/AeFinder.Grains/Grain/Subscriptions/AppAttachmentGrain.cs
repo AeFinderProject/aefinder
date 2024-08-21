@@ -21,7 +21,7 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
         await ReadStateAsync();
     }
 
-    public async Task AddAttachmentAsync(string appId, string version, string fileKey, string fileName, string s3Key)
+    public async Task AddAttachmentAsync(string appId, string version, string fileKey, string fileName)
     {
         if (State.AttachmentInfos == null)
         {
@@ -33,8 +33,7 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
             AppId = appId,
             Version = version,
             FileKey = fileKey,
-            FileName = fileName,
-            AwsS3Key = s3Key
+            FileName = fileName
         };
         if (State.AttachmentInfos.Keys.Contains(fileKey))
         {
@@ -54,11 +53,11 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
         await WriteStateAsync();
     }
 
-    public async Task<string> GetAttachmentAwsS3keyAsync(string fileKey)
+    public async Task<string> GetAttachmentFileNameAsync(string fileKey)
     {
         if (State.AttachmentInfos.Keys.Contains(fileKey))
         {
-            return State.AttachmentInfos[fileKey].AwsS3Key;
+            return State.AttachmentInfos[fileKey].FileName;
         }
 
         return string.Empty;
