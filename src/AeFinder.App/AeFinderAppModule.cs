@@ -20,6 +20,7 @@ using AeFinder.Sdk.Entities;
 using AElf.EntityMapping.Elasticsearch.Options;
 using AElf.EntityMapping.Elasticsearch.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NUglify.Helpers;
 using Orleans;
@@ -93,10 +94,13 @@ public class AeFinderAppModule : AbpModule
     {
         var appAttachmentService = serviceProvider.GetRequiredService<IAppAttachmentService>();
         var appAttachmentValueProviders = serviceProvider.GetServices<IAppAttachmentValueProvider>();
+        var logger = serviceProvider.GetRequiredService<ILogger<AeFinderAppModule>>();
         foreach (var appAttachmentValueProvider in appAttachmentValueProviders)
         {
             var content =
                 await appAttachmentService.GetAppAttachmentContentAsync(appId, version, appAttachmentValueProvider.Key);
+            logger.LogInformation("Init AppAttachmentValueProvider with Key: {Key} and Content:{Content}",
+                appAttachmentValueProvider.Key, content);
             appAttachmentValueProvider.InitValue(content);
         }
     }

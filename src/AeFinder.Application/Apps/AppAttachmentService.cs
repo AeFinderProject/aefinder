@@ -18,7 +18,6 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
 {
     private readonly IClusterClient _clusterClient;
     private readonly IAwsS3ClientService _awsS3ClientService;
-
     public AppAttachmentService(IClusterClient clusterClient,
         IAwsS3ClientService awsS3ClientService)
     {
@@ -98,11 +97,12 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         var appAttachmentGrain = _clusterClient.GetGrain<IAppAttachmentGrain>(
             GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
         var fileName = await appAttachmentGrain.GetAttachmentFileNameAsync(fileKey);
+        
         if (fileName.IsNullOrWhiteSpace())
         {
             throw new BusinessException("No attachment for key： {Key}", fileKey);
         }
-
+        Logger.LogInformation("Get app attachment file name: {FileName}", fileName);
         return await _awsS3ClientService.GetJsonFileContentAsync(appId, GenerateAppAwsS3FileName(version, fileName));
     }
 }
