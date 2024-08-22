@@ -117,7 +117,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         List<string> attachmentDeleteFileKeyList,
         IFormFile attachment1, IFormFile attachment2, IFormFile attachment3, IFormFile attachment4, IFormFile attachment5)
     {
-        
+        await CheckAppVersionExistAsync(appId, version);
         //Delete attach file
         if (attachmentDeleteFileKeyList != null && attachmentDeleteFileKeyList.Count > 0)
         {
@@ -169,6 +169,26 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         if (app.AppId.IsNullOrWhiteSpace())
         {
             throw new UserFriendlyException("App does not exist.");
+        }
+    }
+
+    private async Task CheckAppVersionExistAsync(string appId, string version)
+    {
+        var allSubscriptionDto = await GetSubscriptionManifestAsync(appId);
+        var versionList = new List<string>();
+        if (allSubscriptionDto.CurrentVersion != null)
+        {
+            versionList.Add(allSubscriptionDto.CurrentVersion.Version);
+        }
+
+        if (allSubscriptionDto.PendingVersion != null)
+        {
+            versionList.Add(allSubscriptionDto.PendingVersion.Version);
+        }
+
+        if (!versionList.Contains(version))
+        {
+            throw new UserFriendlyException("Version does not exist.");
         }
     }
 
@@ -329,6 +349,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 
     public async Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string appId, string version)
     {
+        await CheckAppVersionExistAsync(appId, version);
         var appAttachmentGrain =
             _clusterClient.GetGrain<IAppAttachmentGrain>(
                 GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AeFinder.AmazonCloud;
 using AeFinder.Grains;
@@ -46,11 +47,16 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             {
                 throw new UserFriendlyException("Invalid file. only support json file.");
             }
+            
+            string fileKey = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
+            if (!Regex.IsMatch(fileKey, @"^[a-zA-Z0-9_-]+$"))
+            {
+                throw new UserFriendlyException("File name can only contain letters, numbers, underscores, and hyphens.");
+            }
 
             var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithExtension);
             await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
-
-            string fileKey = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
+            
             var appAttachmentGrain =
                 _clusterClient.GetGrain<IAppAttachmentGrain>(
                     GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
