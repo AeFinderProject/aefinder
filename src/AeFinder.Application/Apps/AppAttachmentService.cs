@@ -6,6 +6,7 @@ using AeFinder.AmazonCloud;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Subscriptions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -36,14 +37,15 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         {
             string fileNameWithExtension = file.FileName;
             string extension = Path.GetExtension(fileNameWithExtension);
+            Logger.LogInformation("Attachment file name: {0} extension: {1}", fileNameWithExtension, extension);
             bool hasExtension = !string.IsNullOrEmpty(extension);
             if (!hasExtension)
             {
-                throw new UserFriendlyException("Invalid file. only support json file.");
+                throw new UserFriendlyException("Invalid file.");
             }
 
             bool isJsonFile = extension.Equals(".json", StringComparison.OrdinalIgnoreCase);
-            if (isJsonFile)
+            if (!isJsonFile)
             {
                 throw new UserFriendlyException("Invalid file. only support json file.");
             }
