@@ -89,7 +89,7 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             await _awsS3ClientService.DeleteJsonFileAsync(appId, s3FileName);
         }
 
-        await appAttachmentGrain.RemoveAllAttachmentsAsync();
+        await appAttachmentGrain.ClearGrainStateAsync();
     }
 
     public async Task<string> GetAppAttachmentContentAsync(string appId, string version, string fileKey)
