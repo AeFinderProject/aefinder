@@ -1,9 +1,9 @@
-namespace AeFinder.App.Attachments;
+namespace AeFinder.Sdk.Attachments;
 
 public interface IAppAttachmentValueProvider
 {
     string Key { get; }
-    Task InitValueAsync();
+    void InitValue(string value);
 }
 
 public interface IAppAttachmentValueProvider<T> : IAppAttachmentValueProvider

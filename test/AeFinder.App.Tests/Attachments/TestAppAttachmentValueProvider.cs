@@ -1,15 +1,10 @@
-using AeFinder.Apps;
+using AeFinder.Sdk.Attachments;
 
 namespace AeFinder.App.Attachments;
 
 public class TestAppAttachmentValueProvider : AppAttachmentValueProviderBase<TestInfo>
 {
     public override string Key => "TestKey";
-
-    public TestAppAttachmentValueProvider(IAppInfoProvider appInfoProvider, IAppAttachmentService appAttachmentService)
-        : base(appInfoProvider, appAttachmentService)
-    {
-    }
 }
 
 public class TestInfo
