@@ -44,7 +44,10 @@ jobs:
 
       - name: Test
         run: |
-          dotnet test --no-restore --no-build --verbosity normal --logger trx --settings CodeCoverage.runsettings --results-directory coverage --collect:"XPlat Code Coverage" 
+          for name in `ls ./test/*.Tests/*.csproj | awk '{print $NF}'`;
+          do
+              dotnet test ${name} --no-restore --no-build --verbosity normal --logger trx --settings CodeCoverage.runsettings --results-directory coverage --collect:"XPlat Code Coverage" 
+          done
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
