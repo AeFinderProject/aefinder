@@ -8,5 +8,5 @@ public interface IAppAttachmentGrain: IGrainWithStringKey
     Task RemoveAttachmentAsync(string fileKey);
     Task<string> GetAttachmentFileNameAsync(string fileKey);
     Task<List<AttachmentInfoDto>> GetAllAttachmentsInfoAsync();
-    Task RemoveAllAttachmentsAsync();
+    Task ClearGrainStateAsync();
 }

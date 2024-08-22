@@ -77,9 +77,9 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
         return resultList;
     }
 
-    public async Task RemoveAllAttachmentsAsync()
+    public async Task ClearGrainStateAsync()
     {
-        State.AttachmentInfos.Clear();
-        await WriteStateAsync();
+        await base.ClearStateAsync();
+        DeactivateOnIdle();
     }
 }
