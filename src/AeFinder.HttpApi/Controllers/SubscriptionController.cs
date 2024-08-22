@@ -50,7 +50,7 @@ public class SubscriptionController : AeFinderController
         await _subscriptionAppService.UpdateSubscriptionCodeAsync(ClientId, version, input.Code.GetAllBytes());
     }
 
-    [HttpPut]
+    [HttpPost]
     [Authorize]
     [Route("attachments/{version}")]
     public async Task UpdateAttachmentsAsync(string version, [FromForm]UpdateAttachmentInput input)
