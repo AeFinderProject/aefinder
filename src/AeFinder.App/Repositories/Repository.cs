@@ -54,7 +54,10 @@ public class Repository<TEntity> : RepositoryBase<TEntity>, IRepository<TEntity>
     public async Task DeleteAsync(string id)
     {
         var entity = await GetAsync(id);
-        await DeleteAsync(entity);
+        if (entity != null)
+        {
+            await DeleteAsync(entity);
+        }
     }
     
     public async Task DeleteAsync(TEntity entity)
