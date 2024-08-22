@@ -114,10 +114,19 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     }
 
     public async Task UpdateSubscriptionAttachmentAsync(string appId, string version,
-        string attachmentDeleteFileKeyList,
-        IFormFile attachment1, IFormFile attachment2, IFormFile attachment3, IFormFile attachment4, IFormFile attachment5)
+        string attachmentDeleteFileKeyList = null,
+        IFormFile attachment1 = null, IFormFile attachment2 = null, IFormFile attachment3 = null,
+        IFormFile attachment4 = null, IFormFile attachment5 = null)
     {
         await CheckAppVersionExistAsync(appId, version);
+
+        if (attachmentDeleteFileKeyList.IsNullOrEmpty() && attachment1 == null && attachment2 == null &&
+            attachment3 == null && attachment4 == null && attachment5 == null)
+        {
+            Logger.LogWarning("Attachment's parameters is null.");
+            return;
+        }
+        
         //Delete attach file
         if (!attachmentDeleteFileKeyList.IsNullOrEmpty())
         {
@@ -127,7 +136,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
                 await _appAttachmentService.DeleteAppAttachmentAsync(appId, version, fileKey);
             }
         }
-        
+
         //Upload new attach file
         var attachmentList = new List<IFormFile>()
         {
@@ -142,6 +151,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 
             await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
         }
+
         await _appDeployManager.RestartAppAsync(appId, version);
         Logger.LogInformation("App attachment updated. AppId: {appId}, Version: {version}", appId, version);
     }

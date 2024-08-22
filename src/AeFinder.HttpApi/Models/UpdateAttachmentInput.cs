@@ -8,7 +8,6 @@ namespace AeFinder.Models;
 
 public class UpdateAttachmentInput
 {
-    [ModelBinder(BinderType = typeof(JsonModelBinder))]
     public string AttachmentDeleteFileKeyList { get; set; }
     public IFormFile Attachment1 { get; set; }
     public IFormFile Attachment2 { get; set; }
