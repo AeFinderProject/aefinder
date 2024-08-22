@@ -12,7 +12,5 @@ public class UpdateAttachmentInput
     public IFormFile Attachment3 { get; set; }
     public IFormFile Attachment4 { get; set; }
     public IFormFile Attachment5 { get; set; }
-    
-    [ModelBinder(BinderType = typeof(JsonModelBinder))]
-    public List<string> AttachmentDeleteFileKeyList { get; set; }
+    public string AttachmentDeleteFileKeyList { get; set; }
 }

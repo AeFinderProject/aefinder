@@ -114,14 +114,15 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     }
 
     public async Task UpdateSubscriptionAttachmentAsync(string appId, string version,
-        List<string> attachmentDeleteFileKeyList,
+        string attachmentDeleteFileKeyList,
         IFormFile attachment1, IFormFile attachment2, IFormFile attachment3, IFormFile attachment4, IFormFile attachment5)
     {
         await CheckAppVersionExistAsync(appId, version);
         //Delete attach file
-        if (attachmentDeleteFileKeyList != null && attachmentDeleteFileKeyList.Count > 0)
+        if (!attachmentDeleteFileKeyList.IsNullOrEmpty())
         {
-            foreach (var fileKey in attachmentDeleteFileKeyList)
+            var fileKeyList = attachmentDeleteFileKeyList.Split(',');
+            foreach (var fileKey in fileKeyList)
             {
                 await _appAttachmentService.DeleteAppAttachmentAsync(appId, version, fileKey);
             }
