@@ -78,6 +78,21 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
         return resultList;
     }
 
+    public async Task<long> GetAllAttachmentsFileSizeAsync()
+    {
+        long attachmentsFileSize = 0;
+        if (State.AttachmentInfos != null && State.AttachmentInfos.Count > 0)
+        {
+            foreach (var attachmentInfoKeyValuePair in State.AttachmentInfos)
+            {
+                var attachInfo = attachmentInfoKeyValuePair.Value;
+                attachmentsFileSize = attachmentsFileSize + attachInfo.FileSize;
+            }
+        }
+
+        return attachmentsFileSize;
+    }
+
     public async Task ClearGrainStateAsync()
     {
         await base.ClearStateAsync();

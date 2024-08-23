@@ -66,7 +66,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         {
             attachment1, attachment2, attachment3, attachment4, attachment5
         };
-        CheckAttachmentSize(attachmentList);
+        await CheckAttachmentSizeAsync(appId, version, attachmentList);
         foreach (var attachment in attachmentList)
         {
             if (attachment == null)
@@ -133,7 +133,8 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         {
             attachment1, attachment2, attachment3, attachment4, attachment5
         };
-        CheckAttachmentSize(attachmentList);
+        await CheckAttachmentSizeAsync(appId, version, attachmentList);
+        
         foreach (var attachment in attachmentList)
         {
             if (attachment == null)
@@ -401,7 +402,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         AuditCode(code);
     }
 
-    private void CheckAttachmentSize(List<IFormFile> fileList)
+    private async Task CheckAttachmentSizeAsync(string appId, string version, List<IFormFile> fileList)
     {
         long totalFileSize = 0;
         foreach (var file in fileList)
@@ -413,6 +414,12 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 
             totalFileSize = totalFileSize + file.Length;
         }
+
+        var appAttachmentGrain =
+            _clusterClient.GetGrain<IAppAttachmentGrain>(
+                GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+        var oldAttachmentFileSize = await appAttachmentGrain.GetAllAttachmentsFileSizeAsync();
+        totalFileSize = totalFileSize + oldAttachmentFileSize;
         if (totalFileSize > _appDeployOptions.MaxAppAttachmentSize)
         {
             throw new UserFriendlyException("Attachment's total size is too Large.");
