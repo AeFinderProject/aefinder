@@ -19,7 +19,7 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
         await ReadStateAsync();
     }
 
-    public async Task AddAttachmentAsync(string appId, string version, string fileKey, string fileName)
+    public async Task AddAttachmentAsync(string appId, string version, string fileKey, string fileName, long fileSize)
     {
         if (State.AttachmentInfos == null)
         {
@@ -31,7 +31,8 @@ public class AppAttachmentGrain: AeFinderGrain<AppAttachmentState>, IAppAttachme
             AppId = appId,
             Version = version,
             FileKey = fileKey,
-            FileName = fileName
+            FileName = fileName,
+            FileSize = fileSize
         };
         if (State.AttachmentInfos.Keys.Contains(fileKey))
         {

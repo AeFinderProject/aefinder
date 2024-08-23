@@ -11,4 +11,5 @@ public class AttachmentInfo
     public string AppId { get; set; }
     public string Version { get; set; }
     public string FileName { get; set; }
+    public long FileSize { get; set; }
 }

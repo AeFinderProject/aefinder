@@ -35,6 +35,7 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
     {
         using (Stream fileStream = file.OpenReadStream())
         {
+            var fileSize = file.Length;
             string fileNameWithExtension = file.FileName;
             string extension = Path.GetExtension(fileNameWithExtension);
             Logger.LogInformation("Attachment file name: {0} extension: {1}", fileNameWithExtension, extension);
@@ -63,7 +64,7 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                 _clusterClient.GetGrain<IAppAttachmentGrain>(
                     GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
             await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
-                fileNameWithExtension);
+                fileNameWithExtension, fileSize);
         }
     }
 
