@@ -33,7 +33,7 @@ public sealed class AppAttachmentValueProviderTests : AeFinderAppTestBase
         var fileName = "testFileName.json";
         var key = "TestKey";
         var appAttachmentGrain = _clusterClient.GetGrain<IAppAttachmentGrain>(GrainIdHelper.GenerateAppAttachmentGrainId(_appInfoProvider.AppId, _appInfoProvider.Version));
-        await appAttachmentGrain.AddAttachmentAsync(_appInfoProvider.AppId, _appInfoProvider.Version, key, fileName);
+        await appAttachmentGrain.AddAttachmentAsync(_appInfoProvider.AppId, _appInfoProvider.Version, key, fileName,100000);
         var providers = ServiceProvider.GetServices<IAppAttachmentValueProvider>();
         foreach (var provider in providers)
         {
