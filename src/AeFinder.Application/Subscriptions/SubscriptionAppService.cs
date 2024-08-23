@@ -66,13 +66,14 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         {
             attachment1, attachment2, attachment3, attachment4, attachment5
         };
+        CheckAttachmentSize(attachmentList);
         foreach (var attachment in attachmentList)
         {
             if (attachment == null)
             {
                 continue;
             }
-            CheckAttachmentSize(attachment);
+            
             await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
         }
 
@@ -132,14 +133,14 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         {
             attachment1, attachment2, attachment3, attachment4, attachment5
         };
+        CheckAttachmentSize(attachmentList);
         foreach (var attachment in attachmentList)
         {
             if (attachment == null)
             {
                 continue;
             }
-
-            CheckAttachmentSize(attachment);
+            
             await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
         }
 
@@ -400,11 +401,21 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         AuditCode(code);
     }
 
-    private void CheckAttachmentSize(IFormFile file)
+    private void CheckAttachmentSize(List<IFormFile> fileList)
     {
-        if (file.Length > _appDeployOptions.MaxAppAttachmentSize)
+        long totalFileSize = 0;
+        foreach (var file in fileList)
         {
-            throw new UserFriendlyException("Attachment is too Large.");
+            if (file == null)
+            {
+                continue;
+            }
+
+            totalFileSize = totalFileSize + file.Length;
+        }
+        if (totalFileSize > _appDeployOptions.MaxAppAttachmentSize)
+        {
+            throw new UserFriendlyException("Attachment's total size is too Large.");
         }
     }
 
