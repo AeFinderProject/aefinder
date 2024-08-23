@@ -102,20 +102,21 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         await _appDeployManager.RestartAppAsync(appId, version);
     }
 
-    public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code,
+    public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code = null,
         string attachmentDeleteFileKeyList = null,
         IFormFile attachment1 = null, IFormFile attachment2 = null, IFormFile attachment3 = null,
         IFormFile attachment4 = null, IFormFile attachment5 = null)
     {
         // await CheckAppExistAsync(appId);
         await CheckAppVersionExistAsync(appId, version);
-        
-        if ((code == null || code.Length == 0) && attachmentDeleteFileKeyList.IsNullOrEmpty() && attachment1 == null && attachment2 == null &&
+
+        if ((code == null || code.Length == 0) && attachmentDeleteFileKeyList.IsNullOrEmpty() && attachment1 == null &&
+            attachment2 == null &&
             attachment3 == null && attachment4 == null && attachment5 == null)
         {
             throw new UserFriendlyException("All file is empty.");
         }
-        
+
         //Delete attach file
         if (!attachmentDeleteFileKeyList.IsNullOrEmpty())
         {
@@ -125,7 +126,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
                 await _appAttachmentService.DeleteAppAttachmentAsync(appId, version, fileKey);
             }
         }
-        
+
         //Upload new attach file
         var attachmentList = new List<IFormFile>()
         {
@@ -145,13 +146,14 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         if (code != null && code.Length > 0)
         {
             CheckCode(code);
-            var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+            var subscriptionGrain =
+                _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
             await subscriptionGrain.UpdateCodeAsync(version, code);
         }
-        
+
         await _appDeployManager.RestartAppAsync(appId, version);
         Logger.LogInformation("App updated. AppId: {appId}, Version: {version}", appId, version);
-        
+
     }
 
     public async Task UpdateSubscriptionAttachmentAsync(string appId, string version,
