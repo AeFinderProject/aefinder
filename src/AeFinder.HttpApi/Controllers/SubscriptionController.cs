@@ -64,8 +64,7 @@ public class SubscriptionController : AeFinderController
     public async Task UpdateAttachmentsAsync(string version, [FromForm]UpdateAttachmentInput input)
     {
         await _subscriptionAppService.UpdateSubscriptionAttachmentAsync(ClientId, version,
-            input.AttachmentDeleteFileKeyList, input.Attachment1, input.Attachment2, input.Attachment3,
-            input.Attachment4, input.Attachment5);
+            input.AttachmentDeleteFileKeyList, input.AttachmentList);
     }
     
     [HttpGet]
