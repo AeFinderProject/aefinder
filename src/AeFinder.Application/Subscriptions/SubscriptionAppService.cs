@@ -50,8 +50,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     }
 
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code,
-        IFormFile attachment1 = null, IFormFile attachment2 = null, IFormFile attachment3 = null, IFormFile attachment4 = null,
-        IFormFile attachment5 = null)
+        List<IFormFile> attachmentList = null)
     {
         await CheckAppExistAsync(appId);
         CheckCode(code);
@@ -62,19 +61,22 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         var addResult = await appSubscriptionGrain.AddSubscriptionAsync(subscription, code);
 
         var version = addResult.NewVersion;
-        var attachmentList = new List<IFormFile>()
+        // var attachmentList = new List<IFormFile>()
+        // {
+        //     attachment1, attachment2, attachment3, attachment4, attachment5
+        // };
+        if (attachmentList != null)
         {
-            attachment1, attachment2, attachment3, attachment4, attachment5
-        };
-        await CheckAttachmentSizeAsync(appId, version, attachmentList);
-        foreach (var attachment in attachmentList)
-        {
-            if (attachment == null)
+            await CheckAttachmentSizeAsync(appId, version, attachmentList);
+            foreach (var attachment in attachmentList)
             {
-                continue;
+                if (attachment == null)
+                {
+                    continue;
+                }
+
+                await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
             }
-            
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
         }
 
         var rulePath =
@@ -84,7 +86,6 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         return addResult.NewVersion;
     }
 
-    
 
     public async Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest)
     {
@@ -104,16 +105,12 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     }
 
     public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code = null,
-        string attachmentDeleteFileKeyList = null,
-        IFormFile attachment1 = null, IFormFile attachment2 = null, IFormFile attachment3 = null,
-        IFormFile attachment4 = null, IFormFile attachment5 = null)
+        string attachmentDeleteFileKeyList = null, List<IFormFile> attachmentList = null)
     {
         // await CheckAppExistAsync(appId);
         await CheckAppVersionExistAsync(appId, version);
 
-        if ((code == null || code.Length == 0) && attachmentDeleteFileKeyList.IsNullOrEmpty() && attachment1 == null &&
-            attachment2 == null &&
-            attachment3 == null && attachment4 == null && attachment5 == null)
+        if ((code == null || code.Length == 0) && attachmentDeleteFileKeyList.IsNullOrEmpty() && attachmentList == null)
         {
             throw new UserFriendlyException("All file is empty.");
         }
@@ -129,20 +126,23 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         }
 
         //Upload new attach file
-        var attachmentList = new List<IFormFile>()
+        // var attachmentList = new List<IFormFile>()
+        // {
+        //     attachment1, attachment2, attachment3, attachment4, attachment5
+        // };
+        if (attachmentList != null)
         {
-            attachment1, attachment2, attachment3, attachment4, attachment5
-        };
-        await CheckAttachmentSizeAsync(appId, version, attachmentList);
+            await CheckAttachmentSizeAsync(appId, version, attachmentList);
         
-        foreach (var attachment in attachmentList)
-        {
-            if (attachment == null)
+            foreach (var attachment in attachmentList)
             {
-                continue;
-            }
+                if (attachment == null)
+                {
+                    continue;
+                }
             
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
+                await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
+            }
         }
 
         //Update app code
@@ -404,6 +404,10 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 
     private async Task CheckAttachmentSizeAsync(string appId, string version, List<IFormFile> fileList)
     {
+        if (fileList.Count > 5)
+        {
+            throw new UserFriendlyException("Only support 5 attachments.");
+        }
         long totalFileSize = 0;
         foreach (var file in fileList)
         {

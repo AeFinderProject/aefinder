@@ -9,13 +9,11 @@ namespace AeFinder.Subscriptions;
 public interface ISubscriptionAppService
 {
     Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code,
-        IFormFile attachment1, IFormFile attachment2, IFormFile attachment3, IFormFile attachment4,
-        IFormFile attachment5);
+        List<IFormFile> attachmentList);
     Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest);
 
     Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code, string attachmentDeleteFileKeyList,
-        IFormFile attachment1, IFormFile attachment2, IFormFile attachment3,
-        IFormFile attachment4, IFormFile attachment5);
+        List<IFormFile> attachmentList);
     Task UpdateSubscriptionAttachmentAsync(string appId, string version, string attachmentDeleteFileKeyList,
         List<IFormFile> attachmentList);
     Task<AllSubscriptionDto> GetSubscriptionManifestAsync(string appId);
