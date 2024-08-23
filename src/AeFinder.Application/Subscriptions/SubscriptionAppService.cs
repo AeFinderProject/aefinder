@@ -72,7 +72,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
             {
                 continue;
             }
-
+            CheckAttachmentSize(attachment);
             await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
         }
 
@@ -139,6 +139,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
                 continue;
             }
 
+            CheckAttachmentSize(attachment);
             await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
         }
 
@@ -397,6 +398,14 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         }
         
         AuditCode(code);
+    }
+
+    private void CheckAttachmentSize(IFormFile file)
+    {
+        if (file.Length > _appDeployOptions.MaxAppAttachmentSize)
+        {
+            throw new UserFriendlyException("Attachment is too Large.");
+        }
     }
 
     public async Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string appId, string version)
