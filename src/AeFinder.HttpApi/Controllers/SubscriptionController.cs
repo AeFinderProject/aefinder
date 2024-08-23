@@ -46,8 +46,16 @@ public class SubscriptionController : AeFinderController
     [Route("code/{version}")]
     public async Task UpdateCodeAsync(string version, [FromForm]UpdateSubscriptionCodeInput input)
     {
-        CheckFile(input.Code);
-        await _subscriptionAppService.UpdateSubscriptionCodeAsync(ClientId, version, input.Code.GetAllBytes());
+        // CheckFile(input.Code);
+        byte[] codeBytes = null;
+        if (input.Code != null && input.Code.Length > 0)
+        {
+            codeBytes = input.Code.GetAllBytes();
+        }
+
+        await _subscriptionAppService.UpdateSubscriptionCodeAsync(ClientId, version, codeBytes,
+            input.AttachmentDeleteFileKeyList, input.Attachment1, input.Attachment2, input.Attachment3,
+            input.Attachment4, input.Attachment5);
     }
 
     [HttpPut]
@@ -56,8 +64,7 @@ public class SubscriptionController : AeFinderController
     public async Task UpdateAttachmentsAsync(string version, [FromForm]UpdateAttachmentInput input)
     {
         await _subscriptionAppService.UpdateSubscriptionAttachmentAsync(ClientId, version,
-            input.AttachmentDeleteFileKeyList, input.Attachment1, input.Attachment2, input.Attachment3,
-            input.Attachment4, input.Attachment5);
+            input.AttachmentDeleteFileKeyList, input.AttachmentList);
     }
     
     [HttpGet]

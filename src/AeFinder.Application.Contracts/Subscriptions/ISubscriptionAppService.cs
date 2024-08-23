@@ -12,10 +12,12 @@ public interface ISubscriptionAppService
         IFormFile attachment1, IFormFile attachment2, IFormFile attachment3, IFormFile attachment4,
         IFormFile attachment5);
     Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest);
-    Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code);
+
+    Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code, string attachmentDeleteFileKeyList,
+        IFormFile attachment1, IFormFile attachment2, IFormFile attachment3,
+        IFormFile attachment4, IFormFile attachment5);
     Task UpdateSubscriptionAttachmentAsync(string appId, string version, string attachmentDeleteFileKeyList,
-        IFormFile attachment1, IFormFile attachment2, IFormFile attachment3, IFormFile attachment4,
-        IFormFile attachment5);
+        List<IFormFile> attachmentList);
     Task<AllSubscriptionDto> GetSubscriptionManifestAsync(string appId);
     Task<List<SubscriptionIndexDto>> GetSubscriptionManifestIndexAsync(string appId);
     Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string appId, string version);

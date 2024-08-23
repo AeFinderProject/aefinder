@@ -102,26 +102,65 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         await _appDeployManager.RestartAppAsync(appId, version);
     }
 
-    public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code)
-    {
-        await CheckAppExistAsync(appId);
-        CheckCode(code);
-        
-        var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        await subscriptionGrain.UpdateCodeAsync(version, code);
-        await _appDeployManager.RestartAppAsync(appId, version);
-        Logger.LogInformation("App updated. AppId: {appId}, Version: {version}", appId, version);
-    }
-
-    public async Task UpdateSubscriptionAttachmentAsync(string appId, string version,
+    public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code,
         string attachmentDeleteFileKeyList = null,
         IFormFile attachment1 = null, IFormFile attachment2 = null, IFormFile attachment3 = null,
         IFormFile attachment4 = null, IFormFile attachment5 = null)
     {
+        // await CheckAppExistAsync(appId);
+        await CheckAppVersionExistAsync(appId, version);
+        
+        if ((code == null || code.Length == 0) && attachmentDeleteFileKeyList.IsNullOrEmpty() && attachment1 == null && attachment2 == null &&
+            attachment3 == null && attachment4 == null && attachment5 == null)
+        {
+            throw new UserFriendlyException("All file is empty.");
+        }
+        
+        //Delete attach file
+        if (!attachmentDeleteFileKeyList.IsNullOrEmpty())
+        {
+            var fileKeyList = attachmentDeleteFileKeyList.Split(',');
+            foreach (var fileKey in fileKeyList)
+            {
+                await _appAttachmentService.DeleteAppAttachmentAsync(appId, version, fileKey);
+            }
+        }
+        
+        //Upload new attach file
+        var attachmentList = new List<IFormFile>()
+        {
+            attachment1, attachment2, attachment3, attachment4, attachment5
+        };
+        foreach (var attachment in attachmentList)
+        {
+            if (attachment == null)
+            {
+                continue;
+            }
+
+            await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
+        }
+
+        //Update app code
+        if (code != null && code.Length > 0)
+        {
+            CheckCode(code);
+            var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+            await subscriptionGrain.UpdateCodeAsync(version, code);
+        }
+        
+        await _appDeployManager.RestartAppAsync(appId, version);
+        Logger.LogInformation("App updated. AppId: {appId}, Version: {version}", appId, version);
+        
+    }
+
+    public async Task UpdateSubscriptionAttachmentAsync(string appId, string version,
+        string attachmentDeleteFileKeyList = null,
+        List<IFormFile> attachmentList = null)
+    {
         await CheckAppVersionExistAsync(appId, version);
 
-        if (attachmentDeleteFileKeyList.IsNullOrEmpty() && attachment1 == null && attachment2 == null &&
-            attachment3 == null && attachment4 == null && attachment5 == null)
+        if (attachmentDeleteFileKeyList.IsNullOrEmpty() && (attachmentList == null || attachmentList.Count==0))
         {
             Logger.LogWarning("Attachment's parameters is null.");
             return;
@@ -138,10 +177,10 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         }
 
         //Upload new attach file
-        var attachmentList = new List<IFormFile>()
-        {
-            attachment1, attachment2, attachment3, attachment4, attachment5
-        };
+        // var attachmentList = new List<IFormFile>()
+        // {
+        //     attachment1, attachment2, attachment3, attachment4, attachment5
+        // };
         foreach (var attachment in attachmentList)
         {
             if (attachment == null)
