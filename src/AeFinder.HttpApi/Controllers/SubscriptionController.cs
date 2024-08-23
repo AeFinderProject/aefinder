@@ -26,7 +26,7 @@ public class SubscriptionController : AeFinderController
 
     [HttpPost]
     [Authorize]
-    [RequestSizeLimit(125829120)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
     public async Task<string> AddSubscriptionAsync([FromForm]AddSubscriptionInput input)
     {
         CheckFile(input.Code);
@@ -45,7 +45,7 @@ public class SubscriptionController : AeFinderController
     [HttpPut]
     [Authorize]
     [Route("code/{version}")]
-    [RequestSizeLimit(125829120)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
     public async Task UpdateCodeAsync(string version, [FromForm]UpdateSubscriptionCodeInput input)
     {
         // CheckFile(input.Code);
@@ -63,7 +63,7 @@ public class SubscriptionController : AeFinderController
     [HttpPut]
     [Authorize]
     [Route("attachments/{version}")]
-    [RequestSizeLimit(125829120)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
     public async Task UpdateAttachmentsAsync(string version, [FromForm]UpdateAttachmentInput input)
     {
         await _subscriptionAppService.UpdateSubscriptionAttachmentAsync(ClientId, version,
