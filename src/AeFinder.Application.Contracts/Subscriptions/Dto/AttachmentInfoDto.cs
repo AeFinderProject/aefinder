@@ -9,4 +9,5 @@ public class AttachmentInfoDto
     [Id(1)] public string AppId { get; set; }
     [Id(2)] public string Version { get; set; }
     [Id(3)] public string FileName { get; set; }
+    [Id(4)] public long FileSize { get; set; }
 }
