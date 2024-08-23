@@ -61,10 +61,6 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         var addResult = await appSubscriptionGrain.AddSubscriptionAsync(subscription, code);
 
         var version = addResult.NewVersion;
-        // var attachmentList = new List<IFormFile>()
-        // {
-        //     attachment1, attachment2, attachment3, attachment4, attachment5
-        // };
         if (attachmentList != null)
         {
             await CheckAttachmentSizeAsync(appId, version, attachmentList);
@@ -126,10 +122,6 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         }
 
         //Upload new attach file
-        // var attachmentList = new List<IFormFile>()
-        // {
-        //     attachment1, attachment2, attachment3, attachment4, attachment5
-        // };
         if (attachmentList != null)
         {
             await CheckAttachmentSizeAsync(appId, version, attachmentList);
@@ -157,47 +149,6 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         await _appDeployManager.RestartAppAsync(appId, version);
         Logger.LogInformation("App updated. AppId: {appId}, Version: {version}", appId, version);
 
-    }
-
-    public async Task UpdateSubscriptionAttachmentAsync(string appId, string version,
-        string attachmentDeleteFileKeyList = null,
-        List<IFormFile> attachmentList = null)
-    {
-        await CheckAppVersionExistAsync(appId, version);
-
-        if (attachmentDeleteFileKeyList.IsNullOrEmpty() && (attachmentList == null || attachmentList.Count==0))
-        {
-            Logger.LogWarning("Attachment's parameters is null.");
-            return;
-        }
-        
-        //Delete attach file
-        if (!attachmentDeleteFileKeyList.IsNullOrEmpty())
-        {
-            var fileKeyList = attachmentDeleteFileKeyList.Split(',');
-            foreach (var fileKey in fileKeyList)
-            {
-                await _appAttachmentService.DeleteAppAttachmentAsync(appId, version, fileKey);
-            }
-        }
-
-        //Upload new attach file
-        // var attachmentList = new List<IFormFile>()
-        // {
-        //     attachment1, attachment2, attachment3, attachment4, attachment5
-        // };
-        foreach (var attachment in attachmentList)
-        {
-            if (attachment == null)
-            {
-                continue;
-            }
-
-            await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
-        }
-
-        await _appDeployManager.RestartAppAsync(appId, version);
-        Logger.LogInformation("App attachment updated. AppId: {appId}, Version: {version}", appId, version);
     }
 
     public async Task<AllSubscriptionDto> GetSubscriptionManifestAsync(string appId)

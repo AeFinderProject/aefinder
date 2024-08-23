@@ -14,8 +14,6 @@ public interface ISubscriptionAppService
 
     Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code, string attachmentDeleteFileKeyList,
         List<IFormFile> attachmentList);
-    Task UpdateSubscriptionAttachmentAsync(string appId, string version, string attachmentDeleteFileKeyList,
-        List<IFormFile> attachmentList);
     Task<AllSubscriptionDto> GetSubscriptionManifestAsync(string appId);
     Task<List<SubscriptionIndexDto>> GetSubscriptionManifestIndexAsync(string appId);
     Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string appId, string version);

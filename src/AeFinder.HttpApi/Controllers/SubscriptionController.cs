@@ -46,7 +46,6 @@ public class SubscriptionController : AeFinderController
     [HttpPut]
     [Authorize]
     [Route("code/{version}")]
-    // [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
     [RequestSizeLimit(209715200)]
     [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
     public async Task UpdateCodeAsync(string version, [FromForm]UpdateSubscriptionCodeInput input)
@@ -59,18 +58,6 @@ public class SubscriptionController : AeFinderController
         }
 
         await _subscriptionAppService.UpdateSubscriptionCodeAsync(ClientId, version, codeBytes,
-            input.AttachmentDeleteFileKeyList, input.AttachmentList);
-    }
-
-    [HttpPut]
-    [Authorize]
-    [Route("attachments/{version}")]
-    // [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
-    [RequestSizeLimit(209715200)]
-    [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
-    public async Task UpdateAttachmentsAsync(string version, [FromForm]UpdateAttachmentInput input)
-    {
-        await _subscriptionAppService.UpdateSubscriptionAttachmentAsync(ClientId, version,
             input.AttachmentDeleteFileKeyList, input.AttachmentList);
     }
     
