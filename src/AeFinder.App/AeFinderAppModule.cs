@@ -6,6 +6,7 @@ using AeFinder.App.Handlers;
 using AeFinder.App.Metrics;
 using AeFinder.App.OperationLimits;
 using AeFinder.App.Repositories;
+using AeFinder.Apps;
 using AeFinder.BlockScan;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
@@ -14,6 +15,7 @@ using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Options;
 using AElf.EntityMapping.Elasticsearch;
 using AeFinder.Sdk;
+using AeFinder.Sdk.Attachments;
 using AeFinder.Sdk.Entities;
 using AElf.EntityMapping.Elasticsearch.Options;
 using AElf.EntityMapping.Elasticsearch.Services;
@@ -81,8 +83,21 @@ public class AeFinderAppModule : AbpModule
         if (appInfoOptions.ClientType == ClientType.Full)
         {
             AsyncHelper.RunSync(async () => await CreateIndexAsync(context.ServiceProvider, appInfoOptions.AppId, appInfoOptions.Version));
+            AsyncHelper.RunSync(async () => await InitAppAttachmentValuesAsync(context.ServiceProvider,appInfoOptions.AppId, appInfoOptions.Version));
             AsyncHelper.RunSync(blockStateInitializationProvider.InitializeAsync);
             AsyncHelper.RunSync(async () => await InitBlockPushAsync(context, appInfoOptions.AppId, appInfoOptions.Version));
+        }
+    }
+
+    private async Task InitAppAttachmentValuesAsync(IServiceProvider serviceProvider,string appId, string version)
+    {
+        var appAttachmentService = serviceProvider.GetRequiredService<IAppAttachmentService>();
+        var appAttachmentValueProviders = serviceProvider.GetServices<IAppAttachmentValueProvider>();
+        foreach (var appAttachmentValueProvider in appAttachmentValueProviders)
+        {
+            var content =
+                await appAttachmentService.GetAppAttachmentContentAsync(appId, version, appAttachmentValueProvider.Key);
+            appAttachmentValueProvider.InitValue(content);
         }
     }
 

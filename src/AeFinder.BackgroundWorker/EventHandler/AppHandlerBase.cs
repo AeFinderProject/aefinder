@@ -1,3 +1,4 @@
+using AeFinder.Apps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockPush;
@@ -16,6 +17,8 @@ public abstract class AppHandlerBase
     protected IClusterClient ClusterClient => LazyServiceProvider.LazyGetRequiredService<IClusterClient>();
 
     protected ILogger<AppHandlerBase> Logger => LazyServiceProvider.LazyGetService<ILogger<AppHandlerBase>>();
+
+    protected IAppAttachmentService AppAttachmentService => LazyServiceProvider.LazyGetRequiredService<IAppAttachmentService>();
 
     protected IObjectMapper ObjectMapper => LazyServiceProvider.LazyGetRequiredService<IObjectMapper>();
 

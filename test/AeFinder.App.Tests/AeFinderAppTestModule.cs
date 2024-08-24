@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using AeFinder.AmazonCloud;
+using AeFinder.App.Attachments;
 using AeFinder.App.BlockChain;
 using AeFinder.App.BlockState;
 using AeFinder.App.MockApp;
@@ -63,6 +65,7 @@ public class AeFinderAppTestModule : AbpModule
         });
         
         context.Services.AddTransient<ILogEventProcessor, TokenTransferredProcessor>();
+        context.Services.AddSingleton<IAwsS3ClientService, MockAwsS3ClientService>();
     }
     
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AeFinder.BlockScan;
 using AeFinder.Models;
 using AeFinder.Subscriptions;
+using AeFinder.Subscriptions.Dto;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -25,10 +26,13 @@ public class SubscriptionController : AeFinderController
 
     [HttpPost]
     [Authorize]
+    [RequestSizeLimit(209715200)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
     public async Task<string> AddSubscriptionAsync([FromForm]AddSubscriptionInput input)
     {
         CheckFile(input.Code);
-        return await _subscriptionAppService.AddSubscriptionAsync(ClientId, input.Manifest,input.Code.GetAllBytes());
+        return await _subscriptionAppService.AddSubscriptionAsync(ClientId, input.Manifest, input.Code.GetAllBytes(),
+            input.AttachmentList);
     }
     
     [HttpPut]
@@ -42,10 +46,19 @@ public class SubscriptionController : AeFinderController
     [HttpPut]
     [Authorize]
     [Route("code/{version}")]
+    [RequestSizeLimit(209715200)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
     public async Task UpdateCodeAsync(string version, [FromForm]UpdateSubscriptionCodeInput input)
     {
-        CheckFile(input.Code);
-        await _subscriptionAppService.UpdateSubscriptionCodeAsync(ClientId, version, input.Code.GetAllBytes());
+        // CheckFile(input.Code);
+        byte[] codeBytes = null;
+        if (input.Code != null && input.Code.Length > 0)
+        {
+            codeBytes = input.Code.GetAllBytes();
+        }
+
+        await _subscriptionAppService.UpdateSubscriptionCodeAsync(ClientId, version, codeBytes,
+            input.AttachmentDeleteFileKeyList, input.AttachmentList);
     }
     
     [HttpGet]
@@ -69,5 +82,13 @@ public class SubscriptionController : AeFinderController
         {
             throw new UserFriendlyException("File is empty.");
         }
+    }
+
+    [HttpGet]
+    [Authorize]
+    [Route("attachments/{version}")]
+    public async Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string version)
+    {
+        return await _subscriptionAppService.GetSubscriptionAttachmentsAsync(ClientId, version);
     }
 }

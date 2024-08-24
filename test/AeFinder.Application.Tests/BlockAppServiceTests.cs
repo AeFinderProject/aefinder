@@ -210,7 +210,7 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         try
         {
             blockDtos_test7 =await _blockAppService.GetBlocksAsync(getBlocksInput_test7);
-        }catch (Exception e)
+        }catch (Exception)
         {
             blockDtos_test7 = new List<BlockDto>();
         }
@@ -752,7 +752,7 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         try
         {
             logEventDtos_test28  =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test28);
-        }catch(Exception e)
+        }catch(Exception)
         {
             logEventDtos_test28 = new List<LogEventDto>();
         }
