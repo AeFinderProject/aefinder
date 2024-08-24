@@ -1,16 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.AmazonCloud;
 using AeFinder.App.Deploy;
 using AeFinder.App.Es;
+using AeFinder.Apps;
 using AeFinder.Apps.Eto;
 using AeFinder.BlockScan;
 using AeFinder.CodeOps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Subscriptions.Dto;
 using AElf.EntityMapping.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -29,9 +34,11 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
     private readonly IAppDeployManager _appDeployManager;
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _subscriptionIndexRepository;
+    private readonly IAppAttachmentService _appAttachmentService;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
         IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions,
+        IAppAttachmentService appAttachmentService,
         IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository)
     {
         _clusterClient = clusterClient;
@@ -39,22 +46,42 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         _appDeployManager = appDeployManager;
         _subscriptionIndexRepository = subscriptionIndexRepository;
         _appDeployOptions = appDeployOptions.Value;
+        _appAttachmentService = appAttachmentService;
     }
 
-    public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code)
+    public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code,
+        List<IFormFile> attachmentList = null)
     {
         await CheckAppExistAsync(appId);
         CheckCode(code);
-        
-        var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
-        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
 
+        var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
+        var appSubscriptionGrain =
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var addResult = await appSubscriptionGrain.AddSubscriptionAsync(subscription, code);
-        
-        var rulePath = await _appDeployManager.CreateNewAppAsync(appId, addResult.NewVersion, _appDeployOptions.AppImageName);
-        Logger.LogInformation("App deployed. AppId: {appId}, Version: {version}, RulePath: {rulePath}", appId, addResult.NewVersion, rulePath);
+
+        var version = addResult.NewVersion;
+        if (attachmentList != null)
+        {
+            await CheckAttachmentSizeAsync(appId, version, attachmentList);
+            foreach (var attachment in attachmentList)
+            {
+                if (attachment == null)
+                {
+                    continue;
+                }
+
+                await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
+            }
+        }
+
+        var rulePath =
+            await _appDeployManager.CreateNewAppAsync(appId, addResult.NewVersion, _appDeployOptions.AppImageName);
+        Logger.LogInformation("App deployed. AppId: {appId}, Version: {version}, RulePath: {rulePath}", appId,
+            addResult.NewVersion, rulePath);
         return addResult.NewVersion;
     }
+
 
     public async Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest)
     {
@@ -73,15 +100,55 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         await _appDeployManager.RestartAppAsync(appId, version);
     }
 
-    public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code)
+    public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code = null,
+        string attachmentDeleteFileKeyList = null, List<IFormFile> attachmentList = null)
     {
-        await CheckAppExistAsync(appId);
-        CheckCode(code);
+        // await CheckAppExistAsync(appId);
+        await CheckAppVersionExistAsync(appId, version);
+
+        if ((code == null || code.Length == 0) && attachmentDeleteFileKeyList.IsNullOrEmpty() && attachmentList == null)
+        {
+            throw new UserFriendlyException("All file is empty.");
+        }
+
+        //Delete attach file
+        if (!attachmentDeleteFileKeyList.IsNullOrEmpty())
+        {
+            var fileKeyList = attachmentDeleteFileKeyList.Split(',');
+            foreach (var fileKey in fileKeyList)
+            {
+                await _appAttachmentService.DeleteAppAttachmentAsync(appId, version, fileKey);
+            }
+        }
+
+        //Upload new attach file
+        if (attachmentList != null)
+        {
+            await CheckAttachmentSizeAsync(appId, version, attachmentList);
         
-        var subscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        await subscriptionGrain.UpdateCodeAsync(version, code);
+            foreach (var attachment in attachmentList)
+            {
+                if (attachment == null)
+                {
+                    continue;
+                }
+            
+                await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
+            }
+        }
+
+        //Update app code
+        if (code != null && code.Length > 0)
+        {
+            CheckCode(code);
+            var subscriptionGrain =
+                _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+            await subscriptionGrain.UpdateCodeAsync(version, code);
+        }
+
         await _appDeployManager.RestartAppAsync(appId, version);
         Logger.LogInformation("App updated. AppId: {appId}, Version: {version}", appId, version);
+
     }
 
     public async Task<AllSubscriptionDto> GetSubscriptionManifestAsync(string appId)
@@ -108,6 +175,26 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         if (app.AppId.IsNullOrWhiteSpace())
         {
             throw new UserFriendlyException("App does not exist.");
+        }
+    }
+
+    private async Task CheckAppVersionExistAsync(string appId, string version)
+    {
+        var allSubscriptionDto = await GetSubscriptionManifestAsync(appId);
+        var versionList = new List<string>();
+        if (allSubscriptionDto.CurrentVersion != null)
+        {
+            versionList.Add(allSubscriptionDto.CurrentVersion.Version);
+        }
+
+        if (allSubscriptionDto.PendingVersion != null)
+        {
+            versionList.Add(allSubscriptionDto.PendingVersion.Version);
+        }
+
+        if (!versionList.Contains(version))
+        {
+            throw new UserFriendlyException("Version does not exist.");
         }
     }
 
@@ -264,5 +351,42 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         }
         
         AuditCode(code);
+    }
+
+    private async Task CheckAttachmentSizeAsync(string appId, string version, List<IFormFile> fileList)
+    {
+        if (fileList.Count > 5)
+        {
+            throw new UserFriendlyException("Only support 5 attachments.");
+        }
+        long totalFileSize = 0;
+        foreach (var file in fileList)
+        {
+            if (file == null)
+            {
+                continue;
+            }
+
+            totalFileSize = totalFileSize + file.Length;
+        }
+
+        var appAttachmentGrain =
+            _clusterClient.GetGrain<IAppAttachmentGrain>(
+                GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+        var oldAttachmentFileSize = await appAttachmentGrain.GetAllAttachmentsFileSizeAsync();
+        totalFileSize = totalFileSize + oldAttachmentFileSize;
+        if (totalFileSize > _appDeployOptions.MaxAppAttachmentSize)
+        {
+            throw new UserFriendlyException("Attachment's total size is too Large.");
+        }
+    }
+
+    public async Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string appId, string version)
+    {
+        await CheckAppVersionExistAsync(appId, version);
+        var appAttachmentGrain =
+            _clusterClient.GetGrain<IAppAttachmentGrain>(
+                GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+        return await appAttachmentGrain.GetAllAttachmentsInfoAsync();
     }
 }

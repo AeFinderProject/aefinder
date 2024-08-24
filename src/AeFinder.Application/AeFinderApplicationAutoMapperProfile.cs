@@ -11,11 +11,14 @@ using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.Apps;
+using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Logger.Entities;
 using AeFinder.Subscriptions;
+using AeFinder.Subscriptions.Dto;
 using AeFinder.User.Dto;
 using AutoMapper;
 using Volo.Abp.Identity;
+using SubscriptionInfo = AeFinder.App.Es.SubscriptionInfo;
 
 namespace AeFinder;
 
@@ -115,5 +118,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<TransactionCondition, TransactionConditionInfo>();
         CreateMap<LogEventCondition, LogEventConditionInfo>();
         CreateMap<AppResourceLimitDto, AppLimitUpdateEto>();
+        
+        CreateMap<AttachmentInfo, AttachmentInfoDto>();
     }
 }

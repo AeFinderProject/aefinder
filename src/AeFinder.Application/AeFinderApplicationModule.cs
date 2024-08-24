@@ -1,3 +1,4 @@
+using AeFinder.AmazonCloud;
 using AeFinder.App.Deploy;
 using AeFinder.BlockSync;
 using AeFinder.CodeOps;
@@ -46,6 +47,7 @@ public class AeFinderApplicationModule : AbpModule
         Configure<BlockSyncOptions>(configuration.GetSection("BlockSync"));
         Configure<AppDeployOptions>(configuration.GetSection("AppDeploy"));
         Configure<DevTemplateOptions>(configuration.GetSection("DevTemplate"));
+        Configure<AmazonS3Options>(configuration.GetSection("AmazonS3"));
         context.Services.AddTransient<ICodeAuditor, CodeAuditor>();
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
     }
