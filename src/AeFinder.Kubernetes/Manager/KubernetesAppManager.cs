@@ -320,10 +320,19 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 
     public async Task DestroyAppAsync(string appId, string version)
     {
+        await DestroyAppFullPodsAsync(appId, version);
+
+        await DestroyAppQueryPodsAsync(appId, version);
+    }
+
+    public async Task DestroyAppFullPodsAsync(string appId, string version)
+    {
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
+        var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
+        
         //Delete full app deployment
         var fullTypeAppDeploymentName =
             DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeFull);
-        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var fullTypeAppDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullTypeAppDeploymentName);
         if (fullTypeAppDeploymentExists)
         {
@@ -337,7 +346,6 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 
         //Delete full app appsetting config map
         var fullTypeAppConfigMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeFull);
-        var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
         var fullTypeAppConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == fullTypeAppConfigMapName);
         if (fullTypeAppConfigMapExists)
         {
@@ -354,6 +362,12 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             await _kubernetesClientAdapter.DeleteConfigMapAsync(fullTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {fullTypeAppSideCarConfigName} deleted.", fullTypeAppSideCarConfigName);
         }
+    }
+
+    public async Task DestroyAppQueryPodsAsync(string appId, string version)
+    {
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
+        var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
 
         //Delete query app deployment
         var queryTypeAppDeploymentName =
@@ -462,6 +476,71 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         else
         {
             _logger.LogError($"Deployment {queryClientDeploymentName} is not exists!");
+        }
+    }
+
+    public async Task UpdateAppDockerImageAsync(string appId, string version, string newImage)
+    {
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
+        //Update full pod docker image
+        var fullClientDeploymentName =
+            DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeFull);
+        var fullClientDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullClientDeploymentName);
+        if (fullClientDeploymentExists)
+        {
+            var deployment = await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(fullClientDeploymentName, KubernetesConstants.AppNameSpace);
+            var containers = deployment.Spec.Template.Spec.Containers;
+            var containerName =
+                ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeFull);
+            
+            var container = containers.FirstOrDefault(c => c.Name == containerName);
+            if (container != null)
+            {
+                container.Image = newImage;
+                await _kubernetesClientAdapter.ReplaceNamespacedDeploymentAsync(deployment, fullClientDeploymentName, KubernetesConstants.AppNameSpace);
+                _logger.LogInformation($"Updated deployment {fullClientDeploymentName} to use image {newImage}");
+            }
+            else
+            {
+                _logger.LogError($"Container {containerName} not found in deployment {fullClientDeploymentName}");
+            }
+        }
+        else
+        {
+            _logger.LogError($"Deployment {fullClientDeploymentName} does not exist!");
+        }
+        
+        //Update query pod docker image
+        var queryClientDeploymentName =
+            DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeQuery);
+        var queryClientDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == queryClientDeploymentName);
+
+        if (queryClientDeploymentExists)
+        {
+            var deployment = await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(queryClientDeploymentName, KubernetesConstants.AppNameSpace);
+    
+            // 获取Deployment中的容器
+            var containers = deployment.Spec.Template.Spec.Containers;
+            var containerName = "your-container-name"; 
+
+            // 更新容器镜像
+            var container = containers.FirstOrDefault(c => c.Name == containerName);
+            if (container != null)
+            {
+                container.Image = newImage;
+
+                // 更新Deployment
+                await _kubernetesClientAdapter.ReplaceNamespacedDeploymentAsync(deployment, queryClientDeploymentName, KubernetesConstants.AppNameSpace);
+                _logger.LogInformation($"Updated deployment {queryClientDeploymentName} to use image {newImage}");
+            }
+            else
+            {
+                _logger.LogError($"Container {containerName} not found in deployment {queryClientDeploymentName}");
+            }
+        }
+        else
+        {
+            _logger.LogError($"Deployment {queryClientDeploymentName} does not exist!");
         }
     }
 }
