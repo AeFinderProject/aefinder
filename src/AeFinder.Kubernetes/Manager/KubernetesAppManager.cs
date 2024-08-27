@@ -142,7 +142,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
-            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
+            var deployment = DeploymentHelper.CreateFullAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
                 sideCarConfigName, requestCpuCore, requestMemory);
             // Create Deployment
@@ -217,9 +217,10 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
-            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
+            var healthPath = GetGraphQLPath(appId, version);
+            var deployment = DeploymentHelper.CreateQueryAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
-                sideCarConfigName, requestCpuCore, requestMemory);
+                sideCarConfigName, requestCpuCore, requestMemory, healthPath);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(
@@ -276,6 +277,11 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         }
 
         return hostName + rulePath + "/graphql";
+    }
+
+    private string GetGraphQLPath(string appId,string version)
+    {
+        return $"/{appId}/{version}/graphql";
     }
     
     public async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)

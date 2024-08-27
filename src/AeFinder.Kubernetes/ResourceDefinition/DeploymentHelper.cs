@@ -34,7 +34,7 @@ public class DeploymentHelper
     /// <param name="configMapName"></param>
     /// <param name="sideCarConfigMapName"></param>
     /// <returns></returns>
-    public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string appId, string imageName,
+    public static V1Deployment CreateFullAppDeploymentWithFileBeatSideCarDefinition(string appId, string imageName,
         string deploymentName, string deploymentLabelName, int replicasCount, string containerName,
         int containerPort, string configMapName, string sideCarConfigMapName, string requestCpu, string requestMemory)
     {
@@ -55,6 +55,15 @@ public class DeploymentHelper
             {
                 Replicas = replicasCount,
                 Selector = new V1LabelSelector { MatchLabels = labels },
+                Strategy = new V1DeploymentStrategy()
+                {
+                    Type = "RollingUpdate",
+                    RollingUpdate = new V1RollingUpdateDeployment()
+                    {
+                        MaxSurge = KubernetesConstants.FullPodMaxSurge,
+                        MaxUnavailable = KubernetesConstants.FullPodMaxUnavailable
+                    }
+                },
                 Template = new V1PodTemplateSpec
                 {
                     Metadata = new V1ObjectMeta { Labels = labels },
@@ -126,6 +135,200 @@ public class DeploymentHelper
                                         { "cpu", new ResourceQuantity(requestCpu) }, 
                                         { "memory", new ResourceQuantity(requestMemory) }
                                     }
+                                }
+                            },
+                            new V1Container
+                            {
+                                Name = "filebeat-sidecar",
+                                Image = KubernetesConstants.FileBeatImage,
+                                Args = new List<string>
+                                {
+                                    "-c", KubernetesConstants.FileBeatConfigMountPath,
+                                    "-e",
+                                },
+                                VolumeMounts = new List<V1VolumeMount>
+                                {
+                                    new V1VolumeMount
+                                    {
+                                        Name = "log-volume",
+                                        MountPath = KubernetesConstants.AppLogFileMountPath
+                                    },
+                                    new V1VolumeMount
+                                    {
+                                        Name = "sidecar-config-volume",
+                                        MountPath = KubernetesConstants.FileBeatConfigMountPath,
+                                        SubPath = KubernetesConstants.FileBeatConfigFileName
+                                    }
+                                }
+                            }
+                        },
+                        Volumes = new List<V1Volume>
+                        {
+                            new V1Volume
+                            {
+                                Name = "config-volume",
+                                ConfigMap = new V1ConfigMapVolumeSource
+                                {
+                                    Name = configMapName,
+                                    Items = new List<V1KeyToPath>
+                                    {
+                                        new V1KeyToPath
+                                        {
+                                            Key = KubernetesConstants.AppSettingFileName,
+                                            Path = KubernetesConstants.AppSettingFileName
+                                        }
+                                    }
+                                }
+                            },
+                            new V1Volume
+                            {
+                                Name = "sidecar-config-volume",
+                                ConfigMap = new V1ConfigMapVolumeSource
+                                {
+                                    Name = sideCarConfigMapName,
+                                    Items = new List<V1KeyToPath>
+                                    {
+                                        new V1KeyToPath
+                                        {
+                                            Key = KubernetesConstants.FileBeatConfigFileName,
+                                            Path = KubernetesConstants.FileBeatConfigFileName
+                                        }
+                                    }
+                                }
+                            },
+                            new V1Volume
+                            {
+                                Name = "log-volume",
+                                EmptyDir = new V1EmptyDirVolumeSource()
+                                // PersistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource
+                                // {
+                                //     ClaimName = logPVCName
+                                // }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        return deployment;
+    }
+
+    public static V1Deployment CreateQueryAppDeploymentWithFileBeatSideCarDefinition(string appId, string imageName,
+        string deploymentName, string deploymentLabelName, int replicasCount, string containerName,
+        int containerPort, string configMapName, string sideCarConfigMapName, string requestCpu, string requestMemory,
+        string readinessProbeHealthPath)
+    {
+        var labels = new Dictionary<string, string>
+        {
+            { KubernetesConstants.AppLabelKey, deploymentLabelName },
+            { KubernetesConstants.MonitorLabelKey, appId }
+        };
+
+        var deployment = new V1Deployment
+        {
+            Metadata = new V1ObjectMeta
+            {
+                Name = deploymentName,
+                NamespaceProperty = KubernetesConstants.AppNameSpace
+            },
+            Spec = new V1DeploymentSpec
+            {
+                Replicas = replicasCount,
+                Selector = new V1LabelSelector { MatchLabels = labels },
+                Strategy = new V1DeploymentStrategy()
+                {
+                    Type = "RollingUpdate",
+                    RollingUpdate = new V1RollingUpdateDeployment()
+                    {
+                        MaxSurge = KubernetesConstants.QueryPodMaxSurge,
+                        MaxUnavailable = KubernetesConstants.QueryPodMaxUnavailable
+                    }
+                },
+                Template = new V1PodTemplateSpec
+                {
+                    Metadata = new V1ObjectMeta { Labels = labels },
+                    Spec = new V1PodSpec
+                    {
+                        Affinity = new V1Affinity
+                        {
+                            NodeAffinity = new V1NodeAffinity
+                            {
+                                RequiredDuringSchedulingIgnoredDuringExecution = new V1NodeSelector
+                                {
+                                    NodeSelectorTerms = new List<V1NodeSelectorTerm>
+                                    {
+                                        new V1NodeSelectorTerm
+                                        {
+                                            MatchExpressions = new List<V1NodeSelectorRequirement>
+                                            {
+                                                new V1NodeSelectorRequirement
+                                                {
+                                                    Key = "resource",
+                                                    OperatorProperty = "In",
+                                                    Values = new List<string> { KubernetesConstants.NodeAffinityValue }
+                                                },
+                                                new V1NodeSelectorRequirement
+                                                {
+                                                    Key = "app",
+                                                    OperatorProperty = "In",
+                                                    Values = new List<string> { KubernetesConstants.NodeAffinityValue }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        Containers = new List<V1Container>
+                        {
+                            new V1Container
+                            {
+                                Name = containerName,
+                                Image = imageName,
+                                Command = new List<string> { "dotnet", "AeFinder.App.Host.dll" },
+                                // Add your specific configuration here based on index
+                                // For example, you can mount different config files as volumes
+                                // or set different environment variables
+                                Ports = new List<V1ContainerPort>
+                                {
+                                    new V1ContainerPort(containerPort)
+                                },
+                                VolumeMounts = new List<V1VolumeMount>
+                                {
+                                    new V1VolumeMount
+                                    {
+                                        Name = "config-volume",
+                                        MountPath = KubernetesConstants
+                                            .AppSettingFileMountPath, // Change to the directory where you want to mount
+                                        SubPath = KubernetesConstants.AppSettingFileName
+                                    },
+                                    new V1VolumeMount
+                                    {
+                                        Name = "log-volume",
+                                        MountPath = KubernetesConstants.AppLogFileMountPath
+                                    }
+                                },
+                                Resources = new V1ResourceRequirements
+                                {
+                                    Requests = new Dictionary<string, ResourceQuantity>()
+                                    {
+                                        { "cpu", new ResourceQuantity(requestCpu) },
+                                        { "memory", new ResourceQuantity(requestMemory) }
+                                    }
+                                },
+                                ReadinessProbe = new V1Probe()
+                                {
+                                    HttpGet = new V1HTTPGetAction()
+                                    {
+                                        Path = readinessProbeHealthPath,
+                                        Port = containerPort
+                                    },
+                                    InitialDelaySeconds = 5,
+                                    PeriodSeconds = 5,
+                                    TimeoutSeconds = 1,
+                                    SuccessThreshold = 2,
+                                    FailureThreshold = 10
                                 }
                             },
                             new V1Container
