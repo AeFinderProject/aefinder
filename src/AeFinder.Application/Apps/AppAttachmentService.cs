@@ -105,8 +105,8 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             throw new UserFriendlyException("File name can only contain letters, numbers, underscores, hyphens, and dots (not at the start or end).");
         }
         
-        bool isJsonFile = fileNameWithExtension.Contains(".json", StringComparison.OrdinalIgnoreCase);
-        if (!isJsonFile)
+        bool isFileValid = fileNameWithExtension.Contains(".json", StringComparison.OrdinalIgnoreCase);
+        if (!isFileValid)
         {
             throw new UserFriendlyException("Invalid file. only support json file.");
         }
@@ -118,6 +118,7 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             return;
         }
 
+        bool isJsonFile = extension.Equals(".json", StringComparison.OrdinalIgnoreCase);
         if (isJsonFile)
         {
             using (Stream fileStream = file.OpenReadStream())
@@ -131,6 +132,10 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                     GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
             await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
                 fileNameWithExtension, fileSize);
+        }
+        else
+        {
+            throw new UserFriendlyException("Invalid file.");
         }
         
     }
