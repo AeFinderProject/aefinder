@@ -75,7 +75,12 @@ public class AppResourceLimitGrain : AeFinderGrain<AppResourceLimitState>, IAppR
         {
             State.AppPodReplicas = dto.AppPodReplicas;
         }
-        
+
+        if (dto.EnableMultipleInstances.HasValue)
+        {
+            State.EnableMultipleInstances = dto.EnableMultipleInstances.Value;
+        }
+
         await WriteStateAsync();
     }
 }

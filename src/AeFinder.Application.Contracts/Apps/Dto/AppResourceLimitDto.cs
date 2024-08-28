@@ -16,4 +16,6 @@ public class AppResourceLimitDto
     [Id(7)] public string AppQueryPodRequestCpuCore { get; set; }
     [Id(8)] public string AppQueryPodRequestMemory { get; set; }
     [Id(9)] public int AppPodReplicas { get; set; }
+    
+    [Id(10)] public bool EnableMultipleInstances { get; set; }
 }

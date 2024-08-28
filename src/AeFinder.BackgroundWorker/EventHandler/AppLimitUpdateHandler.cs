@@ -50,6 +50,7 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
         appLimitInfoIndex.ResourceLimit.AppQueryPodRequestCpuCore = eventData.AppQueryPodRequestCpuCore;
         appLimitInfoIndex.ResourceLimit.AppQueryPodRequestMemory = eventData.AppQueryPodRequestMemory;
         appLimitInfoIndex.ResourceLimit.AppPodReplicas = eventData.AppPodReplicas;
+        appLimitInfoIndex.ResourceLimit.EnableMultipleInstances = eventData.EnableMultipleInstances;
         appLimitInfoIndex.OperationLimit = new OperationLimitInfo();
         appLimitInfoIndex.OperationLimit.MaxEntityCallCount = eventData.MaxEntityCallCount;
         appLimitInfoIndex.OperationLimit.MaxEntitySize = eventData.MaxEntitySize;
