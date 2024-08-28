@@ -35,17 +35,14 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
 
     private async Task UploadAppZipAttachmentAsync(IFormFile file, string appId, string version)
     {
+        var fileSize = file.Length;
         string fileNameWithExtension = file.FileName;
         string extension = Path.GetExtension(fileNameWithExtension);
-        Logger.LogInformation("Attachment file name: {0} extension: {1}", fileNameWithExtension, extension);
-        string fileNameWithJsonExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
-        string fileKey = fileNameWithJsonExtension.Replace(".json", "");
+        string fileNameWithJsonExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension); 
+        string fileKey = fileNameWithJsonExtension.Replace(".json", "");//Use file name as file key
         
         var compressedData = await ConvertIFormFileToByteArray(file);
-        // string jsonData = DecompressPakoZip(compressedData);
         string jsonData = ZipHelper.DecompressDeflateData(compressedData);
-        // Logger.LogInformation("File json data: "+jsonData);
-        // string tempFileName = Path.GetTempFileName();
         var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithJsonExtension);
         
         await File.WriteAllTextAsync(s3FileName, jsonData);
@@ -53,6 +50,12 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
         File.Delete(s3FileName);
         Logger.LogInformation($"UpLoad Json File {s3FileName} successfully");
+        
+        var appAttachmentGrain =
+            _clusterClient.GetGrain<IAppAttachmentGrain>(
+                GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+        await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
+            fileNameWithJsonExtension, fileSize);
     }
     
     private async Task<byte[]> ConvertIFormFileToByteArray(IFormFile file)
@@ -88,40 +91,41 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         var fileSize = file.Length;
         string fileNameWithExtension = file.FileName;
         string extension = Path.GetExtension(fileNameWithExtension);
-        Logger.LogInformation("Attachment file name: {0} extension: {1}", fileNameWithExtension, extension);
+        Logger.LogInformation("Attachment file name: {0} extension: {1} size: {2}", fileNameWithExtension, extension,
+            fileSize);
         bool hasExtension = !string.IsNullOrEmpty(extension);
         if (!hasExtension)
         {
             throw new UserFriendlyException("Invalid file.");
         }
 
-        bool isJsonFile = extension.Equals(".json", StringComparison.OrdinalIgnoreCase);
-        if (!isJsonFile)
-        {
-            // throw new UserFriendlyException("Invalid file. only support json file.");
-        }
-        
-        bool isZipFile=extension.Equals(".zip", StringComparison.OrdinalIgnoreCase);
-        if (isZipFile)
-        {
-            await UploadAppZipAttachmentAsync(file, appId, version);
-            return;
-        }
-            
         string fileKey = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
         if (!Regex.IsMatch(fileKey, @"^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)*$"))
         {
             throw new UserFriendlyException("File name can only contain letters, numbers, underscores, hyphens, and dots (not at the start or end).");
         }
         
-        using (Stream fileStream = file.OpenReadStream())
+        bool isJsonFile = fileNameWithExtension.Contains(".json", StringComparison.OrdinalIgnoreCase);
+        if (!isJsonFile)
         {
-            var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithExtension);
-            await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
+            throw new UserFriendlyException("Invalid file. only support json file.");
         }
-        
+
+        bool isZipFile = extension.Equals(".zip", StringComparison.OrdinalIgnoreCase);
+        if (isZipFile)
+        {
+            await UploadAppZipAttachmentAsync(file, appId, version);
+            return;
+        }
+
         if (isJsonFile)
         {
+            using (Stream fileStream = file.OpenReadStream())
+            {
+                var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithExtension);
+                await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
+            }
+            
             var appAttachmentGrain =
                 _clusterClient.GetGrain<IAppAttachmentGrain>(
                     GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
