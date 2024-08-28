@@ -325,7 +325,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         await DestroyAppQueryPodsAsync(appId, version);
     }
 
-    public async Task DestroyAppFullPodsAsync(string appId, string version)
+    private async Task DestroyAppFullPodsAsync(string appId, string version)
     {
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
@@ -364,7 +364,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         }
     }
 
-    public async Task DestroyAppQueryPodsAsync(string appId, string version)
+    private async Task DestroyAppQueryPodsAsync(string appId, string version)
     {
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
