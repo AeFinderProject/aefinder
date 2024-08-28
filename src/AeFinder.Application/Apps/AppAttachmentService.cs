@@ -42,7 +42,8 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         string fileKey = fileNameWithJsonExtension.Replace(".json", "");
         
         var compressedData = await ConvertIFormFileToByteArray(file);
-        string jsonData = DecompressPakoZip(compressedData);
+        // string jsonData = DecompressPakoZip(compressedData);
+        string jsonData = ZipHelper.DecompressDeflateData(compressedData);
         Logger.LogInformation("File json data: "+jsonData);
         // string tempFileName = Path.GetTempFileName();
         var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithJsonExtension);
