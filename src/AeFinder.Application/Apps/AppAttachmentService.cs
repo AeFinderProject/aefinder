@@ -52,9 +52,9 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             }
             
             string fileKey = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
-            if (!Regex.IsMatch(fileKey, @"^[a-zA-Z0-9_-]+$"))
+            if (!Regex.IsMatch(fileKey, @"^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)*$"))
             {
-                throw new UserFriendlyException("File name can only contain letters, numbers, underscores, and hyphens.");
+                throw new UserFriendlyException("File name can only contain letters, numbers, underscores, hyphens, and dots (not at the start or end).");
             }
 
             
