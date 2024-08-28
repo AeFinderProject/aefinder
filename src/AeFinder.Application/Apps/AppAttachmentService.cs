@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.IO.Compression;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AeFinder.AmazonCloud;
@@ -31,45 +33,111 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         return version + "-" + fileName;
     }
 
+    private async Task UploadAppZipAttachmentAsync(IFormFile file, string appId, string version)
+    {
+        string fileNameWithExtension = file.FileName;
+        string extension = Path.GetExtension(fileNameWithExtension);
+        Logger.LogInformation("Attachment file name: {0} extension: {1}", fileNameWithExtension, extension);
+        string fileNameWithJsonExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
+        string fileKey = fileNameWithJsonExtension.Replace(".json", "");
+        
+        var compressedData = await ConvertIFormFileToByteArray(file);
+        string jsonData = DecompressPakoZip(compressedData);
+        Logger.LogInformation("File json data: "+jsonData);
+        // string tempFileName = Path.GetTempFileName();
+        var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithJsonExtension);
+        
+        await File.WriteAllTextAsync(s3FileName, jsonData);
+        var fileStream = await ConvertStringToStream(jsonData);
+        await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
+        File.Delete(s3FileName);
+        Logger.LogInformation($"UpLoad Json File {s3FileName} successfully");
+    }
+    
+    private async Task<byte[]> ConvertIFormFileToByteArray(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return null;
+        }
+
+        using (var memoryStream = new MemoryStream())
+        {
+            await file.CopyToAsync(memoryStream);
+            return memoryStream.ToArray();
+        }
+    }
+    
+    private async Task<Stream> ConvertStringToStream(string jsonData)
+    {
+        var memoryStream = new MemoryStream();
+
+        using (var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true))
+        {
+            await streamWriter.WriteAsync(jsonData);
+            await streamWriter.FlushAsync(); 
+        }
+        memoryStream.Position = 0;
+
+        return memoryStream;
+    }
+    
     public async Task UploadAppAttachmentAsync(IFormFile file, string appId, string version)
     {
+        var fileSize = file.Length;
+        string fileNameWithExtension = file.FileName;
+        string extension = Path.GetExtension(fileNameWithExtension);
+        Logger.LogInformation("Attachment file name: {0} extension: {1}", fileNameWithExtension, extension);
+        bool hasExtension = !string.IsNullOrEmpty(extension);
+        if (!hasExtension)
+        {
+            throw new UserFriendlyException("Invalid file.");
+        }
+
+        bool isJsonFile = extension.Equals(".json", StringComparison.OrdinalIgnoreCase);
+        if (!isJsonFile)
+        {
+            // throw new UserFriendlyException("Invalid file. only support json file.");
+        }
+        
+        bool isZipFile=extension.Equals(".zip", StringComparison.OrdinalIgnoreCase);
+        if (isZipFile)
+        {
+            await UploadAppZipAttachmentAsync(file, appId, version);
+            return;
+        }
+            
+        string fileKey = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
+        if (!Regex.IsMatch(fileKey, @"^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)*$"))
+        {
+            throw new UserFriendlyException("File name can only contain letters, numbers, underscores, hyphens, and dots (not at the start or end).");
+        }
+        
         using (Stream fileStream = file.OpenReadStream())
         {
-            var fileSize = file.Length;
-            string fileNameWithExtension = file.FileName;
-            string extension = Path.GetExtension(fileNameWithExtension);
-            Logger.LogInformation("Attachment file name: {0} extension: {1}", fileNameWithExtension, extension);
-            bool hasExtension = !string.IsNullOrEmpty(extension);
-            if (!hasExtension)
-            {
-                throw new UserFriendlyException("Invalid file.");
-            }
-
-            bool isJsonFile = extension.Equals(".json", StringComparison.OrdinalIgnoreCase);
-            if (!isJsonFile)
-            {
-                // throw new UserFriendlyException("Invalid file. only support json file.");
-            }
-            
-            string fileKey = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
-            if (!Regex.IsMatch(fileKey, @"^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)*$"))
-            {
-                throw new UserFriendlyException("File name can only contain letters, numbers, underscores, hyphens, and dots (not at the start or end).");
-            }
-
-            
             var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithExtension);
             await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
-
-            if (isJsonFile)
-            {
-                var appAttachmentGrain =
-                    _clusterClient.GetGrain<IAppAttachmentGrain>(
-                        GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
-                await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
-                    fileNameWithExtension, fileSize);
-            }
-            
+        }
+        
+        if (isJsonFile)
+        {
+            var appAttachmentGrain =
+                _clusterClient.GetGrain<IAppAttachmentGrain>(
+                    GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+            await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
+                fileNameWithExtension, fileSize);
+        }
+        
+    }
+    
+    private string DecompressPakoZip(byte[] compressedData)
+    {
+        using (var compressedStream = new MemoryStream(compressedData))
+        using (var decompressor = new DeflateStream(compressedStream, CompressionMode.Decompress))
+        using (var resultStream = new MemoryStream())
+        {
+            decompressor.CopyTo(resultStream);
+            return Encoding.UTF8.GetString(resultStream.ToArray());
         }
     }
 
