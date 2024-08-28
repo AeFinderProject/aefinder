@@ -1,6 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 using ICSharpCode.SharpZipLib.Zip;
+using Ionic.Zlib;
 
 namespace AeFinder;
 
@@ -15,15 +16,10 @@ public class ZipHelper
     public static string DecompressDeflateData(byte[] compressedData)
     {
         using (var compressedStream = new MemoryStream(compressedData))
-        using (var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress))
-        using (var resultStream = new MemoryStream())
+        using (var deflateStream = new ZlibStream(compressedStream, Ionic.Zlib.CompressionMode.Decompress))  // 正确引用 CompressionMode
+        using (var reader = new StreamReader(deflateStream))
         {
-            deflateStream.CopyTo(resultStream);
-            resultStream.Seek(0, SeekOrigin.Begin);
-            using (var reader = new StreamReader(resultStream))
-            {
-                return reader.ReadToEnd();
-            }
+            return reader.ReadToEnd();
         }
     }
 }
