@@ -44,7 +44,7 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         var compressedData = await ConvertIFormFileToByteArray(file);
         // string jsonData = DecompressPakoZip(compressedData);
         string jsonData = ZipHelper.DecompressDeflateData(compressedData);
-        Logger.LogInformation("File json data: "+jsonData);
+        // Logger.LogInformation("File json data: "+jsonData);
         // string tempFileName = Path.GetTempFileName();
         var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithJsonExtension);
         
@@ -129,17 +129,6 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                 fileNameWithExtension, fileSize);
         }
         
-    }
-    
-    private string DecompressPakoZip(byte[] compressedData)
-    {
-        using (var compressedStream = new MemoryStream(compressedData))
-        using (var decompressor = new DeflateStream(compressedStream, CompressionMode.Decompress))
-        using (var resultStream = new MemoryStream())
-        {
-            decompressor.CopyTo(resultStream);
-            return Encoding.UTF8.GetString(resultStream.ToArray());
-        }
     }
 
     public async Task DeleteAppAttachmentAsync(string appId, string version,string fileKey)
