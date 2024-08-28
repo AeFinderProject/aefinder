@@ -48,7 +48,7 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             bool isJsonFile = extension.Equals(".json", StringComparison.OrdinalIgnoreCase);
             if (!isJsonFile)
             {
-                throw new UserFriendlyException("Invalid file. only support json file.");
+                // throw new UserFriendlyException("Invalid file. only support json file.");
             }
             
             string fileKey = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
@@ -57,14 +57,19 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                 throw new UserFriendlyException("File name can only contain letters, numbers, underscores, and hyphens.");
             }
 
+            
             var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithExtension);
             await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
+
+            if (isJsonFile)
+            {
+                var appAttachmentGrain =
+                    _clusterClient.GetGrain<IAppAttachmentGrain>(
+                        GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+                await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
+                    fileNameWithExtension, fileSize);
+            }
             
-            var appAttachmentGrain =
-                _clusterClient.GetGrain<IAppAttachmentGrain>(
-                    GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
-            await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
-                fileNameWithExtension, fileSize);
         }
     }
 
