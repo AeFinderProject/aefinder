@@ -138,13 +138,15 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var replicasCount = 1;//Only one pod instance is allowed
         var requestCpuCore = resourceLimitInfo.AppFullPodRequestCpuCore;
         var requestMemory = resourceLimitInfo.AppFullPodRequestMemory;
+        var maxSurge = KubernetesConstants.FullPodMaxSurge;
+        var maxUnavailable = KubernetesConstants.FullPodMaxUnavailable;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
-                sideCarConfigName, requestCpuCore, requestMemory);
+                sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(
@@ -213,6 +215,8 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var replicasCount = resourceLimitInfo.AppPodReplicas;
         var requestCpuCore = resourceLimitInfo.AppQueryPodRequestCpuCore;
         var requestMemory = resourceLimitInfo.AppQueryPodRequestMemory;
+        var maxSurge = KubernetesConstants.QueryPodMaxSurge;
+        var maxUnavailable = KubernetesConstants.QueryPodMaxUnavailable;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
@@ -220,7 +224,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             var healthPath = GetGraphQLPath(appId, version);
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
-                sideCarConfigName, requestCpuCore, requestMemory, healthPath);
+                sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable, healthPath);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(

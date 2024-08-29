@@ -37,7 +37,7 @@ public class DeploymentHelper
     public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string appId, string imageName,
         string deploymentName, string deploymentLabelName, int replicasCount, string containerName,
         int containerPort, string configMapName, string sideCarConfigMapName, string requestCpu, string requestMemory,
-        string readinessProbeHealthPath = null)
+        string maxSurge, string maxUnavailable, string readinessProbeHealthPath = null)
     {
         var labels = CreateLabels(deploymentLabelName, appId);
         var deployment = new V1Deployment
@@ -51,7 +51,7 @@ public class DeploymentHelper
             {
                 Replicas = replicasCount,
                 Selector = new V1LabelSelector { MatchLabels = labels },
-                Strategy = CreateStrategy(),
+                Strategy = CreateStrategy(maxSurge, maxUnavailable),
                 Template = new V1PodTemplateSpec
                 {
                     Metadata = new V1ObjectMeta { Labels = labels },
@@ -77,20 +77,20 @@ public class DeploymentHelper
             { KubernetesConstants.MonitorLabelKey, appId }
         };
     }
-    
-    private static V1DeploymentStrategy CreateStrategy()
+
+    private static V1DeploymentStrategy CreateStrategy(string maxSurge, string maxUnavailable)
     {
         return new V1DeploymentStrategy
         {
             Type = "RollingUpdate",
             RollingUpdate = new V1RollingUpdateDeployment
             {
-                MaxSurge = KubernetesConstants.QueryPodMaxSurge,
-                MaxUnavailable = KubernetesConstants.QueryPodMaxUnavailable
+                MaxSurge = maxSurge,
+                MaxUnavailable = maxUnavailable
             }
         };
     }
-    
+
     private static V1Affinity CreateNodeAffinity()
     {
         return new V1Affinity
