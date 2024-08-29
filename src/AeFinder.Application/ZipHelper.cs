@@ -1,7 +1,9 @@
 using System.IO;
 using System.IO.Compression;
+using System.Text;
 using ICSharpCode.SharpZipLib.Zip;
 using Ionic.Zlib;
+using Microsoft.AspNetCore.Http;
 
 namespace AeFinder;
 
@@ -21,5 +23,33 @@ public class ZipHelper
         {
             return reader.ReadToEnd();
         }
+    }
+    
+    public static byte[] ConvertIFormFileToByteArray(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return null;
+        }
+
+        using (var memoryStream = new MemoryStream())
+        {
+            file.CopyTo(memoryStream);
+            return memoryStream.ToArray();
+        }
+    }
+    
+    public static Stream ConvertStringToStream(string jsonData)
+    {
+        var memoryStream = new MemoryStream();
+
+        using (var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true))
+        {
+            streamWriter.Write(jsonData);
+            streamWriter.Flush(); 
+        }
+        memoryStream.Position = 0;
+
+        return memoryStream;
     }
 }
