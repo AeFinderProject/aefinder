@@ -142,7 +142,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
-            var deployment = DeploymentHelper.CreateFullAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
+            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
                 sideCarConfigName, requestCpuCore, requestMemory);
             // Create Deployment
@@ -218,7 +218,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         if (!deploymentExists)
         {
             var healthPath = GetGraphQLPath(appId, version);
-            var deployment = DeploymentHelper.CreateQueryAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
+            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
                 sideCarConfigName, requestCpuCore, requestMemory, healthPath);
             // Create Deployment
@@ -481,66 +481,44 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 
     public async Task UpdateAppDockerImageAsync(string appId, string version, string newImage)
     {
-        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         //Update full pod docker image
-        var fullClientDeploymentName =
-            DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeFull);
-        var fullClientDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullClientDeploymentName);
-        if (fullClientDeploymentExists)
+        await UpdateAppDockerImageAsync(appId, version, newImage, KubernetesConstants.AppClientTypeFull);
+
+        //Update query pod docker image
+        await UpdateAppDockerImageAsync(appId, version, newImage, KubernetesConstants.AppClientTypeQuery);
+    }
+
+    private async Task UpdateAppDockerImageAsync(string appId, string version, string newImage, string clientType)
+    {
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
+        var deploymentName =
+            DeploymentHelper.GetAppDeploymentName(appId, version, clientType);
+        var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
+        if (deploymentExists)
         {
-            var deployment = await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(fullClientDeploymentName, KubernetesConstants.AppNameSpace);
+            var deployment =
+                await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(deploymentName,
+                    KubernetesConstants.AppNameSpace);
             var containers = deployment.Spec.Template.Spec.Containers;
             var containerName =
-                ContainerHelper.GetAppContainerName(appId, version, KubernetesConstants.AppClientTypeFull);
-            
+                ContainerHelper.GetAppContainerName(appId, version, clientType);
+
             var container = containers.FirstOrDefault(c => c.Name == containerName);
             if (container != null)
             {
                 container.Image = newImage;
-                await _kubernetesClientAdapter.ReplaceNamespacedDeploymentAsync(deployment, fullClientDeploymentName, KubernetesConstants.AppNameSpace);
-                _logger.LogInformation($"Updated deployment {fullClientDeploymentName} to use image {newImage}");
+                await _kubernetesClientAdapter.ReplaceNamespacedDeploymentAsync(deployment, deploymentName,
+                    KubernetesConstants.AppNameSpace);
+                _logger.LogInformation($"Updated deployment {deploymentName} to use image {newImage}");
             }
             else
             {
-                _logger.LogError($"Container {containerName} not found in deployment {fullClientDeploymentName}");
+                _logger.LogError($"Container {containerName} not found in deployment {deploymentName}");
             }
         }
         else
         {
-            _logger.LogError($"Deployment {fullClientDeploymentName} does not exist!");
-        }
-        
-        //Update query pod docker image
-        var queryClientDeploymentName =
-            DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeQuery);
-        var queryClientDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == queryClientDeploymentName);
-
-        if (queryClientDeploymentExists)
-        {
-            var deployment = await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(queryClientDeploymentName, KubernetesConstants.AppNameSpace);
-    
-            // 获取Deployment中的容器
-            var containers = deployment.Spec.Template.Spec.Containers;
-            var containerName = "your-container-name"; 
-
-            // 更新容器镜像
-            var container = containers.FirstOrDefault(c => c.Name == containerName);
-            if (container != null)
-            {
-                container.Image = newImage;
-
-                // 更新Deployment
-                await _kubernetesClientAdapter.ReplaceNamespacedDeploymentAsync(deployment, queryClientDeploymentName, KubernetesConstants.AppNameSpace);
-                _logger.LogInformation($"Updated deployment {queryClientDeploymentName} to use image {newImage}");
-            }
-            else
-            {
-                _logger.LogError($"Container {containerName} not found in deployment {queryClientDeploymentName}");
-            }
-        }
-        else
-        {
-            _logger.LogError($"Deployment {queryClientDeploymentName} does not exist!");
+            _logger.LogError($"Deployment {deploymentName} does not exist!");
         }
     }
 }

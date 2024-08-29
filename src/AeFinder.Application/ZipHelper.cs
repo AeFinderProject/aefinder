@@ -16,7 +16,7 @@ public class ZipHelper
     public static string DecompressDeflateData(byte[] compressedData)
     {
         using (var compressedStream = new MemoryStream(compressedData))
-        using (var deflateStream = new ZlibStream(compressedStream, Ionic.Zlib.CompressionMode.Decompress))  // 正确引用 CompressionMode
+        using (var deflateStream = new ZlibStream(compressedStream, Ionic.Zlib.CompressionMode.Decompress))
         using (var reader = new StreamReader(deflateStream))
         {
             return reader.ReadToEnd();
