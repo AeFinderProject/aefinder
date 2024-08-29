@@ -319,10 +319,19 @@ public class DeploymentHelper
                                 },
                                 ReadinessProbe = new V1Probe()
                                 {
-                                    HttpGet = new V1HTTPGetAction()
+                                    // HttpGet = new V1HTTPGetAction()
+                                    // {
+                                    //     Path = readinessProbeHealthPath,
+                                    //     Port = containerPort
+                                    // },
+                                    Exec = new V1ExecAction()
                                     {
-                                        Path = readinessProbeHealthPath,
-                                        Port = containerPort
+                                        Command = new List<string>()
+                                        {
+                                            "sh",
+                                            "-c",
+                                            "curl -X POST -H 'Content-Type: application/json' -d '{\"query\":\"{ __schema { types { name } } }\"}' http://localhost:"+containerPort+readinessProbeHealthPath+" | grep 'name'"
+                                        }
                                     },
                                     InitialDelaySeconds = 5,
                                     PeriodSeconds = 5,
