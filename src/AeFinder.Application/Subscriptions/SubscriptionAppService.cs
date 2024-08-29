@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AeFinder.AmazonCloud;
 using AeFinder.App.Deploy;
@@ -63,16 +64,17 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         var version = addResult.NewVersion;
         if (attachmentList != null)
         {
-            await CheckAttachmentSizeAsync(appId, version, attachmentList);
-            foreach (var attachment in attachmentList)
-            {
-                if (attachment == null)
-                {
-                    continue;
-                }
-
-                await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
-            }
+            // await CheckAttachmentSizeAsync(appId, version, attachmentList);
+            // foreach (var attachment in attachmentList)
+            // {
+            //     if (attachment == null)
+            //     {
+            //         continue;
+            //     }
+            //
+            //     await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
+            // }
+            await _appAttachmentService.UploadAppAttachmentListAsync(attachmentList, appId, version);
         }
 
         var rulePath =
@@ -124,17 +126,19 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         //Upload new attach file
         if (attachmentList != null)
         {
-            await CheckAttachmentSizeAsync(appId, version, attachmentList);
-        
-            foreach (var attachment in attachmentList)
-            {
-                if (attachment == null)
-                {
-                    continue;
-                }
+            // await CheckAttachmentSizeAsync(appId, version, attachmentList);
+            //
+            // foreach (var attachment in attachmentList)
+            // {
+            //     if (attachment == null)
+            //     {
+            //         continue;
+            //     }
+            //
+            //     await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
+            // }
             
-                await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
-            }
+            await _appAttachmentService.UploadAppAttachmentListAsync(attachmentList, appId, version);
         }
 
         //Update app code
