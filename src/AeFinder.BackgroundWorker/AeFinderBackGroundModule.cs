@@ -47,6 +47,7 @@ public class AeFinderBackGroundModule : AbpModule
         ConfigureCache(configuration);
         ConfigureMongoDbService(configuration, context);
         context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
+        context.Services.Configure<TransactionRepairOptions>(configuration.GetSection("TransactionRepair"));
     }
     
     //Disable TokenCleanupBackgroundWorker
@@ -82,6 +83,13 @@ public class AeFinderBackGroundModule : AbpModule
     {
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppDataClearWorker>());
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppInfoSyncWorker>());
+
+        var transactionRepairOptions = context.ServiceProvider
+            .GetRequiredService<IOptionsSnapshot<TransactionRepairOptions>>().Value;
+        if (transactionRepairOptions.Enable)
+        {
+            AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<TransactionRepairWorker>());
+        }
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
