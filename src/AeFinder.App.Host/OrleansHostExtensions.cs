@@ -38,6 +38,7 @@ public static class OrleansHostExtensions
                     options.SupportedNamespacePrefixes.Add("Newtonsoft.Json");
                 })
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
+                .AddActivityPropagation()
                 .AddKafka(AeFinderApplicationConsts.MessageStreamName)
                 .WithOptions(options =>
                 {
