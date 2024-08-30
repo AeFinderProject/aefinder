@@ -10,5 +10,9 @@
         <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
         <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AElf.OpenTelemetry" Version="8.0.5" />
+    </ItemGroup>
     
 </Project>

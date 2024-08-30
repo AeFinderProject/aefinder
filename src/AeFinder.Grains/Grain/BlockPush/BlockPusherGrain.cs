@@ -4,6 +4,7 @@ using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.Grain.Chains;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.BlockPush;
+using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -12,6 +13,7 @@ using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.BlockPush;
 
+[AggregateExecutionTime]
 public class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockPusherGrain
 {
     private readonly IBlockFilterAppService _blockFilterAppService;
@@ -151,7 +153,7 @@ public class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockPusherGra
         }
     }
 
-    public async Task HandleBlockAsync(BlockWithTransactionDto block)
+    public virtual async Task HandleBlockAsync(BlockWithTransactionDto block)
     {
         if (!CheckPushThreshold(State.PushedBlockHeight, block.BlockHeight))
         {
