@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AeFinder.AmazonCloud;
@@ -37,33 +38,10 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         return version + "-" + fileName;
     }
 
-    // private async Task UploadAppZipAttachmentAsync(IFormFile file, string appId, string version)
-    // {
-    //     var fileSize = file.Length;
-    //     string fileNameWithExtension = file.FileName;
-    //     string extension = Path.GetExtension(fileNameWithExtension);
-    //     string fileNameWithJsonExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension); 
-    //     string fileKey = fileNameWithJsonExtension.Replace(".json", "");//Use file name as file key
-    //     
-    //     var compressedData = ZipHelper.ConvertIFormFileToByteArray(file);
-    //     string jsonData = ZipHelper.DecompressDeflateData(compressedData);
-    //     var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithJsonExtension);
-    //     
-    //     // await File.WriteAllTextAsync(s3FileName, jsonData);
-    //     var fileStream = ZipHelper.ConvertStringToStream(jsonData);
-    //     await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
-    //     // File.Delete(s3FileName);
-    //     Logger.LogInformation($"UpLoad Json File {s3FileName} successfully");
-    //     
-    //     var appAttachmentGrain =
-    //         _clusterClient.GetGrain<IAppAttachmentGrain>(
-    //             GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
-    //     await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
-    //         fileNameWithJsonExtension, fileSize);
-    // }
-
     public async Task UploadAppAttachmentListAsync(List<IFormFile> attachmentList, string appId, string version)
     {
+        await CheckAttachmentListAsync(attachmentList, appId, version);
+        
         long totalFileSize = 0L;
         var appAttachmentGrain =
             _clusterClient.GetGrain<IAppAttachmentGrain>(
@@ -104,7 +82,7 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                 
             if (!Regex.IsMatch(fileKey, @"^[a-zA-Z0-9_-]+$"))
             {
-                throw new UserFriendlyException("File name can only contain letters, numbers, underscores, hyphens, and dots (not at the start or end).");
+                throw new UserFriendlyException("File name can only contain letters, numbers, underscores, hyphens.");
             }
 
             if (isZipFile)
@@ -112,7 +90,10 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                 fileNameWithExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension);
                 var compressedData = ZipHelper.ConvertIFormFileToByteArray(attachment);
                 string jsonData = ZipHelper.DecompressDeflateData(compressedData);
-                //Todo: check json vaild
+                if (!IsValidJson(jsonData))
+                {
+                    throw new UserFriendlyException($"Attachment {fileNameWithExtension} json is not valid.");
+                }
                 var fileStream = ZipHelper.ConvertStringToStream(jsonData);
                 fileSize = fileStream.Length;
                 totalFileSize = totalFileSize + fileSize;
@@ -151,6 +132,37 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
         
     }
 
+    private async Task CheckAttachmentListAsync(List<IFormFile> attachmentList, string appId, string version)
+    {
+        if (attachmentList == null)
+        {
+            Logger.LogWarning("Attachment list is null.");
+            return;
+        }
+        var appAttachmentGrain =
+            _clusterClient.GetGrain<IAppAttachmentGrain>(GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
+        var attachmentInfos = await appAttachmentGrain.GetAllAttachmentsInfoAsync();
+        var fileCount = attachmentList.Count;
+        fileCount = fileCount + attachmentInfos.Count;
+        if (fileCount > 5)
+        {
+            throw new UserFriendlyException("Only support 5 attachments.");
+        }
+    }
+    
+    public static bool IsValidJson(string jsonString)
+    {
+        try
+        {
+            JsonDocument.Parse(jsonString);
+            return true;
+        }
+        catch (JsonException exception) 
+        {
+            return false;
+        }
+    }
+
     public async Task UploadAppAttachmentAsync(Stream fileStream, string appId, string version, string fileKey,
         string fileNameWithExtension, long fileSize)
     {
@@ -164,60 +176,6 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             fileNameWithExtension, fileSize);
         Logger.LogInformation($"UpLoad Json File {s3FileName} successfully");
     }
-
-    // public async Task UploadAppAttachmentAsync(IFormFile file, string appId, string version)
-    // {
-    //     var fileSize = file.Length;
-    //     string fileNameWithExtension = file.FileName;
-    //     string extension = Path.GetExtension(fileNameWithExtension);
-    //     Logger.LogInformation("Attachment file name: {0} extension: {1} size: {2}", fileNameWithExtension, extension,
-    //         fileSize);
-    //     bool hasExtension = !string.IsNullOrEmpty(extension);
-    //     if (!hasExtension)
-    //     {
-    //         throw new UserFriendlyException("Invalid file.");
-    //     }
-    //
-    //     string fileKey = Path.GetFileNameWithoutExtension(fileNameWithExtension); //Use file name as file key
-    //     if (!Regex.IsMatch(fileKey, @"^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)*$"))
-    //     {
-    //         throw new UserFriendlyException("File name can only contain letters, numbers, underscores, hyphens, and dots (not at the start or end).");
-    //     }
-    //     
-    //     bool isFileValid = fileNameWithExtension.Contains(".json", StringComparison.OrdinalIgnoreCase);
-    //     if (!isFileValid)
-    //     {
-    //         throw new UserFriendlyException("Invalid file. only support json file.");
-    //     }
-    //
-    //     bool isZipFile = extension.Equals(".zip", StringComparison.OrdinalIgnoreCase);
-    //     if (isZipFile)
-    //     {
-    //         await UploadAppZipAttachmentAsync(file, appId, version);
-    //         return;
-    //     }
-    //
-    //     bool isJsonFile = extension.Equals(".json", StringComparison.OrdinalIgnoreCase);
-    //     if (isJsonFile)
-    //     {
-    //         using (Stream fileStream = file.OpenReadStream())
-    //         {
-    //             var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithExtension);
-    //             await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
-    //         }
-    //         
-    //         var appAttachmentGrain =
-    //             _clusterClient.GetGrain<IAppAttachmentGrain>(
-    //                 GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
-    //         await appAttachmentGrain.AddAttachmentAsync(appId, version, fileKey,
-    //             fileNameWithExtension, fileSize);
-    //     }
-    //     else
-    //     {
-    //         throw new UserFriendlyException("Invalid file.");
-    //     }
-    //     
-    // }
 
     public async Task DeleteAppAttachmentAsync(string appId, string version,string fileKey)
     {
