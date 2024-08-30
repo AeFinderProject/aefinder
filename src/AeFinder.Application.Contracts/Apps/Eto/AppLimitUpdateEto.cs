@@ -17,4 +17,7 @@ public class AppLimitUpdateEto
     public string AppQueryPodRequestCpuCore { get; set; }
     public string AppQueryPodRequestMemory { get; set; }
     public int AppPodReplicas { get; set; }
+    
+    public long MaxAppCodeSize { get; set; }
+    public long MaxAppAttachmentSize { get; set; }
 }

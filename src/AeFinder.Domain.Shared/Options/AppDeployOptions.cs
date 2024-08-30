@@ -1,4 +1,4 @@
-namespace AeFinder;
+namespace AeFinder.Options;
 
 public class AppDeployOptions
 {
