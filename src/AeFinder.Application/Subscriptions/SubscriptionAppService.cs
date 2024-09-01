@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AeFinder.AmazonCloud;
 using AeFinder.App.Deploy;
@@ -63,16 +64,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         var version = addResult.NewVersion;
         if (attachmentList != null)
         {
-            await CheckAttachmentSizeAsync(appId, version, attachmentList);
-            foreach (var attachment in attachmentList)
-            {
-                if (attachment == null)
-                {
-                    continue;
-                }
-
-                await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
-            }
+            await _appAttachmentService.UploadAppAttachmentListAsync(attachmentList, appId, version);
         }
 
         var rulePath =
@@ -124,17 +116,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         //Upload new attach file
         if (attachmentList != null)
         {
-            await CheckAttachmentSizeAsync(appId, version, attachmentList);
-        
-            foreach (var attachment in attachmentList)
-            {
-                if (attachment == null)
-                {
-                    continue;
-                }
-            
-                await _appAttachmentService.UploadAppAttachmentAsync(attachment, appId, version);
-            }
+            await _appAttachmentService.UploadAppAttachmentListAsync(attachmentList, appId, version);
         }
 
         //Update app code
@@ -351,34 +333,6 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         }
         
         AuditCode(code);
-    }
-
-    private async Task CheckAttachmentSizeAsync(string appId, string version, List<IFormFile> fileList)
-    {
-        if (fileList.Count > 5)
-        {
-            throw new UserFriendlyException("Only support 5 attachments.");
-        }
-        long totalFileSize = 0;
-        foreach (var file in fileList)
-        {
-            if (file == null)
-            {
-                continue;
-            }
-
-            totalFileSize = totalFileSize + file.Length;
-        }
-
-        var appAttachmentGrain =
-            _clusterClient.GetGrain<IAppAttachmentGrain>(
-                GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
-        var oldAttachmentFileSize = await appAttachmentGrain.GetAllAttachmentsFileSizeAsync();
-        totalFileSize = totalFileSize + oldAttachmentFileSize;
-        if (totalFileSize > _appDeployOptions.MaxAppAttachmentSize)
-        {
-            throw new UserFriendlyException("Attachment's total size is too Large.");
-        }
     }
 
     public async Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string appId, string version)
