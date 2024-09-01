@@ -487,6 +487,14 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
     {
         //Update full pod docker image
         await UpdateAppDockerImageAsync(appId, version, newImage, KubernetesConstants.AppClientTypeFull);
+        
+        //Publish app pod update eto to background worker
+        await _distributedEventBus.PublishAsync(new AppPodUpdateEto()
+        {
+            AppId = appId,
+            Version = version,
+            DockerImage = newImage
+        });
 
         //Update query pod docker image
         await UpdateAppDockerImageAsync(appId, version, newImage, KubernetesConstants.AppClientTypeQuery);
