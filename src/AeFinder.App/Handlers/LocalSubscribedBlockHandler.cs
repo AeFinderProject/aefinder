@@ -1,11 +1,13 @@
 using AeFinder.App.BlockProcessing;
 using AeFinder.BlockScan;
+using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.App.Handlers;
 
+[AggregateExecutionTime]
 public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBlockDto>, ITransientDependency
 {
     private readonly IBlockScanAppService _blockScanAppService;
@@ -26,7 +28,7 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         _versionUpgradeProvider = versionUpgradeProvider;
     }
 
-    public async Task HandleEventAsync(SubscribedBlockDto subscribedBlock)
+    public virtual async Task HandleEventAsync(SubscribedBlockDto subscribedBlock)
     {
         if (!_processingStatusProvider.IsRunning(subscribedBlock.ChainId))
         {
