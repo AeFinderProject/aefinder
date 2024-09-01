@@ -138,13 +138,15 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var replicasCount = 1;//Only one pod instance is allowed
         var requestCpuCore = resourceLimitInfo.AppFullPodRequestCpuCore;
         var requestMemory = resourceLimitInfo.AppFullPodRequestMemory;
+        var maxSurge = KubernetesConstants.FullPodMaxSurge;
+        var maxUnavailable = KubernetesConstants.FullPodMaxUnavailable;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
-                sideCarConfigName, requestCpuCore, requestMemory);
+                sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(
@@ -213,13 +215,16 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var replicasCount = resourceLimitInfo.AppPodReplicas;
         var requestCpuCore = resourceLimitInfo.AppQueryPodRequestCpuCore;
         var requestMemory = resourceLimitInfo.AppQueryPodRequestMemory;
+        var maxSurge = KubernetesConstants.QueryPodMaxSurge;
+        var maxUnavailable = KubernetesConstants.QueryPodMaxUnavailable;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
+            var healthPath = GetGraphQLPath(appId, version);
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
-                sideCarConfigName, requestCpuCore, requestMemory);
+                sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable, healthPath);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(
@@ -277,6 +282,11 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 
         return hostName + rulePath + "/graphql";
     }
+
+    private string GetGraphQLPath(string appId,string version)
+    {
+        return $"/{appId}/{version}/graphql";
+    }
     
     public async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
     {
@@ -314,10 +324,19 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 
     public async Task DestroyAppAsync(string appId, string version)
     {
+        await DestroyAppFullPodsAsync(appId, version);
+
+        await DestroyAppQueryPodsAsync(appId, version);
+    }
+
+    private async Task DestroyAppFullPodsAsync(string appId, string version)
+    {
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
+        var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
+        
         //Delete full app deployment
         var fullTypeAppDeploymentName =
             DeploymentHelper.GetAppDeploymentName(appId, version, KubernetesConstants.AppClientTypeFull);
-        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var fullTypeAppDeploymentExists = deployments.Items.Any(item => item.Metadata.Name == fullTypeAppDeploymentName);
         if (fullTypeAppDeploymentExists)
         {
@@ -331,7 +350,6 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 
         //Delete full app appsetting config map
         var fullTypeAppConfigMapName = ConfigMapHelper.GetAppSettingConfigMapName(appId, version,KubernetesConstants.AppClientTypeFull);
-        var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
         var fullTypeAppConfigMapExists = configMaps.Items.Any(configMap => configMap.Metadata.Name == fullTypeAppConfigMapName);
         if (fullTypeAppConfigMapExists)
         {
@@ -348,6 +366,12 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             await _kubernetesClientAdapter.DeleteConfigMapAsync(fullTypeAppSideCarConfigName, KubernetesConstants.AppNameSpace);
             _logger.LogInformation("[KubernetesAppManager]ConfigMap {fullTypeAppSideCarConfigName} deleted.", fullTypeAppSideCarConfigName);
         }
+    }
+
+    private async Task DestroyAppQueryPodsAsync(string appId, string version)
+    {
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
+        var configMaps = await _kubernetesClientAdapter.ListConfigMapAsync(KubernetesConstants.AppNameSpace);
 
         //Delete query app deployment
         var queryTypeAppDeploymentName =
@@ -456,6 +480,57 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         else
         {
             _logger.LogError($"Deployment {queryClientDeploymentName} is not exists!");
+        }
+    }
+
+    public async Task UpdateAppDockerImageAsync(string appId, string version, string newImage)
+    {
+        //Update full pod docker image
+        await UpdateAppDockerImageAsync(appId, version, newImage, KubernetesConstants.AppClientTypeFull);
+        
+        //Publish app pod update eto to background worker
+        await _distributedEventBus.PublishAsync(new AppPodUpdateEto()
+        {
+            AppId = appId,
+            Version = version,
+            DockerImage = newImage
+        });
+
+        //Update query pod docker image
+        await UpdateAppDockerImageAsync(appId, version, newImage, KubernetesConstants.AppClientTypeQuery);
+    }
+
+    private async Task UpdateAppDockerImageAsync(string appId, string version, string newImage, string clientType)
+    {
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
+        var deploymentName =
+            DeploymentHelper.GetAppDeploymentName(appId, version, clientType);
+        var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
+        if (deploymentExists)
+        {
+            var deployment =
+                await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(deploymentName,
+                    KubernetesConstants.AppNameSpace);
+            var containers = deployment.Spec.Template.Spec.Containers;
+            var containerName =
+                ContainerHelper.GetAppContainerName(appId, version, clientType);
+
+            var container = containers.FirstOrDefault(c => c.Name == containerName);
+            if (container != null)
+            {
+                container.Image = newImage;
+                await _kubernetesClientAdapter.ReplaceNamespacedDeploymentAsync(deployment, deploymentName,
+                    KubernetesConstants.AppNameSpace);
+                _logger.LogInformation($"Updated deployment {deploymentName} to use image {newImage}");
+            }
+            else
+            {
+                _logger.LogError($"Container {containerName} not found in deployment {deploymentName}");
+            }
+        }
+        else
+        {
+            _logger.LogError($"Deployment {deploymentName} does not exist!");
         }
     }
 }
