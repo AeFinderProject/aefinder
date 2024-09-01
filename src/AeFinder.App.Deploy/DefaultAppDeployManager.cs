@@ -16,4 +16,9 @@ public class DefaultAppDeployManager : IAppDeployManager
     {
         return;
     }
+
+    public async Task UpdateAppDockerImageAsync(string appId, string version, string imageName)
+    {
+        return;
+    }
 }
