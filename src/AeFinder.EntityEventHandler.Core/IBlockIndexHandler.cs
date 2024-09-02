@@ -6,6 +6,7 @@ using AeFinder.Block.Dtos;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Chains;
+using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Nito.AsyncEx;
@@ -21,6 +22,7 @@ public interface IBlockIndexHandler
     Task ProcessConfirmedBlocksAsync(BlockWithTransactionDto confirmBlock);
 }
 
+[AggregateExecutionTime]
 public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
 {
     private readonly IClusterClient _clusterClient;
@@ -39,7 +41,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
         Logger = NullLogger<BlockIndexHandler>.Instance;
     }
 
-    public async Task ProcessNewBlockAsync(BlockWithTransactionDto block)
+    public virtual async Task ProcessNewBlockAsync(BlockWithTransactionDto block)
     {
         try
         {
