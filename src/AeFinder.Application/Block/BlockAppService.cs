@@ -62,7 +62,7 @@ public class BlockAppService : ApplicationService, IBlockAppService
         queryable = queryable.Where(expression).OrderBy(o => o.BlockHeight).OrderBy(o => o.Id)
             .Take(_apiOptions.MaxQuerySize);
         var list = queryable.ToList();
-        while (list.Count % _apiOptions.MaxQuerySize == 0)
+        while (list.Count != 0 && list.Count % _apiOptions.MaxQuerySize == 0)
         {
             var blocks = queryable.After(new object[] { list.Last().BlockHeight, list.Last().Id }).ToList();
             if (blocks.Count == 0)
@@ -165,7 +165,7 @@ public class BlockAppService : ApplicationService, IBlockAppService
             var query = queryable.Where(mustQuery).OrderBy(o => o.BlockHeight).OrderBy(o => o.Index).OrderBy(o => o.Id)
                 .Take(_apiOptions.MaxQuerySize);
             var list = query.ToList();
-            while (list.Count % _apiOptions.MaxQuerySize == 0)
+            while (list.Count != 0 && list.Count % _apiOptions.MaxQuerySize == 0)
             {
                 var transactions = query
                     .After(new object[] { list.Last().BlockHeight, list.Last().Index, list.Last().Id }).ToList();
@@ -197,7 +197,7 @@ public class BlockAppService : ApplicationService, IBlockAppService
             var query = queryable.Where(mustQuery).OrderBy(o => o.BlockHeight).OrderBy(o => o.Index).OrderBy(o => o.Id)
                 .Take(_apiOptions.MaxQuerySize);
             var list = query.ToList();
-            while (list.Count % _apiOptions.MaxQuerySize == 0)
+            while (list.Count != 0 && list.Count % _apiOptions.MaxQuerySize == 0)
             {
                 var transactions = query
                     .After(new object[] { list.Last().BlockHeight, list.Last().Index, list.Last().Id }).ToList();
@@ -274,7 +274,7 @@ public class BlockAppService : ApplicationService, IBlockAppService
         queryable = queryable.Where(mustQuery).OrderBy(o => o.BlockHeight).OrderBy(o => o.Index).OrderBy(o => o.Id)
             .Take(_apiOptions.MaxQuerySize);
         var list = queryable.ToList();
-        while (list.Count % _apiOptions.MaxQuerySize == 0)
+        while (list.Count != 0 && list.Count % _apiOptions.MaxQuerySize == 0)
         {
             var logEvents = queryable
                 .After(new object[] { list.Last().BlockHeight, list.Last().Index, list.Last().Id }).ToList();
