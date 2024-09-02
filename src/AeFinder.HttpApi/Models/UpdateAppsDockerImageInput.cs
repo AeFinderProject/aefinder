@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AeFinder.Models;
 
-public class UpdateAppDockerImageInput: AppVersionInput
+public class UpdateAppsDockerImageInput: AppIdsInput
 {
     [Required]
     public string ImageName { get; set; }
