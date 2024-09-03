@@ -100,12 +100,12 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                 var fileStream = ZipHelper.ConvertStringToStream(jsonData);
                 fileSize = fileStream.Length;
                 totalFileSize = totalFileSize + fileSize;
-                Logger.LogInformation("Decompress file name: {0} extension: {1} size: {2} ,totalSize: {3}",
+                Logger.LogInformation("Decompress file name: {0} extension: {1} size: {2} ,totalSize: {3} limitSize: {4}",
                     fileNameWithExtension, extension,
-                    fileSize, totalFileSize);
+                    fileSize, totalFileSize, resourceLimitInfo.MaxAppAttachmentSize);
                 if (totalFileSize > resourceLimitInfo.MaxAppAttachmentSize)
                 {
-                    throw new UserFriendlyException("Attachment's total size is too Large.");
+                    throw new UserFriendlyException($"Attachment's total size is too Large. limit size {resourceLimitInfo.MaxAppAttachmentSize} bytes");
                 }
                 await UploadAppAttachmentAsync(fileStream, appId, version, fileKey, fileNameWithExtension,
                     fileSize);
