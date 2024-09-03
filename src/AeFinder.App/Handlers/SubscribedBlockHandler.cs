@@ -1,4 +1,5 @@
 using AeFinder.BlockScan;
+using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans.Streams;
@@ -7,6 +8,7 @@ using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.App.Handlers;
 
+[AggregateExecutionTime]
 public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDependency
 {
     private readonly IBlockScanAppService _blockScanAppService;
@@ -35,7 +37,7 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         await PublishMessageAsync(subscribedBlock);
     }
     
-    private async Task PublishMessageAsync(SubscribedBlockDto subscribedBlock)
+    protected virtual async Task PublishMessageAsync(SubscribedBlockDto subscribedBlock)
     {
         var retryCount = 0;
         while (retryCount < _messageQueueOptions.RetryTimes)
