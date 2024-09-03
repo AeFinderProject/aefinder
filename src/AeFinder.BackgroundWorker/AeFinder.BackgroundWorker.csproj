@@ -8,6 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="AElf.EntityMapping" Version="1.1.1-beta" />
+        <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.1.1-beta" />
         <PackageReference Include="AElf.OpenTelemetry" Version="8.0.5" />
         <PackageReference Include="Hangfire.Core" Version="1.8.14" />
         <PackageReference Include="Microsoft.Orleans.Client" Version="8.1.0" />
