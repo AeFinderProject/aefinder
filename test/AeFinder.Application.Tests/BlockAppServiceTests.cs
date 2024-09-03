@@ -849,21 +849,25 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         };
         var blockDtoss  = await _blockAppService.GetBlocksAsync(input);
         blockDtoss.Count.ShouldBe(15);
-        
-        blocks = new List<BlockIndex>();
+    }
+    
+    [Fact]
+    public async Task GetBlock_SearchAfter_ModZero_Test()
+    {
+        var blocks = new List<BlockIndex>();
         for (var i = 1; i < 21; i++)
         {
             var block =  MockDataHelper.MockNewBlockEtoData(i, MockDataHelper.CreateBlockHash(), false);
             blocks.Add(block);
         }
         await _blockIndexRepository.AddOrUpdateManyAsync(blocks);
-        input = new GetBlocksInput()
+        var input = new GetBlocksInput()
         {
             ChainId = "AELF",
             StartBlockHeight = 1,
             EndBlockHeight = 100
         };
-        blockDtoss  = await _blockAppService.GetBlocksAsync(input);
+        var blockDtoss  = await _blockAppService.GetBlocksAsync(input);
         blockDtoss.Count.ShouldBe(20);
     }
     
@@ -903,21 +907,25 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         };
         blockDtoss  = await _blockAppService.GetTransactionsAsync(input);
         blockDtoss.Count.ShouldBe(15);
-        
-        transactions = new List<TransactionIndex>();
+    }
+    
+    [Fact]
+    public async Task GetTransaction_SearchAfter_ModZero_Test()
+    {
+        var transactions = new List<TransactionIndex>();
         for (var i = 1; i < 21; i++)
         {
             var transaction = MockDataHelper.MockNewTransactionEtoData(i, false, "ContractAddress", "EventName");
             transactions.Add(transaction);
         }
         await _transactionIndexRepository.AddOrUpdateManyAsync(transactions);
-        input = new GetTransactionsInput()
+        var input = new GetTransactionsInput()
         {
             ChainId = "AELF",
             StartBlockHeight = 1,
             EndBlockHeight = 100
         };
-        blockDtoss  = await _blockAppService.GetTransactionsAsync(input);
+        var blockDtoss  = await _blockAppService.GetTransactionsAsync(input);
         blockDtoss.Count.ShouldBe(20);
     }
     
@@ -944,8 +952,12 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         };
         var blockDtoss  = await _blockAppService.GetLogEventsAsync(input);
         blockDtoss.Count.ShouldBe(15);
-        
-        logEvents = new List<LogEventIndex>();
+    }
+    
+    [Fact]
+    public async Task GetLogEvent_SearchAfter_ModZero_Test()
+    {
+        var logEvents = new List<LogEventIndex>();
         for (var i = 1; i < 21; i++)
         {
             var logEvent = MockDataHelper.MockNewLogEventEtoData(i, Guid.NewGuid().ToString(), 1, false,
@@ -953,15 +965,15 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
             logEvent.Id = logEvent.BlockHash + logEvent.TransactionId + logEvent.Index;
             logEvents.Add(logEvent);
         }
-        ;
+        
         await _logEventIndexRepository.AddOrUpdateManyAsync(logEvents);
-        input = new GetLogEventsInput()
+        var input = new GetLogEventsInput()
         {
             ChainId = "AELF",
             StartBlockHeight = 1,
             EndBlockHeight = 100
         };
-        blockDtoss  = await _blockAppService.GetLogEventsAsync(input);
+        var blockDtoss  = await _blockAppService.GetLogEventsAsync(input);
         blockDtoss.Count.ShouldBe(20);
     }
 }
