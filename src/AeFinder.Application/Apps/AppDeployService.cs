@@ -41,9 +41,9 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         await _appDeployManager.RestartAppAsync(appId, version);
     }
 
-    public async Task UpdateAppDockerImageAsync(string appId, string version, string imageName)
+    public async Task UpdateAppDockerImageAsync(string appId, string version, string imageName, bool isUpdateConfig)
     {
         await _blockScanAppService.PauseAsync(appId, version);
-        await _appDeployManager.UpdateAppDockerImageAsync(appId, version, imageName);
+        await _appDeployManager.UpdateAppDockerImageAsync(appId, version, imageName, isUpdateConfig);
     }
 }

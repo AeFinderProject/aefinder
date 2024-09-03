@@ -56,6 +56,9 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
         appLimitInfoIndex.OperationLimit.MaxLogCallCount = eventData.MaxLogCallCount;
         appLimitInfoIndex.OperationLimit.MaxLogSize = eventData.MaxLogSize;
         appLimitInfoIndex.OperationLimit.MaxContractCallCount = eventData.MaxContractCallCount;
+        appLimitInfoIndex.DeployLimit = new DeployLimitInfo();
+        appLimitInfoIndex.DeployLimit.MaxAppCodeSize = eventData.MaxAppCodeSize;
+        appLimitInfoIndex.DeployLimit.MaxAppAttachmentSize = eventData.MaxAppAttachmentSize;
         await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
     }
 }
