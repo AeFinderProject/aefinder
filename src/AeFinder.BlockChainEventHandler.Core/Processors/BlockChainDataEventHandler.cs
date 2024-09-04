@@ -8,6 +8,7 @@ using AeFinder.BlockSync;
 using AeFinder.Etos;
 using AeFinder.Grains.EventData;
 using AElf.Contracts.Consensus.AEDPoS;
+using AElf.OpenTelemetry.ExecutionTime;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -17,6 +18,7 @@ using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.BlockChainEventHandler.Processors;
 
+[AggregateExecutionTime]
 public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDataEto>, ITransientDependency
 {
     private readonly ILogger<BlockChainDataEventHandler> _logger;
@@ -38,7 +40,7 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
         _blockGrainProvider = blockGrainProvider;
     }
 
-    public async Task HandleEventAsync(BlockChainDataEto eventData)
+    public virtual async Task HandleEventAsync(BlockChainDataEto eventData)
     {
         var lastBlockHeight = eventData.Blocks.Last().BlockHeight;
         var syncMode = await _blockSyncAppService.GetBlockSyncModeAsync(eventData.ChainId, lastBlockHeight);

@@ -3,6 +3,7 @@ using AeFinder.GraphQL;
 using AeFinder.GraphQL.Dto;
 using AeFinder.Kubernetes;
 using AeFinder.Options;
+using AElf.OpenTelemetry.ExecutionTime;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -14,6 +15,7 @@ namespace AeFinder.Controllers;
 [RemoteService]
 [ControllerName("Graphql")]
 [Route("api/app/graphql")]
+[AggregateExecutionTime]
 public class GraphqlController : AbpController
 {
     private readonly IGraphQLAppService _graphQLAppService;
@@ -27,7 +29,7 @@ public class GraphqlController : AbpController
     }
 
     [HttpPost("{appId}/{version?}")]
-    public async Task<IActionResult> GraphqlForward([FromBody] GraphQLQueryInput input, string appId,
+    public virtual async Task<IActionResult> GraphqlForward([FromBody] GraphQLQueryInput input, string appId,
         string version = null)
     {
         var response =

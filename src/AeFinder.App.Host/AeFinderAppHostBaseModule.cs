@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using AeFinder.App.Metrics;
 using AeFinder.MongoDb;
+using AElf.OpenTelemetry;
 using GraphQL;
 using GraphQL.Server.Ui.GraphiQL;
 using GraphQL.Server.Ui.Playground;
@@ -27,7 +28,8 @@ namespace AeFinder.App;
     typeof(AbpAutoMapperModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AeFinderMongoDbModule),
-    typeof(AeFinderAppModule))]
+    typeof(AeFinderAppModule),
+    typeof(OpenTelemetryModule))]
 public class AeFinderAppHostBaseModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

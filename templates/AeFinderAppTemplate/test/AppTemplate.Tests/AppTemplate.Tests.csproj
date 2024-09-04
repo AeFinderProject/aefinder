@@ -11,13 +11,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AeFinder.App.TestBase" Version="1.1.0" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
-        <PackageReference Include="xunit" Version="2.4.2" />
-        <PackageReference Include="xunit.extensibility.execution" Version="2.4.2" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5" />
-        <PackageReference Include="Shouldly" Version="4.0.3" />
-        <PackageReference Include="coverlet.collector" Version="3.2.0">
+        <PackageReference Include="AeFinder.App.TestBase" Version="1.2.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+        <PackageReference Include="xunit" Version="2.6.1" />
+        <PackageReference Include="xunit.extensibility.execution" Version="2.6.1" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+        <PackageReference Include="Shouldly" Version="4.2.1" />
+        <PackageReference Include="coverlet.collector" Version="6.0.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

@@ -73,6 +73,8 @@ public class AppUpgradeHandler : AppHandlerBase,IDistributedEventHandler<AppUpgr
 
         //clear app pod index
         await _appSubscriptionPodEntityMappingRepository.DeleteAsync(historyVersion);
+
+        await AppAttachmentService.DeleteAllAppAttachmentsAsync(eventData.AppId, historyVersion);
         
         //clear old version grain data
         await ClearStoppedVersionAppDataAsync(appId, historyVersion,

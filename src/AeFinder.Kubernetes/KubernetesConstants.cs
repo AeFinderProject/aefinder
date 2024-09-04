@@ -36,6 +36,10 @@ public class KubernetesConstants
      public const string PlaceHolderMaxLogCallCount = "[MaxLogCallCount]";
      public const string PlaceHolderMaxLogSize = "[MaxLogSize]";
      public const string PlaceHolderMaxContractCallCount = "[MaxContractCallCount]";
+     public const string FullPodMaxSurge = "0";
+     public const string FullPodMaxUnavailable = "1";
+     public const string QueryPodMaxSurge = "50%";
+     public const string QueryPodMaxUnavailable = "0";
      
      //Prometheus
      public const string MonitorLabelKey = "monitor";

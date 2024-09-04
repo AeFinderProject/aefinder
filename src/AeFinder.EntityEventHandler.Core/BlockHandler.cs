@@ -8,6 +8,7 @@ using AeFinder.BlockSync;
 using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AElf.EntityMapping.Repositories;
+using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
 using Volo.Abp.DependencyInjection;
@@ -16,6 +17,7 @@ using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.EntityEventHandler;
 
+[AggregateExecutionTime]
 public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,
     ITransientDependency
@@ -47,7 +49,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         _summaryIndexRepository = summaryIndexRepository;
     }
 
-    public async Task HandleEventAsync(NewBlocksEto eventData)
+    public virtual async Task HandleEventAsync(NewBlocksEto eventData)
     {
         _logger.LogInformation(
             $"blocks is adding, start BlockNumber: {eventData.NewBlocks.First().BlockHeight} , Confirmed: {eventData.NewBlocks.First().Confirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockHeight}");
