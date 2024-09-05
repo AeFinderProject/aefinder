@@ -7,8 +7,10 @@ using AeFinder.AmazonCloud;
 using AeFinder.App.Attachments;
 using AeFinder.App.BlockChain;
 using AeFinder.App.BlockState;
+using AeFinder.App.Deploy;
 using AeFinder.App.MockApp;
 using AeFinder.App.OperationLimits;
+using AeFinder.Apps;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Options;
 using AeFinder.Orleans.TestBase;
@@ -66,6 +68,7 @@ public class AeFinderAppTestModule : AbpModule
         
         context.Services.AddTransient<ILogEventProcessor, TokenTransferredProcessor>();
         context.Services.AddSingleton<IAwsS3ClientService, MockAwsS3ClientService>();
+        context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
     }
     
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)

@@ -558,7 +558,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderAppId, appId);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderVersion, version);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderClientType,
-            KubernetesConstants.AppClientTypeFull);
+            clientType);
         var resourceLimitInfo = await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
         appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderMaxEntityCallCount,
             resourceLimitInfo.MaxEntityCallCount.ToString());
