@@ -1,4 +1,5 @@
 using AeFinder.Orleans.TestBase;
+using AElf.OpenTelemetry;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 
@@ -6,7 +7,8 @@ namespace AeFinder.EntityEventHandler;
 
 [DependsOn(typeof(AeFinderEntityEventHandlerCoreModule),
     typeof(AeFinderOrleansTestBaseModule),
-    typeof(AeFinderDomainTestModule))]
+    typeof(AeFinderDomainTestModule),
+    typeof(OpenTelemetryModule))]
 public class AeFinderEntityEventHandlerCoreTestModule:AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

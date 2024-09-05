@@ -7,6 +7,7 @@ using AeFinder.BlockChainEventHandler.Providers;
 using AeFinder.BlockSync;
 using AeFinder.Etos;
 using AeFinder.Grains.EventData;
+using AeFinder.Metrics;
 using AElf.Contracts.Consensus.AEDPoS;
 using AElf.OpenTelemetry.ExecutionTime;
 using Google.Protobuf;
@@ -26,28 +27,33 @@ public class BlockChainDataEventHandler : IDistributedEventHandler<BlockChainDat
     private readonly IObjectMapper _objectMapper;
     private readonly IBlockGrainProvider _blockGrainProvider;
     private readonly IBlockSyncAppService _blockSyncAppService;
+    private readonly IElapsedTimeRecorder _elapsedTimeRecorder;
 
     public BlockChainDataEventHandler(
         ILogger<BlockChainDataEventHandler> logger,
         IObjectMapper objectMapper,
         IBlockGrainProvider blockGrainProvider,
-        IDistributedEventBus distributedEventBus, IBlockSyncAppService blockSyncAppService)
+        IDistributedEventBus distributedEventBus, IBlockSyncAppService blockSyncAppService, IElapsedTimeRecorder elapsedTimeRecorder)
     {
         _logger = logger;
         _distributedEventBus = distributedEventBus;
         _blockSyncAppService = blockSyncAppService;
+        _elapsedTimeRecorder = elapsedTimeRecorder;
         _objectMapper = objectMapper;
         _blockGrainProvider = blockGrainProvider;
     }
 
     public virtual async Task HandleEventAsync(BlockChainDataEto eventData)
     {
+        var firstBlock = eventData.Blocks.First();
+        _elapsedTimeRecorder.Record("ReceiveBlockChainData",
+            (long)(DateTime.UtcNow - firstBlock.BlockTime).TotalMilliseconds);
         var lastBlockHeight = eventData.Blocks.Last().BlockHeight;
         var syncMode = await _blockSyncAppService.GetBlockSyncModeAsync(eventData.ChainId, lastBlockHeight);
 
         _logger.LogInformation(
             "Received BlockChainDataEto form {ChainId}, start block: {StartBlockHeight}, end block: {EndBlockHeight}, sync mode: {SyncMode}",
-            eventData.ChainId, eventData.Blocks.First().BlockHeight, lastBlockHeight, syncMode);
+            eventData.ChainId, firstBlock.BlockHeight, lastBlockHeight, syncMode);
 
         //prepare data
         List<Task<NewBlockTaskEntity>> prepareDataTaskList = new List<Task<NewBlockTaskEntity>>();
