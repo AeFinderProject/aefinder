@@ -1,4 +1,5 @@
 using AeFinder.App.BlockProcessing;
+using AeFinder.Apps;
 using AeFinder.Block.Dtos;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockStates;
@@ -52,7 +53,6 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
         {
             await RollbackToLibAsync(item.ChainId);
             _processingStatusProvider.SetStatus(item.ChainId, ProcessingStatus.Running);
-
         }
     }
 

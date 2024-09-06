@@ -218,6 +218,7 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
     {
         await ReadStateAsync();
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Started;
+        await ReSetProcessingStatusAsync(version);
         await WriteStateAsync();
         
         //Publish app subscription update eto to background worker
@@ -315,5 +316,21 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         }
 
         return currentVersionChainIds;
+    }
+
+    private async Task ReSetProcessingStatusAsync(string version)
+    {
+        var currentVersionSubscriptionInfo = State.SubscriptionInfos[version];
+        foreach (var subscriptionItem in currentVersionSubscriptionInfo.SubscriptionManifest.SubscriptionItems)
+        {
+            var chainId = subscriptionItem.ChainId;
+            State.SubscriptionInfos[version].ProcessingStatus[chainId] = ProcessingStatus.Running;
+        }
+    }
+
+    public async Task SetProcessingStatusAsync(string version, string chainId, ProcessingStatus processingStatus)
+    {
+        State.SubscriptionInfos[version].ProcessingStatus[chainId] = processingStatus;
+        await WriteStateAsync();
     }
 }

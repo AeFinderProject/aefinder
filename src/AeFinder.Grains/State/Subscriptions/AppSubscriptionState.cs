@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using AeFinder.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
 
 namespace AeFinder.Grains.State.Subscriptions;
@@ -13,4 +15,5 @@ public class SubscriptionInfo
 {
     public SubscriptionManifest SubscriptionManifest { get; set; } 
     public SubscriptionStatus Status { get; set; }
+    public ConcurrentDictionary<string, ProcessingStatus> ProcessingStatus { get; set; }
 }
