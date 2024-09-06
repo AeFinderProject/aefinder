@@ -1,5 +1,7 @@
+using System.Collections.Concurrent;
 using System.Linq.Dynamic.Core;
 using AeFinder.App.Es;
+using AeFinder.Apps;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Subscriptions;
@@ -22,10 +24,12 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
     private readonly IObjectMapper _objectMapper;
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appIndexRepository;
+    private readonly IAppDeployService _appDeployService;
+    private readonly Dictionary<string, int> _subscriptionRescanTimes = new();
     
     public AppRescanCheckWorker(AbpAsyncTimer timer, IEntityMappingRepository<AppInfoIndex, string> appIndexRepository,
         ILogger<AppRescanCheckWorker> logger, IClusterClient clusterClient, IObjectMapper objectMapper,
-        IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
+        IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,IAppDeployService appDeployService,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -33,6 +37,7 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
         _objectMapper = objectMapper;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
         _appIndexRepository = appIndexRepository;
+        _appDeployService = appDeployService;
         // Timer.Period = 10 * 60 * 1000; // 600000 milliseconds = 10 minutes
         Timer.Period = _scheduledTaskOptions.AppRescanCheckTaskPeriodMilliSeconds;
     }
@@ -65,23 +70,57 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
                 var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
                 if (allSubscription.CurrentVersion != null)
                 {
-                    if (allSubscription.CurrentVersion.Status == SubscriptionStatus.Started)
-                    {
-                        
-                    }
+                    await RescanSubscriptionAsync(appId, allSubscription.CurrentVersion);
                 }
 
                 if (allSubscription.PendingVersion != null)
                 {
-                    if (allSubscription.PendingVersion.Status == SubscriptionStatus.Paused)
-                    {
-                        continue;
-                    }
-                    
+                    await RescanSubscriptionAsync(appId, allSubscription.PendingVersion);
                 }
             }
             
             skipCount = skipCount + maxResultCount;
+        }
+    }
+
+    private async Task<bool> IsAppProcessingFailedAsync(ConcurrentDictionary<string,ProcessingStatus> processingStatusDictionary)
+    {
+        foreach (var processingStatusKeyValuePair in processingStatusDictionary)
+        {
+            var chainId = processingStatusKeyValuePair.Key;
+            if (processingStatusKeyValuePair.Value == ProcessingStatus.Failed)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private async Task RescanSubscriptionAsync(string appId, SubscriptionDetail subscriptionDetail)
+    {
+        var version = subscriptionDetail.Version;
+        if (subscriptionDetail.Status == SubscriptionStatus.Paused)
+        {
+            return;
+        }
+
+        var processingStatusDictionary = subscriptionDetail.ProcessingStatus;
+        var isProcessingFailed = await IsAppProcessingFailedAsync(processingStatusDictionary);
+        if (isProcessingFailed)
+        {
+            if (_subscriptionRescanTimes[version] < _scheduledTaskOptions.MaxAppRescanTimes)
+            {
+                _logger.LogInformation(
+                    $"Detected App {appId} processing failed in version {version}, immediately attempting to restart");
+                await _appDeployService.RestartAppAsync(appId, version);
+                _subscriptionRescanTimes[version] =
+                    _subscriptionRescanTimes[version] + 1;
+            }
+        }
+        else
+        {
+            _subscriptionRescanTimes[version] = 0;
         }
     }
 }

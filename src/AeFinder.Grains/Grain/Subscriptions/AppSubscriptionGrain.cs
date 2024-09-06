@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using AeFinder.Apps;
 using AeFinder.Apps.Eto;
 using AeFinder.BlockScan;
@@ -322,16 +323,27 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
 
     private async Task ReSetProcessingStatusAsync(string version)
     {
+        if (State.SubscriptionInfos[version].ProcessingStatus == null)
+        {
+            State.SubscriptionInfos[version].ProcessingStatus =
+                new ConcurrentDictionary<string, ProcessingStatus>();
+        }
         var currentVersionSubscriptionInfo = State.SubscriptionInfos[version];
         foreach (var subscriptionItem in currentVersionSubscriptionInfo.SubscriptionManifest.SubscriptionItems)
         {
             var chainId = subscriptionItem.ChainId;
-            State.SubscriptionInfos[version].ProcessingStatus[chainId] = ProcessingStatus.Running;
+            State.SubscriptionInfos[version].ProcessingStatus.AddOrUpdate(chainId, ProcessingStatus.Running,
+                (key, oldValue) => ProcessingStatus.Running);
         }
     }
 
     public async Task SetProcessingStatusAsync(string version, string chainId, ProcessingStatus processingStatus)
     {
+        if (State.SubscriptionInfos[version].ProcessingStatus == null)
+        {
+            State.SubscriptionInfos[version].ProcessingStatus =
+                new ConcurrentDictionary<string, ProcessingStatus>();
+        }
         State.SubscriptionInfos[version].ProcessingStatus[chainId] = processingStatus;
         await WriteStateAsync();
     }
