@@ -51,7 +51,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(100);
         subscription.PendingVersion.ShouldBeNull();
         
-        await _blockScanAppService.UpgradeVersionAsync(appId);
+        await _blockScanAppService.UpgradeVersionAsync(appId, subscription.CurrentVersion.Version);
         
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
@@ -153,7 +153,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         allScanIds[chainId].ShouldNotContain(id2);
         allScanIds[chainId].ShouldContain(id3);
 
-        await _blockScanAppService.UpgradeVersionAsync(appId);
+        await _blockScanAppService.UpgradeVersionAsync(appId, subscription.PendingVersion.Version);
         
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version3);
