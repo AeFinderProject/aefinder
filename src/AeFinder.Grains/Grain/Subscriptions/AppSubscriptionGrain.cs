@@ -114,7 +114,8 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             {
                 Version = State.CurrentVersion,
                 Status = State.SubscriptionInfos[State.CurrentVersion].Status,
-                SubscriptionManifest = State.SubscriptionInfos[State.CurrentVersion].SubscriptionManifest
+                SubscriptionManifest = State.SubscriptionInfos[State.CurrentVersion].SubscriptionManifest,
+                ProcessingStatus = State.SubscriptionInfos[State.CurrentVersion].ProcessingStatus
             };
         }
 
@@ -124,7 +125,8 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             {
                 Version = State.PendingVersion,
                 Status = State.SubscriptionInfos[State.PendingVersion].Status,
-                SubscriptionManifest = State.SubscriptionInfos[State.PendingVersion].SubscriptionManifest
+                SubscriptionManifest = State.SubscriptionInfos[State.PendingVersion].SubscriptionManifest,
+                ProcessingStatus = State.SubscriptionInfos[State.PendingVersion].ProcessingStatus
             };
         }
 

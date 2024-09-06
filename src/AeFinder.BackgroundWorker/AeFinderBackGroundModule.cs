@@ -83,6 +83,7 @@ public class AeFinderBackGroundModule : AbpModule
     {
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppDataClearWorker>());
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppInfoSyncWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppRescanCheckWorker>());
 
         var transactionRepairOptions = context.ServiceProvider
             .GetRequiredService<IOptionsSnapshot<TransactionRepairOptions>>().Value;

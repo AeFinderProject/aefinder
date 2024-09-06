@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using AeFinder.Apps;
+
 namespace AeFinder.Grains.Grain.Subscriptions;
 
 [GenerateSerializer]
@@ -13,4 +16,5 @@ public class SubscriptionDetail
     [Id(0)]public string Version { get; set; }
     [Id(1)]public SubscriptionStatus Status { get; set; }
     [Id(2)]public SubscriptionManifest SubscriptionManifest { get; set; }
+    [Id(3)]public ConcurrentDictionary<string, ProcessingStatus> ProcessingStatus { get; set; }
 }
