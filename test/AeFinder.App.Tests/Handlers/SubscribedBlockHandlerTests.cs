@@ -339,4 +339,192 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
         var isRunning = _processingStatusProvider.IsRunning(chainId);
         isRunning.ShouldBeTrue();
     }
+    
+    [Fact]
+    public async Task Handle_Upgrade_Test()
+    {
+        var chainId = "AELF";
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
+        
+        var currentVersion = (await appGrain.AddSubscriptionAsync(new SubscriptionManifest
+        {
+            SubscriptionItems = new List<Subscription>
+            {
+                new Subscription
+                {
+                    ChainId = chainId,
+                    StartBlockNumber = 10000
+                }
+            }
+        }, new byte[] { })).NewVersion;
+        
+        var pendingVersion = (await appGrain.AddSubscriptionAsync(new SubscriptionManifest
+        {
+            SubscriptionItems = new List<Subscription>
+            {
+                new Subscription
+                {
+                    ChainId = chainId,
+                    StartBlockNumber = 10000
+                }
+            }
+        }, new byte[] { })).NewVersion;
+        _appInfoProvider.SetVersion(pendingVersion);
+
+        var blockPusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(
+            GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, pendingVersion, chainId));
+
+        var grain = Cluster.Client.GetGrain<IAppBlockStateSetStatusGrain>(
+            GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoProvider.AppId, _appInfoProvider.Version,
+                chainId));
+        
+        var blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", chainId,confirmed: true);
+        _processingStatusProvider.SetStatus(chainId,ProcessingStatus.Running);
+        
+        await _blockScanAppService.StartScanAsync(_appInfoProvider.AppId, pendingVersion);
+        
+        var blockPushInfo = await blockPusherInfoGrain.GetPushInfoAsync();
+        var pushToken = blockPushInfo.PushToken;
+        
+        await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
+        {
+            Blocks = blocks,
+            PushToken = pushToken,
+            Version = pendingVersion,
+            ChainId = chainId,
+            AppId = _appInfoProvider.AppId
+        });
+        var blockStateSetStatus = await grain.GetBlockStateSetStatusAsync();
+        blockStateSetStatus.BestChainHeight.ShouldBe(10009);
+        
+        var isRunning = _processingStatusProvider.IsRunning(chainId);
+        isRunning.ShouldBeTrue();
+
+        var subscriptions = await appGrain.GetAllSubscriptionAsync();
+        subscriptions.CurrentVersion.Version.ShouldBe(pendingVersion);
+        subscriptions.PendingVersion.ShouldBeNull();
+    }
+    
+    [Fact]
+    public async Task Handle_Upgrade_MultiChain_Test()
+    {
+        var chainId = "AELF";
+        var sideChainId = "tDVV";
+        var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
+        
+        var currentVersion = (await appGrain.AddSubscriptionAsync(new SubscriptionManifest
+        {
+            SubscriptionItems = new List<Subscription>
+            {
+                new Subscription
+                {
+                    ChainId = chainId,
+                    StartBlockNumber = 10000
+                },
+                new Subscription
+                {
+                    ChainId = "tDVV",
+                    StartBlockNumber = 10000
+                }
+            }
+        }, new byte[] { })).NewVersion;
+        
+        var pendingVersion = (await appGrain.AddSubscriptionAsync(new SubscriptionManifest
+        {
+            SubscriptionItems = new List<Subscription>
+            {
+                new Subscription
+                {
+                    ChainId = chainId,
+                    StartBlockNumber = 10000
+                },
+                new Subscription
+                {
+                    ChainId = "tDVV",
+                    StartBlockNumber = 10000
+                }
+            }
+        }, new byte[] { })).NewVersion;
+        _appInfoProvider.SetVersion(pendingVersion);
+        _appInfoProvider.SetChainId(chainId);
+        
+        var aelfBlockStateSetStatusGrain = Cluster.Client.GetGrain<IAppBlockStateSetStatusGrain>(
+            GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoProvider.AppId, currentVersion, chainId));
+        await aelfBlockStateSetStatusGrain.SetBlockStateSetStatusAsync(new BlockStateSetStatus
+            { LastIrreversibleBlockHeight = 11000 });
+        var tdvvBlockStateSetStatusGrain = Cluster.Client.GetGrain<IAppBlockStateSetStatusGrain>(
+            GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoProvider.AppId, currentVersion, sideChainId));
+        await tdvvBlockStateSetStatusGrain.SetBlockStateSetStatusAsync(new BlockStateSetStatus
+            { LastIrreversibleBlockHeight = 11000 });
+
+        var blockPusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(
+            GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, pendingVersion, chainId));
+
+        var grain = Cluster.Client.GetGrain<IAppBlockStateSetStatusGrain>(
+            GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoProvider.AppId, _appInfoProvider.Version,
+                chainId));
+        
+        var blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", chainId,confirmed: true);
+        _processingStatusProvider.SetStatus(chainId,ProcessingStatus.Running);
+        
+        await _blockScanAppService.StartScanAsync(_appInfoProvider.AppId, pendingVersion, chainId);
+        
+        var blockPushInfo = await blockPusherInfoGrain.GetPushInfoAsync();
+        var pushToken = blockPushInfo.PushToken;
+        
+        await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
+        {
+            Blocks = blocks,
+            PushToken = pushToken,
+            Version = pendingVersion,
+            ChainId = chainId,
+            AppId = _appInfoProvider.AppId
+        });
+        var blockStateSetStatus = await grain.GetBlockStateSetStatusAsync();
+        blockStateSetStatus.BestChainHeight.ShouldBe(10009);
+        
+        var isRunning = _processingStatusProvider.IsRunning(chainId);
+        isRunning.ShouldBeTrue();
+
+        var subscriptions = await appGrain.GetAllSubscriptionAsync();
+        subscriptions.CurrentVersion.Version.ShouldBe(currentVersion);
+        subscriptions.PendingVersion.Version.ShouldBe(pendingVersion);
+
+       
+        _appInfoProvider.SetChainId(sideChainId);
+        _processingStatusProvider.SetStatus(sideChainId,ProcessingStatus.Running);
+
+        blockPusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(
+            GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, pendingVersion, sideChainId));
+
+        grain = Cluster.Client.GetGrain<IAppBlockStateSetStatusGrain>(
+            GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoProvider.AppId, _appInfoProvider.Version,
+                sideChainId));
+        
+        blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", sideChainId,confirmed: true);
+        _processingStatusProvider.SetStatus(chainId,ProcessingStatus.Running);
+        
+        await _blockScanAppService.StartScanAsync(_appInfoProvider.AppId, pendingVersion, sideChainId);
+        
+        blockPushInfo = await blockPusherInfoGrain.GetPushInfoAsync();
+        pushToken = blockPushInfo.PushToken;
+        
+        await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
+        {
+            Blocks = blocks,
+            PushToken = pushToken,
+            Version = pendingVersion,
+            ChainId = sideChainId,
+            AppId = _appInfoProvider.AppId
+        });
+        blockStateSetStatus = await grain.GetBlockStateSetStatusAsync();
+        blockStateSetStatus.BestChainHeight.ShouldBe(10009);
+        
+        isRunning = _processingStatusProvider.IsRunning(chainId);
+        isRunning.ShouldBeTrue();
+
+        subscriptions = await appGrain.GetAllSubscriptionAsync();
+        subscriptions.CurrentVersion.Version.ShouldBe(pendingVersion);
+        subscriptions.PendingVersion.ShouldBeNull();
+    }
 }
