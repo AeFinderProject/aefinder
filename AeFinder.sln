@@ -83,6 +83,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.Logger", "src\AeFi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.App.TestBase", "src\AeFinder.App.TestBase\AeFinder.App.TestBase.csproj", "{22B1063B-069B-4587-A6D5-9F56F74625C5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.BackgroundWorker.Tests", "test\AeFinder.BackgroundWorker.Tests\AeFinder.BackgroundWorker.Tests.csproj", "{7E599B41-1DFC-4950-A72F-7DDE4EB2E5D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -241,6 +243,10 @@ Global
 		{22B1063B-069B-4587-A6D5-9F56F74625C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22B1063B-069B-4587-A6D5-9F56F74625C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22B1063B-069B-4587-A6D5-9F56F74625C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E599B41-1DFC-4950-A72F-7DDE4EB2E5D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E599B41-1DFC-4950-A72F-7DDE4EB2E5D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E599B41-1DFC-4950-A72F-7DDE4EB2E5D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E599B41-1DFC-4950-A72F-7DDE4EB2E5D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -283,6 +289,7 @@ Global
 		{A6E1BDC9-D4AD-47B0-9D9C-A28DCBBE027B} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{407317DE-6652-4560-A3B5-78163D47656F} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{22B1063B-069B-4587-A6D5-9F56F74625C5} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
+		{7E599B41-1DFC-4950-A72F-7DDE4EB2E5D0} = {04DBDB01-70F4-4E06-B468-8F87850B22BE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {28315BFD-90E7-4E14-A2EA-F3D23AF4126F}
