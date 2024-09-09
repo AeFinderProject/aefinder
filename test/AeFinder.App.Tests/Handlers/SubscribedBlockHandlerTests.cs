@@ -226,4 +226,50 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
         var blockStateSetStatus = await grain.GetBlockStateSetStatusAsync();
         blockStateSetStatus.BestChainHeight.ShouldBe(0);
     }
+
+    [Fact]
+    public async Task Handle_WrongChaindId_Test()
+    {
+        var chainId = "tDVV";
+        var appGrain =
+            Cluster.Client.GetGrain<IAppSubscriptionGrain>(
+                GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId));
+
+        var currentVersion = (await appGrain.AddSubscriptionAsync(new SubscriptionManifest
+        {
+            SubscriptionItems = new List<Subscription>
+            {
+                new Subscription
+                {
+                    ChainId = chainId,
+                    StartBlockNumber = 10000
+                }
+            }
+        }, new byte[] { })).NewVersion;
+        _appInfoProvider.SetVersion(currentVersion);
+
+        var blockPusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(
+            GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, currentVersion, chainId));
+        var blockPushInfoCurrentVersion = await blockPusherInfoGrain.GetPushInfoAsync();
+        var pushToken = blockPushInfoCurrentVersion.PushToken;
+
+        var grain = Cluster.Client.GetGrain<IAppBlockStateSetStatusGrain>(
+            GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoProvider.AppId, _appInfoProvider.Version,
+                chainId));
+
+        _appInfoProvider.SetChainId(chainId);
+        var blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", chainId);
+        _processingStatusProvider.SetStatus(chainId, ProcessingStatus.Running);
+
+        await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
+        {
+            Blocks = blocks,
+            PushToken = pushToken,
+            Version = currentVersion,
+            ChainId = "AELF",
+            AppId = _appInfoProvider.AppId
+        });
+        var blockStateSetStatus = await grain.GetBlockStateSetStatusAsync();
+        blockStateSetStatus.BestChainBlockHash.ShouldBeNull();
+    }
 }

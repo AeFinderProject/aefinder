@@ -138,7 +138,8 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
                 AppFullPodRequestMemory = "AppFullPodRequestMemory",
                 AppQueryPodRequestMemory = "AppQueryPodRequestMemory",
                 AppFullPodRequestCpuCore = "AppFullPodRequestCpuCore",
-                AppQueryPodRequestCpuCore = "AppQueryPodRequestCpuCore"
+                AppQueryPodRequestCpuCore = "AppQueryPodRequestCpuCore",
+                EnableMultipleInstances = true
             }
         };
         await _appLimitIndexRepository.AddAsync(index);
@@ -160,5 +161,6 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         limit.Items[0].ResourceLimit.AppQueryPodRequestMemory.ShouldBe(index.ResourceLimit.AppQueryPodRequestMemory);
         limit.Items[0].ResourceLimit.AppFullPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppFullPodRequestCpuCore);
         limit.Items[0].ResourceLimit.AppQueryPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppQueryPodRequestCpuCore);
+        limit.Items[0].ResourceLimit.EnableMultipleInstances.ShouldBeTrue();
     }
 }
