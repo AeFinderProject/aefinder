@@ -48,7 +48,7 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
         await ProcessRescanCheckAsync();
     }
 
-    private async Task ProcessRescanCheckAsync()
+    public async Task ProcessRescanCheckAsync()
     {
         var skipCount = 0;
         var maxResultCount = 20;
@@ -103,6 +103,11 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
         if (subscriptionDetail.Status == SubscriptionStatus.Paused)
         {
             return;
+        }
+        
+        if (!_subscriptionRescanTimes.ContainsKey(version))
+        {
+            _subscriptionRescanTimes.Add(version, 0);
         }
 
         var processingStatusDictionary = subscriptionDetail.ProcessingStatus;
