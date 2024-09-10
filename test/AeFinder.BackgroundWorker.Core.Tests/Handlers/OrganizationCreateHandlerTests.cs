@@ -1,4 +1,5 @@
 using AeFinder.App.Es;
+using AeFinder.BackgroundWorker.EventHandler;
 using AeFinder.User.Eto;
 using AElf.EntityMapping.Repositories;
 using Shouldly;
@@ -6,14 +7,14 @@ using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.BackgroundWorker.Tests.Handlers;
 
-public class OrganizationCreateHandlerTests : AeFinderBackgroundWorkerTestBase
+public class OrganizationCreateHandlerTests : AeFinderBackgroundWorkerCoreTestBase
 {
     private readonly IDistributedEventHandler<OrganizationCreateEto> _distributedEventOrganizationCreate;
     private readonly IEntityMappingRepository<OrganizationIndex, string> _organizationEntityMappingRepository;
     
     public OrganizationCreateHandlerTests()
     {
-        _distributedEventOrganizationCreate = GetRequiredService<IDistributedEventHandler<OrganizationCreateEto>>();
+        _distributedEventOrganizationCreate = GetRequiredService<OrganizationCreateHandler>();
         _organizationEntityMappingRepository = GetRequiredService<IEntityMappingRepository<OrganizationIndex, string>>();
     }
     

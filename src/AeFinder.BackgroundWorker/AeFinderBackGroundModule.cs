@@ -1,5 +1,6 @@
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.BackgroundWorker.Core;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.BackgroundWorker.ScheduledTask;
 using AeFinder.Kubernetes;
@@ -25,6 +26,7 @@ using Volo.Abp.Threading;
 namespace AeFinder.BackgroundWorker;
 
 [DependsOn(typeof(AbpAutofacModule),
+    typeof(AeFinderBackGroundCoreModule),
     typeof(AbpCachingStackExchangeRedisModule),
     typeof(AeFinderKubernetesModule),
     typeof(AbpEventBusRabbitMqModule),
