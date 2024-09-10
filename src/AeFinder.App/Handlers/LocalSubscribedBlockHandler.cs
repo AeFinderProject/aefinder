@@ -1,4 +1,6 @@
 using AeFinder.App.BlockProcessing;
+using AeFinder.App.OperationLimits;
+using AeFinder.Apps;
 using AeFinder.BlockScan;
 using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.Extensions.Logging;
@@ -61,17 +63,33 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             "Processing blocks. ChainId: {ChainId}, BlockHeight: {FirstBlockHeight}-{LastBlockHeight}, Confirmed: {Confirmed}",
             subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,
             subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
-        
+
         try
         {
             await _blockAttachService.AttachBlocksAsync(subscribedBlock.ChainId, subscribedBlock.Blocks);
             await _versionUpgradeProvider.UpgradeAsync();
+        }
+        catch (OperationLimitException e)
+        {
+            _logger.LogError(AeFinderApplicationConsts.AppLogEventId, e, "[{ChainId}] Data processing failed!",
+                subscribedBlock.ChainId);
+            _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.OperationLimited);
+            _ = Task.Run(async () =>
+            {
+                await _processingStatusProvider.SetSubscriptionProcessingStatusAsync(subscribedBlock.AppId,
+                    subscribedBlock.Version, subscribedBlock.ChainId, ProcessingStatus.OperationLimited);
+            });
         }
         catch (AppProcessingException e)
         {
             _logger.LogError(AeFinderApplicationConsts.AppLogEventId, e, "[{ChainId}] Data processing failed!",
                 subscribedBlock.ChainId);
             _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.Failed);
+            _ = Task.Run(async () =>
+            {
+                await _processingStatusProvider.SetSubscriptionProcessingStatusAsync(subscribedBlock.AppId,
+                    subscribedBlock.Version, subscribedBlock.ChainId, ProcessingStatus.Failed);
+            });
         }
         catch (Exception e)
         {
@@ -79,6 +97,11 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             _logger.LogError(AeFinderApplicationConsts.AppLogEventId, null,
                 "[{ChainId}] Data processing failed, please contact the AeFinder!", subscribedBlock.ChainId);
             _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.Failed);
+            _ = Task.Run(async () =>
+            {
+                await _processingStatusProvider.SetSubscriptionProcessingStatusAsync(subscribedBlock.AppId,
+                    subscribedBlock.Version, subscribedBlock.ChainId, ProcessingStatus.Failed);
+            });
         }
     }
 }

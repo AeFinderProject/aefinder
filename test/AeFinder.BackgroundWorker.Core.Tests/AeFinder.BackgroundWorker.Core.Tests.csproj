@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <RootNamespace>AeFinder.BackgroundWorker.Tests</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.2"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\AeFinder.BackgroundWorker\AeFinder.BackgroundWorker.csproj" />
+      <ProjectReference Include="..\AeFinder.Domain.Tests\AeFinder.Domain.Tests.csproj" />
+      <ProjectReference Include="..\AeFinder.Orleans.TestBase\AeFinder.Orleans.TestBase.csproj" />
+    </ItemGroup>
+
+</Project>

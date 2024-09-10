@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.App.BlockProcessing;
+using AeFinder.Apps;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
 using AeFinder.Grains;
@@ -60,7 +61,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                 chainId));
         
         var blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", chainId);
-        _processingStatusProvider.SetStatus(chainId,ProcessingStatus.Running);
+        _processingStatusProvider.SetStatus(chainId, ProcessingStatus.Running);
         
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {

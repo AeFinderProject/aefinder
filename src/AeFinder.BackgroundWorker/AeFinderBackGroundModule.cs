@@ -1,5 +1,6 @@
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.BackgroundWorker.Core;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.BackgroundWorker.ScheduledTask;
 using AeFinder.Kubernetes;
@@ -25,6 +26,7 @@ using Volo.Abp.Threading;
 namespace AeFinder.BackgroundWorker;
 
 [DependsOn(typeof(AbpAutofacModule),
+    typeof(AeFinderBackGroundCoreModule),
     typeof(AbpCachingStackExchangeRedisModule),
     typeof(AeFinderKubernetesModule),
     typeof(AbpEventBusRabbitMqModule),
@@ -82,7 +84,8 @@ public class AeFinderBackGroundModule : AbpModule
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppDataClearWorker>());
-        // AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppInfoSyncWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppInfoSyncWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppRescanCheckWorker>());
 
         var transactionRepairOptions = context.ServiceProvider
             .GetRequiredService<IOptionsSnapshot<TransactionRepairOptions>>().Value;

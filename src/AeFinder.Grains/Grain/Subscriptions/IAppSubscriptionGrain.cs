@@ -1,3 +1,4 @@
+using AeFinder.Apps;
 using AeFinder.Subscriptions;
 using Orleans;
 
@@ -17,4 +18,5 @@ public interface IAppSubscriptionGrain : IGrainWithStringKey
     Task StartAsync(string version);
     Task PauseAsync(string version);
     Task StopAsync(string version);
+    Task SetProcessingStatusAsync(string version, string chainId, ProcessingStatus processingStatus);
 }

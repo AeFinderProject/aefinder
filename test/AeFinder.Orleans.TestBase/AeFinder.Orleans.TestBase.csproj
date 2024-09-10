@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\src\AeFinder.BackgroundWorker.Core\AeFinder.BackgroundWorker.Core.csproj" />
       <ProjectReference Include="..\..\src\AeFinder.BlockChainEventHandler.Core\AeFinder.BlockChainEventHandler.Core.csproj" />
       <ProjectReference Include="..\..\src\AeFinder.EntityEventHandler.Core\AeFinder.EntityEventHandler.Core.csproj" />
       <ProjectReference Include="..\..\src\AeFinder.Grains\AeFinder.Grains.csproj" />
