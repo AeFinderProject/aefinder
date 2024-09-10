@@ -24,4 +24,8 @@
       <ProjectReference Include="..\AeFinder.Orleans.TestBase\AeFinder.Orleans.TestBase.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="ScheduledTasks\" />
+    </ItemGroup>
+
 </Project>

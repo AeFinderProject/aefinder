@@ -11,18 +11,18 @@ namespace AeFinder.BackgroundWorker.Tests;
 )]
 public class AeFinderBackgroundWorkerTestModule: AbpModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-        
-    }
-
-    public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
-    {
-        
-    }
-
-    public override void OnApplicationShutdown(ApplicationShutdownContext context)
-    {
-        
-    }
+    // public override void ConfigureServices(ServiceConfigurationContext context)
+    // {
+    //     
+    // }
+    //
+    // public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
+    // {
+    //     
+    // }
+    //
+    // public override void OnApplicationShutdown(ApplicationShutdownContext context)
+    // {
+    //     
+    // }
 }
