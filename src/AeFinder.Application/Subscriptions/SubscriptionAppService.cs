@@ -33,21 +33,21 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
 {
     private readonly IClusterClient _clusterClient;
     private readonly ICodeAuditor _codeAuditor;
-    private readonly IAppDeployManager _appDeployManager;
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _subscriptionIndexRepository;
     private readonly IAppAttachmentService _appAttachmentService;
+    private readonly IAppDeployService _appDeployService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
-        IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions,
-        IAppAttachmentService appAttachmentService,IAppResourceLimitProvider appResourceLimitProvider,
-        IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository)
+        IOptionsSnapshot<AppDeployOptions> appDeployOptions,
+        IAppAttachmentService appAttachmentService,
+        IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository, IAppDeployService appDeployService,IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
         _codeAuditor = codeAuditor;
-        _appDeployManager = appDeployManager;
         _subscriptionIndexRepository = subscriptionIndexRepository;
+        _appDeployService = appDeployService;
         _appDeployOptions = appDeployOptions.Value;
         _appAttachmentService = appAttachmentService;
         _appResourceLimitProvider = appResourceLimitProvider;
@@ -71,7 +71,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         }
 
         var rulePath =
-            await _appDeployManager.CreateNewAppAsync(appId, addResult.NewVersion, _appDeployOptions.AppImageName);
+            await _appDeployService.DeployNewAppAsync(appId, addResult.NewVersion, _appDeployOptions.AppImageName);
         Logger.LogInformation("App deployed. AppId: {appId}, Version: {version}, RulePath: {rulePath}", appId,
             addResult.NewVersion, rulePath);
         return addResult.NewVersion;
@@ -92,7 +92,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         CheckInputSubscriptionInfoIsDuplicateOrMissing(subscription.SubscriptionItems,currentSubscriptionInfos.SubscriptionItems);
 
         await appSubscriptionGrain.UpdateSubscriptionAsync(version, subscription);
-        await _appDeployManager.RestartAppAsync(appId, version);
+        await _appDeployService.RestartAppAsync(appId, version);
     }
 
     public async Task UpdateSubscriptionCodeAsync(string appId, string version, byte[] code = null,
@@ -131,7 +131,7 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
             await subscriptionGrain.UpdateCodeAsync(version, code);
         }
 
-        await _appDeployManager.RestartAppAsync(appId, version);
+        await _appDeployService.RestartAppAsync(appId, version);
         Logger.LogInformation("App updated. AppId: {appId}, Version: {version}", appId, version);
 
     }

@@ -86,6 +86,12 @@ public class AppResourceLimitGrain : AeFinderGrain<AppResourceLimitState>, IAppR
             State.MaxAppAttachmentSize = dto.MaxAppAttachmentSize;
         }
         
+
+        if (dto.EnableMultipleInstances.HasValue)
+        {
+            State.EnableMultipleInstances = dto.EnableMultipleInstances.Value;
+        }
+
         await WriteStateAsync();
     }
 }

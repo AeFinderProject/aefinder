@@ -20,4 +20,6 @@ public class AppLimitUpdateEto
     
     public long MaxAppCodeSize { get; set; }
     public long MaxAppAttachmentSize { get; set; }
+    
+    public bool EnableMultipleInstances { get; set; }
 }
