@@ -8,6 +8,7 @@ public class AppResourceLimitIndexDto
     public string OrganizationName { get; set; }
     public ResourceLimitDto ResourceLimit { get; set; }
     public OperationLimitDto OperationLimit { get; set; }
+    public DeployLimitInfoDto DeployLimit { get; set; }
 }
 
 public class ResourceLimitDto
@@ -27,4 +28,10 @@ public class OperationLimitDto
     public int MaxLogCallCount { get; set; }
     public int MaxLogSize { get; set; }
     public int MaxContractCallCount { get; set; }
+}
+
+public class DeployLimitInfoDto
+{
+    public long MaxAppCodeSize { get; set; }
+    public long MaxAppAttachmentSize { get; set; }
 }

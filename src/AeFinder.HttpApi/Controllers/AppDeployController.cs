@@ -48,13 +48,11 @@ public class AppDeployController : AeFinderController
 
             if (app.Versions.PendingVersion != null)
             {
-                // await _appDeployManager.CreateNewAppAsync(appId, app.Versions.PendingVersion, input.ImageName);
                 await _appDeployService.DeployNewAppAsync(appId, app.Versions.PendingVersion, input.ImageName);
             }
 
             if (app.Versions.CurrentVersion != null)
             {
-                // await _appDeployManager.CreateNewAppAsync(appId, app.Versions.CurrentVersion, input.ImageName);
                 await _appDeployService.DeployNewAppAsync(appId, app.Versions.CurrentVersion, input.ImageName);
             }
         });
@@ -67,7 +65,6 @@ public class AppDeployController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task DestroyAppAsync(AppVersionInput input)
     {
-        // await _appDeployManager.DestroyAppAsync(input.AppId, input.Version);
         await _appDeployService.DestroyAppAsync(input.AppId, input.Version);
     }
     
@@ -82,13 +79,11 @@ public class AppDeployController : AeFinderController
 
             if (app.Versions.PendingVersion != null)
             {
-                // await _appDeployManager.DestroyAppAsync(appId, app.Versions.PendingVersion);
                 await _appDeployService.DestroyAppAsync(appId, app.Versions.PendingVersion);
             }
 
             if (app.Versions.CurrentVersion != null)
             {
-                // await _appDeployManager.DestroyAppAsync(appId, app.Versions.CurrentVersion);
                 await _appDeployService.DestroyAppAsync(appId, app.Versions.CurrentVersion);
             }
         });
@@ -101,7 +96,6 @@ public class AppDeployController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task RestartAppAsync(AppVersionInput input)
     {
-        // await _appDeployManager.RestartAppAsync(input.AppId, input.Version);
         await _appDeployService.RestartAppAsync(input.AppId, input.Version);
     }
     
@@ -116,13 +110,11 @@ public class AppDeployController : AeFinderController
 
             if (app.Versions.PendingVersion != null)
             {
-                // await _appDeployManager.RestartAppAsync(appId, app.Versions.PendingVersion);
                 await _appDeployService.RestartAppAsync(appId, app.Versions.PendingVersion);
             }
 
             if (app.Versions.CurrentVersion != null)
             {
-                // await _appDeployManager.RestartAppAsync(appId, app.Versions.CurrentVersion);
                 await _appDeployService.RestartAppAsync(appId, app.Versions.CurrentVersion);
             }
         });
@@ -135,6 +127,32 @@ public class AppDeployController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task UpdateAppDockerImageAsync(UpdateAppDockerImageInput input)
     {
-        await _appDeployService.UpdateAppDockerImageAsync(input.AppId, input.Version, input.ImageName);
+        await _appDeployService.UpdateAppDockerImageAsync(input.AppId, input.Version, input.ImageName,
+            input.IsUpdateConfig);
+    }
+
+    [HttpPost]
+    [Route("batch-update-image")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task UpdateAppsDockerImageAsync(UpdateAppsDockerImageInput input)
+    {
+        var tasks = input.AppIds.Select(async appId =>
+        {
+            var app = await _appService.GetIndexAsync(appId);
+
+            if (app.Versions.PendingVersion != null)
+            {
+                await _appDeployService.UpdateAppDockerImageAsync(appId, app.Versions.PendingVersion, input.ImageName,
+                    input.IsUpdateConfig);
+            }
+
+            if (app.Versions.CurrentVersion != null)
+            {
+                await _appDeployService.UpdateAppDockerImageAsync(appId, app.Versions.CurrentVersion, input.ImageName,
+                    input.IsUpdateConfig);
+            }
+        });
+
+        await tasks.WhenAll();
     }
 }

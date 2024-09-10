@@ -50,11 +50,11 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         await _appDeployManager.RestartAppAsync(appId, version, chainIds);
     }
 
-    public async Task UpdateAppDockerImageAsync(string appId, string version, string imageName)
+    public async Task UpdateAppDockerImageAsync(string appId, string version, string imageName, bool isUpdateConfig)
     {
         var chainIds = await GetDeployChainIdAsync(appId, version);
         await _blockScanAppService.PauseAsync(appId, version);
-        await _appDeployManager.UpdateAppDockerImageAsync(appId, version, imageName, chainIds);
+        await _appDeployManager.UpdateAppDockerImageAsync(appId, version, imageName, chainIds, isUpdateConfig);
     }
 
     private async Task<List<string>> GetSubscriptionChainIdAsync(string appId, string version)

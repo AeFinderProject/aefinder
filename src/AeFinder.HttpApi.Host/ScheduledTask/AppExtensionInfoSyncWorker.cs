@@ -103,6 +103,12 @@ public class AppExtensionInfoSyncWorker : AsyncPeriodicBackgroundWorkerBase, ISi
                         MaxLogSize = resourceLimitDto.MaxLogSize,
                         MaxContractCallCount = resourceLimitDto.MaxContractCallCount
                     };
+
+                    appLimitInfoIndex.DeployLimit = new DeployLimitInfo()
+                    {
+                        MaxAppCodeSize = resourceLimitDto.MaxAppCodeSize,
+                        MaxAppAttachmentSize = resourceLimitDto.MaxAppAttachmentSize
+                    };
                     await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
                     _logger.LogInformation("[AppExtensionInfoSyncWorker] App limit info Synchronized: {0}.", appLimitInfoIndex.AppName);
                 }

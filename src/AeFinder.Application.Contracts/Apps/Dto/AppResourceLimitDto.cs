@@ -17,5 +17,8 @@ public class AppResourceLimitDto
     [Id(8)] public string AppQueryPodRequestMemory { get; set; }
     [Id(9)] public int AppPodReplicas { get; set; }
     
-    [Id(10)] public bool EnableMultipleInstances { get; set; }
+    [Id(10)] public long MaxAppCodeSize { get; set; }
+    [Id(11)] public long MaxAppAttachmentSize { get; set; }
+    
+    [Id(12)] public bool EnableMultipleInstances { get; set; }
 }
