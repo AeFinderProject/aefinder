@@ -46,7 +46,7 @@ public class AppUpgradeHandler : AppHandlerBase,IDistributedEventHandler<AppUpgr
         var historyVersion = eventData.CurrentVersion;
         
         //destory old version pod
-        await _kubernetesAppManager.DestroyAppAsync(appId, eventData.CurrentVersion);
+        await _kubernetesAppManager.DestroyAppAsync(appId, eventData.CurrentVersion, eventData.CurrentVersionChainIds);
         
         //update app info index
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
