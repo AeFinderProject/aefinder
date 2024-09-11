@@ -88,6 +88,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppState, AppCreateEto>();
         CreateMap<AppState, AppUpdateEto>();
         CreateMap<OrganizationUnit, OrganizationUnitDto>();
+        CreateMap<OrganizationIndex, OrganizationIndexDto>();
         CreateMap<AppVersionInfo, AppVersion>();
 
         CreateMap<BlockWithTransactionDto, AppSubscribedBlockDto>();
