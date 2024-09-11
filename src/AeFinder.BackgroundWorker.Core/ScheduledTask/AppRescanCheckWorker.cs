@@ -50,7 +50,7 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
 
     public async Task ProcessRescanCheckAsync()
     {
-        _logger.LogInformation("[AppRescanCheckWorker]Process rescan check.");
+        _logger.LogInformation("[AppRescanCheckWorker] Process rescan check.");
         var skipCount = 0;
         var maxResultCount = 20;
         while (true)
@@ -106,7 +106,7 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
                 _subscriptionRescanTimes[version] =
                     _subscriptionRescanTimes[version] + 1;
                 _logger.LogInformation(
-                    $"Detected App {appId} processing failed in version {version}, immediately attempting to restart {_subscriptionRescanTimes[version]}");
+                    $"[AppRescanCheckWorker] Detected App {appId} processing failed in version {version}, immediately attempting to restart {_subscriptionRescanTimes[version]}");
                 await _appDeployService.RestartAppAsync(appId, version);
             }
         }
