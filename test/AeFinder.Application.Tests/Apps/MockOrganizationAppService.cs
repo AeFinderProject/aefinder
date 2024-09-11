@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.User;
 using AeFinder.User.Dto;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Identity;
 
 namespace AeFinder.Apps;
@@ -25,6 +26,11 @@ public class MockOrganizationAppService: AeFinderAppService, IOrganizationAppSer
     }
 
     public Task<List<OrganizationUnitDto>> GetAllOrganizationUnitsAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<PagedResultDto<OrganizationIndexDto>> GetOrganizationListAsync(GetOrganizationListInput input)
     {
         throw new NotImplementedException();
     }
