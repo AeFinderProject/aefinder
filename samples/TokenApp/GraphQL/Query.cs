@@ -5,7 +5,7 @@ using Volo.Abp.ObjectMapping;
 
 namespace TokenApp.GraphQL;
 
-public class TokenAppQuery
+public class Query
 {
     public static async Task<List<AccountDto>> Account(
         [FromServices] IReadOnlyRepository<Account> repository,
@@ -26,7 +26,7 @@ public class TokenAppQuery
             queryable = queryable.Where(a => a.Symbol == input.Symbol);
         }
         
-        var accounts= queryable.ToList();
+        var accounts= queryable.OrderBy(o=>o.Metadata.Block.BlockHeight).ToList();
 
         return objectMapper.Map<List<Account>, List<AccountDto>>(accounts);
     }
@@ -50,7 +50,7 @@ public class TokenAppQuery
             queryable = queryable.Where(a => a.Symbol == input.Symbol);
         }
         
-        var accounts= queryable.ToList();
+        var accounts= queryable.OrderBy(o=>o.Metadata.Block.BlockHeight).ToList();
 
         return objectMapper.Map<List<TransferRecord>, List<TransferRecordDto>>(accounts);
     }

@@ -22,7 +22,7 @@ public class TokenTransferredProcessor : LogEventProcessorBase<Transferred>, ITr
     {
         var transfer = new TransferRecord
         {
-            Id = $"{context.ChainId}-{context.Transaction.TransactionId}",
+            Id = $"{context.ChainId}-{context.Transaction.TransactionId}-{context.LogEvent.Index}",
             FromAddress = logEvent.From.ToBase58(),
             ToAddress = logEvent.To.ToBase58(),
             Symbol = logEvent.Symbol,
