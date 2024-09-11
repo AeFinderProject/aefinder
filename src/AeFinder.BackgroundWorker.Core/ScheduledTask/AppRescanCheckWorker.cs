@@ -84,20 +84,6 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
         }
     }
 
-    private async Task<bool> IsAppProcessingFailedAsync(ConcurrentDictionary<string,ProcessingStatus> processingStatusDictionary)
-    {
-        foreach (var processingStatusKeyValuePair in processingStatusDictionary)
-        {
-            var chainId = processingStatusKeyValuePair.Key;
-            if (processingStatusKeyValuePair.Value == ProcessingStatus.Failed)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private async Task RescanSubscriptionAsync(string appId, SubscriptionDetail subscriptionDetail)
     {
         var version = subscriptionDetail.Version;
@@ -128,5 +114,24 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
         {
             _subscriptionRescanTimes[version] = 0;
         }
+    }
+    
+    private async Task<bool> IsAppProcessingFailedAsync(ConcurrentDictionary<string,ProcessingStatus> processingStatusDictionary)
+    {
+        if (processingStatusDictionary == null)
+        {
+            return false;
+        }
+        
+        foreach (var processingStatusKeyValuePair in processingStatusDictionary)
+        {
+            var chainId = processingStatusKeyValuePair.Key;
+            if (processingStatusKeyValuePair.Value == ProcessingStatus.Failed)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
