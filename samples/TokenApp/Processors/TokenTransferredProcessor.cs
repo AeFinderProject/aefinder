@@ -12,8 +12,8 @@ public class TokenTransferredProcessor : LogEventProcessorBase<Transferred>, ITr
     {
         return chainId switch
         {
-            "AELF" => "MainChainTokenContractAddress",
-            "tDVV" => "SideChainTokenContractAddress",
+            "AELF" => "JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE",
+            "tDVW" => "ASh2Wt7nSEmYqnGxPPzp4pnVDU4uhj1XW9Se5VeZcX2UDdyjx",
             _ => string.Empty
         };
     }
@@ -22,7 +22,7 @@ public class TokenTransferredProcessor : LogEventProcessorBase<Transferred>, ITr
     {
         var transfer = new TransferRecord
         {
-            Id = context.ChainId + "-" + context.Transaction.TransactionId,
+            Id = $"{context.ChainId}-{context.Transaction.TransactionId}",
             FromAddress = logEvent.From.ToBase58(),
             ToAddress = logEvent.To.ToBase58(),
             Symbol = logEvent.Symbol,
@@ -36,7 +36,7 @@ public class TokenTransferredProcessor : LogEventProcessorBase<Transferred>, ITr
 
     private async Task ChangeBalanceAsync(string chainId, string address, string symbol, long amount)
     {
-        var accountId = chainId + "-" + address;
+        var accountId = $"{chainId}-{address}-{symbol}";
         var account = await GetEntityAsync<Account>(accountId);
         if (account == null)
         {

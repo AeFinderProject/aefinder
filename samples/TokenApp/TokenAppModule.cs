@@ -14,6 +14,7 @@ public class TokenAppModule: AbpModule
     {
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<TokenAppModule>(); });
         context.Services.AddSingleton<ISchema, TokenAppSchema>();
-        context.Services.AddTransient<ILogEventProcessor, TokenTransferredProcessor>();
+        
+        context.Services.AddSingleton<ILogEventProcessor, TokenTransferredProcessor>();
     }
 }
