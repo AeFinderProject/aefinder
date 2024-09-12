@@ -63,7 +63,7 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
     public async Task SetMaxAppCountAsync(int maxAppCount)
     {
         await ReadStateAsync();
-        
+        State.OrganizationId = this.GetPrimaryKeyString();
         State.MaxAppCount = maxAppCount;
         await WriteStateAsync();
         
