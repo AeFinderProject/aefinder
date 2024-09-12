@@ -71,6 +71,12 @@ public class AeFinderAppHostBaseModule : AbpModule
                     .AllowAnyMethod()
                     .AllowCredentials();
             });
+            options.AddPolicy("AllowAll", builder =>
+            {
+                builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
         });
     }
     
@@ -90,6 +96,10 @@ public class AeFinderAppHostBaseModule : AbpModule
         var app = context.GetApplicationBuilder();
         var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
         var graphqlPath = $"/{appInfoOptions.AppId}/{appInfoOptions.Version}/graphql";
+        
+        app.UseRouting();
+        app.UseCors("AllowAll");
+        
         app.UseGraphQLHttpMetrics(graphqlPath);
         app.UseGraphQL(graphqlPath);
         app.UseGraphQLPlayground(
@@ -108,8 +118,6 @@ public class AeFinderAppHostBaseModule : AbpModule
             }
         );
         app.UseOpenTelemetryPrometheusScrapingEndpoint($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/metrics");
-        app.UseRouting();
-        app.UseCors();
         app.UseConfiguredEndpoints();
     }
 
