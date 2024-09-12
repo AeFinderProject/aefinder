@@ -13,6 +13,7 @@ using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch.Services;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
 using Orleans;
 using Volo.Abp;
@@ -184,6 +185,7 @@ public class AppService : AeFinderAppService, IAppService
 
     public async Task SetMaxAppCountAsync(Guid organizationId, int appCount)
     {
+        Logger.LogInformation($"[SetMaxAppCountAsync] organizationId: {organizationId.ToString()} appCount: {appCount}");
         var orgId = GrainIdHelper.GenerateOrganizationAppGrainId(organizationId);
         var organizationAppGrain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(orgId);
