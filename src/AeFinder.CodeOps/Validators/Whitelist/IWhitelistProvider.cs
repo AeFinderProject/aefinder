@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using AElf.Types;
 using AeFinder.Sdk.Entities;
 using AElf.Cryptography.SecretSharing;
@@ -36,6 +37,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Assembly(System.Reflection.Assembly.Load("netstandard"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.Runtime"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.Runtime.Extensions"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("System.Runtime.InteropServices"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.Private.CoreLib"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.ObjectModel"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.Linq"), Trust.Full)
@@ -109,6 +111,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type(nameof(Guid), Permission.Allowed)
                 .Type(nameof(Random), Permission.Allowed)
                 .Type(nameof(AbpStringExtensions), Permission.Allowed)
+                .Type("Span`1",Permission.Allowed)
             );
     }
 
@@ -152,6 +155,9 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type("TaskAwaiter", Permission.Allowed)
                 .Type("TaskAwaiter`1", Permission.Allowed)
                 .Type(nameof(SwitchExpressionException), Permission.Allowed)
+            )
+            .Namespace("System.Runtime.InteropServices", Permission.Denied, type => type
+                .Type(nameof(CollectionsMarshal), Permission.Allowed)
             )
             .Namespace("System.Text", Permission.Allowed)
             .Namespace("System.Numerics", Permission.Allowed)

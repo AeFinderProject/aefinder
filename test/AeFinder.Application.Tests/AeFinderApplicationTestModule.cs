@@ -26,6 +26,7 @@ public class AeFinderApplicationTestModule : AbpModule
             o.BlockQueryHeightInterval = 1000;
             o.TransactionQueryHeightInterval = 1000;
             o.LogEventQueryHeightInterval = 1000;
+            o.MaxQuerySize = 10;
         });
         
         context.Services.AddTransient<ICodeAuditor>(o=>Mock.Of<ICodeAuditor>());
