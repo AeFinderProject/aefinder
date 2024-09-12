@@ -66,35 +66,23 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         {
             _logger.LogError(AeFinderApplicationConsts.AppLogEventId, e, "[{ChainId}] Data processing failed!",
                 subscribedBlock.ChainId);
-            _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.OperationLimited);
-            _ = Task.Run(async () =>
-            {
-                await _processingStatusProvider.SetSubscriptionProcessingStatusAsync(subscribedBlock.AppId,
-                    subscribedBlock.Version, subscribedBlock.ChainId, ProcessingStatus.OperationLimited);
-            });
+            _processingStatusProvider.SetStatus(subscribedBlock.AppId, subscribedBlock.Version, 
+                subscribedBlock.ChainId, ProcessingStatus.OperationLimited);
         }
         catch (AppProcessingException e)
         {
             _logger.LogError(AeFinderApplicationConsts.AppLogEventId, e, "[{ChainId}] Data processing failed!",
                 subscribedBlock.ChainId);
-            _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.Failed);
-            _ = Task.Run(async () =>
-            {
-                await _processingStatusProvider.SetSubscriptionProcessingStatusAsync(subscribedBlock.AppId,
-                    subscribedBlock.Version, subscribedBlock.ChainId, ProcessingStatus.Failed);
-            });
+            _processingStatusProvider.SetStatus(subscribedBlock.AppId, subscribedBlock.Version,
+                subscribedBlock.ChainId, ProcessingStatus.Failed);
         }
         catch (Exception e)
         {
             _logger.LogError(e, "[{ChainId}] Data processing failed!", subscribedBlock.ChainId);
             _logger.LogError(AeFinderApplicationConsts.AppLogEventId, null,
                 "[{ChainId}] Data processing failed, please contact the AeFinder!", subscribedBlock.ChainId);
-            _processingStatusProvider.SetStatus(subscribedBlock.ChainId, ProcessingStatus.Failed);
-            _ = Task.Run(async () =>
-            {
-                await _processingStatusProvider.SetSubscriptionProcessingStatusAsync(subscribedBlock.AppId,
-                    subscribedBlock.Version, subscribedBlock.ChainId, ProcessingStatus.Failed);
-            });
+            _processingStatusProvider.SetStatus(subscribedBlock.AppId, subscribedBlock.Version,
+                subscribedBlock.ChainId, ProcessingStatus.Failed);
         }
     }
 }

@@ -52,7 +52,8 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
         foreach (var item in subscription.SubscriptionItems)
         {
             await RollbackToLibAsync(item.ChainId);
-            _processingStatusProvider.SetStatus(item.ChainId, ProcessingStatus.Running);
+            _processingStatusProvider.SetStatus(_appInfoProvider.AppId, _appInfoProvider.Version, item.ChainId,
+                ProcessingStatus.Running);
         }
     }
 
