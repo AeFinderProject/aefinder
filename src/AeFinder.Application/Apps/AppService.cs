@@ -184,7 +184,7 @@ public class AppService : AeFinderAppService, IAppService
 
     public async Task SetMaxAppCountAsync(Guid organizationId, int appCount)
     {
-        var orgId = GetOrganizationGrainId(organizationId);
+        var orgId = GrainIdHelper.GenerateOrganizationAppGrainId(organizationId);
         var organizationAppGrain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(orgId);
         await organizationAppGrain.SetMaxAppCountAsync(appCount);
@@ -192,7 +192,7 @@ public class AppService : AeFinderAppService, IAppService
 
     public async Task<int> GetMaxAppCountAsync(Guid organizationId)
     {
-        var orgId = GetOrganizationGrainId(organizationId);
+        var orgId = GrainIdHelper.GenerateOrganizationAppGrainId(organizationId);
         var organizationAppGrain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(orgId);
         return await organizationAppGrain.GetMaxAppCountAsync();
@@ -241,10 +241,10 @@ public class AppService : AeFinderAppService, IAppService
         return organizationIds.First().Id.ToString("N");
     }
 
-    private string GetOrganizationGrainId(Guid orgId)
-    {
-        return GrainIdHelper.GenerateOrganizationAppGrainId(orgId.ToString("N"));
-    }
+    // private string GetOrganizationGrainId(Guid orgId)
+    // {
+    //     return GrainIdHelper.GenerateOrganizationAppGrainId(orgId.ToString("N"));
+    // }
     
     public async Task<string> GetAppCodeAsync(string appId,string version)
     {

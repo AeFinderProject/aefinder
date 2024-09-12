@@ -60,7 +60,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         //Synchronize organization info into grain & es
         var organizationAppGain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(
-                GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id.ToString()));
+                GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id.ToString("N")));
         await organizationAppGain.AddOrganizationAsync(organizationUnit.DisplayName);
         
         return organizationUnitDto;
