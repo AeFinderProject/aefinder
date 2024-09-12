@@ -646,6 +646,8 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         {
             exchangeName += $"-{chainId}";
         }
+        appSettingsContent = appSettingsContent.Replace(KubernetesConstants.PlaceHolderEventBusExchangeName,
+            exchangeName);
         
         var newAppSettingConfigMap =
             ConfigMapHelper.CreateAppSettingConfigMapDefinition(appSettingConfigMapName, appSettingsContent);
