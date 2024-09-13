@@ -112,6 +112,11 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
             {
             }
         }
+
+        public class TestAppConst
+        {
+            public static readonly List<string> List = [""a"", ""b"", ""c""];
+        }
         ";
         AddAssemblies(typeof(FromServicesAttribute).Assembly.Location, typeof(IObjectMapper).Assembly.Location,
             typeof(AbpModule).Assembly.Location, typeof(KeywordAttribute).Assembly.Location,

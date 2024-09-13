@@ -13,7 +13,8 @@ public class TokenAppModule: AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<TokenAppModule>(); });
-        context.Services.AddSingleton<ISchema, TokenAppSchema>();
-        context.Services.AddTransient<ILogEventProcessor, TokenTransferredProcessor>();
+        context.Services.AddSingleton<ISchema, AppSchema>();
+        
+        context.Services.AddSingleton<ILogEventProcessor, TokenTransferredProcessor>();
     }
 }

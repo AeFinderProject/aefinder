@@ -9,5 +9,6 @@ public class TokenAppMapperProfile : Profile
     public TokenAppMapperProfile()
     {
         CreateMap<Account, AccountDto>();
+        CreateMap<TransferRecord, TransferRecordDto>();
     }
 }
