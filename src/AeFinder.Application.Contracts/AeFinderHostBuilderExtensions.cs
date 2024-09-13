@@ -1,9 +1,7 @@
-using AeFinder.Reporter;
 using Com.Ctrip.Framework.Apollo.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Prometheus;
 using Serilog;
 using Serilog.Events;
 
@@ -30,19 +28,6 @@ public static class AeFinderHostBuilderExtensions
         return hostBuilder
             .ConfigureAppConfiguration((_, builder) => { builder.AddApollo(builder.Build().GetSection("apollo")); })
             .ConfigureGloballySharedLog(false);
-    }
-
-    public static IHostBuilder AddMetrics(this IHostBuilder hostBuilder)
-    {
-        return hostBuilder.ConfigureServices((_, services) =>
-        {
-            services.AddMetricServer(options =>
-            {
-                var metricsOption = Commons.ConfigurationHelper.GetValue("Metrics", new MetricsOption());
-                options.Port = metricsOption.Port;
-            });
-            services.AddHealthChecks();
-        });
     }
 
     private static IHostBuilder AddAppSettingsApolloJson(this IHostBuilder hostBuilder)
