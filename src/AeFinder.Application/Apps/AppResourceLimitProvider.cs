@@ -7,10 +7,11 @@ using AeFinder.Grains.Grain.Apps;
 using AeFinder.Options;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.Apps;
 
-public class AppResourceLimitProvider : IAppResourceLimitProvider
+public class AppResourceLimitProvider : IAppResourceLimitProvider, ISingletonDependency
 {
     private readonly OperationLimitOptions _operationLimitOptions;
     private readonly IClusterClient _clusterClient;
