@@ -66,17 +66,19 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
             foreach (var appInfo in apps)
             {
                 var appId = appInfo.AppId;
-                var appSubscriptionGrain =
-                    _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-                var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
-                if (allSubscription.CurrentVersion != null)
+                if (appInfo.Versions == null)
                 {
-                    await RescanSubscriptionAsync(appId, allSubscription.CurrentVersion);
+                    continue;
+                }
+                
+                if (appInfo.Versions.CurrentVersion != null)
+                {
+                    await RescanSubscriptionAsync(appId, appInfo.Versions.CurrentVersion);
                 }
 
-                if (allSubscription.PendingVersion != null)
+                if (appInfo.Versions.PendingVersion != null)
                 {
-                    await RescanSubscriptionAsync(appId, allSubscription.PendingVersion);
+                    await RescanSubscriptionAsync(appId, appInfo.Versions.PendingVersion);
                 }
             }
             
@@ -84,10 +86,12 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
         }
     }
 
-    private async Task RescanSubscriptionAsync(string appId, SubscriptionDetail subscriptionDetail)
+    private async Task RescanSubscriptionAsync(string appId, string version)
     {
-        var version = subscriptionDetail.Version;
-        if (subscriptionDetail.Status == SubscriptionStatus.Paused)
+        var appSubscriptionGrain =
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var subscriptionStatus = await appSubscriptionGrain.GetSubscriptionStatusAsync(version);
+        if (subscriptionStatus == SubscriptionStatus.Paused)
         {
             return;
         }
@@ -96,8 +100,11 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
         {
             _subscriptionRescanTimes.Add(version, 0);
         }
+        var appSubscriptionProcessingStatusGrain =
+            _clusterClient.GetGrain<IAppSubscriptionProcessingStatusGrain>(
+                GrainIdHelper.GenerateAppSubscriptionProcessingStatusGrainId(appId, version));
 
-        var processingStatusDictionary = subscriptionDetail.ProcessingStatus;
+        var processingStatusDictionary = await appSubscriptionProcessingStatusGrain.GetProcessingStatusAsync();
         var isProcessingFailed = await IsAppProcessingFailedAsync(processingStatusDictionary);
         if (isProcessingFailed)
         {

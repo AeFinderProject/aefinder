@@ -36,6 +36,7 @@ public static class OrleansHostExtensions
                 {
                     options.SupportedNamespacePrefixes.Add("Volo.Abp");
                     options.SupportedNamespacePrefixes.Add("Newtonsoft.Json");
+                    options.SupportedNamespacePrefixes.Add("MongoDB.Driver");
                 })
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddActivityPropagation()

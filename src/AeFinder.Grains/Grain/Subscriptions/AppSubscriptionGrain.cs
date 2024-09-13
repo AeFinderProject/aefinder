@@ -115,8 +115,7 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             {
                 Version = State.CurrentVersion,
                 Status = State.SubscriptionInfos[State.CurrentVersion].Status,
-                SubscriptionManifest = State.SubscriptionInfos[State.CurrentVersion].SubscriptionManifest,
-                ProcessingStatus = State.SubscriptionInfos[State.CurrentVersion].ProcessingStatus
+                SubscriptionManifest = State.SubscriptionInfos[State.CurrentVersion].SubscriptionManifest
             };
         }
 
@@ -126,8 +125,7 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
             {
                 Version = State.PendingVersion,
                 Status = State.SubscriptionInfos[State.PendingVersion].Status,
-                SubscriptionManifest = State.SubscriptionInfos[State.PendingVersion].SubscriptionManifest,
-                ProcessingStatus = State.SubscriptionInfos[State.PendingVersion].ProcessingStatus
+                SubscriptionManifest = State.SubscriptionInfos[State.PendingVersion].SubscriptionManifest
             };
         }
 
@@ -222,8 +220,13 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
     {
         await ReadStateAsync();
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Started;
-        await ReSetProcessingStatusAsync(version);
         await WriteStateAsync();
+
+        //Reset app subscription processing status
+        await GrainFactory
+            .GetGrain<IAppSubscriptionProcessingStatusGrain>(
+                GrainIdHelper.GenerateAppSubscriptionProcessingStatusGrainId(this.GetPrimaryKeyString(), version))
+            .ReSetProcessingStatusAsync(GetVersionSubscribedChainIds(version));
         
         //Publish app subscription update eto to background worker
         await _distributedEventBus.PublishAsync(new AppSubscriptionUpdateEto()
@@ -320,32 +323,5 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         }
 
         return currentVersionChainIds;
-    }
-
-    private async Task ReSetProcessingStatusAsync(string version)
-    {
-        if (State.SubscriptionInfos[version].ProcessingStatus == null)
-        {
-            State.SubscriptionInfos[version].ProcessingStatus =
-                new ConcurrentDictionary<string, ProcessingStatus>();
-        }
-        var currentVersionSubscriptionInfo = State.SubscriptionInfos[version];
-        foreach (var subscriptionItem in currentVersionSubscriptionInfo.SubscriptionManifest.SubscriptionItems)
-        {
-            var chainId = subscriptionItem.ChainId;
-            State.SubscriptionInfos[version].ProcessingStatus.AddOrUpdate(chainId, ProcessingStatus.Running,
-                (key, oldValue) => ProcessingStatus.Running);
-        }
-    }
-
-    public async Task SetProcessingStatusAsync(string version, string chainId, ProcessingStatus processingStatus)
-    {
-        if (State.SubscriptionInfos[version].ProcessingStatus == null)
-        {
-            State.SubscriptionInfos[version].ProcessingStatus =
-                new ConcurrentDictionary<string, ProcessingStatus>();
-        }
-        State.SubscriptionInfos[version].ProcessingStatus[chainId] = processingStatus;
-        await WriteStateAsync();
     }
 }

@@ -61,7 +61,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                 chainId));
         
         var blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", chainId);
-        _processingStatusProvider.SetStatus(chainId, ProcessingStatus.Running);
+        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, currentVersion, chainId, ProcessingStatus.Running);
         
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
@@ -214,8 +214,8 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
         await _blockScanAppService.StartScanAsync(_appInfoProvider.AppId, currentVersion);
         var blockPushInfoCurrentVersion = await blockPusherInfoGrain.GetPushInfoAsync();
         var pushToken = blockPushInfoCurrentVersion.PushToken;
-        
-        _processingStatusProvider.SetStatus(chainId, ProcessingStatus.Failed);
+
+        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, currentVersion, chainId, ProcessingStatus.Failed);
         await _subscribedBlockHandler.HandleAsync(new SubscribedBlockDto
         {
             Blocks = blocks,

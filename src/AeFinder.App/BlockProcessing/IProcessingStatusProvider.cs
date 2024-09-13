@@ -8,10 +8,8 @@ namespace AeFinder.App.BlockProcessing;
 
 public interface IProcessingStatusProvider
 {
-    void SetStatus(string chainId, ProcessingStatus status);
+    void SetStatus(string appId, string version, string chainId, ProcessingStatus status);
     bool IsRunning(string chainId);
-    Task SetSubscriptionProcessingStatusAsync(string appId, string version, string chainId,
-        ProcessingStatus processingStatus);
 }
 
 public class ProcessingStatusProvider : IProcessingStatusProvider, ISingletonDependency
@@ -25,9 +23,10 @@ public class ProcessingStatusProvider : IProcessingStatusProvider, ISingletonDep
     
     private readonly ConcurrentDictionary<string, ProcessingStatus> _status = new();
 
-    public void SetStatus(string chainId, ProcessingStatus status)
+    public void SetStatus(string appId, string version, string chainId, ProcessingStatus status)
     {
         _status[chainId] = status;
+        _ = SetAppProcessingStatusAsync(appId, version, chainId, status);
     }
 
     public bool IsRunning(string chainId)
@@ -35,12 +34,12 @@ public class ProcessingStatusProvider : IProcessingStatusProvider, ISingletonDep
         return _status.TryGetValue(chainId, out var status) && status == ProcessingStatus.Running;
     }
 
-    public async Task SetSubscriptionProcessingStatusAsync(string appId, string version, string chainId,
+    private async Task SetAppProcessingStatusAsync(string appId, string version, string chainId,
         ProcessingStatus processingStatus)
     {
-        var appSubscriptionGrain =
-            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        await appSubscriptionGrain.SetProcessingStatusAsync(version, chainId, processingStatus);
+        var appSubscriptionProcessingStatusGrain =
+            _clusterClient.GetGrain<IAppSubscriptionProcessingStatusGrain>(GrainIdHelper.GenerateAppSubscriptionProcessingStatusGrainId(appId,version));
+        await appSubscriptionProcessingStatusGrain.SetProcessingStatusAsync(chainId, processingStatus);
     }
 }
 
