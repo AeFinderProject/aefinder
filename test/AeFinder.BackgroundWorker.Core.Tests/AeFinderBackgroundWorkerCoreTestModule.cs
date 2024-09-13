@@ -6,8 +6,8 @@ using Volo.Abp.Modularity;
 namespace AeFinder.BackgroundWorker.Tests;
 
 [DependsOn(typeof(AeFinderBackGroundCoreModule),
-    typeof(AeFinderDomainTestModule),
-    typeof(AeFinderOrleansTestBaseModule)
+    typeof(AeFinderOrleansTestBaseModule),
+    typeof(AeFinderDomainTestModule)
 )]
 public class AeFinderBackgroundWorkerCoreTestModule: AbpModule
 {

@@ -111,4 +111,9 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(appId, version);
     }
+
+    public static string GenerateAppSubscriptionProcessingStatusGrainId(string appId, string version)
+    {
+        return GenerateGrainId(appId, version);
+    }
 }

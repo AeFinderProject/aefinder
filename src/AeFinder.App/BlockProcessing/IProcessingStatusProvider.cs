@@ -37,9 +37,9 @@ public class ProcessingStatusProvider : IProcessingStatusProvider, ISingletonDep
     private async Task SetAppProcessingStatusAsync(string appId, string version, string chainId,
         ProcessingStatus processingStatus)
     {
-        var appSubscriptionGrain =
-            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        await appSubscriptionGrain.SetProcessingStatusAsync(version, chainId, processingStatus);
+        var appSubscriptionProcessingStatusGrain =
+            _clusterClient.GetGrain<IAppSubscriptionProcessingStatusGrain>(GrainIdHelper.GenerateAppSubscriptionProcessingStatusGrainId(appId,version));
+        await appSubscriptionProcessingStatusGrain.SetProcessingStatusAsync(chainId, processingStatus);
     }
 }
 

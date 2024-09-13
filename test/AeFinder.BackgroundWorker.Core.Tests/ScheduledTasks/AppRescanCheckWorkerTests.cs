@@ -55,15 +55,18 @@ public class AppRescanCheckWorkerTests: AeFinderBackgroundWorkerCoreTestBase
             }
         };
         await _appInfoEntityMappingRepository.AddOrUpdateAsync(appInfoIndex);
+        
+        var appSubscriptionProcessingStatusGrain =
+            Cluster.Client.GetGrain<IAppSubscriptionProcessingStatusGrain>(
+                GrainIdHelper.GenerateAppSubscriptionProcessingStatusGrainId(appId, version1));
 
-        await appSubscriptionGrain.SetProcessingStatusAsync(version1, chainId, ProcessingStatus.Failed);
-        var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
-        allSubscription.CurrentVersion.ShouldNotBeNull();
-        allSubscription.CurrentVersion.ProcessingStatus[chainId].ShouldBe(ProcessingStatus.Failed);
+        await appSubscriptionProcessingStatusGrain.SetProcessingStatusAsync(chainId, ProcessingStatus.Failed);
+        var processingStatus = await appSubscriptionProcessingStatusGrain.GetProcessingStatusAsync();
+        processingStatus[chainId].ShouldBe(ProcessingStatus.Failed);
 
         await _appRescanCheckWorker.ProcessRescanCheckAsync();
         
-        await appSubscriptionGrain.SetProcessingStatusAsync(version1, chainId, ProcessingStatus.Failed);
+        await appSubscriptionProcessingStatusGrain.SetProcessingStatusAsync(chainId, ProcessingStatus.Failed);
         var subscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
         subscriptions.CurrentVersion.ShouldNotBeNull();
         subscriptions.CurrentVersion.Status.ShouldBe(SubscriptionStatus.Paused);

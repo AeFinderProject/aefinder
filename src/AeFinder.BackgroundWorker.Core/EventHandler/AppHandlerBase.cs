@@ -30,7 +30,13 @@ public abstract class AppHandlerBase
         var appCodeGrain = ClusterClient.GetGrain<IAppCodeGrain>(codeId);
         await appCodeGrain.RemoveAsync();
         Logger.LogInformation("AppCodeGrain state cleared, appId: {0}, historyVersion: {1}", appId, version);
-
+        
+        //remove AppSubscriptionProcessingStatusGrain
+        var appSubscriptionProcessingStatusGrain =
+            ClusterClient.GetGrain<IAppSubscriptionProcessingStatusGrain>(
+                GrainIdHelper.GenerateAppSubscriptionProcessingStatusGrainId(appId, version));
+        await appSubscriptionProcessingStatusGrain.ClearGrainStateAsync();
+        
         //remove AppBlockStateSetStatusGrain、BlockPusherInfo、BlockPusher Grain data
         foreach (var chainId in chainIds)
         {
