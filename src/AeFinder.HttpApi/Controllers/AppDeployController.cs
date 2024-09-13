@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
@@ -46,12 +47,12 @@ public class AppDeployController : AeFinderController
         {
             var app = await _appService.GetIndexAsync(appId);
 
-            if (app.Versions.PendingVersion != null)
+            if (!app.Versions.PendingVersion.IsNullOrEmpty())
             {
                 await _appDeployService.DeployNewAppAsync(appId, app.Versions.PendingVersion, input.ImageName);
             }
 
-            if (app.Versions.CurrentVersion != null)
+            if (!app.Versions.CurrentVersion.IsNullOrEmpty())
             {
                 await _appDeployService.DeployNewAppAsync(appId, app.Versions.CurrentVersion, input.ImageName);
             }
@@ -77,12 +78,12 @@ public class AppDeployController : AeFinderController
         {
             var app = await _appService.GetIndexAsync(appId);
 
-            if (app.Versions.PendingVersion != null)
+            if (!app.Versions.PendingVersion.IsNullOrEmpty())
             {
                 await _appDeployService.DestroyAppAsync(appId, app.Versions.PendingVersion);
             }
 
-            if (app.Versions.CurrentVersion != null)
+            if (!app.Versions.CurrentVersion.IsNullOrEmpty())
             {
                 await _appDeployService.DestroyAppAsync(appId, app.Versions.CurrentVersion);
             }
@@ -108,12 +109,12 @@ public class AppDeployController : AeFinderController
         {
             var app = await _appService.GetIndexAsync(appId);
 
-            if (app.Versions.PendingVersion != null)
+            if (!app.Versions.PendingVersion.IsNullOrEmpty())
             {
                 await _appDeployService.RestartAppAsync(appId, app.Versions.PendingVersion);
             }
 
-            if (app.Versions.CurrentVersion != null)
+            if (!app.Versions.CurrentVersion.IsNullOrEmpty())
             {
                 await _appDeployService.RestartAppAsync(appId, app.Versions.CurrentVersion);
             }
@@ -140,13 +141,13 @@ public class AppDeployController : AeFinderController
         {
             var app = await _appService.GetIndexAsync(appId);
 
-            if (app.Versions.PendingVersion != null)
+            if (!app.Versions.PendingVersion.IsNullOrEmpty())
             {
                 await _appDeployService.UpdateAppDockerImageAsync(appId, app.Versions.PendingVersion, input.ImageName,
                     input.IsUpdateConfig);
             }
 
-            if (app.Versions.CurrentVersion != null)
+            if (!app.Versions.CurrentVersion.IsNullOrEmpty())
             {
                 await _appDeployService.UpdateAppDockerImageAsync(appId, app.Versions.CurrentVersion, input.ImageName,
                     input.IsUpdateConfig);
