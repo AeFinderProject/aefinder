@@ -16,6 +16,6 @@ public class AeIndexerTemplateModule: AbpModule
         context.Services.AddSingleton<ISchema, AeIndexerSchema>();
         
         // Add your LogEventProcessor implementation.
-        //context.Services.AddTransient<ILogEventProcessor, MyLogEventProcessor>();
+        //context.Services.AddSingleton<ILogEventProcessor, MyLogEventProcessor>();
     }
 }
