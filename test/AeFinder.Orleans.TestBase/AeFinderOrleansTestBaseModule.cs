@@ -1,4 +1,3 @@
-using AeFinder.BackgroundWorker.Core;
 using AeFinder.BlockChainEventHandler;
 using AeFinder.EntityEventHandler;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +11,6 @@ namespace AeFinder.Orleans.TestBase;
 
 [DependsOn(typeof(AeFinderBlockChainEventHandlerCoreModule),
     typeof(AeFinderEntityEventHandlerCoreModule),
-    typeof(AeFinderBackGroundCoreModule),
     typeof(AbpAutofacModule),
     typeof(AbpTestBaseModule),
     typeof(AbpAuthorizationModule),
