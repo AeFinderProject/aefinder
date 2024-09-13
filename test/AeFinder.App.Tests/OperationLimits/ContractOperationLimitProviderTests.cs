@@ -21,7 +21,7 @@ public class ContractOperationLimitProviderTests : AeFinderAppTestBase
         _contractOperationLimitProvider.CheckCallCount();
         _contractOperationLimitProvider.CheckCallCount();
         
-        Assert.Throws<ApplicationException>(() => _contractOperationLimitProvider.CheckCallCount());
+        Assert.Throws<OperationLimitException>(() => _contractOperationLimitProvider.CheckCallCount());
         
         _operationLimitManager.ResetAll();
         _contractOperationLimitProvider.CheckCallCount();
