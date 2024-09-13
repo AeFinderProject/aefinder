@@ -1,10 +1,15 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Es;
 using AeFinder.Apps;
 using AeFinder.BlockScan;
+using AeFinder.User;
+using AeFinder.User.Dto;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Shouldly;
 using Volo.Abp.Validation;
 using Xunit;
@@ -22,6 +27,22 @@ public class SubscriptionAppServiceTests : AeFinderApplicationOrleansTestBase
         _subscriptionAppService = GetRequiredService<ISubscriptionAppService>();
         _appService = GetRequiredService<IAppService>();
         _subscriptionIndexRepository = GetRequiredService<IEntityMappingRepository<AppSubscriptionIndex, string>>();
+    }
+    
+    protected override void AfterAddApplication(IServiceCollection services)
+    {
+        services.AddSingleton(BuildOrganizationAppService());
+    }
+    
+    private static IOrganizationAppService BuildOrganizationAppService()
+    {
+        var mockOrganizationAppService = new Mock<IOrganizationAppService>();
+        mockOrganizationAppService
+            .Setup(service => service.GetOrganizationUnitsByUserIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new List<OrganizationUnitDto> { 
+                new OrganizationUnitDto { Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1") } 
+            });
+        return mockOrganizationAppService.Object;
     }
 
     [Fact]

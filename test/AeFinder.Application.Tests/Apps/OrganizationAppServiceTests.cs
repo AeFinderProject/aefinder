@@ -17,7 +17,7 @@ public class OrganizationAppServiceTests: AeFinderApplicationAppTestBase
     
     public OrganizationAppServiceTests()
     {
-        _organizationAppService = GetRequiredService<OrganizationAppService>();
+        _organizationAppService = GetRequiredService<IOrganizationAppService>();
         _organizationEntityMappingRepository = GetRequiredService<IEntityMappingRepository<OrganizationIndex, string>>();
     }
 
