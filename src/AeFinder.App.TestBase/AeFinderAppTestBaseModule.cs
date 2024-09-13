@@ -72,13 +72,7 @@ public class AeFinderAppTestBaseModule : AbpModule
             .Returns(Task.FromResult(new List<Guid>()));
         context.Services.AddSingleton(mockBlockScanAppService.Object);
         
-        var mockOrganizationAppService = new Mock<IOrganizationAppService>();
-        mockOrganizationAppService
-            .Setup(service => service.GetOrganizationUnitsByUserIdAsync(It.IsAny<Guid>()))
-            .ReturnsAsync(new List<OrganizationUnitDto> { 
-                new OrganizationUnitDto { Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1") } 
-            });
-        context.Services.AddSingleton(mockOrganizationAppService.Object);
+        
     }
 
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
