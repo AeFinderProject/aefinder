@@ -71,12 +71,12 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
                     continue;
                 }
                 
-                if (appInfo.Versions.CurrentVersion != null)
+                if (!appInfo.Versions.CurrentVersion.IsNullOrEmpty())
                 {
                     await RescanSubscriptionAsync(appId, appInfo.Versions.CurrentVersion);
                 }
 
-                if (appInfo.Versions.PendingVersion != null)
+                if (!appInfo.Versions.PendingVersion.IsNullOrEmpty())
                 {
                     await RescanSubscriptionAsync(appId, appInfo.Versions.PendingVersion);
                 }
