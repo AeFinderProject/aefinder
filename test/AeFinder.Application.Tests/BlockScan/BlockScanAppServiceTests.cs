@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.Apps;
@@ -5,6 +6,10 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Subscriptions;
+using AeFinder.User;
+using AeFinder.User.Dto;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -24,6 +29,22 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         _blockScanAppService = GetRequiredService<IBlockScanAppService>();
         _clusterClient = GetRequiredService<IClusterClient>();
         _appService = GetRequiredService<IAppService>();
+    }
+    
+    protected override void AfterAddApplication(IServiceCollection services)
+    {
+        services.AddSingleton(BuildOrganizationAppService());
+    }
+    
+    private static IOrganizationAppService BuildOrganizationAppService()
+    {
+        var mockOrganizationAppService = new Mock<IOrganizationAppService>();
+        mockOrganizationAppService
+            .Setup(service => service.GetOrganizationUnitsByUserIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new List<OrganizationUnitDto> { 
+                new OrganizationUnitDto { Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1") } 
+            });
+        return mockOrganizationAppService.Object;
     }
 
     [Fact]
