@@ -23,13 +23,13 @@ public class OrganizationCreateHandlerTests : AeFinderBackgroundWorkerCoreTestBa
     {
         var organizationEto = new OrganizationCreateEto()
         {
-            OrganizationId = "abcd123",
+            OrganizationId = "9c77dbf6-8222-d919-d38a-3a14710c091f",
             MaxAppCount = 3,
             OrganizationName = "AElfProject"
         };
         await _distributedEventOrganizationCreate.HandleEventAsync(organizationEto);
         var queryable = await _organizationEntityMappingRepository.GetQueryableAsync();
-        queryable = queryable.Where(x => x.Id == "abcd123");
+        queryable = queryable.Where(x => x.Id == "9c77dbf6-8222-d919-d38a-3a14710c091f");
         var result = queryable.OrderBy(x => x.OrganizationName).ToList();
         result.ShouldNotBeNull();
         result.Count.ShouldBe(1);
