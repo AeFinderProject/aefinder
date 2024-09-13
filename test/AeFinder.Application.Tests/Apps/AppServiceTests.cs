@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Es;
+using AeFinder.User;
+using AeFinder.User.Dto;
 using AElf.EntityMapping.Repositories;
+using Moq;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Validation;
@@ -39,6 +43,12 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         await Assert.ThrowsAsync<AbpValidationException>(async () => await _appService.CreateAsync(createDto));
         
         createDto.AppName = "My App";
+        var mockOrganizationAppService = new Mock<IOrganizationAppService>();
+        mockOrganizationAppService
+            .Setup(service => service.GetOrganizationUnitsByUserIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new List<OrganizationUnitDto> { 
+                new OrganizationUnitDto { Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1") } 
+            });
         var result = await _appService.CreateAsync(createDto);
         
         await Assert.ThrowsAsync<UserFriendlyException>(async () => await _appService.GetAsync("appid"));
