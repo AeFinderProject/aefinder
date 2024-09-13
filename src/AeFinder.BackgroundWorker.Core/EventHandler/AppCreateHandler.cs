@@ -33,7 +33,7 @@ public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCrea
     {
         //Update organization app ids
         var organizationIndex = new OrganizationIndex();
-        organizationIndex.OrganizationId = eventData.OrganizationId;
+        
         Guid organizationUnitGuid;
         if (!Guid.TryParse(eventData.OrganizationId, out organizationUnitGuid))
         {
@@ -41,11 +41,11 @@ public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCrea
         }
 
         var organizationUnitDto = await _organizationAppService.GetOrganizationUnitAsync(organizationUnitGuid);
+        organizationIndex.OrganizationId = organizationUnitGuid.ToString();
         organizationIndex.OrganizationName = organizationUnitDto.DisplayName;
-
-        var orgId = GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id);
+        
         var organizationAppGrain =
-            _clusterClient.GetGrain<IOrganizationAppGrain>(orgId);
+            _clusterClient.GetGrain<IOrganizationAppGrain>(GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id));
         var maxAppCount = await organizationAppGrain.GetMaxAppCountAsync();
         organizationIndex.MaxAppCount = maxAppCount;
         var appIds = await organizationAppGrain.GetAppsAsync();
