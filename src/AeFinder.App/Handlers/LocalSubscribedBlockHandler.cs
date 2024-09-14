@@ -15,22 +15,29 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
     private readonly IBlockAttachService _blockAttachService;
     private readonly IVersionUpgradeProvider _versionUpgradeProvider;
     private readonly ILogger<LocalSubscribedBlockHandler> _logger;
+    private readonly IAppInfoProvider _appInfoProvider;
 
     public LocalSubscribedBlockHandler(ILogger<LocalSubscribedBlockHandler> logger,
         IBlockScanAppService blockScanAppService,
         IProcessingStatusProvider processingStatusProvider, IBlockAttachService blockAttachService,
-        IVersionUpgradeProvider versionUpgradeProvider)
+        IVersionUpgradeProvider versionUpgradeProvider, IAppInfoProvider appInfoProvider)
     {
         _logger = logger;
         _blockScanAppService = blockScanAppService;
         _processingStatusProvider = processingStatusProvider;
         _blockAttachService = blockAttachService;
         _versionUpgradeProvider = versionUpgradeProvider;
+        _appInfoProvider = appInfoProvider;
     }
 
     public virtual async Task HandleEventAsync(SubscribedBlockDto subscribedBlock)
     {
         if (!_processingStatusProvider.IsRunning(subscribedBlock.ChainId))
+        {
+            return;
+        }
+
+        if (!_appInfoProvider.ChainId.IsNullOrWhiteSpace() && subscribedBlock.ChainId != _appInfoProvider.ChainId)
         {
             return;
         }

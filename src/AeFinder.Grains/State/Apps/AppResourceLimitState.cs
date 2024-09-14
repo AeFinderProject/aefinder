@@ -17,4 +17,6 @@ public class AppResourceLimitState
 
     [Id(10)] public long MaxAppCodeSize { get; set; }
     [Id(11)] public long MaxAppAttachmentSize { get; set; }
+
+    [Id(12)] public bool EnableMultipleInstances { get; set; } = false;
 }

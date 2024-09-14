@@ -51,7 +51,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(100);
         subscription.PendingVersion.ShouldBeNull();
         
-        await _blockScanAppService.UpgradeVersionAsync(appId);
+        await _blockScanAppService.UpgradeVersionAsync(appId, subscription.CurrentVersion.Version);
         
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version1);
@@ -153,7 +153,7 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         allScanIds[chainId].ShouldNotContain(id2);
         allScanIds[chainId].ShouldContain(id3);
 
-        await _blockScanAppService.UpgradeVersionAsync(appId);
+        await _blockScanAppService.UpgradeVersionAsync(appId, subscription.PendingVersion.Version);
         
         subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
         subscription.CurrentVersion.Version.ShouldBe(version3);
@@ -173,5 +173,68 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
         
         allScanIds = await blockScanManagerGrain.GetAllBlockPusherIdsAsync();
         allScanIds[chainId].ShouldNotContain(id3);
+    }
+
+    [Fact]
+    public async Task Scan_MultiChain_Test()
+    {
+        var chainId = "AELF";
+        var appId = (await _appService.CreateAsync(new CreateAppDto { AppName = "AppId" })).AppId;
+        var subscriptionInput = new SubscriptionManifestDto()
+        {
+            SubscriptionItems = new List<SubscriptionDto>()
+            {
+                new()
+                {
+                    ChainId = chainId,
+                    StartBlockNumber = 100,
+                    OnlyConfirmed = true
+                },
+                new()
+                {
+                    ChainId = "tDVV",
+                    StartBlockNumber = 100,
+                    OnlyConfirmed = true
+                }
+            }
+        };
+
+        var version1 = await _subscriptionAppService.AddSubscriptionAsync(appId, subscriptionInput, new byte[1], null);
+
+        var subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
+        subscription.CurrentVersion.Version.ShouldBe(version1);
+        subscription.CurrentVersion.SubscriptionManifest.SubscriptionItems[0].StartBlockNumber.ShouldBe(100);
+        subscription.PendingVersion.ShouldBeNull();
+        
+        subscription = await _blockScanAppService.GetSubscriptionAsync(appId);
+        subscription.CurrentVersion.Version.ShouldBe(version1);
+        subscription.PendingVersion.ShouldBeNull();
+
+        var streamIds = await _blockScanAppService.GetMessageStreamIdsAsync(appId, version1, chainId);
+        var id1 = GrainIdHelper.GenerateBlockPusherGrainId(appId, version1, chainId);
+        var blockScanGrain = _clusterClient.GetGrain<IBlockPusherInfoGrain>(id1);
+        var streamId = await blockScanGrain.GetMessageStreamIdAsync();
+        streamIds.Count.ShouldBe(1);
+        streamIds[0].ShouldBe(streamId);
+
+        await _blockScanAppService.StartScanAsync(appId, version1, chainId);
+
+        var blockScanManagerGrain =
+            _clusterClient.GetGrain<IBlockPusherManagerGrain>(GrainIdHelper.GenerateBlockPusherManagerGrainId());
+        var scanIds = await blockScanManagerGrain.GetAllBlockPusherIdsAsync();
+        scanIds[chainId].Count.ShouldBe(1);
+        scanIds[chainId].ShouldContain(id1);
+
+        var scanAppGrain =
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var versionStatus = await scanAppGrain.GetSubscriptionStatusAsync(version1);
+        versionStatus.ShouldBe(SubscriptionStatus.Started);
+
+        var token = await blockScanGrain.GetPushTokenAsync();
+        var isRunning = await _blockScanAppService.IsRunningAsync(chainId, appId, version1, token);
+        isRunning.ShouldBeTrue();
+        
+        isRunning = await _blockScanAppService.IsRunningAsync("tDVV", appId, version1, token);
+        isRunning.ShouldBeFalse();
     }
 }

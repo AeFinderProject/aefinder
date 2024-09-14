@@ -74,6 +74,7 @@ public class AeFinderAppModule : AbpModule
         var appInfoProvider = context.ServiceProvider.GetRequiredService<IAppInfoProvider>();
         appInfoProvider.SetAppId(appInfoOptions.AppId);
         appInfoProvider.SetVersion(appInfoOptions.Version);
+        appInfoProvider.SetChainId(appInfoOptions.ChainId);
     }
     
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
@@ -85,7 +86,7 @@ public class AeFinderAppModule : AbpModule
             AsyncHelper.RunSync(async () => await CreateIndexAsync(context.ServiceProvider, appInfoOptions.AppId, appInfoOptions.Version));
             AsyncHelper.RunSync(async () => await InitAppAttachmentValuesAsync(context.ServiceProvider,appInfoOptions.AppId, appInfoOptions.Version));
             AsyncHelper.RunSync(blockStateInitializationProvider.InitializeAsync);
-            AsyncHelper.RunSync(async () => await InitBlockPushAsync(context, appInfoOptions.AppId, appInfoOptions.Version));
+            AsyncHelper.RunSync(async () => await InitBlockPushAsync(context, appInfoOptions.AppId, appInfoOptions.Version, appInfoOptions.ChainId));
         }
     }
 
@@ -131,18 +132,18 @@ public class AeFinderAppModule : AbpModule
             .Cast<Type>().ToList();
     }
 
-    private async Task InitBlockPushAsync(ApplicationInitializationContext context, string appId, string version)
+    private async Task InitBlockPushAsync(ApplicationInitializationContext context, string appId, string version, string chainId)
     {
         var blockScanService = context.ServiceProvider.GetRequiredService<IBlockScanAppService>();
         var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
         var subscribedBlockHandler = context.ServiceProvider.GetRequiredService<ISubscribedBlockHandler>();
-        var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(appId, version);
+        var messageStreamIds = await blockScanService.GetMessageStreamIdsAsync(appId, version, chainId);
         foreach (var streamId in messageStreamIds)
         {
             await SubscribeStreamAsync(appId, streamId, subscribedBlockHandler, clusterClient);
         }
 
-        await blockScanService.StartScanAsync(appId, version);
+        await blockScanService.StartScanAsync(appId, version, chainId);
     }
 
     private async Task SubscribeStreamAsync(string appId, Guid streamId,

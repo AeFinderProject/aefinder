@@ -4,16 +4,30 @@ namespace AeFinder.Kubernetes.ResourceDefinition;
 
 public class ConfigMapHelper
 {
-    public static string GetAppSettingConfigMapName(string appId, string version, string clientType)
+    public static string GetAppSettingConfigMapName(string appId, string version, string clientType,
+        string chainId)
     {
         appId = appId.Replace("_", "-");
-        return $"appsettings-config-{appId}-{version}-{clientType}".ToLower();
+        var name = $"appsettings-config-{appId}-{version}-{clientType}";
+        if (!string.IsNullOrWhiteSpace(chainId))
+        {
+            name += $"-{chainId}";
+        }
+
+        return name.ToLower();
     }
 
-    public static string GetAppFileBeatConfigMapName(string appId, string version, string clientType)
+    public static string GetAppFileBeatConfigMapName(string appId, string version, string clientType,
+        string chainId)
     {
         appId = appId.Replace("_", "-");
-        return $"filebeat-config-{appId}-{version}-{clientType}".ToLower();
+        var name =  $"filebeat-config-{appId}-{version}-{clientType}";
+        if (!string.IsNullOrWhiteSpace(chainId))
+        {
+            name += $"-{chainId}";
+        }
+
+        return name.ToLower();
     }
 
     /// <summary>

@@ -47,7 +47,7 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
         var version = eventData.StopVersion;
         
         //destroy app pod
-        await _kubernetesAppManager.DestroyAppAsync(appId, version);
+        await _kubernetesAppManager.DestroyAppAsync(appId, version, eventData.StopVersionChainIds);
         
         //update app info index of stopped version
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));

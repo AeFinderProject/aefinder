@@ -167,15 +167,16 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         return true;
     }
 
-    public async Task UpgradeVersionAsync()
+    public async Task UpgradeVersionAsync(string version)
     {
         await ReadStateAsync();
-        await BeginChangingStateAsync();
-
-        if (State.PendingVersion == null)
+        
+        if (State.PendingVersion == null || version != State.PendingVersion)
         {
             return;
         }
+        
+        await BeginChangingStateAsync();
         
         if (State.CurrentVersion != null)
         {

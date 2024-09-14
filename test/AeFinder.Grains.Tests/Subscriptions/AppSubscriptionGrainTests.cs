@@ -32,7 +32,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
         var appGrain = Cluster.Client.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var version1 = (await appGrain.AddSubscriptionAsync(subscriptionManifest1, new byte[] { })).NewVersion;
         
-        await appGrain.UpgradeVersionAsync();
+        await appGrain.UpgradeVersionAsync(version1);
 
         var subscription1 = await appGrain.GetSubscriptionAsync(version1);
         subscription1.SubscriptionItems[0].ChainId.ShouldBe(chainId);
@@ -99,7 +99,7 @@ public class AppSubscriptionGrainTests : AeFinderGrainTestBase
         isAvailable = await appGrain.IsRunningAsync(version2, chainId, scanToken2);
         isAvailable.ShouldBeFalse();
 
-        await appGrain.UpgradeVersionAsync();
+        await appGrain.UpgradeVersionAsync(version2);
         allSubscriptionsAsync = await appGrain.GetAllSubscriptionAsync();
         allSubscriptionsAsync.CurrentVersion.Version.ShouldBe(version2);
         allSubscriptionsAsync.PendingVersion.ShouldBeNull();
