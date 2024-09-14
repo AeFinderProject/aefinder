@@ -4,9 +4,9 @@ using TokenAeIndexer.GraphQL;
 
 namespace TokenAeIndexer;
 
-public class TokenAeIndexerMapperProfile : Profile
+public class TokenAeIndexerAutoMapperProfile : Profile
 {
-    public TokenAeIndexerMapperProfile()
+    public TokenAeIndexerAutoMapperProfile()
     {
         CreateMap<Account, AccountDto>();
         CreateMap<TransferRecord, TransferRecordDto>();

@@ -4,7 +4,7 @@ using AutoMapper;
 
 namespace AeIndexerTemplate;
 
-public class AeIndexerTemplateProfile : Profile
+public class AeIndexerTemplateAutoMapperProfile : Profile
 {
     public AeIndexerTemplateProfile()
     {
