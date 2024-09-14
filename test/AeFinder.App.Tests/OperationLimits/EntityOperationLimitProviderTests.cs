@@ -23,7 +23,7 @@ public class EntityOperationLimitProviderTests : AeFinderAppTestBase
             _entityOperationLimitProvider.Check(entity);
         }
         
-        Assert.Throws<ApplicationException>(() => _entityOperationLimitProvider.Check(entity));
+        Assert.Throws<OperationLimitException>(() => _entityOperationLimitProvider.Check(entity));
         
         _operationLimitManager.ResetAll();
         _entityOperationLimitProvider.Check(entity);
@@ -34,7 +34,7 @@ public class EntityOperationLimitProviderTests : AeFinderAppTestBase
             name += "0123456789";
         }
         entity = new {Name = name};
-        Assert.Throws<ApplicationException>(() => _entityOperationLimitProvider.Check(entity));
+        Assert.Throws<OperationLimitException>(() => _entityOperationLimitProvider.Check(entity));
 
     }
 }
