@@ -45,21 +45,21 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
             return;
         }
 
-        if (!await IsThresholdExceededAsync())
+        if (!await IsCurrentInstanceThresholdExceededAsync())
         {
             return;
         }
 
         await UpdateCurrentVersionConfirmedBlockHeightsAsync();
 
-        if (!await IsThresholdExceededAsync())
+        if (!await IsAllInstanceThresholdExceededAsync())
         {
             return;
         }
         
         await _clusterClient
             .GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(_appInfoProvider.AppId))
-            .UpgradeVersionAsync();
+            .UpgradeVersionAsync(_appInfoProvider.Version);
         
         _logger.LogInformation("Upgrade CurrentVersion from {currentVersion} to {pendingVersion}", _currentVersion,
             _appInfoProvider.Version);
@@ -79,12 +79,48 @@ public class VersionUpgradeProvider : IVersionUpgradeProvider, ISingletonDepende
             .ToList();
     }
 
-    private async Task<bool> IsThresholdExceededAsync()
+    private async Task<bool> IsCurrentInstanceThresholdExceededAsync()
     {
         foreach (var chainId in _pendingVersionChains)
         {
+            if (!_appInfoProvider.ChainId.IsNullOrWhiteSpace() && _appInfoProvider.ChainId != chainId)
+            {
+                continue;
+            }
+            
             var pendingVersionConfirmedBlockHeight =
                 (await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId))?.Block.BlockHeight;
+            if (pendingVersionConfirmedBlockHeight == null ||
+                pendingVersionConfirmedBlockHeight.Value + UpgradeHeightThreshold <
+                _currentVersionConfirmedBlockHeights.GetValueOrDefault(chainId, 0))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private async Task<bool> IsAllInstanceThresholdExceededAsync()
+    {
+        foreach (var chainId in _pendingVersionChains)
+        {
+            long? pendingVersionConfirmedBlockHeight = null;
+            if (!_appInfoProvider.ChainId.IsNullOrWhiteSpace() && _appInfoProvider.ChainId != chainId)
+            {
+                var grain = _clusterClient.GetGrain<IAppBlockStateSetStatusGrain>(
+                    GrainIdHelper.GenerateAppBlockStateSetStatusGrainId(_appInfoProvider.AppId,
+                        _appInfoProvider.Version, chainId));
+                var status = await grain.GetBlockStateSetStatusAsync();
+                pendingVersionConfirmedBlockHeight = status.LastIrreversibleBlockHeight;
+
+            }
+            else
+            {
+                pendingVersionConfirmedBlockHeight =
+                    (await _appBlockStateSetProvider.GetLastIrreversibleBlockStateSetAsync(chainId))?.Block.BlockHeight;
+            }
+
             if (pendingVersionConfirmedBlockHeight == null ||
                 pendingVersionConfirmedBlockHeight.Value + UpgradeHeightThreshold <
                 _currentVersionConfirmedBlockHeights.GetValueOrDefault(chainId, 0))

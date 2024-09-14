@@ -2,6 +2,7 @@ using AeFinder.BlockChainEventHandler.DTOs;
 using AeFinder.BlockChainEventHandler.Processors;
 using AeFinder.Grains.Grain.Blocks;
 using AeFinder.Orleans.TestBase;
+using AElf.OpenTelemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.EventBus;
 using Volo.Abp.EventBus.Distributed;
@@ -13,6 +14,7 @@ namespace AeFinder.BlockChainEventHandler;
     typeof(AeFinderBlockChainEventHandlerCoreModule),
     typeof(AbpEventBusModule),
     typeof(AeFinderOrleansTestBaseModule),
+    typeof(OpenTelemetryModule),
     typeof(AeFinderDomainModule))]
 public class AeFinderBlockChainEventHandlerCoreTestModule:AbpModule
 {

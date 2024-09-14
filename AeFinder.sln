@@ -71,7 +71,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.CodeOps.Tests", "t
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{7AD57916-6546-4CC5-B6F1-F7AEAA526DE3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenApp", "samples\TokenApp\TokenApp.csproj", "{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenAeIndexer", "samples\TokenAeIndexer\TokenAeIndexer.csproj", "{5A4743DF-BC69-4CCE-B8CE-29F04DCB7F43}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AeFinder.BackgroundWorker", "src\AeFinder.BackgroundWorker\AeFinder.BackgroundWorker.csproj", "{3DAA91B3-2610-4138-B908-FB4917C86FDF}"
 EndProject

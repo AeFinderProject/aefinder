@@ -51,6 +51,11 @@ public class AppBlockStateInitializationProvider : IAppBlockStateInitializationP
         var subscription = await appSubscriptionGrain.GetSubscriptionAsync(_appInfoProvider.Version);
         foreach (var item in subscription.SubscriptionItems)
         {
+            if (!_appInfoProvider.ChainId.IsNullOrWhiteSpace() && item.ChainId != _appInfoProvider.ChainId)
+            {
+                continue;
+            }
+            
             await RollbackToLibAsync(item.ChainId);
             _processingStatusProvider.SetStatus(_appInfoProvider.AppId, _appInfoProvider.Version, item.ChainId,
                 ProcessingStatus.Running);

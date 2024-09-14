@@ -50,12 +50,16 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
         appLimitInfoIndex.ResourceLimit.AppQueryPodRequestCpuCore = eventData.AppQueryPodRequestCpuCore;
         appLimitInfoIndex.ResourceLimit.AppQueryPodRequestMemory = eventData.AppQueryPodRequestMemory;
         appLimitInfoIndex.ResourceLimit.AppPodReplicas = eventData.AppPodReplicas;
+        appLimitInfoIndex.ResourceLimit.EnableMultipleInstances = eventData.EnableMultipleInstances;
         appLimitInfoIndex.OperationLimit = new OperationLimitInfo();
         appLimitInfoIndex.OperationLimit.MaxEntityCallCount = eventData.MaxEntityCallCount;
         appLimitInfoIndex.OperationLimit.MaxEntitySize = eventData.MaxEntitySize;
         appLimitInfoIndex.OperationLimit.MaxLogCallCount = eventData.MaxLogCallCount;
         appLimitInfoIndex.OperationLimit.MaxLogSize = eventData.MaxLogSize;
         appLimitInfoIndex.OperationLimit.MaxContractCallCount = eventData.MaxContractCallCount;
+        appLimitInfoIndex.DeployLimit = new DeployLimitInfo();
+        appLimitInfoIndex.DeployLimit.MaxAppCodeSize = eventData.MaxAppCodeSize;
+        appLimitInfoIndex.DeployLimit.MaxAppAttachmentSize = eventData.MaxAppAttachmentSize;
         await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
     }
 }

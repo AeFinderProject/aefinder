@@ -5,6 +5,7 @@ using AeFinder.Apps.Dto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Options;
+using GraphQL;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp.DependencyInjection;
@@ -16,13 +17,16 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider, ISingletonDep
     private readonly OperationLimitOptions _operationLimitOptions;
     private readonly IClusterClient _clusterClient;
     private readonly KubernetesOptions _kubernetesOptions;
+    private readonly AppDeployOptions _appDeployOptions;
 
     public AppResourceLimitProvider(IOptionsSnapshot<OperationLimitOptions> operationLimitOptions,
-        IClusterClient clusterClient, IOptionsSnapshot<KubernetesOptions> kubernetesOptions)
+        IClusterClient clusterClient, IOptionsSnapshot<KubernetesOptions> kubernetesOptions,
+        IOptionsSnapshot<AppDeployOptions> appDeployOptions)
     {
         _operationLimitOptions = operationLimitOptions.Value;
         _clusterClient = clusterClient;
         _kubernetesOptions = kubernetesOptions.Value;
+        _appDeployOptions = appDeployOptions.Value;
     }
 
     public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
@@ -88,6 +92,16 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider, ISingletonDep
         if (resourceLimitDto.AppPodReplicas <= 0)
         {
             resourceLimitDto.AppPodReplicas = _kubernetesOptions.AppPodReplicas;
+        }
+        
+        if (resourceLimitDto.MaxAppCodeSize <= 0)
+        {
+            resourceLimitDto.MaxAppCodeSize = _appDeployOptions.MaxAppCodeSize;
+        }
+        
+        if (resourceLimitDto.MaxAppAttachmentSize <= 0)
+        {
+            resourceLimitDto.MaxAppAttachmentSize = _appDeployOptions.MaxAppAttachmentSize;
         }
 
         return resourceLimitDto;
