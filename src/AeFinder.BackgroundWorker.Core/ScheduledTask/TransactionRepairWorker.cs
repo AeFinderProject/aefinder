@@ -86,7 +86,7 @@ public class TransactionRepairWorker : AsyncPeriodicBackgroundWorkerBase
             _prcessedHeight[chainId] = block.BlockHeight;
         }
 
-        await _transactionIndexRepository.AddOrUpdateManyAsync(toUpdateTxs, skipRouteKey: true);
+        await _transactionIndexRepository.AddOrUpdateManyAsync(toUpdateTxs);
         Logger.LogDebug("Processing success! ChainId: {ChainId}, Height: {Height}", chainId, _prcessedHeight[chainId]);
     }
 
