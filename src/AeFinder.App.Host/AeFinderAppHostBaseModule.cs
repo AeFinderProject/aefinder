@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
+using AeFinder.App.Deploy;
 using AeFinder.App.Metrics;
+using AeFinder.Apps;
 using AeFinder.MongoDb;
 using AElf.OpenTelemetry;
 using GraphQL;
@@ -50,6 +52,7 @@ public class AeFinderAppHostBaseModule : AbpModule
                 builder.AddPrometheusExporter();
             });
         Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
+        context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
     }
 
     private void ConfigureCors(ServiceConfigurationContext context, IConfiguration configuration)
