@@ -101,6 +101,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppLimitInfoIndex, AppResourceLimitIndexDto>();
         CreateMap<ResourceLimitInfo, ResourceLimitDto>();
         CreateMap<OperationLimitInfo, OperationLimitDto>();
+        CreateMap<DeployLimitInfo, DeployLimitInfoDto>();
         
         CreateMap<AppSubscriptionPodIndex, AppResourceDto>();
         

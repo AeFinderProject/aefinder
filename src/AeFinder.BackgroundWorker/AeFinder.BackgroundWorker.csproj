@@ -33,6 +33,7 @@
     <ItemGroup>
         <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
         <ProjectReference Include="..\AeFinder.Application\AeFinder.Application.csproj" />
+        <ProjectReference Include="..\AeFinder.BackgroundWorker.Core\AeFinder.BackgroundWorker.Core.csproj" />
         <ProjectReference Include="..\AeFinder.Kubernetes\AeFinder.Kubernetes.csproj" />
         <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
     </ItemGroup>

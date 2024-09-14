@@ -159,7 +159,13 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
                 AppFullPodRequestMemory = "AppFullPodRequestMemory",
                 AppQueryPodRequestMemory = "AppQueryPodRequestMemory",
                 AppFullPodRequestCpuCore = "AppFullPodRequestCpuCore",
-                AppQueryPodRequestCpuCore = "AppQueryPodRequestCpuCore"
+                AppQueryPodRequestCpuCore = "AppQueryPodRequestCpuCore",
+                EnableMultipleInstances = true
+            },
+            DeployLimit = new DeployLimitInfo()
+            {
+                MaxAppCodeSize = 800000,
+                MaxAppAttachmentSize = 10240000
             }
         };
         await _appLimitIndexRepository.AddAsync(index);
@@ -181,5 +187,8 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         limit.Items[0].ResourceLimit.AppQueryPodRequestMemory.ShouldBe(index.ResourceLimit.AppQueryPodRequestMemory);
         limit.Items[0].ResourceLimit.AppFullPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppFullPodRequestCpuCore);
         limit.Items[0].ResourceLimit.AppQueryPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppQueryPodRequestCpuCore);
+        limit.Items[0].DeployLimit.MaxAppCodeSize.ShouldBe(index.DeployLimit.MaxAppCodeSize);
+        limit.Items[0].DeployLimit.MaxAppAttachmentSize.ShouldBe(index.DeployLimit.MaxAppAttachmentSize);
+        limit.Items[0].ResourceLimit.EnableMultipleInstances.ShouldBeTrue();
     }
 }
