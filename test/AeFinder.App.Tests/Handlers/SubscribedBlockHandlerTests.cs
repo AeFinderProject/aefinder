@@ -308,7 +308,8 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                 chainId));
         
         var blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", chainId);
-        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, currentVersion, chainId,ProcessingStatus.Running);
+
+        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, currentVersion, chainId, ProcessingStatus.Running);
         
         await _blockScanAppService.StartScanAsync(_appInfoProvider.AppId, currentVersion, chainId);
         
@@ -380,7 +381,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                 chainId));
         
         var blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", chainId,confirmed: true);
-        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, pendingVersion, chainId,ProcessingStatus.Running);
+        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, pendingVersion, chainId, ProcessingStatus.Running);
         
         await _blockScanAppService.StartScanAsync(_appInfoProvider.AppId, pendingVersion);
         
@@ -466,7 +467,8 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                 chainId));
         
         var blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", chainId,confirmed: true);
-        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, pendingVersion, chainId,ProcessingStatus.Running);
+
+        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, pendingVersion, chainId, ProcessingStatus.Running);
         
         await _blockScanAppService.StartScanAsync(_appInfoProvider.AppId, pendingVersion, chainId);
         
@@ -493,7 +495,8 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
 
        
         _appInfoProvider.SetChainId(sideChainId);
-        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, pendingVersion, sideChainId,ProcessingStatus.Running);
+        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, pendingVersion, sideChainId,
+            ProcessingStatus.Running);
 
         blockPusherInfoGrain = Cluster.Client.GetGrain<IBlockPusherInfoGrain>(
             GrainIdHelper.GenerateBlockPusherGrainId(_appInfoProvider.AppId, pendingVersion, sideChainId));
@@ -503,7 +506,7 @@ public class SubscribedBlockHandlerTests : AeFinderAppTestBase
                 sideChainId));
         
         blocks = BlockCreationHelper.CreateBlock(10000, 10, "BlockHash", sideChainId,confirmed: true);
-        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, pendingVersion, chainId,ProcessingStatus.Running);
+        _processingStatusProvider.SetStatus(_appInfoProvider.AppId, pendingVersion, chainId, ProcessingStatus.Running);
         
         await _blockScanAppService.StartScanAsync(_appInfoProvider.AppId, pendingVersion, sideChainId);
         

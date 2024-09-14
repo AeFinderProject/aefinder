@@ -7,11 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-    <PackageReference Include="AElf.EntityMapping" Version="1.1.1-beta" />
-    <PackageReference Include="AElf.EntityMapping.Elasticsearch" Version="1.1.1-beta" />
-    </ItemGroup>
-    
-    <ItemGroup>
       <ProjectReference Include="..\AeFinder.Application\AeFinder.Application.csproj" />
       <ProjectReference Include="..\AeFinder.Domain\AeFinder.Domain.csproj" />
       <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.AspNetCore.Http;
@@ -12,7 +13,7 @@ public class GraphQLHttpMetricsMiddleware
     private readonly Counter<long> _graphQLRequestsCounter;
     private readonly IClock _clock;
     private readonly IAppInfoProvider _appInfoProvider;
-
+    
     public GraphQLHttpMetricsMiddleware(RequestDelegate next, Instrumentation instrumentation, IClock clock, IAppInfoProvider appInfoProvider)
     {
         _next = next;

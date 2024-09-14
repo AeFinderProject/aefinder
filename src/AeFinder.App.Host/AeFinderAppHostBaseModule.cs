@@ -71,14 +71,7 @@ public class AeFinderAppHostBaseModule : AbpModule
                     .WithAbpExposedHeaders()
                     .SetIsOriginAllowedToAllowWildcardSubdomains()
                     .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
-            });
-            options.AddPolicy("AllowAll", builder =>
-            {
-                builder.AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader();
+                    .AllowAnyMethod();
             });
         });
     }
@@ -100,8 +93,6 @@ public class AeFinderAppHostBaseModule : AbpModule
         var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
         var graphqlPath = $"/{appInfoOptions.AppId}/{appInfoOptions.Version}/graphql";
         
-        app.UseRouting();
-        app.UseCors("AllowAll");
         
         app.UseGraphQLHttpMetrics(graphqlPath);
         app.UseGraphQL(graphqlPath);
@@ -121,6 +112,8 @@ public class AeFinderAppHostBaseModule : AbpModule
             }
         );
         app.UseOpenTelemetryPrometheusScrapingEndpoint($"/{appInfoOptions.AppId}/{appInfoOptions.Version}/metrics");
+        app.UseRouting();
+        app.UseCors();
         app.UseConfiguredEndpoints();
     }
 

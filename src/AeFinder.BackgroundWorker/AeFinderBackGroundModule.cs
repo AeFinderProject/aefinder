@@ -84,8 +84,8 @@ public class AeFinderBackGroundModule : AbpModule
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppDataClearWorker>());
-        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppInfoSyncWorker>());
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppRescanCheckWorker>());
+        // AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppInfoSyncWorker>());
 
         var transactionRepairOptions = context.ServiceProvider
             .GetRequiredService<IOptionsSnapshot<TransactionRepairOptions>>().Value;
