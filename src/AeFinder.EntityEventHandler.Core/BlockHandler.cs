@@ -7,6 +7,7 @@ using AeFinder.Block.Dtos;
 using AeFinder.BlockSync;
 using AeFinder.Entities.Es;
 using AeFinder.Etos;
+using AeFinder.Metrics;
 using AElf.EntityMapping.Repositories;
 using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.Extensions.Logging;
@@ -30,6 +31,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     private readonly IBlockIndexHandler _blockIndexHandler;
     private readonly IBlockSyncAppService _blockSyncAppService;
     private readonly IEntityMappingRepository<SummaryIndex, string> _summaryIndexRepository;
+    private readonly IElapsedTimeRecorder _elapsedTimeRecorder;
 
     public BlockHandler(
         IEntityMappingRepository<BlockIndex, string> blockIndexRepository,
@@ -37,7 +39,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         IEntityMappingRepository<LogEventIndex, string> logEventIndexRepository,
         ILogger<BlockHandler> logger,
         IObjectMapper objectMapper, IBlockIndexHandler blockIndexHandler, IBlockSyncAppService blockSyncAppService,
-        IEntityMappingRepository<SummaryIndex, string> summaryIndexRepository)
+        IEntityMappingRepository<SummaryIndex, string> summaryIndexRepository, IElapsedTimeRecorder elapsedTimeRecorder)
     {
         _blockIndexRepository = blockIndexRepository;
         _logger = logger;
@@ -47,12 +49,14 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         _blockIndexHandler = blockIndexHandler;
         _blockSyncAppService = blockSyncAppService;
         _summaryIndexRepository = summaryIndexRepository;
+        _elapsedTimeRecorder = elapsedTimeRecorder;
     }
 
     public virtual async Task HandleEventAsync(NewBlocksEto eventData)
     {
+        var firstBlock = eventData.NewBlocks.First();
         _logger.LogInformation(
-            $"blocks is adding, start BlockNumber: {eventData.NewBlocks.First().BlockHeight} , Confirmed: {eventData.NewBlocks.First().Confirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockHeight}");
+            $"blocks is adding, start BlockNumber: {firstBlock.BlockHeight} , Confirmed: {firstBlock.Confirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockHeight}");
 
         try
         {
@@ -111,6 +115,8 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
             tasks.Add( _summaryIndexRepository.AddOrUpdateAsync(summaryIndex));
 
             await tasks.WhenAll();
+            _elapsedTimeRecorder.Record("ReceiveAndProcessBlockChainData",
+                (long)(DateTime.UtcNow - firstBlock.BlockTime).TotalMilliseconds);
             
             var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
 
@@ -125,7 +131,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         catch (Exception e)
         {
             _logger.LogError(e,
-                $"Handle newBlocks add event error:{e.Message}，start BlockHeight: {eventData.NewBlocks.First().BlockHeight}, end BlockHeight: {eventData.NewBlocks.Last().BlockHeight},retrying...");
+                $"Handle newBlocks add event error:{e.Message}，start BlockHeight: {firstBlock.BlockHeight}, end BlockHeight: {eventData.NewBlocks.Last().BlockHeight},retrying...");
             await HandleEventAsync(eventData);
         }
     }
