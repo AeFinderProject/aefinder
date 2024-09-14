@@ -49,7 +49,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="../../templates/AeFinderAppTemplate/**" CopyToPublishDirectory="PreserveNewest" Link="DevTemplate/template/%(RecursiveDir)/%(Filename)%(Extension)" />
+    <Content Include="../../templates/AeIndexerTemplate/**" CopyToPublishDirectory="PreserveNewest" Link="DevTemplate/template/%(RecursiveDir)/%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>
