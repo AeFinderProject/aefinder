@@ -12,6 +12,6 @@ public class AeFinderApplicationAppTestModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.AddTransient<IOrganizationAppService, MockOrganizationAppService>();
+        // context.Services.AddTransient<IOrganizationAppService, MockOrganizationAppService>();
     }
 }

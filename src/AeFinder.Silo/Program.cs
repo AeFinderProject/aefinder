@@ -1,4 +1,5 @@
 ﻿using AeFinder.Silo.Extensions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -11,8 +12,12 @@ public class Program
 {
     public async static Task<int> Main(string[] args)
     {
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .Build();
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Is(LogEventLevel.Debug)
+            .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
             .WriteTo.Async(c =>
                 c.Console(

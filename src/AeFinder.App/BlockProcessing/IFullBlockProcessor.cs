@@ -57,6 +57,10 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                         ChainId = block.ChainId
                     });
             }
+            catch (OperationLimitException e)
+            {
+                throw new OperationLimitException("Block processing operation limited!", e);
+            }
             catch (Exception e)
             {
                 throw new AppProcessingException("Block processing failed!", e);
@@ -80,6 +84,10 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                             ChainId = block.ChainId,
                             Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block)
                         });
+                }
+                catch (OperationLimitException e)
+                {
+                    throw new OperationLimitException("Transaction processing operation limited!", e);
                 }
                 catch (Exception e)
                 {
@@ -113,6 +121,10 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                         Transaction = _objectMapper.Map<TransactionDto, Transaction>(transaction),
                         LogEvent = _objectMapper.Map<LogEventDto, LogEvent>(logEvent)
                     });
+                }
+                catch (OperationLimitException e)
+                {
+                    throw new OperationLimitException("Log event processing operation limited!", e);
                 }
                 catch (Exception e)
                 {

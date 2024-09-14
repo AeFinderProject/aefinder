@@ -88,6 +88,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppState, AppCreateEto>();
         CreateMap<AppState, AppUpdateEto>();
         CreateMap<OrganizationUnit, OrganizationUnitDto>();
+        CreateMap<OrganizationIndex, OrganizationIndexDto>();
         CreateMap<AppVersionInfo, AppVersion>();
 
         CreateMap<BlockWithTransactionDto, AppSubscribedBlockDto>();
@@ -100,6 +101,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppLimitInfoIndex, AppResourceLimitIndexDto>();
         CreateMap<ResourceLimitInfo, ResourceLimitDto>();
         CreateMap<OperationLimitInfo, OperationLimitDto>();
+        CreateMap<DeployLimitInfo, DeployLimitInfoDto>();
         
         CreateMap<AppSubscriptionPodIndex, AppResourceDto>();
         

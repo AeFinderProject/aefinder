@@ -25,7 +25,7 @@ public class ContractOperationLimitProvider : CallCountOperationLimitProvider, I
 
         if (CallCount > _options.MaxContractCallCount)
         {
-            throw new ApplicationException(
+            throw new OperationLimitException(
                 $"Too many contract calls. The maximum of calls allowed is {_options.MaxContractCallCount} per block.");
         }
     }

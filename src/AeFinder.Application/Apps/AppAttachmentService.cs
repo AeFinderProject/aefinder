@@ -7,8 +7,10 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AeFinder.AmazonCloud;
+using AeFinder.App.Deploy;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -23,14 +25,14 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
 {
     private readonly IClusterClient _clusterClient;
     private readonly IAwsS3ClientService _awsS3ClientService;
-    private readonly AppDeployOptions _appDeployOptions;
+    private readonly IAppResourceLimitProvider _appResourceLimitProvider;
 
-    public AppAttachmentService(IClusterClient clusterClient, IOptionsSnapshot<AppDeployOptions> appDeployOptions,
-        IAwsS3ClientService awsS3ClientService)
+    public AppAttachmentService(IClusterClient clusterClient,
+        IAppResourceLimitProvider appResourceLimitProvider, IAwsS3ClientService awsS3ClientService)
     {
         _clusterClient = clusterClient;
         _awsS3ClientService = awsS3ClientService;
-        _appDeployOptions = appDeployOptions.Value;
+        _appResourceLimitProvider = appResourceLimitProvider;
     }
 
     private string GenerateAppAwsS3FileName(string version, string fileName)
@@ -85,6 +87,7 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                 throw new UserFriendlyException("File name can only contain letters, numbers, underscores, hyphens.");
             }
 
+            var resourceLimitInfo = await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
             if (isZipFile)
             {
                 fileNameWithExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension);
@@ -97,12 +100,12 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                 var fileStream = ZipHelper.ConvertStringToStream(jsonData);
                 fileSize = fileStream.Length;
                 totalFileSize = totalFileSize + fileSize;
-                Logger.LogInformation("Decompress file name: {0} extension: {1} size: {2} ,totalSize: {3}",
+                Logger.LogInformation("Decompress file name: {0} extension: {1} size: {2} ,totalSize: {3} limitSize: {4}",
                     fileNameWithExtension, extension,
-                    fileSize, totalFileSize);
-                if (totalFileSize > _appDeployOptions.MaxAppAttachmentSize)
+                    fileSize, totalFileSize, resourceLimitInfo.MaxAppAttachmentSize);
+                if (totalFileSize > resourceLimitInfo.MaxAppAttachmentSize)
                 {
-                    throw new UserFriendlyException("Attachment's total size is too Large.");
+                    throw new UserFriendlyException($"Attachment's total size is too Large. limit size {resourceLimitInfo.MaxAppAttachmentSize} bytes");
                 }
                 await UploadAppAttachmentAsync(fileStream, appId, version, fileKey, fileNameWithExtension,
                     fileSize);
@@ -113,7 +116,7 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             if (isJsonFile)
             {
                 totalFileSize = totalFileSize + fileSize;
-                if (totalFileSize > _appDeployOptions.MaxAppAttachmentSize)
+                if (totalFileSize > resourceLimitInfo.MaxAppAttachmentSize)
                 {
                     throw new UserFriendlyException("Attachment's total size is too Large.");
                 }

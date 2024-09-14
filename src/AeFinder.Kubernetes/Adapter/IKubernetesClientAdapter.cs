@@ -64,4 +64,11 @@ public interface IKubernetesClientAdapter
 
     Task<V1Deployment> ReplaceNamespacedDeploymentAsync(V1Deployment deployment, string name, string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
+
+    Task<V1ConfigMap> ReadNamespacedConfigMapAsync(string name, string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken));
+
+    Task<V1ConfigMap> ReplaceNamespacedConfigMapAsync(V1ConfigMap configMap, string name,
+        string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken));
 }

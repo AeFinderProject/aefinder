@@ -20,7 +20,6 @@ public class DevelopmentTemplateController : AeFinderController
     }
     
     [HttpPost]
-    [Authorize]
     public async Task<FileContentResult> GenerateProjectAsync(GenerateProjectDto input)
     {
         return await _developmentTemplateAppService.GenerateProjectAsync(input);

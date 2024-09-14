@@ -166,4 +166,19 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
         return await _k8sClient.ReplaceNamespacedDeploymentAsync(deployment, name, namespaceParameter,
             cancellationToken: cancellationToken);
     }
+
+    public async Task<V1ConfigMap> ReadNamespacedConfigMapAsync(string name, string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return await _k8sClient.ReadNamespacedConfigMapAsync(name, namespaceParameter,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task<V1ConfigMap> ReplaceNamespacedConfigMapAsync(V1ConfigMap configMap, string name,
+        string namespaceParameter,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return await _k8sClient.ReplaceNamespacedConfigMapAsync(configMap, name, namespaceParameter,
+            cancellationToken: cancellationToken);
+    }
 }

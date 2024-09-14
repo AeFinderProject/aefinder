@@ -91,7 +91,8 @@ public class AppExtensionInfoSyncWorker : AsyncPeriodicBackgroundWorkerBase, ISi
                         AppFullPodRequestCpuCore = resourceLimitDto.AppFullPodRequestCpuCore,
                         AppFullPodRequestMemory=resourceLimitDto.AppFullPodRequestMemory,
                         AppQueryPodRequestCpuCore = resourceLimitDto.AppQueryPodRequestCpuCore,
-                        AppQueryPodRequestMemory = resourceLimitDto.AppQueryPodRequestMemory
+                        AppQueryPodRequestMemory = resourceLimitDto.AppQueryPodRequestMemory,
+                        EnableMultipleInstances = resourceLimitDto.EnableMultipleInstances
                     };
                 
                     appLimitInfoIndex.OperationLimit = new OperationLimitInfo()
@@ -101,6 +102,12 @@ public class AppExtensionInfoSyncWorker : AsyncPeriodicBackgroundWorkerBase, ISi
                         MaxLogCallCount = resourceLimitDto.MaxLogCallCount,
                         MaxLogSize = resourceLimitDto.MaxLogSize,
                         MaxContractCallCount = resourceLimitDto.MaxContractCallCount
+                    };
+
+                    appLimitInfoIndex.DeployLimit = new DeployLimitInfo()
+                    {
+                        MaxAppCodeSize = resourceLimitDto.MaxAppCodeSize,
+                        MaxAppAttachmentSize = resourceLimitDto.MaxAppAttachmentSize
                     };
                     await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
                     _logger.LogInformation("[AppExtensionInfoSyncWorker] App limit info Synchronized: {0}.", appLimitInfoIndex.AppName);

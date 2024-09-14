@@ -1,6 +1,8 @@
 using AeFinder.App.BlockChain;
 using AeFinder.App.BlockState;
 using AeFinder.BlockScan;
+using AeFinder.User;
+using AeFinder.User.Dto;
 using AElf.EntityMapping.Elasticsearch;
 using AElf.EntityMapping.Elasticsearch.Options;
 using AElf.EntityMapping.Elasticsearch.Services;
@@ -66,9 +68,11 @@ public class AeFinderAppTestBaseModule : AbpModule
         var applicationBuilder = new ApplicationBuilder(context.Services.BuildServiceProvider());
         context.Services.AddObjectAccessor<IApplicationBuilder>(applicationBuilder);
         var mockBlockScanAppService = new Mock<IBlockScanAppService>();
-        mockBlockScanAppService.Setup(p => p.GetMessageStreamIdsAsync(It.IsAny<string>(), It.IsAny<string>()))
+        mockBlockScanAppService.Setup(p => p.GetMessageStreamIdsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(Task.FromResult(new List<Guid>()));
         context.Services.AddSingleton(mockBlockScanAppService.Object);
+        
+        
     }
 
     public override void OnPreApplicationInitialization(ApplicationInitializationContext context)

@@ -22,15 +22,15 @@ public class LogOperationLimitProviderTests: AeFinderAppTestBase
             _logOperationLimitProvider.CheckLog(null, "Test");
         }
         
-        Assert.Throws<ApplicationException>(() => _logOperationLimitProvider.CheckLog(null, "Test"));
+        Assert.Throws<OperationLimitException>(() => _logOperationLimitProvider.CheckLog(null, "Test"));
         
         _operationLimitManager.ResetAll();
         _logOperationLimitProvider.CheckLog(null, "Test");
         
         var message = "0123456789-";
-        Assert.Throws<ApplicationException>(() => _logOperationLimitProvider.CheckLog(new Exception(message), null));
-        Assert.Throws<ApplicationException>(() => _logOperationLimitProvider.CheckLog(null, message));
-        Assert.Throws<ApplicationException>(() => _logOperationLimitProvider.CheckLog(null, null,message));
+        Assert.Throws<OperationLimitException>(() => _logOperationLimitProvider.CheckLog(new Exception(message), null));
+        Assert.Throws<OperationLimitException>(() => _logOperationLimitProvider.CheckLog(null, message));
+        Assert.Throws<OperationLimitException>(() => _logOperationLimitProvider.CheckLog(null, null,message));
 
     }
 }

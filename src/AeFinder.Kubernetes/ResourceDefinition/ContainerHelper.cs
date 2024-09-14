@@ -2,9 +2,15 @@ namespace AeFinder.Kubernetes.ResourceDefinition;
 
 public class ContainerHelper
 {
-    public static string GetAppContainerName(string appId, string version,string clientType)
+    public static string GetAppContainerName(string appId, string version,string clientType, string chainId)
     {
         appId = appId.Replace("_", "-");
-        return $"container-{version}-{clientType}".ToLower();
+        var name = $"container-{version}-{clientType}";
+        if (!string.IsNullOrWhiteSpace(chainId))
+        {
+            name += $"-{chainId}";
+        }
+
+        return name.ToLower();
     }
 }

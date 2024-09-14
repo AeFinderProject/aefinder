@@ -17,4 +17,5 @@ public class AppLimitInfoIndex : AeFinderEntity<string>, IEntityMappingEntity
     [Keyword] public string AppName { get; set; }
     public ResourceLimitInfo ResourceLimit { get; set; }
     public OperationLimitInfo OperationLimit { get; set; }
+    public DeployLimitInfo DeployLimit { get; set; }
 }

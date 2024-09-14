@@ -29,6 +29,7 @@ public class KubernetesConstants
      public const string PlaceHolderAppId = "[AppId]";
      public const string PlaceHolderVersion = "[Version]";
      public const string PlaceHolderClientType = "[ClientType]";
+     public const string PlaceHolderChainId = "[ChainId]";
      public const string PlaceHolderNameSpace = "[NameSpace]";
      public const int AppContainerTargetPort = 8308;
      public const string PlaceHolderMaxEntityCallCount = "[MaxEntityCallCount]";
@@ -40,6 +41,8 @@ public class KubernetesConstants
      public const string FullPodMaxUnavailable = "1";
      public const string QueryPodMaxSurge = "50%";
      public const string QueryPodMaxUnavailable = "0";
+     public const string PlaceHolderEventBusClientName = "[EventBusClientName]";
+     public const string PlaceHolderEventBusExchangeName = "[EventBusExchangeName]";
      
      //Prometheus
      public const string MonitorLabelKey = "monitor";

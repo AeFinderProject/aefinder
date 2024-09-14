@@ -25,7 +25,7 @@ public class LogOperationLimitProvider : CallCountOperationLimitProvider, ILogOp
 
         if (CallCount > _options.MaxLogCallCount)
         {
-            throw new ApplicationException(
+            throw new OperationLimitException(
                 $"Too many log calls. The maximum of calls allowed is {_options.MaxLogCallCount} per block.");
         }
 
@@ -47,7 +47,7 @@ public class LogOperationLimitProvider : CallCountOperationLimitProvider, ILogOp
 
         if (size > _options.MaxLogSize)
         {
-            throw new ApplicationException(
+            throw new OperationLimitException(
                 $"Too large log. The log {size} exceeds the maximum value {_options.MaxLogSize}");
         }
     }

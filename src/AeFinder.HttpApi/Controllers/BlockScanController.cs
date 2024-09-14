@@ -67,8 +67,8 @@ public class BlockScanController : AeFinderController
     [HttpPost]
     [Route("upgrade")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public virtual async Task UpgradeVersionAsync(AppInput input)
+    public virtual async Task UpgradeVersionAsync(AppVersionInput input)
     {
-        await _blockScanAppService.UpgradeVersionAsync(input.AppId);
+        await _blockScanAppService.UpgradeVersionAsync(input.AppId, input.Version);
     }
 }

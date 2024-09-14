@@ -5,6 +5,7 @@ public class AppInfoOptions
     public string AppId { get; set; }
     public string Version { get; set; }
     public ClientType ClientType { get; set; } = ClientType.Full;
+    public string ChainId { get; set; }
 }
 
 public enum ClientType

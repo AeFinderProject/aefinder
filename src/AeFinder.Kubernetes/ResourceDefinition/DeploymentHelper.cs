@@ -4,22 +4,37 @@ namespace AeFinder.Kubernetes.ResourceDefinition;
 
 public class DeploymentHelper
 {
-    public static string GetAppDeploymentName(string appId, string version, string clientType)
+    public static string GetAppDeploymentName(string appId, string version, string clientType,
+        string chainId)
     {
         appId = appId.Replace("_", "-");
-        return $"deployment-{appId}-{version}-{clientType}".ToLower();
+        var name = $"deployment-{appId}-{version}-{clientType}";
+        if (!string.IsNullOrWhiteSpace(chainId))
+        {
+            name += $"-{chainId}";
+        }
+
+        return name.ToLower();
     }
-    
+
     /// <summary>
     /// label name must be no more than 63 characters
     /// </summary>
     /// <param name="appId"></param>
     /// <param name="version"></param>
     /// <param name="clientType"></param>
+    /// <param name="chainId"></param>
     /// <returns></returns>
-    public static string GetAppDeploymentLabelName(string version, string clientType)
+    public static string GetAppDeploymentLabelName(string version, string clientType,
+        string chainId)
     {
-        return $"deployment-{version}-{clientType}".ToLower();
+        var name = $"deployment-{version}-{clientType}";
+        if (!string.IsNullOrWhiteSpace(chainId))
+        {
+            name += $"-{chainId}";
+        }
+
+        return name.ToLower();
     }
 
     /// <summary>

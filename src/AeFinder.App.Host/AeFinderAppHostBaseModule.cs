@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
+using AeFinder.App.Deploy;
 using AeFinder.App.Metrics;
+using AeFinder.Apps;
 using AeFinder.MongoDb;
 using AElf.OpenTelemetry;
 using GraphQL;
@@ -50,6 +52,7 @@ public class AeFinderAppHostBaseModule : AbpModule
                 builder.AddPrometheusExporter();
             });
         Configure<TokenCleanupOptions>(x => x.IsCleanupEnabled = false);
+        context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
     }
 
     private void ConfigureCors(ServiceConfigurationContext context, IConfiguration configuration)
@@ -68,8 +71,7 @@ public class AeFinderAppHostBaseModule : AbpModule
                     .WithAbpExposedHeaders()
                     .SetIsOriginAllowedToAllowWildcardSubdomains()
                     .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
+                    .AllowAnyMethod();
             });
         });
     }
@@ -90,6 +92,8 @@ public class AeFinderAppHostBaseModule : AbpModule
         var app = context.GetApplicationBuilder();
         var appInfoOptions = context.ServiceProvider.GetRequiredService<IOptionsSnapshot<AppInfoOptions>>().Value;
         var graphqlPath = $"/{appInfoOptions.AppId}/{appInfoOptions.Version}/graphql";
+        
+        
         app.UseGraphQLHttpMetrics(graphqlPath);
         app.UseGraphQL(graphqlPath);
         app.UseGraphQLPlayground(

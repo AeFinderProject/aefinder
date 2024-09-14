@@ -1,5 +1,3 @@
-using AeFinder.BackgroundWorker.ScheduledTask;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Volo.Abp;
 

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using AeFinder.Apps;
 using AeFinder.Apps.Eto;
 using AeFinder.BlockScan;
@@ -167,15 +168,16 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         return true;
     }
 
-    public async Task UpgradeVersionAsync()
+    public async Task UpgradeVersionAsync(string version)
     {
         await ReadStateAsync();
-        await BeginChangingStateAsync();
-
-        if (State.PendingVersion == null)
+        
+        if (State.PendingVersion == null || version != State.PendingVersion)
         {
             return;
         }
+        
+        await BeginChangingStateAsync();
         
         if (State.CurrentVersion != null)
         {
@@ -219,6 +221,12 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
         await ReadStateAsync();
         State.SubscriptionInfos[version].Status = SubscriptionStatus.Started;
         await WriteStateAsync();
+
+        //Reset app subscription processing status
+        await GrainFactory
+            .GetGrain<IAppSubscriptionProcessingStatusGrain>(
+                GrainIdHelper.GenerateAppSubscriptionProcessingStatusGrainId(this.GetPrimaryKeyString(), version))
+            .ReSetProcessingStatusAsync(GetVersionSubscribedChainIds(version));
         
         //Publish app subscription update eto to background worker
         await _distributedEventBus.PublishAsync(new AppSubscriptionUpdateEto()
