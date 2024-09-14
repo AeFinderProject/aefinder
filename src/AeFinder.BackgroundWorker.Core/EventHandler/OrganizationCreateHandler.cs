@@ -14,11 +14,17 @@ public class OrganizationCreateHandler: IDistributedEventHandler<OrganizationCre
     {
         _entityMappingRepository = entityMappingRepository;
     }
-    
+
     public async Task HandleEventAsync(OrganizationCreateEto eventData)
     {
+        Guid organizationUnitGuid;
+        if (!Guid.TryParse(eventData.OrganizationId, out organizationUnitGuid))
+        {
+            throw new Exception($"Invalid OrganizationUnitId string: {eventData.OrganizationId}");
+        }
+
         var organizationIndex = new OrganizationIndex();
-        organizationIndex.OrganizationId = eventData.OrganizationId;
+        organizationIndex.OrganizationId = organizationUnitGuid.ToString();
         organizationIndex.OrganizationName = eventData.OrganizationName;
         organizationIndex.MaxAppCount = eventData.MaxAppCount;
         await _entityMappingRepository.AddOrUpdateAsync(organizationIndex);

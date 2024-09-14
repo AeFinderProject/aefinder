@@ -8,13 +8,14 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Identity;
 
 namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("OrganizationUnits")]
-[Route("api/organizationUnits")]
+[Route("api/organizations")]
 public class OrganizationUnitsController : AeFinderController
 {
     private readonly IOrganizationAppService _organizationAppService;
@@ -35,9 +36,9 @@ public class OrganizationUnitsController : AeFinderController
 
     [HttpGet]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public virtual async Task<List<OrganizationUnitDto>> GetAllOrganizationUnitsAsync()
+    public virtual async Task<PagedResultDto<OrganizationIndexDto>> GetAllOrganizationUnitsAsync(GetOrganizationListInput input)
     {
-        return await _organizationAppService.GetAllOrganizationUnitsAsync();
+        return await _organizationAppService.GetOrganizationListAsync(input);
     }
     
     [HttpGet("user")]

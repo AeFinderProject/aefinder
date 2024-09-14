@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App;
+using AeFinder.App.Es;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.User.Dto;
+using AElf.EntityMapping.Repositories;
 using Orleans;
 using Volo.Abp;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Auditing;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
@@ -24,11 +27,13 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     private readonly IdentityUserManager _identityUserManager;
     private readonly IIdentityUserRepository _identityUserRepository;
     private readonly IClusterClient _clusterClient;
+    private readonly IEntityMappingRepository<OrganizationIndex, string> _organizationEntityMappingRepository;
 
     public OrganizationAppService(IClusterClient clusterClient, 
         OrganizationUnitManager organizationUnitManager,
         IRepository<OrganizationUnit, Guid> organizationUnitRepository,
         IIdentityUserRepository identityUserRepository,
+        IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
         IdentityUserManager identityUserManager)
     {
         _clusterClient = clusterClient;
@@ -36,6 +41,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         _organizationUnitRepository = organizationUnitRepository;
         _identityUserManager = identityUserManager;
         _identityUserRepository = identityUserRepository;
+        _organizationEntityMappingRepository = organizationEntityMappingRepository;
     }
     
     public async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(string displayName, Guid? parentId = null)
@@ -54,7 +60,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         //Synchronize organization info into grain & es
         var organizationAppGain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(
-                GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id.ToString()));
+                GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id.ToString("N")));
         await organizationAppGain.AddOrganizationAsync(organizationUnit.DisplayName);
         
         return organizationUnitDto;
@@ -89,6 +95,18 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         var organizationUnits = await _organizationUnitRepository.GetListAsync();
         var result = ObjectMapper.Map<List<OrganizationUnit>, List<OrganizationUnitDto>>(organizationUnits);
         return result;
+    }
+
+    public async Task<PagedResultDto<OrganizationIndexDto>> GetOrganizationListAsync(GetOrganizationListInput input)
+    {
+        var queryable = await _organizationEntityMappingRepository.GetQueryableAsync();
+        var organizations = queryable.OrderBy(o => o.OrganizationName).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
+        var totalCount = queryable.Count();
+        return new PagedResultDto<OrganizationIndexDto>
+        {
+            TotalCount = totalCount,
+            Items = ObjectMapper.Map<List<OrganizationIndex>, List<OrganizationIndexDto>>(organizations)
+        };
     }
     
     public async Task<OrganizationUnitDto> GetOrganizationUnitAsync(Guid id)
