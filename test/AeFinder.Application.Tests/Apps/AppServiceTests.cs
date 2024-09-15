@@ -1,8 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Es;
+using AeFinder.User;
+using AeFinder.User.Dto;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Validation;
@@ -21,6 +26,22 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         _appService = GetRequiredService<IAppService>();
         _appIndexRepository = GetRequiredService<IEntityMappingRepository<AppInfoIndex, string>>();
         _appLimitIndexRepository = GetRequiredService<IEntityMappingRepository<AppLimitInfoIndex, string>>();
+    }
+
+    protected override void AfterAddApplication(IServiceCollection services)
+    {
+        services.AddSingleton(BuildOrganizationAppService());
+    }
+    
+    private static IOrganizationAppService BuildOrganizationAppService()
+    {
+        var mockOrganizationAppService = new Mock<IOrganizationAppService>();
+        mockOrganizationAppService
+            .Setup(service => service.GetOrganizationUnitsByUserIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new List<OrganizationUnitDto> { 
+                new OrganizationUnitDto { Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1") } 
+            });
+        return mockOrganizationAppService.Object;
     }
 
     [Fact]
@@ -138,7 +159,13 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
                 AppFullPodRequestMemory = "AppFullPodRequestMemory",
                 AppQueryPodRequestMemory = "AppQueryPodRequestMemory",
                 AppFullPodRequestCpuCore = "AppFullPodRequestCpuCore",
-                AppQueryPodRequestCpuCore = "AppQueryPodRequestCpuCore"
+                AppQueryPodRequestCpuCore = "AppQueryPodRequestCpuCore",
+                EnableMultipleInstances = true
+            },
+            DeployLimit = new DeployLimitInfo()
+            {
+                MaxAppCodeSize = 800000,
+                MaxAppAttachmentSize = 10240000
             }
         };
         await _appLimitIndexRepository.AddAsync(index);
@@ -160,5 +187,8 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         limit.Items[0].ResourceLimit.AppQueryPodRequestMemory.ShouldBe(index.ResourceLimit.AppQueryPodRequestMemory);
         limit.Items[0].ResourceLimit.AppFullPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppFullPodRequestCpuCore);
         limit.Items[0].ResourceLimit.AppQueryPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppQueryPodRequestCpuCore);
+        limit.Items[0].DeployLimit.MaxAppCodeSize.ShouldBe(index.DeployLimit.MaxAppCodeSize);
+        limit.Items[0].DeployLimit.MaxAppAttachmentSize.ShouldBe(index.DeployLimit.MaxAppAttachmentSize);
+        limit.Items[0].ResourceLimit.EnableMultipleInstances.ShouldBeTrue();
     }
 }

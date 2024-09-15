@@ -29,14 +29,14 @@ public class EntityOperationLimitProvider : CallCountOperationLimitProvider, IEn
 
         if (CallCount > _options.MaxEntityCallCount)
         {
-            throw new ApplicationException(
+            throw new OperationLimitException(
                 $"Too many entity calls. The maximum of calls allowed is {_options.MaxEntityCallCount} per block.");
         }
 
         var length = _objectSerializer.Serialize(entity).Length;
         if (length > _options.MaxEntitySize)
         {
-            throw new ApplicationException(
+            throw new OperationLimitException(
                 $"Too large entity. The entity {length} exceeds the maximum value {_options.MaxEntitySize}");
         }
     }
