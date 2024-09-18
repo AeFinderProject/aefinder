@@ -53,4 +53,20 @@ public class BlockController : AbpController
     {
         return _blockAppService.GetSummariesAsync(input);
     }
+    
+    [HttpPost]
+    [Route("transactions/route-key-alias")]
+    [Authorize]
+    public virtual Task<List<TransactionDto>> GetTransactionsByRouteKeyWithIndexAliasAsync(GetTransactionsInput input)
+    {
+        return _blockAppService.GetTransactionsByRouteKeyWithIndexAliasAsync(input);
+    }
+    
+    [HttpPost]
+    [Route("transactions/route-key")]
+    [Authorize]
+    public virtual Task<List<TransactionDto>> GetTransactionsByRouteKeyAsync(GetTransactionsInput input)
+    {
+        return _blockAppService.GetTransactionsByRouteKeyAsync(input);
+    }
 }

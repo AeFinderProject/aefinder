@@ -10,4 +10,7 @@ public class GetTransactionsInput
     public bool IsOnlyConfirmed { get; set; } = false;
     public List<FilterContractEventInput> Events { get; set; }
     public string TransactionId { get; set; }
+    public string From { get; set; }
+    public string To { get; set; }
+    public string BlockHash { get; set; }
 }

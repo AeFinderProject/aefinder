@@ -15,4 +15,6 @@ public interface IBlockAppService:IApplicationService
     Task<List<TransactionDto>> GetSubscriptionTransactionsAsync(GetSubscriptionTransactionsInput input);
 
     Task<List<SummaryDto>> GetSummariesAsync(GetSummariesInput input);
+    Task<List<TransactionDto>> GetTransactionsByRouteKeyWithIndexAliasAsync(GetTransactionsInput input);
+    Task<List<TransactionDto>> GetTransactionsByRouteKeyAsync(GetTransactionsInput input);
 }

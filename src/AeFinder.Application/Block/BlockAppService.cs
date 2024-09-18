@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AeFinder.Block.Dtos;
 using AeFinder.Entities.Es;
+using AElf.EntityMapping.Elasticsearch;
+using AElf.EntityMapping.Options;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -22,11 +26,12 @@ public class BlockAppService : ApplicationService, IBlockAppService
     private readonly IEntityMappingRepository<LogEventIndex, string> _logEventIndexRepository;
     private readonly ApiOptions _apiOptions;
     private readonly IEntityMappingRepository<SummaryIndex, string> _summaryIndexRepository;
+    private readonly AElfEntityMappingOptions _entityMappingOptions;
 
     public BlockAppService(IEntityMappingRepository<BlockIndex, string> blockIndexRepository,
         IEntityMappingRepository<TransactionIndex, string> transactionIndexRepository,
         IEntityMappingRepository<LogEventIndex, string> logEventIndexRepository,
-        IOptionsSnapshot<ApiOptions> apiOptions,
+        IOptionsSnapshot<ApiOptions> apiOptions,IOptionsSnapshot<AElfEntityMappingOptions> entityMappingOptions,
         IEntityMappingRepository<SummaryIndex, string> summaryIndexRepository)
     {
         _blockIndexRepository = blockIndexRepository;
@@ -34,6 +39,7 @@ public class BlockAppService : ApplicationService, IBlockAppService
         _logEventIndexRepository = logEventIndexRepository;
         _apiOptions = apiOptions.Value;
         _summaryIndexRepository = summaryIndexRepository;
+        _entityMappingOptions = entityMappingOptions.Value;
     }
 
     public async Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
@@ -410,6 +416,86 @@ public class BlockAppService : ApplicationService, IBlockAppService
         var queryable = await _summaryIndexRepository.GetQueryableAsync();
         var list = queryable.Where(expression).Skip(0).Take(100).ToList();
         resultList = ObjectMapper.Map<List<SummaryIndex>, List<SummaryDto>>(list);
+        return resultList;
+    }
+
+    public async Task<List<TransactionDto>> GetTransactionsByRouteKeyWithIndexAliasAsync(GetTransactionsInput input)
+    {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        string parameter = "";
+        var indexAlias =
+            IndexNameHelper.GetDefaultFullIndexName(typeof(TransactionIndex), _entityMappingOptions.CollectionPrefix);
+        
+        List<TransactionDto> resultList = new List<TransactionDto>();
+        var queryable = await _transactionIndexRepository.GetQueryableAsync(indexAlias);
+        Expression<Func<TransactionIndex, bool>> mustQuery = null;
+        if (!string.IsNullOrEmpty(input.TransactionId))
+        {
+            parameter = "TransactionId: " + input.TransactionId;
+            mustQuery = p => p.TransactionId == input.TransactionId;
+        }
+        if (!string.IsNullOrEmpty(input.From))
+        {
+            parameter = "From: " + input.From;
+            mustQuery = p => p.From == input.From;
+        }
+        if (!string.IsNullOrEmpty(input.To))
+        {
+            parameter = "To: " + input.To;
+            mustQuery = p => p.To == input.To;
+        }
+        if (!string.IsNullOrEmpty(input.BlockHash))
+        {
+            parameter = "BlockHash: " + input.BlockHash;
+            mustQuery = p => p.BlockHash == input.BlockHash;
+        }
+        var query = queryable.Where(mustQuery).OrderBy(o => o.BlockHeight).OrderBy(o => o.Index).OrderBy(o => o.Id)
+            .Take(_apiOptions.MaxQuerySize);
+        var list = query.ToList();
+        resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list);
+        
+        stopwatch.Stop();
+        TimeSpan ts = stopwatch.Elapsed;
+        Logger.LogInformation($"[GetTransactionsByRouteKeyWithIndexAliasAsync] {parameter} Result Count: {resultList.Count} Execution Time: {ts.TotalMilliseconds} ms");
+        return resultList;
+    }
+    
+    public async Task<List<TransactionDto>> GetTransactionsByRouteKeyAsync(GetTransactionsInput input)
+    {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        string parameter = "";
+        
+        List<TransactionDto> resultList = new List<TransactionDto>();
+        var queryable = await _transactionIndexRepository.GetQueryableAsync();
+        Expression<Func<TransactionIndex, bool>> mustQuery = null;
+        if (!string.IsNullOrEmpty(input.TransactionId))
+        {
+            parameter = "TransactionId: " + input.TransactionId;
+            mustQuery = p => p.TransactionId == input.TransactionId;
+        }
+        if (!string.IsNullOrEmpty(input.From))
+        {
+            parameter = "From: " + input.From;
+            mustQuery = p => p.From == input.From;
+        }
+        if (!string.IsNullOrEmpty(input.To))
+        {
+            parameter = "To: " + input.To;
+            mustQuery = p => p.To == input.To;
+        }
+        if (!string.IsNullOrEmpty(input.BlockHash))
+        {
+            parameter = "BlockHash: " + input.BlockHash;
+            mustQuery = p => p.BlockHash == input.BlockHash;
+        }
+        var query = queryable.Where(mustQuery).OrderBy(o => o.BlockHeight).OrderBy(o => o.Index).OrderBy(o => o.Id)
+            .Take(_apiOptions.MaxQuerySize);
+        var list = query.ToList();
+        resultList = ObjectMapper.Map<List<TransactionIndex>, List<TransactionDto>>(list);
+        
+        stopwatch.Stop();
+        TimeSpan ts = stopwatch.Elapsed;
+        Logger.LogInformation($"[GetTransactionsByRouteKeyAsync] {parameter} Result Count: {resultList.Count} Execution Time: {ts.TotalMilliseconds} ms");
         return resultList;
     }
 }
