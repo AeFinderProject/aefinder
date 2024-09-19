@@ -419,6 +419,66 @@ public class BlockAppService : ApplicationService, IBlockAppService
         return resultList;
     }
 
+    public async Task<List<BlockDto>> GetBlocksByRouteKeyWithIndexAliasAsync(GetBlocksInput input)
+    {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        string parameter = "";
+        var indexAlias =
+            IndexNameHelper.GetDefaultFullIndexName(typeof(BlockIndex), _entityMappingOptions.CollectionPrefix);
+
+        List<BlockDto> resultList = new List<BlockDto>();
+        Expression<Func<BlockIndex, bool>> expression = null;
+        var queryable = await _blockIndexRepository.GetQueryableAsync(indexAlias);
+        if (!string.IsNullOrEmpty(input.BlockHash))
+        {
+            parameter = "BlockHash: " + input.BlockHash;
+            expression = p => p.BlockHash == input.BlockHash;
+        }
+        if (!string.IsNullOrEmpty(input.Miner))
+        {
+            parameter = "Miner: " + input.Miner;
+            expression = p => p.Miner == input.Miner;
+        }
+        var query = queryable.Where(expression).OrderBy(o => o.BlockHeight).OrderBy(o => o.Id)
+            .Take(_apiOptions.MaxQuerySize);
+        var list = query.ToList();
+        resultList = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list);
+        
+        stopwatch.Stop();
+        TimeSpan ts = stopwatch.Elapsed;
+        Logger.LogInformation($"[GetBlocksByRouteKeyWithIndexAliasAsync] {parameter} Result Count: {resultList.Count} Execution Time: {ts.TotalMilliseconds} ms");
+        return resultList;
+    }
+    
+    public async Task<List<BlockDto>> GetBlocksByRouteKeyAsync(GetBlocksInput input)
+    {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        string parameter = "";
+
+        List<BlockDto> resultList = new List<BlockDto>();
+        Expression<Func<BlockIndex, bool>> expression = null;
+        var queryable = await _blockIndexRepository.GetQueryableAsync();
+        if (!string.IsNullOrEmpty(input.BlockHash))
+        {
+            parameter = "BlockHash: " + input.BlockHash;
+            expression = p => p.BlockHash == input.BlockHash;
+        }
+        if (!string.IsNullOrEmpty(input.Miner))
+        {
+            parameter = "Miner: " + input.Miner;
+            expression = p => p.Miner == input.Miner;
+        }
+        var query = queryable.Where(expression).OrderBy(o => o.BlockHeight).OrderBy(o => o.Id)
+            .Take(_apiOptions.MaxQuerySize);
+        var list = query.ToList();
+        resultList = ObjectMapper.Map<List<BlockIndex>, List<BlockDto>>(list);
+        
+        stopwatch.Stop();
+        TimeSpan ts = stopwatch.Elapsed;
+        Logger.LogInformation($"[GetBlocksByRouteKeyAsync] {parameter} Result Count: {resultList.Count} Execution Time: {ts.TotalMilliseconds} ms");
+        return resultList;
+    }
+    
     public async Task<List<TransactionDto>> GetTransactionsByRouteKeyWithIndexAliasAsync(GetTransactionsInput input)
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
@@ -496,6 +556,76 @@ public class BlockAppService : ApplicationService, IBlockAppService
         stopwatch.Stop();
         TimeSpan ts = stopwatch.Elapsed;
         Logger.LogInformation($"[GetTransactionsByRouteKeyAsync] {parameter} Result Count: {resultList.Count} Execution Time: {ts.TotalMilliseconds} ms");
+        return resultList;
+    }
+
+    public async Task<List<LogEventDto>> GetLogEventsByRouteKeyWithIndexAliasAsync(GetLogEventsInput input)
+    {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        string parameter = "";
+        var indexAlias =
+            IndexNameHelper.GetDefaultFullIndexName(typeof(LogEventIndex), _entityMappingOptions.CollectionPrefix);
+        
+        List<LogEventDto> resultList = new List<LogEventDto>();
+        var queryable = await _logEventIndexRepository.GetQueryableAsync(indexAlias);
+        Expression<Func<LogEventIndex, bool>> mustQuery = null;
+        if (!string.IsNullOrEmpty(input.TransactionId))
+        {
+            parameter = "TransactionId: " + input.TransactionId;
+            mustQuery = p => p.TransactionId == input.TransactionId;
+        }
+        if (!string.IsNullOrEmpty(input.BlockHash))
+        {
+            parameter = "BlockHash: " + input.BlockHash;
+            mustQuery = p => p.BlockHash == input.BlockHash;
+        }
+        if (!string.IsNullOrEmpty(input.ContractAddress))
+        {
+            parameter = "ContractAddress: " + input.ContractAddress;
+            mustQuery = p => p.ContractAddress == input.ContractAddress;
+        }
+        var query = queryable.Where(mustQuery).OrderBy(o => o.BlockHeight).OrderBy(o => o.Index).OrderBy(o => o.Id)
+            .Take(_apiOptions.MaxQuerySize);
+        var list = query.ToList();
+        resultList = ObjectMapper.Map<List<LogEventIndex>, List<LogEventDto>>(list);
+        
+        stopwatch.Stop();
+        TimeSpan ts = stopwatch.Elapsed;
+        Logger.LogInformation($"[GetLogEventsByRouteKeyWithIndexAliasAsync] {parameter} Result Count: {resultList.Count} Execution Time: {ts.TotalMilliseconds} ms");
+        return resultList;
+    }
+    
+    public async Task<List<LogEventDto>> GetLogEventsByRouteKeyAsync(GetLogEventsInput input)
+    {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        string parameter = "";
+        
+        List<LogEventDto> resultList = new List<LogEventDto>();
+        var queryable = await _logEventIndexRepository.GetQueryableAsync();
+        Expression<Func<LogEventIndex, bool>> mustQuery = null;
+        if (!string.IsNullOrEmpty(input.TransactionId))
+        {
+            parameter = "TransactionId: " + input.TransactionId;
+            mustQuery = p => p.TransactionId == input.TransactionId;
+        }
+        if (!string.IsNullOrEmpty(input.BlockHash))
+        {
+            parameter = "BlockHash: " + input.BlockHash;
+            mustQuery = p => p.BlockHash == input.BlockHash;
+        }
+        if (!string.IsNullOrEmpty(input.ContractAddress))
+        {
+            parameter = "ContractAddress: " + input.ContractAddress;
+            mustQuery = p => p.ContractAddress == input.ContractAddress;
+        }
+        var query = queryable.Where(mustQuery).OrderBy(o => o.BlockHeight).OrderBy(o => o.Index).OrderBy(o => o.Id)
+            .Take(_apiOptions.MaxQuerySize);
+        var list = query.ToList();
+        resultList = ObjectMapper.Map<List<LogEventIndex>, List<LogEventDto>>(list);
+        
+        stopwatch.Stop();
+        TimeSpan ts = stopwatch.Elapsed;
+        Logger.LogInformation($"[GetLogEventsByRouteKeyAsync] {parameter} Result Count: {resultList.Count} Execution Time: {ts.TotalMilliseconds} ms");
         return resultList;
     }
 }

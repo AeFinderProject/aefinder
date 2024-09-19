@@ -9,4 +9,7 @@ public class GetLogEventsInput
     public long EndBlockHeight { get; set; }
     public bool IsOnlyConfirmed { get; set; } = false;
     public List<FilterContractEventInput> Events { get; set; }
+    public string BlockHash { get; set; }
+    public string TransactionId { get; set; }
+    public string ContractAddress { get; set; }
 }

@@ -55,6 +55,22 @@ public class BlockController : AbpController
     }
     
     [HttpPost]
+    [Route("blocks/route-key-alias")]
+    [Authorize]
+    public virtual Task<List<BlockDto>> GetBlocksByRouteKeyWithIndexAliasAsync(GetBlocksInput input)
+    {
+        return _blockAppService.GetBlocksByRouteKeyWithIndexAliasAsync(input);
+    }
+    
+    [HttpPost]
+    [Route("blocks/route-key")]
+    [Authorize]
+    public virtual Task<List<BlockDto>> GetBlocksByRouteKeyAsync(GetBlocksInput input)
+    {
+        return _blockAppService.GetBlocksByRouteKeyAsync(input);
+    }
+    
+    [HttpPost]
     [Route("transactions/route-key-alias")]
     [Authorize]
     public virtual Task<List<TransactionDto>> GetTransactionsByRouteKeyWithIndexAliasAsync(GetTransactionsInput input)
@@ -68,5 +84,21 @@ public class BlockController : AbpController
     public virtual Task<List<TransactionDto>> GetTransactionsByRouteKeyAsync(GetTransactionsInput input)
     {
         return _blockAppService.GetTransactionsByRouteKeyAsync(input);
+    }
+    
+    [HttpPost]
+    [Route("logevents/route-key-alias")]
+    [Authorize]
+    public virtual Task<List<LogEventDto>> GetLogEventsByRouteKeyWithIndexAliasAsync(GetLogEventsInput input)
+    {
+        return _blockAppService.GetLogEventsByRouteKeyWithIndexAliasAsync(input);
+    }
+    
+    [HttpPost]
+    [Route("logevents/route-key")]
+    [Authorize]
+    public virtual Task<List<LogEventDto>> GetLogEventsByRouteKeyAsync(GetLogEventsInput input)
+    {
+        return _blockAppService.GetLogEventsByRouteKeyAsync(input);
     }
 }

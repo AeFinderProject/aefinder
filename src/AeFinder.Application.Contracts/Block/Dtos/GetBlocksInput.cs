@@ -11,4 +11,5 @@ public class GetBlocksInput
     public bool HasTransaction { get; set; } = false;
     public List<FilterContractEventInput> Events { get; set; }
     public string BlockHash { get; set; }
+    public string Miner { get; set; }
 }
