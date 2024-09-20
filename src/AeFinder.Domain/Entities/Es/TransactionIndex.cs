@@ -16,19 +16,15 @@ public class TransactionIndex:AeFinderEntity<string>,IEntityMappingEntity,IBlock
             return BlockHash + "_" + TransactionId;
         }
     }
-    [CollectionRouteKey]
     [Keyword]
     public string TransactionId { get; set; }
     
     [ShardPropertyAttributes("ChainId",1)]
     [Keyword]
     public string ChainId { get; set; }
-    [CollectionRouteKey]
     [Keyword]public string From { get; set; }
-    [CollectionRouteKey]
     [Keyword]public string To { get; set; }
     
-    [CollectionRouteKey]
     [Keyword]
     public string BlockHash { get; set; }
     
