@@ -7,14 +7,14 @@ public class RequestProxyService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string[] _urls;
-    private readonly string[] _blockedPaths;
+    private readonly string[] _blockedPathPrefixes;
     private int _index;
 
     public RequestProxyService(IHttpClientFactory httpClientFactory, IOptionsMonitor<ProxyOptions> proxyOptions)
     {
         _httpClientFactory = httpClientFactory;
         _urls = proxyOptions.CurrentValue.Urls;
-        _blockedPaths = proxyOptions.CurrentValue.BlockedPaths;
+        _blockedPathPrefixes = proxyOptions.CurrentValue.BlockedPathPrefixes;
     }
 
     public async Task<string> ForwardSearchGetRequestAsync(string path, string method, string requestPayload)
@@ -23,11 +23,12 @@ public class RequestProxyService
         {
             throw new Exception("Invalid path");
         }
-        if (_blockedPaths.Contains(path))
+
+        if (_blockedPathPrefixes.Any(path.StartsWith))
         {
             throw new Exception("Blocked path");
         }
-        
+
         if (method.Contains("/"))
         {
             throw new Exception("Invalid method");
