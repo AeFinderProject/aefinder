@@ -275,8 +275,8 @@ public class AeFinderHttpApiHostModule : AbpModule
         app.UseAbpRequestLocalization();
         app.UseCorrelationId();
         app.UseStaticFiles();
-        app.UseIpRateLimiting();
         app.UseRouting();
+        app.UseIpRateLimiting();
         app.UseCors();
         app.UseAuthentication();
 
