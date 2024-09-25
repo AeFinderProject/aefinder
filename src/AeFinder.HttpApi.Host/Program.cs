@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -34,9 +35,20 @@ public class Program
                 protocol: OtlpProtocol.HttpProtobuf)
 #endif
             .CreateLogger();
-
+        
         try
         {
+            var workerThreads = configuration.GetValue<int>("ThreadPool:MinWorkerThreads", 0);
+            var completionPortThreads = configuration.GetValue<int>("ThreadPool:MinCompletionPortThreads", 0);
+            if (workerThreads > 0 && completionPortThreads > 0)
+            {
+                if (!ThreadPool.SetMinThreads(workerThreads, completionPortThreads))
+                {
+                    throw new Exception(
+                        $"Set min threads failed! MinWorkerThreads: {workerThreads}, MinCompletionPortThreads:{completionPortThreads}");
+                }
+            }
+            
             Log.Information("Starting AeFinder.HttpApi.Host.");
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.AddAppSettingsSecretsJson()

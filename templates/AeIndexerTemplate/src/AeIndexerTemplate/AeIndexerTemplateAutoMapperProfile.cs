@@ -6,7 +6,7 @@ namespace AeIndexerTemplate;
 
 public class AeIndexerTemplateAutoMapperProfile : Profile
 {
-    public AeIndexerTemplateProfile()
+    public AeIndexerTemplateAutoMapperProfile()
     {
         CreateMap<MyEntity, MyEntityDto>();
     }
