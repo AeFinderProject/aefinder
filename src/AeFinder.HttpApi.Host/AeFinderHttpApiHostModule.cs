@@ -73,6 +73,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         context.Services.AddMemoryCache();
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
+        ConfigureApiRequestRateLimit(context, configuration);
         ConfigureConventionalControllers();
         ConfigureAuthentication(context, configuration);
         ConfigureLocalization();
@@ -255,8 +256,8 @@ public class AeFinderHttpApiHostModule : AbpModule
     {
         context.Services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
         // context.Services.Configure<IpRateLimitPolicies>(configuration.GetSection("IpRateLimitPolicies"));
-        context.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
-        context.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+        context.Services.AddSingleton<IIpPolicyStore, DistributedCacheIpPolicyStore>();
+        context.Services.AddSingleton<IRateLimitCounterStore,DistributedCacheRateLimitCounterStore>();
         context.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
         context.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
     }
