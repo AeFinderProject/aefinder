@@ -11,6 +11,7 @@ using AeFinder.MultiTenancy;
 using AeFinder.Options;
 using AeFinder.ScheduledTask;
 using AElf.OpenTelemetry;
+using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -68,6 +69,8 @@ public class AeFinderHttpApiHostModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddHttpClient();
+        context.Services.AddHttpContextAccessor();
+        context.Services.AddMemoryCache();
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
         ConfigureConventionalControllers();
@@ -246,6 +249,16 @@ public class AeFinderHttpApiHostModule : AbpModule
                     .AllowCredentials();
             });
         });
+    }
+
+    private void ConfigureApiRequestRateLimit(ServiceConfigurationContext context, IConfiguration configuration)
+    {
+        context.Services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
+        // context.Services.Configure<IpRateLimitPolicies>(configuration.GetSection("IpRateLimitPolicies"));
+        context.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+        context.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+        context.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+        context.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
