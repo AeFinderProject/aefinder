@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 using AeFinder.Block.Dtos;
 using AeFinder.Entities.Es;
@@ -108,6 +109,11 @@ public class BlockAppService : ApplicationService, IBlockAppService
 
     public async Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
     {
+        ThreadPool.GetMinThreads(out var workerThreads, out var completionPortThreads);
+        Logger.LogInformation(
+            "ThreadPool - MinWorkerThreads: {MinWorkerThreads}, MinCompletionPortThreads: {MinCompletionPortThreads}",
+            workerThreads, completionPortThreads);
+        
         if ((input.EndBlockHeight - input.StartBlockHeight + 1) > _apiOptions.TransactionQueryHeightInterval)
         {
             input.EndBlockHeight = input.StartBlockHeight + _apiOptions.TransactionQueryHeightInterval - 1;
