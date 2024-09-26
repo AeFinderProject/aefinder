@@ -19,8 +19,6 @@ public class LogEventIndex:AeFinderEntity<string>,IEntityMappingEntity,IBlockcha
     [ShardPropertyAttributes("ChainId",1)]
     [Keyword]
     public string ChainId { get; set; }
-    
-    [CollectionRouteKey]
     [Keyword]
     public string BlockHash { get; set; }
     
@@ -30,11 +28,9 @@ public class LogEventIndex:AeFinderEntity<string>,IEntityMappingEntity,IBlockcha
     /// </summary>
     [ShardPropertyAttributes("BlockHeight",2)]
     public long BlockHeight { get; set; }
-    [CollectionRouteKey]
     [Keyword]public string TransactionId { get; set; }
     
     public DateTime BlockTime { get; set; }
-    [CollectionRouteKey]
     [Keyword]public string ContractAddress { get; set; }
     
     [Keyword]public string EventName { get; set; }
