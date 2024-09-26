@@ -12,6 +12,7 @@ using AeFinder.Options;
 using AeFinder.ScheduledTask;
 using AElf.OpenTelemetry;
 using AspNetCoreRateLimit;
+using AspNetCoreRateLimit.Redis;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -70,7 +71,6 @@ public class AeFinderHttpApiHostModule : AbpModule
     {
         context.Services.AddHttpClient();
         context.Services.AddHttpContextAccessor();
-        context.Services.AddMemoryCache();
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
         ConfigureApiRequestRateLimit(context, configuration);
@@ -259,7 +259,8 @@ public class AeFinderHttpApiHostModule : AbpModule
         context.Services.AddSingleton<IIpPolicyStore, DistributedCacheIpPolicyStore>();
         context.Services.AddSingleton<IRateLimitCounterStore,DistributedCacheRateLimitCounterStore>();
         context.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
-        context.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+        // context.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+        context.Services.AddRedisRateLimiting();
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
@@ -275,8 +276,8 @@ public class AeFinderHttpApiHostModule : AbpModule
         app.UseAbpRequestLocalization();
         app.UseCorrelationId();
         app.UseStaticFiles();
-        app.UseRouting();
         app.UseIpRateLimiting();
+        app.UseRouting();
         app.UseCors();
         app.UseAuthentication();
 
