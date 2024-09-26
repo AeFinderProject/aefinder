@@ -254,6 +254,8 @@ public class AeFinderHttpApiHostModule : AbpModule
 
     private void ConfigureApiRequestRateLimit(ServiceConfigurationContext context, IConfiguration configuration)
     {
+        var redisOptions = ConfigurationOptions.Parse(configuration["Redis:Configuration"]);
+        context.Services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(redisOptions));
         context.Services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
         // context.Services.Configure<IpRateLimitPolicies>(configuration.GetSection("IpRateLimitPolicies"));
         context.Services.AddSingleton<IIpPolicyStore, DistributedCacheIpPolicyStore>();
