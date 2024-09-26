@@ -9,20 +9,21 @@ using AeFinder.Block.Dtos;
 using AeFinder.Entities.Es;
 using AElf.EntityMapping.Repositories;
 using Shouldly;
+using Volo.Abp.Validation;
 using Xunit;
 
 namespace AeFinder;
 
 public class BlockAppServiceTests:AeFinderApplicationTestBase
 {
-    private readonly BlockAppService _blockAppService;
+    private readonly IBlockAppService _blockAppService;
     private readonly IEntityMappingRepository<BlockIndex, string> _blockIndexRepository;
     private readonly IEntityMappingRepository<TransactionIndex, string> _transactionIndexRepository;
     private readonly IEntityMappingRepository<LogEventIndex, string> _logEventIndexRepository;
 
     public BlockAppServiceTests()
     {
-        _blockAppService = GetRequiredService<BlockAppService>();
+        _blockAppService = GetRequiredService<IBlockAppService>();
         _blockIndexRepository = GetRequiredService<IEntityMappingRepository<BlockIndex, string>>();
         _transactionIndexRepository = GetRequiredService<IEntityMappingRepository<TransactionIndex, string>>();
         _logEventIndexRepository = GetRequiredService<IEntityMappingRepository<LogEventIndex, string>>();
@@ -975,5 +976,36 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         };
         var blockDtoss  = await _blockAppService.GetLogEventsAsync(input);
         blockDtoss.Count.ShouldBe(20);
+    }
+
+    [Fact]
+    public async Task GetBlocks_WithoutBlockHeight_Test()
+    {
+        var input = new GetBlocksInput()
+        {
+            ChainId = "AELF",
+            HasTransaction = true
+        };
+        await Assert.ThrowsAsync<AbpValidationException>(async () => await _blockAppService.GetBlocksAsync(input));
+    }
+    
+    [Fact]
+    public async Task GetTransactions_WithoutBlockHeight_Test()
+    {
+        var input = new GetTransactionsInput()
+        {
+            ChainId = "AELF"
+        };
+        await Assert.ThrowsAsync<AbpValidationException>(async () => await _blockAppService.GetTransactionsAsync(input));
+    }
+    
+    [Fact]
+    public async Task GetLogEvents_WithoutBlockHeight_Test()
+    {
+        var input = new GetLogEventsInput()
+        {
+            ChainId = "AELF",
+        };
+        await Assert.ThrowsAsync<AbpValidationException>(async () => await _blockAppService.GetLogEventsAsync(input));
     }
 }
