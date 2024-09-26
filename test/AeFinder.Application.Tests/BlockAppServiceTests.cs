@@ -385,6 +385,17 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         List<BlockDto> blockDtos_test30 =await _blockAppService.GetBlocksAsync(getBlocksInput_test30);
         // blockDtos_test30.Count.ShouldBe(1);
         blockDtos_test30.ShouldContain(x=>x.BlockHash==block_107.BlockHash);
+        
+        var input = new GetBlocksInput()
+        {
+            ChainId = "AELF",
+            StartBlockHeight = 100,
+            EndBlockHeight = 100,
+            BlockHash = block_100.BlockHash
+        };
+        var result =await _blockAppService.GetBlocksAsync(input);
+        result.Count.ShouldBe(1);
+        result[0].BlockHash.ShouldBe(input.BlockHash);
     }
     
     [Fact]
@@ -549,6 +560,41 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         List<TransactionDto> transactionDtos_test32 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test32);
         transactionDtos_test32.Count.ShouldBe(1);
         transactionDtos_test32.ShouldContain(x=>x.TransactionId==transaction_110.TransactionId);
+        
+        var input = new GetTransactionsInput()
+        {
+            ChainId = "AELF",
+            StartBlockHeight = 110,
+            EndBlockHeight = 110,
+            TransactionId = transaction_110.TransactionId
+        };
+        var result =await _blockAppService.GetTransactionsAsync(input);
+        result.Count.ShouldBe(1);
+        result[0].TransactionId.ShouldBe(input.TransactionId);
+        
+        input = new GetTransactionsInput()
+        {
+            ChainId = "AELF",
+            StartBlockHeight = 110,
+            EndBlockHeight = 110,
+            TransactionId = transaction_110.TransactionId,
+            Events = new List<FilterContractEventInput>()
+            {
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "",
+                    EventNames = new List<string>(){"UpdateValue","UpdateTinyBlockInformation"}
+                },
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "",
+                    EventNames = new List<string>(){"DonateResourceToken"}
+                }
+            }
+        };
+        result =await _blockAppService.GetTransactionsAsync(input);
+        result.Count.ShouldBe(1);
+        result[0].TransactionId.ShouldBe(input.TransactionId);
     }
 
     [Fact]

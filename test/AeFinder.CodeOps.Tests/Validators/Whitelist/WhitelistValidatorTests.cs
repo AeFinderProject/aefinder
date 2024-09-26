@@ -93,6 +93,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
                 
                 throw new NotImplementedException();
                 throw new SwitchExpressionException();
+                throw new ArgumentException();
             }
         }
 
