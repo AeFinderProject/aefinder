@@ -83,6 +83,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type(typeof(NotImplementedException), Permission.Allowed) // Required for protobuf generated code
                 .Type(typeof(NotSupportedException), Permission.Allowed) // Required for protobuf generated code
                 .Type(typeof(ArgumentOutOfRangeException), Permission.Allowed) // From AEDPoS
+                .Type(typeof(ArgumentException), Permission.Allowed)
                 .Type(nameof(DateTime), Permission.Allowed)
                 .Type(nameof(DateTimeOffset), Permission.Allowed)
                 .Type(nameof(TimeSpan), Permission.Allowed)

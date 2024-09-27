@@ -11,6 +11,8 @@ using AeFinder.MultiTenancy;
 using AeFinder.Options;
 using AeFinder.ScheduledTask;
 using AElf.OpenTelemetry;
+using AspNetCoreRateLimit;
+using AspNetCoreRateLimit.Redis;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -68,8 +70,10 @@ public class AeFinderHttpApiHostModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddHttpClient();
+        context.Services.AddHttpContextAccessor();
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
+        ConfigureApiRequestRateLimit(context, configuration);
         ConfigureConventionalControllers();
         ConfigureAuthentication(context, configuration);
         ConfigureLocalization();
@@ -248,6 +252,19 @@ public class AeFinderHttpApiHostModule : AbpModule
         });
     }
 
+    private void ConfigureApiRequestRateLimit(ServiceConfigurationContext context, IConfiguration configuration)
+    {
+        var redisOptions = ConfigurationOptions.Parse(configuration["Redis:Configuration"]);
+        context.Services.AddSingleton<IConnectionMultiplexer>(provider => ConnectionMultiplexer.Connect(redisOptions));
+        context.Services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
+        // context.Services.Configure<IpRateLimitPolicies>(configuration.GetSection("IpRateLimitPolicies"));
+        context.Services.AddSingleton<IIpPolicyStore, DistributedCacheIpPolicyStore>();
+        context.Services.AddSingleton<IRateLimitCounterStore,DistributedCacheRateLimitCounterStore>();
+        context.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+        // context.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+        context.Services.AddRedisRateLimiting();
+    }
+
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         var app = context.GetApplicationBuilder();
@@ -261,6 +278,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         app.UseAbpRequestLocalization();
         app.UseCorrelationId();
         app.UseStaticFiles();
+        app.UseIpRateLimiting();
         app.UseRouting();
         app.UseCors();
         app.UseAuthentication();

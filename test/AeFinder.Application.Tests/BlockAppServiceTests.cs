@@ -9,20 +9,21 @@ using AeFinder.Block.Dtos;
 using AeFinder.Entities.Es;
 using AElf.EntityMapping.Repositories;
 using Shouldly;
+using Volo.Abp.Validation;
 using Xunit;
 
 namespace AeFinder;
 
 public class BlockAppServiceTests:AeFinderApplicationTestBase
 {
-    private readonly BlockAppService _blockAppService;
+    private readonly IBlockAppService _blockAppService;
     private readonly IEntityMappingRepository<BlockIndex, string> _blockIndexRepository;
     private readonly IEntityMappingRepository<TransactionIndex, string> _transactionIndexRepository;
     private readonly IEntityMappingRepository<LogEventIndex, string> _logEventIndexRepository;
 
     public BlockAppServiceTests()
     {
-        _blockAppService = GetRequiredService<BlockAppService>();
+        _blockAppService = GetRequiredService<IBlockAppService>();
         _blockIndexRepository = GetRequiredService<IEntityMappingRepository<BlockIndex, string>>();
         _transactionIndexRepository = GetRequiredService<IEntityMappingRepository<TransactionIndex, string>>();
         _logEventIndexRepository = GetRequiredService<IEntityMappingRepository<LogEventIndex, string>>();
@@ -384,6 +385,17 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         List<BlockDto> blockDtos_test30 =await _blockAppService.GetBlocksAsync(getBlocksInput_test30);
         // blockDtos_test30.Count.ShouldBe(1);
         blockDtos_test30.ShouldContain(x=>x.BlockHash==block_107.BlockHash);
+        
+        var input = new GetBlocksInput()
+        {
+            ChainId = "AELF",
+            StartBlockHeight = 100,
+            EndBlockHeight = 100,
+            BlockHash = block_100.BlockHash
+        };
+        var result =await _blockAppService.GetBlocksAsync(input);
+        result.Count.ShouldBe(1);
+        result[0].BlockHash.ShouldBe(input.BlockHash);
     }
     
     [Fact]
@@ -548,6 +560,41 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         List<TransactionDto> transactionDtos_test32 =await _blockAppService.GetTransactionsAsync(getTransactionsInput_test32);
         transactionDtos_test32.Count.ShouldBe(1);
         transactionDtos_test32.ShouldContain(x=>x.TransactionId==transaction_110.TransactionId);
+        
+        var input = new GetTransactionsInput()
+        {
+            ChainId = "AELF",
+            StartBlockHeight = 110,
+            EndBlockHeight = 110,
+            TransactionId = transaction_110.TransactionId
+        };
+        var result =await _blockAppService.GetTransactionsAsync(input);
+        result.Count.ShouldBe(1);
+        result[0].TransactionId.ShouldBe(input.TransactionId);
+        
+        input = new GetTransactionsInput()
+        {
+            ChainId = "AELF",
+            StartBlockHeight = 110,
+            EndBlockHeight = 110,
+            TransactionId = transaction_110.TransactionId,
+            Events = new List<FilterContractEventInput>()
+            {
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "",
+                    EventNames = new List<string>(){"UpdateValue","UpdateTinyBlockInformation"}
+                },
+                new FilterContractEventInput()
+                {
+                    ContractAddress = "",
+                    EventNames = new List<string>(){"DonateResourceToken"}
+                }
+            }
+        };
+        result =await _blockAppService.GetTransactionsAsync(input);
+        result.Count.ShouldBe(1);
+        result[0].TransactionId.ShouldBe(input.TransactionId);
     }
 
     [Fact]
@@ -975,5 +1022,36 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
         };
         var blockDtoss  = await _blockAppService.GetLogEventsAsync(input);
         blockDtoss.Count.ShouldBe(20);
+    }
+
+    [Fact]
+    public async Task GetBlocks_WithoutBlockHeight_Test()
+    {
+        var input = new GetBlocksInput()
+        {
+            ChainId = "AELF",
+            HasTransaction = true
+        };
+        await Assert.ThrowsAsync<AbpValidationException>(async () => await _blockAppService.GetBlocksAsync(input));
+    }
+    
+    [Fact]
+    public async Task GetTransactions_WithoutBlockHeight_Test()
+    {
+        var input = new GetTransactionsInput()
+        {
+            ChainId = "AELF"
+        };
+        await Assert.ThrowsAsync<AbpValidationException>(async () => await _blockAppService.GetTransactionsAsync(input));
+    }
+    
+    [Fact]
+    public async Task GetLogEvents_WithoutBlockHeight_Test()
+    {
+        var input = new GetLogEventsInput()
+        {
+            ChainId = "AELF",
+        };
+        await Assert.ThrowsAsync<AbpValidationException>(async () => await _blockAppService.GetLogEventsAsync(input));
     }
 }

@@ -13,8 +13,7 @@ public class BlockBase:AeFinderEntity<string>,IBlockchainData
     [ShardPropertyAttributes("ChainId",1)]
     [Keyword]
     public string ChainId { get; set; } 
-    
-    [CollectionRouteKey]
+
     [Keyword]
     public string BlockHash { get; set; }
     
@@ -24,7 +23,7 @@ public class BlockBase:AeFinderEntity<string>,IBlockchainData
     [Keyword]public string PreviousBlockHash { get; set; }
     public DateTime BlockTime { get; set; }
     [Keyword]public string SignerPubkey { get; set; }
-    [CollectionRouteKey]
+    
     [Keyword]
     public string Miner
     {

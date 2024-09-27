@@ -49,8 +49,7 @@ public class BlockAppService : ApplicationService, IBlockAppService
             p.BlockHeight <= input.EndBlockHeight;
         if (!string.IsNullOrEmpty(input.BlockHash))
         {
-            expression = p =>
-                p.ChainId == input.ChainId && p.BlockHash == input.BlockHash;
+            expression = expression.And(p => p.BlockHash == input.BlockHash);
         }
 
         if (input.IsOnlyConfirmed)
@@ -84,11 +83,6 @@ public class BlockAppService : ApplicationService, IBlockAppService
         Expression<Func<BlockIndex, bool>> expression = p =>
             p.ChainId == input.ChainId && p.BlockHeight >= input.StartBlockHeight &&
             p.BlockHeight <= input.EndBlockHeight;
-        if (!string.IsNullOrEmpty(input.BlockHash))
-        {
-            expression = p =>
-                p.ChainId == input.ChainId && p.BlockHash == input.BlockHash;
-        }
 
         if (input.IsOnlyConfirmed)
         {
@@ -117,8 +111,8 @@ public class BlockAppService : ApplicationService, IBlockAppService
                 i.BlockHeight <= input.EndBlockHeight);
             if (!string.IsNullOrEmpty(input.TransactionId))
             {
-                mustQuery = p =>
-                    p.LogEvents.Any(i => i.ChainId == input.ChainId && i.TransactionId == input.TransactionId);
+                mustQuery = mustQuery.And(p =>
+                    p.LogEvents.Any(i => i.TransactionId == input.TransactionId));
             }
 
             if (input.IsOnlyConfirmed)
@@ -186,7 +180,7 @@ public class BlockAppService : ApplicationService, IBlockAppService
                 p.BlockHeight <= input.EndBlockHeight;
             if (!string.IsNullOrEmpty(input.TransactionId))
             {
-                mustQuery = p => p.ChainId == input.ChainId && p.TransactionId == input.TransactionId;
+                mustQuery = mustQuery.And(p => p.TransactionId == input.TransactionId);
             }
 
             if (input.IsOnlyConfirmed)
