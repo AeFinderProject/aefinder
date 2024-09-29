@@ -40,6 +40,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         using AutoMapper;
         using AutoMapper.Configuration;
         using System.Runtime.CompilerServices;
+        using System.Numerics;
 
         namespace TestApp;
 
@@ -57,6 +58,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         {
             public int IntValue { get; set; }
             public TimeSpan TimeSpan { get; set; }
+            public BigInteger BigInteger {get; set;}
         }
 
         public class Query
