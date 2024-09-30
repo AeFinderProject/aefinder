@@ -179,7 +179,7 @@ public class DeploymentHelper
         };
     }
     
-    private static V1ResourceRequirements CreateResources(string requestCpu, string requestMemory)
+    public static V1ResourceRequirements CreateResources(string requestCpu, string requestMemory)
     {
         return new V1ResourceRequirements
         {
