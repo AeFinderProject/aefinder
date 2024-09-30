@@ -583,6 +583,11 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
             var deployment =
                 await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(deploymentName,
                     KubernetesConstants.AppNameSpace);
+            // Add or update annotations to trigger rolling updates
+            var annotations = deployment.Spec.Template.Metadata.Annotations ?? new Dictionary<string, string>();
+            annotations["kubectl.kubernetes.io/restartedAt"] = DateTime.UtcNow.ToString("s");
+            deployment.Spec.Template.Metadata.Annotations = annotations;
+            //Update container image 
             var containers = deployment.Spec.Template.Spec.Containers;
             var containerName =
                 ContainerHelper.GetAppContainerName(appId, version, clientType, chainId);
