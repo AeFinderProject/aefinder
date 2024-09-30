@@ -246,7 +246,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
-            var healthPath = GetGraphQLPath(appId, version);
+            var healthPath = GetGraphQLPlaygroundPath(appId, version);
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
                 deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
                 sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable, healthPath);
@@ -312,7 +312,12 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
     {
         return $"/{appId}/{version}/graphql";
     }
-    
+
+    private string GetGraphQLPlaygroundPath(string appId, string version)
+    {
+        return $"/{appId}/{version}/ui/playground";
+    }
+
     public async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
     {
         try
