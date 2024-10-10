@@ -77,9 +77,9 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         return chainIds;
     }
 
-    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(int pageSize, string continueToken)
+    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(string appId, int pageSize, string continueToken)
     {
-        var podsPageResult = await _appDeployManager.GetPodListWithPagingAsync(pageSize, continueToken);
+        var podsPageResult = await _appDeployManager.GetPodListWithPagingAsync(appId, pageSize, continueToken);
         return podsPageResult;
     }
 }

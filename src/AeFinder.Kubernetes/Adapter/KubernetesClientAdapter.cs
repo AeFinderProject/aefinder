@@ -39,6 +39,14 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
         return (pods, continueToken);
     }
 
+    public async Task<V1PodList> ListPodsInNamespaceWithPagingAsync(string namespaceParameter, string labelSelector,
+        CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var pods = await _k8sClient.ListNamespacedPodAsync(namespaceParameter, labelSelector: labelSelector,
+            cancellationToken: cancellationToken);
+        return pods;
+    }
+
     public async Task<V1ConfigMapList> ListConfigMapAsync(string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken))
     {

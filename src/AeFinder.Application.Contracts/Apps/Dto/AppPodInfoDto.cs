@@ -16,7 +16,7 @@ public class AppPodInfoDto
     public DateTime? StartTime { get; set; }
     public int ReadyContainersCount { get; set; }
     public int TotalContainersCount { get; set; }
-    public long AgeSeconds { get; set; }
+    public double AgeSeconds { get; set; }
     public List<PodContainerDto> Containers { get; set; }
 }
 

@@ -37,7 +37,7 @@ public class DefaultAppDeployManager : IAppDeployManager
         return;
     }
 
-    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(int pageSize, string continueToken)
+    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(string appId, int pageSize, string continueToken)
     {
         return new AppPodsPageResultDto();
     }

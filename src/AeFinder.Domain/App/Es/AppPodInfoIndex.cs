@@ -23,6 +23,6 @@ public class AppPodInfoIndex: AeFinderEntity<string>, IEntityMappingEntity
     public DateTime? StartTime { get; set; }
     public int ReadyContainersCount { get; set; }
     public int TotalContainersCount { get; set; }
-    public long AgeSeconds { get; set; }
+    public double AgeSeconds { get; set; }
     public List<PodContainerInfo> Containers { get; set; }
 }
