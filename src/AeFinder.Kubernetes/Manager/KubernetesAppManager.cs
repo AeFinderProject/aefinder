@@ -724,8 +724,11 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
             var info = new AppPodInfoDto();
             info.PodUid = pod.Metadata.Uid;
             info.PodName = pod.Metadata.Name;
-            info.AppId = pod.Metadata.Labels["app-id"];
-            info.AppVersion = pod.Metadata.Labels["app-version"];
+            if (pod.Metadata.Labels.ContainsKey(KubernetesConstants.AppIdLabelKey))
+            {
+                info.AppId = pod.Metadata.Labels[KubernetesConstants.AppIdLabelKey];
+                info.AppVersion = pod.Metadata.Labels[KubernetesConstants.AppVersionLabelKey];
+            }
             info.Status = pod.Status.Phase;
             info.PodIP = pod.Status.PodIP;
             info.NodeName = pod.Spec.NodeName;
