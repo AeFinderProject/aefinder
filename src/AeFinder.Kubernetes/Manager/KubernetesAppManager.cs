@@ -62,32 +62,6 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         return await CreateQueryClientTypeAppPodAsync(appId, version, imageName);
     }
 
-    private async Task CheckNameSpaceAsync()
-    {
-        // var namespaces = await _kubernetesClientAdapter.ListNamespaceAsync();
-
-        var nameSpace = KubernetesConstants.AppNameSpace;
-        // var namespaceExists = namespaces.Items.Any(n => n.Metadata.Name == nameSpace);
-        //
-        // if (!namespaceExists)
-        // {
-        //     _logger.LogInformation($"Namespace '{nameSpace}' does not exist.");
-        //     var newNamespace = NameSpaceHelper.CreateNameSpaceDefinition(nameSpace);
-        //     var result = await _kubernetesClientAdapter.CreateNamespaceAsync(newNamespace);
-        //     _logger.LogInformation($"Namespace created: {result.Metadata.Name}");
-        // }
-        
-        try
-        {
-            await _kubernetesClientAdapter.ReadNamespaceAsync(nameSpace);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Namespace '{nameSpace}' does not exist. An error occurred: {ex.Message}");
-            throw ex;
-        }
-    }
-
     private async Task CreateFullClientTypeAppPodAsync(string appId, string version, string imageName, string chainId)
     {
         //Create full app appsetting config map
@@ -340,7 +314,7 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
         }
         catch (Exception ex)
         {
-            // Handle other potential exceptions
+            // Exceptions are caught here because normal business cannot fail due to the monitored service
             _logger.LogError(ex, $"List service monitor resource exception: {ex.Message}");
             return false;
         }

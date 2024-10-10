@@ -147,6 +147,7 @@ public class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockPusherGra
         }
         catch (Exception e)
         {
+            // Log the exception information when processing historical blocks.
             _logger.LogError(e, "Grain: {GrainId} token: {PushToken} handle historical block failed: {Message}",
                 this.GetPrimaryKeyString(), State.PushToken, e.Message);
             throw;

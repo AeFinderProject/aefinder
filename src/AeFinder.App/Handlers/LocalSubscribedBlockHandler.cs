@@ -64,6 +64,11 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,
             subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
 
+        await HandleBlocksAsync(subscribedBlock);
+    }
+
+    private async Task HandleBlocksAsync(SubscribedBlockDto subscribedBlock)
+    {
         try
         {
             await _blockAttachService.AttachBlocksAsync(subscribedBlock.ChainId, subscribedBlock.Blocks);
@@ -85,6 +90,9 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
         }
         catch (Exception e)
         {
+            // When processing data, there are programs that handle exceptions themselves.
+            // If it continues to be thrown, it will cause EventBus to re-enqueue, which makes no sense due to the wrong order.
+            
             _logger.LogError(e, "[{ChainId}] Data processing failed!", subscribedBlock.ChainId);
             _logger.LogError(AeFinderApplicationConsts.AppLogEventId, null,
                 "[{ChainId}] Data processing failed, please contact the AeFinder!", subscribedBlock.ChainId);

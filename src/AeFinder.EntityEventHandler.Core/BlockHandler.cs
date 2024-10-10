@@ -130,6 +130,7 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         }
         catch (Exception e)
         {
+            // Record a log. And retry to ensure that the message is not lost.
             _logger.LogError(e,
                 $"Handle newBlocks add event error:{e.Message}，start BlockHeight: {firstBlock.BlockHeight}, end BlockHeight: {eventData.NewBlocks.Last().BlockHeight},retrying...");
             await HandleEventAsync(eventData);

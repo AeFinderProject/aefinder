@@ -67,6 +67,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
         }
         catch (Exception e)
         {
+            // Log processing exception.
             Logger.LogError(e,"Process new block failed.");
             throw;
         }
@@ -151,6 +152,7 @@ public class BlockIndexHandler : IBlockIndexHandler, ISingletonDependency
         }
         catch (Exception e)
         {
+            // Log processing exception.
             Logger.LogError(e,"Process Confirmed block failed.");
             throw;
         }

@@ -46,23 +46,34 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         var retryCount = 0;
         while (retryCount < _messageQueueOptions.RetryTimes)
         {
-            try
+            if (await PublishMessageToEventBusAsync(subscribedBlock, retryCount))
             {
-                await _distributedEventBus.PublishAsync(subscribedBlock);
                 break;
             }
-            catch (Exception e)
-            {
-                Logger.LogError(e, "[{ChainId}] Publish subscribedBlock event failed, retrying..." + retryCount,
-                    subscribedBlock.ChainId);
-                retryCount++;
-                await Task.Delay(_messageQueueOptions.RetryInterval);
+            retryCount++;
+        }
+    }
 
-                if (retryCount >= _messageQueueOptions.RetryTimes)
-                {
-                    throw e;
-                }
+    private async Task<bool> PublishMessageToEventBusAsync(SubscribedBlockDto subscribedBlock, int retryCount)
+    {
+        try
+        {
+            await _distributedEventBus.PublishAsync(subscribedBlock);
+            return true;
+        }
+        catch (Exception e)
+        {
+            // Any exception will attempt to resend the data as long as it is within the range of retries.
+            Logger.LogError(e, "[{ChainId}] Publish subscribedBlock event failed, retry times: {RetryCount}",
+                subscribedBlock.ChainId, retryCount);
+            await Task.Delay(_messageQueueOptions.RetryInterval);
+
+            if (retryCount >= _messageQueueOptions.RetryTimes)
+            {
+                throw;
             }
+
+            return false;
         }
     }
 }

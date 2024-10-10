@@ -31,31 +31,45 @@ public class DevelopmentTemplateAppService : AeFinderAppService, IDevelopmentTem
         var generatedPath = Path.Combine(_devTemplateOptions.TemplatePath, GeneratedProjectFolder, tempFolder);
         var zipFileName = generatedPath + ".zip";
 
+        var file = await GenerateProjectFileAsync(input.Name, zipFileName, generatedPath);
+        return new FileContentResult(file, "application/zip");
+    }
+
+    private async Task<byte[]> GenerateProjectFileAsync(string projectName, string zipFileName, string generatedPath)
+    {
         try
         {
-            GenerateProject(input.Name, _devTemplateOptions.TemplatePath, generatedPath);
+            GenerateProject(projectName, _devTemplateOptions.TemplatePath, generatedPath);
             ZipHelper.ZipDirectory(zipFileName, generatedPath);
-            var file = await File.ReadAllBytesAsync(zipFileName);
-            return new FileContentResult(file, "application/zip");
+            return await File.ReadAllBytesAsync(zipFileName);
         }
         catch (Exception e)
         {
-            var message = $"Generate project: {input.Name} failed.";
+            // Log the exception information and throw a UserFriendlyException to the user.
+            var message = $"Generate project: {projectName} failed.";
             Logger.LogError(e, message);
             throw new UserFriendlyException(message);
         }
         finally
         {
-            try
-            {
-                File.Delete(zipFileName);
-                Directory.Delete(generatedPath, true);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError(e, "Failed to clean up temporary files.");
-            }
+            await CleanTempFilesAsync(zipFileName, generatedPath);
         }
+    }
+
+    private Task CleanTempFilesAsync(string zipFileName, string generatedPath)
+    {
+        try
+        {
+            File.Delete(zipFileName);
+            Directory.Delete(generatedPath, true);
+        }
+        catch (Exception e)
+        {
+            // Only exception information is logged without blocking the service logic.
+            Logger.LogError(e, "Failed to clean up temporary files.");
+        }
+
+        return Task.CompletedTask;
     }
 
     public void GenerateProject(string projectName, string templatePath, string generatedPath)
