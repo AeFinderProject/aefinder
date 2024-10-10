@@ -251,8 +251,8 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
-        {
-            var healthPath = GetGraphQLPath(appId, version);
+        { 
+            var healthPath = GetGraphQLPlaygroundPath(appId, version);
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, version,
                 imageName, deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
                 sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable, healthPath);
@@ -318,6 +318,11 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
     private string GetGraphQLPath(string appId, string version)
     {
         return $"/{appId}/{version}/graphql";
+    }
+
+    private string GetGraphQLPlaygroundPath(string appId, string version)
+    {
+        return $"/{appId}/{version}/ui/playground";
     }
 
     public async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
@@ -625,6 +630,11 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
             var deployment =
                 await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(deploymentName,
                     KubernetesConstants.AppNameSpace);
+            // Add or update annotations to trigger rolling updates
+            var annotations = deployment.Spec.Template.Metadata.Annotations ?? new Dictionary<string, string>();
+            annotations["kubectl.kubernetes.io/restartedAt"] = DateTime.UtcNow.ToString("s");
+            deployment.Spec.Template.Metadata.Annotations = annotations;
+            //Update container image 
             var containers = deployment.Spec.Template.Spec.Containers;
             var containerName =
                 ContainerHelper.GetAppContainerName(appId, version, clientType, chainId);
@@ -702,10 +712,11 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         _logger.LogInformation($"Updated app setting config map {appSettingConfigMapName} successfully");
     }
 
+
     public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(int pageSize, string continueToken)
     {
         var (pods, newContinueToken) = await _kubernetesClientAdapter.ListPodsInNamespaceWithPagingAsync(
-                KubernetesConstants.AppNameSpace, pageSize, continueToken);
+            KubernetesConstants.AppNameSpace, pageSize, continueToken);
 
         var podList = new List<AppPodInfoDto>();
         foreach (var pod in pods.Items)
@@ -755,5 +766,72 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
             ContinueToken = newContinueToken,
             PodInfos = podList
         };
+    }
+
+    public async Task UpdateAppFullPodResourceAsync(string appId, string version, string requestCpu,
+        string requestMemory, List<string> chainIds)
+    {
+        if (chainIds.Count == 0)
+        {
+            await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
+                KubernetesConstants.AppClientTypeFull, null);
+        }
+        else
+        {
+            foreach (var chainId in chainIds)
+            {
+                await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
+                    KubernetesConstants.AppClientTypeFull, chainId);
+            }
+        }
+    }
+
+    public async Task UpdateAppQueryPodResourceAsync(string appId, string version, string requestCpu,
+        string requestMemory)
+    {
+        await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
+            KubernetesConstants.AppClientTypeQuery, null);
+    }
+
+    private async Task UpdateAppResourceAsync(string appId, string version, string requestCpu, string requestMemory,
+        string clientType, string chainId)
+    {
+        var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
+        var deploymentName =
+            DeploymentHelper.GetAppDeploymentName(appId, version, clientType, chainId);
+        var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
+        if (deploymentExists)
+        {
+            var deployment =
+                await _kubernetesClientAdapter.ReadNamespacedDeploymentAsync(deploymentName,
+                    KubernetesConstants.AppNameSpace);
+            // Add or update annotations to trigger rolling updates
+            var annotations = deployment.Spec.Template.Metadata.Annotations ?? new Dictionary<string, string>();
+            annotations["kubectl.kubernetes.io/restartedAt"] = DateTime.UtcNow.ToString("s");
+            deployment.Spec.Template.Metadata.Annotations = annotations;
+            //Update container resource
+            var containers = deployment.Spec.Template.Spec.Containers;
+            var containerName =
+                ContainerHelper.GetAppContainerName(appId, version, clientType, chainId);
+
+            var container = containers.FirstOrDefault(c => c.Name == containerName);
+            if (container != null)
+            {
+                var resources = DeploymentHelper.CreateResources(requestCpu, requestMemory);
+                container.Resources = resources;
+                await _kubernetesClientAdapter.ReplaceNamespacedDeploymentAsync(deployment, deploymentName,
+                    KubernetesConstants.AppNameSpace);
+                _logger.LogInformation(
+                    $"Updated deployment {deploymentName} main container resources cpu: {requestCpu} memory: {requestMemory}");
+            }
+            else
+            {
+                _logger.LogError($"Container {containerName} not found in deployment {deploymentName}");
+            }
+        }
+        else
+        {
+            _logger.LogError($"Deployment {deploymentName} does not exist!");
+        }
     }
 }

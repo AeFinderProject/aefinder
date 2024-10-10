@@ -181,7 +181,7 @@ public class DeploymentHelper
         };
     }
     
-    private static V1ResourceRequirements CreateResources(string requestCpu, string requestMemory)
+    public static V1ResourceRequirements CreateResources(string requestCpu, string requestMemory)
     {
         return new V1ResourceRequirements
         {
@@ -197,20 +197,20 @@ public class DeploymentHelper
     {
         return new V1Probe()
         {
-            // HttpGet = new V1HTTPGetAction()
-            // {
-            //     Path = readinessProbeHealthPath,
-            //     Port = containerPort
-            // },
-            Exec = new V1ExecAction()
+            HttpGet = new V1HTTPGetAction()
             {
-                Command = new List<string>()
-                {
-                    "sh",
-                    "-c",
-                    "curl -X POST -H 'Content-Type: application/json' -d '{\"query\":\"{ __schema { types { name } } }\"}' http://localhost:"+containerPort+readinessProbeHealthPath+" | grep 'name'"
-                }
+                Path = readinessProbeHealthPath,
+                Port = containerPort
             },
+            // Exec = new V1ExecAction()
+            // {
+            //     Command = new List<string>()
+            //     {
+            //         "sh",
+            //         "-c",
+            //         "curl -X POST -H 'Content-Type: application/json' -d '{\"query\":\"{ __schema { types { name } } }\"}' http://localhost:"+containerPort+readinessProbeHealthPath+" | grep 'name'"
+            //     }
+            // },
             InitialDelaySeconds = 5,
             PeriodSeconds = 5,
             TimeoutSeconds = 1,
