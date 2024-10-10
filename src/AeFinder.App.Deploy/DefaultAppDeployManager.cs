@@ -1,4 +1,6 @@
-﻿namespace AeFinder.App.Deploy;
+﻿using AeFinder.Apps.Dto;
+
+namespace AeFinder.App.Deploy;
 
 public class DefaultAppDeployManager : IAppDeployManager
 {
@@ -20,5 +22,10 @@ public class DefaultAppDeployManager : IAppDeployManager
     public async Task UpdateAppDockerImageAsync(string appId, string version, string imageName, List<string> chainIds, bool isUpdateConfig)
     {
         return;
+    }
+
+    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(int pageSize, string continueToken)
+    {
+        return new AppPodsPageResultDto();
     }
 }
