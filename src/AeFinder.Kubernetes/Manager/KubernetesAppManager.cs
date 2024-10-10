@@ -728,10 +728,10 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
                 info.AgeSeconds = age.Seconds;
             }
 
-            var containerList = new List<PodContainer>();
+            var containerList = new List<PodContainerDto>();
             foreach (var v1Container in pod.Spec.Containers)
             {
-                var container = new PodContainer();
+                var container = new PodContainerDto();
                 container.ContainerName = v1Container.Name;
                 container.ContainerImage = v1Container.Image;
                 containerList.Add(container);

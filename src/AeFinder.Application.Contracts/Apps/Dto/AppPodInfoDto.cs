@@ -17,10 +17,10 @@ public class AppPodInfoDto
     public int ReadyContainersCount { get; set; }
     public int TotalContainersCount { get; set; }
     public long AgeSeconds { get; set; }
-    public List<PodContainer> Containers { get; set; }
+    public List<PodContainerDto> Containers { get; set; }
 }
 
-public class PodContainer
+public class PodContainerDto
 {
     public string ContainerID { get; set; }
     public string ContainerName { get; set; }
