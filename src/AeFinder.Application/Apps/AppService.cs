@@ -36,9 +36,11 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appIndexRepository;
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitIndexRepository;
     private readonly IDistributedEventBus _distributedEventBus;
+    private readonly IAppDeployManager _appDeployManager;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
+        IAppDeployManager appDeployManager,
         IDistributedEventBus distributedEventBus,
         IElasticIndexService elasticIndexService,
         IOrganizationAppService organizationAppService,
@@ -53,6 +55,7 @@ public class AppService : AeFinderAppService, IAppService
         _appResourceLimitProvider = appResourceLimitProvider;
         _elasticIndexService = elasticIndexService;
         _distributedEventBus = distributedEventBus;
+        _appDeployManager = appDeployManager;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -262,6 +265,8 @@ public class AppService : AeFinderAppService, IAppService
         {
             throw new UserFriendlyException("please input limit parameters");
         }
+        
+        var appOldLimit = await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
 
         var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
             GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
@@ -274,7 +279,68 @@ public class AppService : AeFinderAppService, IAppService
         appLimitUpdateEto.AppId = appId;
         await _distributedEventBus.PublishAsync(appLimitUpdateEto);
         
+        var appSubscriptionGrain =
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(
+                GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        var currentVersion = allSubscription.CurrentVersion?.Version;
+        var pendingVersion = allSubscription.PendingVersion?.Version;
+        
+        //Check if need update full pod resource
+        if (appOldLimit.AppFullPodRequestCpuCore != appLimit.AppFullPodRequestCpuCore ||
+            appOldLimit.AppFullPodRequestMemory != appLimit.AppFullPodRequestMemory)
+        {
+            if (!currentVersion.IsNullOrEmpty())
+            {
+                var chainIds = await GetDeployChainIdAsync(appId, currentVersion);
+                await _appDeployManager.UpdateAppFullPodResourceAsync(appId, currentVersion,
+                    appLimit.AppFullPodRequestCpuCore, appLimit.AppFullPodRequestMemory, chainIds);
+            }
+
+            if (!pendingVersion.IsNullOrEmpty())
+            {
+                var chainIds = await GetDeployChainIdAsync(appId, pendingVersion);
+                await _appDeployManager.UpdateAppFullPodResourceAsync(appId, pendingVersion,
+                    appLimit.AppFullPodRequestCpuCore, appLimit.AppFullPodRequestMemory, chainIds);
+            }
+        }
+        //Check if need update query pod resource
+        if (appOldLimit.AppQueryPodRequestCpuCore != appLimit.AppQueryPodRequestCpuCore ||
+            appOldLimit.AppQueryPodRequestMemory != appLimit.AppQueryPodRequestMemory)
+        {
+            if (!currentVersion.IsNullOrEmpty())
+            {
+                await _appDeployManager.UpdateAppQueryPodResourceAsync(appId, currentVersion,
+                    appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory);
+            }
+
+            if (!pendingVersion.IsNullOrEmpty())
+            {
+                await _appDeployManager.UpdateAppQueryPodResourceAsync(appId, pendingVersion,
+                    appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory);
+            }
+        }
+        
         return await appResourceLimitGrain.GetAsync();
+    }
+    
+    private async Task<List<string>> GetSubscriptionChainIdAsync(string appId, string version)
+    {
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var subscription = await appSubscriptionGrain.GetSubscriptionAsync(version);
+        return subscription.SubscriptionItems.Select(o => o.ChainId).ToList();
+    }
+
+    private async Task<List<string>> GetDeployChainIdAsync(string appId, string version)
+    {
+        var chainIds = new List<string>();
+        var enableMultipleInstances = (await _appResourceLimitProvider.GetAppResourceLimitAsync(appId)).EnableMultipleInstances;
+        if (enableMultipleInstances)
+        {
+            chainIds = await GetSubscriptionChainIdAsync(appId, version);
+        }
+
+        return chainIds;
     }
 
     public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)

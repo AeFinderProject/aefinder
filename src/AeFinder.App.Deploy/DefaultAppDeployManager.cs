@@ -17,7 +17,20 @@ public class DefaultAppDeployManager : IAppDeployManager
         return;
     }
 
-    public async Task UpdateAppDockerImageAsync(string appId, string version, string imageName, List<string> chainIds, bool isUpdateConfig)
+    public async Task UpdateAppDockerImageAsync(string appId, string version, string imageName, List<string> chainIds,
+        bool isUpdateConfig)
+    {
+        return;
+    }
+
+    public async Task UpdateAppFullPodResourceAsync(string appId, string version, string requestCpu,
+        string requestMemory, List<string> chainIds)
+    {
+        return;
+    }
+
+    public async Task UpdateAppQueryPodResourceAsync(string appId, string version, string requestCpu,
+        string requestMemory)
     {
         return;
     }
