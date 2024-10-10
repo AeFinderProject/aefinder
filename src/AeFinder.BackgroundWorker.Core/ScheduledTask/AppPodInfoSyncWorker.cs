@@ -55,17 +55,17 @@ public class AppPodInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
         //Todo Delete all old app pod index data
 
         //Start process synchronization
-        string continueToken = null;
-        
-        do
-        {
-            var podsPageResultDto = await _appDeployService.GetPodListWithPagingAsync(syncPageSize, continueToken);
-            continueToken = podsPageResultDto.ContinueToken;
-            
-            var podsInfoIndexList =
-                _objectMapper.Map<List<AppPodInfoDto>, List<AppPodInfoIndex>>(podsPageResultDto.PodInfos);
-            await _appPodInfoEntityMappingRepository.AddOrUpdateManyAsync(podsInfoIndexList);
-
-        } while (!string.IsNullOrEmpty(continueToken));
+        // string continueToken = null;
+        //
+        // do
+        // {
+        //     var podsPageResultDto = await _appDeployService.GetPodListWithPagingAsync(syncPageSize, continueToken);
+        //     continueToken = podsPageResultDto.ContinueToken;
+        //     
+        //     var podsInfoIndexList =
+        //         _objectMapper.Map<List<AppPodInfoDto>, List<AppPodInfoIndex>>(podsPageResultDto.PodInfos);
+        //     await _appPodInfoEntityMappingRepository.AddOrUpdateManyAsync(podsInfoIndexList);
+        //
+        // } while (!string.IsNullOrEmpty(continueToken));
     }
 }
