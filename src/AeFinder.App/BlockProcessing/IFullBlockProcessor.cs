@@ -1,6 +1,7 @@
 using AeFinder.App.OperationLimits;
 using AeFinder.Block.Dtos;
 using AeFinder.Sdk.Processor;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
@@ -12,7 +13,7 @@ public interface IFullBlockProcessor
     Task ProcessAsync(BlockWithTransactionDto block);
 }
 
-public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
+public partial class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
 {
     private readonly IEnumerable<IBlockProcessor> _blockProcessors;
     private readonly IBlockProcessingContext _blockProcessingContext;
@@ -65,91 +66,68 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
 
             foreach (var logEvent in transaction.LogEvents)
             {
-                await ProcesslogEventAsync(block, transaction, logEvent);
+                await ProcessLogEventAsync(block, transaction, logEvent);
             }
         }
     }
 
+    [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessBlockOperationLimitException))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessBlockException))]
     private async Task ProcessBlockAsync(IBlockProcessor blockProcessor, BlockWithTransactionDto block)
     {
-        try
-        {
-            await blockProcessor.ProcessAsync(
-                _objectMapper.Map<BlockWithTransactionDto, Sdk.Processor.Block>(block), new BlockContext
-                {
-                    ChainId = block.ChainId
-                });
-        }
-        catch (OperationLimitException e)
-        {
-            throw new OperationLimitException("Block processing operation limited!", e);
-        }
-        catch (Exception e)
-        {
-            // Any exception caused by the logic of the external developer's code is encapsulated as an AppProcessingException and handled separately by the upper level.
-            throw new AppProcessingException("Block processing failed!", e);
-        }
-    }
-
-    private async Task ProcessTransactionAsync(ITransactionProcessor transactionProcessor, BlockWithTransactionDto block, TransactionDto transaction)
-    {
-        try
-        {
-            await transactionProcessor.ProcessAsync(
-                _objectMapper.Map<TransactionDto, Transaction>(transaction),
-                new TransactionContext
-                {
-                    ChainId = block.ChainId,
-                    Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block)
-                });
-        }
-        catch (OperationLimitException e)
-        {
-            throw new OperationLimitException("Transaction processing operation limited!", e);
-        }
-        catch (Exception e)
-        {
-            // Any exception caused by the logic of the external developer's code is encapsulated as an AppProcessingException and handled separately by the upper level.
-            throw new AppProcessingException("Transaction processing failed!", e);
-        }
-    }
-
-    private async Task ProcesslogEventAsync(BlockWithTransactionDto block, TransactionDto transaction,
-        LogEventDto logEvent)
-    {
-        try
-        {
-            var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>
-                p.GetContractAddress(block.ChainId) == logEvent.ContractAddress &&
-                p.GetEventName() == logEvent.EventName);
-
-            if (logEventProcessor == null)
+        await blockProcessor.ProcessAsync(
+            _objectMapper.Map<BlockWithTransactionDto, Sdk.Processor.Block>(block), new BlockContext
             {
-                return;
-            }
+                ChainId = block.ChainId
+            });
+    }
 
-            _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
-                "Processing log event. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}, TransactionHash: {TransactionHash}, ContractAddress: {ContractAddress}, EventName: {EventName}.",
-                block.ChainId, block.BlockHash, block.BlockHeight, transaction.TransactionId,
-                logEvent.ContractAddress,
-                logEvent.EventName);
-
-            await logEventProcessor.ProcessAsync(new LogEventContext
+    [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessTransactionOperationLimitException))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessTransactionException))]
+    private async Task ProcessTransactionAsync(ITransactionProcessor transactionProcessor,
+        BlockWithTransactionDto block, TransactionDto transaction)
+    {
+        await transactionProcessor.ProcessAsync(
+            _objectMapper.Map<TransactionDto, Transaction>(transaction),
+            new TransactionContext
             {
                 ChainId = block.ChainId,
-                Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block),
-                Transaction = _objectMapper.Map<TransactionDto, Transaction>(transaction),
-                LogEvent = _objectMapper.Map<LogEventDto, LogEvent>(logEvent)
+                Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block)
             });
-        }
-        catch (OperationLimitException e)
+    }
+
+    [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessLogEventOperationLimitException))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessLogEventException))]
+    private async Task ProcessLogEventAsync(BlockWithTransactionDto block, TransactionDto transaction,
+        LogEventDto logEvent)
+    {
+        var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>
+            p.GetContractAddress(block.ChainId) == logEvent.ContractAddress &&
+            p.GetEventName() == logEvent.EventName);
+
+        if (logEventProcessor == null)
         {
-            throw new OperationLimitException("Log event processing operation limited!", e);
+            return;
         }
-        catch (Exception e)
+
+        _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
+            "Processing log event. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}, TransactionHash: {TransactionHash}, ContractAddress: {ContractAddress}, EventName: {EventName}.",
+            block.ChainId, block.BlockHash, block.BlockHeight, transaction.TransactionId,
+            logEvent.ContractAddress,
+            logEvent.EventName);
+
+        await logEventProcessor.ProcessAsync(new LogEventContext
         {
-            // Any exception caused by the logic of the external developer's code is encapsulated as an AppProcessingException and handled separately by the upper level.
-            throw new AppProcessingException("Log event processing failed!", e);
-        }
+            ChainId = block.ChainId,
+            Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block),
+            Transaction = _objectMapper.Map<TransactionDto, Transaction>(transaction),
+            LogEvent = _objectMapper.Map<LogEventDto, LogEvent>(logEvent)
+        });
     }
 }

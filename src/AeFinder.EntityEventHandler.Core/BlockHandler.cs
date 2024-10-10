@@ -9,6 +9,7 @@ using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AeFinder.Metrics;
 using AElf.EntityMapping.Repositories;
+using AElf.ExceptionHandler;
 using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.Extensions.Logging;
 using Nito.AsyncEx;
@@ -19,7 +20,7 @@ using Volo.Abp.ObjectMapping;
 namespace AeFinder.EntityEventHandler;
 
 [AggregateExecutionTime]
-public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
+public partial class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     IDistributedEventHandler<ConfirmBlocksEto>,
     ITransientDependency
 {
@@ -52,89 +53,82 @@ public class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
         _elapsedTimeRecorder = elapsedTimeRecorder;
     }
 
+    [ExceptionHandler([typeof(Exception)], TargetType = typeof(BlockHandler),
+        MethodName = nameof(HandleNewBlockExceptionAsync))]
     public virtual async Task HandleEventAsync(NewBlocksEto eventData)
     {
         var firstBlock = eventData.NewBlocks.First();
         _logger.LogInformation(
             $"blocks is adding, start BlockNumber: {firstBlock.BlockHeight} , Confirmed: {firstBlock.Confirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockHeight}");
 
-        try
+        var blockIndexList = new List<BlockIndex>();
+        foreach (var newBlock in eventData.NewBlocks)
         {
-            var blockIndexList = new List<BlockIndex>();
-            foreach (var newBlock in eventData.NewBlocks)
-            {
-                var blockIndex = _objectMapper.Map<NewBlockEto, BlockIndex>(newBlock);
-                blockIndex.TransactionIds = newBlock.Transactions.Select(b => b.TransactionId).ToList();
-                blockIndex.LogEventCount = newBlock.Transactions.Sum(t => t.LogEvents.Count);
-                blockIndexList.Add(blockIndex);
-            }
+            var blockIndex = _objectMapper.Map<NewBlockEto, BlockIndex>(newBlock);
+            blockIndex.TransactionIds = newBlock.Transactions.Select(b => b.TransactionId).ToList();
+            blockIndex.LogEventCount = newBlock.Transactions.Sum(t => t.LogEvents.Count);
+            blockIndexList.Add(blockIndex);
+        }
 
-            var tasks = new List<Task>
-            {
-                _blockIndexRepository.AddOrUpdateManyAsync(blockIndexList)
-            };
+        var tasks = new List<Task>
+        {
+            _blockIndexRepository.AddOrUpdateManyAsync(blockIndexList)
+        };
 
-            List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
-            List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
+        List<TransactionIndex> transactionIndexList = new List<TransactionIndex>();
+        List<LogEventIndex> logEventIndexList = new List<LogEventIndex>();
 
-            foreach (var newBlock in eventData.NewBlocks)
+        foreach (var newBlock in eventData.NewBlocks)
+        {
+            foreach (var transaction in newBlock.Transactions)
             {
-                foreach (var transaction in newBlock.Transactions)
+                var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
+                transactionIndexList.Add(transactionIndex);
+
+                foreach (var logEvent in transaction.LogEvents)
                 {
-                    var transactionIndex = _objectMapper.Map<Transaction, TransactionIndex>(transaction);
-                    transactionIndexList.Add(transactionIndex);
-
-                    foreach (var logEvent in transaction.LogEvents)
-                    {
-                        var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
-                        logEventIndexList.Add(logEventIndex);
-                    }
+                    var logEventIndex = _objectMapper.Map<LogEvent, LogEventIndex>(logEvent);
+                    logEventIndexList.Add(logEventIndex);
                 }
             }
-
-            if (transactionIndexList.Count > 0)
-            {
-                tasks.Add(_transactionIndexRepository.AddOrUpdateManyAsync(transactionIndexList));
-            }
-
-            if (logEventIndexList.Count > 0)
-            {
-                tasks.Add( _logEventIndexRepository.AddOrUpdateManyAsync(logEventIndexList));
-            }
-            
-            //Record latest new block height
-            var chainId = eventData.NewBlocks.Last().ChainId;
-            var summaryIndex = await _summaryIndexRepository.GetAsync(chainId);
-            if (summaryIndex == null)
-            {
-                summaryIndex = new SummaryIndex();
-                summaryIndex.ChainId = chainId;
-            }
-            summaryIndex.LatestBlockHash = eventData.NewBlocks.Last().BlockHash;
-            summaryIndex.LatestBlockHeight = eventData.NewBlocks.Last().BlockHeight;
-            tasks.Add( _summaryIndexRepository.AddOrUpdateAsync(summaryIndex));
-
-            await tasks.WhenAll();
-            _elapsedTimeRecorder.Record("ReceiveAndProcessBlockChainData",
-                (long)(DateTime.UtcNow - firstBlock.BlockTime).TotalMilliseconds);
-            
-            var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
-
-            _ = Task.Run(async () =>
-            {
-                foreach (var dto in blockDtos)
-                {
-                    await _blockIndexHandler.ProcessNewBlockAsync(dto);
-                }
-            });
         }
-        catch (Exception e)
+
+        if (transactionIndexList.Count > 0)
         {
-            // Record a log. And retry to ensure that the message is not lost.
-            _logger.LogError(e,
-                $"Handle newBlocks add event error:{e.Message}，start BlockHeight: {firstBlock.BlockHeight}, end BlockHeight: {eventData.NewBlocks.Last().BlockHeight},retrying...");
-            await HandleEventAsync(eventData);
+            tasks.Add(_transactionIndexRepository.AddOrUpdateManyAsync(transactionIndexList));
         }
+
+        if (logEventIndexList.Count > 0)
+        {
+            tasks.Add(_logEventIndexRepository.AddOrUpdateManyAsync(logEventIndexList));
+        }
+
+        //Record latest new block height
+        var chainId = eventData.NewBlocks.Last().ChainId;
+        var summaryIndex = await _summaryIndexRepository.GetAsync(chainId);
+        if (summaryIndex == null)
+        {
+            summaryIndex = new SummaryIndex();
+            summaryIndex.ChainId = chainId;
+        }
+
+        summaryIndex.LatestBlockHash = eventData.NewBlocks.Last().BlockHash;
+        summaryIndex.LatestBlockHeight = eventData.NewBlocks.Last().BlockHeight;
+        tasks.Add(_summaryIndexRepository.AddOrUpdateAsync(summaryIndex));
+
+        await tasks.WhenAll();
+        _elapsedTimeRecorder.Record("ReceiveAndProcessBlockChainData",
+            (long)(DateTime.UtcNow - firstBlock.BlockTime).TotalMilliseconds);
+
+        var blockDtos = _objectMapper.Map<List<NewBlockEto>, List<BlockWithTransactionDto>>(eventData.NewBlocks);
+
+        _ = Task.Run(async () =>
+        {
+            foreach (var dto in blockDtos)
+            {
+                await _blockIndexHandler.ProcessNewBlockAsync(dto);
+            }
+        });
     }
 
     public async Task HandleEventAsync(ConfirmBlocksEto eventData)

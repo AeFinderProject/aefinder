@@ -11,6 +11,7 @@ using AeFinder.App.Deploy;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Options;
+using AElf.ExceptionHandler;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,7 +22,7 @@ namespace AeFinder.Apps;
 
 [RemoteService(IsEnabled = false)]
 [DisableAuditing]
-public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
+public partial class AppAttachmentService : AeFinderAppService, IAppAttachmentService
 {
     private readonly IClusterClient _clusterClient;
     private readonly IAwsS3ClientService _awsS3ClientService;
@@ -152,18 +153,13 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             throw new UserFriendlyException("Only support 5 attachments.");
         }
     }
-    
+
+    [ExceptionHandler([typeof(JsonException)], TargetType = typeof(AppAttachmentService),
+        MethodName = nameof(HandleJsonExceptionException))]
     public static bool IsValidJson(string jsonString)
     {
-        try
-        {
-            JsonDocument.Parse(jsonString);
-            return true;
-        }
-        catch (JsonException exception) 
-        {
-            return false;
-        }
+        JsonDocument.Parse(jsonString);
+        return true;
     }
 
     public async Task UploadAppAttachmentAsync(Stream fileStream, string appId, string version, string fileKey,
