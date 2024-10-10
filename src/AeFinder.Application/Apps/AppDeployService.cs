@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
+using AeFinder.Apps.Dto;
 using AeFinder.BlockScan;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Subscriptions;
@@ -74,5 +75,11 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         }
 
         return chainIds;
+    }
+
+    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(int pageSize, string continueToken)
+    {
+        var podsPageResult = await _appDeployManager.GetPodListWithPagingAsync(pageSize, continueToken);
+        return podsPageResult;
     }
 }

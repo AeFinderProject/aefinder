@@ -10,6 +10,9 @@ public interface IKubernetesClientAdapter
     Task<V1Namespace> ReadNamespaceAsync(string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
 
+    Task<(V1PodList, string)> ListPodsInNamespaceWithPagingAsync(string namespaceParameter, int pageSize,
+        string continueToken, CancellationToken cancellationToken = default(CancellationToken));
+
     Task<V1ConfigMapList> ListConfigMapAsync(string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
 
