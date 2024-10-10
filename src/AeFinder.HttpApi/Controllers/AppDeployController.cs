@@ -161,8 +161,8 @@ public class AppDeployController : AeFinderController
     [HttpGet]
     [Route("pods")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(int pageSize,string continueToken)
+    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(string appId, int pageSize, string continueToken)
     {
-        return await _appDeployService.GetPodListWithPagingAsync(pageSize, continueToken);
+        return await _appDeployService.GetPodListWithPagingAsync(appId, pageSize, continueToken);
     }
 }

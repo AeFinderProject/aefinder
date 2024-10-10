@@ -711,11 +711,23 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
 
         _logger.LogInformation($"Updated app setting config map {appSettingConfigMapName} successfully");
     }
-    
-    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(int pageSize, string continueToken)
+
+    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(string appId, int pageSize, string continueToken)
     {
-        var (pods, newContinueToken) = await _kubernetesClientAdapter.ListPodsInNamespaceWithPagingAsync(
-            KubernetesConstants.AppNameSpace, pageSize, continueToken);
+        V1PodList pods;
+        string newContinueToken = null;
+
+        if (string.IsNullOrEmpty(appId))
+        {
+            (pods, newContinueToken) = await _kubernetesClientAdapter.ListPodsInNamespaceWithPagingAsync(
+                KubernetesConstants.AppNameSpace, pageSize, continueToken);
+        }
+        else
+        {
+            string labelSelector = $"app-id={appId}";
+            pods = await _kubernetesClientAdapter.ListPodsInNamespaceWithPagingAsync(KubernetesConstants.AppNameSpace,
+                labelSelector);
+        }
 
         var podList = new List<AppPodInfoDto>();
         foreach (var pod in pods.Items)
@@ -728,6 +740,7 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
                 info.AppId = pod.Metadata.Labels[KubernetesConstants.AppIdLabelKey];
                 info.AppVersion = pod.Metadata.Labels[KubernetesConstants.AppVersionLabelKey];
             }
+
             info.Status = pod.Status.Phase;
             info.PodIP = pod.Status.PodIP;
             info.NodeName = pod.Spec.NodeName;
@@ -738,7 +751,7 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
             {
                 var creationTime = pod.Metadata.CreationTimestamp.Value;
                 TimeSpan age = DateTime.Now - creationTime;
-                info.AgeSeconds = age.Seconds;
+                info.AgeSeconds = age.TotalSeconds;
             }
 
             var containerList = new List<PodContainerDto>();
