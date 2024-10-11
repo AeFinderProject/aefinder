@@ -725,7 +725,7 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         }
         else
         {
-            string labelSelector = $"app-id={appId}";
+            string labelSelector = $"{KubernetesConstants.AppIdLabelKey}={appId}";
             pods = await _kubernetesClientAdapter.ListPodsInNamespaceWithPagingAsync(KubernetesConstants.AppNameSpace,
                 labelSelector);
         }
