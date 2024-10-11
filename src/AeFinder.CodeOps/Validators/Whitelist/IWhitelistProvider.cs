@@ -38,6 +38,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Assembly(System.Reflection.Assembly.Load("System.Runtime"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.Runtime.Extensions"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.Runtime.InteropServices"), Trust.Partial)
+            .Assembly(System.Reflection.Assembly.Load("System.Runtime.Numerics"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.Private.CoreLib"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.ObjectModel"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("System.Linq"), Trust.Full)
