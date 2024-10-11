@@ -1,6 +1,7 @@
 ﻿using AeFinder.Kubernetes.Manager;
 using AeFinder.Logger;
 using AeFinder.Options;
+using AElf.ExceptionHandler;
 using k8s;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,9 @@ using Volo.Abp.Threading;
 
 namespace AeFinder.Kubernetes;
 
+[DependsOn(
+    typeof(AOPExceptionModule)
+)]
 public class AeFinderKubernetesModule: AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

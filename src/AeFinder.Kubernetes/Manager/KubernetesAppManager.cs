@@ -5,6 +5,7 @@ using AeFinder.Kubernetes.Adapter;
 using AeFinder.Kubernetes.ResourceDefinition;
 using AeFinder.Logger;
 using AeFinder.Options;
+using AElf.ExceptionHandler;
 using k8s;
 using k8s.Autorest;
 using Microsoft.Extensions.Logging;
@@ -14,7 +15,7 @@ using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Kubernetes.Manager;
 
-public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
+public partial class KubernetesAppManager:IAppDeployManager,ISingletonDependency
 {
     // private readonly k8s.Kubernetes _k8sClient;
     private readonly KubernetesOptions _kubernetesOptions;
@@ -286,39 +287,29 @@ public class KubernetesAppManager:IAppDeployManager,ISingletonDependency
     {
         return $"/{appId}/{version}/graphql";
     }
-    
+
+    [ExceptionHandler([typeof(HttpOperationException)], TargetType = typeof(KubernetesAppManager),
+        MethodName = nameof(HandleHttpOperationException))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(KubernetesAppManager),
+        MethodName = nameof(HandleException))]
     public async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
     {
-        try
+        var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+            KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
+        if (serviceMonitors == null)
         {
-            var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
-                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
-            if (serviceMonitors == null)
-            {
-                _logger.LogError("Failed to retrieve service monitors, the result is null");
-                return false;
-            }
-            var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
-            foreach (var serviceMonitor in serviceMonitorList!.Items)
-            {
-                if (serviceMonitor.Metadata.Name == serviceMonitorName)
-                    return true;
-            }
+            _logger.LogError("Failed to retrieve service monitors, the result is null");
             return false;
         }
-        catch (HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+
+        var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
+        foreach (var serviceMonitor in serviceMonitorList!.Items)
         {
-            // Handle resources do not exist
-            _logger.LogInformation($"The service monitor resource {serviceMonitorName} does not exist.");
-            return false;
+            if (serviceMonitor.Metadata.Name == serviceMonitorName)
+                return true;
         }
-        catch (Exception ex)
-        {
-            // Exceptions are caught here because normal business cannot fail due to the monitored service
-            _logger.LogError(ex, $"List service monitor resource exception: {ex.Message}");
-            return false;
-        }
-        
+
+        return false;
     }
 
     public async Task DestroyAppAsync(string appId, string version, List<string> chainIds)

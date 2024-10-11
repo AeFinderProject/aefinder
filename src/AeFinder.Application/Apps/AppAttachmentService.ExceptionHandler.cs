@@ -5,7 +5,7 @@ namespace AeFinder.Apps;
 
 public partial class AppAttachmentService
 {
-    private FlowBehavior HandleJsonExceptionException(JsonException exception)
+    private FlowBehavior HandleJsonException(JsonException exception)
     {
         return new FlowBehavior
         {

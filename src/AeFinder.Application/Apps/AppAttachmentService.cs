@@ -155,7 +155,7 @@ public partial class AppAttachmentService : AeFinderAppService, IAppAttachmentSe
     }
 
     [ExceptionHandler([typeof(JsonException)], TargetType = typeof(AppAttachmentService),
-        MethodName = nameof(HandleJsonExceptionException))]
+        MethodName = nameof(HandleJsonException))]
     public static bool IsValidJson(string jsonString)
     {
         JsonDocument.Parse(jsonString);
