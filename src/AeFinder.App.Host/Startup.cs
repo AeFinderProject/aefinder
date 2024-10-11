@@ -79,22 +79,15 @@ public class Startup
             // httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer YOUR_TOKEN");
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            try
-            {
-                string requestUrl = $"api/apps/code?appId={HttpUtility.UrlEncode(appId)}&version={HttpUtility.UrlEncode(version)}";
-                HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
-                response.EnsureSuccessStatusCode();
+            var requestUrl =
+                $"api/apps/code?appId={HttpUtility.UrlEncode(appId)}&version={HttpUtility.UrlEncode(version)}";
+            var response = await httpClient.GetAsync(requestUrl);
+            response.EnsureSuccessStatusCode();
 
-                string responseBody = await response.Content.ReadAsStringAsync();
-                string base64EncodedData = responseBody.Trim('"');
-                byte[] decodedBytes = Convert.FromBase64String(base64EncodedData);
-                return decodedBytes;
-            }
-            catch (Exception e)
-            {
-                Log.Error($"Request app code error: {e.Message}");
-                throw e;
-            }
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var base64EncodedData = responseBody.Trim('"');
+            var decodedBytes = Convert.FromBase64String(base64EncodedData);
+            return decodedBytes;
         }
     }
 }

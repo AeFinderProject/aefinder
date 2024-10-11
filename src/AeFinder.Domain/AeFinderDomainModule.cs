@@ -2,6 +2,7 @@
 using AeFinder.OpenIddict;
 using AeFinder.OpenIddict.Login;
 using AElf.EntityMapping.Elasticsearch;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenIddict.Abstractions;
@@ -31,7 +32,8 @@ namespace AeFinder;
     typeof(AbpSettingManagementDomainModule),
     typeof(AbpTenantManagementDomainModule),
     typeof(AbpEmailingModule),
-    typeof(AElfEntityMappingElasticsearchModule)
+    typeof(AElfEntityMappingElasticsearchModule),
+    typeof(AOPExceptionModule)
 )]
 public class AeFinderDomainModule : AbpModule
 {

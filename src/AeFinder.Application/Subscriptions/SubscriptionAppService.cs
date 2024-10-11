@@ -17,6 +17,7 @@ using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Options;
 using AeFinder.Subscriptions.Dto;
 using AElf.EntityMapping.Repositories;
+using AElf.ExceptionHandler;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -29,7 +30,7 @@ namespace AeFinder.Subscriptions;
 
 [RemoteService(IsEnabled = false)]
 [DisableAuditing]
-public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppService
+public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionAppService
 {
     private readonly IClusterClient _clusterClient;
     private readonly ICodeAuditor _codeAuditor;
@@ -183,18 +184,13 @@ public class SubscriptionAppService : AeFinderAppService, ISubscriptionAppServic
         }
     }
 
+    [ExceptionHandler([typeof(CodeCheckException)], TargetType = typeof(SubscriptionAppService),
+        MethodName = nameof(HandleCodeCheckException))]
     private void AuditCode(byte[] code)
     {
-        try
-        {
-            _codeAuditor.Audit(code);
-        }
-        catch (CodeCheckException ex)
-        {
-            throw new UserFriendlyException(ex.Message);
-        }
+        _codeAuditor.Audit(code);
     }
-    
+
     private void CheckInputSubscriptionInfoIsValid(List<Subscription> subscriptionInfos,
         List<Subscription> currentSubscriptionInfos)
     {
