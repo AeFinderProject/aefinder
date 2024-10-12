@@ -49,12 +49,12 @@ public class DeploymentHelper
     /// <param name="configMapName"></param>
     /// <param name="sideCarConfigMapName"></param>
     /// <returns></returns>
-    public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string appId, string imageName,
-        string deploymentName, string deploymentLabelName, int replicasCount, string containerName,
+    public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string appId, string version,
+        string imageName, string deploymentName, string deploymentLabelName, int replicasCount, string containerName,
         int containerPort, string configMapName, string sideCarConfigMapName, string requestCpu, string requestMemory,
         string maxSurge, string maxUnavailable, string readinessProbeHealthPath = null)
     {
-        var labels = CreateLabels(deploymentLabelName, appId);
+        var labels = CreateLabels(deploymentLabelName, appId, version);
         var deployment = new V1Deployment
         {
             Metadata = new V1ObjectMeta
@@ -84,12 +84,14 @@ public class DeploymentHelper
         return deployment;
     }
 
-    private static Dictionary<string, string> CreateLabels(string deploymentLabelName, string appId)
+    private static Dictionary<string, string> CreateLabels(string deploymentLabelName, string appId, string version)
     {
         return new Dictionary<string, string>
         {
             { KubernetesConstants.AppLabelKey, deploymentLabelName },
-            { KubernetesConstants.MonitorLabelKey, appId }
+            { KubernetesConstants.MonitorLabelKey, appId },
+            { KubernetesConstants.AppIdLabelKey, appId },
+            { KubernetesConstants.AppVersionLabelKey, version }
         };
     }
 
@@ -179,7 +181,7 @@ public class DeploymentHelper
         };
     }
     
-    private static V1ResourceRequirements CreateResources(string requestCpu, string requestMemory)
+    public static V1ResourceRequirements CreateResources(string requestCpu, string requestMemory)
     {
         return new V1ResourceRequirements
         {
@@ -195,20 +197,20 @@ public class DeploymentHelper
     {
         return new V1Probe()
         {
-            // HttpGet = new V1HTTPGetAction()
-            // {
-            //     Path = readinessProbeHealthPath,
-            //     Port = containerPort
-            // },
-            Exec = new V1ExecAction()
+            HttpGet = new V1HTTPGetAction()
             {
-                Command = new List<string>()
-                {
-                    "sh",
-                    "-c",
-                    "curl -X POST -H 'Content-Type: application/json' -d '{\"query\":\"{ __schema { types { name } } }\"}' http://localhost:"+containerPort+readinessProbeHealthPath+" | grep 'name'"
-                }
+                Path = readinessProbeHealthPath,
+                Port = containerPort
             },
+            // Exec = new V1ExecAction()
+            // {
+            //     Command = new List<string>()
+            //     {
+            //         "sh",
+            //         "-c",
+            //         "curl -X POST -H 'Content-Type: application/json' -d '{\"query\":\"{ __schema { types { name } } }\"}' http://localhost:"+containerPort+readinessProbeHealthPath+" | grep 'name'"
+            //     }
+            // },
             InitialDelaySeconds = 5,
             PeriodSeconds = 5,
             TimeoutSeconds = 1,
