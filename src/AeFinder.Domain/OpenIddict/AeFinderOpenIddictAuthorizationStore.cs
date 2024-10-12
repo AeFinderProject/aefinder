@@ -3,6 +3,7 @@ using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Volo.Abp.Guids;
 using Volo.Abp.OpenIddict;
 using Volo.Abp.OpenIddict.Applications;
@@ -20,12 +21,14 @@ public class AeFinderOpenIddictAuthorizationStore:AbpOpenIddictAuthorizationStor
         IOpenIddictApplicationRepository applicationRepository,
         IOpenIddictTokenRepository tokenRepository,
         AbpOpenIddictIdentifierConverter identifierConverter,
-        IOpenIddictDbConcurrencyExceptionHandler concurrencyExceptionHandler)
-        : base(repository, unitOfWorkManager, guidGenerator,applicationRepository,tokenRepository,identifierConverter,concurrencyExceptionHandler)
+        IOpenIddictDbConcurrencyExceptionHandler concurrencyExceptionHandler,
+        IOptions<AbpOpenIddictStoreOptions> storeOptions)
+        : base(repository, unitOfWorkManager, guidGenerator, applicationRepository, tokenRepository,
+            identifierConverter, concurrencyExceptionHandler, storeOptions)
     {
-        
+
     }
-    
+
     /// <summary>
     /// Override PruneAsync and set isTransactional as false
     /// </summary>
