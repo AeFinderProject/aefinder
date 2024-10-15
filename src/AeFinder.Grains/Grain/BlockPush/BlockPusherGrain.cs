@@ -59,8 +59,8 @@ public partial class BlockPusherGrain : AeFinderGrain<BlockPusherState>, IBlockP
     }
 
     [ExceptionHandler(typeof(Exception), TargetType = typeof(BlockPusherGrain),
-        MethodName = nameof(HandleHistoricalBlockException))]
-    public async Task HandleHistoricalBlockAsync()
+        MethodName = nameof(HandleHistoricalBlockExceptionAsync))]
+    public virtual async Task HandleHistoricalBlockAsync()
     {
         await ReadStateAsync();
 

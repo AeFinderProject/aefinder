@@ -72,10 +72,10 @@ public partial class FullBlockProcessor : IFullBlockProcessor, ISingletonDepende
     }
 
     [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(FullBlockProcessor),
-        MethodName = nameof(HandleProcessBlockOperationLimitException))]
+        MethodName = nameof(HandleProcessBlockOperationLimitExceptionAsync))]
     [ExceptionHandler(typeof(Exception), TargetType = typeof(FullBlockProcessor),
-        MethodName = nameof(HandleProcessBlockException))]
-    private async Task ProcessBlockAsync(IBlockProcessor blockProcessor, BlockWithTransactionDto block)
+        MethodName = nameof(HandleProcessBlockExceptionAsync))]
+    protected virtual async Task ProcessBlockAsync(IBlockProcessor blockProcessor, BlockWithTransactionDto block)
     {
         await blockProcessor.ProcessAsync(
             _objectMapper.Map<BlockWithTransactionDto, Sdk.Processor.Block>(block), new BlockContext
@@ -85,10 +85,10 @@ public partial class FullBlockProcessor : IFullBlockProcessor, ISingletonDepende
     }
 
     [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(FullBlockProcessor),
-        MethodName = nameof(HandleProcessTransactionOperationLimitException))]
+        MethodName = nameof(HandleProcessTransactionOperationLimitExceptionAsync))]
     [ExceptionHandler(typeof(Exception), TargetType = typeof(FullBlockProcessor),
-        MethodName = nameof(HandleProcessTransactionException))]
-    private async Task ProcessTransactionAsync(ITransactionProcessor transactionProcessor,
+        MethodName = nameof(HandleProcessTransactionExceptionAsync))]
+    protected virtual async Task ProcessTransactionAsync(ITransactionProcessor transactionProcessor,
         BlockWithTransactionDto block, TransactionDto transaction)
     {
         await transactionProcessor.ProcessAsync(
@@ -101,10 +101,10 @@ public partial class FullBlockProcessor : IFullBlockProcessor, ISingletonDepende
     }
 
     [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(FullBlockProcessor),
-        MethodName = nameof(HandleProcessLogEventOperationLimitException))]
+        MethodName = nameof(HandleProcessLogEventOperationLimitExceptionAsync))]
     [ExceptionHandler(typeof(Exception), TargetType = typeof(FullBlockProcessor),
-        MethodName = nameof(HandleProcessLogEventException))]
-    private async Task ProcessLogEventAsync(BlockWithTransactionDto block, TransactionDto transaction,
+        MethodName = nameof(HandleProcessLogEventExceptionAsync))]
+    protected virtual async Task ProcessLogEventAsync(BlockWithTransactionDto block, TransactionDto transaction,
         LogEventDto logEvent)
     {
         var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>

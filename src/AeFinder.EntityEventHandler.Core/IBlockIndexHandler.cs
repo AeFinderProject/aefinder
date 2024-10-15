@@ -42,8 +42,7 @@ public partial class BlockIndexHandler : IBlockIndexHandler, ISingletonDependenc
         Logger = NullLogger<BlockIndexHandler>.Instance;
     }
 
-    [ExceptionHandler([typeof(Exception)], TargetType = typeof(BlockIndexHandler),
-        MethodName = nameof(HandleNewBlockException))]
+    [ExceptionHandler([typeof(Exception)], Message = "Process new block failed.", LogOnly = true)]
     public virtual async Task ProcessNewBlockAsync(BlockWithTransactionDto block)
     {
         var chainGrain = _clusterClient.GetGrain<IChainGrain>(block.ChainId);
@@ -68,9 +67,8 @@ public partial class BlockIndexHandler : IBlockIndexHandler, ISingletonDependenc
         await tasks.WhenAll();
     }
 
-    [ExceptionHandler([typeof(Exception)], TargetType = typeof(BlockIndexHandler),
-        MethodName = nameof(HandleConfirmedBlockException))]
-    public async Task ProcessConfirmedBlocksAsync(BlockWithTransactionDto confirmBlock)
+    [ExceptionHandler([typeof(Exception)], Message = "Process Confirmed block failed.", LogOnly = true)]
+    public virtual async Task ProcessConfirmedBlocksAsync(BlockWithTransactionDto confirmBlock)
     {
         var chainId = confirmBlock.ChainId;
 

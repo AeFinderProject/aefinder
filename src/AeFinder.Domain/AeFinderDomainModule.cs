@@ -2,7 +2,7 @@
 using AeFinder.OpenIddict;
 using AeFinder.OpenIddict.Login;
 using AElf.EntityMapping.Elasticsearch;
-using AElf.ExceptionHandler;
+using AElf.ExceptionHandler.ABP;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenIddict.Abstractions;

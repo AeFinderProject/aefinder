@@ -94,7 +94,7 @@ public partial class AppAttachmentService : AeFinderAppService, IAppAttachmentSe
                 fileNameWithExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension);
                 var compressedData = ZipHelper.ConvertIFormFileToByteArray(attachment);
                 string jsonData = ZipHelper.DecompressDeflateData(compressedData);
-                if (!IsValidJson(jsonData))
+                if (!await IsValidJsonAsync(jsonData))
                 {
                     throw new UserFriendlyException($"Attachment {fileNameWithExtension} json is not valid.");
                 }
@@ -155,11 +155,11 @@ public partial class AppAttachmentService : AeFinderAppService, IAppAttachmentSe
     }
 
     [ExceptionHandler([typeof(JsonException)], TargetType = typeof(AppAttachmentService),
-        MethodName = nameof(HandleJsonException))]
-    public static bool IsValidJson(string jsonString)
+        MethodName = nameof(HandleJsonExceptionAsync))]
+    protected virtual Task<bool> IsValidJsonAsync(string jsonString)
     {
         JsonDocument.Parse(jsonString);
-        return true;
+        return Task.FromResult(true);
     }
 
     public async Task UploadAppAttachmentAsync(Stream fileStream, string appId, string version, string fileKey,

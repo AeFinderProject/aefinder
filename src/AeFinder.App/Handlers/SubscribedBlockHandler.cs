@@ -57,7 +57,7 @@ public partial class SubscribedBlockHandler : ISubscribedBlockHandler, ISingleto
 
     [ExceptionHandler([typeof(Exception)], TargetType = typeof(SubscribedBlockHandler),
         MethodName = nameof(HandleSubscribedBlockExceptionAsync))]
-    private async Task<bool> PublishMessageToEventBusAsync(SubscribedBlockDto subscribedBlock, int retryCount)
+    protected virtual async Task<bool> PublishMessageToEventBusAsync(SubscribedBlockDto subscribedBlock, int retryCount)
     {
         await _distributedEventBus.PublishAsync(subscribedBlock);
         return true;

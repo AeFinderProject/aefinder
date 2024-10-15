@@ -300,10 +300,10 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
     }
 
     [ExceptionHandler([typeof(HttpOperationException)], TargetType = typeof(KubernetesAppManager),
-        MethodName = nameof(HandleHttpOperationException))]
+        MethodName = nameof(HandleHttpOperationExceptionAsync))]
     [ExceptionHandler(typeof(Exception), TargetType = typeof(KubernetesAppManager),
-        MethodName = nameof(HandleException))]
-    public async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
+        MethodName = nameof(HandleExceptionAsync))]
+    public virtual async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
     {
         var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
             KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);

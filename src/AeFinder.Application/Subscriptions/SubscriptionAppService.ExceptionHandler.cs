@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using AeFinder.CodeOps;
 using AElf.ExceptionHandler;
 using Volo.Abp;
@@ -6,12 +7,12 @@ namespace AeFinder.Subscriptions;
 
 public partial class SubscriptionAppService
 {
-    private FlowBehavior HandleCodeCheckException(CodeCheckException exception)
+    public virtual Task<FlowBehavior> HandleCodeCheckExceptionAsync(CodeCheckException exception)
     {
-        return new FlowBehavior
+        return Task.FromResult(new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Throw,
             ReturnValue = new UserFriendlyException(exception.Message)
-        };
+        });
     }
 }

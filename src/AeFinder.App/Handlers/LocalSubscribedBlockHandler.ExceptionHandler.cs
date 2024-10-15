@@ -8,33 +8,33 @@ namespace AeFinder.App.Handlers;
 
 public partial class LocalSubscribedBlockHandler
 {
-    private FlowBehavior HandleBlocksOperationLimitException(OperationLimitException exception,
+    public virtual Task<FlowBehavior> HandleBlocksOperationLimitExceptionAsync(OperationLimitException exception,
         SubscribedBlockDto subscribedBlock)
     {
         _logger.LogError(AeFinderApplicationConsts.AppLogEventId, exception, "[{ChainId}] Data processing failed!",
             subscribedBlock.ChainId);
         _processingStatusProvider.SetStatus(subscribedBlock.AppId, subscribedBlock.Version, 
             subscribedBlock.ChainId, ProcessingStatus.OperationLimited);
-        return new FlowBehavior
+        return Task.FromResult(new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return
-        };
+        });
     }
 
-    private FlowBehavior HandleBlocksAppProcessingException(AppProcessingException exception,
+    public virtual Task<FlowBehavior> HandleBlocksAppProcessingExceptionAsync(AppProcessingException exception,
         SubscribedBlockDto subscribedBlock)
     {
         _logger.LogError(AeFinderApplicationConsts.AppLogEventId, exception, "[{ChainId}] Data processing failed!",
             subscribedBlock.ChainId);
         _processingStatusProvider.SetStatus(subscribedBlock.AppId, subscribedBlock.Version,
             subscribedBlock.ChainId, ProcessingStatus.Failed);
-        return new FlowBehavior
+        return Task.FromResult(new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return
-        };
+        });
     }
 
-    private FlowBehavior HandleBlocksException(Exception exception, SubscribedBlockDto subscribedBlock)
+    public virtual Task<FlowBehavior> HandleBlocksExceptionAsync(Exception exception, SubscribedBlockDto subscribedBlock)
     {
         // When processing data, there are programs that handle exceptions themselves.
         // If it continues to be thrown, it will cause EventBus to re-enqueue, which makes no sense due to the wrong order.
@@ -43,9 +43,9 @@ public partial class LocalSubscribedBlockHandler
             "[{ChainId}] Data processing failed, please contact the AeFinder!", subscribedBlock.ChainId);
         _processingStatusProvider.SetStatus(subscribedBlock.AppId, subscribedBlock.Version,
             subscribedBlock.ChainId, ProcessingStatus.Failed);
-        return new FlowBehavior
+        return Task.FromResult(new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return
-        };
+        });
     }
 }

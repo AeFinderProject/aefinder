@@ -185,10 +185,11 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
     }
 
     [ExceptionHandler([typeof(CodeCheckException)], TargetType = typeof(SubscriptionAppService),
-        MethodName = nameof(HandleCodeCheckException))]
-    private void AuditCode(byte[] code)
+        MethodName = nameof(HandleCodeCheckExceptionAsync))]
+    protected virtual Task AuditCodeAsync(byte[] code)
     {
         _codeAuditor.Audit(code);
+        return Task.CompletedTask;
     }
 
     private void CheckInputSubscriptionInfoIsValid(List<Subscription> subscriptionInfos,
@@ -332,7 +333,7 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
             throw new UserFriendlyException("Code is too Large.");
         }
 
-        AuditCode(code);
+        await AuditCodeAsync(code);
     }
 
     public async Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string appId, string version)

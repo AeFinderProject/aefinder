@@ -6,7 +6,7 @@ namespace AeFinder.App.Handlers;
 
 public partial class SubscribedBlockHandler
 {
-    private async Task<FlowBehavior> HandleSubscribedBlockExceptionAsync(Exception exception,
+    public virtual async Task<FlowBehavior> HandleSubscribedBlockExceptionAsync(Exception exception,
         SubscribedBlockDto subscribedBlock, int retryCount)
     {
         // Any exception will attempt to resend the data as long as it is within the range of retries.

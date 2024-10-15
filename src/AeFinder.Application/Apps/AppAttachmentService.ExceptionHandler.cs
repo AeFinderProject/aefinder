@@ -1,16 +1,17 @@
 using System.Text.Json;
+using System.Threading.Tasks;
 using AElf.ExceptionHandler;
 
 namespace AeFinder.Apps;
 
 public partial class AppAttachmentService
 {
-    private FlowBehavior HandleJsonException(JsonException exception)
+    public virtual Task<FlowBehavior> HandleJsonExceptionAsync(JsonException exception)
     {
-        return new FlowBehavior
+        return Task.FromResult(new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
             ReturnValue = false
-        };
+        });
     }
 }

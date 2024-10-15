@@ -9,7 +9,7 @@ namespace AeFinder.EntityEventHandler;
 
 public partial class BlockHandler
 {
-    private async Task<FlowBehavior> HandleNewBlockExceptionAsync(Exception exception, NewBlocksEto eventData)
+    public virtual async Task<FlowBehavior> HandleNewBlockExceptionAsync(Exception exception, NewBlocksEto eventData)
     {
         // Record a log. And retry to ensure that the message is not lost.
         _logger.LogError(exception,

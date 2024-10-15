@@ -69,12 +69,12 @@ public partial class LocalSubscribedBlockHandler : IDistributedEventHandler<Subs
     }
 
     [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(LocalSubscribedBlockHandler),
-        MethodName = nameof(HandleBlocksOperationLimitException))]
+        MethodName = nameof(HandleBlocksOperationLimitExceptionAsync))]
     [ExceptionHandler([typeof(AppProcessingException)], TargetType = typeof(LocalSubscribedBlockHandler),
-        MethodName = nameof(HandleBlocksAppProcessingException))]
+        MethodName = nameof(HandleBlocksAppProcessingExceptionAsync))]
     [ExceptionHandler(typeof(Exception), TargetType = typeof(LocalSubscribedBlockHandler),
-        MethodName = nameof(HandleBlocksException))]
-    private async Task HandleBlocksAsync(SubscribedBlockDto subscribedBlock)
+        MethodName = nameof(HandleBlocksExceptionAsync))]
+    protected virtual async Task HandleBlocksAsync(SubscribedBlockDto subscribedBlock)
     {
         await _blockAttachService.AttachBlocksAsync(subscribedBlock.ChainId, subscribedBlock.Blocks);
         await _versionUpgradeProvider.UpgradeAsync();

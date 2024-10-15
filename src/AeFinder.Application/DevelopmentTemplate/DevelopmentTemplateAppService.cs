@@ -37,10 +37,10 @@ public partial class DevelopmentTemplateAppService : AeFinderAppService, IDevelo
     }
 
     [ExceptionHandler(typeof(Exception), TargetType = typeof(DevelopmentTemplateAppService),
-        MethodName = nameof(HandleGenerateProjectFileException),
+        MethodName = nameof(HandleGenerateProjectFileExceptionAsync),
         FinallyTargetType = typeof(DevelopmentTemplateAppService),
         FinallyMethodName = nameof(CleanTempFiles))]
-    private async Task<byte[]> GenerateProjectFileAsync(string projectName, string zipFileName, string generatedPath)
+    protected virtual async Task<byte[]> GenerateProjectFileAsync(string projectName, string zipFileName, string generatedPath)
     {
         GenerateProject(projectName, _devTemplateOptions.TemplatePath, generatedPath);
         ZipHelper.ZipDirectory(zipFileName, generatedPath);
@@ -48,8 +48,8 @@ public partial class DevelopmentTemplateAppService : AeFinderAppService, IDevelo
     }
 
     [ExceptionHandler(typeof(Exception), TargetType = typeof(DevelopmentTemplateAppService),
-        MethodName = nameof(HandleCleanTempFilesException))]
-    private void CleanTempFiles(string zipFileName, string generatedPath)
+        MethodName = nameof(HandleCleanTempFilesExceptionAsync))]
+    protected virtual void CleanTempFiles(string zipFileName, string generatedPath)
     {
         File.Delete(zipFileName);
         Directory.Delete(generatedPath, true);
