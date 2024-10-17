@@ -43,12 +43,15 @@ public class OrleansDbClearService : IOrleansDbClearService
         var maxDocumentSize = _orleansDataClearOptions.MongoDbMaxDocumentSize;
         if (totalSize > maxDocumentSize)
         {
+            var deviationRatio = _orleansDataClearOptions.ExceedDeviationRatio;
             _logger.LogInformation(
-                "The total document size exceeds the limit size {maxDocumentSize}, current total size: {totalSize}, current limit count: {limitCount}",
-                maxDocumentSize, totalSize, limitCount);
+                "The total document size exceeds the limit size {maxDocumentSize}, current total size: {totalSize}, current limit count: {limitCount}, current deviation ratio: {deviationRatio}",
+                maxDocumentSize, totalSize, limitCount, deviationRatio);
             double retentionRatio = (double)maxDocumentSize / totalSize;
-            limitCount = (int)(limitCount * (retentionRatio - _orleansDataClearOptions.ExceedDeviationRatio));
+            limitCount = (int)(limitCount * (retentionRatio - deviationRatio));
             // resultList = await QueryRecordsWithPrefixAsync(collectionName, idPrefix, limitCount);
+            _logger.LogInformation("Finally limit count: {limitCount}, recent radio: {retentionRatio}", limitCount,
+                retentionRatio);
             resultList = resultList.Take(limitCount).ToList();
         }
 
