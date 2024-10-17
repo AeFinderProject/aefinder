@@ -48,7 +48,8 @@ public class OrleansDbClearService : IOrleansDbClearService
                 maxDocumentSize, totalSize, limitCount);
             double retentionRatio = (double)maxDocumentSize / totalSize;
             limitCount = (int)(limitCount * (retentionRatio - _orleansDataClearOptions.ExceedDeviationRatio));
-            resultList = await QueryRecordsWithPrefixAsync(collectionName, idPrefix, limitCount);
+            // resultList = await QueryRecordsWithPrefixAsync(collectionName, idPrefix, limitCount);
+            resultList = resultList.Take(limitCount).ToList();
         }
 
         _logger.LogInformation("Found {count} records to delete. collectionName:{collectionName} idPrefix:{idPrefix}",
