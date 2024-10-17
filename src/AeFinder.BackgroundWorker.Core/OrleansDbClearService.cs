@@ -33,15 +33,6 @@ public class OrleansDbClearService : IOrleansDbClearService
                 collectionName, idPrefix);
             return new List<BsonValue>();
         }
-
-        // do
-        // {
-        //     _logger.LogInformation(
-        //         "The number of query documents needs to be reduced, current count: {limitCount}",
-        //         limitCount);
-        //     limitCount = limitCount / 2;
-        //     resultList = await QueryRecordsWithPrefixAsync(collectionName, idPrefix, limitCount);
-        // } while (!CheckBsonLength(resultList));
         
         var totalSize = resultList.Sum(doc =>
         {
@@ -49,12 +40,13 @@ public class OrleansDbClearService : IOrleansDbClearService
             return size;
         });
 
-        if (totalSize > _orleansDataClearOptions.MongoDbMaxDocumentSize)
+        var maxDocumentSize = _orleansDataClearOptions.MongoDbMaxDocumentSize;
+        if (totalSize > maxDocumentSize)
         {
             _logger.LogInformation(
-                "The total document size exceeds the limit size 16793600, current total size: {totalSize}, current limit count: {limitCount}",
-                totalSize, limitCount);
-            double retentionRatio = (double)_orleansDataClearOptions.MongoDbMaxDocumentSize / totalSize;
+                "The total document size exceeds the limit size {maxDocumentSize}, current total size: {totalSize}, current limit count: {limitCount}",
+                maxDocumentSize, totalSize, limitCount);
+            double retentionRatio = (double)maxDocumentSize / totalSize;
             limitCount = (int)(limitCount * (retentionRatio - _orleansDataClearOptions.ExceedDeviationRatio));
             resultList = await QueryRecordsWithPrefixAsync(collectionName, idPrefix, limitCount);
         }
@@ -77,24 +69,6 @@ public class OrleansDbClearService : IOrleansDbClearService
             await collection.Find(filter).Limit(limitCount).Project<BsonDocument>(projection).ToListAsync();
 
         return resultList;
-    }
-
-    private bool CheckBsonLength(List<BsonDocument> resultList)
-    {
-        var totalSize = resultList.Sum(doc =>
-        {
-            var size = doc.ToBson().Length;  // Serialize the document to BSON and get its length.
-            return size;
-        });
-
-        if (totalSize > 16793600)
-        {
-            _logger.LogInformation("The total document size exceeds the limit, current total size: {totalSize}",
-                totalSize);
-            return false;
-        }
-
-        return true;
     }
     
     public async Task<long> DeleteRecordsWithIdsAsync(string collectionName, List<BsonValue> recordIdList)
