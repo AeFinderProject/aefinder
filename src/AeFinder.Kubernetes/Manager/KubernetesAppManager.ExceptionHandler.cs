@@ -6,7 +6,7 @@ namespace AeFinder.Kubernetes.Manager;
 
 public partial class KubernetesAppManager
 {
-    public virtual Task<FlowBehavior> HandleHttpOperationExceptionAsync(HttpOperationException exception, string serviceMonitorName)
+    private Task<FlowBehavior> HandleHttpOperationExceptionAsync(HttpOperationException exception, string serviceMonitorName)
     {
         // Handle resources do not exist
         if (exception.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -26,7 +26,7 @@ public partial class KubernetesAppManager
         });
     }
 
-    public virtual Task<FlowBehavior> HandleExceptionAsync(Exception exception, string serviceMonitorName)
+    private Task<FlowBehavior> HandleExceptionAsync(Exception exception, string serviceMonitorName)
     {
         // Exceptions are caught here because normal business cannot fail due to the monitored service
         _logger.LogError(exception, "List service monitor resource {ServiceMonitorName} error.", serviceMonitorName);

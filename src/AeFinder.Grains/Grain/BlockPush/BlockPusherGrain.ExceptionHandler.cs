@@ -5,7 +5,7 @@ namespace AeFinder.Grains.Grain.BlockPush;
 
 public partial class BlockPusherGrain
 {
-    public virtual Task<FlowBehavior> HandleHistoricalBlockExceptionAsync(Exception exception)
+    private Task<FlowBehavior> HandleHistoricalBlockExceptionAsync(Exception exception)
     {
         // Log the exception information when processing historical blocks.
         _logger.LogError(exception, "Grain: {GrainId} token: {PushToken} handle historical block failed: {Message}",

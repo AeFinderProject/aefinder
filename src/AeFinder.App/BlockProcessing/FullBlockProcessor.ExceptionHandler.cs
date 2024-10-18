@@ -5,7 +5,7 @@ namespace AeFinder.App.BlockProcessing;
 
 public partial class FullBlockProcessor
 {
-    public virtual Task<FlowBehavior> HandleProcessBlockOperationLimitExceptionAsync(OperationLimitException exception)
+    private Task<FlowBehavior> HandleProcessBlockOperationLimitExceptionAsync(OperationLimitException exception)
     {
         return Task.FromResult(new FlowBehavior
         {
@@ -14,7 +14,7 @@ public partial class FullBlockProcessor
         });
     }
     
-    public virtual Task<FlowBehavior> HandleProcessBlockExceptionAsync(Exception exception)
+    private Task<FlowBehavior> HandleProcessBlockExceptionAsync(Exception exception)
     {
         // Any exception caused by the logic of the external developer's code is encapsulated as an AppProcessingException and handled separately by the upper level.
         return Task.FromResult(new FlowBehavior
@@ -24,7 +24,7 @@ public partial class FullBlockProcessor
         });
     }
     
-    public virtual Task<FlowBehavior> HandleProcessTransactionOperationLimitExceptionAsync(OperationLimitException exception)
+    private Task<FlowBehavior> HandleProcessTransactionOperationLimitExceptionAsync(OperationLimitException exception)
     {
         return Task.FromResult(new FlowBehavior
         {
@@ -33,7 +33,7 @@ public partial class FullBlockProcessor
         });
     }
     
-    public virtual Task<FlowBehavior> HandleProcessTransactionExceptionAsync(Exception exception)
+    private Task<FlowBehavior> HandleProcessTransactionExceptionAsync(Exception exception)
     {
         // Any exception caused by the logic of the external developer's code is encapsulated as an AppProcessingException and handled separately by the upper level.
         return Task.FromResult(new FlowBehavior
@@ -43,7 +43,7 @@ public partial class FullBlockProcessor
         });
     }
     
-    public virtual Task<FlowBehavior> HandleProcessLogEventOperationLimitExceptionAsync(OperationLimitException exception)
+    private Task<FlowBehavior> HandleProcessLogEventOperationLimitExceptionAsync(OperationLimitException exception)
     {
         return Task.FromResult(new FlowBehavior
         {
@@ -52,7 +52,7 @@ public partial class FullBlockProcessor
         });
     }
     
-    public virtual Task<FlowBehavior> HandleProcessLogEventExceptionAsync(Exception exception)
+    private Task<FlowBehavior> HandleProcessLogEventExceptionAsync(Exception exception)
     {
         // Any exception caused by the logic of the external developer's code is encapsulated as an AppProcessingException and handled separately by the upper level.
         return Task.FromResult(new FlowBehavior

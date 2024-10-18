@@ -8,7 +8,7 @@ namespace AeFinder.App.Handlers;
 
 public partial class LocalSubscribedBlockHandler
 {
-    public virtual Task<FlowBehavior> HandleBlocksOperationLimitExceptionAsync(OperationLimitException exception,
+    private Task<FlowBehavior> HandleBlocksOperationLimitExceptionAsync(OperationLimitException exception,
         SubscribedBlockDto subscribedBlock)
     {
         _logger.LogError(AeFinderApplicationConsts.AppLogEventId, exception, "[{ChainId}] Data processing failed!",
@@ -21,7 +21,7 @@ public partial class LocalSubscribedBlockHandler
         });
     }
 
-    public virtual Task<FlowBehavior> HandleBlocksAppProcessingExceptionAsync(AppProcessingException exception,
+    private Task<FlowBehavior> HandleBlocksAppProcessingExceptionAsync(AppProcessingException exception,
         SubscribedBlockDto subscribedBlock)
     {
         _logger.LogError(AeFinderApplicationConsts.AppLogEventId, exception, "[{ChainId}] Data processing failed!",
@@ -34,7 +34,7 @@ public partial class LocalSubscribedBlockHandler
         });
     }
 
-    public virtual Task<FlowBehavior> HandleBlocksExceptionAsync(Exception exception, SubscribedBlockDto subscribedBlock)
+    private Task<FlowBehavior> HandleBlocksExceptionAsync(Exception exception, SubscribedBlockDto subscribedBlock)
     {
         // When processing data, there are programs that handle exceptions themselves.
         // If it continues to be thrown, it will cause EventBus to re-enqueue, which makes no sense due to the wrong order.

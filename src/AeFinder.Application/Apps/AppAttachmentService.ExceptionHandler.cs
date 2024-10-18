@@ -6,7 +6,7 @@ namespace AeFinder.Apps;
 
 public partial class AppAttachmentService
 {
-    public virtual Task<FlowBehavior> HandleJsonExceptionAsync(JsonException exception)
+    private Task<FlowBehavior> HandleJsonExceptionAsync(JsonException exception)
     {
         return Task.FromResult(new FlowBehavior
         {

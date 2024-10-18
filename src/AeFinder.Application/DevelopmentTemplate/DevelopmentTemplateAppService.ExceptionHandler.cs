@@ -8,7 +8,7 @@ namespace AeFinder.DevelopmentTemplate;
 
 public partial class DevelopmentTemplateAppService
 {
-    public virtual Task<FlowBehavior> HandleGenerateProjectFileExceptionAsync(Exception exception, string projectName, string zipFileName,
+    private Task<FlowBehavior> HandleGenerateProjectFileExceptionAsync(Exception exception, string projectName, string zipFileName,
         string generatedPath)
     {
         // Log the exception information and throw a UserFriendlyException to the user.
@@ -22,7 +22,7 @@ public partial class DevelopmentTemplateAppService
         });
     }
     
-    public virtual Task<FlowBehavior> HandleCleanTempFilesExceptionAsync(Exception exception, string projectName, string zipFileName,
+    private Task<FlowBehavior> HandleCleanTempFilesExceptionAsync(Exception exception, string projectName, string zipFileName,
         string generatedPath)
     {
         // Only exception information is logged without blocking the service logic.

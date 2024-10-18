@@ -7,7 +7,7 @@ namespace AeFinder.Subscriptions;
 
 public partial class SubscriptionAppService
 {
-    public virtual Task<FlowBehavior> HandleCodeCheckExceptionAsync(CodeCheckException exception)
+    private Task<FlowBehavior> HandleCodeCheckExceptionAsync(CodeCheckException exception)
     {
         return Task.FromResult(new FlowBehavior
         {
