@@ -15,7 +15,6 @@ namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("Graphql")]
-[EnableCors("AllowAnyCorsPolicy")]
 [Route("api/app/graphql")]
 [AggregateExecutionTime]
 public class GraphqlController : AbpController
