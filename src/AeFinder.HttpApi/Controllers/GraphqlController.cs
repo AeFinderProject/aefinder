@@ -15,6 +15,7 @@ namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("Graphql")]
+[EnableCors("AllowAnyCorsPolicy")]
 [Route("api/app/graphql")]
 [AggregateExecutionTime]
 public class GraphqlController : AbpController
@@ -28,7 +29,7 @@ public class GraphqlController : AbpController
         _graphQLAppService = graphQLAppService;
         _kubernetesOption = kubernetesOption.Value;
     }
-
+    
     [EnableCors("AllowAnyCorsPolicy")]
     [HttpPost("{appId}/{version?}")]
     public virtual async Task<IActionResult> GraphqlForward([FromBody] GraphQLQueryInput input, string appId,
