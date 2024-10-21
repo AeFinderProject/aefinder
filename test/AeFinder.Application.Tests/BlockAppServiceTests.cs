@@ -208,14 +208,8 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
             HasTransaction = true
         };
         List<BlockDto> blockDtos_test7 = new List<BlockDto>();
-        try
-        {
-            blockDtos_test7 =await _blockAppService.GetBlocksAsync(getBlocksInput_test7);
-        }catch (Exception)
-        {
-            blockDtos_test7 = new List<BlockDto>();
-        }
-
+        
+        blockDtos_test7 =await _blockAppService.GetBlocksAsync(getBlocksInput_test7);
         blockDtos_test7.Count().ShouldBe(0);
         
         //Unit Test 8
@@ -796,13 +790,8 @@ public class BlockAppServiceTests:AeFinderApplicationTestBase
             IsOnlyConfirmed = false
         };
         List<LogEventDto> logEventDtos_test28 = new List<LogEventDto>();
-        try
-        {
-            logEventDtos_test28  =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test28);
-        }catch(Exception)
-        {
-            logEventDtos_test28 = new List<LogEventDto>();
-        }
+        
+        logEventDtos_test28  =await _blockAppService.GetLogEventsAsync(getLogEventsInput_test28);
         logEventDtos_test28.Count.ShouldBe(0);
         
         //Unit Test 29

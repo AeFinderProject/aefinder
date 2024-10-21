@@ -226,14 +226,7 @@ public class BlockHandlerTests:AeFinderEntityEventHandlerCoreTestBase
             ConfirmBlocks = new List<ConfirmBlockEto>(){confirmBlockEto_h31}
         };
         
-        try
-        {
-            await _confirmBlockEventHandler.HandleEventAsync(confirmBlocks);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
+        await _confirmBlockEventHandler.HandleEventAsync(confirmBlocks);
         
         // blockIndex_h30 = await _blockIndexRepository.GetAsync(q =>
         //     q.Term(i => i.Field(f => f.BlockHash).Value(newBlockEto_h30.BlockHash)));
