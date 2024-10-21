@@ -39,7 +39,7 @@ public partial class DevelopmentTemplateAppService : AeFinderAppService, IDevelo
     [ExceptionHandler(typeof(Exception), TargetType = typeof(DevelopmentTemplateAppService),
         MethodName = nameof(HandleGenerateProjectFileExceptionAsync),
         FinallyTargetType = typeof(DevelopmentTemplateAppService),
-        FinallyMethodName = nameof(CleanTempFiles))]
+        FinallyMethodName = nameof(CleanTempFilesAsync))]
     protected virtual async Task<byte[]> GenerateProjectFileAsync(string projectName, string zipFileName, string generatedPath)
     {
         GenerateProject(projectName, _devTemplateOptions.TemplatePath, generatedPath);
@@ -49,10 +49,11 @@ public partial class DevelopmentTemplateAppService : AeFinderAppService, IDevelo
 
     [ExceptionHandler(typeof(Exception), TargetType = typeof(DevelopmentTemplateAppService),
         MethodName = nameof(HandleCleanTempFilesExceptionAsync))]
-    public virtual void CleanTempFiles(string zipFileName, string generatedPath)
+    private Task CleanTempFilesAsync(string zipFileName, string generatedPath)
     {
         File.Delete(zipFileName);
         Directory.Delete(generatedPath, true);
+        return Task.CompletedTask;
     }
 
     public void GenerateProject(string projectName, string templatePath, string generatedPath)
