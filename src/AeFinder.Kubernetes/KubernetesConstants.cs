@@ -11,6 +11,8 @@ public class KubernetesConstants
      public const string NodeAffinityValue = "aefinder-app";
      public static string AppNameSpace { get; private set; }
      public const string AppLabelKey = "app";
+     public const string AppIdLabelKey = "app-id";
+     public const string AppVersionLabelKey = "app-version";
      public const string AppSettingFileName = "appsettings.json";
      public const string AppSettingFileMountPath = "/app/appsettings.json";
      public const string AppLogFileMountPath = "/app/Logs";

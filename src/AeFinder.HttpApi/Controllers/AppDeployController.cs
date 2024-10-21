@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.Apps.Dto;
 using AeFinder.Apps.Eto;
 using AeFinder.Models;
 using Asp.Versioning;
@@ -155,5 +156,13 @@ public class AppDeployController : AeFinderController
         });
 
         await tasks.WhenAll();
+    }
+
+    [HttpGet]
+    [Route("pods")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(string appId, int pageSize, string continueToken)
+    {
+        return await _appDeployService.GetPodListWithPagingAsync(appId, pageSize, continueToken);
     }
 }
