@@ -2,6 +2,7 @@ using AeFinder.App.BlockProcessing;
 using AeFinder.App.OperationLimits;
 using AeFinder.Apps;
 using AeFinder.BlockScan;
+using AElf.ExceptionHandler;
 using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
@@ -10,7 +11,7 @@ using Volo.Abp.EventBus.Distributed;
 namespace AeFinder.App.Handlers;
 
 [AggregateExecutionTime]
-public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBlockDto>, ITransientDependency
+public partial class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBlockDto>, ITransientDependency
 {
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IProcessingStatusProvider _processingStatusProvider;
@@ -64,32 +65,18 @@ public class LocalSubscribedBlockHandler : IDistributedEventHandler<SubscribedBl
             subscribedBlock.Blocks.First().ChainId, subscribedBlock.Blocks.First().BlockHeight,
             subscribedBlock.Blocks.Last().BlockHeight, subscribedBlock.Blocks.First().Confirmed);
 
-        try
-        {
-            await _blockAttachService.AttachBlocksAsync(subscribedBlock.ChainId, subscribedBlock.Blocks);
-            await _versionUpgradeProvider.UpgradeAsync();
-        }
-        catch (OperationLimitException e)
-        {
-            _logger.LogError(AeFinderApplicationConsts.AppLogEventId, e, "[{ChainId}] Data processing failed!",
-                subscribedBlock.ChainId);
-            _processingStatusProvider.SetStatus(subscribedBlock.AppId, subscribedBlock.Version, 
-                subscribedBlock.ChainId, ProcessingStatus.OperationLimited);
-        }
-        catch (AppProcessingException e)
-        {
-            _logger.LogError(AeFinderApplicationConsts.AppLogEventId, e, "[{ChainId}] Data processing failed!",
-                subscribedBlock.ChainId);
-            _processingStatusProvider.SetStatus(subscribedBlock.AppId, subscribedBlock.Version,
-                subscribedBlock.ChainId, ProcessingStatus.Failed);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "[{ChainId}] Data processing failed!", subscribedBlock.ChainId);
-            _logger.LogError(AeFinderApplicationConsts.AppLogEventId, null,
-                "[{ChainId}] Data processing failed, please contact the AeFinder!", subscribedBlock.ChainId);
-            _processingStatusProvider.SetStatus(subscribedBlock.AppId, subscribedBlock.Version,
-                subscribedBlock.ChainId, ProcessingStatus.Failed);
-        }
+        await HandleBlocksAsync(subscribedBlock);
+    }
+
+    [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(LocalSubscribedBlockHandler),
+        MethodName = nameof(HandleBlocksOperationLimitExceptionAsync))]
+    [ExceptionHandler([typeof(AppProcessingException)], TargetType = typeof(LocalSubscribedBlockHandler),
+        MethodName = nameof(HandleBlocksAppProcessingExceptionAsync))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(LocalSubscribedBlockHandler),
+        MethodName = nameof(HandleBlocksExceptionAsync))]
+    protected virtual async Task HandleBlocksAsync(SubscribedBlockDto subscribedBlock)
+    {
+        await _blockAttachService.AttachBlocksAsync(subscribedBlock.ChainId, subscribedBlock.Blocks);
+        await _versionUpgradeProvider.UpgradeAsync();
     }
 }

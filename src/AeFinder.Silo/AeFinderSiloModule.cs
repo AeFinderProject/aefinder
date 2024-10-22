@@ -2,10 +2,12 @@ using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.Grains;
 using AeFinder.MongoDb;
+using AElf.ExceptionHandler.Orleans.Extensions;
 using AElf.OpenTelemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Providers.MongoDB.StorageProviders.Serializers;
+using Volo.Abp;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
@@ -13,6 +15,7 @@ using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.EventBus.RabbitMq;
 using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict.Tokens;
+using Volo.Abp.Threading;
 
 namespace AeFinder.Silo;
 
@@ -33,6 +36,8 @@ public class AeFinderOrleansSiloModule : AbpModule
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
+        
+        context.Services.AddOrleansExceptionHandler();
     }
 
     //Disable TokenCleanupService

@@ -115,7 +115,6 @@ public class BlockBranchGrain:AeFinderGrain<BlockBranchState>,IBlockBranchGrain
             {
                 if (dicLibBlock.BlockHeight >= blockEventDataList.OrderBy(x => x.BlockHeight).Last().BlockHeight)
                 {
-                    // Console.WriteLine($"[BlockGrain]Block {blockEvent.BlockNumber} smaller than dicLibBlock {dicLibBlock.BlockNumber},so ignored");
                     return Task.FromResult<List<BlockData>>(null);
                 }
             
@@ -132,8 +131,6 @@ public class BlockBranchGrain:AeFinderGrain<BlockBranchState>,IBlockBranchGrain
             //Ensure block continuity
             if (!State.Blocks.ContainsKey(blockEventDataList.First().PreviousBlockHash))
             {
-                Console.WriteLine(
-                    $"[BlockGrain]Block {blockEventDataList.First().BlockHeight} can't be processed now, its PreviousBlockHash:{blockEventDataList.First().BlockHash} is not exist in dictionary");
                 throw new Exception(
                     $"Block {blockEventDataList.First().BlockHeight} can't be processed now, its PreviousBlockHash:{blockEventDataList.First().BlockHash} is not exist in dictionary " +
                     $"which max block height is {State.Blocks.Max(d=>d.Value.BlockHeight)}");
