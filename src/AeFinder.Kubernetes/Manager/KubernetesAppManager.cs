@@ -1,20 +1,23 @@
 using System.Text.Json;
 using AeFinder.App.Deploy;
+using AeFinder.Apps.Dto;
 using AeFinder.Apps.Eto;
 using AeFinder.Kubernetes.Adapter;
 using AeFinder.Kubernetes.ResourceDefinition;
-using AeFinder.Logger;
 using AeFinder.Options;
+using AElf.ExceptionHandler;
 using k8s;
 using k8s.Autorest;
+using k8s.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Kubernetes.Manager;
 
-public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
+public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependency
 {
     // private readonly k8s.Kubernetes _k8sClient;
     private readonly KubernetesOptions _kubernetesOptions;
@@ -60,32 +63,6 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         });
 
         return await CreateQueryClientTypeAppPodAsync(appId, version, imageName);
-    }
-
-    private async Task CheckNameSpaceAsync()
-    {
-        // var namespaces = await _kubernetesClientAdapter.ListNamespaceAsync();
-
-        var nameSpace = KubernetesConstants.AppNameSpace;
-        // var namespaceExists = namespaces.Items.Any(n => n.Metadata.Name == nameSpace);
-        //
-        // if (!namespaceExists)
-        // {
-        //     _logger.LogInformation($"Namespace '{nameSpace}' does not exist.");
-        //     var newNamespace = NameSpaceHelper.CreateNameSpaceDefinition(nameSpace);
-        //     var result = await _kubernetesClientAdapter.CreateNamespaceAsync(newNamespace);
-        //     _logger.LogInformation($"Namespace created: {result.Metadata.Name}");
-        // }
-
-        try
-        {
-            await _kubernetesClientAdapter.ReadNamespaceAsync(nameSpace);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Namespace '{nameSpace}' does not exist. An error occurred: {ex.Message}");
-            throw ex;
-        }
     }
 
     private async Task CreateFullClientTypeAppPodAsync(string appId, string version, string imageName, string chainId)
@@ -173,8 +150,8 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
         {
-            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
-                deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
+            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, version,
+                imageName, deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
                 sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
@@ -250,10 +227,10 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentExists = deployments.Items.Any(item => item.Metadata.Name == deploymentName);
         if (!deploymentExists)
-        {
+        { 
             var healthPath = GetGraphQLPlaygroundPath(appId, version);
-            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, imageName,
-                deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
+            var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, version,
+                imageName, deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
                 sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable, healthPath);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
@@ -318,48 +295,34 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
     {
         return $"/{appId}/{version}/graphql";
     }
-
+    
     private string GetGraphQLPlaygroundPath(string appId, string version)
     {
         return $"/{appId}/{version}/ui/playground";
     }
 
-    public async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
+    [ExceptionHandler([typeof(HttpOperationException)], TargetType = typeof(KubernetesAppManager),
+        MethodName = nameof(HandleHttpOperationExceptionAsync))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(KubernetesAppManager),
+        MethodName = nameof(HandleExceptionAsync))]
+    public virtual async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
     {
-        try
+        var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+            KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
+        if (serviceMonitors == null)
         {
-            var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(
-                KubernetesConstants.MonitorGroup,
-                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
-                KubernetesConstants.MonitorPlural);
-            if (serviceMonitors == null)
-            {
-                _logger.LogError("Failed to retrieve service monitors, the result is null");
-                return false;
-            }
-
-            var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
-            foreach (var serviceMonitor in serviceMonitorList!.Items)
-            {
-                if (serviceMonitor.Metadata.Name == serviceMonitorName)
-                    return true;
-            }
-
-            return false;
-        }
-        catch (HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-        {
-            // Handle resources do not exist
-            _logger.LogInformation($"The service monitor resource {serviceMonitorName} does not exist.");
-            return false;
-        }
-        catch (Exception ex)
-        {
-            // Handle other potential exceptions
-            _logger.LogError(ex, $"List service monitor resource exception: {ex.Message}");
+            _logger.LogError("Failed to retrieve service monitors, the result is null");
             return false;
         }
 
+        var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
+        foreach (var serviceMonitor in serviceMonitorList!.Items)
+        {
+            if (serviceMonitor.Metadata.Name == serviceMonitorName)
+                return true;
+        }
+
+        return false;
     }
 
     public async Task DestroyAppAsync(string appId, string version, List<string> chainIds)
@@ -709,6 +672,78 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
             appSettingConfigMapName, KubernetesConstants.AppNameSpace);
 
         _logger.LogInformation($"Updated app setting config map {appSettingConfigMapName} successfully");
+    }
+
+
+    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(string appId, int pageSize, string continueToken)
+    {
+        V1PodList pods;
+        string newContinueToken = null;
+
+        if (string.IsNullOrEmpty(appId))
+        {
+            (pods, newContinueToken) = await _kubernetesClientAdapter.ListPodsInNamespaceWithPagingAsync(
+                KubernetesConstants.AppNameSpace, pageSize, continueToken);
+        }
+        else
+        {
+            string labelSelector = $"{KubernetesConstants.AppIdLabelKey}={appId}";
+            pods = await _kubernetesClientAdapter.ListPodsInNamespaceWithPagingAsync(KubernetesConstants.AppNameSpace,
+                labelSelector);
+        }
+
+        var podList = new List<AppPodInfoDto>();
+        foreach (var pod in pods.Items)
+        {
+            var info = new AppPodInfoDto();
+            info.PodUid = pod.Metadata.Uid;
+            info.PodName = pod.Metadata.Name;
+            if (pod.Metadata.Labels.ContainsKey(KubernetesConstants.AppIdLabelKey))
+            {
+                info.AppId = pod.Metadata.Labels[KubernetesConstants.AppIdLabelKey];
+                info.AppVersion = pod.Metadata.Labels[KubernetesConstants.AppVersionLabelKey];
+            }
+
+            info.Status = pod.Status.Phase;
+            info.PodIP = pod.Status.PodIP;
+            info.NodeName = pod.Spec.NodeName;
+            info.StartTime = pod.Status.StartTime;
+            info.ReadyContainersCount = pod.Status.ContainerStatuses.Count(cs => cs.Ready);
+            info.TotalContainersCount = pod.Status.ContainerStatuses.Count;
+            if (pod.Metadata.CreationTimestamp.HasValue)
+            {
+                var creationTime = pod.Metadata.CreationTimestamp.Value;
+                TimeSpan age = DateTime.Now - creationTime;
+                info.AgeSeconds = age.TotalSeconds;
+            }
+
+            var containerList = new List<PodContainerDto>();
+            foreach (var v1Container in pod.Spec.Containers)
+            {
+                var container = new PodContainerDto();
+                container.ContainerName = v1Container.Name;
+                container.ContainerImage = v1Container.Image;
+                containerList.Add(container);
+            }
+
+            foreach (var v1ContainerStatus in pod.Status.ContainerStatuses)
+            {
+                var container = containerList.Find(c => c.ContainerName == v1ContainerStatus.Name);
+                container.ContainerID = v1ContainerStatus.ContainerID;
+                container.RestartCount = v1ContainerStatus.RestartCount;
+                container.Ready = v1ContainerStatus.Ready;
+                container.CurrentState = (v1ContainerStatus.State?.Running != null ? "Running" : "Not Running");
+            }
+
+            info.Containers = containerList;
+            podList.Add(info);
+        }
+
+        return new AppPodsPageResultDto()
+        {
+            ContinueToken = newContinueToken,
+            PodInfos = podList
+        };
     }
 
     public async Task UpdateAppFullPodResourceAsync(string appId, string version, string requestCpu,

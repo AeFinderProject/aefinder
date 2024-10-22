@@ -82,20 +82,10 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
             await _fullBlockProcessor.ProcessAsync(blockStateSet.Block);
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, true);
 
-            try
-            {
-                changeKeys[blockStateSet.Block.BlockHeight] = blockStateSet.Changes
-                    .Select(o => new BlockStateChange { Key = o.Key, Type = o.Value.Type }).ToList();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "BlockStateSet exception. ChainId: {ChainId}, BlockStateSet: {BlockStateSet}", chainId,
-                    JsonConvert.SerializeObject(blockStateSet));
-                throw;
-            }
-
+            changeKeys[blockStateSet.Block.BlockHeight] = blockStateSet.Changes
+                .Select(o => new BlockStateChange { Key = o.Key, Type = o.Value.Type }).ToList();
         }
-        
+
         await _appBlockStateChangeProvider.AddBlockStateChangeAsync(chainId, changeKeys);
 
         await _appBlockStateSetProvider.SetBestChainBlockStateSetAsync(chainId,

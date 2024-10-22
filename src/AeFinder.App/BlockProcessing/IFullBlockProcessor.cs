@@ -1,6 +1,7 @@
 using AeFinder.App.OperationLimits;
 using AeFinder.Block.Dtos;
 using AeFinder.Sdk.Processor;
+using AElf.ExceptionHandler;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
@@ -12,7 +13,7 @@ public interface IFullBlockProcessor
     Task ProcessAsync(BlockWithTransactionDto block);
 }
 
-public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
+public partial class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
 {
     private readonly IEnumerable<IBlockProcessor> _blockProcessors;
     private readonly IBlockProcessingContext _blockProcessingContext;
@@ -49,22 +50,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
             _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
                 "Processing block. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}.",
                 block.ChainId, block.BlockHash, block.BlockHeight);
-            try
-            {
-                await blockProcessor.ProcessAsync(
-                    _objectMapper.Map<BlockWithTransactionDto, Sdk.Processor.Block>(block), new BlockContext
-                    {
-                        ChainId = block.ChainId
-                    });
-            }
-            catch (OperationLimitException e)
-            {
-                throw new OperationLimitException("Block processing operation limited!", e);
-            }
-            catch (Exception e)
-            {
-                throw new AppProcessingException("Block processing failed!", e);
-            }
+            await ProcessBlockAsync(blockProcessor, block);
         }
 
         var transactionProcessor = _transactionProcessors.FirstOrDefault();
@@ -75,62 +61,73 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
                 _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
                     "Processing transaction. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}, TransactionHash: {TransactionHash}.",
                     block.ChainId, block.BlockHash, block.BlockHeight, transaction.TransactionId);
-                try
-                {
-                    await transactionProcessor.ProcessAsync(
-                        _objectMapper.Map<TransactionDto, Transaction>(transaction),
-                        new TransactionContext
-                        {
-                            ChainId = block.ChainId,
-                            Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block)
-                        });
-                }
-                catch (OperationLimitException e)
-                {
-                    throw new OperationLimitException("Transaction processing operation limited!", e);
-                }
-                catch (Exception e)
-                {
-                    throw new AppProcessingException("Transaction processing failed!", e);
-                }
+                await ProcessTransactionAsync(transactionProcessor, block, transaction);
             }
 
             foreach (var logEvent in transaction.LogEvents)
             {
-                try
-                {
-                    var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>
-                        p.GetContractAddress(block.ChainId) == logEvent.ContractAddress &&
-                        p.GetEventName() == logEvent.EventName);
-
-                    if (logEventProcessor == null)
-                    {
-                        continue;
-                    }
-
-                    _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
-                        "Processing log event. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}, TransactionHash: {TransactionHash}, ContractAddress: {ContractAddress}, EventName: {EventName}.",
-                        block.ChainId, block.BlockHash, block.BlockHeight, transaction.TransactionId,
-                        logEvent.ContractAddress,
-                        logEvent.EventName);
-                        
-                    await logEventProcessor.ProcessAsync(new LogEventContext
-                    {
-                        ChainId = block.ChainId,
-                        Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block),
-                        Transaction = _objectMapper.Map<TransactionDto, Transaction>(transaction),
-                        LogEvent = _objectMapper.Map<LogEventDto, LogEvent>(logEvent)
-                    });
-                }
-                catch (OperationLimitException e)
-                {
-                    throw new OperationLimitException("Log event processing operation limited!", e);
-                }
-                catch (Exception e)
-                {
-                    throw new AppProcessingException("Log event processing failed!", e);
-                }
+                await ProcessLogEventAsync(block, transaction, logEvent);
             }
         }
+    }
+
+    [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessBlockOperationLimitExceptionAsync))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessBlockExceptionAsync))]
+    protected virtual async Task ProcessBlockAsync(IBlockProcessor blockProcessor, BlockWithTransactionDto block)
+    {
+        await blockProcessor.ProcessAsync(
+            _objectMapper.Map<BlockWithTransactionDto, Sdk.Processor.Block>(block), new BlockContext
+            {
+                ChainId = block.ChainId
+            });
+    }
+
+    [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessTransactionOperationLimitExceptionAsync))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessTransactionExceptionAsync))]
+    protected virtual async Task ProcessTransactionAsync(ITransactionProcessor transactionProcessor,
+        BlockWithTransactionDto block, TransactionDto transaction)
+    {
+        await transactionProcessor.ProcessAsync(
+            _objectMapper.Map<TransactionDto, Transaction>(transaction),
+            new TransactionContext
+            {
+                ChainId = block.ChainId,
+                Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block)
+            });
+    }
+
+    [ExceptionHandler([typeof(OperationLimitException)], TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessLogEventOperationLimitExceptionAsync))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(FullBlockProcessor),
+        MethodName = nameof(HandleProcessLogEventExceptionAsync))]
+    protected virtual async Task ProcessLogEventAsync(BlockWithTransactionDto block, TransactionDto transaction,
+        LogEventDto logEvent)
+    {
+        var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>
+            p.GetContractAddress(block.ChainId) == logEvent.ContractAddress &&
+            p.GetEventName() == logEvent.EventName);
+
+        if (logEventProcessor == null)
+        {
+            return;
+        }
+
+        _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
+            "Processing log event. ChainId: {ChainId}, BlockHash: {BlockHash}, BlockHeight: {BlockHeight}, TransactionHash: {TransactionHash}, ContractAddress: {ContractAddress}, EventName: {EventName}.",
+            block.ChainId, block.BlockHash, block.BlockHeight, transaction.TransactionId,
+            logEvent.ContractAddress,
+            logEvent.EventName);
+
+        await logEventProcessor.ProcessAsync(new LogEventContext
+        {
+            ChainId = block.ChainId,
+            Block = _objectMapper.Map<BlockWithTransactionDto, LightBlock>(block),
+            Transaction = _objectMapper.Map<TransactionDto, Transaction>(transaction),
+            LogEvent = _objectMapper.Map<LogEventDto, LogEvent>(logEvent)
+        });
     }
 }
