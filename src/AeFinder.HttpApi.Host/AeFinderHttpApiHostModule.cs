@@ -249,6 +249,12 @@ public class AeFinderHttpApiHostModule : AbpModule
                     .AllowAnyMethod()
                     .AllowCredentials();
             });
+            options.AddPolicy("AllowAnyCorsPolicy", builder =>
+            {
+                builder.AllowAnyOrigin() 
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
         });
     }
 
