@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using AElf.OpenTelemetry;
@@ -8,7 +9,7 @@ namespace AeFinder.Metrics;
 public class ElapsedTimeRecorder : IElapsedTimeRecorder,ISingletonDependency
 {
     private readonly Meter _meter;
-    private readonly Dictionary<string, Histogram<long>> _histogramMapCache = new ();
+    private readonly ConcurrentDictionary<string, Histogram<long>> _histogramMapCache = new ();
 
     public ElapsedTimeRecorder(IInstrumentationProvider instrumentationProvider)
     {
@@ -36,7 +37,7 @@ public class ElapsedTimeRecorder : IElapsedTimeRecorder,ISingletonDependency
             description: "Histogram for action elapsed time",
             unit: "ms"
         );
-        _histogramMapCache.Add(key, histogram);
+        _histogramMapCache.TryAdd(key, histogram);
         return histogram;
     }
 }
