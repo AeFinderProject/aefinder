@@ -56,6 +56,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
             .Assembly(System.Reflection.Assembly.Load("Volo.Abp.Core"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("AeFinder.Domain"), Trust.Partial)
             .Assembly(System.Reflection.Assembly.Load("Newtonsoft.Json"), Trust.Full)
+            .Assembly(System.Reflection.Assembly.Load("System.Text.RegularExpressions"), Trust.Full)
             .Assembly(typeof(AeFinderEntity).Assembly, Trust.Full) // AeFinder.Sdk
             .Assembly(typeof(Address).Assembly, Trust.Full) // AElf.Types
             .Assembly(typeof(IMethod).Assembly, Trust.Full) // AElf.CSharp.Core
@@ -88,6 +89,7 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type(nameof(DateTime), Permission.Allowed)
                 .Type(nameof(DateTimeOffset), Permission.Allowed)
                 .Type(nameof(TimeSpan), Permission.Allowed)
+                .Type(nameof(DayOfWeek), Permission.Allowed)
                 .Type(typeof(void).Name, Permission.Allowed)
                 .Type(nameof(Object), Permission.Allowed)
                 .Type(nameof(Type), Permission.Allowed)
@@ -114,6 +116,15 @@ public class WhitelistProvider : IWhitelistProvider, ISingletonDependency
                 .Type(nameof(Random), Permission.Allowed)
                 .Type(nameof(AbpStringExtensions), Permission.Allowed)
                 .Type("Span`1",Permission.Allowed)
+                .Type(nameof(Tuple), Permission.Allowed)
+                .Type("Tuple`1",Permission.Allowed)
+                .Type("Tuple`2",Permission.Allowed)
+                .Type("Tuple`3",Permission.Allowed)
+                .Type("Tuple`4",Permission.Allowed)
+                .Type("Tuple`5",Permission.Allowed)
+                .Type("Tuple`6",Permission.Allowed)
+                .Type("Tuple`7",Permission.Allowed)
+                .Type("Tuple`8",Permission.Allowed)
             );
     }
 
