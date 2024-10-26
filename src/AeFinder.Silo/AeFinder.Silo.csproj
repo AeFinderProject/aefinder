@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AElf.OpenTelemetry" Version="8.0.5" />
+        <PackageReference Include="AElf.OpenTelemetry" Version="8.2.1" />
         <PackageReference Include="Com.Ctrip.Framework.Apollo.Configuration" Version="2.10.2" />  
       <PackageReference Include="JsonNet.PrivateSettersContractResolvers" Version="1.0.0" />
       <PackageReference Include="Microsoft.Orleans.Server" Version="8.1.0" />
