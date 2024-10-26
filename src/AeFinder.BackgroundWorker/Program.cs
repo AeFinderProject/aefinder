@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using AElf.ExceptionHandler.ABP;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -57,6 +58,7 @@ namespace AeFinder.BackgroundWorker
                 .ConfigureServices((hostContext, services) => { services.AddApplication<AeFinderBackGroundModule>(); })
                 .UseOrleansClient()
                 .UseAutofac()
+                .UseAElfExceptionHandler()
                 .UseSerilog();
     }
 }

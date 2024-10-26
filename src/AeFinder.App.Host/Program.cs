@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using AElf.ExceptionHandler.ABP;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -61,6 +62,7 @@ public class Program
             .UseOrleansClient()
             .UseAutofac()
             .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); })
+            .UseAElfExceptionHandler()
             .UseSerilog();
     }
 }
