@@ -67,13 +67,27 @@ public class AeFinderAuthServerModule : AbpModule
                 options.UseAspNetCore();
             });
         });
-        PreConfigure<OpenIddictServerBuilder>(builder => { builder.Configure(openIddictServerOptions => { openIddictServerOptions.GrantTypes.Add(LoginConsts.GrantType); }); });
+        //add login grant type
+        PreConfigure<OpenIddictServerBuilder>(builder =>
+        {
+            builder.Configure(openIddictServerOptions =>
+            {
+                openIddictServerOptions.GrantTypes.Add(LoginConsts.GrantType);
+            });
+        });
+        //add signature grant type
+        PreConfigure<OpenIddictServerBuilder>(builder =>
+        {
+            builder.Configure(openIddictServerOptions => { openIddictServerOptions.GrantTypes.Add("signature"); });
+        });
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var hostingEnvironment = context.Services.GetHostingEnvironment();
         var configuration = context.Services.GetConfiguration();
+        
+        context.Services.Configure<SignatureOptions>(configuration.GetSection("Signature"));
 
         Configure<AbpLocalizationOptions>(options =>
         {

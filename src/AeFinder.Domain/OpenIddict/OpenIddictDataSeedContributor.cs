@@ -96,7 +96,8 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                     OpenIddictConstants.GrantTypes.Password,
                     OpenIddictConstants.GrantTypes.ClientCredentials,
                     OpenIddictConstants.GrantTypes.RefreshToken,
-                    LoginConsts.GrantType
+                    LoginConsts.GrantType,
+                    SignatureGrantConsts.GrantType
                 },
                 scopes: commonScopes
             );
@@ -120,7 +121,8 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                 {
                     OpenIddictConstants.GrantTypes.AuthorizationCode,
                     OpenIddictConstants.GrantTypes.Implicit,
-                    LoginConsts.GrantType
+                    LoginConsts.GrantType,
+                    SignatureGrantConsts.GrantType
                 },
                 scopes: commonScopes,
                 redirectUri: $"{webClientRootUrl}signin-oidc",
@@ -303,7 +305,8 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                     grantType == OpenIddictConstants.GrantTypes.Password ||
                     grantType == OpenIddictConstants.GrantTypes.RefreshToken ||
                     grantType == OpenIddictConstants.GrantTypes.DeviceCode ||
-                    grantType == LoginConsts.GrantType)
+                    grantType == LoginConsts.GrantType ||
+                    grantType == SignatureGrantConsts.GrantType)
                 {
                     application.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Token);
                     application.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Revocation);
@@ -313,6 +316,11 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                 if (grantType == LoginConsts.GrantType)
                 {
                     application.Permissions.Add($"gt:{LoginConsts.GrantType}");
+                }
+                
+                if (grantType == SignatureGrantConsts.GrantType)
+                {
+                    application.Permissions.Add($"gt:{SignatureGrantConsts.GrantType}");
                 }
 
                 if (grantType == OpenIddictConstants.GrantTypes.ClientCredentials)
