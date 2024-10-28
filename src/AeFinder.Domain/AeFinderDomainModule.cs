@@ -1,7 +1,9 @@
 ﻿using AeFinder.MultiTenancy;
 using AeFinder.OpenIddict;
 using AeFinder.OpenIddict.Login;
+using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenIddict.Abstractions;
@@ -39,6 +41,7 @@ public class AeFinderDomainModule : AbpModule
     {
         Configure<AbpMultiTenancyOptions>(options => { options.IsEnabled = MultiTenancyConsts.IsEnabled; });
         context.Services.TryAddTransient<ILoginNewUserCreator, LoginNewUserCreator>();
+        context.Services.AddSingleton<UserManager<AppIdentityUser>, AppUserManager>();
 
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());

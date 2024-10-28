@@ -1,4 +1,5 @@
 ﻿using AeFinder.App;
+using AeFinder.User;
 using MongoDB.Driver;
 using Volo.Abp.Data;
 using Volo.Abp.Identity;
@@ -21,6 +22,11 @@ public class AeFinderMongoDbContext : AbpMongoDbContext
         //{
         //    //...
         //});
+        
+        modelBuilder.Entity<AppIdentityUser>(builder =>
+        {
+            builder.CollectionName = "AppIdentityUsers";
+        });
     }
     
 }

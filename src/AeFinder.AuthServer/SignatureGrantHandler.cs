@@ -146,12 +146,10 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         var signInManager = context.HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Identity.SignInManager<IdentityUser>>();
         var principal = await signInManager.CreateUserPrincipalAsync(user);
         var claimsPrincipal = await userClaimsPrincipalFactory.CreateAsync(user);
-        claimsPrincipal.SetScopes("NFTMarketServer");
+        claimsPrincipal.SetScopes(context.Request.GetScopes());
         claimsPrincipal.SetResources(await GetResourcesAsync(context, principal.GetScopes()));
-        claimsPrincipal.SetAudiences("NFTMarketServer");
-
-        // await context.HttpContext.RequestServices.GetRequiredService<AbpOpenIddictClaimDestinationsManager>()
-        //     .SetAsync(principal);
+        claimsPrincipal.SetAudiences("AeFinder");
+        
         await context.HttpContext.RequestServices.GetRequiredService<AbpOpenIddictClaimsPrincipalManager>()
             .HandleAsync(context.Request, principal);
 

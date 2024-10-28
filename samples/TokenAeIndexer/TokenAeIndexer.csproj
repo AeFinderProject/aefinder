@@ -6,7 +6,7 @@
     </PropertyGroup>
     
     <ItemGroup>
-      <PackageReference Include="AeFinder.Sdk" Version="1.2.0" />
+      <PackageReference Include="AeFinder.Sdk" Version="1.4.0" />
     </ItemGroup>
     
 </Project>

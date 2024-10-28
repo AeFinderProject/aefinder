@@ -134,7 +134,15 @@ public class AeFinderAuthServerModule : AbpModule
             options.IsEnabled = false; //Disables the auditing system
         });
 
-        context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options => { options.Grants.Add(LoginConsts.GrantType, new LoginTokenExtensionGrant()); });
+        context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
+        {
+            options.Grants.Add(LoginConsts.GrantType, new LoginTokenExtensionGrant());
+        });
+        
+        context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
+        {
+            options.Grants.Add(SignatureGrantConsts.GrantType, new SignatureGrantHandler());
+        });
 
         if (hostingEnvironment.IsDevelopment())
         {
