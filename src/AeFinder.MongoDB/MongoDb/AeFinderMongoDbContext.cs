@@ -13,7 +13,7 @@ public class AeFinderMongoDbContext : AbpMongoDbContext
     /* Add mongo collections here. Example:
      * public IMongoCollection<Question> Questions => Collection<Question>();
      */
-
+    public IMongoCollection<IdentityUserExtension> IdentityUserExtensionInfos { get; private set; }
     protected override void CreateModel(IMongoModelBuilder modelBuilder)
     {
         base.CreateModel(modelBuilder);
@@ -22,6 +22,12 @@ public class AeFinderMongoDbContext : AbpMongoDbContext
         //{
         //    //...
         //});
+        
+        
+        modelBuilder.Entity<IdentityUserExtension>(b =>
+        {
+            b.CollectionName = "IdentityUserExtensions"; 
+        });
     }
     
 }
