@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.User.Dto;
+using AeFinder.User.Provider;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -23,6 +24,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
     private readonly ILookupNormalizer _lookupNormalizer;
     private readonly IOpenIddictApplicationManager _applicationManager;
     private readonly IOrganizationAppService _organizationAppService;
+    private readonly IUserInformationProvider _userInformationProvider;
 
     public UserAppService(
         IdentityUserManager userManager,
@@ -33,6 +35,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         IOpenIddictApplicationManager applicationManager,
         IOrganizationAppService organizationAppService,
         IOrganizationUnitRepository organizationUnitRepository,
+        IUserInformationProvider userInformationProvider,
         IPermissionChecker permissionChecker)
         : base(userManager, userRepository, roleRepository, identityOptions, permissionChecker)
     {
@@ -40,6 +43,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         _lookupNormalizer = lookupNormalizer;
         _applicationManager = applicationManager;
         _organizationAppService = organizationAppService;
+        _userInformationProvider = userInformationProvider;
     }
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)
@@ -122,7 +126,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         });
     }
 
-    public async Task<IdentityUserDto> GetUserInfoAsync()
+    public async Task<IdentityUserExtensionDto> GetUserInfoAsync()
     {
         if (CurrentUser == null || CurrentUser.Id == null)
         {
@@ -135,7 +139,10 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             throw new UserFriendlyException("user not found.");
         }
 
-        return ObjectMapper.Map<IdentityUser, IdentityUserDto>(identityUser);
+        var identityUserExtensionDto = ObjectMapper.Map<IdentityUser, IdentityUserExtensionDto>(identityUser);
+        var extensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
+        identityUserExtensionDto.userExtensionInfo = extensionInfo;
+        return identityUserExtensionDto;
     }
 
     public async Task<string> GetClientDisplayNameAsync(string clientId)

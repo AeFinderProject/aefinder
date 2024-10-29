@@ -127,5 +127,6 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<UserExtensionDto, IdentityUserExtension>();
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();
         CreateMap<IdentityUserExtension, UserExtensionDto>();
+        CreateMap<IdentityUser, IdentityUserExtensionDto>();
     }
 }
