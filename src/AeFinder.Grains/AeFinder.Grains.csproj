@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AElf.ExceptionHandler" Version="1.8.0" />
+        <PackageReference Include="AElf.ExceptionHandler" Version="1.8.2" />
         <PackageReference Include="AElf.ExceptionHandler" Version="1.8.0" />
         <PackageReference Include="AElf.OpenTelemetry" Version="8.2.1" />
         <PackageReference Include="Microsoft.Orleans.Reminders" Version="8.1.0" />
