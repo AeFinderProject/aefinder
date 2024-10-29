@@ -22,11 +22,6 @@ public class AeFinderMongoDbContext : AbpMongoDbContext
         //{
         //    //...
         //});
-        
-        modelBuilder.Entity<AppIdentityUser>(builder =>
-        {
-            builder.CollectionName = "AppIdentityUsers";
-        });
     }
     
 }

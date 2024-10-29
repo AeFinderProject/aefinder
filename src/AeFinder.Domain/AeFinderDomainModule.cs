@@ -41,7 +41,6 @@ public class AeFinderDomainModule : AbpModule
     {
         Configure<AbpMultiTenancyOptions>(options => { options.IsEnabled = MultiTenancyConsts.IsEnabled; });
         context.Services.TryAddTransient<ILoginNewUserCreator, LoginNewUserCreator>();
-        context.Services.AddSingleton<UserManager<AppIdentityUser>, AppUserManager>();
 
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());

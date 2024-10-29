@@ -1,12 +1,13 @@
+using System;
 using System.Collections.Generic;
-using Volo.Abp.Identity;
+using Volo.Abp.Domain.Entities;
 
 namespace AeFinder.User;
 
-public class AppIdentityUser: IdentityUser
+public class IdentityUserExtension: Entity<Guid>
 {
     public string AElfAddress { get; set; }
     public string CaHash { get; set; }
     public string CaAddressMain { get; set; }
-    public List<UserChainAddress> CaAddressListSide { get; set; }
+    public List<UserChainAddressInfo> CaAddressListSide { get; set; }
 }

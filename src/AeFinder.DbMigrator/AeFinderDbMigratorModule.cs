@@ -27,6 +27,6 @@ public class AeFinderDbMigratorModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<AbpBackgroundJobOptions>(options => options.IsJobExecutionEnabled = false);
         Configure<AppOptions>(configuration.GetSection("App"));
-        IdentityBuilderExtensions.AddDefaultTokenProviders(context.Services.AddIdentity<AppIdentityUser, IdentityRole>());
+        IdentityBuilderExtensions.AddDefaultTokenProviders(context.Services.AddIdentity<IdentityUser, IdentityRole>());
     }
 }
