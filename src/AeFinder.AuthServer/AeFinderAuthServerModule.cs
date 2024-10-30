@@ -89,7 +89,7 @@ public class AeFinderAuthServerModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         
         context.Services.Configure<SignatureOptions>(configuration.GetSection("Signature"));
-
+        context.Services.Configure<ChainOptions>(configuration.GetSection("Chains"));
         Configure<AbpLocalizationOptions>(options =>
         {
             options.Resources
