@@ -24,7 +24,7 @@ namespace AeFinder.User.Provider;
 public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
 {
     private readonly ILogger<WalletLoginProvider> _logger;
-    private readonly SignatureOptions _signatureOptions;
+    private readonly SignatureGrantOptions _signatureGrantOptions;
     private readonly ChainOptions _chainOptions;
     
     private const string GetHolderInfoMethodName = "GetHolderInfo";
@@ -33,17 +33,17 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     private const string CrossChainContractName = "AElf.ContractNames.CrossChain";
     
     public WalletLoginProvider(ILogger<WalletLoginProvider> logger,
-        IOptionsMonitor<SignatureOptions> signatureOptions,IOptionsMonitor<ChainOptions> chainOptions)
+        IOptionsMonitor<SignatureGrantOptions> signatureOptions,IOptionsMonitor<ChainOptions> chainOptions)
     {
         _logger = logger;
-        _signatureOptions = signatureOptions.CurrentValue;
+        _signatureGrantOptions = signatureOptions.CurrentValue;
         _chainOptions = chainOptions.CurrentValue;
     }
 
     public bool IsTimeStampOutRange(long timestamp, out int timeRange)
     {
         var time = DateTime.UnixEpoch.AddMilliseconds(timestamp);
-        timeRange = _signatureOptions.TimestampValidityRangeMinutes;
+        timeRange = _signatureGrantOptions.TimestampValidityRangeMinutes;
         if (time < DateTime.UtcNow.AddMinutes(-timeRange) ||
             time > DateTime.UtcNow.AddMinutes(timeRange))
         {
@@ -81,7 +81,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     
     public async Task<bool?> CheckAddressAsync(string chainId, string caHash, string manager)
     {
-        string graphQlUrl = _signatureOptions.PortkeyV2GraphQLUrl;
+        string graphQlUrl = _signatureGrantOptions.PortkeyV2GraphQLUrl;
         var graphQlResult = await CheckAddressFromGraphQlAsync(graphQlUrl, caHash, manager);
         if (!graphQlResult.HasValue || !graphQlResult.Value)
         {
@@ -125,7 +125,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
 
             var client = new AElfClient(chainInfo.AElfNodeBaseUrl);
             await client.IsConnectedAsync();
-            var address = client.GetAddressFromPrivateKey(_signatureOptions.CommonPrivateKeyForCallTx);
+            var address = client.GetAddressFromPrivateKey(_signatureGrantOptions.CommonPrivateKeyForCallTx);
 
             var contractAddress = isCrossChain
                 ? (await client.GetContractAddressByNameAsync(HashHelper.ComputeFrom(CrossChainContractName)))
@@ -136,7 +136,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
                 await client.GenerateTransactionAsync(address, contractAddress,
                     methodName, param);
 
-            var txWithSign = client.SignTransaction(_signatureOptions.CommonPrivateKeyForCallTx, transaction);
+            var txWithSign = client.SignTransaction(_signatureGrantOptions.CommonPrivateKeyForCallTx, transaction);
             var result = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
             {
                 RawTransaction = txWithSign.ToByteArray().ToHex()
@@ -183,7 +183,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     public async Task<List<UserChainAddressDto>> GetAddressInfosAsync(string caHash)
     {
         var addressInfos = new List<UserChainAddressDto>();
-        var holderInfoDto = await GetHolderInfosAsync(_signatureOptions.PortkeyV2GraphQLUrl, caHash);
+        var holderInfoDto = await GetHolderInfosAsync(_signatureGrantOptions.PortkeyV2GraphQLUrl, caHash);
 
         var chainIds = new List<string>();
         if (holderInfoDto != null && !holderInfoDto.CaHolderInfo.IsNullOrEmpty())

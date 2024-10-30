@@ -1,6 +1,6 @@
 namespace AeFinder.Options;
 
-public class SignatureOptions
+public class SignatureGrantOptions
 {
     public int TimestampValidityRangeMinutes { get; set; }
     public string PortkeyGraphQLUrl { get; set; }
