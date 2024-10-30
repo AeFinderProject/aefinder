@@ -73,10 +73,7 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
             .CurrentValue;
         
         //Validate timestamp validity period
-        var time = DateTime.UnixEpoch.AddMilliseconds(timestamp);
-        var timeRange = _signatureOptions.TimestampValidityRangeMinutes;
-        if (time < DateTime.UtcNow.AddMinutes(-timeRange) ||
-            time > DateTime.UtcNow.AddMinutes(timeRange))
+        if (_walletLoginProvider.IsTimeStampOutRange(timestamp, out int timeRange))
         {
             return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
                 $"The time should be {timeRange} minutes before and after the current time.");
@@ -139,7 +136,7 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "User has already linked another Portkey wallet address.");
             }
 
-            var managerCheck = await _walletLoginProvider.CheckAddressAsync(chainId, _signatureOptions.PortkeyV2GraphQLUrl, caHash, signAddress);
+            var managerCheck = await _walletLoginProvider.CheckAddressAsync(chainId, caHash, signAddress);
             if (!managerCheck.HasValue || !managerCheck.Value)
             {
                 _logger.LogError("Manager validation failed. caHash:{0}, address:{1}, chainId:{2}",

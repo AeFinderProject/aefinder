@@ -39,7 +39,20 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         _signatureOptions = signatureOptions.CurrentValue;
         _chainOptions = chainOptions.CurrentValue;
     }
-    
+
+    public bool IsTimeStampOutRange(long timestamp, out int timeRange)
+    {
+        var time = DateTime.UnixEpoch.AddMilliseconds(timestamp);
+        timeRange = _signatureOptions.TimestampValidityRangeMinutes;
+        if (time < DateTime.UtcNow.AddMinutes(-timeRange) ||
+            time > DateTime.UtcNow.AddMinutes(timeRange))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public bool RecoverPublicKey(string address, string timestampVal, byte[] signature, out byte[] managerPublicKey)
     {
         var newSignText = """
@@ -66,8 +79,9 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         return (managerPublicKey.ToHex() == publicKeyVal || managerPublicKeyOld.ToHex() == publicKeyVal);
     }
     
-    public async Task<bool?> CheckAddressAsync(string chainId, string graphQlUrl, string caHash, string manager)
+    public async Task<bool?> CheckAddressAsync(string chainId, string caHash, string manager)
     {
+        string graphQlUrl = _signatureOptions.PortkeyV2GraphQLUrl;
         var graphQlResult = await CheckAddressFromGraphQlAsync(graphQlUrl, caHash, manager);
         if (!graphQlResult.HasValue || !graphQlResult.Value)
         {

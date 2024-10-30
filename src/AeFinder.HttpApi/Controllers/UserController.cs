@@ -54,4 +54,12 @@ public class UserController : AeFinderController
     // {
     //     return await _userAppService.GetClientDisplayNameAsync(clientId);
     // }
+
+    [HttpPost("bind/wallet")]
+    [Authorize]
+    public virtual async Task<IdentityUserExtensionDto> BindUserWalletAsync(string publickey, string signature,
+        string chain_id, string ca_hash, long timestamp, string address)
+    {
+        return await _userAppService.BindUserWalletAsync(publickey, signature, chain_id, ca_hash, timestamp, address);
+    }
 }
