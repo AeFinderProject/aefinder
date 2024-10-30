@@ -2,22 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using AeFinder.OpenIddict;
 using AeFinder.Options;
-using AeFinder.User;
 using AeFinder.User.Dto;
 using AeFinder.User.Provider;
 using AElf;
-using AElf.Client;
-using AElf.Client.Dto;
-using AElf.Cryptography;
 using AElf.Types;
-using Google.Protobuf;
-using GraphQL;
-using GraphQL.Client.Http;
-using GraphQL.Client.Serializer.Newtonsoft;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +16,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
-using Portkey.Contracts.CA;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.DistributedLocking;
 using Volo.Abp.Identity;
@@ -42,6 +32,7 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
     
     private SignatureOptions _signatureOptions;
     private ChainOptions _chainOptions;
+    private IWalletLoginProvider _walletLoginProvider;
     private IUserInformationProvider _userInformationProvider;
     
     public string Name { get; } = SignatureGrantConsts.GrantType;
@@ -90,27 +81,22 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
             return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
                 $"The time should be {timeRange} minutes before and after the current time.");
         }
-        
+
+        _walletLoginProvider = context.HttpContext.RequestServices.GetRequiredService<IWalletLoginProvider>();
         _userInformationProvider = context.HttpContext.RequestServices.GetRequiredService<IUserInformationProvider>();
         _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
         //Validate public key and signature
-//         var newSignText = """
-//                           Welcome to AeFinder! Click to sign in to the AeFinder platform! This request will not trigger any blockchain transaction or cost any gas fees.
-//
-//                           signature: 
-//                           """+string.Join("-", address, timestampVal);
-//         _logger.LogInformation("newSignText:{newSignText}",newSignText);
-        if (!_userInformationProvider.RecoverPublicKey(address, timestampVal, signature, out var managerPublicKey))
+        if (!_walletLoginProvider.RecoverPublicKey(address, timestampVal, signature, out var managerPublicKey))
         {
             return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Signature validation failed new.");
         }
 
-        if (!_userInformationProvider.RecoverPublicKeyOld(address, timestampVal, signature, out var managerPublicKeyOld))
+        if (!_walletLoginProvider.RecoverPublicKeyOld(address, timestampVal, signature, out var managerPublicKeyOld))
         {
             return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Signature validation failed old.");
         }
 
-        if (!_userInformationProvider.CheckPublicKey(managerPublicKey, managerPublicKeyOld, publicKeyVal))
+        if (!_walletLoginProvider.CheckPublicKey(managerPublicKey, managerPublicKeyOld, publicKeyVal))
         {
             return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Invalid publicKey or signature.");
         }
@@ -153,7 +139,7 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "User has already linked another Portkey wallet address.");
             }
 
-            var managerCheck = await _userInformationProvider.CheckAddressAsync(chainId, _signatureOptions.PortkeyV2GraphQLUrl, caHash, signAddress);
+            var managerCheck = await _walletLoginProvider.CheckAddressAsync(chainId, _signatureOptions.PortkeyV2GraphQLUrl, caHash, signAddress);
             if (!managerCheck.HasValue || !managerCheck.Value)
             {
                 _logger.LogError("Manager validation failed. caHash:{0}, address:{1}, chainId:{2}",
@@ -161,7 +147,7 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Manager validation failed.");
             }
 
-            addressInfos = await _userInformationProvider.GetAddressInfosAsync(caHash);
+            addressInfos = await _walletLoginProvider.GetAddressInfosAsync(caHash);
             userExtensionDto.CaAddressList = addressInfos;
         }
         else
