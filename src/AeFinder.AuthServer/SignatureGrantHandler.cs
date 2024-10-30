@@ -91,9 +91,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         var userManager = context.HttpContext.RequestServices.GetRequiredService<IdentityUserManager>();
         
         UserExtensionDto userExtensionDto = null;
-        // UserExtensionDto userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByIdAsync(user.Id);
-        // userExtensionDto.UserId = user.Id;
-        List<UserChainAddressDto> addressInfos;
         if (!string.IsNullOrWhiteSpace(caHash))
         {
             //If CA wallet connect
@@ -126,9 +123,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
                     caHash, address, chainId);
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Manager validation failed.");
             }
-
-            addressInfos = await _walletLoginProvider.GetAddressInfosAsync(caHash);
-            userExtensionDto.CaAddressList = addressInfos;
         }
         else
         {
@@ -157,8 +151,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
                     signAddress, userExtensionDto.AElfAddress, userExtensionDto.UserId);
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "User has already linked another NightElf wallet address.");
             }
-
-            userExtensionDto.AElfAddress = signAddress;
         }
         
         var user = await userManager.FindByIdAsync(userExtensionDto.UserId.ToString());
