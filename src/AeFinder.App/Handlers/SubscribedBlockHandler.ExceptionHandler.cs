@@ -12,9 +12,8 @@ public partial class SubscribedBlockHandler
         // Any exception will attempt to resend the data as long as it is within the range of retries.
         Logger.LogError(exception, "[{ChainId}] Publish subscribedBlock event failed, retry times: {RetryCount}",
             subscribedBlock.ChainId, retryCount);
-        await Task.Delay(_messageQueueOptions.RetryInterval);
-
-        if (retryCount >= _messageQueueOptions.RetryTimes)
+        
+        if (retryCount +1 >= _messageQueueOptions.RetryTimes)
         {
             return new FlowBehavior
             {
@@ -22,6 +21,8 @@ public partial class SubscribedBlockHandler
             };
         }
 
+        await Task.Delay(_messageQueueOptions.RetryInterval);
+        
         return new FlowBehavior
         {
             ExceptionHandlingStrategy = ExceptionHandlingStrategy.Return,
