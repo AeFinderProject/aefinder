@@ -59,6 +59,12 @@ public partial class SubscribedBlockHandler : ISubscribedBlockHandler, ISingleto
         MethodName = nameof(HandleSubscribedBlockExceptionAsync))]
     protected virtual async Task<bool> PublishMessageToEventBusAsync(SubscribedBlockDto subscribedBlock, int retryCount)
     {
+        if (subscribedBlock.Blocks.First().BlockHeight >= 8297246 &&
+            subscribedBlock.Blocks.First().BlockHeight <= 8297446)
+        {
+            throw new Exception("Test Excepiton");
+        }
+
         await _distributedEventBus.PublishAsync(subscribedBlock);
         return true;
     }
