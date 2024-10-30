@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.OpenIddict;
-using AeFinder.Options;
 using AeFinder.User.Dto;
 using AeFinder.User.Provider;
 using AElf;
@@ -13,7 +12,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using Volo.Abp.DependencyInjection;
@@ -29,9 +27,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
     private ILogger<SignatureGrantHandler> _logger;
     private IAbpDistributedLock _distributedLock;
     private const string LockKeyPrefix = "AeFinder:Auth:SignatureGrantHandler:";
-    
-    private SignatureOptions _signatureOptions;
-    private ChainOptions _chainOptions;
     private IWalletLoginProvider _walletLoginProvider;
     private IUserInformationProvider _userInformationProvider;
     
@@ -45,13 +40,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         var caHash = context.Request.GetParameter("ca_hash").ToString();
         var timestampVal = context.Request.GetParameter("timestamp").ToString();
         var address = context.Request.GetParameter("address").ToString();
-        var userName = context.Request.GetParameter("uname").ToString();
-
-        //Before opening registration, must first log in with a regular account
-        if (userName.IsNullOrEmpty())
-        {
-            return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Invalid user name.");
-        }
         
         var invalidParamResult = CheckParams(publicKeyVal, signatureVal, chainId, address, timestampVal);
         if (invalidParamResult != null)
@@ -67,10 +55,10 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         {
             signAddress = Address.FromPublicKey(publicKey).ToBase58();
         }
-
-        _signatureOptions = context.HttpContext.RequestServices
-            .GetRequiredService<IOptionsMonitor<SignatureOptions>>()
-            .CurrentValue;
+        
+        _walletLoginProvider = context.HttpContext.RequestServices.GetRequiredService<IWalletLoginProvider>();
+        _userInformationProvider = context.HttpContext.RequestServices.GetRequiredService<IUserInformationProvider>();
+        _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
         
         //Validate timestamp validity period
         if (_walletLoginProvider.IsTimeStampOutRange(timestamp, out int timeRange))
@@ -78,10 +66,7 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
             return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
                 $"The time should be {timeRange} minutes before and after the current time.");
         }
-
-        _walletLoginProvider = context.HttpContext.RequestServices.GetRequiredService<IWalletLoginProvider>();
-        _userInformationProvider = context.HttpContext.RequestServices.GetRequiredService<IUserInformationProvider>();
-        _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
+        
         //Validate public key and signature
         if (!_walletLoginProvider.RecoverPublicKey(address, timestampVal, signature, out var managerPublicKey))
         {
@@ -99,40 +84,38 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         }
 
         _distributedLock = context.HttpContext.RequestServices.GetRequiredService<IAbpDistributedLock>();
-        _chainOptions = context.HttpContext.RequestServices.GetRequiredService<IOptionsMonitor<ChainOptions>>().CurrentValue;
         _logger.LogInformation(
             "publicKeyVal:{0}, signatureVal:{1}, address:{2}, caHash:{3}, chainId:{4}, timestamp:{5}",
             publicKeyVal, signatureVal, address, caHash, chainId, timestamp);
-
         
         var userManager = context.HttpContext.RequestServices.GetRequiredService<IdentityUserManager>();
         
-        //Before opening registration, must first log in with a regular account
-        var user = await userManager.FindByNameAsync(userName);
-        if (user == null || user.IsDeleted)
-        {
-            return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, $"Invalid user name {userName}.");
-        }
-
-        //Add or update user extension info
-        UserExtensionDto userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByIdAsync(user.Id);
-        userExtensionDto.UserId = user.Id;
+        UserExtensionDto userExtensionDto = null;
+        // UserExtensionDto userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByIdAsync(user.Id);
+        // userExtensionDto.UserId = user.Id;
         List<UserChainAddressDto> addressInfos;
         if (!string.IsNullOrWhiteSpace(caHash))
         {
             //If CA wallet connect
+            userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByCaHashAsync(caHash);
+            if (userExtensionDto == null)
+            {
+                return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
+                    $"Invalid user, please register an account first,then bind your wallet.");
+            }
+
             if (!string.IsNullOrWhiteSpace(userExtensionDto.AElfAddress))
             {
                 _logger.LogError(
                     "User has already linked a NightElf wallet; each user can only link one type of wallet. userExtensionAElfAddress:{0}, userId:{1}",
-                    userExtensionDto.AElfAddress, user.Id);
+                    userExtensionDto.AElfAddress, userExtensionDto.UserId);
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
                     "User has already linked a NightElf wallet; each user can only link one type of wallet.");
             }
             if (!string.IsNullOrWhiteSpace(userExtensionDto.CaHash) && userExtensionDto.CaHash != caHash)
             {
                 _logger.LogError("User has already linked another Portkey wallet address. caHash:{0}, userExtensionCaHash:{1}, userId:{2}",
-                    caHash, userExtensionDto.CaHash, user.Id);
+                    caHash, userExtensionDto.CaHash, userExtensionDto.UserId);
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "User has already linked another Portkey wallet address.");
             }
 
@@ -154,34 +137,31 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
             {
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Invalid address or pubkey.");
             }
+            userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByAElfWalletAddressAsync(signAddress);
+            if (userExtensionDto == null)
+            {
+                return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
+                    $"Invalid user, please register an account first,then bind your wallet.");
+            }
             if (!string.IsNullOrWhiteSpace(userExtensionDto.CaHash))
             {
                 _logger.LogError(
                     "User has already linked a Portkey wallet; each user can only link one type of wallet. CaHash:{0}, userId:{1}",
-                    userExtensionDto.CaHash, user.Id);
+                    userExtensionDto.CaHash, userExtensionDto.UserId);
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
                     "User has already linked a Portkey wallet; each user can only link one type of wallet.");
             }
             if (!string.IsNullOrWhiteSpace(userExtensionDto.AElfAddress) && userExtensionDto.AElfAddress != signAddress)
             {
                 _logger.LogError("User has already linked another NightElf wallet address. signAddress:{0}, userExtensionAElfAddress:{2}, userId:{3}",
-                    signAddress, userExtensionDto.AElfAddress, user.Id);
+                    signAddress, userExtensionDto.AElfAddress, userExtensionDto.UserId);
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "User has already linked another NightElf wallet address.");
             }
 
             userExtensionDto.AElfAddress = signAddress;
         }
         
-        caHash = string.IsNullOrWhiteSpace(caHash) ? string.Empty : caHash;
-        userExtensionDto.CaHash = caHash;
-
-        //Save user extension info to mongodb
-        var saveUserExtensionResult = await _userInformationProvider.SaveUserExtensionInfoAsync(userExtensionDto);;
-        if (!saveUserExtensionResult)
-        {
-            return GetForbidResult(OpenIddictConstants.Errors.ServerError, "Save user failed.");
-        }
-        
+        var user = await userManager.FindByIdAsync(userExtensionDto.UserId.ToString());
         var userClaimsPrincipalFactory = context.HttpContext.RequestServices
             .GetRequiredService<Microsoft.AspNetCore.Identity.IUserClaimsPrincipalFactory<IdentityUser>>();
         var signInManager = context.HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Identity.SignInManager<IdentityUser>>();

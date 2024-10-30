@@ -62,4 +62,26 @@ public class UserInformationProvider: IUserInformationProvider, ISingletonDepend
         }
         return _objectMapper.Map<IdentityUserExtension,UserExtensionDto>(userExtension);
     }
+
+    public async Task<UserExtensionDto> GetUserExtensionInfoByAElfWalletAddressAsync(string address)
+    {
+        var userExtension = await _userExtensionRepository.FindAsync(u => u.AElfAddress == address);
+        if (userExtension != null)
+        {
+            return _objectMapper.Map<IdentityUserExtension,UserExtensionDto>(userExtension);
+        }
+
+        return null;
+    }
+
+    public async Task<UserExtensionDto> GetUserExtensionInfoByCaHashAsync(string caHash)
+    {
+        var userExtension = await _userExtensionRepository.FindAsync(u => u.CaHash == caHash);
+        if (userExtension != null)
+        {
+            return _objectMapper.Map<IdentityUserExtension,UserExtensionDto>(userExtension);
+        }
+
+        return null;
+    }
 }

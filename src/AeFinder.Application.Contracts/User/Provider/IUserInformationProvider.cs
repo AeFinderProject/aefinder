@@ -11,4 +11,8 @@ public interface IUserInformationProvider
     Task<bool> SaveUserExtensionInfoAsync(UserExtensionDto userExtensionDto);
 
     Task<UserExtensionDto> GetUserExtensionInfoByIdAsync(Guid userId);
+
+    Task<UserExtensionDto> GetUserExtensionInfoByAElfWalletAddressAsync(string address);
+
+    Task<UserExtensionDto> GetUserExtensionInfoByCaHashAsync(string caHash);
 }
