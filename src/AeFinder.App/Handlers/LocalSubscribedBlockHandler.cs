@@ -76,11 +76,6 @@ public partial class LocalSubscribedBlockHandler : IDistributedEventHandler<Subs
         MethodName = nameof(HandleBlocksExceptionAsync))]
     protected virtual async Task HandleBlocksAsync(SubscribedBlockDto subscribedBlock)
     {
-        if (subscribedBlock.Blocks.First().BlockHeight > 8267246 &&
-            subscribedBlock.Blocks.First().BlockHeight < 8267446)
-        {
-            throw new Exception("test HandleBlocksAsync exception");
-        }
         await _blockAttachService.AttachBlocksAsync(subscribedBlock.ChainId, subscribedBlock.Blocks);
         await _versionUpgradeProvider.UpgradeAsync();
     }
