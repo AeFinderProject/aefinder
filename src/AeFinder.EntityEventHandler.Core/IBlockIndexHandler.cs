@@ -45,6 +45,10 @@ public partial class BlockIndexHandler : IBlockIndexHandler, ISingletonDependenc
     [ExceptionHandler([typeof(Exception)], Message = "Process new block failed.", LogOnly = true)]
     public virtual async Task ProcessNewBlockAsync(BlockWithTransactionDto block)
     {
+        if (block.BlockHeight > 21551456 && block.BlockHeight < 21551856)
+        {
+            throw new Exception("entity test exception");
+        }
         var chainGrain = _clusterClient.GetGrain<IChainGrain>(block.ChainId);
         await chainGrain.SetLatestBlockAsync(block.BlockHash, block.BlockHeight);
 
