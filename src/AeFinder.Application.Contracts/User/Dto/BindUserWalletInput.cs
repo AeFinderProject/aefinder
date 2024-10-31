@@ -8,7 +8,6 @@ public class BindUserWalletInput
     public string SignatureVal { get; set; }
     [Required]
     public string ChainId { get; set; }
-    [Required]
     public string CaHash { get; set; }
     [Required]
     public long Timestamp { get; set; }
