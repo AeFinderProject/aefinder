@@ -22,11 +22,10 @@ public partial class DevelopmentTemplateAppService
         });
     }
     
-    private Task<FlowBehavior> HandleCleanTempFilesExceptionAsync(Exception exception, string projectName, string zipFileName,
-        string generatedPath)
+    private Task<FlowBehavior> HandleCleanTempFilesExceptionAsync(Exception exception, string zipFileName, string generatedPath)
     {
         // Only exception information is logged without blocking the service logic.
-        Logger.LogError(exception, "Failed to clean up temporary files: {PorjectName}, {Path}.", projectName,
+        Logger.LogError(exception, "Failed to clean up temporary files: {ZipFileName}, {Path}.", zipFileName,
             generatedPath);
 
         return Task.FromResult(new FlowBehavior

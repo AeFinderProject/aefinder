@@ -49,7 +49,7 @@ public partial class DevelopmentTemplateAppService : AeFinderAppService, IDevelo
 
     [ExceptionHandler(typeof(Exception), TargetType = typeof(DevelopmentTemplateAppService),
         MethodName = nameof(HandleCleanTempFilesExceptionAsync))]
-    private Task CleanTempFilesAsync(string zipFileName, string generatedPath)
+    protected virtual Task CleanTempFilesAsync(string zipFileName, string generatedPath)
     {
         File.Delete(zipFileName);
         Directory.Delete(generatedPath, true);
