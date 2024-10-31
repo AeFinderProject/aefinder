@@ -56,11 +56,11 @@ public partial class DevelopmentTemplateAppService : AeFinderAppService, IDevelo
         MethodName = nameof(HandleCleanTempFilesExceptionAsync))]
     protected virtual Task CleanTempFilesAsync(string projectName, string zipFileName, string generatedPath)
     {
-        if ("scotttest".Equals(projectName))
-        {
-            throw new Exception("zip exception");
-        
-        }
+        // if ("scotttest".Equals(projectName))
+        // {
+        //     throw new Exception("zip exception");
+        //
+        // }
         File.Delete(zipFileName);
         Directory.Delete(generatedPath, true);
         return Task.CompletedTask;
