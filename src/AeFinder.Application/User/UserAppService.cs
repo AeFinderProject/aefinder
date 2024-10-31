@@ -199,7 +199,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
     {
         if (CurrentUser == null || CurrentUser.Id == null)
         {
-            throw new UserFriendlyException("CurrentUser is null");
+            throw new UserFriendlyException("Please sign in first.");
         }
         
         var identityUser = await UserManager.FindByIdAsync(CurrentUser.Id.ToString());

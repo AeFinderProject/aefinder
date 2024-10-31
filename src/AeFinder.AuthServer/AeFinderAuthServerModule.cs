@@ -68,18 +68,15 @@ public class AeFinderAuthServerModule : AbpModule
                 options.UseAspNetCore();
             });
         });
+        
         //add login grant type
         PreConfigure<OpenIddictServerBuilder>(builder =>
         {
             builder.Configure(openIddictServerOptions =>
             {
                 openIddictServerOptions.GrantTypes.Add(LoginConsts.GrantType);
+                openIddictServerOptions.GrantTypes.Add(SignatureGrantConsts.GrantType);
             });
-        });
-        //add signature grant type
-        PreConfigure<OpenIddictServerBuilder>(builder =>
-        {
-            builder.Configure(openIddictServerOptions => { openIddictServerOptions.GrantTypes.Add("signature"); });
         });
     }
 
@@ -135,13 +132,10 @@ public class AeFinderAuthServerModule : AbpModule
             options.IsEnabled = false; //Disables the auditing system
         });
 
+        //add login grant type
         context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
         {
             options.Grants.Add(LoginConsts.GrantType, new LoginTokenExtensionGrant());
-        });
-        
-        context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
-        {
             options.Grants.Add(SignatureGrantConsts.GrantType, new SignatureGrantHandler());
         });
 
