@@ -42,11 +42,11 @@ public partial class DevelopmentTemplateAppService : AeFinderAppService, IDevelo
         FinallyMethodName = nameof(CleanTempFilesAsync))]
     protected virtual async Task<byte[]> GenerateProjectFileAsync(string projectName, string zipFileName, string generatedPath)
     {
-        // if ("scotttest".Equals(zipFileName))
-        // {
-        //     throw new Exception("zip exception");
-        //
-        // }
+        if ("scotttest".Equals(zipFileName))
+        {
+            throw new Exception("zip exception");
+        
+        }
         GenerateProject(projectName, _devTemplateOptions.TemplatePath, generatedPath);
         ZipHelper.ZipDirectory(zipFileName, generatedPath);
         return await File.ReadAllBytesAsync(zipFileName);
@@ -56,11 +56,11 @@ public partial class DevelopmentTemplateAppService : AeFinderAppService, IDevelo
         MethodName = nameof(HandleCleanTempFilesExceptionAsync))]
     protected virtual Task CleanTempFilesAsync(string zipFileName, string generatedPath)
     {
-        if ("scotttest".Equals(zipFileName))
-        {
-            throw new Exception("zip exception");
-
-        }
+        // if ("scotttest".Equals(zipFileName))
+        // {
+        //     throw new Exception("zip exception");
+        //
+        // }
         File.Delete(zipFileName);
         Directory.Delete(generatedPath, true);
         return Task.CompletedTask;
