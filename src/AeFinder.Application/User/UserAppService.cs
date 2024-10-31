@@ -207,11 +207,6 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         
         // var publicKey = ByteArrayHelper.HexStringToByteArray(publicKeyVal);
         var signature = ByteArrayHelper.HexStringToByteArray(input.SignatureVal);
-        // var signAddress = string.Empty;
-        // if (!string.IsNullOrWhiteSpace(publicKeyVal))
-        // {
-        //     signAddress = Address.FromPublicKey(publicKey).ToBase58();
-        // }
 
         //Validate timestamp validity period
         if (_walletLoginProvider.IsTimeStampOutRange(input.Timestamp, out int timeRange))
@@ -227,17 +222,6 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         
         //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
         var signAddress = Address.FromPublicKey(publicKey).ToBase58();
-
-        // if (!_walletLoginProvider.RecoverPublicKeyOld(address, timestamp.ToString(), signature, out var managerPublicKeyOld))
-        // {
-        //     throw new UserFriendlyException("Signature validation failed old.");
-        // }
-        //
-        // if (!_walletLoginProvider.CheckPublicKey(managerPublicKey, managerPublicKeyOld, publicKeyVal))
-        // {
-        //     throw new UserFriendlyException("Invalid publicKey or signature.");
-        // }
-        
         
         //Add or update user extension info
         UserExtensionDto userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
@@ -267,23 +251,8 @@ public class UserAppService : IdentityUserAppService, IUserAppService
                 throw new UserFriendlyException(OpenIddictConstants.Errors.InvalidRequest,
                     $"Can not get ca address in chain {input.ChainId}.");
             }
-            // if (!string.IsNullOrWhiteSpace(userExtensionDto.WalletAddress))
-            // {
-            //     Logger.LogError(
-            //         "User has already linked a NightElf wallet; each user can only link one type of wallet. userExtensionAElfAddress:{0}, userId:{1}",
-            //         userExtensionDto.WalletAddress, identityUser.Id);
-            //     throw new UserFriendlyException(
-            //         "User has already linked a NightElf wallet; each user can only link one type of wallet.");
-            // }
-            // if (!string.IsNullOrWhiteSpace(userExtensionDto.CaHash) && userExtensionDto.CaHash != caHash)
-            // {
-            //     Logger.LogError("User has already linked another Portkey wallet address. caHash:{0}, userExtensionCaHash:{1}, userId:{2}",
-            //         caHash, userExtensionDto.CaHash, identityUser.Id);
-            //     throw new UserFriendlyException("User has already linked another Portkey wallet address.");
-            // }
             var caAddress = addressInfos[0].Address;
             userExtensionDto.WalletAddress = caAddress;
-            // userExtensionDto.CaAddressList = addressInfos;
         }
         else
         {
@@ -292,26 +261,9 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             {
                 throw new UserFriendlyException("Invalid address or signature.");
             }
-            // if (!string.IsNullOrWhiteSpace(userExtensionDto.CaHash))
-            // {
-            //     Logger.LogError(
-            //         "User has already linked a Portkey wallet; each user can only link one type of wallet. CaHash:{0}, userId:{1}",
-            //         userExtensionDto.CaHash, identityUser.Id);
-            //     throw new UserFriendlyException(
-            //         "User has already linked a Portkey wallet; each user can only link one type of wallet.");
-            // }
-            // if (!string.IsNullOrWhiteSpace(userExtensionDto.WalletAddress) && userExtensionDto.WalletAddress != signAddress)
-            // {
-            //     Logger.LogError("User has already linked another NightElf wallet address. signAddress:{0}, userExtensionAElfAddress:{2}, userId:{3}",
-            //         signAddress, userExtensionDto.WalletAddress, identityUser.Id);
-            //     throw new UserFriendlyException("User has already linked another NightElf wallet address.");
-            // }
 
             userExtensionDto.WalletAddress = signAddress;
         }
-        
-        // caHash = string.IsNullOrWhiteSpace(caHash) ? string.Empty : caHash;
-        // userExtensionDto.CaHash = caHash;
 
         //Save user extension info to mongodb
         var saveUserExtensionResult = await _userInformationProvider.SaveUserExtensionInfoAsync(userExtensionDto);;

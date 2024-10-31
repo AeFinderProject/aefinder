@@ -65,19 +65,6 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             HashHelper.ComputeFrom(Encoding.UTF8.GetBytes(newSignText).ToHex()).ToByteArray(),
             out managerPublicKey);
     }
-
-    // public bool RecoverPublicKeyOld(string address, string timestampVal, byte[] signature,
-    //     out byte[] managerPublicKeyOld)
-    // {
-    //     return CryptoHelper.RecoverPublicKey(signature,
-    //         HashHelper.ComputeFrom(string.Join("-", address, timestampVal)).ToByteArray(),
-    //         out managerPublicKeyOld);
-    // }
-    //
-    // public bool CheckPublicKey(byte[] managerPublicKey, byte[] managerPublicKeyOld, string publicKeyVal)
-    // {
-    //     return (managerPublicKey.ToHex() == publicKeyVal || managerPublicKeyOld.ToHex() == publicKeyVal);
-    // }
     
     public async Task<bool?> CheckManagerAddressAsync(string chainId, string caHash, string manager)
     {

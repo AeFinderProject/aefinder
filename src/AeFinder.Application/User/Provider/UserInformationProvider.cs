@@ -34,17 +34,8 @@ public class UserInformationProvider: IUserInformationProvider, ISingletonDepend
             userExtension = new IdentityUserExtension(userExtensionDto.UserId)
             {
                 UserId = userExtensionDto.UserId,
-                WalletAddress = userExtensionDto.WalletAddress,
-                // CaHash = userExtensionDto.CaHash
+                WalletAddress = userExtensionDto.WalletAddress
             };
-            // if (userExtensionDto.CaAddressList != null && userExtensionDto.CaAddressList.Count > 0)
-            // {
-            //     userExtension.CaAddressList =
-            //         _objectMapper.Map<List<UserChainAddressDto>, List<UserChainAddressInfo>>(userExtensionDto
-            //             .CaAddressList);
-            //     var caAddressMain = userExtension.CaAddressList.FirstOrDefault(u => u.ChainId.ToUpper() == "AELF");
-            //     userExtension.CaAddressMain = caAddressMain == null ? string.Empty : caAddressMain.Address;
-            // }
 
             await _userExtensionRepository.InsertAsync(userExtension);
             return true;
@@ -73,15 +64,4 @@ public class UserInformationProvider: IUserInformationProvider, ISingletonDepend
 
         return null;
     }
-
-    // public async Task<UserExtensionDto> GetUserExtensionInfoByCaHashAsync(string caHash)
-    // {
-    //     var userExtension = await _userExtensionRepository.FindAsync(u => u.CaHash == caHash);
-    //     if (userExtension != null)
-    //     {
-    //         return _objectMapper.Map<IdentityUserExtension,UserExtensionDto>(userExtension);
-    //     }
-    //
-    //     return null;
-    // }
 }

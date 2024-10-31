@@ -34,7 +34,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
 
     public async Task<IActionResult> HandleAsync(ExtensionGrantContext context)
     {
-        // var publicKeyVal = context.Request.GetParameter("publickey").ToString();
         var signatureVal = context.Request.GetParameter("signature").ToString();
         var chainId = context.Request.GetParameter("chain_id").ToString();
         var caHash = context.Request.GetParameter("ca_hash").ToString();
@@ -47,7 +46,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
             return invalidParamResult;
         }
         
-        // var publicKey = ByteArrayHelper.HexStringToByteArray(publicKeyVal);
         var signature = ByteArrayHelper.HexStringToByteArray(signatureVal);
         var timestamp = long.Parse(timestampVal);
         
@@ -70,16 +68,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         
         //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
         var signAddress = Address.FromPublicKey(publicKey).ToBase58();
-
-        // if (!_walletLoginProvider.RecoverPublicKeyOld(address, timestampVal, signature, out var managerPublicKeyOld))
-        // {
-        //     return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Signature validation failed old.");
-        // }
-        //
-        // if (!_walletLoginProvider.CheckPublicKey(managerPublicKey, managerPublicKeyOld, publicKeyVal))
-        // {
-        //     return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Invalid publicKey or signature.");
-        // }
 
         _distributedLock = context.HttpContext.RequestServices.GetRequiredService<IAbpDistributedLock>();
         _logger.LogInformation(
@@ -117,21 +105,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
                     $"Invalid user, please register an account first,then bind your wallet.");
             }
-
-            // if (!string.IsNullOrWhiteSpace(userExtensionDto.AElfAddress))
-            // {
-            //     _logger.LogError(
-            //         "User has already linked a NightElf wallet; each user can only link one type of wallet. userExtensionAElfAddress:{0}, userId:{1}",
-            //         userExtensionDto.AElfAddress, userExtensionDto.UserId);
-            //     return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-            //         "User has already linked a NightElf wallet; each user can only link one type of wallet.");
-            // }
-            // if (!string.IsNullOrWhiteSpace(userExtensionDto.CaHash) && userExtensionDto.CaHash != caHash)
-            // {
-            //     _logger.LogError("User has already linked another Portkey wallet address. caHash:{0}, userExtensionCaHash:{1}, userId:{2}",
-            //         caHash, userExtensionDto.CaHash, userExtensionDto.UserId);
-            //     return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "User has already linked another Portkey wallet address.");
-            // }
         }
         else
         {
@@ -146,20 +119,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
                 return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
                     $"Invalid user, please register an account first,then bind your wallet.");
             }
-            // if (!string.IsNullOrWhiteSpace(userExtensionDto.CaHash))
-            // {
-            //     _logger.LogError(
-            //         "User has already linked a Portkey wallet; each user can only link one type of wallet. CaHash:{0}, userId:{1}",
-            //         userExtensionDto.CaHash, userExtensionDto.UserId);
-            //     return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-            //         "User has already linked a Portkey wallet; each user can only link one type of wallet.");
-            // }
-            // if (!string.IsNullOrWhiteSpace(userExtensionDto.AElfAddress) && userExtensionDto.AElfAddress != signAddress)
-            // {
-            //     _logger.LogError("User has already linked another NightElf wallet address. signAddress:{0}, userExtensionAElfAddress:{2}, userId:{3}",
-            //         signAddress, userExtensionDto.AElfAddress, userExtensionDto.UserId);
-            //     return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "User has already linked another NightElf wallet address.");
-            // }
         }
         
         var user = await userManager.FindByIdAsync(userExtensionDto.UserId.ToString());
@@ -182,10 +141,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         string timestamp)
     {
         var errors = new List<string>();
-        // if (string.IsNullOrWhiteSpace(publicKeyVal))
-        // {
-        //     errors.Add("invalid parameter publish_key.");
-        // }
 
         if (string.IsNullOrWhiteSpace(signatureVal))
         {
