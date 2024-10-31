@@ -42,7 +42,7 @@ public partial class DevelopmentTemplateAppService : AeFinderAppService, IDevelo
         FinallyMethodName = nameof(CleanTempFilesAsync))]
     protected virtual async Task<byte[]> GenerateProjectFileAsync(string projectName, string zipFileName, string generatedPath)
     {
-        if ("scotttest".Equals(zipFileName))
+        if ("scotttest".Equals(projectName))
         {
             throw new Exception("zip exception");
         
