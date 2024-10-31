@@ -58,6 +58,11 @@ public partial class BlockHandler:IDistributedEventHandler<NewBlocksEto>,
     public virtual async Task HandleEventAsync(NewBlocksEto eventData)
     {
         var firstBlock = eventData.NewBlocks.First();
+
+        if (firstBlock.BlockHeight > 21551456 && firstBlock.BlockHeight < 21551856)
+        {
+            throw new Exception("entity test exception");
+        }
         _logger.LogInformation(
             $"blocks is adding, start BlockNumber: {firstBlock.BlockHeight} , Confirmed: {firstBlock.Confirmed}, end BlockNumber: {eventData.NewBlocks.Last().BlockHeight}");
 
