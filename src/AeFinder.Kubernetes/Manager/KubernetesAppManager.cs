@@ -307,6 +307,12 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         MethodName = nameof(HandleExceptionAsync))]
     public virtual async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
     {
+        string str = "tmp";
+        if ("tmp".Equals(str))
+        {
+            throw new Exception("ExistsServiceMonitorAsync exception");
+        }
+        
         var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
             KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
         if (serviceMonitors == null)
