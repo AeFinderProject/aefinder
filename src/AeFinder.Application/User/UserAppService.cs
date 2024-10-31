@@ -9,13 +9,11 @@ using AElf.Types;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Identity;
-using Volo.Abp.OpenIddict.Applications;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder.User;
@@ -194,8 +192,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         }
     }
 
-    public async Task<IdentityUserExtensionDto> BindUserWalletAsync(string publicKeyVal, string signatureVal, string chainId,
-        string caHash, long timestamp, string address)
+    public async Task<IdentityUserExtensionDto> BindUserWalletAsync(BindUserWalletInput input)
     {
         if (CurrentUser == null || CurrentUser.Id == null)
         {
@@ -208,121 +205,113 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             throw new UserFriendlyException("user not found.");
         }
         
-        if (string.IsNullOrWhiteSpace(publicKeyVal))
-        {
-            throw new UserFriendlyException("invalid parameter publish_key.");
-        }
-        
-        if (string.IsNullOrWhiteSpace(signatureVal))
-        {
-            throw new UserFriendlyException("invalid parameter signature.");
-        }
-
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            throw new UserFriendlyException("invalid parameter address.");
-        }
-
-        if (string.IsNullOrWhiteSpace(chainId))
-        {
-            throw new UserFriendlyException("invalid parameter chain_id.");
-        }
-
-        if (timestamp <= 0)
-        {
-            throw new UserFriendlyException("invalid parameter timestamp.");
-        }
-        
-        var publicKey = ByteArrayHelper.HexStringToByteArray(publicKeyVal);
-        var signature = ByteArrayHelper.HexStringToByteArray(signatureVal);
-        var signAddress = string.Empty;
-        if (!string.IsNullOrWhiteSpace(publicKeyVal))
-        {
-            signAddress = Address.FromPublicKey(publicKey).ToBase58();
-        }
+        // var publicKey = ByteArrayHelper.HexStringToByteArray(publicKeyVal);
+        var signature = ByteArrayHelper.HexStringToByteArray(input.SignatureVal);
+        // var signAddress = string.Empty;
+        // if (!string.IsNullOrWhiteSpace(publicKeyVal))
+        // {
+        //     signAddress = Address.FromPublicKey(publicKey).ToBase58();
+        // }
 
         //Validate timestamp validity period
-        if (_walletLoginProvider.IsTimeStampOutRange(timestamp, out int timeRange))
+        if (_walletLoginProvider.IsTimeStampOutRange(input.Timestamp, out int timeRange))
         {
             throw new UserFriendlyException($"The time should be {timeRange} minutes before and after the current time.");
         }
         
         //Validate public key and signature
-        if (!_walletLoginProvider.RecoverPublicKey(address, timestamp.ToString(), signature, out var managerPublicKey))
+        if (!_walletLoginProvider.RecoverPublicKey(input.Address, input.Timestamp.ToString(), signature, out var publicKey))
         {
             throw new UserFriendlyException("Signature validation failed new.");
         }
+        
+        //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
+        var signAddress = Address.FromPublicKey(publicKey).ToBase58();
 
-        if (!_walletLoginProvider.RecoverPublicKeyOld(address, timestamp.ToString(), signature, out var managerPublicKeyOld))
-        {
-            throw new UserFriendlyException("Signature validation failed old.");
-        }
-
-        if (!_walletLoginProvider.CheckPublicKey(managerPublicKey, managerPublicKeyOld, publicKeyVal))
-        {
-            throw new UserFriendlyException("Invalid publicKey or signature.");
-        }
+        // if (!_walletLoginProvider.RecoverPublicKeyOld(address, timestamp.ToString(), signature, out var managerPublicKeyOld))
+        // {
+        //     throw new UserFriendlyException("Signature validation failed old.");
+        // }
+        //
+        // if (!_walletLoginProvider.CheckPublicKey(managerPublicKey, managerPublicKeyOld, publicKeyVal))
+        // {
+        //     throw new UserFriendlyException("Invalid publicKey or signature.");
+        // }
+        
         
         //Add or update user extension info
         UserExtensionDto userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
+
+        if (!userExtensionDto.WalletAddress.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("User has already linked a wallet.");
+        }
+        
         userExtensionDto.UserId = identityUser.Id;
-        List<UserChainAddressDto> addressInfos;
-        if (!string.IsNullOrWhiteSpace(caHash))
+        if (!string.IsNullOrWhiteSpace(input.CaHash))
         {
             //If CA wallet connect
-            if (!string.IsNullOrWhiteSpace(userExtensionDto.AElfAddress))
-            {
-                Logger.LogError(
-                    "User has already linked a NightElf wallet; each user can only link one type of wallet. userExtensionAElfAddress:{0}, userId:{1}",
-                    userExtensionDto.AElfAddress, identityUser.Id);
-                throw new UserFriendlyException(
-                    "User has already linked a NightElf wallet; each user can only link one type of wallet.");
-            }
-            if (!string.IsNullOrWhiteSpace(userExtensionDto.CaHash) && userExtensionDto.CaHash != caHash)
-            {
-                Logger.LogError("User has already linked another Portkey wallet address. caHash:{0}, userExtensionCaHash:{1}, userId:{2}",
-                    caHash, userExtensionDto.CaHash, identityUser.Id);
-                throw new UserFriendlyException("User has already linked another Portkey wallet address.");
-            }
-
-            var managerCheck = await _walletLoginProvider.CheckAddressAsync(chainId, caHash, signAddress);
+            var managerCheck = await _walletLoginProvider.CheckManagerAddressAsync(input.ChainId, input.CaHash, signAddress);
             if (!managerCheck.HasValue || !managerCheck.Value)
             {
                 Logger.LogError("Manager validation failed. caHash:{0}, address:{1}, chainId:{2}",
-                    caHash, address, chainId);
+                    input.CaHash, input.Address, input.ChainId);
                 throw new UserFriendlyException("Manager validation failed.");
             }
-
-            addressInfos = await _walletLoginProvider.GetAddressInfosAsync(caHash);
-            userExtensionDto.CaAddressList = addressInfos;
+            
+            List<UserChainAddressDto> addressInfos = await _walletLoginProvider.GetAddressInfosAsync(input.CaHash);
+            if (addressInfos == null || addressInfos.Count == 0)
+            {
+                Logger.LogError("Get ca address failed. caHash:{0}, chainId:{1}",
+                    input.CaHash, input.ChainId);
+                throw new UserFriendlyException(OpenIddictConstants.Errors.InvalidRequest,
+                    $"Can not get ca address in chain {input.ChainId}.");
+            }
+            // if (!string.IsNullOrWhiteSpace(userExtensionDto.WalletAddress))
+            // {
+            //     Logger.LogError(
+            //         "User has already linked a NightElf wallet; each user can only link one type of wallet. userExtensionAElfAddress:{0}, userId:{1}",
+            //         userExtensionDto.WalletAddress, identityUser.Id);
+            //     throw new UserFriendlyException(
+            //         "User has already linked a NightElf wallet; each user can only link one type of wallet.");
+            // }
+            // if (!string.IsNullOrWhiteSpace(userExtensionDto.CaHash) && userExtensionDto.CaHash != caHash)
+            // {
+            //     Logger.LogError("User has already linked another Portkey wallet address. caHash:{0}, userExtensionCaHash:{1}, userId:{2}",
+            //         caHash, userExtensionDto.CaHash, identityUser.Id);
+            //     throw new UserFriendlyException("User has already linked another Portkey wallet address.");
+            // }
+            var caAddress = addressInfos[0].Address;
+            userExtensionDto.WalletAddress = caAddress;
+            // userExtensionDto.CaAddressList = addressInfos;
         }
         else
         {
             //If NightElf wallet connect
-            if (address != signAddress)
+            if (input.Address != signAddress)
             {
-                throw new UserFriendlyException("Invalid address or pubkey.");
+                throw new UserFriendlyException("Invalid address or signature.");
             }
-            if (!string.IsNullOrWhiteSpace(userExtensionDto.CaHash))
-            {
-                Logger.LogError(
-                    "User has already linked a Portkey wallet; each user can only link one type of wallet. CaHash:{0}, userId:{1}",
-                    userExtensionDto.CaHash, identityUser.Id);
-                throw new UserFriendlyException(
-                    "User has already linked a Portkey wallet; each user can only link one type of wallet.");
-            }
-            if (!string.IsNullOrWhiteSpace(userExtensionDto.AElfAddress) && userExtensionDto.AElfAddress != signAddress)
-            {
-                Logger.LogError("User has already linked another NightElf wallet address. signAddress:{0}, userExtensionAElfAddress:{2}, userId:{3}",
-                    signAddress, userExtensionDto.AElfAddress, identityUser.Id);
-                throw new UserFriendlyException("User has already linked another NightElf wallet address.");
-            }
+            // if (!string.IsNullOrWhiteSpace(userExtensionDto.CaHash))
+            // {
+            //     Logger.LogError(
+            //         "User has already linked a Portkey wallet; each user can only link one type of wallet. CaHash:{0}, userId:{1}",
+            //         userExtensionDto.CaHash, identityUser.Id);
+            //     throw new UserFriendlyException(
+            //         "User has already linked a Portkey wallet; each user can only link one type of wallet.");
+            // }
+            // if (!string.IsNullOrWhiteSpace(userExtensionDto.WalletAddress) && userExtensionDto.WalletAddress != signAddress)
+            // {
+            //     Logger.LogError("User has already linked another NightElf wallet address. signAddress:{0}, userExtensionAElfAddress:{2}, userId:{3}",
+            //         signAddress, userExtensionDto.WalletAddress, identityUser.Id);
+            //     throw new UserFriendlyException("User has already linked another NightElf wallet address.");
+            // }
 
-            userExtensionDto.AElfAddress = signAddress;
+            userExtensionDto.WalletAddress = signAddress;
         }
         
-        caHash = string.IsNullOrWhiteSpace(caHash) ? string.Empty : caHash;
-        userExtensionDto.CaHash = caHash;
+        // caHash = string.IsNullOrWhiteSpace(caHash) ? string.Empty : caHash;
+        // userExtensionDto.CaHash = caHash;
 
         //Save user extension info to mongodb
         var saveUserExtensionResult = await _userInformationProvider.SaveUserExtensionInfoAsync(userExtensionDto);;

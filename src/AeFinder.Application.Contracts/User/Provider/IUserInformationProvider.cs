@@ -12,7 +12,7 @@ public interface IUserInformationProvider
 
     Task<UserExtensionDto> GetUserExtensionInfoByIdAsync(Guid userId);
 
-    Task<UserExtensionDto> GetUserExtensionInfoByAElfWalletAddressAsync(string address);
+    Task<UserExtensionDto> GetUserExtensionInfoByWalletAddressAsync(string address);
 
-    Task<UserExtensionDto> GetUserExtensionInfoByCaHashAsync(string caHash);
+    // Task<UserExtensionDto> GetUserExtensionInfoByCaHashAsync(string caHash);
 }

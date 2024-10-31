@@ -34,17 +34,17 @@ public class UserInformationProvider: IUserInformationProvider, ISingletonDepend
             userExtension = new IdentityUserExtension(userExtensionDto.UserId)
             {
                 UserId = userExtensionDto.UserId,
-                AElfAddress = userExtensionDto.AElfAddress,
-                CaHash = userExtensionDto.CaHash
+                WalletAddress = userExtensionDto.WalletAddress,
+                // CaHash = userExtensionDto.CaHash
             };
-            if (userExtensionDto.CaAddressList != null && userExtensionDto.CaAddressList.Count > 0)
-            {
-                userExtension.CaAddressList =
-                    _objectMapper.Map<List<UserChainAddressDto>, List<UserChainAddressInfo>>(userExtensionDto
-                        .CaAddressList);
-                var caAddressMain = userExtension.CaAddressList.FirstOrDefault(u => u.ChainId.ToUpper() == "AELF");
-                userExtension.CaAddressMain = caAddressMain == null ? string.Empty : caAddressMain.Address;
-            }
+            // if (userExtensionDto.CaAddressList != null && userExtensionDto.CaAddressList.Count > 0)
+            // {
+            //     userExtension.CaAddressList =
+            //         _objectMapper.Map<List<UserChainAddressDto>, List<UserChainAddressInfo>>(userExtensionDto
+            //             .CaAddressList);
+            //     var caAddressMain = userExtension.CaAddressList.FirstOrDefault(u => u.ChainId.ToUpper() == "AELF");
+            //     userExtension.CaAddressMain = caAddressMain == null ? string.Empty : caAddressMain.Address;
+            // }
 
             await _userExtensionRepository.InsertAsync(userExtension);
             return true;
@@ -63,25 +63,25 @@ public class UserInformationProvider: IUserInformationProvider, ISingletonDepend
         return _objectMapper.Map<IdentityUserExtension,UserExtensionDto>(userExtension);
     }
 
-    public async Task<UserExtensionDto> GetUserExtensionInfoByAElfWalletAddressAsync(string address)
+    public async Task<UserExtensionDto> GetUserExtensionInfoByWalletAddressAsync(string address)
     {
-        var userExtension = await _userExtensionRepository.FindAsync(u => u.AElfAddress == address);
+        var userExtension = await _userExtensionRepository.FindAsync(u => u.WalletAddress == address);
         if (userExtension != null)
         {
-            return _objectMapper.Map<IdentityUserExtension,UserExtensionDto>(userExtension);
+            return _objectMapper.Map<IdentityUserExtension, UserExtensionDto>(userExtension);
         }
 
         return null;
     }
 
-    public async Task<UserExtensionDto> GetUserExtensionInfoByCaHashAsync(string caHash)
-    {
-        var userExtension = await _userExtensionRepository.FindAsync(u => u.CaHash == caHash);
-        if (userExtension != null)
-        {
-            return _objectMapper.Map<IdentityUserExtension,UserExtensionDto>(userExtension);
-        }
-
-        return null;
-    }
+    // public async Task<UserExtensionDto> GetUserExtensionInfoByCaHashAsync(string caHash)
+    // {
+    //     var userExtension = await _userExtensionRepository.FindAsync(u => u.CaHash == caHash);
+    //     if (userExtension != null)
+    //     {
+    //         return _objectMapper.Map<IdentityUserExtension,UserExtensionDto>(userExtension);
+    //     }
+    //
+    //     return null;
+    // }
 }

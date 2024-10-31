@@ -16,6 +16,5 @@ public interface IUserAppService
 
     Task<string> GetClientDisplayNameAsync(string clientId);
 
-    Task<IdentityUserExtensionDto> BindUserWalletAsync(string publickey, string signature, string chain_id,
-        string ca_hash, long timestamp, string address);
+    Task<IdentityUserExtensionDto> BindUserWalletAsync(BindUserWalletInput input);
 }

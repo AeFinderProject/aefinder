@@ -66,33 +66,33 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             out managerPublicKey);
     }
 
-    public bool RecoverPublicKeyOld(string address, string timestampVal, byte[] signature,
-        out byte[] managerPublicKeyOld)
-    {
-        return CryptoHelper.RecoverPublicKey(signature,
-            HashHelper.ComputeFrom(string.Join("-", address, timestampVal)).ToByteArray(),
-            out managerPublicKeyOld);
-    }
-
-    public bool CheckPublicKey(byte[] managerPublicKey, byte[] managerPublicKeyOld, string publicKeyVal)
-    {
-        return (managerPublicKey.ToHex() == publicKeyVal || managerPublicKeyOld.ToHex() == publicKeyVal);
-    }
+    // public bool RecoverPublicKeyOld(string address, string timestampVal, byte[] signature,
+    //     out byte[] managerPublicKeyOld)
+    // {
+    //     return CryptoHelper.RecoverPublicKey(signature,
+    //         HashHelper.ComputeFrom(string.Join("-", address, timestampVal)).ToByteArray(),
+    //         out managerPublicKeyOld);
+    // }
+    //
+    // public bool CheckPublicKey(byte[] managerPublicKey, byte[] managerPublicKeyOld, string publicKeyVal)
+    // {
+    //     return (managerPublicKey.ToHex() == publicKeyVal || managerPublicKeyOld.ToHex() == publicKeyVal);
+    // }
     
-    public async Task<bool?> CheckAddressAsync(string chainId, string caHash, string manager)
+    public async Task<bool?> CheckManagerAddressAsync(string chainId, string caHash, string manager)
     {
         string graphQlUrl = _signatureGrantOptions.PortkeyV2GraphQLUrl;
-        var graphQlResult = await CheckAddressFromGraphQlAsync(graphQlUrl, caHash, manager);
+        var graphQlResult = await CheckManagerAddressFromGraphQlAsync(graphQlUrl, caHash, manager);
         if (!graphQlResult.HasValue || !graphQlResult.Value)
         {
             _logger.LogDebug("graphql is invalid.");
-            return await CheckAddressFromContractAsync(chainId, caHash, manager, _chainOptions);
+            return await CheckManagerAddressFromContractAsync(chainId, caHash, manager, _chainOptions);
         }
 
         return true;
     }
     
-    private async Task<bool?> CheckAddressFromContractAsync(string chainId, string caHash, string manager,
+    private async Task<bool?> CheckManagerAddressFromContractAsync(string chainId, string caHash, string manager,
         ChainOptions chainOptions)
     {
         var param = new GetHolderInfoInput
@@ -108,12 +108,14 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         return output?.ManagerInfos?.Any(t => t.Address.ToBase58() == manager);
     }
     
-    private async Task<bool?> CheckAddressFromGraphQlAsync(string url, string caHash,
+    private async Task<bool?> CheckManagerAddressFromGraphQlAsync(string url, string caHash,
         string managerAddress)
     {
         var cHolderInfos = await GetHolderInfosAsync(url, caHash);
-        var caHolder = cHolderInfos?.CaHolderInfo?.SelectMany(t => t.ManagerInfos);
-        return caHolder?.Any(t => t.Address == managerAddress);
+        var loginChainHolderInfo =
+            cHolderInfos.CaHolderInfo.Find(c => c.ChainId == _signatureGrantOptions.LoginChainId);
+        var caHolderManagerInfos = loginChainHolderInfo?.ManagerInfos;
+        return caHolderManagerInfos?.Any(t => t.Address == managerAddress);
     }
     
     private async Task<T> CallTransactionAsync<T>(string chainId, string methodName, IMessage param,
@@ -183,6 +185,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     public async Task<List<UserChainAddressDto>> GetAddressInfosAsync(string caHash)
     {
         var addressInfos = new List<UserChainAddressDto>();
+        //Get CaAddress from portkey V2 graphql
         var holderInfoDto = await GetHolderInfosAsync(_signatureGrantOptions.PortkeyV2GraphQLUrl, caHash);
 
         var chainIds = new List<string>();
@@ -193,14 +196,19 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             chainIds = holderInfoDto.CaHolderInfo.Select(t => t.ChainId).ToList();
         }
 
+        //Get CaAddress from node contract
         var chains = _chainOptions.ChainInfos.Select(key => _chainOptions.ChainInfos[key.Key])
             .Select(chainOptionsChainInfo => chainOptionsChainInfo.ChainId).Where(t => !chainIds.Contains(t));
 
         foreach (var chainId in chains)
         {
+            if (chainId != _signatureGrantOptions.LoginChainId)
+            {
+                continue;
+            }
             try
             {
-                var addressInfo = await GetAddressInfoAsync(chainId, caHash);
+                var addressInfo = await GetAddressInfoFromContractAsync(chainId, caHash);
                 addressInfos.Add(addressInfo);
             }
             catch (Exception e)
@@ -212,7 +220,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         return addressInfos;
     }
     
-    private async Task<UserChainAddressDto> GetAddressInfoAsync(string chainId, string caHash)
+    private async Task<UserChainAddressDto> GetAddressInfoFromContractAsync(string chainId, string caHash)
     {
         var param = new GetHolderInfoInput
         {
