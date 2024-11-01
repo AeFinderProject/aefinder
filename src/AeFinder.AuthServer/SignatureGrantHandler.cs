@@ -41,11 +41,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         var timestampVal = context.Request.GetParameter("timestamp").ToString();
         var address = context.Request.GetParameter("address").ToString();
         
-        // var invalidParamResult = CheckParams(signatureVal, chainId, address, timestampVal);
-        // if (invalidParamResult != null)
-        // {
-        //     return invalidParamResult;
-        // }
         _walletLoginProvider = context.HttpContext.RequestServices.GetRequiredService<IWalletLoginProvider>();
         _userInformationProvider = context.HttpContext.RequestServices.GetRequiredService<IUserInformationProvider>();
         _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
@@ -86,76 +81,9 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByWalletAddressAsync(wallectAddress);
         if (userExtensionDto == null)
         {
-            throw new SignatureVerifyException($"Invalid user, please register an account first,then bind your wallet.");
+            return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
+                $"Invalid user, please register an account first,then bind your wallet.");
         }
-        
-        // var signature = ByteArrayHelper.HexStringToByteArray(signatureVal);
-        // var timestamp = long.Parse(timestampVal);
-        //
-        // //Validate timestamp validity period
-        // if (_walletLoginProvider.IsTimeStampOutRange(timestamp, out int timeRange))
-        // {
-        //     return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-        //         $"The time should be {timeRange} minutes before and after the current time.");
-        // }
-        //
-        // //Validate public key and signature
-        // if (!_walletLoginProvider.RecoverPublicKey(address, timestampVal, signature, out var publicKey))
-        // {
-        //     return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Signature validation failed new.");
-        // }
-        //
-        // //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
-        // var signAddress = Address.FromPublicKey(publicKey).ToBase58();
-        //
-        // _logger.LogInformation(
-        //     "[SignatureGrantHandler] signatureVal:{1}, address:{2}, caHash:{3}, chainId:{4}, timestamp:{5}",
-        //     signatureVal, address, caHash, chainId, timestamp);
-        //
-        // UserExtensionDto userExtensionDto = null;
-        // if (!string.IsNullOrWhiteSpace(caHash))
-        // {
-        //     //If CA wallet connect
-        //     var managerCheck = await _walletLoginProvider.CheckManagerAddressAsync(chainId, caHash, signAddress);
-        //     if (!managerCheck.HasValue || !managerCheck.Value)
-        //     {
-        //         _logger.LogError("[SignatureGrantHandler] Manager validation failed. caHash:{0}, address:{1}, chainId:{2}",
-        //             caHash, address, chainId);
-        //         return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Manager validation failed.");
-        //     }
-        //
-        //     List<UserChainAddressDto> addressInfos = await _walletLoginProvider.GetAddressInfosAsync(caHash);
-        //     if (addressInfos == null || addressInfos.Count == 0)
-        //     {
-        //         _logger.LogError("[SignatureGrantHandler] Get ca address failed. caHash:{0}, chainId:{1}",
-        //             caHash, chainId);
-        //         return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-        //             $"Can not get ca address in chain {chainId}.");
-        //     }
-        //
-        //     var caAddress = addressInfos[0].Address;
-        //     userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByWalletAddressAsync(caAddress);
-        //     // userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByCaHashAsync(caHash);
-        //     if (userExtensionDto == null)
-        //     {
-        //         return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-        //             $"Invalid user, please register an account first,then bind your wallet.");
-        //     }
-        // }
-        // else
-        // {
-        //     //If NightElf wallet connect
-        //     if (address != signAddress)
-        //     {
-        //         return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest, "Invalid address or signature.");
-        //     }
-        //     userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByWalletAddressAsync(signAddress);
-        //     if (userExtensionDto == null)
-        //     {
-        //         return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-        //             $"Invalid user, please register an account first,then bind your wallet.");
-        //     }
-        // }
         
         var userManager = context.HttpContext.RequestServices.GetRequiredService<IdentityUserManager>();
         var user = await userManager.FindByIdAsync(userExtensionDto.UserId.ToString());
@@ -173,66 +101,6 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
 
         return new SignInResult(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, claimsPrincipal);
     }
-    
-    // private ForbidResult CheckParams(string signatureVal, string chainId, string address,
-    //     string timestamp)
-    // {
-    //     var errors = new List<string>();
-    //
-    //     if (string.IsNullOrWhiteSpace(signatureVal))
-    //     {
-    //         errors.Add("invalid parameter signature.");
-    //     }
-    //
-    //     if (string.IsNullOrWhiteSpace(address))
-    //     {
-    //         errors.Add("invalid parameter address.");
-    //     }
-    //
-    //     if (string.IsNullOrWhiteSpace(chainId))
-    //     {
-    //         errors.Add("invalid parameter chain_id.");
-    //     }
-    //
-    //     if (string.IsNullOrWhiteSpace(timestamp))
-    //     {
-    //         errors.Add("invalid parameter timestamp.");
-    //     }
-    //
-    //     
-    //
-    //     return null;
-    // }
-    
-    private List<string> CheckParams(string signatureVal, string chainId, string address,
-        string timestamp)
-    {
-        var errors = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(signatureVal))
-        {
-            errors.Add("invalid parameter signature.");
-        }
-
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            errors.Add("invalid parameter address.");
-        }
-
-        if (string.IsNullOrWhiteSpace(chainId))
-        {
-            errors.Add("invalid parameter chain_id.");
-        }
-
-        if (string.IsNullOrWhiteSpace(timestamp))
-        {
-            errors.Add("invalid parameter timestamp.");
-        }
-        
-        return errors;
-    }
-    
-    
     
     private ForbidResult GetForbidResult(string errorType, string errorDescription)
     {
