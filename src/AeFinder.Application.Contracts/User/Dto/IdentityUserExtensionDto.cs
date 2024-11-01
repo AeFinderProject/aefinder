@@ -10,5 +10,6 @@ public class IdentityUserExtensionDto
     public string Email { get; set; }
 
     public bool EmailConfirmed { get; set; }
-    public UserExtensionDto userExtensionInfo { get; set; }
+    public string WalletAddress { get; set; }
+    // public UserExtensionDto userExtensionInfo { get; set; }
 }

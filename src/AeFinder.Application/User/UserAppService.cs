@@ -146,7 +146,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
         var identityUserExtensionDto = ObjectMapper.Map<IdentityUser, IdentityUserExtensionDto>(identityUser);
         var extensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
-        identityUserExtensionDto.userExtensionInfo = extensionInfo;
+        identityUserExtensionDto.WalletAddress = extensionInfo.WalletAddress;
         return identityUserExtensionDto;
     }
 
@@ -256,7 +256,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
         var identityUserExtensionDto = ObjectMapper.Map<IdentityUser, IdentityUserExtensionDto>(identityUser);
         var extensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
-        identityUserExtensionDto.userExtensionInfo = extensionInfo;
+        identityUserExtensionDto.WalletAddress = extensionInfo.WalletAddress;
         return identityUserExtensionDto;
     }
 }
