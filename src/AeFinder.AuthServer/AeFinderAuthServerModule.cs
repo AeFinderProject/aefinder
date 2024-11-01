@@ -6,6 +6,7 @@ using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
 using AeFinder.OpenIddict;
 using AeFinder.Options;
+using AeFinder.User.Provider;
 using Localization.Resources.AbpUi;
 using Medallion.Threading;
 using Medallion.Threading.Redis;
@@ -46,7 +47,8 @@ namespace AeFinder;
     typeof(AbpAccountHttpApiModule),
     typeof(AbpAspNetCoreMvcUiLeptonXLiteThemeModule),
     typeof(AeFinderMongoDbModule),
-    typeof(AbpAspNetCoreSerilogModule)
+    typeof(AbpAspNetCoreSerilogModule),
+    typeof(AeFinderApplicationModule)
 )]
 public class AeFinderAuthServerModule : AbpModule
 {
@@ -85,8 +87,6 @@ public class AeFinderAuthServerModule : AbpModule
         var hostingEnvironment = context.Services.GetHostingEnvironment();
         var configuration = context.Services.GetConfiguration();
         
-        context.Services.Configure<SignatureGrantOptions>(configuration.GetSection("Signature"));
-        context.Services.Configure<ChainOptions>(configuration.GetSection("Chains"));
         Configure<AbpLocalizationOptions>(options =>
         {
             options.Resources

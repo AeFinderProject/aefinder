@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace AeFinder.User;
+namespace AeFinder.User.Dto;
 
 public class HolderInfoIndexerDto
 {
