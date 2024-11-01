@@ -204,67 +204,100 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         {
             throw new UserFriendlyException("user not found.");
         }
-        
-        // var publicKey = ByteArrayHelper.HexStringToByteArray(publicKeyVal);
-        var signature = ByteArrayHelper.HexStringToByteArray(input.SignatureVal);
 
-        //Validate timestamp validity period
-        if (_walletLoginProvider.IsTimeStampOutRange(input.Timestamp, out int timeRange))
+        var errors = _walletLoginProvider.CheckParams(input.SignatureVal, input.ChainId, input.Address,
+            input.Timestamp.ToString());
+        if (errors.Count > 0)
         {
-            throw new UserFriendlyException($"The time should be {timeRange} minutes before and after the current time.");
+            throw new UserFriendlyException(_walletLoginProvider.GetErrorMessage(errors));
         }
         
-        //Validate public key and signature
-        if (!_walletLoginProvider.RecoverPublicKey(input.Address, input.Timestamp.ToString(), signature, out var publicKey))
+        string wallectAddress = string.Empty;
+        try
         {
-            throw new UserFriendlyException("Signature validation failed new.");
+            wallectAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(input.SignatureVal,
+                input.Timestamp.ToString(), input.CaHash,
+                input.Address, input.ChainId);
+        }
+        catch (SignatureVerifyException verifyException)
+        {
+            throw new UserFriendlyException(verifyException.Message);
+        }
+        catch (Exception e)
+        {
+            Logger.LogError("[BindUserWalletAsync] Signature validation failed: {e}",
+                e.Message);
+            throw;
         }
         
-        //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
-        var signAddress = Address.FromPublicKey(publicKey).ToBase58();
+        //Check if the wallet address is linked to another account
+        UserExtensionDto userExtensionDto =
+            await _userInformationProvider.GetUserExtensionInfoByWalletAddressAsync(wallectAddress);
+        if (userExtensionDto != null)
+        {
+            throw new UserFriendlyException("This wallet address has already been linked to another account.");
+        }
         
         //Add or update user extension info
-        UserExtensionDto userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
-
+        userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
         if (!userExtensionDto.WalletAddress.IsNullOrEmpty())
         {
             throw new UserFriendlyException("User has already linked a wallet.");
         }
-        
         userExtensionDto.UserId = identityUser.Id;
-        if (!string.IsNullOrWhiteSpace(input.CaHash))
-        {
-            //If CA wallet connect
-            var managerCheck = await _walletLoginProvider.CheckManagerAddressAsync(input.ChainId, input.CaHash, signAddress);
-            if (!managerCheck.HasValue || !managerCheck.Value)
-            {
-                Logger.LogError("Manager validation failed. caHash:{0}, address:{1}, chainId:{2}",
-                    input.CaHash, input.Address, input.ChainId);
-                throw new UserFriendlyException("Manager validation failed.");
-            }
-            
-            List<UserChainAddressDto> addressInfos = await _walletLoginProvider.GetAddressInfosAsync(input.CaHash);
-            if (addressInfos == null || addressInfos.Count == 0)
-            {
-                Logger.LogError("Get ca address failed. caHash:{0}, chainId:{1}",
-                    input.CaHash, input.ChainId);
-                throw new UserFriendlyException(OpenIddictConstants.Errors.InvalidRequest,
-                    $"Can not get ca address in chain {input.ChainId}.");
-            }
-            var caAddress = addressInfos[0].Address;
-            userExtensionDto.WalletAddress = caAddress;
-        }
-        else
-        {
-            //If NightElf wallet connect
-            if (input.Address != signAddress)
-            {
-                throw new UserFriendlyException("Invalid address or signature.");
-            }
+        userExtensionDto.WalletAddress = wallectAddress;
 
-            userExtensionDto.WalletAddress = signAddress;
-        }
-
+        // var signature = ByteArrayHelper.HexStringToByteArray(input.SignatureVal);
+        //
+        // //Validate timestamp validity period
+        // if (_walletLoginProvider.IsTimeStampOutRange(input.Timestamp, out int timeRange))
+        // {
+        //     throw new UserFriendlyException($"The time should be {timeRange} minutes before and after the current time.");
+        // }
+        //
+        // //Validate public key and signature
+        // if (!_walletLoginProvider.RecoverPublicKey(input.Address, input.Timestamp.ToString(), signature, out var publicKey))
+        // {
+        //     throw new UserFriendlyException("Signature validation failed new.");
+        // }
+        //
+        // //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
+        // var signAddress = Address.FromPublicKey(publicKey).ToBase58();
+        //
+        
+        // if (!string.IsNullOrWhiteSpace(input.CaHash))
+        // {
+        //     //If CA wallet connect
+        //     var managerCheck = await _walletLoginProvider.CheckManagerAddressAsync(input.ChainId, input.CaHash, signAddress);
+        //     if (!managerCheck.HasValue || !managerCheck.Value)
+        //     {
+        //         Logger.LogError("Manager validation failed. caHash:{0}, address:{1}, chainId:{2}",
+        //             input.CaHash, input.Address, input.ChainId);
+        //         throw new UserFriendlyException("Manager validation failed.");
+        //     }
+        //     
+        //     List<UserChainAddressDto> addressInfos = await _walletLoginProvider.GetAddressInfosAsync(input.CaHash);
+        //     if (addressInfos == null || addressInfos.Count == 0)
+        //     {
+        //         Logger.LogError("Get ca address failed. caHash:{0}, chainId:{1}",
+        //             input.CaHash, input.ChainId);
+        //         throw new UserFriendlyException(OpenIddictConstants.Errors.InvalidRequest,
+        //             $"Can not get ca address in chain {input.ChainId}.");
+        //     }
+        //     var caAddress = addressInfos[0].Address;
+        //     userExtensionDto.WalletAddress = caAddress;
+        // }
+        // else
+        // {
+        //     //If NightElf wallet connect
+        //     if (input.Address != signAddress)
+        //     {
+        //         throw new UserFriendlyException("Invalid address or signature.");
+        //     }
+        //
+        //     userExtensionDto.WalletAddress = signAddress;
+        // }
+        
         //Save user extension info to mongodb
         var saveUserExtensionResult = await _userInformationProvider.SaveUserExtensionInfoAsync(userExtensionDto);;
         if (!saveUserExtensionResult)

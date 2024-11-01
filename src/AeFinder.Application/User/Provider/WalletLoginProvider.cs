@@ -26,6 +26,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     private readonly ILogger<WalletLoginProvider> _logger;
     private readonly SignatureGrantOptions _signatureGrantOptions;
     private readonly ChainOptions _chainOptions;
+    private readonly IUserInformationProvider _userInformationProvider;
     
     private const string GetHolderInfoMethodName = "GetHolderInfo";
     private const string PortKeyAppId = "PortKey";
@@ -33,11 +34,113 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     private const string CrossChainContractName = "AElf.ContractNames.CrossChain";
     
     public WalletLoginProvider(ILogger<WalletLoginProvider> logger,
-        IOptionsMonitor<SignatureGrantOptions> signatureOptions,IOptionsMonitor<ChainOptions> chainOptions)
+        IOptionsMonitor<SignatureGrantOptions> signatureOptions,IOptionsMonitor<ChainOptions> chainOptions,
+        IUserInformationProvider userInformationProvider)
     {
         _logger = logger;
         _signatureGrantOptions = signatureOptions.CurrentValue;
         _chainOptions = chainOptions.CurrentValue;
+        _userInformationProvider = userInformationProvider;
+    }
+
+    public List<string> CheckParams(string signatureVal, string chainId, string address,
+        string timestamp)
+    {
+        var errors = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(signatureVal))
+        {
+            errors.Add("invalid parameter signature.");
+        }
+
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            errors.Add("invalid parameter address.");
+        }
+
+        if (string.IsNullOrWhiteSpace(chainId) || chainId != _signatureGrantOptions.LoginChainId)
+        {
+            errors.Add("invalid parameter chain_id.");
+        }
+
+        if (string.IsNullOrWhiteSpace(timestamp))
+        {
+            errors.Add("invalid parameter timestamp.");
+        }
+
+        return errors;
+    }
+
+    public async Task<string> VerifySignatureAndParseWalletAddressAsync(string signatureVal, string timestampVal,
+        string caHash, string address, string chainId)
+    {
+        var signature = ByteArrayHelper.HexStringToByteArray(signatureVal);
+        var timestamp = long.Parse(timestampVal);
+
+        //Validate timestamp validity period
+        if (IsTimeStampOutRange(timestamp, out int timeRange))
+        {
+            throw new SignatureVerifyException(
+                $"The time should be {timeRange} minutes before and after the current time.");
+        }
+
+        //Validate public key and signature
+        if (!RecoverPublicKey(address, timestampVal, signature, out var publicKey))
+        {
+            throw new SignatureVerifyException("Signature validation failed new.");
+        }
+
+        //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
+        var signAddress = Address.FromPublicKey(publicKey).ToBase58();
+        _logger.LogInformation(
+            "[VerifySignature] signatureVal:{1}, address:{2}, caHash:{3}, chainId:{4}, timestamp:{5}",
+            signatureVal, address, caHash, chainId, timestamp);
+        
+        if (!string.IsNullOrWhiteSpace(caHash))
+        {
+            //If CA wallet connect
+            var managerCheck = await CheckManagerAddressAsync(chainId, caHash, signAddress);
+            if (!managerCheck.HasValue || !managerCheck.Value)
+            {
+                _logger.LogError(
+                    "[VerifySignature] Manager validation failed. caHash:{0}, address:{1}, chainId:{2}",
+                    caHash, address, chainId);
+                throw new SignatureVerifyException("Manager validation failed.");
+            }
+
+            List<UserChainAddressDto> addressInfos = await GetAddressInfosAsync(caHash);
+            if (addressInfos == null || addressInfos.Count == 0)
+            {
+                _logger.LogError("[VerifySignature] Get ca address failed. caHash:{0}, chainId:{1}",
+                    caHash, chainId);
+                throw new SignatureVerifyException($"Can not get ca address in chain {chainId}.");
+            }
+
+            var caAddress = addressInfos[0].Address;
+            return caAddress;
+        }
+        else
+        {
+            //If NightElf wallet connect
+            if (address != signAddress)
+            {
+                throw new SignatureVerifyException("Invalid address or signature.");
+            }
+            return signAddress;
+        }
+    }
+    
+    public string GetErrorMessage(List<string> errors)
+    {
+        var message = string.Empty;
+
+        errors?.ForEach(t => message += $"{t}, ");
+        if (message.Contains(','))
+        {
+            return message.TrimEnd().TrimEnd(',');
+        }
+
+        return message;
     }
 
     public bool IsTimeStampOutRange(long timestamp, out int timeRange)
@@ -175,9 +278,15 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         var chainIds = new List<string>();
         if (holderInfoDto != null && !holderInfoDto.CaHolderInfo.IsNullOrEmpty())
         {
-            addressInfos.AddRange(holderInfoDto.CaHolderInfo.Select(t => new UserChainAddressDto
-                { ChainId = t.ChainId, Address = t.CaAddress }));
+            addressInfos.AddRange(holderInfoDto.CaHolderInfo
+                .Where(h => h.ChainId == _signatureGrantOptions.LoginChainId)
+                .Select(t => new UserChainAddressDto { ChainId = t.ChainId, Address = t.CaAddress }));
             chainIds = holderInfoDto.CaHolderInfo.Select(t => t.ChainId).ToList();
+        }
+
+        if (addressInfos.Count > 0)
+        {
+            return addressInfos;
         }
 
         //Get CaAddress from node contract
