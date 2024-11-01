@@ -89,7 +89,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         };
 
         var output =
-            await CallTransactionAsync<GetHolderInfoOutput>(chainId, GetHolderInfoMethodName, param, false,
+            await CallTransactionAsync<GetHolderInfoOutput>(chainId, GetHolderInfoMethodName, param, 
                 chainOptions);
 
         return output?.ManagerInfos?.Any(t => t.Address.ToBase58() == manager);
@@ -106,7 +106,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     }
     
     private async Task<T> CallTransactionAsync<T>(string chainId, string methodName, IMessage param,
-        bool isCrossChain, ChainOptions chainOptions) where T : class, IMessage<T>, new()
+        ChainOptions chainOptions) where T : class, IMessage<T>, new()
     {
         try
         {
@@ -116,10 +116,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             await client.IsConnectedAsync();
             var address = client.GetAddressFromPrivateKey(_signatureGrantOptions.CommonPrivateKeyForCallTx);
 
-            var contractAddress = isCrossChain
-                ? (await client.GetContractAddressByNameAsync(HashHelper.ComputeFrom(CrossChainContractName)))
-                .ToBase58()
-                : chainInfo.CAContractAddress;
+            var contractAddress = chainInfo.CAContractAddress;
 
             var transaction =
                 await client.GenerateTransactionAsync(address, contractAddress,
@@ -215,7 +212,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             LoginGuardianIdentifierHash = Hash.Empty
         };
 
-        var output = await CallTransactionAsync<GetHolderInfoOutput>(chainId, GetHolderInfoMethodName, param, false,
+        var output = await CallTransactionAsync<GetHolderInfoOutput>(chainId, GetHolderInfoMethodName, param, 
             _chainOptions);
 
         return new UserChainAddressDto()
