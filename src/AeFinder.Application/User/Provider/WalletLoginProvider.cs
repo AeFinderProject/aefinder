@@ -97,7 +97,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             //EOA wallet signature
             if (!RecoverPublicKeyOld(address, timestampVal, signature, out var publicKey))
             {
-                throw new SignatureVerifyException("Signature validation failed new.");
+                throw new SignatureVerifyException("Signature validation failed old.");
             }
             signAddress = Address.FromPublicKey(publicKey).ToBase58();
         }
