@@ -33,5 +33,9 @@
     <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="8.1.4" />
     <PackageReference Include="Volo.Abp.TenantManagement.Application" Version="8.1.4" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Contract\" />
+  </ItemGroup>
     
 </Project>

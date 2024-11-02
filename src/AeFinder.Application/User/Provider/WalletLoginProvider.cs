@@ -26,21 +26,18 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     private readonly ILogger<WalletLoginProvider> _logger;
     private readonly SignatureGrantOptions _signatureGrantOptions;
     private readonly ChainOptions _chainOptions;
-    private readonly IUserInformationProvider _userInformationProvider;
     
     private const string GetHolderInfoMethodName = "GetHolderInfo";
     private const string PortKeyAppId = "PortKey";
     private const string NightElfAppId = "NightElf";
     private const string CrossChainContractName = "AElf.ContractNames.CrossChain";
-    
+
     public WalletLoginProvider(ILogger<WalletLoginProvider> logger,
-        IOptionsMonitor<SignatureGrantOptions> signatureOptions,IOptionsMonitor<ChainOptions> chainOptions,
-        IUserInformationProvider userInformationProvider)
+        IOptionsMonitor<SignatureGrantOptions> signatureOptions, IOptionsMonitor<ChainOptions> chainOptions)
     {
         _logger = logger;
         _signatureGrantOptions = signatureOptions.CurrentValue;
         _chainOptions = chainOptions.CurrentValue;
-        _userInformationProvider = userInformationProvider;
     }
 
     public List<string> CheckParams(string signatureVal, string chainId, string address,
@@ -93,8 +90,8 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
         var signAddress = Address.FromPublicKey(publicKey).ToBase58();
         _logger.LogInformation(
-            "[VerifySignature] signatureVal:{1}, address:{2}, caHash:{3}, chainId:{4}, timestamp:{5}",
-            signatureVal, address, caHash, chainId, timestamp);
+            "[VerifySignature] signatureVal:{1}, address:{2}, signAddress:{3}, caHash:{4}, chainId:{5}, timestamp:{6}",
+            signatureVal, address, signAddress, caHash, chainId, timestamp);
         
         if (!string.IsNullOrWhiteSpace(caHash))
         {

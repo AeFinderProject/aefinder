@@ -263,7 +263,8 @@ src/AeFinder.BlockChainEventHandler/Logs/*
 src/AeFinder.Orleans.Silo/Logs/*
 src/AeFinder.EntityEventHandler/Logs/*
 *.dll
-
+*.c.cs
+src/AeFinder.Application/Contract/Acs12.g.cs
 **/wwwroot/libs/*
 
 
