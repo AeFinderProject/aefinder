@@ -22,7 +22,7 @@ filebeat.inputs:
 
 
 setup.template.settings:
-  index.number_of_shards: 5
+  index.number_of_shards: 1
   index.number_of_replicas: 1
 
 setup.template.enabled: true
