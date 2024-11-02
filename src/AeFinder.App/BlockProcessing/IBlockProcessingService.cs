@@ -4,6 +4,7 @@ using AeFinder.Grains.Grain.BlockStates;
 using AeFinder.Grains.State.BlockStates;
 using AeFinder.Sdk;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Local;
@@ -25,13 +26,15 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
     private readonly IRuntimeTypeProvider _runtimeTypeProvider;
     private readonly IAppBlockStateChangeProvider _appBlockStateChangeProvider;
     private readonly ILogger<BlockProcessingService> _logger;
+    private readonly BlockProcessingOptions _blockProcessingOptions;
     public ILocalEventBus LocalEventBus { get; set; }
 
     public BlockProcessingService(IAppBlockStateSetProvider appBlockStateSetProvider,
         IFullBlockProcessor fullBlockProcessor, IAppDataIndexManagerProvider appDataIndexManagerProvider,
         IAppStateProvider appStateProvider, 
         IGeneralAppDataIndexProvider generalAppDataIndexProvider, IRuntimeTypeProvider runtimeTypeProvider,
-        IAppBlockStateChangeProvider appBlockStateChangeProvider, ILogger<BlockProcessingService> logger)
+        IAppBlockStateChangeProvider appBlockStateChangeProvider, ILogger<BlockProcessingService> logger,
+        IOptionsSnapshot<BlockProcessingOptions> blockProcessingOptions)
     {
         _appBlockStateSetProvider = appBlockStateSetProvider;
         _fullBlockProcessor = fullBlockProcessor;
@@ -40,6 +43,7 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
         _generalAppDataIndexProvider = generalAppDataIndexProvider;
         _runtimeTypeProvider = runtimeTypeProvider;
         _appBlockStateChangeProvider = appBlockStateChangeProvider;
+        _blockProcessingOptions = blockProcessingOptions.Value;
         _logger = logger;
     }
 
@@ -79,7 +83,12 @@ public class BlockProcessingService : IBlockProcessingService, ITransientDepende
         var changeKeys = new Dictionary<long, List<BlockStateChange>>();
         foreach (var blockStateSet in blockStateSets)
         {
-            await _fullBlockProcessor.ProcessAsync(blockStateSet.Block);
+            using (var cts = new CancellationTokenSource())
+            {
+                cts.CancelAfter(_blockProcessingOptions.MaxBlockProcessingTime);
+                await _fullBlockProcessor.ProcessAsync(blockStateSet.Block, cts.Token);
+            }
+
             await SetBlockStateSetProcessedAsync(chainId, blockStateSet, true);
 
             try
