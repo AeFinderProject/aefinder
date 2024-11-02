@@ -59,9 +59,4 @@
     <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Dto\" />
-    <Folder Include="Model\" />
-  </ItemGroup>
-
 </Project>
