@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.Loader;
 using AeFinder.App.BlockChain;
+using AeFinder.App.BlockProcessing;
 using AeFinder.App.BlockState;
 using AeFinder.App.Handlers;
 using AeFinder.App.Metrics;
@@ -50,7 +51,8 @@ public class AeFinderAppModule : AbpModule
         Configure<AppStateOptions>(configuration.GetSection("AppState"));
         Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
         Configure<AppIndexOptions>(configuration.GetSection("AppIndex"));
-
+        Configure<BlockProcessingOptions>(configuration.GetSection("BlockProcessing"));
+        
         context.Services.AddSingleton(typeof(IAppDataIndexProvider<>), typeof(AppDataIndexProvider<>));
         context.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
         context.Services.AddTransient(typeof(IReadOnlyRepository<>), typeof(ReadOnlyRepository<>));
