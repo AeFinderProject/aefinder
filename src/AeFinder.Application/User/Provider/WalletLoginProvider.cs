@@ -82,13 +82,27 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         }
 
         //Validate public key and signature
-        if (!RecoverPublicKey(address, timestampVal, signature, out var publicKey))
+        var signAddress = string.Empty;
+        if (!string.IsNullOrWhiteSpace(caHash))
         {
-            throw new SignatureVerifyException("Signature validation failed new.");
+            //CA wallet signature
+            if (!RecoverPublicKey(address, timestampVal, signature, out var publicKey))
+            {
+                throw new SignatureVerifyException("Signature validation failed new.");
+            }
+            signAddress = Address.FromPublicKey(publicKey).ToBase58();
+        }
+        else
+        {
+            //EOA wallet signature
+            if (!RecoverPublicKeyOld(address, timestampVal, signature, out var publicKey))
+            {
+                throw new SignatureVerifyException("Signature validation failed new.");
+            }
+            signAddress = Address.FromPublicKey(publicKey).ToBase58();
         }
 
         //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
-        var signAddress = Address.FromPublicKey(publicKey).ToBase58();
         _logger.LogInformation(
             "[VerifySignature] signatureVal:{1}, address:{2}, signAddress:{3}, caHash:{4}, chainId:{5}, timestamp:{6}",
             signatureVal, address, signAddress, caHash, chainId, timestamp);
@@ -153,7 +167,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         return false;
     }
 
-    public bool RecoverPublicKey(string address, string timestampVal, byte[] signature, out byte[] managerPublicKey)
+    private bool RecoverPublicKey(string address, string timestampVal, byte[] signature, out byte[] managerPublicKey)
     {
         var newSignText = """
                           Welcome to AeFinder! Click to sign in to the AeFinder platform! This request will not trigger any blockchain transaction or cost any gas fees.
@@ -165,8 +179,17 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             HashHelper.ComputeFrom(Encoding.UTF8.GetBytes(newSignText).ToHex()).ToByteArray(),
             out managerPublicKey);
     }
+
+    private bool RecoverPublicKeyOld(string address, string timestampVal, byte[] signature, out byte[] managerPublicKeyOld)
+    {
+        var oldSignText = string.Join("-", address, timestampVal);
+        _logger.LogInformation("oldSignText:{oldSignText}", oldSignText);
+        return CryptoHelper.RecoverPublicKey(signature,
+            HashHelper.ComputeFrom(string.Join("-", address, timestampVal)).ToByteArray(),
+            out managerPublicKeyOld);
+    }
     
-    public async Task<bool?> CheckManagerAddressAsync(string chainId, string caHash, string manager)
+    private async Task<bool?> CheckManagerAddressAsync(string chainId, string caHash, string manager)
     {
         string graphQlUrl = _signatureGrantOptions.PortkeyV2GraphQLUrl;
         var graphQlResult = await CheckManagerAddressFromGraphQlAsync(graphQlUrl, caHash, manager);
@@ -266,7 +289,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         return graphQlResponse.Data;
     }
     
-    public async Task<List<UserChainAddressDto>> GetAddressInfosAsync(string caHash)
+    private async Task<List<UserChainAddressDto>> GetAddressInfosAsync(string caHash)
     {
         var addressInfos = new List<UserChainAddressDto>();
         //Get CaAddress from portkey V2 graphql
