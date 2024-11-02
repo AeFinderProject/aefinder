@@ -20,6 +20,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AElf.Client" Version="1.3.0" />
+    <PackageReference Include="AElf.Core" Version="1.6.0" />
+    <PackageReference Include="AElf.Cryptography" Version="1.6.0" />
+    <PackageReference Include="AElf.CSharp.Core" Version="1.6.0" />
+    <PackageReference Include="AElf.Kernel.Types" Version="1.6.0" />
+    <PackageReference Include="AElf.Types" Version="1.6.0" />
+    <PackageReference Include="GraphQL.Client" Version="6.1.0" />
+    <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.1.0" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.401.2" />
     <PackageReference Include="DotNetZip" Version="1.16.0" />
     <PackageReference Include="IdentityModel.OidcClient" Version="5.2.1" />
