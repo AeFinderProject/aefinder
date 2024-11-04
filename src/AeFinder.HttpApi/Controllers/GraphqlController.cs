@@ -5,6 +5,7 @@ using AeFinder.Kubernetes;
 using AeFinder.Options;
 using AElf.OpenTelemetry.ExecutionTime;
 using Asp.Versioning;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
@@ -27,7 +28,8 @@ public class GraphqlController : AbpController
         _graphQLAppService = graphQLAppService;
         _kubernetesOption = kubernetesOption.Value;
     }
-
+    
+    [EnableCors("AllowAnyCorsPolicy")]
     [HttpPost("{appId}/{version?}")]
     public virtual async Task<IActionResult> GraphqlForward([FromBody] GraphQLQueryInput input, string appId,
         string version = null)

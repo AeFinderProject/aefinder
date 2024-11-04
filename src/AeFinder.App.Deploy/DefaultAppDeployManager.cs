@@ -1,4 +1,6 @@
-﻿namespace AeFinder.App.Deploy;
+﻿using AeFinder.Apps.Dto;
+
+namespace AeFinder.App.Deploy;
 
 public class DefaultAppDeployManager : IAppDeployManager
 {
@@ -33,5 +35,10 @@ public class DefaultAppDeployManager : IAppDeployManager
         string requestMemory)
     {
         return;
+    }
+
+    public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(string appId, int pageSize, string continueToken)
+    {
+        return new AppPodsPageResultDto();
     }
 }

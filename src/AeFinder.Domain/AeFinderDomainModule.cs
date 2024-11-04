@@ -1,7 +1,9 @@
 ﻿using AeFinder.MultiTenancy;
 using AeFinder.OpenIddict;
 using AeFinder.OpenIddict.Login;
+using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenIddict.Abstractions;

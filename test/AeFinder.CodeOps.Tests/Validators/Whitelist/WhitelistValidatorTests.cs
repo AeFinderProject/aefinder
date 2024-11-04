@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
 using GraphQL;
@@ -18,6 +19,11 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
     public WhitelistValidatorTests()
     {
         _whitelistValidator = GetRequiredService<WhitelistValidator>();
+    }
+    
+    public static bool Match(string source, string pattern)
+    {
+        return source.IsNullOrEmpty() ? false : Regex.IsMatch(source, pattern);
     }
 
     [Fact]
@@ -41,6 +47,7 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
         using AutoMapper.Configuration;
         using System.Runtime.CompilerServices;
         using System.Numerics;
+        using System.Text.RegularExpressions; 
 
         namespace TestApp;
 
@@ -73,6 +80,11 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
 
                 return objectMapper.Map<List<TestAppEntity>, List<TestAppEntityDto>>(list);
             }
+
+            public static bool Match(string source, string pattern)
+            {
+                return source.IsNullOrEmpty() ? false : Regex.IsMatch(source, pattern);
+            }
         }
 
         public class TestAppSchema : AppSchema<Query>
@@ -92,7 +104,17 @@ public class WhitelistValidatorTests : AeFinderCodeOpsTestBase
                 var sets = new HashSet<string>();
                 var list = new List<string>();
                 var address = list.RemoveAll(o => sets.Contains(o));
-                
+                var day = DateTime.Now.DayOfWeek;
+                var tuple = Tuple.Create(1);
+                var tuple1 = new Tuple<int>(1);
+                var tuple2 = new Tuple<int, int>(1, 1);
+                var tuple3 = new Tuple<int, int, int>(1, 1, 1);
+                var tuple4 = new Tuple<int, int, int, int>(1, 1, 1, 1);
+                var tuple5 = new Tuple<int, int, int, int, int>(1, 1, 1, 1, 1);
+                var tuple6 = new Tuple<int, int, int, int, int, int>(1, 1, 1, 1, 1, 1);
+                var tuple7 = new Tuple<int, int, int, int, int, int, int>(1, 1, 1, 1, 1, 1, 1);
+                var tuple8 = new Tuple<int, int, int, int, int, int, int, Tuple<int>>(1, 1, 1, 1, 1, 1, 1, new Tuple<int>(4));
+                        
                 throw new NotImplementedException();
                 throw new SwitchExpressionException();
                 throw new ArgumentException();

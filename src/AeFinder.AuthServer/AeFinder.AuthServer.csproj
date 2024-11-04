@@ -55,6 +55,7 @@
     <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj">
       <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
     </ProjectReference>
+    <ProjectReference Include="..\AeFinder.Application\AeFinder.Application.csproj" />
     <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
   </ItemGroup>
 
