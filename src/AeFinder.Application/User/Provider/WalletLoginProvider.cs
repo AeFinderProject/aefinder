@@ -40,10 +40,14 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         _chainOptions = chainOptions.CurrentValue;
     }
 
-    public List<string> CheckParams(string signatureVal, string chainId, string address,
+    public List<string> CheckParams(string publicKeyVal, string signatureVal, string chainId, string address,
         string timestamp)
     {
         var errors = new List<string>();
+        if (string.IsNullOrWhiteSpace(publicKeyVal))
+        {
+            errors.Add("invalid parameter publish_key.");
+        }
 
         if (string.IsNullOrWhiteSpace(signatureVal))
         {
@@ -68,8 +72,8 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         return errors;
     }
 
-    public async Task<string> VerifySignatureAndParseWalletAddressAsync(string signatureVal, string timestampVal,
-        string caHash, string address, string chainId)
+    public async Task<string> VerifySignatureAndParseWalletAddressAsync(string publicKeyVal, string signatureVal,
+        string timestampVal, string caHash, string address, string chainId)
     {
         var timestamp = long.Parse(timestampVal);
 
@@ -81,13 +85,13 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         }
 
         //Validate public key and signature
-        var signAddress = VerifySignature(caHash, address, timestampVal, signatureVal);
-        
+        var signAddress = VerifySignature(address, timestampVal, signatureVal, publicKeyVal);
+
         //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
         _logger.LogInformation(
             "[VerifySignature] signatureVal:{1}, address:{2}, signAddress:{3}, caHash:{4}, chainId:{5}, timestamp:{6}",
             signatureVal, address, signAddress, caHash, chainId, timestamp);
-        
+
         if (!string.IsNullOrWhiteSpace(caHash))
         {
             //If CA wallet connect
@@ -118,24 +122,19 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             {
                 throw new SignatureVerifyException("Invalid address or signature.");
             }
+
             return signAddress;
         }
     }
 
-    private string VerifySignature(string caHash, string address, string timestampVal, string signatureVal)
+    private string VerifySignature(string address, string timestampVal, string signatureVal,string publicKeyVal)
     {
         var signature = ByteArrayHelper.HexStringToByteArray(signatureVal);
-        var signAddress = string.Empty;
-        if (!string.IsNullOrEmpty(caHash))
+        
+        //Portkey discover wallet signature
+        if (!RecoverPublicKey(address, timestampVal, signature, out var managerPublicKey))
         {
-            //Portkey discover wallet signature
-            if (!RecoverPublicKey(address, timestampVal, signature, out var managerPublicKey))
-            {
-                throw new SignatureVerifyException("Signature validation failed new.");
-            }
-
-            signAddress = Address.FromPublicKey(managerPublicKey).ToBase58();
-            return signAddress;
+            throw new SignatureVerifyException("Signature validation failed new.");
         }
 
         //EOA/PortkeyAA wallet signature
@@ -143,16 +142,16 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         {
             throw new SignatureVerifyException("Signature validation failed old.");
         }
-
-        signAddress = Address.FromPublicKey(managerPublicKeyOld).ToBase58();
-        if (string.IsNullOrEmpty(caHash) && address != signAddress) //check EOA wallet signature
+        
+        if (!(managerPublicKey.ToHex() == publicKeyVal || managerPublicKeyOld.ToHex() == publicKeyVal))
         {
-            _logger.LogInformation(
-                "[VerifySignature]with old sign text, signatureVal:{1}, address:{2}, signAddress:{3}",
-                signatureVal, address, signAddress);
             throw new SignatureVerifyException("Invalid publicKey or signature.");
         }
-
+        
+        //Since it is not possible to determine whether the CA wallet manager address is in managerPublicKey or in managerPublicKeyOld
+        //therefore, the accurate manager address is obtained from publicKeyVal.
+        var publicKey = ByteArrayHelper.HexStringToByteArray(publicKeyVal);
+        var signAddress = Address.FromPublicKey(publicKey).ToBase58();
         return signAddress;
     }
 

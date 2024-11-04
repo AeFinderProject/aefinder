@@ -5,6 +5,8 @@ namespace AeFinder.User.Dto;
 public class BindUserWalletInput
 {
     [Required]
+    public string Publickey { get; set; }
+    [Required]
     public string SignatureVal { get; set; }
     [Required]
     public string ChainId { get; set; }

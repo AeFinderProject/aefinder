@@ -205,8 +205,8 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             throw new UserFriendlyException("user not found.");
         }
 
-        var errors = _walletLoginProvider.CheckParams(input.SignatureVal, input.ChainId, input.Address,
-            input.Timestamp.ToString());
+        var errors = _walletLoginProvider.CheckParams(input.Publickey, input.SignatureVal,
+            input.ChainId, input.Address, input.Timestamp.ToString());
         if (errors.Count > 0)
         {
             throw new UserFriendlyException(_walletLoginProvider.GetErrorMessage(errors));
@@ -215,9 +215,8 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         string wallectAddress = string.Empty;
         try
         {
-            wallectAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(input.SignatureVal,
-                input.Timestamp.ToString(), input.CaHash,
-                input.Address, input.ChainId);
+            wallectAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(input.Publickey,
+                input.SignatureVal, input.Timestamp.ToString(), input.CaHash, input.Address, input.ChainId);
         }
         catch (SignatureVerifyException verifyException)
         {

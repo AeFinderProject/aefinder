@@ -35,6 +35,7 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
 
     public async Task<IActionResult> HandleAsync(ExtensionGrantContext context)
     {
+        var publicKeyVal = context.Request.GetParameter("publickey").ToString();
         var signatureVal = context.Request.GetParameter("signature").ToString();
         var chainId = context.Request.GetParameter("chain_id").ToString();
         var caHash = context.Request.GetParameter("ca_hash").ToString();
@@ -45,8 +46,8 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         _userInformationProvider = context.HttpContext.RequestServices.GetRequiredService<IUserInformationProvider>();
         _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
         _distributedLock = context.HttpContext.RequestServices.GetRequiredService<IAbpDistributedLock>();
-        
-        var errors = _walletLoginProvider.CheckParams(signatureVal, chainId, address, timestampVal);
+
+        var errors = _walletLoginProvider.CheckParams(publicKeyVal, signatureVal, chainId, address, timestampVal);
         if (errors.Count > 0)
         {
             return new ForbidResult(
@@ -62,9 +63,8 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         UserExtensionDto userExtensionDto = null;
         try
         {
-            wallectAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(signatureVal,
-                timestampVal, caHash,
-                address, chainId);
+            wallectAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(publicKeyVal,
+                signatureVal, timestampVal, caHash, address, chainId);
         }
         catch (SignatureVerifyException verifyException)
         {
