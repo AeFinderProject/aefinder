@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AElf.OpenTelemetry" Version="8.0.5" />
+    <PackageReference Include="AElf.OpenTelemetry" Version="8.0.6" />
     <PackageReference Include="AspNetCoreRateLimit" Version="5.0.0" />
     <PackageReference Include="AspNetCoreRateLimit.Redis" Version="2.0.0" />
     <PackageReference Include="Com.Ctrip.Framework.Apollo.Configuration" Version="2.10.2" />

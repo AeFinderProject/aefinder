@@ -1,5 +1,6 @@
 ﻿using AeFinder.MongoDb;
 using AeFinder.Options;
+using AeFinder.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Autofac;
