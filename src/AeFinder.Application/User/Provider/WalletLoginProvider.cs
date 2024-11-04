@@ -71,7 +71,6 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     public async Task<string> VerifySignatureAndParseWalletAddressAsync(string signatureVal, string timestampVal,
         string caHash, string address, string chainId)
     {
-        var signature = ByteArrayHelper.HexStringToByteArray(signatureVal);
         var timestamp = long.Parse(timestampVal);
 
         //Validate timestamp validity period
@@ -82,8 +81,8 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         }
 
         //Validate public key and signature
-        var signAddress = VerifySignature(address, timestampVal, signature);
-
+        var signAddress = VerifySignature(address, timestampVal, signatureVal);
+        
         //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
         _logger.LogInformation(
             "[VerifySignature] signatureVal:{1}, address:{2}, signAddress:{3}, caHash:{4}, chainId:{5}, timestamp:{6}",
@@ -123,8 +122,9 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         }
     }
 
-    private string VerifySignature(string address, string timestampVal, byte[] signature)
+    private string VerifySignature(string address, string timestampVal, string signatureVal)
     {
+        var signature = ByteArrayHelper.HexStringToByteArray(signatureVal);
         var signAddress = string.Empty;
         //Portkey discover wallet signature
         if (!RecoverPublicKey(address, timestampVal, signature, out var managerPublicKey))
@@ -137,6 +137,8 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         {
             return signAddress;
         }
+        _logger.LogInformation("[VerifySignature]with new sign text, signatureVal:{1}, address:{2}, signAddress:{3}",
+            signatureVal, address, signAddress);
 
         //EOA/PortkeyAA wallet signature
         if (!RecoverPublicKeyOld(address, timestampVal, signature, out var managerPublicKeyOld))
@@ -150,6 +152,9 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             return signAddress;
         }
 
+        _logger.LogInformation("[VerifySignature]with old sign text, signatureVal:{1}, address:{2}, signAddress:{3}",
+            signatureVal, address, signAddress);
+        
         throw new SignatureVerifyException("Invalid publicKey or signature.");
     }
 
