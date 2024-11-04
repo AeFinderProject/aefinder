@@ -55,7 +55,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             errors.Add("invalid parameter address.");
         }
 
-        if (string.IsNullOrWhiteSpace(chainId) || chainId != _signatureGrantOptions.LoginChainId)
+        if (string.IsNullOrWhiteSpace(chainId))
         {
             errors.Add("invalid parameter chain_id.");
         }
@@ -82,25 +82,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         }
 
         //Validate public key and signature
-        var signAddress = string.Empty;
-        if (!string.IsNullOrWhiteSpace(caHash))
-        {
-            //CA wallet signature
-            if (!RecoverPublicKey(address, timestampVal, signature, out var publicKey))
-            {
-                throw new SignatureVerifyException("Signature validation failed new.");
-            }
-            signAddress = Address.FromPublicKey(publicKey).ToBase58();
-        }
-        else
-        {
-            //EOA wallet signature
-            if (!RecoverPublicKeyOld(address, timestampVal, signature, out var publicKey))
-            {
-                throw new SignatureVerifyException("Signature validation failed old.");
-            }
-            signAddress = Address.FromPublicKey(publicKey).ToBase58();
-        }
+        var signAddress = VerifySignature(address, timestampVal, signature);
 
         //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
         _logger.LogInformation(
@@ -140,7 +122,37 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             return signAddress;
         }
     }
-    
+
+    private string VerifySignature(string address, string timestampVal, byte[] signature)
+    {
+        var signAddress = string.Empty;
+        //Portkey discover wallet signature
+        if (!RecoverPublicKey(address, timestampVal, signature, out var managerPublicKey))
+        {
+            throw new SignatureVerifyException("Signature validation failed new.");
+        }
+
+        signAddress = Address.FromPublicKey(managerPublicKey).ToBase58();
+        if (address == signAddress)
+        {
+            return signAddress;
+        }
+
+        //EOA/PortkeyAA wallet signature
+        if (!RecoverPublicKeyOld(address, timestampVal, signature, out var managerPublicKeyOld))
+        {
+            throw new SignatureVerifyException("Signature validation failed old.");
+        }
+
+        signAddress = Address.FromPublicKey(managerPublicKeyOld).ToBase58();
+        if (address == signAddress)
+        {
+            return signAddress;
+        }
+
+        throw new SignatureVerifyException("Invalid publicKey or signature.");
+    }
+
     public string GetErrorMessage(List<string> errors)
     {
         var message = string.Empty;
@@ -299,14 +311,8 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         if (holderInfoDto != null && !holderInfoDto.CaHolderInfo.IsNullOrEmpty())
         {
             addressInfos.AddRange(holderInfoDto.CaHolderInfo
-                .Where(h => h.ChainId == _signatureGrantOptions.LoginChainId)
                 .Select(t => new UserChainAddressDto { ChainId = t.ChainId, Address = t.CaAddress }));
             chainIds = holderInfoDto.CaHolderInfo.Select(t => t.ChainId).ToList();
-        }
-
-        if (addressInfos.Count > 0)
-        {
-            return addressInfos;
         }
 
         //Get CaAddress from node contract
@@ -315,10 +321,6 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
 
         foreach (var chainId in chains)
         {
-            if (chainId != _signatureGrantOptions.LoginChainId)
-            {
-                continue;
-            }
             try
             {
                 var addressInfo = await GetAddressInfoFromContractAsync(chainId, caHash);
