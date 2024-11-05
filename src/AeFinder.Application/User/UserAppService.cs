@@ -174,6 +174,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
         if (CurrentUser.UserName != userName)
         {
+            Logger.LogInformation($"[ResetPasswordAsync] CurrentUser.UserName:{CurrentUser.UserName} userName:{userName}");
             throw new UserFriendlyException("Can only reset your own password");
         }
 

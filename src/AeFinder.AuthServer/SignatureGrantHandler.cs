@@ -89,15 +89,14 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         var user = await userManager.FindByIdAsync(userExtensionDto.UserId.ToString());
         var userClaimsPrincipalFactory = context.HttpContext.RequestServices
             .GetRequiredService<Microsoft.AspNetCore.Identity.IUserClaimsPrincipalFactory<IdentityUser>>();
-        var signInManager = context.HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Identity.SignInManager<IdentityUser>>();
-        var principal = await signInManager.CreateUserPrincipalAsync(user);
         var claimsPrincipal = await userClaimsPrincipalFactory.CreateAsync(user);
+        
         claimsPrincipal.SetScopes(context.Request.GetScopes());
-        claimsPrincipal.SetResources(await GetResourcesAsync(context, principal.GetScopes()));
+        claimsPrincipal.SetResources(await GetResourcesAsync(context, claimsPrincipal.GetScopes()));
         claimsPrincipal.SetAudiences("AeFinder");
         
         await context.HttpContext.RequestServices.GetRequiredService<AbpOpenIddictClaimsPrincipalManager>()
-            .HandleAsync(context.Request, principal);
+            .HandleAsync(context.Request, claimsPrincipal);
 
         return new SignInResult(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, claimsPrincipal);
     }
