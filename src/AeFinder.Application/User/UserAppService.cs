@@ -178,7 +178,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             Logger.LogInformation(JsonConvert.SerializeObject(CurrentUser));
             throw new UserFriendlyException("Can only reset your own password");
         }
-
+        Logger.LogInformation(JsonConvert.SerializeObject(CurrentUser));
         var identityUser = await UserManager.FindByIdAsync(CurrentUser.Id.ToString());
         if (identityUser == null)
         {
