@@ -9,6 +9,7 @@ using AElf.Types;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using OpenIddict.Abstractions;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -174,6 +175,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
         if (CurrentUser.UserName != userName)
         {
+            Logger.LogInformation(JsonConvert.SerializeObject(CurrentUser));
             throw new UserFriendlyException("Can only reset your own password");
         }
 
