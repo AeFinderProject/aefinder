@@ -11,7 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AeFinder.App.TestBase" Version="1.3.0" />
+        <PackageReference Include="AeFinder.App.TestBase" Version="1.4.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
         <PackageReference Include="xunit" Version="2.6.1" />
         <PackageReference Include="xunit.extensibility.execution" Version="2.6.1" />

@@ -9,7 +9,7 @@ namespace AeFinder.App.BlockProcessing;
 
 public interface IFullBlockProcessor
 {
-    Task ProcessAsync(BlockWithTransactionDto block);
+    Task ProcessAsync(BlockWithTransactionDto block, CancellationToken cancellationToken);
 }
 
 public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
@@ -37,7 +37,7 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         _blockProcessingContext = blockProcessingContext;
     }
 
-    public async Task ProcessAsync(BlockWithTransactionDto block)
+    public async Task ProcessAsync(BlockWithTransactionDto block, CancellationToken cancellationToken)
     {
         _operationLimitManager.ResetAll();
         _blockProcessingContext.SetContext(block.ChainId, block.BlockHash, block.BlockHeight,
@@ -70,6 +70,11 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
         var transactionProcessor = _transactionProcessors.FirstOrDefault();
         foreach (var transaction in block.Transactions)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                throw new AppProcessingException("Processing timeout. Processor processing time is too long.");
+            }
+
             if (transactionProcessor != null)
             {
                 _logger.LogDebug(AeFinderApplicationConsts.AppLogEventId,
@@ -97,6 +102,11 @@ public class FullBlockProcessor : IFullBlockProcessor, ISingletonDependency
 
             foreach (var logEvent in transaction.LogEvents)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw new AppProcessingException("Processing timeout. Processor processing time is too long.");
+                }
+                
                 try
                 {
                     var logEventProcessor = _logEventProcessors.FirstOrDefault(p =>

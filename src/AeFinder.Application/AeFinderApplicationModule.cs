@@ -51,5 +51,7 @@ public class AeFinderApplicationModule : AbpModule
         Configure<AmazonS3Options>(configuration.GetSection("AmazonS3"));
         context.Services.AddTransient<ICodeAuditor, CodeAuditor>();
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
+        context.Services.Configure<SignatureGrantOptions>(configuration.GetSection("Signature"));
+        context.Services.Configure<ChainOptions>(configuration.GetSection("Chains"));
     }
 }

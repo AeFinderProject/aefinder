@@ -1,16 +1,19 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.User.Dto;
+using AeFinder.User.Provider;
+using AElf;
+using AElf.Types;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Identity;
-using Volo.Abp.OpenIddict.Applications;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder.User;
@@ -23,6 +26,8 @@ public class UserAppService : IdentityUserAppService, IUserAppService
     private readonly ILookupNormalizer _lookupNormalizer;
     private readonly IOpenIddictApplicationManager _applicationManager;
     private readonly IOrganizationAppService _organizationAppService;
+    private readonly IUserInformationProvider _userInformationProvider;
+    private readonly IWalletLoginProvider _walletLoginProvider;
 
     public UserAppService(
         IdentityUserManager userManager,
@@ -33,6 +38,8 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         IOpenIddictApplicationManager applicationManager,
         IOrganizationAppService organizationAppService,
         IOrganizationUnitRepository organizationUnitRepository,
+        IUserInformationProvider userInformationProvider,
+        IWalletLoginProvider walletLoginProvider,
         IPermissionChecker permissionChecker)
         : base(userManager, userRepository, roleRepository, identityOptions, permissionChecker)
     {
@@ -40,6 +47,8 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         _lookupNormalizer = lookupNormalizer;
         _applicationManager = applicationManager;
         _organizationAppService = organizationAppService;
+        _userInformationProvider = userInformationProvider;
+        _walletLoginProvider = walletLoginProvider;
     }
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)
@@ -122,7 +131,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         });
     }
 
-    public async Task<IdentityUserDto> GetUserInfoAsync()
+    public async Task<IdentityUserExtensionDto> GetUserInfoAsync()
     {
         if (CurrentUser == null || CurrentUser.Id == null)
         {
@@ -135,7 +144,10 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             throw new UserFriendlyException("user not found.");
         }
 
-        return ObjectMapper.Map<IdentityUser, IdentityUserDto>(identityUser);
+        var identityUserExtensionDto = ObjectMapper.Map<IdentityUser, IdentityUserExtensionDto>(identityUser);
+        var extensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
+        identityUserExtensionDto.WalletAddress = extensionInfo.WalletAddress;
+        return identityUserExtensionDto;
     }
 
     public async Task<string> GetClientDisplayNameAsync(string clientId)
@@ -162,6 +174,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
         if (CurrentUser.UserName != userName)
         {
+            Logger.LogInformation($"[ResetPasswordAsync] CurrentUser.UserName:{CurrentUser.UserName} userName:{userName}");
             throw new UserFriendlyException("Can only reset your own password");
         }
 
@@ -178,5 +191,72 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             throw new UserFriendlyException("reset user password failed." + result.Errors.Select(e => e.Description)
                 .Aggregate((errors, error) => errors + ", " + error));
         }
+    }
+
+    public async Task<IdentityUserExtensionDto> BindUserWalletAsync(BindUserWalletInput input)
+    {
+        if (CurrentUser == null || CurrentUser.Id == null)
+        {
+            throw new UserFriendlyException("Please sign in first.");
+        }
+        
+        var identityUser = await UserManager.FindByIdAsync(CurrentUser.Id.ToString());
+        if (identityUser == null)
+        {
+            throw new UserFriendlyException("user not found.");
+        }
+
+        var errors = _walletLoginProvider.CheckParams(input.Publickey, input.SignatureVal,
+            input.ChainId, input.Address, input.Timestamp.ToString());
+        if (errors.Count > 0)
+        {
+            throw new UserFriendlyException(_walletLoginProvider.GetErrorMessage(errors));
+        }
+        
+        string wallectAddress = string.Empty;
+        try
+        {
+            wallectAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(input.Publickey,
+                input.SignatureVal, input.Timestamp.ToString(), input.CaHash, input.Address, input.ChainId);
+        }
+        catch (SignatureVerifyException verifyException)
+        {
+            throw new UserFriendlyException(verifyException.Message);
+        }
+        catch (Exception e)
+        {
+            Logger.LogError("[BindUserWalletAsync] Signature validation failed: {e}",
+                e.Message);
+            throw;
+        }
+        
+        //Check if the wallet address is linked to another account
+        UserExtensionDto userExtensionDto =
+            await _userInformationProvider.GetUserExtensionInfoByWalletAddressAsync(wallectAddress);
+        if (userExtensionDto != null)
+        {
+            throw new UserFriendlyException("This wallet address has already been linked to another account.");
+        }
+        
+        //Add or update user extension info
+        userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
+        if (!userExtensionDto.WalletAddress.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("User has already linked a wallet.");
+        }
+        userExtensionDto.UserId = identityUser.Id;
+        userExtensionDto.WalletAddress = wallectAddress;
+        
+        //Save user extension info to mongodb
+        var saveUserExtensionResult = await _userInformationProvider.SaveUserExtensionInfoAsync(userExtensionDto);;
+        if (!saveUserExtensionResult)
+        {
+            throw new UserFriendlyException("Save user failed.");
+        }
+
+        var identityUserExtensionDto = ObjectMapper.Map<IdentityUser, IdentityUserExtensionDto>(identityUser);
+        var extensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
+        identityUserExtensionDto.WalletAddress = extensionInfo.WalletAddress;
+        return identityUserExtensionDto;
     }
 }
