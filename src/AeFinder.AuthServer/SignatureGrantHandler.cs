@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using AeFinder.OpenIddict;
 using AeFinder.User;
@@ -92,6 +93,13 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
         var signInManager = context.HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Identity.SignInManager<IdentityUser>>();
         var principal = await signInManager.CreateUserPrincipalAsync(user);
         var claimsPrincipal = await userClaimsPrincipalFactory.CreateAsync(user);
+        
+        var identity = new ClaimsIdentity();
+        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+        identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
+        identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));
+        claimsPrincipal.AddIdentity(identity);
+        
         claimsPrincipal.SetScopes(context.Request.GetScopes());
         claimsPrincipal.SetResources(await GetResourcesAsync(context, principal.GetScopes()));
         claimsPrincipal.SetAudiences("AeFinder");
