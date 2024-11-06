@@ -8,13 +8,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AElf.ExceptionHandler" Version="1.8.0" />
-        <PackageReference Include="AElf.OpenTelemetry" Version="8.0.5" />
+        <PackageReference Include="AElf.OpenTelemetry" Version="8.2.1" />
         <PackageReference Include="Microsoft.Orleans.Reminders" Version="8.1.0" />
         <PackageReference Include="Microsoft.Orleans.Sdk" Version="8.1.0" />
         <PackageReference Include="Microsoft.Orleans.Streaming" Version="8.1.0" />
-      <PackageReference Include="Volo.Abp.Autofac" Version="8.1.4" />
-      <PackageReference Include="Volo.Abp.BackgroundJobs.Domain" Version="8.1.4" />
+        <PackageReference Include="Volo.Abp.Autofac" Version="8.2.0" />
+        <PackageReference Include="Volo.Abp.BackgroundJobs.Domain" Version="8.2.0" />
+        <PackageReference Include="AElf.ExceptionHandler" Version="1.8.0" />
         <PackageReference Include="AElf.ExceptionHandler.Orleans" Version="1.1.0" />
     </ItemGroup>
 

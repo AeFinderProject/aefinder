@@ -5,6 +5,8 @@ using AeFinder.Localization;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
 using AeFinder.OpenIddict;
+using AeFinder.Options;
+using AeFinder.User.Provider;
 using Localization.Resources.AbpUi;
 using Medallion.Threading;
 using Medallion.Threading.Redis;
@@ -45,7 +47,8 @@ namespace AeFinder;
     typeof(AbpAccountHttpApiModule),
     typeof(AbpAspNetCoreMvcUiLeptonXLiteThemeModule),
     typeof(AeFinderMongoDbModule),
-    typeof(AbpAspNetCoreSerilogModule)
+    typeof(AbpAspNetCoreSerilogModule),
+    typeof(AeFinderApplicationModule)
 )]
 public class AeFinderAuthServerModule : AbpModule
 {
@@ -67,14 +70,23 @@ public class AeFinderAuthServerModule : AbpModule
                 options.UseAspNetCore();
             });
         });
-        PreConfigure<OpenIddictServerBuilder>(builder => { builder.Configure(openIddictServerOptions => { openIddictServerOptions.GrantTypes.Add(LoginConsts.GrantType); }); });
+        
+        //add login grant type
+        PreConfigure<OpenIddictServerBuilder>(builder =>
+        {
+            builder.Configure(openIddictServerOptions =>
+            {
+                openIddictServerOptions.GrantTypes.Add(LoginConsts.GrantType);
+                openIddictServerOptions.GrantTypes.Add(SignatureGrantConsts.GrantType);
+            });
+        });
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var hostingEnvironment = context.Services.GetHostingEnvironment();
         var configuration = context.Services.GetConfiguration();
-
+        
         Configure<AbpLocalizationOptions>(options =>
         {
             options.Resources
@@ -120,7 +132,12 @@ public class AeFinderAuthServerModule : AbpModule
             options.IsEnabled = false; //Disables the auditing system
         });
 
-        context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options => { options.Grants.Add(LoginConsts.GrantType, new LoginTokenExtensionGrant()); });
+        //add login grant type
+        context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
+        {
+            options.Grants.Add(LoginConsts.GrantType, new LoginTokenExtensionGrant());
+            options.Grants.Add(SignatureGrantConsts.GrantType, new SignatureGrantHandler());
+        });
 
         if (hostingEnvironment.IsDevelopment())
         {
