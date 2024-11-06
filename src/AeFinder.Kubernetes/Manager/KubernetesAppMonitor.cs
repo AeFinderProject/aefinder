@@ -10,12 +10,15 @@ public class KubernetesAppMonitor : IKubernetesAppMonitor, ISingletonDependency
 {
     private readonly ILogger<KubernetesAppMonitor> _logger;
     private readonly IKubernetesClientAdapter _kubernetesClientAdapter;
+    private readonly IPrometheusClient _prometheusClient;
 
     public KubernetesAppMonitor(ILogger<KubernetesAppMonitor> logger,
+        IPrometheusClient prometheusClient,
         IKubernetesClientAdapter kubernetesClientAdapter)
     {
         _logger = logger;
         _kubernetesClientAdapter = kubernetesClientAdapter;
+        _prometheusClient = prometheusClient;
     }
     
     public async Task<List<AppPodResourceInfoDto>> GetAppAllPodResourcesAsync()
@@ -43,4 +46,11 @@ public class KubernetesAppMonitor : IKubernetesAppMonitor, ISingletonDependency
 
         return result;
     }
+
+    public async Task<string> GetAppPodsResourceInfoFromPrometheusAsync(List<string> podsName)
+    {
+        return await _prometheusClient.GetAppPodsResourceInfoAsync(podsName);
+    }
+    
+    
 }
