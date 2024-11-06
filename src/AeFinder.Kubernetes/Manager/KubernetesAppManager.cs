@@ -296,14 +296,14 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
             _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} created", ingressName);
         }
 
-        //Create query app service monitor
+        //Create app service monitor
         var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId);
         var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
         var metricsPath = rulePath + KubernetesConstants.MetricsPath;
         if (!serviceMonitorExists)
         {
             var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(appId, serviceMonitorName,
-                deploymentName, serviceLabelName, servicePortName, metricsPath);
+                servicePortName, metricsPath);
             //Create Service Monitor
             await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
                 KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
