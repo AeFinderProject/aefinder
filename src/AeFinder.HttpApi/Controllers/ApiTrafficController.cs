@@ -1,0 +1,28 @@
+using System;
+using System.Threading.Tasks;
+using AeFinder.ApiTraffic;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
+using Volo.Abp;
+
+namespace AeFinder.Controllers;
+
+[RemoteService]
+[ControllerName("ApiTraffic")]
+[Route("api/traffic")]
+public class ApiTrafficController : AeFinderController
+{
+    private readonly IApiTrafficService _apiTrafficService;
+
+    public ApiTrafficController(IApiTrafficService apiTrafficService)
+    {
+        _apiTrafficService = apiTrafficService;
+    }
+    
+    [HttpGet]
+    [Route("{key}")]
+    public async Task<long> GetSubscriptionAsync(string key, DateTime date)
+    {
+        return await _apiTrafficService.GetRequestCountAsync(key, date);
+    }
+}
