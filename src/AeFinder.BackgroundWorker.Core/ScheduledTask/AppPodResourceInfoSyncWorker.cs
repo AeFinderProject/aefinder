@@ -47,17 +47,50 @@ public class AppPodResourceInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
 
     private async Task ProcessSynchronizationAsync()
     {
-        //get pods from es by page
         int pageSize = 10;
         int skipCount = 0;
-        var queryable = await _appPodInfoEntityMappingRepository.GetQueryableAsync();
-        queryable = queryable.OrderBy(o => o.PodName).Skip(skipCount).Take(pageSize);
-        var podList = queryable.ToList();
-        
-        var podNames = podList.Select(p => p.PodName).ToList();
-        var prometheusPodsInfo = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podNames);
-        //TODO convert prometheusPodsInfo to index
+        bool continueProcessing = true;
+        _logger.LogInformation($"[AppPodResourceInfoSyncWorker] Start Process Synchronization Async. PageSize:{pageSize}");
+        while (continueProcessing)
+        {
+            //get pods from es by page
+            var queryable = await _appPodInfoEntityMappingRepository.GetQueryableAsync();
+            queryable = queryable.OrderBy(o => o.PodName).Skip(skipCount).Take(pageSize);
+            var podInfoIndexList = queryable.ToList();
+            if (podInfoIndexList.Count == 0)
+            {
+                continueProcessing = false;
+                break;
+            }
 
-        skipCount = skipCount + pageSize;
+            var podNames = podInfoIndexList.Select(p => p.PodName).ToList();
+            var prometheusPodsInfo = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podNames);
+            //Update pod resource usage
+            foreach (var podInfoIndex in podInfoIndexList)
+            {
+                var prometheusInfo = prometheusPodsInfo.FirstOrDefault(p => p.PodName == podInfoIndex.PodName);
+                if (prometheusInfo == null)
+                {
+                    _logger.LogInformation($"[AppPodResourceInfoSyncWorker]Pod {podInfoIndex.PodName} not found.");
+                    continue;
+                }
+
+                foreach (var containerInfo in podInfoIndex.Containers)
+                {
+                    containerInfo.CpuUsage = "";
+                    containerInfo.MemoryUsage = "";
+                }
+            }
+
+            await _appPodInfoEntityMappingRepository.UpdateManyAsync(podInfoIndexList);
+
+            skipCount += pageSize;
+            if (podInfoIndexList.Count < pageSize)
+            {
+                continueProcessing = false;
+            }
+        }
+        
+        _logger.LogInformation("[AppPodResourceInfoSyncWorker] Process Synchronization Completion.");
     }
 }

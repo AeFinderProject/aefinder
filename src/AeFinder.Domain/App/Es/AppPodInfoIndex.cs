@@ -37,4 +37,6 @@ public class PodContainerInfo
     [Keyword]public string CurrentState { get; set; }
     [Keyword]public string RequestCpu { get; set; }
     [Keyword]public string RequestMemory { get; set; }
+    [Keyword]public string CpuUsage { get; set; }
+    [Keyword]public string MemoryUsage { get; set; }
 }

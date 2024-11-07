@@ -10,10 +10,18 @@ public class PrometheusClient: IPrometheusClient, ISingletonDependency
     {
     }
     
-    public async Task<string> GetAppPodsResourceInfoAsync(List<string> podNames)
+    public async Task<string> GetPodContainerCpuUsageInfoAsync(List<string> podNames)
     {
-        string prometheusBaseUrl = "http://your-prometheus-server:9090";
-        var query = $"sum(rate(container_cpu_usage_seconds_total{{namespace='{KubernetesConstants.AppNameSpace}', pod=~'{string.Join("|", podNames)}'}}[5m])) by (pod)";
+        // var query = $"sum(rate(container_cpu_usage_seconds_total{{namespace='{KubernetesConstants.AppNameSpace}', pod=~'{string.Join("|", podNames)}'}}[5m])) by (pod)";
+        var query = $"sum(rate(container_cpu_usage_seconds_total{{namespace='{KubernetesConstants.AppNameSpace}', pod=~'{string.Join("|", podNames)}', container!='POD'}}[5m])) by (pod, container)";
+        string result = await QueryPrometheusAsync(prometheusBaseUrl, query);
+        return result;
+    }
+    
+    public async Task<string> GetPodContainerMemoryUsageInfoAsync(List<string> podNames)
+    {
+        // var query = $"sum(container_memory_usage_bytes{{namespace='{KubernetesConstants.AppNameSpace}', pod=~'{string.Join("|", podNames)}'}}) by (pod)";
+        var query = $"sum(container_memory_usage_bytes{{namespace='{KubernetesConstants.AppNameSpace}', pod=~'{string.Join("|", podNames)}', container!='POD'}}) by (pod, container)";
         string result = await QueryPrometheusAsync(prometheusBaseUrl, query);
         return result;
     }

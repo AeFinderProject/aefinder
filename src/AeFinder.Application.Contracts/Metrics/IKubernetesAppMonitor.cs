@@ -8,5 +8,5 @@ public interface IKubernetesAppMonitor
 {
     Task<List<AppPodResourceInfoDto>> GetAppAllPodResourcesAsync();
 
-    Task<string> GetAppPodsResourceInfoFromPrometheusAsync(List<string> podsName);
+    Task<List<AppPodResourceInfoDto>> GetAppPodsResourceInfoFromPrometheusAsync(List<string> podsName);
 }

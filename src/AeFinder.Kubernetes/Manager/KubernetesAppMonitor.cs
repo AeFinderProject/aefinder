@@ -1,7 +1,9 @@
 using AeFinder.Apps.Dto;
 using AeFinder.Kubernetes.Adapter;
 using AeFinder.Metrics;
+using AeFinder.Metrics.Dto;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.Kubernetes.Manager;
@@ -47,9 +49,18 @@ public class KubernetesAppMonitor : IKubernetesAppMonitor, ISingletonDependency
         return result;
     }
 
-    public async Task<string> GetAppPodsResourceInfoFromPrometheusAsync(List<string> podsName)
+    public async Task<List<AppPodResourceInfoDto>> GetAppPodsResourceInfoFromPrometheusAsync(List<string> podsName)
     {
-        return await _prometheusClient.GetAppPodsResourceInfoAsync(podsName);
+        var cpuUsage = await _prometheusClient.GetPodContainerCpuUsageInfoAsync(podsName);
+        var cpuUsageDto = JsonConvert.DeserializeObject<PrometheusContainerCpuUsageDto>(cpuUsage);
+        
+        var memoryUsage = await _prometheusClient.GetPodContainerMemoryUsageInfoAsync(podsName);
+        var memoryUsageDto=JsonConvert.DeserializeObject<PrometheusContainerMemoryUsageDto>(memoryUsage);
+
+        var result = new List<AppPodResourceInfoDto>();
+
+
+        return result;
     }
     
     
