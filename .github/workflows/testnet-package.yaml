@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0' # which dotnet version is required?
-      - run: dotnet publish src/${{ matrix.servicename }}/${{ matrix.servicename }}.csproj -c Release -o out/${{ matrix.servicename }} -p:Version=${{ env.VERSION }}
+      - run: dotnet publish src/${{ matrix.servicename }}/${{ matrix.servicename }}.csproj -c Release -o out/${{ matrix.servicename }} -p:Version=2.0.0
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
