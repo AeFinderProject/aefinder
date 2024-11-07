@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using AeFinder.ApiTraffic;
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
 
@@ -21,7 +22,8 @@ public class ApiTrafficController : AeFinderController
     
     [HttpGet]
     [Route("{key}")]
-    public async Task<long> GetSubscriptionAsync(string key, DateTime date)
+    [Authorize]
+    public async Task<long> GetRequestCountAsync(string key, DateTime date)
     {
         return await _apiTrafficService.GetRequestCountAsync(key, date);
     }
