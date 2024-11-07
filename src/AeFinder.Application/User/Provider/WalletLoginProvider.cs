@@ -248,12 +248,6 @@ public partial class WalletLoginProvider: IWalletLoginProvider, ISingletonDepend
     protected virtual async Task<T> CallTransactionAsync<T>(string chainId, string methodName, IMessage param,
         ChainOptions chainOptions) where T : class, IMessage<T>, new()
     {
-        string tmp = "sc";
-        if ("sc".Equals(tmp))
-        {
-            // throw new SignatureVerifyException("SignatureVerifyExceptionTest");
-            throw new Exception("CallTransactionAsync Exception test");
-        }
         var chainInfo = chainOptions.ChainInfos[chainId];
 
         var client = new AElfClient(chainInfo.AElfNodeBaseUrl);
@@ -328,12 +322,6 @@ public partial class WalletLoginProvider: IWalletLoginProvider, ISingletonDepend
     protected virtual async Task GetAddressInfoFromContractAsync(List<UserChainAddressDto> addressInfos, string chainId,
         string caHash)
     {
-        string tmp = "sc";
-        if ("sc".Equals(tmp))
-        {
-            // throw new SignatureVerifyException("SignatureVerifyExceptionTest");
-            throw new Exception("CallTransactionAsync Exception test");
-        }
         var addressInfo = await GetAddressInfoFromContractAsync(chainId, caHash);
         addressInfos.Add(addressInfo);
     }
