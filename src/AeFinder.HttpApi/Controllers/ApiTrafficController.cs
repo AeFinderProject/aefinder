@@ -22,7 +22,7 @@ public class ApiTrafficController : AeFinderController
     
     [HttpGet]
     [Route("{key}")]
-    [Authorize]
+    [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<long> GetRequestCountAsync(string key, DateTime date)
     {
         return await _apiTrafficService.GetRequestCountAsync(key, date);
