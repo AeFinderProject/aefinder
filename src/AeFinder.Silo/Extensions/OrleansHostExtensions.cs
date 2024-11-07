@@ -54,16 +54,14 @@ public static class OrleansHostExtensions
                         settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
                         settings.DefaultValueHandling = DefaultValueHandling.Populate;
                     })
-                .ConfigureServices(services =>
-                    services.AddSingleton<IGrainStateSerializer, AeFinderJsonGrainStateSerializer>())
+                .ConfigureServices(services => services.AddSingleton<IGrainStateSerializer,AeFinderJsonGrainStateSerializer>())
                 .AddAeFinderMongoDBGrainStorage("Default", (MongoDBGrainStorageOptions op) =>
                 {
                     op.CollectionPrefix = OrleansConstants.GrainCollectionPrefix;
                     op.DatabaseName = configSection.GetValue<string>("DataBase");
 
                     var grainIdPrefix = configSection
-                        .GetSection("GrainSpecificIdPrefix").GetChildren()
-                        .ToDictionary(o => o.Key.ToLower(), o => o.Value);
+                        .GetSection("GrainSpecificIdPrefix").GetChildren().ToDictionary(o => o.Key.ToLower(), o => o.Value);
                     op.KeyGenerator = id =>
                     {
                         var grainType = id.Type.ToString();
@@ -114,7 +112,7 @@ public static class OrleansHostExtensions
                     options.CollectionPrefix = OrleansConstants.StreamCollectionPrefix;
                     options.DatabaseName = configSection.GetValue<string>("DataBase");
                 })
-                .Configure<ExceptionSerializationOptions>(options =>
+                .Configure<ExceptionSerializationOptions>(options=>
                 {
                     options.SupportedNamespacePrefixes.Add("Volo.Abp");
                     options.SupportedNamespacePrefixes.Add("Newtonsoft.Json");
@@ -129,31 +127,31 @@ public static class OrleansHostExtensions
                     options.CounterUpdateIntervalMs = configSection.GetValue<int>("DashboardCounterUpdateIntervalMs");
                 })
                 .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); })
-                .AddActivityPropagation();
-            // .AddKafka(AeFinderApplicationConsts.MessageStreamName)
-            // .WithOptions(options =>
-            // {
-            //     options.BrokerList = configuration.GetSection("Kafka:Brokers").Get<List<string>>();
-            //     options.ConsumerGroupId = "AeFinder";
-            //     options.ConsumeMode = ConsumeMode.LastCommittedMessage;
-            //
-            //     var partitions = configuration.GetSection("Kafka:Partitions").Get<int>();
-            //     var replicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>();
-            //
-            //     foreach (var n in configuration.GetSection("BlockPush:MessageStreamNamespaces").Get<List<string>>())
-            //     {
-            //         options.AddTopic(n, new TopicCreationConfig
-            //         {
-            //             AutoCreate = true,
-            //             Partitions = partitions,
-            //             ReplicationFactor = replicationFactor
-            //         });
-            //     }
-            //     options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
-            // })
-            // .AddJson()
-            // .AddLoggingTracker()
-            // .Build();
+                .AddActivityPropagation()
+                .AddKafka(AeFinderApplicationConsts.MessageStreamName)
+                .WithOptions(options =>
+                {
+                    options.BrokerList = configuration.GetSection("Kafka:Brokers").Get<List<string>>();
+                    options.ConsumerGroupId = "AeFinder";
+                    options.ConsumeMode = ConsumeMode.LastCommittedMessage;
+
+                    var partitions = configuration.GetSection("Kafka:Partitions").Get<int>();
+                    var replicationFactor = configuration.GetSection("Kafka:ReplicationFactor").Get<short>();
+
+                    foreach (var n in configuration.GetSection("BlockPush:MessageStreamNamespaces").Get<List<string>>())
+                    {
+                        options.AddTopic(n, new TopicCreationConfig
+                        {
+                            AutoCreate = true,
+                            Partitions = partitions,
+                            ReplicationFactor = replicationFactor
+                        });
+                    }
+                    options.MessageMaxBytes = configuration.GetSection("Kafka:MessageMaxBytes").Get<int>();
+                })
+                .AddJson()
+                .AddLoggingTracker()
+                .Build();
         });
     }
 }
