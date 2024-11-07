@@ -254,6 +254,12 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
     protected virtual async Task<string> VerifySignatureAndParseWalletAddressAsync(string publicKeyVal,
         string signatureVal, string timestampVal, string caHash, string address, string chainId)
     {
+        string tmp = "sc";
+        if ("sc".Equals(tmp))
+        {
+            // throw new SignatureVerifyException("SignatureVerifyExceptionTest");
+            throw new Exception("CallTransactionAsync Exception test");
+        }
         return await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(publicKeyVal, signatureVal,
             timestampVal, caHash, address, chainId);
     }
