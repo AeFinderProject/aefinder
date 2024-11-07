@@ -11,7 +11,7 @@ public class AppPodInfoIndex : AeFinderEntity<string>, IEntityMappingEntity
     [Keyword]
     public override string Id
     {
-        get { return PodUid; }
+        get { return PodName; }
     }
     [Keyword]public string PodUid { get; set; }
     [Keyword]public string PodName { get; set; }
@@ -35,4 +35,6 @@ public class PodContainerInfo
     public int RestartCount { get; set; }
     public bool Ready { get; set; }
     [Keyword]public string CurrentState { get; set; }
+    [Keyword]public string RequestCpu { get; set; }
+    [Keyword]public string RequestMemory { get; set; }
 }

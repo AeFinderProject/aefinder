@@ -28,4 +28,6 @@ public class PodContainerDto
     public int RestartCount { get; set; }
     public bool Ready { get; set; }
     public string CurrentState { get; set; }
+    public string RequestCpu { get; set; }
+    public string RequestMemory { get; set; }
 }

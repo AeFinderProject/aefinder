@@ -35,8 +35,8 @@ public class AppPodResourceInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
         _kubernetesAppMonitor = kubernetesAppMonitor;
         _objectMapper = objectMapper;
         _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
-        // Timer.Period = 10 * 60 * 1000; // 600000 milliseconds = 10 minutes
-        Timer.Period = _scheduledTaskOptions.AppPodListSyncTaskPeriodMilliSeconds;
+        // Timer.Period = 5 * 60 * 1000; // 300000 milliseconds = 5 minutes
+        Timer.Period = _scheduledTaskOptions.AppPodResourceSyncTaskPeriodMilliSeconds;
     }
     
     [UnitOfWork]
@@ -48,10 +48,16 @@ public class AppPodResourceInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
     private async Task ProcessSynchronizationAsync()
     {
         //get pods from es by page
+        int pageSize = 10;
+        int skipCount = 0;
+        var queryable = await _appPodInfoEntityMappingRepository.GetQueryableAsync();
+        queryable = queryable.OrderBy(o => o.PodName).Skip(skipCount).Take(pageSize);
+        var podList = queryable.ToList();
         
-        
-        // var podNames = podsPageResultDto.PodInfos.Select(p => p.PodName).ToList();
-        // var prometheusPodsInfo = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podNames);
-        // //TODO convert prometheusPodsInfo to 
+        var podNames = podList.Select(p => p.PodName).ToList();
+        var prometheusPodsInfo = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podNames);
+        //TODO convert prometheusPodsInfo to index
+
+        skipCount = skipCount + pageSize;
     }
 }

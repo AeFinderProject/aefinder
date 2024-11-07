@@ -20,7 +20,6 @@ public class AppPodListSyncWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
     private readonly ILogger<AppPodListSyncWorker> _logger;
     private readonly IAppDeployService _appDeployService;
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
-    private readonly IKubernetesAppMonitor _kubernetesAppMonitor;
     private readonly IObjectMapper _objectMapper;
     private readonly IEntityMappingRepository<AppPodInfoIndex, string> _appPodInfoEntityMappingRepository;
     
@@ -33,7 +32,6 @@ public class AppPodListSyncWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
         _logger = logger;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
         _appDeployService = appDeployService;
-        _kubernetesAppMonitor = kubernetesAppMonitor;
         _objectMapper = objectMapper;
         _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
         // Timer.Period = 10 * 60 * 1000; // 600000 milliseconds = 10 minutes
@@ -49,21 +47,28 @@ public class AppPodListSyncWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
     private async Task ProcessSynchronizationAsync()
     {
         int pageSize = 10;
-        var podsPageResultDto = await _appDeployService.GetPodListWithPagingAsync(null, pageSize, null);
-        var appPodInfoIndexList =
-            _objectMapper.Map<List<AppPodInfoDto>, List<AppPodInfoIndex>>(podsPageResultDto.PodInfos);
+        string continueToken = null;
+        _logger.LogInformation($"[AppPodListSyncWorker] Start Process Synchronization Async. PageSize:{pageSize}");
         //Delete old pod info record first
-        foreach (var podInfo in appPodInfoIndexList)
+        var oldPodIndexList = await _appPodInfoEntityMappingRepository.GetListAsync();
+        if (oldPodIndexList.Count > 0)
         {
-            var oldPodIndexList = await _appPodInfoEntityMappingRepository.GetListAsync(p =>
-                p.AppId == podInfo.AppId && p.AppVersion == podInfo.AppVersion);
-            if (oldPodIndexList.Count > 0)
-            {
-                await _appPodInfoEntityMappingRepository.DeleteManyAsync(oldPodIndexList);
-            }
+            await _appPodInfoEntityMappingRepository.DeleteManyAsync(oldPodIndexList);
         }
-        
-        //Add new pod info record
-        await _appPodInfoEntityMappingRepository.AddOrUpdateManyAsync(appPodInfoIndexList);
+        _logger.LogInformation($"[AppPodListSyncWorker] All old pod info indexes deleted.");
+        do
+        {
+            var podsPageResultDto = await _appDeployService.GetPodListWithPagingAsync(null, pageSize, continueToken);
+            continueToken = podsPageResultDto.ContinueToken;
+            if (podsPageResultDto.PodInfos.Count > 0)
+            {
+                var appPodInfoIndexList =
+                    _objectMapper.Map<List<AppPodInfoDto>, List<AppPodInfoIndex>>(podsPageResultDto.PodInfos);
+                //Add new pod info record
+                await _appPodInfoEntityMappingRepository.AddOrUpdateManyAsync(appPodInfoIndexList);
+            }
+            
+        } while (!continueToken.IsNullOrEmpty());
+        _logger.LogInformation($"[AppPodListSyncWorker] Process Synchronization Completion.");
     }
 }

@@ -760,6 +760,19 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
             {
                 var container = new PodContainerDto();
                 container.ContainerName = v1Container.Name;
+                var requests = v1Container.Resources.Requests;
+                if (requests != null)
+                {
+                    if (requests.ContainsKey("cpu"))
+                    {
+                        container.RequestCpu = requests["cpu"].ToString();
+                    }
+
+                    if (requests.ContainsKey("memory"))
+                    {
+                        container.RequestMemory = requests["memory"].ToString();
+                    }
+                }
                 container.ContainerImage = v1Container.Image;
                 containerList.Add(container);
             }

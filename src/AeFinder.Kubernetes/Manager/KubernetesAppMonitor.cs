@@ -37,8 +37,8 @@ public class KubernetesAppMonitor : IKubernetesAppMonitor, ISingletonDependency
             foreach (var containerMetric in podMetric.Containers)
             {
                 var containerResourceDto = new PodContainerResourceDto();
-                containerResourceDto.CpuUsage = containerMetric.Usage["cpu"].Value;
-                containerResourceDto.MemoryUsage = containerMetric.Usage["memory"].Value;
+                containerResourceDto.CpuUsage = containerMetric.Usage["cpu"].ToString();
+                containerResourceDto.MemoryUsage = containerMetric.Usage["memory"].ToString();
                 podInfoDto.Containers.Add(containerResourceDto);
             }
             result.Add(podInfoDto);
