@@ -258,7 +258,7 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         if ("sc".Equals(tmp))
         {
             // throw new SignatureVerifyException("SignatureVerifyExceptionTest");
-            throw new Exception("CallTransactionAsync Exception test");
+            throw new SignatureVerifyException("VerifySignatureAndParseWalletAddressAsync Exception test");
         }
         return await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(publicKeyVal, signatureVal,
             timestampVal, caHash, address, chainId);
