@@ -37,6 +37,7 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitIndexRepository;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IAppDeployManager _appDeployManager;
+    private readonly IEntityMappingRepository<AppPodInfoIndex, string> _appPodInfoEntityMappingRepository;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
@@ -45,7 +46,8 @@ public class AppService : AeFinderAppService, IAppService
         IElasticIndexService elasticIndexService,
         IOrganizationAppService organizationAppService,
         IEntityMappingRepository<AppInfoIndex, string> appIndexRepository,
-        IEntityMappingRepository<AppLimitInfoIndex, string> appLimitIndexRepository)
+        IEntityMappingRepository<AppLimitInfoIndex, string> appLimitIndexRepository,
+        IEntityMappingRepository<AppPodInfoIndex, string> appPodInfoEntityMappingRepository)
     {
         _clusterClient = clusterClient;
         _userAppService = userAppService;
@@ -56,6 +58,7 @@ public class AppService : AeFinderAppService, IAppService
         _elasticIndexService = elasticIndexService;
         _distributedEventBus = distributedEventBus;
         _appDeployManager = appDeployManager;
+        _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -374,6 +377,29 @@ public class AppService : AeFinderAppService, IAppService
     public async Task DeleteAppIndexAsync(string indexName)
     {
         await _elasticIndexService.DeleteIndexAsync(indexName);
+    }
+    
+    public async Task<PagedResultDto<AppPodResourceInfoIndexDto>> GetAppPodResourceInfoIndexListAsync(
+        GetAppPodResourceInfoInput input)
+    {
+        var queryable = await _appPodInfoEntityMappingRepository.GetQueryableAsync();
+        if (!input.AppId.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.AppId == input.AppId);
+        }
+
+        if (!input.Version.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.AppVersion == input.Version);
+        }
+
+        var pods = queryable.OrderBy(o => o.PodName).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
+        var totalCount = queryable.Count();
+        return new PagedResultDto<AppPodResourceInfoIndexDto>
+        {
+            TotalCount = totalCount,
+            Items = ObjectMapper.Map<List<AppPodInfoIndex>, List<AppPodResourceInfoIndexDto>>(pods)
+        };
     }
     
 }

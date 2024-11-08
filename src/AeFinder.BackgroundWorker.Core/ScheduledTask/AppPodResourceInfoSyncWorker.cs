@@ -75,6 +75,7 @@ public class AppPodResourceInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
                     continue;
                 }
 
+                podInfoIndex.UsageTimestamp = prometheusPodInfo.Timestamp;
                 podInfoIndex.CpuUsage = prometheusPodInfo.CpuUsage;
                 podInfoIndex.MemoryUsage = prometheusPodInfo.MemoryUsage;
 
@@ -89,6 +90,7 @@ public class AppPodResourceInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
                         continue;
                     }
 
+                    containerInfo.UsageTimestamp = prometheusContainerInfo.Timestamp;
                     containerInfo.CpuUsage = prometheusContainerInfo.CpuUsage;
                     containerInfo.MemoryUsage = prometheusContainerInfo.MemoryUsage;
                 }

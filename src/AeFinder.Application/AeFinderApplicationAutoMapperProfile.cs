@@ -122,5 +122,6 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppResourceLimitDto, AppLimitUpdateEto>();
         
         CreateMap<AttachmentInfo, AttachmentInfoDto>();
+        CreateMap<AppPodInfoIndex, AppPodResourceInfoIndexDto>();
     }
 }
