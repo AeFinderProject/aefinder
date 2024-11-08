@@ -165,7 +165,7 @@ public class DeploymentHelper
         // Filebeat side car container
         var sideCarContainer = new V1Container
         {
-            Name = "filebeat-sidecar",
+            Name = KubernetesConstants.FileBeatContainerName,
             Image = KubernetesConstants.FileBeatImage,
             Args = new List<string>
             {

@@ -34,22 +34,23 @@ public class KubernetesAppMonitorTests:AeFinderApplicationTestBase
             .ReturnsAsync(new List<AppPodResourceInfoDto> { 
                 new AppPodResourceInfoDto
                 {
-                    PodUid="7282799a-b15c-4919-bc78-843410fcfb2e",
+                    // PodUid="7282799a-b15c-4919-bc78-843410fcfb2e",
                     PodName="deployment-test-ae8ec5b7361e4e1381082f5570283214-fulmhzcw",
-                    CurrentTime=DateTime.Now,
+                    // CurrentTime=DateTime.Now,
+                    Timestamp = 1731044470,
                     Containers=new List<PodContainerResourceDto>()
                     {
                         new PodContainerResourceDto()
                         {
                             ContainerName = "container-ae8ec5b7361e4e1381082f5570283214-full",
-                            CpuUsage = "",
-                            MemoryUsage = ""
+                            CpuUsage = "0.0015564684208729614",
+                            MemoryUsage = "676065280"
                         },
                         new PodContainerResourceDto()
                         {
                             ContainerName = "filebeat-sidecar",
-                            CpuUsage = "",
-                            MemoryUsage = ""
+                            CpuUsage = "0.00039660100332426063",
+                            MemoryUsage = "76947456"
                         }
                     }
                 } 

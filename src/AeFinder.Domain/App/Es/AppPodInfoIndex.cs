@@ -24,6 +24,8 @@ public class AppPodInfoIndex : AeFinderEntity<string>, IEntityMappingEntity
     public int ReadyContainersCount { get; set; }
     public int TotalContainersCount { get; set; }
     public double AgeSeconds { get; set; }
+    [Keyword]public string CpuUsage { get; set; }
+    [Keyword]public string MemoryUsage { get; set; }
     public List<PodContainerInfo> Containers { get; set; }
 }
 

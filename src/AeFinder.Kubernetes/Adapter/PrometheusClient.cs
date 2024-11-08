@@ -4,7 +4,7 @@ namespace AeFinder.Kubernetes.Adapter;
 
 public class PrometheusClient: IPrometheusClient, ISingletonDependency
 {
-    private readonly string prometheusBaseUrl = "http://your-prometheus-server:9090";
+    private readonly string prometheusBaseUrl = "http://prometheus.aelf.elf:30684";
     
     public PrometheusClient()
     {

@@ -68,17 +68,29 @@ public class AppPodResourceInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
             //Update pod resource usage
             foreach (var podInfoIndex in podInfoIndexList)
             {
-                var prometheusInfo = prometheusPodsInfo.FirstOrDefault(p => p.PodName == podInfoIndex.PodName);
-                if (prometheusInfo == null)
+                var prometheusPodInfo = prometheusPodsInfo.FirstOrDefault(p => p.PodName == podInfoIndex.PodName);
+                if (prometheusPodInfo == null)
                 {
                     _logger.LogInformation($"[AppPodResourceInfoSyncWorker]Pod {podInfoIndex.PodName} not found.");
                     continue;
                 }
 
+                podInfoIndex.CpuUsage = prometheusPodInfo.CpuUsage;
+                podInfoIndex.MemoryUsage = prometheusPodInfo.MemoryUsage;
+
                 foreach (var containerInfo in podInfoIndex.Containers)
                 {
-                    containerInfo.CpuUsage = "";
-                    containerInfo.MemoryUsage = "";
+                    var prometheusContainerInfo =
+                        prometheusPodInfo.Containers.FirstOrDefault(c =>
+                            c.ContainerName == containerInfo.ContainerName);
+                    if (prometheusContainerInfo == null)
+                    {
+                        _logger.LogInformation($"[AppPodResourceInfoSyncWorker]Container {containerInfo.ContainerName} not found.");
+                        continue;
+                    }
+
+                    containerInfo.CpuUsage = prometheusContainerInfo.CpuUsage;
+                    containerInfo.MemoryUsage = prometheusContainerInfo.MemoryUsage;
                 }
             }
 
