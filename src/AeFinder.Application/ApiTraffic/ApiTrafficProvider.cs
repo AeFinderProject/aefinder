@@ -5,6 +5,7 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiTraffic;
 using Orleans;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Timing;
 
 namespace AeFinder.ApiTraffic;
 
@@ -18,15 +19,17 @@ public class ApiTrafficProvider : IApiTrafficProvider, ISingletonDependency
 {
     private readonly ConcurrentDictionary<string, long> _requestCount = new();
     private readonly IClusterClient _clusterClient;
+    private readonly IClock _clock;
 
-    public ApiTrafficProvider(IClusterClient clusterClient)
+    public ApiTrafficProvider(IClusterClient clusterClient, IClock clock)
     {
         _clusterClient = clusterClient;
+        _clock = clock;
     }
 
     public Task IncreaseRequestCountAsync(string key)
     {
-        var id = GrainIdHelper.GenerateApiTrafficGrainId(key, DateTime.UtcNow);
+        var id = GrainIdHelper.GenerateApiTrafficGrainId(key, _clock.Now);
         _requestCount.AddOrUpdate(id, 1, (s, i) => i + 1);
         return Task.CompletedTask;
     }
@@ -37,7 +40,7 @@ public class ApiTrafficProvider : IApiTrafficProvider, ISingletonDependency
         {
             if (item.Value == 0)
             {
-                if (item.Key.Split('-')[1] != DateTime.UtcNow.ToString("yyyyMM"))
+                if (item.Key.Split('-')[1] != _clock.Now.ToString("yyyyMM"))
                 {
                     _requestCount.TryRemove(item.Key, out _);
                 }
