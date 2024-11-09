@@ -35,7 +35,7 @@ public class AppPodResourceInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
         _kubernetesAppMonitor = kubernetesAppMonitor;
         _objectMapper = objectMapper;
         _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
-        // Timer.Period = 5 * 60 * 1000; // 300000 milliseconds = 5 minutes
+        // Timer.Period = 3 * 60 * 1000; // 180000 milliseconds = 3 minutes
         Timer.Period = _scheduledTaskOptions.AppPodResourceSyncTaskPeriodMilliSeconds;
     }
     
