@@ -96,7 +96,8 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                     OpenIddictConstants.GrantTypes.Password,
                     OpenIddictConstants.GrantTypes.ClientCredentials,
                     OpenIddictConstants.GrantTypes.RefreshToken,
-                    LoginConsts.GrantType
+                    LoginConsts.GrantType,
+                    SignatureGrantConsts.GrantType
                 },
                 scopes: commonScopes
             );
@@ -145,7 +146,8 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                     OpenIddictConstants.GrantTypes.AuthorizationCode,
                     OpenIddictConstants.GrantTypes.Password,
                     OpenIddictConstants.GrantTypes.ClientCredentials,
-                    OpenIddictConstants.GrantTypes.RefreshToken
+                    OpenIddictConstants.GrantTypes.RefreshToken,
+                    SignatureGrantConsts.GrantType
                 },
                 scopes: commonScopes,
                 redirectUri: consoleAndAngularClientRootUrl,
@@ -313,6 +315,11 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                 if (grantType == LoginConsts.GrantType)
                 {
                     application.Permissions.Add($"gt:{LoginConsts.GrantType}");
+                }
+                
+                if (grantType == SignatureGrantConsts.GrantType)
+                {
+                    application.Permissions.Add($"gt:{SignatureGrantConsts.GrantType}");
                 }
 
                 if (grantType == OpenIddictConstants.GrantTypes.ClientCredentials)

@@ -15,6 +15,7 @@ using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Logger.Entities;
 using AeFinder.Subscriptions;
 using AeFinder.Subscriptions.Dto;
+using AeFinder.User;
 using AeFinder.User.Dto;
 using AutoMapper;
 using Volo.Abp.Identity;
@@ -123,5 +124,10 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         
         CreateMap<AttachmentInfo, AttachmentInfoDto>();
         CreateMap<AppPodInfoIndex, AppPodResourceInfoIndexDto>();
+
+        CreateMap<UserExtensionDto, IdentityUserExtension>();
+        CreateMap<UserChainAddressDto, UserChainAddressInfo>();
+        CreateMap<IdentityUserExtension, UserExtensionDto>();
+        CreateMap<IdentityUser, IdentityUserExtensionDto>();
     }
 }

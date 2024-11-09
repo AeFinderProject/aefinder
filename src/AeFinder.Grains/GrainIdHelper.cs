@@ -116,4 +116,9 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(appId, version);
     }
+    
+    public static string GenerateApiTrafficGrainId(string key, DateTime dateTime)
+    {
+        return GenerateGrainId(key,dateTime.ToString("yyyyMM"));
+    }
 }

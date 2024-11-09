@@ -36,7 +36,7 @@ public class UserController : AeFinderController
     
     [HttpGet("info")]
     [Authorize]
-    public virtual async Task<IdentityUserDto> GetUserInfoAsync()
+    public virtual async Task<IdentityUserExtensionDto> GetUserInfoAsync()
     {
         return await _userAppService.GetUserInfoAsync();
     }
@@ -54,4 +54,11 @@ public class UserController : AeFinderController
     // {
     //     return await _userAppService.GetClientDisplayNameAsync(clientId);
     // }
+
+    [HttpPost("bind/wallet")]
+    [Authorize]
+    public virtual async Task<IdentityUserExtensionDto> BindUserWalletAsync(BindUserWalletInput input)
+    {
+        return await _userAppService.BindUserWalletAsync(input);
+    }
 }

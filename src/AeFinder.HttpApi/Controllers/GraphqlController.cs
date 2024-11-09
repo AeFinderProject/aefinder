@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using AeFinder.ApiTraffic;
 using AeFinder.GraphQL;
 using AeFinder.GraphQL.Dto;
 using AeFinder.Kubernetes;
@@ -15,25 +16,28 @@ namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("Graphql")]
-[Route("api/app/graphql")]
 [AggregateExecutionTime]
 public class GraphqlController : AbpController
 {
     private readonly IGraphQLAppService _graphQLAppService;
     private readonly KubernetesOptions _kubernetesOption;
+    private readonly IApiTrafficService _apiTrafficService;
 
     public GraphqlController(IGraphQLAppService graphQLAppService,
-        IOptionsSnapshot<KubernetesOptions> kubernetesOption)
+        IOptionsSnapshot<KubernetesOptions> kubernetesOption, IApiTrafficService apiTrafficService)
     {
         _graphQLAppService = graphQLAppService;
+        _apiTrafficService = apiTrafficService;
         _kubernetesOption = kubernetesOption.Value;
     }
     
     [EnableCors("AllowAnyCorsPolicy")]
-    [HttpPost("{appId}/{version?}")]
-    public virtual async Task<IActionResult> GraphqlForward([FromBody] GraphQLQueryInput input, string appId,
+    [HttpPost("api/{key}/graphql/{appId}/{version?}")]
+    public virtual async Task<IActionResult> GraphqlForward([FromBody] GraphQLQueryInput input, string key, string appId,
         string version = null)
     {
+        await _apiTrafficService.IncreaseRequestCountAsync(key);
+        
         var response =
             await _graphQLAppService.RequestForwardAsync(appId, version, _kubernetesOption.OriginName, input);
 

@@ -42,19 +42,20 @@
 
   <ItemGroup>
     <PackageReference Include="Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite" Version="3.1.4" />
-    <PackageReference Include="Volo.Abp.Autofac" Version="8.1.4" />
-    <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="8.1.4" />
-    <PackageReference Include="Volo.Abp.DistributedLocking" Version="8.1.4" />
-    <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="8.1.4" />
-    <PackageReference Include="Volo.Abp.Account.Web.OpenIddict" Version="8.1.4" />
-    <PackageReference Include="Volo.Abp.Account.Application" Version="8.1.4" />
-    <PackageReference Include="Volo.Abp.Account.HttpApi" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.Autofac" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.DistributedLocking" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.Account.Web.OpenIddict" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.Account.Application" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.Account.HttpApi" Version="8.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj">
       <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
     </ProjectReference>
+    <ProjectReference Include="..\AeFinder.Application\AeFinder.Application.csproj" />
     <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
   </ItemGroup>
 
