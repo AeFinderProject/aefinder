@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AeFinder.ApiTraffic;
 using AeFinder.Block;
 using AeFinder.Block.Dtos;
 using Asp.Versioning;
@@ -12,42 +13,46 @@ namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("Block")]
-[Route("api/app/block")]
 public class BlockController : AbpController
 {
     private readonly IBlockAppService _blockAppService;
+    private readonly IApiTrafficService _apiTrafficService;
 
-    public BlockController(IBlockAppService blockAppService)
+    public BlockController(IBlockAppService blockAppService, IApiTrafficService apiTrafficService)
     {
         _blockAppService = blockAppService;
+        _apiTrafficService = apiTrafficService;
     }
 
     [HttpPost]
-    [Route("blocks")]
+    [Route("api/{key}/block/blocks")]
     [Authorize]
-    public virtual Task<List<BlockDto>> GetBlocksAsync(GetBlocksInput input)
+    public virtual async Task<List<BlockDto>> GetBlocksAsync(string key, GetBlocksInput input)
     {
-        return _blockAppService.GetBlocksAsync(input);
+        await _apiTrafficService.IncreaseRequestCountAsync(key);
+        return await _blockAppService.GetBlocksAsync(input);
     }
 
     [HttpPost]
-    [Route("transactions")]
+    [Route("api/{key}/block/transactions")]
     [Authorize]
-    public virtual Task<List<TransactionDto>> GetTransactionsAsync(GetTransactionsInput input)
+    public virtual async Task<List<TransactionDto>> GetTransactionsAsync(string key, GetTransactionsInput input)
     {
-        return _blockAppService.GetTransactionsAsync(input);
+        await _apiTrafficService.IncreaseRequestCountAsync(key);
+        return await _blockAppService.GetTransactionsAsync(input);
     }
 
     [HttpPost]
-    [Route("logevents")]
+    [Route("api/{key}/block/logevents")]
     [Authorize]
-    public virtual Task<List<LogEventDto>> GetLogEventsAsync(GetLogEventsInput input)
+    public virtual async Task<List<LogEventDto>> GetLogEventsAsync(string key, GetLogEventsInput input)
     {
-        return _blockAppService.GetLogEventsAsync(input);
+        await _apiTrafficService.IncreaseRequestCountAsync(key);
+        return await _blockAppService.GetLogEventsAsync(input);
     }
     
     [HttpPost]
-    [Route("summaries")]
+    [Route("api/app/block/summaries")]
     [Authorize]
     public virtual Task<List<SummaryDto>> GetSummariesAsync(GetSummariesInput input)
     {
