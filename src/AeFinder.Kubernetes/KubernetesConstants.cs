@@ -22,6 +22,7 @@ public class KubernetesConstants
      public const string FileBeatConfigMountPath = "/etc/filebeat/filebeat.yml";
      public const string FileBeatConfigFileName = "filebeat.yml";
      public const string FileBeatLogILMPolicyName = "filebeat-log-policy";
+     public const string FileBeatContainerName = "filebeat-sidecar";
      
      //manager
      public const string AppClientTypeFull = "Full";

@@ -123,6 +123,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppResourceLimitDto, AppLimitUpdateEto>();
         
         CreateMap<AttachmentInfo, AttachmentInfoDto>();
+        CreateMap<AppPodInfoIndex, AppPodResourceInfoIndexDto>();
 
         CreateMap<UserExtensionDto, IdentityUserExtension>();
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();
