@@ -7,13 +7,14 @@ namespace AeFinder.Kubernetes.Adapter;
 public class PrometheusClient: IPrometheusClient, ISingletonDependency
 {
     private readonly KubernetesOptions _kubernetesOptions;
-    // private readonly string prometheusBaseUrl = "http://prometheus.aelf.elf:30684";
-    
-    public PrometheusClient(IOptionsSnapshot<KubernetesOptions> kubernetesOptions)
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    public PrometheusClient(IOptionsSnapshot<KubernetesOptions> kubernetesOptions, IHttpClientFactory httpClientFactory)
     {
         _kubernetesOptions = kubernetesOptions.Value;
+        _httpClientFactory = httpClientFactory;
     }
-    
+
     public async Task<string> GetPodContainerCpuUsageInfoAsync(List<string> podNames)
     {
         // var query = $"sum(rate(container_cpu_usage_seconds_total{{namespace='{KubernetesConstants.AppNameSpace}', pod=~'{string.Join("|", podNames)}'}}[5m])) by (pod)";
@@ -29,18 +30,16 @@ public class PrometheusClient: IPrometheusClient, ISingletonDependency
         string result = await QueryPrometheusAsync(query);
         return result;
     }
-    
+
     private async Task<string> QueryPrometheusAsync(string query)
     {
         string prometheusBaseUrl = _kubernetesOptions.PrometheusUrl;
-        using (var httpClient = new HttpClient())
-        {
-            var uri = $"{prometheusBaseUrl}/api/v1/query" +
-                      $"?query={Uri.EscapeDataString(query)}";
+        var httpClient = _httpClientFactory.CreateClient();
+        var uri = $"{prometheusBaseUrl}/api/v1/query" +
+                  $"?query={Uri.EscapeDataString(query)}";
 
-            var response = await httpClient.GetAsync(uri);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync();
-        }
+        var response = await httpClient.GetAsync(uri);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
     }
 }

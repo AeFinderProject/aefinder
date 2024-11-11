@@ -11,5 +11,5 @@ public interface IAppDeployService
     Task RestartAppAsync(string appId, string version);
     Task UpdateAppDockerImageAsync(string appId, string version, string imageName, bool isUpdateConfig);
     Task<AppPodsPageResultDto> GetPodListWithPagingAsync(string appId, int pageSize, string continueToken);
-    Task<List<AppPodResourceInfoDto>> GetPodResourceInfoAsync(string podName);
+    // Task<List<AppPodResourceInfoDto>> GetPodResourceInfoAsync(string podName);
 }

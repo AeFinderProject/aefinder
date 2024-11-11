@@ -379,7 +379,7 @@ public class AppService : AeFinderAppService, IAppService
         await _elasticIndexService.DeleteIndexAsync(indexName);
     }
     
-    public async Task<PagedResultDto<AppPodResourceInfoIndexDto>> GetAppPodResourceInfoIndexListAsync(
+    public async Task<PagedResultDto<AppPodInfoDto>> GetAppPodResourceInfoListAsync(
         GetAppPodResourceInfoInput input)
     {
         var queryable = await _appPodInfoEntityMappingRepository.GetQueryableAsync();
@@ -395,10 +395,10 @@ public class AppService : AeFinderAppService, IAppService
 
         var pods = queryable.OrderBy(o => o.PodName).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
         var totalCount = queryable.Count();
-        return new PagedResultDto<AppPodResourceInfoIndexDto>
+        return new PagedResultDto<AppPodInfoDto>
         {
             TotalCount = totalCount,
-            Items = ObjectMapper.Map<List<AppPodInfoIndex>, List<AppPodResourceInfoIndexDto>>(pods)
+            Items = ObjectMapper.Map<List<AppPodInfoIndex>, List<AppPodInfoDto>>(pods)
         };
     }
     
