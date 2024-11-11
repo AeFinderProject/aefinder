@@ -25,13 +25,9 @@ public class KubernetesAppMonitor : IKubernetesAppMonitor, ISingletonDependency
 
     public async Task<List<AppPodResourceInfoDto>> GetAppPodsResourceInfoFromPrometheusAsync(List<string> podsName)
     {
-        var cpuUsage = await _prometheusClient.GetPodContainerCpuUsageInfoAsync(podsName);
-        // _logger.LogInformation($"cpuUsage: {cpuUsage}");
-        var cpuUsageResultDto = JsonConvert.DeserializeObject<PrometheusResultDto<List<PrometheusContainerUsageDto>>>(cpuUsage);
+        var cpuUsageResultDto = await _prometheusClient.GetPodContainerCpuUsageInfoAsync(podsName);
         
-        var memoryUsage = await _prometheusClient.GetPodContainerMemoryUsageInfoAsync(podsName);
-        // _logger.LogInformation($"memoryUsage: {memoryUsage}");
-        var memoryUsageResultDto=JsonConvert.DeserializeObject<PrometheusResultDto<List<PrometheusContainerUsageDto>>>(memoryUsage);
+        var memoryUsageResultDto = await _prometheusClient.GetPodContainerMemoryUsageInfoAsync(podsName);
 
         var result = new List<AppPodResourceInfoDto>();
 

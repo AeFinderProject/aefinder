@@ -3,6 +3,7 @@ using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.CodeOps;
 using AeFinder.Grains.Grain.BlockPush;
+using AeFinder.Metrics;
 using AeFinder.Orleans.TestBase;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,5 +37,6 @@ public class AeFinderApplicationTestModule : AbpModule
             o.MessageStreamNamespaces = new List<string> { "MessageStreamNamespace" };
         });
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
+        context.Services.AddTransient<IKubernetesAppMonitor, DefaultKubernetesAppMonitor>();
     }
 }
