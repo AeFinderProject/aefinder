@@ -13,7 +13,7 @@ public class AppPodInfoSyncWorkerBase: AsyncPeriodicBackgroundWorkerBase
     protected readonly ILogger<AppPodInfoSyncWorkerBase> Logger;
     protected readonly IKubernetesAppMonitor KubernetesAppMonitor;
     
-    protected AppPodInfoSyncWorkerBase(AbpAsyncTimer timer,IServiceScopeFactory serviceScopeFactory,
+    public AppPodInfoSyncWorkerBase(AbpAsyncTimer timer,IServiceScopeFactory serviceScopeFactory,
         ILogger<AppPodInfoSyncWorkerBase> logger,IKubernetesAppMonitor kubernetesAppMonitor): base(timer, serviceScopeFactory)
     {
         Logger = logger;
