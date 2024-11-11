@@ -125,8 +125,8 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AttachmentInfo, AttachmentInfoDto>();
         CreateMap<AppPodInfoDto, AppPodInfoIndex>();
         CreateMap<PodContainerDto, PodContainerInfo>();
-        CreateMap<AppPodInfoIndex, AppPodResourceInfoIndexDto>();
-        CreateMap<PodContainerInfo, PodContainerInfoDto>();
+        CreateMap<AppPodInfoIndex, AppPodInfoDto>();
+        CreateMap<PodContainerInfo, PodContainerDto>();
 
         CreateMap<UserExtensionDto, IdentityUserExtension>();
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();

@@ -128,9 +128,9 @@ public class AppController : AeFinderController
     [HttpGet]
     [Route("resource-pods")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public async Task<PagedResultDto<AppPodResourceInfoIndexDto>> GetAppPodResourceInfoIndexListAsync(
+    public async Task<PagedResultDto<AppPodInfoDto>> GetAppPodResourceInfoListAsync(
         GetAppPodResourceInfoInput input)
     {
-        return await _appService.GetAppPodResourceInfoIndexListAsync(input);
+        return await _appService.GetAppPodResourceInfoListAsync(input);
     }
 }

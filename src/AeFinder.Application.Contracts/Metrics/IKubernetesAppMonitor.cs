@@ -6,7 +6,5 @@ namespace AeFinder.Metrics;
 
 public interface IKubernetesAppMonitor
 {
-    Task<List<AppPodResourceInfoDto>> GetAppAllPodResourcesAsync();
-
     Task<List<AppPodResourceInfoDto>> GetAppPodsResourceInfoFromPrometheusAsync(List<string> podsName);
 }

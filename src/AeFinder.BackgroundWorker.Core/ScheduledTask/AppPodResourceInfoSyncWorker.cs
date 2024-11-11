@@ -14,7 +14,7 @@ using Volo.Abp.Uow;
 
 namespace AeFinder.BackgroundWorker.ScheduledTask;
 
-public class AppPodResourceInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
+public class AppPodResourceInfoSyncWorker: AppPodInfoSyncWorkerBase, ISingletonDependency
 {
     private readonly ILogger<AppPodResourceInfoSyncWorker> _logger;
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
@@ -25,7 +25,7 @@ public class AppPodResourceInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
         IKubernetesAppMonitor kubernetesAppMonitor,
         IEntityMappingRepository<AppPodInfoIndex, string> appPodInfoEntityMappingRepository,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
-        IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
+        IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory, logger, kubernetesAppMonitor)
     {
         _logger = logger;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
@@ -59,38 +59,8 @@ public class AppPodResourceInfoSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
                 break;
             }
 
-            var podNames = podInfoIndexList.Select(p => p.PodName).ToList();
-            var prometheusPodsInfo = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podNames);
-            //Update pod resource usage
-            foreach (var podInfoIndex in podInfoIndexList)
-            {
-                var prometheusPodInfo = prometheusPodsInfo.FirstOrDefault(p => p.PodName == podInfoIndex.PodName);
-                if (prometheusPodInfo == null)
-                {
-                    _logger.LogInformation($"[AppPodResourceInfoSyncWorker]Pod {podInfoIndex.PodName} not found.");
-                    continue;
-                }
-
-                podInfoIndex.UsageTimestamp = prometheusPodInfo.Timestamp;
-                podInfoIndex.CpuUsage = prometheusPodInfo.CpuUsage;
-                podInfoIndex.MemoryUsage = prometheusPodInfo.MemoryUsage;
-
-                foreach (var containerInfo in podInfoIndex.Containers)
-                {
-                    var prometheusContainerInfo =
-                        prometheusPodInfo.Containers.FirstOrDefault(c =>
-                            c.ContainerName == containerInfo.ContainerName);
-                    if (prometheusContainerInfo == null)
-                    {
-                        _logger.LogInformation($"[AppPodResourceInfoSyncWorker]Container {containerInfo.ContainerName} not found.");
-                        continue;
-                    }
-
-                    containerInfo.UsageTimestamp = prometheusContainerInfo.Timestamp;
-                    containerInfo.CpuUsage = prometheusContainerInfo.CpuUsage;
-                    containerInfo.MemoryUsage = prometheusContainerInfo.MemoryUsage;
-                }
-            }
+            //Update pod resource usage info
+            podInfoIndexList = await UpdatePodResourceUsageAsync(podInfoIndexList);
 
             await _appPodInfoEntityMappingRepository.UpdateManyAsync(podInfoIndexList);
 

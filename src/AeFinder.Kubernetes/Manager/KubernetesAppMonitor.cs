@@ -22,31 +22,6 @@ public class KubernetesAppMonitor : IKubernetesAppMonitor, ISingletonDependency
         _kubernetesClientAdapter = kubernetesClientAdapter;
         _prometheusClient = prometheusClient;
     }
-    
-    public async Task<List<AppPodResourceInfoDto>> GetAppAllPodResourcesAsync()
-    {
-        var result = new List<AppPodResourceInfoDto>();
-        var podsMetrics =
-            await _kubernetesClientAdapter.GetKubernetesPodsMetricsByNamespaceAsync(KubernetesConstants.AppNameSpace);
-        
-        foreach (var podMetric in podsMetrics.Items)
-        {
-            var podInfoDto = new AppPodResourceInfoDto();
-            podInfoDto.PodName = podMetric.Metadata.Name;
-            podInfoDto.Timestamp = podMetric.Timestamp == null ? 0 : ToUnixTimeMilliseconds(podMetric.Timestamp.Value);
-            podInfoDto.Containers = new List<PodContainerResourceDto>();
-            foreach (var containerMetric in podMetric.Containers)
-            {
-                var containerResourceDto = new PodContainerResourceDto();
-                containerResourceDto.CpuUsage = containerMetric.Usage["cpu"].ToString();
-                containerResourceDto.MemoryUsage = containerMetric.Usage["memory"].ToString();
-                podInfoDto.Containers.Add(containerResourceDto);
-            }
-            result.Add(podInfoDto);
-        }
-
-        return result;
-    }
 
     public async Task<List<AppPodResourceInfoDto>> GetAppPodsResourceInfoFromPrometheusAsync(List<string> podsName)
     {
@@ -84,46 +59,7 @@ public class KubernetesAppMonitor : IKubernetesAppMonitor, ISingletonDependency
                 //container metric
                 else
                 {
-                    if (cpuUsageDto.Metric.Container == KubernetesConstants.FileBeatContainerName)
-                    {
-                        var fileBeatContainerInfo = podInfo.Containers.FirstOrDefault(c =>
-                            c.ContainerName == KubernetesConstants.FileBeatContainerName);
-                        if (fileBeatContainerInfo == null)
-                        {
-                            fileBeatContainerInfo = new PodContainerResourceDto()
-                            {
-                                ContainerName = cpuUsageDto.Metric.Container,
-                                Timestamp = Convert.ToInt64(cpuUsageDto.Value[0]),
-                                CpuUsage = cpuUsageDto.Value[1].ToString()
-                            };
-                            podInfo.Containers.Add(fileBeatContainerInfo);
-                        }
-                        else
-                        {
-                            fileBeatContainerInfo.Timestamp = Convert.ToInt64(cpuUsageDto.Value[0]);
-                            fileBeatContainerInfo.CpuUsage = cpuUsageDto.Value[1].ToString();
-                        }
-                    }
-                    else
-                    {
-                        var appContainerInfo = podInfo.Containers.FirstOrDefault(c =>
-                            c.ContainerName == cpuUsageDto.Metric.Container);
-                        if (appContainerInfo == null)
-                        {
-                            appContainerInfo = new PodContainerResourceDto()
-                            {
-                                ContainerName = cpuUsageDto.Metric.Container,
-                                Timestamp = Convert.ToInt64(cpuUsageDto.Value[0]),
-                                CpuUsage = cpuUsageDto.Value[1].ToString()
-                            };
-                            podInfo.Containers.Add(appContainerInfo);
-                        }
-                        else
-                        {
-                            appContainerInfo.Timestamp = Convert.ToInt64(cpuUsageDto.Value[0]);
-                            appContainerInfo.CpuUsage = cpuUsageDto.Value[1].ToString();
-                        }
-                    }
+                    await SetContainerCpuUsageInfoAsync(podInfo, cpuUsageDto);
                 }
             }
         }
@@ -152,56 +88,53 @@ public class KubernetesAppMonitor : IKubernetesAppMonitor, ISingletonDependency
                 //container metric
                 else
                 {
-                    if (memoryUsageDto.Metric.Container == KubernetesConstants.FileBeatContainerName)
-                    {
-                        var fileBeatContainerInfo = podInfo.Containers.FirstOrDefault(c =>
-                            c.ContainerName == KubernetesConstants.FileBeatContainerName);
-                        if (fileBeatContainerInfo == null)
-                        {
-                            fileBeatContainerInfo = new PodContainerResourceDto()
-                            {
-                                ContainerName = memoryUsageDto.Metric.Container,
-                                Timestamp = Convert.ToInt64(memoryUsageDto.Value[0]),
-                                MemoryUsage = memoryUsageDto.Value[1].ToString()
-                            };
-                            podInfo.Containers.Add(fileBeatContainerInfo);
-                        }
-                        else
-                        {
-                            fileBeatContainerInfo.Timestamp = Convert.ToInt64(memoryUsageDto.Value[0]);
-                            fileBeatContainerInfo.MemoryUsage = memoryUsageDto.Value[1].ToString();
-                        }
-                    }
-                    else
-                    {
-                        var appContainerInfo = podInfo.Containers.FirstOrDefault(c =>
-                            c.ContainerName == memoryUsageDto.Metric.Container);
-                        if (appContainerInfo == null)
-                        {
-                            appContainerInfo = new PodContainerResourceDto()
-                            {
-                                ContainerName = memoryUsageDto.Metric.Container,
-                                Timestamp = Convert.ToInt64(memoryUsageDto.Value[0]),
-                                MemoryUsage = memoryUsageDto.Value[1].ToString()
-                            };
-                            podInfo.Containers.Add(appContainerInfo);
-                        }
-                        else
-                        {
-                            appContainerInfo.Timestamp = Convert.ToInt64(memoryUsageDto.Value[0]);
-                            appContainerInfo.MemoryUsage = memoryUsageDto.Value[1].ToString();
-                        }
-                    }
+                    await SetContainerMemoryUsageInfoAsync(podInfo, memoryUsageDto);
                 }
             }
         }
 
         return result;
     }
-    
-    private static long ToUnixTimeMilliseconds(DateTime value)
+
+    private async Task SetContainerCpuUsageInfoAsync(AppPodResourceInfoDto podInfo, PrometheusContainerUsageDto cpuUsageDto)
     {
-        var span = value - DateTime.UnixEpoch;
-        return (long) span.TotalMilliseconds;
+        var appContainerInfo = podInfo.Containers.FirstOrDefault(c =>
+            c.ContainerName == cpuUsageDto.Metric.Container);
+        if (appContainerInfo == null)
+        {
+            appContainerInfo = new PodContainerResourceDto()
+            {
+                ContainerName = cpuUsageDto.Metric.Container,
+                Timestamp = Convert.ToInt64(cpuUsageDto.Value[0]),
+                CpuUsage = cpuUsageDto.Value[1].ToString()
+            };
+            podInfo.Containers.Add(appContainerInfo);
+        }
+        else
+        {
+            appContainerInfo.Timestamp = Convert.ToInt64(cpuUsageDto.Value[0]);
+            appContainerInfo.CpuUsage = cpuUsageDto.Value[1].ToString();
+        }
+    }
+
+    private async Task SetContainerMemoryUsageInfoAsync(AppPodResourceInfoDto podInfo, PrometheusContainerUsageDto memoryUsageDto)
+    {
+        var appContainerInfo = podInfo.Containers.FirstOrDefault(c =>
+            c.ContainerName == memoryUsageDto.Metric.Container);
+        if (appContainerInfo == null)
+        {
+            appContainerInfo = new PodContainerResourceDto()
+            {
+                ContainerName = memoryUsageDto.Metric.Container,
+                Timestamp = Convert.ToInt64(memoryUsageDto.Value[0]),
+                MemoryUsage = memoryUsageDto.Value[1].ToString()
+            };
+            podInfo.Containers.Add(appContainerInfo);
+        }
+        else
+        {
+            appContainerInfo.Timestamp = Convert.ToInt64(memoryUsageDto.Value[0]);
+            appContainerInfo.MemoryUsage = memoryUsageDto.Value[1].ToString();
+        }
     }
 }

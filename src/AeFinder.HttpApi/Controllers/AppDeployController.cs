@@ -167,11 +167,11 @@ public class AppDeployController : AeFinderController
         return await _appDeployService.GetPodListWithPagingAsync(appId, pageSize, continueToken);
     }
     
-    [HttpGet]
-    [Route("prometheus-pod")]
-    [Authorize(Policy = "OnlyAdminAccess")]
-    public async Task<List<AppPodResourceInfoDto>> GetPodResourceInfoAsync(string podName)
-    {
-        return await _appDeployService.GetPodResourceInfoAsync(podName);
-    }
+    // [HttpGet]
+    // [Route("prometheus-pod")]
+    // [Authorize(Policy = "OnlyAdminAccess")]
+    // public async Task<List<AppPodResourceInfoDto>> GetPodResourceInfoAsync(string podName)
+    // {
+    //     return await _appDeployService.GetPodResourceInfoAsync(podName);
+    // }
 }

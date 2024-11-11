@@ -87,11 +87,11 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         return podsPageResult;
     }
 
-    public async Task<List<AppPodResourceInfoDto>> GetPodResourceInfoAsync(string podName)
-    {
-        List<string> podsName = new List<string>();
-        podsName.Add(podName);
-        var podResourceResult = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podsName);
-        return podResourceResult;
-    }
+    // public async Task<List<AppPodResourceInfoDto>> GetPodResourceInfoAsync(string podName)
+    // {
+    //     List<string> podsName = new List<string>();
+    //     podsName.Add(podName);
+    //     var podResourceResult = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podsName);
+    //     return podResourceResult;
+    // }
 }
