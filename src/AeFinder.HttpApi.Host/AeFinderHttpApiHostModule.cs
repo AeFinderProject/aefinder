@@ -7,6 +7,7 @@ using AeFinder.Apps;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.Logger;
+using AeFinder.Metrics;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
 using AeFinder.Options;
@@ -85,6 +86,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         ConfigureSwaggerServices(context, configuration);
         context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
+        context.Services.AddTransient<IKubernetesAppMonitor, KubernetesAppMonitor>();
         Configure<AbpAuditingOptions>(options =>
         {
             options.IsEnabled = false; //Disables the auditing system

@@ -5,6 +5,7 @@ using AeFinder.BackgroundWorker.Options;
 using AeFinder.BackgroundWorker.ScheduledTask;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
+using AeFinder.Metrics;
 using AeFinder.MongoDb;
 using AElf.EntityMapping.Options;
 using AElf.OpenTelemetry;
@@ -44,6 +45,7 @@ public class AeFinderBackGroundModule : AbpModule
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AeFinderBackGroundModule>(); });
         context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
+        context.Services.AddTransient<IKubernetesAppMonitor, KubernetesAppMonitor>();
         ConfigureTokenCleanupService();
         ConfigureEsIndexCreation();
         ConfigureCache(configuration);
