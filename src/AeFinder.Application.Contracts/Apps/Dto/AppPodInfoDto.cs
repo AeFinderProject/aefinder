@@ -17,6 +17,7 @@ public class AppPodInfoDto
     public int ReadyContainersCount { get; set; }
     public int TotalContainersCount { get; set; }
     public double AgeSeconds { get; set; }
+    public long UsageTimestamp { get; set; }
     public string CpuUsage { get; set; }
     public string MemoryUsage { get; set; }
     public List<PodContainerDto> Containers { get; set; }
@@ -32,6 +33,7 @@ public class PodContainerDto
     public string CurrentState { get; set; }
     public string RequestCpu { get; set; }
     public string RequestMemory { get; set; }
+    public long UsageTimestamp { get; set; }
     public string CpuUsage { get; set; }
     public string MemoryUsage { get; set; }
 }
