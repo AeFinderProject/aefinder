@@ -5,6 +5,7 @@ using AeFinder.App.Deploy;
 using AeFinder.Apps.Dto;
 using AeFinder.BlockScan;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Metrics;
 using Orleans;
@@ -38,6 +39,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     {
         var chainIds = await GetDeployChainIdAsync(appId, version);
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(appId, version, imageName, chainIds);
+        await _appResourceLimitProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Start);
         return graphqlUrl;
     }
 
@@ -45,6 +47,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     {
         var chainIds = await GetSubscriptionChainIdAsync(appId, version);
         await _blockScanAppService.PauseAsync(appId, version);
+        await _appResourceLimitProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Stop);
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
     }
 
@@ -94,4 +97,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     //     var podResourceResult = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podsName);
     //     return podResourceResult;
     // }
+
+    
+    
 }

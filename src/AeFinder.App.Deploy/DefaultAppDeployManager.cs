@@ -41,4 +41,9 @@ public class DefaultAppDeployManager : IAppDeployManager
     {
         return new AppPodsPageResultDto();
     }
+
+    public async Task<AppPodOperationSnapshotDto> GetPodResourceSnapshotAsync(string appId, string version)
+    {
+        return new AppPodOperationSnapshotDto();
+    }
 }

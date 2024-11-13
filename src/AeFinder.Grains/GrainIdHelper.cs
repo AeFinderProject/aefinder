@@ -121,4 +121,9 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(key,dateTime.ToString("yyyyMM"));
     }
+    
+    public static string GenerateAppPodOperationSnapshotGrainId(string appId, string version)
+    {
+        return GenerateGrainId(appId, version);
+    }
 }
