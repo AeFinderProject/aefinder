@@ -5,6 +5,8 @@ using AeFinder.Apps.Eto;
 using AeFinder.Kubernetes.Adapter;
 using AeFinder.Kubernetes.ResourceDefinition;
 using AeFinder.Options;
+using AElf.ExceptionHandler;
+using k8s;
 using k8s.Autorest;
 using k8s.Models;
 using Microsoft.Extensions.Logging;
@@ -15,7 +17,7 @@ using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Kubernetes.Manager;
 
-public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
+public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependency
 {
     // private readonly k8s.Kubernetes _k8sClient;
     private readonly KubernetesOptions _kubernetesOptions;
@@ -61,32 +63,6 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         });
 
         return await CreateQueryClientTypeAppPodAsync(appId, version, imageName);
-    }
-
-    private async Task CheckNameSpaceAsync()
-    {
-        // var namespaces = await _kubernetesClientAdapter.ListNamespaceAsync();
-
-        var nameSpace = KubernetesConstants.AppNameSpace;
-        // var namespaceExists = namespaces.Items.Any(n => n.Metadata.Name == nameSpace);
-        //
-        // if (!namespaceExists)
-        // {
-        //     _logger.LogInformation($"Namespace '{nameSpace}' does not exist.");
-        //     var newNamespace = NameSpaceHelper.CreateNameSpaceDefinition(nameSpace);
-        //     var result = await _kubernetesClientAdapter.CreateNamespaceAsync(newNamespace);
-        //     _logger.LogInformation($"Namespace created: {result.Metadata.Name}");
-        // }
-
-        try
-        {
-            await _kubernetesClientAdapter.ReadNamespaceAsync(nameSpace);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Namespace '{nameSpace}' does not exist. An error occurred: {ex.Message}");
-            throw ex;
-        }
     }
 
     private async Task CreateFullClientTypeAppPodAsync(string appId, string version, string imageName, string chainId)
@@ -319,48 +295,34 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
     {
         return $"/{appId}/{version}/graphql";
     }
-
+    
     private string GetGraphQLPlaygroundPath(string appId, string version)
     {
         return $"/{appId}/{version}/ui/playground";
     }
 
-    public async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
+    [ExceptionHandler([typeof(HttpOperationException)], TargetType = typeof(KubernetesAppManager),
+        MethodName = nameof(HandleHttpOperationExceptionAsync))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(KubernetesAppManager),
+        MethodName = nameof(HandleExceptionAsync))]
+    public virtual async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
     {
-        try
+        var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+            KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
+        if (serviceMonitors == null)
         {
-            var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(
-                KubernetesConstants.MonitorGroup,
-                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
-                KubernetesConstants.MonitorPlural);
-            if (serviceMonitors == null)
-            {
-                _logger.LogError("Failed to retrieve service monitors, the result is null");
-                return false;
-            }
-
-            var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
-            foreach (var serviceMonitor in serviceMonitorList!.Items)
-            {
-                if (serviceMonitor.Metadata.Name == serviceMonitorName)
-                    return true;
-            }
-
-            return false;
-        }
-        catch (HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-        {
-            // Handle resources do not exist
-            _logger.LogInformation($"The service monitor resource {serviceMonitorName} does not exist.");
-            return false;
-        }
-        catch (Exception ex)
-        {
-            // Handle other potential exceptions
-            _logger.LogError(ex, $"List service monitor resource exception: {ex.Message}");
+            _logger.LogError("Failed to retrieve service monitors, the result is null");
             return false;
         }
 
+        var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
+        foreach (var serviceMonitor in serviceMonitorList!.Items)
+        {
+            if (serviceMonitor.Metadata.Name == serviceMonitorName)
+                return true;
+        }
+
+        return false;
     }
 
     public async Task DestroyAppAsync(string appId, string version, List<string> chainIds)

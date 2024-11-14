@@ -1,4 +1,5 @@
 using AeFinder.BlockScan;
+using AElf.ExceptionHandler;
 using AElf.OpenTelemetry.ExecutionTime;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -9,7 +10,7 @@ using Volo.Abp.EventBus.Distributed;
 namespace AeFinder.App.Handlers;
 
 [AggregateExecutionTime]
-public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDependency
+public partial class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDependency
 {
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly MessageQueueOptions _messageQueueOptions;
@@ -46,23 +47,19 @@ public class SubscribedBlockHandler : ISubscribedBlockHandler, ISingletonDepende
         var retryCount = 0;
         while (retryCount < _messageQueueOptions.RetryTimes)
         {
-            try
+            if (await PublishMessageToEventBusAsync(subscribedBlock, retryCount))
             {
-                await _distributedEventBus.PublishAsync(subscribedBlock);
                 break;
             }
-            catch (Exception e)
-            {
-                Logger.LogError(e, "[{ChainId}] Publish subscribedBlock event failed, retrying..." + retryCount,
-                    subscribedBlock.ChainId);
-                retryCount++;
-                await Task.Delay(_messageQueueOptions.RetryInterval);
-
-                if (retryCount >= _messageQueueOptions.RetryTimes)
-                {
-                    throw e;
-                }
-            }
+            retryCount++;
         }
+    }
+
+    [ExceptionHandler([typeof(Exception)], TargetType = typeof(SubscribedBlockHandler),
+        MethodName = nameof(HandleSubscribedBlockExceptionAsync))]
+    protected virtual async Task<bool> PublishMessageToEventBusAsync(SubscribedBlockDto subscribedBlock, int retryCount)
+    {
+        await _distributedEventBus.PublishAsync(subscribedBlock);
+        return true;
     }
 }
