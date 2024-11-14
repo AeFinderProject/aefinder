@@ -3,6 +3,7 @@ using AeFinder.OpenIddict;
 using AeFinder.OpenIddict.Login;
 using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch;
+using AElf.ExceptionHandler.ABP;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -33,7 +34,8 @@ namespace AeFinder;
     typeof(AbpSettingManagementDomainModule),
     typeof(AbpTenantManagementDomainModule),
     typeof(AbpEmailingModule),
-    typeof(AElfEntityMappingElasticsearchModule)
+    typeof(AElfEntityMappingElasticsearchModule),
+    typeof(AOPExceptionModule)
 )]
 public class AeFinderDomainModule : AbpModule
 {

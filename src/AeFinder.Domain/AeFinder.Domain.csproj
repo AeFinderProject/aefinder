@@ -28,6 +28,7 @@
     <PackageReference Include="Volo.Abp.BackgroundJobs.Domain" Version="8.2.0" />
     <PackageReference Include="Volo.Abp.AuditLogging.Domain" Version="8.2.0" />
     <PackageReference Include="Volo.Abp.SettingManagement.Domain" Version="8.2.0" />
+    <PackageReference Include="AElf.ExceptionHandler.ABP" Version="8.2.5" />
   </ItemGroup>
     
 </Project>

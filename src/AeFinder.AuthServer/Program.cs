@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using AElf.ExceptionHandler.ABP;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,6 +40,7 @@ public class Program
                 .InitAppConfiguration(false)
                 .UseApolloForConfigureHostBuilder()
                 .UseAutofac()
+                .UseAElfExceptionHandler()
                 .UseSerilog();
             await builder.AddApplicationAsync<AeFinderAuthServerModule>();
             var app = builder.Build();
