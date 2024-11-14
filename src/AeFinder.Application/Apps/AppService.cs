@@ -437,11 +437,20 @@ public class AppService : AeFinderAppService, IAppService
         }
 
         var pods = queryable.OrderByDescending(o => o.StartTimestamp).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
+        var list = ObjectMapper.Map<List<AppPodUsageDurationIndex>, List<AppPodUsageDurationDto>>(pods);
+        foreach (var dto in list)
+        {
+            if (dto.EndTimestamp == 0)
+            {
+                dto.EndTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                dto.TotalUsageDuration = dto.EndTimestamp - dto.StartTimestamp;
+            }
+        }
         var totalCount = queryable.Count();
         return new PagedResultDto<AppPodUsageDurationDto>
         {
             TotalCount = totalCount,
-            Items = ObjectMapper.Map<List<AppPodUsageDurationIndex>, List<AppPodUsageDurationDto>>(pods)
+            Items = list
         };
     }
     
