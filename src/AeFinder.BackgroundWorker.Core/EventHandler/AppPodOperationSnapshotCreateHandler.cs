@@ -2,7 +2,6 @@ using AeFinder.App.Es;
 using AeFinder.Apps;
 using AeFinder.Apps.Eto;
 using AElf.EntityMapping.Repositories;
-using Grpc.Net.Client.Balancer;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;

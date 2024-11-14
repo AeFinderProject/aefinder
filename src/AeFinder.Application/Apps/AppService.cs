@@ -38,6 +38,7 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IAppDeployManager _appDeployManager;
     private readonly IEntityMappingRepository<AppPodInfoIndex, string> _appPodInfoEntityMappingRepository;
+    private readonly IEntityMappingRepository<AppPodUsageDurationIndex, string> _appPodUsageDurationEntityMappingRepository;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
@@ -47,6 +48,7 @@ public class AppService : AeFinderAppService, IAppService
         IOrganizationAppService organizationAppService,
         IEntityMappingRepository<AppInfoIndex, string> appIndexRepository,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitIndexRepository,
+        IEntityMappingRepository<AppPodUsageDurationIndex, string> appPodUsageDurationEntityMappingRepository,
         IEntityMappingRepository<AppPodInfoIndex, string> appPodInfoEntityMappingRepository)
     {
         _clusterClient = clusterClient;
@@ -59,6 +61,7 @@ public class AppService : AeFinderAppService, IAppService
         _distributedEventBus = distributedEventBus;
         _appDeployManager = appDeployManager;
         _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
+        _appPodUsageDurationEntityMappingRepository = appPodUsageDurationEntityMappingRepository;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -417,6 +420,28 @@ public class AppService : AeFinderAppService, IAppService
         {
             TotalCount = totalCount,
             Items = ObjectMapper.Map<List<AppPodInfoIndex>, List<AppPodInfoDto>>(pods)
+        };
+    }
+
+    public async Task<PagedResultDto<AppPodUsageDurationDto>> GetAppPodUsageDurationListAsync(GetAppPodUsageDurationInput input)
+    {
+        var queryable = await _appPodUsageDurationEntityMappingRepository.GetQueryableAsync();
+        if (!input.AppId.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.AppId == input.AppId);
+        }
+
+        if (!input.Version.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.AppVersion == input.Version);
+        }
+
+        var pods = queryable.OrderByDescending(o => o.StartTimestamp).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
+        var totalCount = queryable.Count();
+        return new PagedResultDto<AppPodUsageDurationDto>
+        {
+            TotalCount = totalCount,
+            Items = ObjectMapper.Map<List<AppPodUsageDurationIndex>, List<AppPodUsageDurationDto>>(pods)
         };
     }
     
