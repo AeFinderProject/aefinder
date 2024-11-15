@@ -18,17 +18,15 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider, ISingletonDep
     private readonly IClusterClient _clusterClient;
     private readonly KubernetesOptions _kubernetesOptions;
     private readonly AppDeployOptions _appDeployOptions;
-    private readonly IAppDeployManager _appDeployManager;
 
     public AppResourceLimitProvider(IOptionsSnapshot<OperationLimitOptions> operationLimitOptions,
         IClusterClient clusterClient, IOptionsSnapshot<KubernetesOptions> kubernetesOptions,
-        IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions)
+        IOptionsSnapshot<AppDeployOptions> appDeployOptions)
     {
         _operationLimitOptions = operationLimitOptions.Value;
         _clusterClient = clusterClient;
         _kubernetesOptions = kubernetesOptions.Value;
         _appDeployOptions = appDeployOptions.Value;
-        _appDeployManager = appDeployManager;
     }
 
     public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
