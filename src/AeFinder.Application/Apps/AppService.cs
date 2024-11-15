@@ -32,6 +32,7 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IUserAppService _userAppService;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
+    private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
     private readonly IElasticIndexService _elasticIndexService;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appIndexRepository;
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitIndexRepository;
@@ -42,6 +43,7 @@ public class AppService : AeFinderAppService, IAppService
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
+        IAppOperationSnapshotProvider appOperationSnapshotProvider,
         IAppDeployManager appDeployManager,
         IDistributedEventBus distributedEventBus,
         IElasticIndexService elasticIndexService,
@@ -57,6 +59,7 @@ public class AppService : AeFinderAppService, IAppService
         _appIndexRepository = appIndexRepository;
         _appLimitIndexRepository = appLimitIndexRepository;
         _appResourceLimitProvider = appResourceLimitProvider;
+        _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _elasticIndexService = elasticIndexService;
         _distributedEventBus = distributedEventBus;
         _appDeployManager = appDeployManager;
@@ -334,13 +337,13 @@ public class AppService : AeFinderAppService, IAppService
         {
             if (!currentVersion.IsNullOrEmpty())
             {
-                await _appResourceLimitProvider.SetAppPodOperationSnapshotAsync(appId, currentVersion,
+                await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, currentVersion,
                     AppPodOperationType.ResourceChange);
             }
 
             if (!pendingVersion.IsNullOrEmpty())
             {
-                await _appResourceLimitProvider.SetAppPodOperationSnapshotAsync(appId, pendingVersion,
+                await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, pendingVersion,
                     AppPodOperationType.ResourceChange);
             }
         }
