@@ -108,14 +108,4 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider, ISingletonDep
 
         return resourceLimitDto;
     }
-    
-    public async Task SetAppPodOperationSnapshotAsync(string appId, string version, AppPodOperationType operationType)
-    {
-        var appPodResourceSnapshot = await _appDeployManager.GetPodResourceSnapshotAsync(appId, version);
-        appPodResourceSnapshot.PodOperationType = operationType;
-        var appPodOperationSnapshotGrain =
-            _clusterClient.GetGrain<IAppPodOperationSnapshotGrain>(
-                GrainIdHelper.GenerateAppPodOperationSnapshotGrainId(appId, version));
-        await appPodOperationSnapshotGrain.SetAsync(appPodResourceSnapshot);
-    }
 }
