@@ -11,6 +11,7 @@ using AeFinder.App.Deploy;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Options;
+using AElf.ExceptionHandler;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,7 +22,7 @@ namespace AeFinder.Apps;
 
 [RemoteService(IsEnabled = false)]
 [DisableAuditing]
-public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
+public partial class AppAttachmentService : AeFinderAppService, IAppAttachmentService
 {
     private readonly IClusterClient _clusterClient;
     private readonly IAwsS3ClientService _awsS3ClientService;
@@ -93,7 +94,7 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
                 fileNameWithExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension);
                 var compressedData = ZipHelper.ConvertIFormFileToByteArray(attachment);
                 string jsonData = ZipHelper.DecompressDeflateData(compressedData);
-                if (!IsValidJson(jsonData))
+                if (!await IsValidJsonAsync(jsonData))
                 {
                     throw new UserFriendlyException($"Attachment {fileNameWithExtension} json is not valid.");
                 }
@@ -152,18 +153,13 @@ public class AppAttachmentService : AeFinderAppService, IAppAttachmentService
             throw new UserFriendlyException("Only support 5 attachments.");
         }
     }
-    
-    public static bool IsValidJson(string jsonString)
+
+    [ExceptionHandler([typeof(JsonException)], TargetType = typeof(AppAttachmentService),
+        MethodName = nameof(HandleJsonExceptionAsync))]
+    protected virtual Task<bool> IsValidJsonAsync(string jsonString)
     {
-        try
-        {
-            JsonDocument.Parse(jsonString);
-            return true;
-        }
-        catch (JsonException exception) 
-        {
-            return false;
-        }
+        JsonDocument.Parse(jsonString);
+        return Task.FromResult(true);
     }
 
     public async Task UploadAppAttachmentAsync(Stream fileStream, string appId, string version, string fileKey,

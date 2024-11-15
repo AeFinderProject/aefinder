@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AElf.ExceptionHandler.ABP;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,6 +57,7 @@ public class Program
                 .UseApolloForConfigureHostBuilder()
                 .UseOrleansClient()
                 .UseAutofac()
+                .UseAElfExceptionHandler()
                 .UseSerilog();
             await builder.AddApplicationAsync<AeFinderHttpApiHostModule>();
             var app = builder.Build();

@@ -126,15 +126,8 @@ public class AeFinderCodeOpsTestBase : AeFinderTestBase<AeFinderCodeOpsTestModul
 
         if (References.Any(r => r.FilePath == file)) return true;
 
-        try
-        {
-            var reference = MetadataReference.CreateFromFile(file);
-            References.Add(reference);
-        }
-        catch
-        {
-            return false;
-        }
+        var reference = MetadataReference.CreateFromFile(file);
+        References.Add(reference);
 
         return true;
     }
