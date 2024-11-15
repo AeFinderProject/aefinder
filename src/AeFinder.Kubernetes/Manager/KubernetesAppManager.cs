@@ -833,11 +833,6 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             $"{KubernetesConstants.AppIdLabelKey}={appId},{KubernetesConstants.AppVersionLabelKey}={version}";
         var pods = await _kubernetesClientAdapter.ListPodsInNamespaceWithPagingAsync(KubernetesConstants.AppNameSpace,
             labelSelector);
-        if (pods == null)
-        {
-            _logger.LogError($"Get pod resource snapshot error,Unable get {appId} {version} pods");
-            throw new Exception($"Unable get {appId} {version} pods");
-        }
 
         var result = new AppPodOperationSnapshotDto();
         result.AppId = appId;
@@ -873,16 +868,16 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
                     result.AppFullPodRequestCpuCore = requests.ContainsKey("cpu") ? requests["cpu"].ToString() : "";
                     result.AppFullPodRequestMemory =
                         requests.ContainsKey("memory") ? requests["memory"].ToString() : "";
-                    result.AppFullPodLimitCpuCore = limits.ContainsKey("cpu") ? limits["cpu"].ToString() : "";
-                    result.AppFullPodLimitMemory = limits.ContainsKey("memory") ? limits["memory"].ToString() : "";
+                    result.AppFullPodLimitCpuCore = (limits!=null && limits.ContainsKey("cpu")) ? limits["cpu"].ToString() : "";
+                    result.AppFullPodLimitMemory = (limits!=null && limits.ContainsKey("memory")) ? limits["memory"].ToString() : "";
                 }
                 else
                 {
                     result.AppQueryPodRequestCpuCore = requests.ContainsKey("cpu") ? requests["cpu"].ToString() : "";
                     result.AppQueryPodRequestMemory =
                         requests.ContainsKey("memory") ? requests["memory"].ToString() : "";
-                    result.AppQueryPodLimitCpuCore = limits.ContainsKey("cpu") ? limits["cpu"].ToString() : "";
-                    result.AppQueryPodLimitMemory = limits.ContainsKey("memory") ? limits["memory"].ToString() : "";
+                    result.AppQueryPodLimitCpuCore = (limits!=null && limits.ContainsKey("cpu")) ? limits["cpu"].ToString() : "";
+                    result.AppQueryPodLimitMemory = (limits!=null && limits.ContainsKey("memory")) ? limits["memory"].ToString() : "";
                 }
             }
             
