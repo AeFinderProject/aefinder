@@ -18,15 +18,17 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider, ISingletonDep
     private readonly IClusterClient _clusterClient;
     private readonly KubernetesOptions _kubernetesOptions;
     private readonly AppDeployOptions _appDeployOptions;
+    private readonly IAppDeployManager _appDeployManager;
 
     public AppResourceLimitProvider(IOptionsSnapshot<OperationLimitOptions> operationLimitOptions,
         IClusterClient clusterClient, IOptionsSnapshot<KubernetesOptions> kubernetesOptions,
-        IOptionsSnapshot<AppDeployOptions> appDeployOptions)
+        IAppDeployManager appDeployManager, IOptionsSnapshot<AppDeployOptions> appDeployOptions)
     {
         _operationLimitOptions = operationLimitOptions.Value;
         _clusterClient = clusterClient;
         _kubernetesOptions = kubernetesOptions.Value;
         _appDeployOptions = appDeployOptions.Value;
+        _appDeployManager = appDeployManager;
     }
 
     public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
@@ -105,5 +107,15 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider, ISingletonDep
         }
 
         return resourceLimitDto;
+    }
+    
+    public async Task SetAppPodOperationSnapshotAsync(string appId, string version, AppPodOperationType operationType)
+    {
+        var appPodResourceSnapshot = await _appDeployManager.GetPodResourceSnapshotAsync(appId, version);
+        appPodResourceSnapshot.PodOperationType = operationType;
+        var appPodOperationSnapshotGrain =
+            _clusterClient.GetGrain<IAppPodOperationSnapshotGrain>(
+                GrainIdHelper.GenerateAppPodOperationSnapshotGrainId(appId, version));
+        await appPodOperationSnapshotGrain.SetAsync(appPodResourceSnapshot);
     }
 }

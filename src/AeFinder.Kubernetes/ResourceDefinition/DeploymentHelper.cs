@@ -49,12 +49,12 @@ public class DeploymentHelper
     /// <param name="configMapName"></param>
     /// <param name="sideCarConfigMapName"></param>
     /// <returns></returns>
-    public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string appId, string version,
+    public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string appId, string version,string clientType,
         string imageName, string deploymentName, string deploymentLabelName, int replicasCount, string containerName,
         int containerPort, string configMapName, string sideCarConfigMapName, string requestCpu, string requestMemory,
         string maxSurge, string maxUnavailable, string readinessProbeHealthPath = null)
     {
-        var labels = CreateLabels(deploymentLabelName, appId, version);
+        var labels = CreateLabels(deploymentLabelName, appId, version, clientType);
         var deployment = new V1Deployment
         {
             Metadata = new V1ObjectMeta
@@ -84,14 +84,16 @@ public class DeploymentHelper
         return deployment;
     }
 
-    private static Dictionary<string, string> CreateLabels(string deploymentLabelName, string appId, string version)
+    private static Dictionary<string, string> CreateLabels(string deploymentLabelName, string appId, string version,
+        string podType)
     {
         return new Dictionary<string, string>
         {
             { KubernetesConstants.AppLabelKey, deploymentLabelName },
             { KubernetesConstants.MonitorLabelKey, appId },
             { KubernetesConstants.AppIdLabelKey, appId },
-            { KubernetesConstants.AppVersionLabelKey, version }
+            { KubernetesConstants.AppVersionLabelKey, version },
+            { KubernetesConstants.AppPodTypeLabelKey, podType }
         };
     }
 
