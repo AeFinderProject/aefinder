@@ -159,6 +159,9 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
                 "[KubernetesAppManager]Deployment {deploymentName} created, requestCpuCore: {requestCpuCore} requestMemory: {requestMemory}",
                 deploymentName, requestCpuCore, requestMemory);
         }
+
+        //Set the app resource limit as it deployed
+        await _appResourceLimitProvider.SetAppResourceLimitAsync(appId, resourceLimitInfo);
     }
 
     private async Task<string> CreateQueryClientTypeAppPodAsync(string appId, string version, string imageName)
