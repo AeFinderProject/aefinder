@@ -833,6 +833,11 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             $"{KubernetesConstants.AppIdLabelKey}={appId},{KubernetesConstants.AppVersionLabelKey}={version}";
         var pods = await _kubernetesClientAdapter.ListPodsInNamespaceWithPagingAsync(KubernetesConstants.AppNameSpace,
             labelSelector);
+        if (pods == null)
+        {
+            _logger.LogError($"Get pod resource snapshot error,Unable get {appId} {version} pods");
+            throw new Exception($"Unable get {appId} {version} pods");
+        }
 
         var result = new AppPodOperationSnapshotDto();
         result.AppId = appId;
