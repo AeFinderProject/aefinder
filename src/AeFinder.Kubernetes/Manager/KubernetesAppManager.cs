@@ -899,18 +899,7 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             return false;
         }
 
-        if (pod.Metadata.OwnerReferences != null && pod.Metadata.OwnerReferences.Any())
-        {
-            foreach (var ownerRef in pod.Metadata.OwnerReferences)
-            {
-                if (ownerRef.Kind.ToLower() == "deployment")
-                {
-                    var deploymentName = ownerRef.Name;
-                    return deploymentName.Contains("full");
-                }
-            }
-        }
-
-        throw new Exception("Unable to recognize pod type");
+        // throw new Exception("Unable to recognize pod type");
+        return false;
     }
 }
