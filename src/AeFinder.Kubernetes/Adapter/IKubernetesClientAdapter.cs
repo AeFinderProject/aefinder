@@ -77,4 +77,6 @@ public interface IKubernetesClientAdapter
     Task<V1ConfigMap> ReplaceNamespacedConfigMapAsync(V1ConfigMap configMap, string name,
         string namespaceParameter,
         CancellationToken cancellationToken = default(CancellationToken));
+
+    Task<PodMetricsList> GetKubernetesPodsMetricsByNamespaceAsync(string namespaceParameter);
 }

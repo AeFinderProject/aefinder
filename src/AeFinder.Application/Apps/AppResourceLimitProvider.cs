@@ -6,9 +6,11 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Options;
 using GraphQL;
+using Grpc.Net.Client.Balancer;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Apps;
 
@@ -18,15 +20,17 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider, ISingletonDep
     private readonly IClusterClient _clusterClient;
     private readonly KubernetesOptions _kubernetesOptions;
     private readonly AppDeployOptions _appDeployOptions;
+    private readonly IObjectMapper _objectMapper;
 
     public AppResourceLimitProvider(IOptionsSnapshot<OperationLimitOptions> operationLimitOptions,
         IClusterClient clusterClient, IOptionsSnapshot<KubernetesOptions> kubernetesOptions,
-        IOptionsSnapshot<AppDeployOptions> appDeployOptions)
+        IObjectMapper objectMapper,IOptionsSnapshot<AppDeployOptions> appDeployOptions)
     {
         _operationLimitOptions = operationLimitOptions.Value;
         _clusterClient = clusterClient;
         _kubernetesOptions = kubernetesOptions.Value;
         _appDeployOptions = appDeployOptions.Value;
+        _objectMapper = objectMapper;
     }
 
     public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
@@ -105,5 +109,13 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider, ISingletonDep
         }
 
         return resourceLimitDto;
+    }
+
+    public async Task SetAppResourceLimitAsync(string appId, AppResourceLimitDto limitDto)
+    {
+        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
+            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
+        var setLimitDto = _objectMapper.Map<AppResourceLimitDto, SetAppResourceLimitDto>(limitDto);
+        await appResourceLimitGrain.SetAsync(setLimitDto);
     }
 }

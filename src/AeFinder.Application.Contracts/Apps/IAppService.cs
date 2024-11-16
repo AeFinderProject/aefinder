@@ -22,4 +22,7 @@ public interface IAppService
     Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId);
     Task<PagedResultDto<AppResourceLimitIndexDto>> GetAppResourceLimitIndexListAsync(GetAppResourceLimitInput input);
     Task DeleteAppIndexAsync(string indexName);
+    Task<PagedResultDto<AppPodInfoDto>> GetAppPodResourceInfoListAsync(
+        GetAppPodResourceInfoInput input);
+    Task<PagedResultDto<AppPodUsageDurationDto>> GetAppPodUsageDurationListAsync(GetAppPodUsageDurationInput input);
 }

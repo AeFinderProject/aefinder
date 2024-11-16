@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using AElf.ExceptionHandler;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,7 +14,7 @@ namespace AeFinder.DevelopmentTemplate;
 
 [RemoteService(IsEnabled = false)]
 [DisableAuditing]
-public class DevelopmentTemplateAppService : AeFinderAppService, IDevelopmentTemplateAppService
+public partial class DevelopmentTemplateAppService : AeFinderAppService, IDevelopmentTemplateAppService
 {
     private readonly DevTemplateOptions _devTemplateOptions;
 
@@ -31,31 +32,28 @@ public class DevelopmentTemplateAppService : AeFinderAppService, IDevelopmentTem
         var generatedPath = Path.Combine(_devTemplateOptions.TemplatePath, GeneratedProjectFolder, tempFolder);
         var zipFileName = generatedPath + ".zip";
 
-        try
-        {
-            GenerateProject(input.Name, _devTemplateOptions.TemplatePath, generatedPath);
-            ZipHelper.ZipDirectory(zipFileName, generatedPath);
-            var file = await File.ReadAllBytesAsync(zipFileName);
-            return new FileContentResult(file, "application/zip");
-        }
-        catch (Exception e)
-        {
-            var message = $"Generate project: {input.Name} failed.";
-            Logger.LogError(e, message);
-            throw new UserFriendlyException(message);
-        }
-        finally
-        {
-            try
-            {
-                File.Delete(zipFileName);
-                Directory.Delete(generatedPath, true);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError(e, "Failed to clean up temporary files.");
-            }
-        }
+        var file = await GenerateProjectFileAsync(input.Name, zipFileName, generatedPath);
+        return new FileContentResult(file, "application/zip");
+    }
+
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(DevelopmentTemplateAppService),
+        MethodName = nameof(HandleGenerateProjectFileExceptionAsync),
+        FinallyTargetType = typeof(DevelopmentTemplateAppService),
+        FinallyMethodName = nameof(CleanTempFilesAsync))]
+    protected virtual async Task<byte[]> GenerateProjectFileAsync(string projectName, string zipFileName, string generatedPath)
+    {
+        GenerateProject(projectName, _devTemplateOptions.TemplatePath, generatedPath);
+        ZipHelper.ZipDirectory(zipFileName, generatedPath);
+        return await File.ReadAllBytesAsync(zipFileName);
+    }
+
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(DevelopmentTemplateAppService),
+        MethodName = nameof(HandleCleanTempFilesExceptionAsync))]
+    protected virtual Task CleanTempFilesAsync(string projectName, string zipFileName, string generatedPath)
+    {
+        File.Delete(zipFileName);
+        Directory.Delete(generatedPath, true);
+        return Task.CompletedTask;
     }
 
     public void GenerateProject(string projectName, string templatePath, string generatedPath)

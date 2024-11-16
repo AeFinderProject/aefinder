@@ -4,6 +4,7 @@ using AeFinder.Apps;
 using AeFinder.Block;
 using AeFinder.Grains.BlockPush;
 using AeFinder.Grains.Grain.BlockPush;
+using AeFinder.Metrics;
 using AeFinder.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;

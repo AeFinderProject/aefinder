@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AeFinder.User.Dto;
 using AeFinder.User.Provider;
 using AElf;
+using AElf.ExceptionHandler;
 using AElf.Types;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -20,7 +21,7 @@ namespace AeFinder.User;
 
 [RemoteService(IsEnabled = false)]
 [DisableAuditing]
-public class UserAppService : IdentityUserAppService, IUserAppService
+public partial class UserAppService : IdentityUserAppService, IUserAppService
 {
     private readonly IOrganizationUnitRepository _organizationUnitRepository;
     private readonly ILookupNormalizer _lookupNormalizer;
@@ -213,22 +214,8 @@ public class UserAppService : IdentityUserAppService, IUserAppService
             throw new UserFriendlyException(_walletLoginProvider.GetErrorMessage(errors));
         }
         
-        string wallectAddress = string.Empty;
-        try
-        {
-            wallectAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(input.Publickey,
-                input.SignatureVal, input.Timestamp.ToString(), input.CaHash, input.Address, input.ChainId);
-        }
-        catch (SignatureVerifyException verifyException)
-        {
-            throw new UserFriendlyException(verifyException.Message);
-        }
-        catch (Exception e)
-        {
-            Logger.LogError("[BindUserWalletAsync] Signature validation failed: {e}",
-                e.Message);
-            throw;
-        }
+        var wallectAddress = await VerifySignatureAndParseWalletAddressAsync(input.Publickey,
+            input.SignatureVal, input.Timestamp.ToString(), input.CaHash, input.Address, input.ChainId);
         
         //Check if the wallet address is linked to another account
         UserExtensionDto userExtensionDto =
@@ -258,5 +245,16 @@ public class UserAppService : IdentityUserAppService, IUserAppService
         var extensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
         identityUserExtensionDto.WalletAddress = extensionInfo.WalletAddress;
         return identityUserExtensionDto;
+    }
+
+    [ExceptionHandler([typeof(SignatureVerifyException)], TargetType = typeof(UserAppService),
+        MethodName = nameof(HandleSignatureVerifyExceptionAsync))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(UserAppService),
+        MethodName = nameof(HandleExceptionAsync))]
+    protected virtual async Task<string> VerifySignatureAndParseWalletAddressAsync(string publicKeyVal,
+        string signatureVal, string timestampVal, string caHash, string address, string chainId)
+    {
+        return await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(publicKeyVal, signatureVal,
+            timestampVal, caHash, address, chainId);
     }
 }

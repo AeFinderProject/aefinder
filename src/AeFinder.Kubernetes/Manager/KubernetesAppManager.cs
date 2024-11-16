@@ -5,6 +5,8 @@ using AeFinder.Apps.Eto;
 using AeFinder.Kubernetes.Adapter;
 using AeFinder.Kubernetes.ResourceDefinition;
 using AeFinder.Options;
+using AElf.ExceptionHandler;
+using k8s;
 using k8s.Autorest;
 using k8s.Models;
 using Microsoft.Extensions.Logging;
@@ -15,7 +17,7 @@ using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Kubernetes.Manager;
 
-public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
+public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependency
 {
     // private readonly k8s.Kubernetes _k8sClient;
     private readonly KubernetesOptions _kubernetesOptions;
@@ -61,32 +63,6 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         });
 
         return await CreateQueryClientTypeAppPodAsync(appId, version, imageName);
-    }
-
-    private async Task CheckNameSpaceAsync()
-    {
-        // var namespaces = await _kubernetesClientAdapter.ListNamespaceAsync();
-
-        var nameSpace = KubernetesConstants.AppNameSpace;
-        // var namespaceExists = namespaces.Items.Any(n => n.Metadata.Name == nameSpace);
-        //
-        // if (!namespaceExists)
-        // {
-        //     _logger.LogInformation($"Namespace '{nameSpace}' does not exist.");
-        //     var newNamespace = NameSpaceHelper.CreateNameSpaceDefinition(nameSpace);
-        //     var result = await _kubernetesClientAdapter.CreateNamespaceAsync(newNamespace);
-        //     _logger.LogInformation($"Namespace created: {result.Metadata.Name}");
-        // }
-
-        try
-        {
-            await _kubernetesClientAdapter.ReadNamespaceAsync(nameSpace);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Namespace '{nameSpace}' does not exist. An error occurred: {ex.Message}");
-            throw ex;
-        }
     }
 
     private async Task CreateFullClientTypeAppPodAsync(string appId, string version, string imageName, string chainId)
@@ -175,14 +151,18 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         if (!deploymentExists)
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, version,
-                imageName, deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
-                sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable);
+                KubernetesConstants.AppClientTypeFull, chainId, imageName, deploymentName, deploymentLabelName,
+                replicasCount, containerName, targetPort, configMapName, sideCarConfigName, requestCpuCore, requestMemory,
+                maxSurge, maxUnavailable);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(
                 "[KubernetesAppManager]Deployment {deploymentName} created, requestCpuCore: {requestCpuCore} requestMemory: {requestMemory}",
                 deploymentName, requestCpuCore, requestMemory);
         }
+
+        //Set the app resource limit as it deployed
+        await _appResourceLimitProvider.SetAppResourceLimitAsync(appId, resourceLimitInfo);
     }
 
     private async Task<string> CreateQueryClientTypeAppPodAsync(string appId, string version, string imageName)
@@ -254,8 +234,9 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         { 
             var healthPath = GetGraphQLPlaygroundPath(appId, version);
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, version,
-                imageName, deploymentName, deploymentLabelName, replicasCount, containerName, targetPort, configMapName,
-                sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable, healthPath);
+                KubernetesConstants.AppClientTypeQuery, string.Empty, imageName, deploymentName, deploymentLabelName,
+                replicasCount, containerName, targetPort, configMapName, sideCarConfigName, requestCpuCore, requestMemory, 
+                maxSurge, maxUnavailable, healthPath);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(
@@ -296,14 +277,14 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
             _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} created", ingressName);
         }
 
-        //Create query app service monitor
+        //Create app service monitor
         var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId);
         var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
         var metricsPath = rulePath + KubernetesConstants.MetricsPath;
         if (!serviceMonitorExists)
         {
             var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(appId, serviceMonitorName,
-                deploymentName, serviceLabelName, servicePortName, metricsPath);
+                servicePortName, metricsPath);
             //Create Service Monitor
             await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
                 KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
@@ -319,48 +300,34 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
     {
         return $"/{appId}/{version}/graphql";
     }
-
+    
     private string GetGraphQLPlaygroundPath(string appId, string version)
     {
         return $"/{appId}/{version}/ui/playground";
     }
 
-    public async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
+    [ExceptionHandler([typeof(HttpOperationException)], TargetType = typeof(KubernetesAppManager),
+        MethodName = nameof(HandleHttpOperationExceptionAsync))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(KubernetesAppManager),
+        MethodName = nameof(HandleExceptionAsync))]
+    public virtual async Task<bool> ExistsServiceMonitorAsync(string serviceMonitorName)
     {
-        try
+        var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(KubernetesConstants.MonitorGroup,
+            KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace, KubernetesConstants.MonitorPlural);
+        if (serviceMonitors == null)
         {
-            var serviceMonitors = await _kubernetesClientAdapter.ListServiceMonitorAsync(
-                KubernetesConstants.MonitorGroup,
-                KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
-                KubernetesConstants.MonitorPlural);
-            if (serviceMonitors == null)
-            {
-                _logger.LogError("Failed to retrieve service monitors, the result is null");
-                return false;
-            }
-
-            var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
-            foreach (var serviceMonitor in serviceMonitorList!.Items)
-            {
-                if (serviceMonitor.Metadata.Name == serviceMonitorName)
-                    return true;
-            }
-
-            return false;
-        }
-        catch (HttpOperationException ex) when (ex.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
-        {
-            // Handle resources do not exist
-            _logger.LogInformation($"The service monitor resource {serviceMonitorName} does not exist.");
-            return false;
-        }
-        catch (Exception ex)
-        {
-            // Handle other potential exceptions
-            _logger.LogError(ex, $"List service monitor resource exception: {ex.Message}");
+            _logger.LogError("Failed to retrieve service monitors, the result is null");
             return false;
         }
 
+        var serviceMonitorList = ((JsonElement)serviceMonitors).Deserialize<ServiceMonitorList>();
+        foreach (var serviceMonitor in serviceMonitorList!.Items)
+        {
+            if (serviceMonitor.Metadata.Name == serviceMonitorName)
+                return true;
+        }
+
+        return false;
     }
 
     public async Task DestroyAppAsync(string appId, string version, List<string> chainIds)
@@ -760,6 +727,19 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
             {
                 var container = new PodContainerDto();
                 container.ContainerName = v1Container.Name;
+                var requests = v1Container.Resources.Requests;
+                if (requests != null)
+                {
+                    if (requests.ContainsKey("cpu"))
+                    {
+                        container.RequestCpu = requests["cpu"].ToString();
+                    }
+
+                    if (requests.ContainsKey("memory"))
+                    {
+                        container.RequestMemory = requests["memory"].ToString();
+                    }
+                }
                 container.ContainerImage = v1Container.Image;
                 containerList.Add(container);
             }
@@ -849,5 +829,108 @@ public class KubernetesAppManager : IAppDeployManager, ISingletonDependency
         {
             _logger.LogError($"Deployment {deploymentName} does not exist!");
         }
+    }
+
+    public async Task<AppPodOperationSnapshotDto> GetPodResourceSnapshotAsync(string appId, string version)
+    {
+        string labelSelector =
+            $"{KubernetesConstants.AppIdLabelKey}={appId},{KubernetesConstants.AppVersionLabelKey}={version}";
+        var pods = await _kubernetesClientAdapter.ListPodsInNamespaceWithPagingAsync(KubernetesConstants.AppNameSpace,
+            labelSelector);
+
+        var result = new AppPodOperationSnapshotDto();
+        result.AppId = appId;
+        result.AppVersion = version;
+        result.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        result.PodNameList = new List<string>();
+        bool isMultipleInstance = false;
+        var chainIdList = new List<string>();
+        foreach (var pod in pods.Items)
+        {
+            var podName = pod.Metadata.Name;
+            result.PodNameList.Add(podName);
+            bool isFullPod = CheckIsFullPod(pod);
+            if (isFullPod)
+            {
+                var chainId = GetPodChainId(pod);
+                if (!string.IsNullOrEmpty(chainId))
+                {
+                    isMultipleInstance = true;
+                    if (!chainIdList.Contains(chainId))
+                    {
+                        chainIdList.Add(chainId);
+                        result.AppFullPodCount += 1;
+                    }
+                }
+            }
+            else
+            {
+                result.AppQueryPodReplicas += 1;
+            }
+
+            foreach (var container in pod.Spec.Containers)
+            {
+                if (container.Name == KubernetesConstants.FileBeatContainerName)
+                {
+                    continue;
+                }
+                
+                var requests = container.Resources.Requests;
+                var limits = container.Resources.Limits;
+                
+                if (isFullPod)
+                {
+                    result.AppFullPodRequestCpuCore = requests.ContainsKey("cpu") ? requests["cpu"].ToString() : "";
+                    result.AppFullPodRequestMemory =
+                        requests.ContainsKey("memory") ? requests["memory"].ToString() : "";
+                    result.AppFullPodLimitCpuCore = (limits!=null && limits.ContainsKey("cpu")) ? limits["cpu"].ToString() : "";
+                    result.AppFullPodLimitMemory = (limits!=null && limits.ContainsKey("memory")) ? limits["memory"].ToString() : "";
+                }
+                else
+                {
+                    result.AppQueryPodRequestCpuCore = requests.ContainsKey("cpu") ? requests["cpu"].ToString() : "";
+                    result.AppQueryPodRequestMemory =
+                        requests.ContainsKey("memory") ? requests["memory"].ToString() : "";
+                    result.AppQueryPodLimitCpuCore = (limits!=null && limits.ContainsKey("cpu")) ? limits["cpu"].ToString() : "";
+                    result.AppQueryPodLimitMemory = (limits!=null && limits.ContainsKey("memory")) ? limits["memory"].ToString() : "";
+                }
+            }
+            
+        }
+
+        if (!isMultipleInstance)
+        {
+            result.AppFullPodCount = 1;
+        }
+
+        return result;
+    }
+
+    private bool CheckIsFullPod(V1Pod pod)
+    {
+        if (pod.Metadata.Labels.ContainsKey(KubernetesConstants.AppPodTypeLabelKey))
+        {
+            string podType = pod.Metadata.Labels[KubernetesConstants.AppPodTypeLabelKey];
+            if (podType == KubernetesConstants.AppClientTypeFull)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        // throw new Exception("Unable to recognize pod type");
+        return false;
+    }
+
+    private string GetPodChainId(V1Pod pod)
+    {
+        if (pod.Metadata.Labels.ContainsKey(KubernetesConstants.AppPodChainIdLabelKey))
+        {
+            var podChainId = pod.Metadata.Labels[KubernetesConstants.AppPodChainIdLabelKey];
+            return podChainId;
+        }
+
+        return null;
     }
 }

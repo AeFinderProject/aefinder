@@ -22,9 +22,11 @@ public class AppUpgradeHandler : AppHandlerBase,IDistributedEventHandler<AppUpgr
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _appSubscriptionEntityMappingRepository;
     private readonly IEntityMappingRepository<AppSubscriptionPodIndex, string> _appSubscriptionPodEntityMappingRepository;
     private readonly IOrganizationAppService _organizationAppService;
+    private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
 
     public AppUpgradeHandler(IAppDeployManager kubernetesAppManager,
         IOrganizationAppService organizationAppService,IClusterClient clusterClient,
+        IAppOperationSnapshotProvider appOperationSnapshotProvider,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
         IEntityMappingRepository<AppSubscriptionIndex, string> appSubscriptionEntityMappingRepository,
         IEntityMappingRepository<AppSubscriptionPodIndex, string> appSubscriptionPodEntityMappingRepository)
@@ -32,6 +34,7 @@ public class AppUpgradeHandler : AppHandlerBase,IDistributedEventHandler<AppUpgr
         _clusterClient = clusterClient;
         _organizationAppService = organizationAppService;
         _kubernetesAppManager = kubernetesAppManager;
+        _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
         _appSubscriptionEntityMappingRepository = appSubscriptionEntityMappingRepository;
         _appSubscriptionPodEntityMappingRepository = appSubscriptionPodEntityMappingRepository;
@@ -46,6 +49,8 @@ public class AppUpgradeHandler : AppHandlerBase,IDistributedEventHandler<AppUpgr
         var historyVersion = eventData.CurrentVersion;
         
         //destory old version pod
+        await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, eventData.CurrentVersion,
+            AppPodOperationType.Stop);
         await _kubernetesAppManager.DestroyAppAsync(appId, eventData.CurrentVersion, eventData.CurrentVersionChainIds);
         
         //update app info index

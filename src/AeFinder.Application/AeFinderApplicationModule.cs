@@ -1,10 +1,13 @@
+using System;
 using AeFinder.AmazonCloud;
+using AeFinder.ApiTraffic;
 using AeFinder.App.Deploy;
 using AeFinder.BlockSync;
 using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
 using AeFinder.DevelopmentTemplate;
 using AeFinder.Grains;
+using AeFinder.Metrics;
 using AeFinder.Options;
 using AeFinder.User;
 using AElf.EntityMapping;
@@ -19,6 +22,7 @@ using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.TenantManagement;
+using Volo.Abp.Timing;
 
 namespace AeFinder;
 
@@ -53,5 +57,11 @@ public class AeFinderApplicationModule : AbpModule
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
         context.Services.Configure<SignatureGrantOptions>(configuration.GetSection("Signature"));
         context.Services.Configure<ChainOptions>(configuration.GetSection("Chains"));
+        Configure<ApiTrafficOptions>(configuration.GetSection("ApiTraffic"));
+        
+        Configure<AbpClockOptions>(options =>
+        {
+            options.Kind = DateTimeKind.Utc;
+        });
     }
 }

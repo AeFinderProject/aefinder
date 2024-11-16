@@ -13,4 +13,5 @@ public interface IAppDeployManager
         string requestMemory, List<string> chainIds);
     Task UpdateAppQueryPodResourceAsync(string appId, string version, string requestCpu,
         string requestMemory);
+    Task<AppPodOperationSnapshotDto> GetPodResourceSnapshotAsync(string appId, string version);
 }
