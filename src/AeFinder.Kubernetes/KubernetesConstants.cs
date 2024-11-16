@@ -14,6 +14,7 @@ public class KubernetesConstants
      public const string AppIdLabelKey = "app-id";
      public const string AppVersionLabelKey = "app-version";
      public const string AppPodTypeLabelKey = "app-pod-type";
+     public const string AppPodChainIdLabelKey = "app-pod-chainid";
      public const string AppSettingFileName = "appsettings.json";
      public const string AppSettingFileMountPath = "/app/appsettings.json";
      public const string AppLogFileMountPath = "/app/Logs";
