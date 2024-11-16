@@ -6,12 +6,12 @@ namespace AeFinder.Logger.Entities;
 
 public class AppLogIndex
 {
-    public string Log_id { get; set; }
+    [Keyword]public string Log_id { get; set; }
 
     [PropertyName("@timestamp")]
     public DateTime Timestamp { get; set; }
 
-    public string Environment { get; set; }
+    [Keyword]public string Environment { get; set; }
 
     // public string Message { get; set; }
 
@@ -19,5 +19,6 @@ public class AppLogIndex
     //
     // public FileBeatLogAgentInfo Agent { get; set; }
 
-    public AppLogInfo App_log { get; set; }
+    // public AppLogInfo App_log { get; set; }
+    public AppLogDetail App_log { get; set; }
 }
