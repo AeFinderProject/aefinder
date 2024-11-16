@@ -858,6 +858,7 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
                     isMultipleInstance = true;
                     if (!chainIdList.Contains(chainId))
                     {
+                        chainIdList.Add(chainId);
                         result.AppFullPodCount += 1;
                     }
                 }
