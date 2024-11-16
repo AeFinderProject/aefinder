@@ -108,6 +108,13 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         
         CreateMap<AppLogIndex, AppLogRecordDto>();
         CreateMap<AppResourceLimitState, AppResourceLimitDto>();
+        CreateMap<AppResourceLimitDto, SetAppResourceLimitDto>();
+        CreateMap<AppPodOperationSnapshotDto, AppPodOperationSnapshotState>();
+        CreateMap<AppPodOperationSnapshotState, AppPodOperationSnapshotDto>();
+        CreateMap<AppPodOperationSnapshotState, AppPodOperationSnapshotCreateEto>();
+        CreateMap<AppPodOperationSnapshotCreateEto, AppPodOperationSnapshotIndex>();
+        CreateMap<AppPodOperationSnapshotCreateEto, AppPodUsageDurationIndex>();
+        CreateMap<AppPodUsageDurationIndex, AppPodUsageDurationDto>();
         
         CreateMap<AppCreateEto, AppInfoIndex>();
         CreateMap<AppDto, AppInfoIndex>()

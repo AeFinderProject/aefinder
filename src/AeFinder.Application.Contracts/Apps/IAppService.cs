@@ -24,4 +24,5 @@ public interface IAppService
     Task DeleteAppIndexAsync(string indexName);
     Task<PagedResultDto<AppPodInfoDto>> GetAppPodResourceInfoListAsync(
         GetAppPodResourceInfoInput input);
+    Task<PagedResultDto<AppPodUsageDurationDto>> GetAppPodUsageDurationListAsync(GetAppPodUsageDurationInput input);
 }

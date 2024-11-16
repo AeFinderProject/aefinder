@@ -5,6 +5,7 @@ using AeFinder.App.Deploy;
 using AeFinder.Apps.Dto;
 using AeFinder.BlockScan;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Metrics;
 using Orleans;
@@ -21,23 +22,24 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IAppDeployManager _appDeployManager;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
-    private readonly IKubernetesAppMonitor _kubernetesAppMonitor;
+    private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
-        IKubernetesAppMonitor kubernetesAppMonitor,IAppResourceLimitProvider appResourceLimitProvider)
+        IAppOperationSnapshotProvider appOperationSnapshotProvider,IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
         _blockScanAppService = blockScanAppService;
         _appDeployManager = appDeployManager;
         _appResourceLimitProvider = appResourceLimitProvider;
-        _kubernetesAppMonitor = kubernetesAppMonitor;
+        _appOperationSnapshotProvider = appOperationSnapshotProvider;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
     {
         var chainIds = await GetDeployChainIdAsync(appId, version);
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(appId, version, imageName, chainIds);
+        await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Start);
         return graphqlUrl;
     }
 
@@ -45,6 +47,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     {
         var chainIds = await GetSubscriptionChainIdAsync(appId, version);
         await _blockScanAppService.PauseAsync(appId, version);
+        await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Stop);
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
     }
 

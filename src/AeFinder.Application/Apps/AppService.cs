@@ -32,21 +32,25 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IUserAppService _userAppService;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
+    private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
     private readonly IElasticIndexService _elasticIndexService;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appIndexRepository;
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitIndexRepository;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IAppDeployManager _appDeployManager;
     private readonly IEntityMappingRepository<AppPodInfoIndex, string> _appPodInfoEntityMappingRepository;
+    private readonly IEntityMappingRepository<AppPodUsageDurationIndex, string> _appPodUsageDurationEntityMappingRepository;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
+        IAppOperationSnapshotProvider appOperationSnapshotProvider,
         IAppDeployManager appDeployManager,
         IDistributedEventBus distributedEventBus,
         IElasticIndexService elasticIndexService,
         IOrganizationAppService organizationAppService,
         IEntityMappingRepository<AppInfoIndex, string> appIndexRepository,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitIndexRepository,
+        IEntityMappingRepository<AppPodUsageDurationIndex, string> appPodUsageDurationEntityMappingRepository,
         IEntityMappingRepository<AppPodInfoIndex, string> appPodInfoEntityMappingRepository)
     {
         _clusterClient = clusterClient;
@@ -55,10 +59,12 @@ public class AppService : AeFinderAppService, IAppService
         _appIndexRepository = appIndexRepository;
         _appLimitIndexRepository = appLimitIndexRepository;
         _appResourceLimitProvider = appResourceLimitProvider;
+        _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _elasticIndexService = elasticIndexService;
         _distributedEventBus = distributedEventBus;
         _appDeployManager = appDeployManager;
         _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
+        _appPodUsageDurationEntityMappingRepository = appPodUsageDurationEntityMappingRepository;
     }
 
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
@@ -288,7 +294,8 @@ public class AppService : AeFinderAppService, IAppService
         var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
         var currentVersion = allSubscription.CurrentVersion?.Version;
         var pendingVersion = allSubscription.PendingVersion?.Version;
-        
+
+        bool isResourceChanged = false;
         //Check if need update full pod resource
         if (appOldLimit.AppFullPodRequestCpuCore != appLimit.AppFullPodRequestCpuCore ||
             appOldLimit.AppFullPodRequestMemory != appLimit.AppFullPodRequestMemory)
@@ -306,6 +313,7 @@ public class AppService : AeFinderAppService, IAppService
                 await _appDeployManager.UpdateAppFullPodResourceAsync(appId, pendingVersion,
                     appLimit.AppFullPodRequestCpuCore, appLimit.AppFullPodRequestMemory, chainIds);
             }
+            isResourceChanged = true;
         }
         //Check if need update query pod resource
         if (appOldLimit.AppQueryPodRequestCpuCore != appLimit.AppQueryPodRequestCpuCore ||
@@ -321,6 +329,22 @@ public class AppService : AeFinderAppService, IAppService
             {
                 await _appDeployManager.UpdateAppQueryPodResourceAsync(appId, pendingVersion,
                     appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory);
+            }
+            isResourceChanged = true;
+        }
+
+        if (isResourceChanged)
+        {
+            if (!currentVersion.IsNullOrEmpty())
+            {
+                await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, currentVersion,
+                    AppPodOperationType.ResourceChange);
+            }
+
+            if (!pendingVersion.IsNullOrEmpty())
+            {
+                await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, pendingVersion,
+                    AppPodOperationType.ResourceChange);
             }
         }
         
@@ -399,6 +423,37 @@ public class AppService : AeFinderAppService, IAppService
         {
             TotalCount = totalCount,
             Items = ObjectMapper.Map<List<AppPodInfoIndex>, List<AppPodInfoDto>>(pods)
+        };
+    }
+
+    public async Task<PagedResultDto<AppPodUsageDurationDto>> GetAppPodUsageDurationListAsync(GetAppPodUsageDurationInput input)
+    {
+        var queryable = await _appPodUsageDurationEntityMappingRepository.GetQueryableAsync();
+        if (!input.AppId.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.AppId == input.AppId);
+        }
+
+        if (!input.Version.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.AppVersion == input.Version);
+        }
+
+        var pods = queryable.OrderByDescending(o => o.StartTimestamp).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
+        var list = ObjectMapper.Map<List<AppPodUsageDurationIndex>, List<AppPodUsageDurationDto>>(pods);
+        foreach (var dto in list)
+        {
+            if (dto.EndTimestamp == 0)
+            {
+                dto.EndTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                dto.TotalUsageDuration = dto.EndTimestamp - dto.StartTimestamp;
+            }
+        }
+        var totalCount = queryable.Count();
+        return new PagedResultDto<AppPodUsageDurationDto>
+        {
+            TotalCount = totalCount,
+            Items = list
         };
     }
     

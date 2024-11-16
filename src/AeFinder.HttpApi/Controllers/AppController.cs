@@ -133,4 +133,13 @@ public class AppController : AeFinderController
     {
         return await _appService.GetAppPodResourceInfoListAsync(input);
     }
+
+    [HttpGet]
+    [Route("pods-duration")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task<PagedResultDto<AppPodUsageDurationDto>> GetAppPodUsageDurationListAsync(
+        GetAppPodUsageDurationInput input)
+    {
+        return await _appService.GetAppPodUsageDurationListAsync(input);
+    }
 }
