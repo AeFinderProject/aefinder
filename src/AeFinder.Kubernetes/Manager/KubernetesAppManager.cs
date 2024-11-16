@@ -151,8 +151,9 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         if (!deploymentExists)
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, version,
-                KubernetesConstants.AppClientTypeFull, imageName, deploymentName, deploymentLabelName, replicasCount, 
-                containerName, targetPort, configMapName, sideCarConfigName, requestCpuCore, requestMemory, maxSurge, maxUnavailable);
+                KubernetesConstants.AppClientTypeFull, chainId, imageName, deploymentName, deploymentLabelName,
+                replicasCount, containerName, targetPort, configMapName, sideCarConfigName, requestCpuCore, requestMemory,
+                maxSurge, maxUnavailable);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(
@@ -233,9 +234,9 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         { 
             var healthPath = GetGraphQLPlaygroundPath(appId, version);
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, version,
-                KubernetesConstants.AppClientTypeQuery,imageName, deploymentName, deploymentLabelName, replicasCount,
-                containerName, targetPort, configMapName, sideCarConfigName, requestCpuCore, requestMemory, maxSurge, 
-                maxUnavailable, healthPath);
+                KubernetesConstants.AppClientTypeQuery, string.Empty, imageName, deploymentName, deploymentLabelName,
+                replicasCount, containerName, targetPort, configMapName, sideCarConfigName, requestCpuCore, requestMemory, 
+                maxSurge, maxUnavailable, healthPath);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(
@@ -842,6 +843,7 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         result.AppVersion = version;
         result.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         result.PodNameList = new List<string>();
+        bool isMultipleInstance = false;
         foreach (var pod in pods.Items)
         {
             var podName = pod.Metadata.Name;
@@ -854,6 +856,12 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             else
             {
                 result.AppQueryPodReplicas += 1;
+            }
+
+            isMultipleInstance = CheckIsMultipleInstances(pod);
+            if (isMultipleInstance)
+            {
+                result.AppFullPodCount += 1;
             }
 
             foreach (var container in pod.Spec.Containers)
@@ -886,6 +894,11 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             
         }
 
+        if (!isMultipleInstance)
+        {
+            result.AppFullPodCount = 1;
+        }
+
         return result;
     }
 
@@ -903,6 +916,22 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         }
 
         // throw new Exception("Unable to recognize pod type");
+        return false;
+    }
+
+    private bool CheckIsMultipleInstances(V1Pod pod)
+    {
+        if (pod.Metadata.Labels.ContainsKey(KubernetesConstants.AppPodChainIdLabelKey))
+        {
+            var podChainId = pod.Metadata.Labels[KubernetesConstants.AppPodChainIdLabelKey];
+            if (string.IsNullOrEmpty(podChainId))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         return false;
     }
 }
