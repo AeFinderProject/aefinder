@@ -7,6 +7,7 @@ using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
 using AeFinder.DevelopmentTemplate;
 using AeFinder.Grains;
+using AeFinder.Metrics;
 using AeFinder.Options;
 using AeFinder.User;
 using AElf.EntityMapping;

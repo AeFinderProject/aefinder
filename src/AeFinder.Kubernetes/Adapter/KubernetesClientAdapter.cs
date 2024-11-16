@@ -198,4 +198,9 @@ public class KubernetesClientAdapter : IKubernetesClientAdapter, ISingletonDepen
         return await _k8sClient.ReplaceNamespacedConfigMapAsync(configMap, name, namespaceParameter,
             cancellationToken: cancellationToken);
     }
+
+    public async Task<PodMetricsList> GetKubernetesPodsMetricsByNamespaceAsync(string namespaceParameter)
+    {
+        return await _k8sClient.GetKubernetesPodsMetricsByNamespaceAsync(namespaceParameter);
+    }
 }

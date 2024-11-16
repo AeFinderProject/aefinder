@@ -6,6 +6,7 @@ using AeFinder.Apps.Dto;
 using AeFinder.BlockScan;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Metrics;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -20,14 +21,17 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IAppDeployManager _appDeployManager;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
+    private readonly IKubernetesAppMonitor _kubernetesAppMonitor;
 
     public AppDeployService(IClusterClient clusterClient,
-        IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager, IAppResourceLimitProvider appResourceLimitProvider)
+        IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
+        IKubernetesAppMonitor kubernetesAppMonitor,IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
         _blockScanAppService = blockScanAppService;
         _appDeployManager = appDeployManager;
         _appResourceLimitProvider = appResourceLimitProvider;
+        _kubernetesAppMonitor = kubernetesAppMonitor;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
@@ -82,4 +86,12 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var podsPageResult = await _appDeployManager.GetPodListWithPagingAsync(appId, pageSize, continueToken);
         return podsPageResult;
     }
+
+    // public async Task<List<AppPodResourceInfoDto>> GetPodResourceInfoAsync(string podName)
+    // {
+    //     List<string> podsName = new List<string>();
+    //     podsName.Add(podName);
+    //     var podResourceResult = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podsName);
+    //     return podResourceResult;
+    // }
 }

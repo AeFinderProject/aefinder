@@ -11,4 +11,5 @@ public class KubernetesOptions
     public string AppFullPodRequestMemory { get; set; } = "2Gi";
     public string AppQueryPodRequestCpuCore { get; set; } = "1";
     public string AppQueryPodRequestMemory { get; set; } = "2Gi";
+    public string PrometheusUrl { get; set; }
 }

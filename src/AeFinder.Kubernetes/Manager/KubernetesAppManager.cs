@@ -272,14 +272,14 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             _logger.LogInformation("[KubernetesAppManager]Ingress {ingressName} created", ingressName);
         }
 
-        //Create query app service monitor
+        //Create app service monitor
         var serviceMonitorName = ServiceMonitorHelper.GetAppServiceMonitorName(appId);
         var serviceMonitorExists = await ExistsServiceMonitorAsync(serviceMonitorName);
         var metricsPath = rulePath + KubernetesConstants.MetricsPath;
         if (!serviceMonitorExists)
         {
             var serviceMonitor = ServiceMonitorHelper.CreateAppServiceMonitorDefinition(appId, serviceMonitorName,
-                deploymentName, serviceLabelName, servicePortName, metricsPath);
+                servicePortName, metricsPath);
             //Create Service Monitor
             await _kubernetesClientAdapter.CreateServiceMonitorAsync(serviceMonitor, KubernetesConstants.MonitorGroup,
                 KubernetesConstants.CoreApiVersion, KubernetesConstants.AppNameSpace,
@@ -722,6 +722,19 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             {
                 var container = new PodContainerDto();
                 container.ContainerName = v1Container.Name;
+                var requests = v1Container.Resources.Requests;
+                if (requests != null)
+                {
+                    if (requests.ContainsKey("cpu"))
+                    {
+                        container.RequestCpu = requests["cpu"].ToString();
+                    }
+
+                    if (requests.ContainsKey("memory"))
+                    {
+                        container.RequestMemory = requests["memory"].ToString();
+                    }
+                }
                 container.ContainerImage = v1Container.Image;
                 containerList.Add(container);
             }

@@ -11,8 +11,7 @@ public class ServiceMonitorHelper
     }
 
     public static ServiceMonitor CreateAppServiceMonitorDefinition(string appId, string serviceMonitorName,
-        string deploymentName, string serviceLabelName, string servicePortName, 
-        string metricsPath)
+        string servicePortName, string metricsPath)
     {
         var serviceMonitor = new ServiceMonitor
         {
