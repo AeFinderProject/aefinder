@@ -852,21 +852,19 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             bool isFullPod = CheckIsFullPod(pod);
             if (isFullPod)
             {
-                result.AppFullPodCount += 1;
+                var chainId = GetPodChainId(pod);
+                if (!string.IsNullOrEmpty(chainId))
+                {
+                    isMultipleInstance = true;
+                    if (!chainIdList.Contains(chainId))
+                    {
+                        result.AppFullPodCount += 1;
+                    }
+                }
             }
             else
             {
                 result.AppQueryPodReplicas += 1;
-            }
-
-            var chainId = GetPodChainId(pod);
-            if (!string.IsNullOrEmpty(chainId))
-            {
-                isMultipleInstance = true;
-                if (!chainIdList.Contains(chainId))
-                {
-                    result.AppFullPodCount += 1;
-                }
             }
 
             foreach (var container in pod.Spec.Containers)
