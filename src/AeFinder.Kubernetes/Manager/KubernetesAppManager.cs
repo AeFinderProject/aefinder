@@ -844,6 +844,7 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         result.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         result.PodNameList = new List<string>();
         bool isMultipleInstance = false;
+        var chainIdList = new List<string>();
         foreach (var pod in pods.Items)
         {
             var podName = pod.Metadata.Name;
@@ -858,10 +859,14 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
                 result.AppQueryPodReplicas += 1;
             }
 
-            isMultipleInstance = CheckIsMultipleInstances(pod);
-            if (isMultipleInstance)
+            var chainId = GetPodChainId(pod);
+            if (!string.IsNullOrEmpty(chainId))
             {
-                result.AppFullPodCount += 1;
+                isMultipleInstance = true;
+                if (!chainIdList.Contains(chainId))
+                {
+                    result.AppFullPodCount += 1;
+                }
             }
 
             foreach (var container in pod.Spec.Containers)
@@ -919,19 +924,14 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         return false;
     }
 
-    private bool CheckIsMultipleInstances(V1Pod pod)
+    private string GetPodChainId(V1Pod pod)
     {
         if (pod.Metadata.Labels.ContainsKey(KubernetesConstants.AppPodChainIdLabelKey))
         {
             var podChainId = pod.Metadata.Labels[KubernetesConstants.AppPodChainIdLabelKey];
-            if (string.IsNullOrEmpty(podChainId))
-            {
-                return false;
-            }
-
-            return true;
+            return podChainId;
         }
 
-        return false;
+        return null;
     }
 }
