@@ -133,7 +133,7 @@ public class AppController : AeFinderController
     {
         return await _appService.GetAppPodResourceInfoListAsync(input);
     }
-    
+
     [HttpGet]
     [Route("pods-duration")]
     [Authorize(Policy = "OnlyAdminAccess")]

@@ -97,7 +97,4 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     //     var podResourceResult = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podsName);
     //     return podResourceResult;
     // }
-
-    
-    
 }
