@@ -271,12 +271,6 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         }
         catch (Exception e)
         {
-            if (methodName != GetHolderInfoMethodName)
-            {
-                _logger.LogError(e, "CallTransaction error, chain id:{chainId}, methodName:{methodName}", chainId,
-                    methodName);
-            }
-
             _logger.LogError(e, "CallTransaction error, chain id:{chainId}, methodName:{methodName}", chainId,
                 methodName);
             return null;
