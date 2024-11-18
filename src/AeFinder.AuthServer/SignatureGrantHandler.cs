@@ -104,6 +104,7 @@ public partial class SignatureGrantHandler: ITokenExtensionGrant, ITransientDepe
         string tmp = "sc";
         if ("sc".Equals(tmp))
         {
+            _logger.LogError("testHandleSignatureVerifyExceptionAsync456errrrrrerrrr");
             throw new SignatureVerifyException("testHandleSignatureVerifyExceptionAsync456");
         }
         var walletAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(publicKeyVal,
