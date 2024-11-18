@@ -322,6 +322,11 @@ public partial class WalletLoginProvider: IWalletLoginProvider, ISingletonDepend
     protected virtual async Task GetAddressInfoFromContractAsync(List<UserChainAddressDto> addressInfos, string chainId,
         string caHash)
     {
+        string tmp = "sc";
+        if ("sc".Equals(tmp))
+        {
+            throw new Exception("testHandleSignatureVerifyExceptionAsync123");
+        }
         var addressInfo = await GetAddressInfoFromContractAsync(chainId, caHash);
         addressInfos.Add(addressInfo);
     }

@@ -101,6 +101,11 @@ public partial class SignatureGrantHandler: ITokenExtensionGrant, ITransientDepe
     protected virtual async Task<Tuple<string, string>> VerifySignatureAndParseWalletAddressAsync(string publicKeyVal, string signatureVal,
         string timestampVal, string caHash, string address, string chainId)
     {
+        string tmp = "sc";
+        if ("sc".Equals(tmp))
+        {
+            throw new Exception("testHandleSignatureVerifyExceptionAsync456");
+        }
         var walletAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(publicKeyVal,
             signatureVal, timestampVal, caHash, address, chainId);
         return new Tuple<string, string>(walletAddress, string.Empty);
