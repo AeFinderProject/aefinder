@@ -8,6 +8,7 @@ using AeFinder.User;
 using AeFinder.User.Dto;
 using AeFinder.User.Provider;
 using AElf;
+using AElf.ExceptionHandler;
 using AElf.Types;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ using Volo.Abp.OpenIddict.ExtensionGrantTypes;
 
 namespace AeFinder;
 
-public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
+public partial class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
 {
     private ILogger<SignatureGrantHandler> _logger;
     private IAbpDistributedLock _distributedLock;
@@ -58,27 +59,19 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
                     [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = _walletLoginProvider.GetErrorMessage(errors)
                 }!));
         }
-
-        string wallectAddress = string.Empty;
+        
         UserExtensionDto userExtensionDto = null;
-        try
-        {
-            wallectAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(publicKeyVal,
-                signatureVal, timestampVal, caHash, address, chainId);
-        }
-        catch (SignatureVerifyException verifyException)
+        
+        var verifyResult = await VerifySignatureAndParseWalletAddressAsync(publicKeyVal,
+            signatureVal, timestampVal, caHash, address, chainId);
+        if (!verifyResult.Item2.IsNullOrEmpty())
         {
             return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-                verifyException.Message);
+                verifyResult.Item2);
         }
-        catch (Exception e)
-        {
-            _logger.LogError("[SignatureGrantHandler] Signature validation failed: {e}",
-                e.Message);
-            throw;
-        }
+        var walletAddress = verifyResult.Item1;
         
-        userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByWalletAddressAsync(wallectAddress);
+        userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByWalletAddressAsync(walletAddress);
         if (userExtensionDto == null)
         {
             return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
@@ -100,7 +93,19 @@ public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
 
         return new SignInResult(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, claimsPrincipal);
     }
-    
+
+    [ExceptionHandler([typeof(SignatureVerifyException)], TargetType = typeof(SignatureGrantHandler),
+        MethodName = nameof(HandleSignatureVerifyExceptionAsync))]
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(SignatureGrantHandler),
+        MethodName = nameof(HandleExceptionAsync))]
+    protected virtual async Task<Tuple<string, string>> VerifySignatureAndParseWalletAddressAsync(string publicKeyVal, string signatureVal,
+        string timestampVal, string caHash, string address, string chainId)
+    {
+        var walletAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(publicKeyVal,
+            signatureVal, timestampVal, caHash, address, chainId);
+        return new Tuple<string, string>(walletAddress, string.Empty);
+    }
+
     private ForbidResult GetForbidResult(string errorType, string errorDescription)
     {
         return new ForbidResult(
