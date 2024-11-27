@@ -1,10 +1,11 @@
+using AeFinder.ApiKeys;
 using AeFinder.Grains.State.ApiKeys;
 
 namespace AeFinder.Grains.Grain.ApiKeys;
 
 public class ApiKeyQueryAeIndexerGrain : AeFinderGrain<ApiKeyQueryAeIndexerState>, IApiKeyQueryAeIndexerGrain
 {
-    public async Task IncreaseQueryCountAsync(Guid organizationId, Guid appKeyId, string appId, long query,
+    public async Task RecordQueryCountAsync(Guid organizationId, Guid appKeyId, string appId, long query,
         DateTime dateTime)
     {
         await ReadStateAsync();
@@ -17,6 +18,16 @@ public class ApiKeyQueryAeIndexerGrain : AeFinderGrain<ApiKeyQueryAeIndexerState
 
         await WriteStateAsync();
 
-        
+        var monthlyDate = dateTime.Date.AddDays(-dateTime.Day + 1);
+        var monthlySnapshotKey =
+            GrainIdHelper.GenerateApiKeyQueryAeIndexerMonthlySnapshotGrainId(appKeyId, appId, monthlyDate);
+        await GrainFactory.GetGrain<IApiKeyQueryAeIndexerSnapshotGrain>(monthlySnapshotKey)
+            .RecordQueryCountAsync(organizationId, appKeyId, appId, query, monthlyDate, SnapshotType.Monthly);
+
+        var dailyDate = dateTime.Date;
+        var dailySnapshotKey =
+            GrainIdHelper.GenerateApiKeyQueryAeIndexerDailySnapshotGrainId(appKeyId, appId, dailyDate);
+        await GrainFactory.GetGrain<IApiKeyQueryAeIndexerSnapshotGrain>(dailySnapshotKey)
+            .RecordQueryCountAsync(organizationId, appKeyId, appId, query, dailyDate, SnapshotType.Daily);
     }
 }

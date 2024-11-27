@@ -2,5 +2,6 @@ namespace AeFinder.Grains.Grain.ApiKeys;
 
 public interface IApiKeyQueryAeIndexerGrain : IGrainWithStringKey
 {
-    
+    Task RecordQueryCountAsync(Guid organizationId, Guid appKeyId, string appId, long query,
+        DateTime dateTime);
 }

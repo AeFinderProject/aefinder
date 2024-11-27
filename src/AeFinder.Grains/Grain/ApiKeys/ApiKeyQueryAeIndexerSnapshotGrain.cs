@@ -1,3 +1,4 @@
+using AeFinder.ApiKeys;
 using AeFinder.Grains.State.ApiKeys;
 
 namespace AeFinder.Grains.Grain.ApiKeys;
@@ -5,17 +6,18 @@ namespace AeFinder.Grains.Grain.ApiKeys;
 public class ApiKeyQueryAeIndexerSnapshotGrain : AeFinderGrain<ApiKeyQueryAeIndexerSnapshotState>,
     IApiKeyQueryAeIndexerSnapshotGrain
 {
-    public async Task IncreaseQueryCountAsync(Guid appKeyId, string appId, long query,)
+    public async Task RecordQueryCountAsync(Guid organizationId, Guid appKeyId, string appId, long query,
+        DateTime dateTime, SnapshotType type)
     {
         await ReadStateAsync();
 
+        State.OrganizationId = organizationId;
         State.ApiKeyId = appKeyId;
         State.AppId = appId;
-        State.TotalQuery += query;
-        State.LastQueryTime = lastQueryTime;
+        State.Query += query;
+        State.Time = dateTime;
+        State.Type = type;
 
         await WriteStateAsync();
-        
-        
     }
 }

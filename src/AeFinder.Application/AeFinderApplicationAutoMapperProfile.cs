@@ -9,7 +9,9 @@ using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
 using AeFinder.Entities.Es;
 using AeFinder.Etos;
+using AeFinder.Grains.Grain.ApiKeys;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Grains.State.ApiKeys;
 using AeFinder.Grains.State.Apps;
 using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Logger.Entities;
@@ -139,5 +141,8 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();
         CreateMap<IdentityUserExtension, UserExtensionDto>();
         CreateMap<IdentityUser, IdentityUserExtensionDto>();
+        
+        // Api Key
+        CreateMap<ApiKeyState, ApiKeyInfo>();
     }
 }
