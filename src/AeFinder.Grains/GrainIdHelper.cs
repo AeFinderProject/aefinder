@@ -126,4 +126,19 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(appId, version);
     }
+    
+    public static string GenerateApiKeyQueryAeIndexerGrainId(Guid appKeyId, string appId)
+    {
+        return GenerateGrainId(appKeyId.ToString("N"),appId);
+    }
+    
+    public static string GenerateApiKeyQueryAeIndexerMonthlySnapshotGrainId(Guid appKeyId, string appId, DateTime dateTime)
+    {
+        return GenerateGrainId(appKeyId.ToString("N"), appId, dateTime.ToString("yyyyMM"));
+    }
+    
+    public static string GenerateApiKeyQueryAeIndexerDailySnapshotGrainId(Guid appKeyId, string appId, DateTime dateTime)
+    {
+        return GenerateGrainId(appKeyId.ToString("N"), appId, dateTime.ToString("yyyyMMdd"));
+    }
 }
