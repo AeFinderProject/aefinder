@@ -14,12 +14,6 @@ public partial class WalletLoginProvider
     private Task<FlowBehavior> HandleCallTransactionExceptionAsync(Exception exception, string chainId, string methodName, IMessage param,
         ChainOptions chainOptions)
     {
-        if (methodName != GetHolderInfoMethodName)
-        {
-            _logger.LogError(exception, "CallTransaction error, chain id:{chainId}, methodName:{methodName}", chainId,
-                methodName);
-        }
-
         _logger.LogError(exception, "CallTransaction error, chain id:{chainId}, methodName:{methodName}", chainId,
             methodName);
         return Task.FromResult(new FlowBehavior
