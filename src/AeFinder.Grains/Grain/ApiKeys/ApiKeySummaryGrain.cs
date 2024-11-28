@@ -15,10 +15,34 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         await WriteStateAsync();
     }
     
-    public async Task RecordQueryCountAsync(Guid appKeyId, string appId, long query, DateTime dateTime)
+    public async Task RecordQueryAeIndexerCountAsync(Guid appKeyId, string appId, long query, DateTime dateTime)
     {
         var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(appKeyId);
         var apiKeyInfo = await apiKeyGrain.GetAsync();
+
+        await RecordQueryCountAsync(apiKeyInfo, query, dateTime);
+
+        await GrainFactory
+            .GetGrain<IApiKeyQueryAeIndexerGrain>(
+                GrainIdHelper.GenerateApiKeyQueryAeIndexerGrainId(appKeyId, appId))
+            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, appKeyId, appId, query, dateTime);
+    }
+    
+    public async Task RecordQueryBasicDataCountAsync(Guid appKeyId, BasicDataApi basicDataApi, long query, DateTime dateTime)
+    {
+        var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(appKeyId);
+        var apiKeyInfo = await apiKeyGrain.GetAsync();
+
+        await RecordQueryCountAsync(apiKeyInfo, query, dateTime);
+
+        await GrainFactory
+            .GetGrain<IApiKeyQueryBasicDataGrain>(
+                GrainIdHelper.GenerateApiKeyQueryBasicDataGrainId(appKeyId, basicDataApi))
+            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, appKeyId, basicDataApi, query, dateTime);
+    }
+    
+    private async Task<bool> RecordQueryCountAsync(ApiKeyInfo apiKeyInfo, long query, DateTime dateTime)
+    {
 
         var monthlySnapshotKey =
             GrainIdHelper.GenerateApiKeySummaryMonthlySnapshotGrainId(apiKeyInfo.OrganizationId, dateTime);
@@ -27,15 +51,22 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
 
         await ReadStateAsync();
 
-        if (periodQuery >= State.QueryLimit)
+        var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(apiKeyInfo.Id);
+        var availabilityQuery = await apiKeyGrain.GetAvailabilityQueryAsync(dateTime);
+        if (periodQuery >= State.QueryLimit || apiKeyInfo.Status == ApiKeyStatus.Stopped ||
+            availabilityQuery is <= 0)
         {
-            // Todo: Might be wrong, and how do I notify the api?
-            return;
+            return false;
         }
 
         if (periodQuery + query > State.QueryLimit)
         {
             query = State.QueryLimit - periodQuery;
+        }
+        
+        if (availabilityQuery.HasValue)
+        {
+            query = Math.Min(query, availabilityQuery.Value);
         }
 
         State.TotalQuery += query;
@@ -53,9 +84,6 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
 
         await apiKeyGrain.RecordQueryCountAsync(query, dateTime);
 
-        await GrainFactory
-            .GetGrain<IApiKeyQueryAeIndexerGrain>(
-                GrainIdHelper.GenerateApiKeyQueryAeIndexerDailySnapshotGrainId(appKeyId, appId, dateTime))
-            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, appKeyId, appId, query, dateTime);
+        return true;
     }
 }

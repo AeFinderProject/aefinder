@@ -1,3 +1,5 @@
+using AeFinder.ApiKeys;
+
 namespace AeFinder.Grains;
 
 public static class GrainIdHelper
@@ -165,5 +167,20 @@ public static class GrainIdHelper
     public static string GenerateApiKeyQueryAeIndexerDailySnapshotGrainId(Guid appKeyId, string appId, DateTime dateTime)
     {
         return GenerateGrainId(appKeyId.ToString("N"), appId, dateTime.ToString("yyyyMMdd"));
+    }
+    
+    public static string GenerateApiKeyQueryBasicDataGrainId(Guid appKeyId, BasicDataApi basicDataApi)
+    {
+        return GenerateGrainId(appKeyId.ToString("N"),basicDataApi);
+    }
+    
+    public static string GenerateApiKeyQueryBasicDataMonthlySnapshotGrainId(Guid appKeyId, BasicDataApi basicDataApi, DateTime dateTime)
+    {
+        return GenerateGrainId(appKeyId.ToString("N"), basicDataApi, dateTime.ToString("yyyyMM"));
+    }
+    
+    public static string GenerateApiKeyQueryBasicDataDailySnapshotGrainId(Guid appKeyId, BasicDataApi basicDataApi, DateTime dateTime)
+    {
+        return GenerateGrainId(appKeyId.ToString("N"), basicDataApi, dateTime.ToString("yyyyMMdd"));
     }
 }

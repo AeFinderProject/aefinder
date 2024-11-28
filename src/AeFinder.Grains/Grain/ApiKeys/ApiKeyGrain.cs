@@ -1,70 +1,170 @@
+using AeFinder.ApiKeys;
 using AeFinder.Grains.State.ApiKeys;
 using Volo.Abp.ObjectMapping;
+using Volo.Abp.Timing;
 
 namespace AeFinder.Grains.Grain.ApiKeys;
 
 public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
 {
     private readonly IObjectMapper _objectMapper;
+    private readonly IClock _clock;
+    
+    // TODO: Get prices through product information
+    private const decimal QueryPrice = 4 / 100000;
 
-    public ApiKeyGrain(IObjectMapper objectMapper)
+    public ApiKeyGrain(IObjectMapper objectMapper, IClock clock)
     {
         _objectMapper = objectMapper;
+        _clock = clock;
     }
 
-    public async Task CreateAsync(Guid id, Guid organizationId, string name)
+    public async Task<ApiKeyInfo> CreateAsync(Guid id, Guid organizationId, string name)
     {
+        await ReadStateAsync();
+        State.Id = id;
+        State.OrganizationId = organizationId;
+        State.Name = name;
+        State.Key = GenerateKey();
+        State.Status = ApiKeyStatus.Active;
+        await WriteStateAsync();
 
+        return _objectMapper.Map<ApiKeyState, ApiKeyInfo>(State);
     }
 
-    public Task RenameAsync(string newName)
+    public async Task RenameAsync(string newName)
     {
-        throw new NotImplementedException();
+        await ReadStateAsync();
+        State.Name = newName;
+        await WriteStateAsync();
     }
 
-    public Task RegenerateKeyAsync()
+    public async Task<string> RegenerateKeyAsync()
     {
-        throw new NotImplementedException();
+        await ReadStateAsync();
+        State.Key = GenerateKey();
+        await WriteStateAsync();
+
+        return State.Key;
     }
 
-    public Task DeleteAsync()
+    public async Task DeleteAsync()
     {
-        throw new NotImplementedException();
+        await ReadStateAsync();
+        State.IsDeleted = true;
+        await WriteStateAsync();
     }
 
-    public Task SetSpendingLimitAsync(bool isEnable, decimal limitUsdt)
+    public async Task SetSpendingLimitAsync(bool isEnable, decimal limitUsdt)
     {
-        throw new NotImplementedException();
+        await ReadStateAsync();
+        State.IsEnableSpendingLimit = isEnable;
+        State.SpendingLimitUsdt = limitUsdt;
+        
+        var availabilityQuery = await CalculateAvailabilityQueryAsync(_clock.Now);
+        State.Status = availabilityQuery > 0 ? ApiKeyStatus.Active : ApiKeyStatus.Stopped;
+        
+        await WriteStateAsync();
     }
 
-    public Task SetAuthorisedAeIndexersAsync(List<string> appIds)
+    public async Task SetAuthorisedAeIndexersAsync(List<string> appIds)
     {
-        throw new NotImplementedException();
+        await ReadStateAsync();
+        foreach (var appId in appIds)
+        {
+            State.AuthorisedAeIndexers.Add(appId);
+        }
+        await WriteStateAsync();
     }
 
-    public Task DeleteAuthorisedAeIndexersAsync(List<string> appIds)
+    public async Task DeleteAuthorisedAeIndexersAsync(List<string> appIds)
     {
-        throw new NotImplementedException();
+        await ReadStateAsync();
+        foreach (var appId in appIds)
+        {
+            State.AuthorisedAeIndexers.Remove(appId);
+        }
+        await WriteStateAsync();
     }
 
-    public Task SetAuthorisedDomainsAsync(List<string> domains)
+    public async Task SetAuthorisedDomainsAsync(List<string> domains)
     {
-        throw new NotImplementedException();
+        await ReadStateAsync();
+        foreach (var domain in domains)
+        {
+            State.AuthorisedDomains.Add(domain);
+        }
+        await WriteStateAsync();
     }
 
-    public Task DeleteAuthorisedDomainsAsync(List<string> domains)
+    public async Task DeleteAuthorisedDomainsAsync(List<string> domains)
     {
-        throw new NotImplementedException();
+        await ReadStateAsync();
+        foreach (var domain in domains)
+        {
+            State.AuthorisedDomains.Remove(domain);
+        }
+        await WriteStateAsync();
     }
 
     public async Task RecordQueryCountAsync(long query, DateTime dateTime)
     {
+        await ReadStateAsync();
+
+        State.TotalQuery += query;
+        State.LastQueryTime = dateTime;
         
+        var availabilityQuery = await GetAvailabilityQueryAsync(dateTime);
+        if (availabilityQuery.HasValue && query >= availabilityQuery)
+        {
+            State.Status = ApiKeyStatus.Stopped;
+        }
+
+        await WriteStateAsync();
+        
+        var monthlyDate = dateTime.Date.AddDays(-dateTime.Day + 1);
+        var monthlySnapshotKey =
+            GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(State.Id, monthlyDate);
+        await GrainFactory.GetGrain<IApiKeySnapshotGrain>(monthlySnapshotKey)
+            .RecordQueryCountAsync(State.OrganizationId, State.Id, query, monthlyDate, SnapshotType.Monthly);
+
+        var dailyDate = dateTime.Date;
+        var dailySnapshotKey =
+            GrainIdHelper.GenerateApiKeyDailySnapshotGrainId(State.Id, dailyDate);
+        await GrainFactory.GetGrain<IApiKeySnapshotGrain>(dailySnapshotKey)
+            .RecordQueryCountAsync(State.OrganizationId, State.Id, query, dailyDate, SnapshotType.Daily);
     }
 
     public async Task<ApiKeyInfo> GetAsync()
     {
         await ReadStateAsync();
         return _objectMapper.Map<ApiKeyState, ApiKeyInfo>(State);
+    }
+
+    public async Task<long?> GetAvailabilityQueryAsync(DateTime dateTime)
+    {
+        await ReadStateAsync();
+
+        if (!State.IsEnableSpendingLimit)
+        {
+            return null;
+        }
+        
+        return await CalculateAvailabilityQueryAsync(dateTime);
+    }
+
+    private async Task<long> CalculateAvailabilityQueryAsync(DateTime dateTime)
+    {
+        var monthlyDate = dateTime.Date.AddDays(-dateTime.Day + 1);
+        var monthlySnapshotKey =
+            GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(State.Id, monthlyDate);
+        var periodQuery = await GrainFactory.GetGrain<IApiKeySnapshotGrain>(monthlySnapshotKey).GetQueryCountAsync();
+
+        return (long)(State.SpendingLimitUsdt / QueryPrice) - periodQuery;
+    }
+
+    private string GenerateKey()
+    {
+        return Guid.NewGuid().ToString("N");
     }
 }
