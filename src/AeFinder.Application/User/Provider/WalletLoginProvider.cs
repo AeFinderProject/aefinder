@@ -9,6 +9,7 @@ using AElf;
 using AElf.Client;
 using AElf.Client.Dto;
 using AElf.Cryptography;
+using AElf.ExceptionHandler;
 using AElf.Types;
 using Google.Protobuf;
 using GraphQL;
@@ -21,7 +22,7 @@ using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.User.Provider;
 
-public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
+public partial class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
 {
     private readonly ILogger<WalletLoginProvider> _logger;
     private readonly SignatureGrantOptions _signatureGrantOptions;
@@ -241,42 +242,35 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         var caHolderManagerInfos = loginChainHolderInfo?.ManagerInfos;
         return caHolderManagerInfos?.Any(t => t.Address == managerAddress);
     }
-    
-    private async Task<T> CallTransactionAsync<T>(string chainId, string methodName, IMessage param,
+
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(WalletLoginProvider),
+        MethodName = nameof(HandleCallTransactionExceptionAsync))]
+    protected virtual async Task<T> CallTransactionAsync<T>(string chainId, string methodName, IMessage param,
         ChainOptions chainOptions) where T : class, IMessage<T>, new()
     {
-        try
+        var chainInfo = chainOptions.ChainInfos[chainId];
+
+        var client = new AElfClient(chainInfo.AElfNodeBaseUrl);
+        await client.IsConnectedAsync();
+        var address = client.GetAddressFromPrivateKey(_signatureGrantOptions.CommonPrivateKeyForCallTx);
+
+        var contractAddress = chainInfo.CAContractAddress;
+
+        var transaction =
+            await client.GenerateTransactionAsync(address, contractAddress,
+                methodName, param);
+
+        var txWithSign = client.SignTransaction(_signatureGrantOptions.CommonPrivateKeyForCallTx, transaction);
+        var result = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
         {
-            var chainInfo = chainOptions.ChainInfos[chainId];
+            RawTransaction = txWithSign.ToByteArray().ToHex()
+        });
 
-            var client = new AElfClient(chainInfo.AElfNodeBaseUrl);
-            await client.IsConnectedAsync();
-            var address = client.GetAddressFromPrivateKey(_signatureGrantOptions.CommonPrivateKeyForCallTx);
-
-            var contractAddress = chainInfo.CAContractAddress;
-
-            var transaction =
-                await client.GenerateTransactionAsync(address, contractAddress,
-                    methodName, param);
-
-            var txWithSign = client.SignTransaction(_signatureGrantOptions.CommonPrivateKeyForCallTx, transaction);
-            var result = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
-            {
-                RawTransaction = txWithSign.ToByteArray().ToHex()
-            });
-
-            var value = new T();
-            value.MergeFrom(ByteArrayHelper.HexStringToByteArray(result));
-            return value;
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "CallTransaction error, chain id:{chainId}, methodName:{methodName}", chainId,
-                methodName);
-            return null;
-        }
+        var value = new T();
+        value.MergeFrom(ByteArrayHelper.HexStringToByteArray(result));
+        return value;
     }
-    
+
     private async Task<HolderInfoIndexerDto> GetHolderInfosAsync(string url, string caHash)
     {
         using var graphQlClient = new GraphQLHttpClient(url, new NewtonsoftJsonSerializer());
@@ -317,20 +311,21 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
 
         foreach (var chainId in chains)
         {
-            try
-            {
-                var addressInfo = await GetAddressInfoFromContractAsync(chainId, caHash);
-                addressInfos.Add(addressInfo);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "get holder from chain error, caHash:{caHash}", caHash);
-            }
+            await GetAddressInfoFromContractAsync(addressInfos, chainId, caHash);
         }
 
         return addressInfos;
     }
-    
+
+    [ExceptionHandler(typeof(Exception), TargetType = typeof(WalletLoginProvider),
+        MethodName = nameof(HandleGetAddressExceptionAsync))]
+    protected virtual async Task GetAddressInfoFromContractAsync(List<UserChainAddressDto> addressInfos, string chainId,
+        string caHash)
+    {
+        var addressInfo = await GetAddressInfoFromContractAsync(chainId, caHash);
+        addressInfos.Add(addressInfo);
+    }
+
     private async Task<UserChainAddressDto> GetAddressInfoFromContractAsync(string chainId, string caHash)
     {
         var param = new GetHolderInfoInput
