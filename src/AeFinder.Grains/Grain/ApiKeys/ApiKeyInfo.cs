@@ -2,6 +2,7 @@ using AeFinder.ApiKeys;
 
 namespace AeFinder.Grains.Grain.ApiKeys;
 
+[GenerateSerializer]
 public class ApiKeyInfo
 {
     public Guid Id { get; set; }
@@ -13,7 +14,7 @@ public class ApiKeyInfo
     public decimal SpendingLimitUsdt { get; set; }
     public HashSet<string> AuthorisedAeIndexers { get; set; } = new();
     public HashSet<string> AuthorisedDomains { get; set; } = new();
-    public Dictionary<BasicDataApi, bool> AuthorisedApis = new();
+    public Dictionary<BasicDataApiType, bool> AuthorisedApis = new();
     public long TotalQuery { get; set; }
     public DateTime LastQueryTime { get; set; }
     public bool IsDeleted { get; set; }

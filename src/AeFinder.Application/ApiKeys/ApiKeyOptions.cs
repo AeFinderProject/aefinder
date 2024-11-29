@@ -1,6 +1,6 @@
-namespace AeFinder.ApiTraffic;
+namespace AeFinder.ApiKeys;
 
-public class ApiTrafficOptions
+public class ApiKeyOptions
 {
     public int FlushPeriod { get; set; } = 5; // 5 minutes
 }

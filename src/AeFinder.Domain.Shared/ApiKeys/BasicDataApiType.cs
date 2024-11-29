@@ -1,6 +1,6 @@
 namespace AeFinder.ApiKeys;
 
-public enum BasicDataApi
+public enum BasicDataApiType
 {
     Block,
     Transaction,

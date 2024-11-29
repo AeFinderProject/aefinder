@@ -5,14 +5,14 @@ namespace AeFinder.Grains.Grain.ApiKeys;
 
 public class ApiKeyQueryBasicDataGrain : AeFinderGrain<ApiKeyQueryBasicDataState>, IApiKeyQueryBasicDataGrain
 {
-    public async Task RecordQueryCountAsync(Guid organizationId, Guid appKeyId, BasicDataApi basicDataApi, long query,
+    public async Task RecordQueryCountAsync(Guid organizationId, Guid apiKeyId, BasicDataApiType basicDataApiType, long query,
         DateTime dateTime)
     {
         await ReadStateAsync();
 
         State.OrganizationId = organizationId;
-        State.ApiKeyId = appKeyId;
-        State.BasicDataApi = basicDataApi;
+        State.ApiKeyId = apiKeyId;
+        State.BasicDataApiType = basicDataApiType;
         State.TotalQuery += query;
         State.LastQueryTime = dateTime;
 
@@ -20,14 +20,14 @@ public class ApiKeyQueryBasicDataGrain : AeFinderGrain<ApiKeyQueryBasicDataState
 
         var monthlyDate = dateTime.Date.AddDays(-dateTime.Day + 1);
         var monthlySnapshotKey =
-            GrainIdHelper.GenerateApiKeyQueryBasicDataMonthlySnapshotGrainId(appKeyId, basicDataApi, monthlyDate);
+            GrainIdHelper.GenerateApiKeyQueryBasicDataMonthlySnapshotGrainId(apiKeyId, basicDataApiType, monthlyDate);
         await GrainFactory.GetGrain<IApiKeyQueryBasicDataSnapshotGrain>(monthlySnapshotKey)
-            .RecordQueryCountAsync(organizationId, appKeyId, basicDataApi, query, monthlyDate, SnapshotType.Monthly);
+            .RecordQueryCountAsync(organizationId, apiKeyId, basicDataApiType, query, monthlyDate, SnapshotType.Monthly);
 
         var dailyDate = dateTime.Date;
         var dailySnapshotKey =
-            GrainIdHelper.GenerateApiKeyQueryBasicDataDailySnapshotGrainId(appKeyId, basicDataApi, dailyDate);
+            GrainIdHelper.GenerateApiKeyQueryBasicDataDailySnapshotGrainId(apiKeyId, basicDataApiType, dailyDate);
         await GrainFactory.GetGrain<IApiKeyQueryBasicDataSnapshotGrain>(dailySnapshotKey)
-            .RecordQueryCountAsync(organizationId, appKeyId, basicDataApi, query, dailyDate, SnapshotType.Daily);
+            .RecordQueryCountAsync(organizationId, apiKeyId, basicDataApiType, query, dailyDate, SnapshotType.Daily);
     }
 }

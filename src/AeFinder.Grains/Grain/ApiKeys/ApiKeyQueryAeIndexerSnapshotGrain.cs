@@ -6,13 +6,13 @@ namespace AeFinder.Grains.Grain.ApiKeys;
 public class ApiKeyQueryAeIndexerSnapshotGrain : AeFinderGrain<ApiKeyQueryAeIndexerSnapshotState>,
     IApiKeyQueryAeIndexerSnapshotGrain
 {
-    public async Task RecordQueryCountAsync(Guid organizationId, Guid appKeyId, string appId, long query,
+    public async Task RecordQueryCountAsync(Guid organizationId, Guid apiKeyId, string appId, long query,
         DateTime dateTime, SnapshotType type)
     {
         await ReadStateAsync();
 
         State.OrganizationId = organizationId;
-        State.ApiKeyId = appKeyId;
+        State.ApiKeyId = apiKeyId;
         State.AppId = appId;
         State.Query += query;
         State.Time = dateTime;

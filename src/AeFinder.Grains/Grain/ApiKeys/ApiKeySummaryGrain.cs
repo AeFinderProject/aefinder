@@ -15,30 +15,30 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         await WriteStateAsync();
     }
     
-    public async Task RecordQueryAeIndexerCountAsync(Guid appKeyId, string appId, long query, DateTime dateTime)
+    public async Task RecordQueryAeIndexerCountAsync(Guid apiKeyId, string appId, long query, DateTime dateTime)
     {
-        var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(appKeyId);
+        var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId);
         var apiKeyInfo = await apiKeyGrain.GetAsync();
 
         await RecordQueryCountAsync(apiKeyInfo, query, dateTime);
 
         await GrainFactory
             .GetGrain<IApiKeyQueryAeIndexerGrain>(
-                GrainIdHelper.GenerateApiKeyQueryAeIndexerGrainId(appKeyId, appId))
-            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, appKeyId, appId, query, dateTime);
+                GrainIdHelper.GenerateApiKeyQueryAeIndexerGrainId(apiKeyId, appId))
+            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, appId, query, dateTime);
     }
     
-    public async Task RecordQueryBasicDataCountAsync(Guid appKeyId, BasicDataApi basicDataApi, long query, DateTime dateTime)
+    public async Task RecordQueryBasicDataCountAsync(Guid apiKeyId, BasicDataApiType basicDataApiType, long query, DateTime dateTime)
     {
-        var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(appKeyId);
+        var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId);
         var apiKeyInfo = await apiKeyGrain.GetAsync();
 
         await RecordQueryCountAsync(apiKeyInfo, query, dateTime);
 
         await GrainFactory
             .GetGrain<IApiKeyQueryBasicDataGrain>(
-                GrainIdHelper.GenerateApiKeyQueryBasicDataGrainId(appKeyId, basicDataApi))
-            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, appKeyId, basicDataApi, query, dateTime);
+                GrainIdHelper.GenerateApiKeyQueryBasicDataGrainId(apiKeyId, basicDataApiType))
+            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, basicDataApiType, query, dateTime);
     }
     
     private async Task<bool> RecordQueryCountAsync(ApiKeyInfo apiKeyInfo, long query, DateTime dateTime)

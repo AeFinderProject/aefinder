@@ -6,7 +6,7 @@ public class ApiKeyQueryBasicDataState
 {
     public Guid OrganizationId { get; set; }
     public Guid ApiKeyId { get; set; }
-    public BasicDataApi BasicDataApi { get; set; }
+    public BasicDataApiType BasicDataApiType { get; set; }
     public long TotalQuery { get; set; }
     public DateTime LastQueryTime { get; set; }
 }

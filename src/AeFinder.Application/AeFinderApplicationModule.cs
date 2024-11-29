@@ -1,5 +1,6 @@
 using System;
 using AeFinder.AmazonCloud;
+using AeFinder.ApiKeys;
 using AeFinder.ApiTraffic;
 using AeFinder.App.Deploy;
 using AeFinder.BlockSync;
@@ -57,7 +58,7 @@ public class AeFinderApplicationModule : AbpModule
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
         context.Services.Configure<SignatureGrantOptions>(configuration.GetSection("Signature"));
         context.Services.Configure<ChainOptions>(configuration.GetSection("Chains"));
-        Configure<ApiTrafficOptions>(configuration.GetSection("ApiTraffic"));
+        Configure<ApiKeyOptions>(configuration.GetSection("ApiKey"));
         
         Configure<AbpClockOptions>(options =>
         {
