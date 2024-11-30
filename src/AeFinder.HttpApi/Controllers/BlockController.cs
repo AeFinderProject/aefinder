@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.ApiKeys;
-using AeFinder.ApiTraffic;
 using AeFinder.Block;
 using AeFinder.Block.Dtos;
 using Asp.Versioning;

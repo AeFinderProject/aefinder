@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using AeFinder.ApiKeys;
-using AeFinder.ApiTraffic;
 using AeFinder.GraphQL;
 using AeFinder.GraphQL.Dto;
 using AeFinder.Kubernetes;
