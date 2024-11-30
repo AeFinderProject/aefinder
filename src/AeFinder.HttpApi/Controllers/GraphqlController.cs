@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using AeFinder.ApiKeys;
 using AeFinder.ApiTraffic;
 using AeFinder.GraphQL;
 using AeFinder.GraphQL.Dto;
@@ -17,17 +18,17 @@ namespace AeFinder.Controllers;
 [RemoteService]
 [ControllerName("Graphql")]
 [AggregateExecutionTime]
-public class GraphqlController : AbpController
+public class GraphqlController : AeFinderController
 {
     private readonly IGraphQLAppService _graphQLAppService;
     private readonly KubernetesOptions _kubernetesOption;
-    private readonly IApiTrafficService _apiTrafficService;
+    private readonly IApiKeyService _apiKeyService;
 
     public GraphqlController(IGraphQLAppService graphQLAppService,
-        IOptionsSnapshot<KubernetesOptions> kubernetesOption, IApiTrafficService apiTrafficService)
+        IOptionsSnapshot<KubernetesOptions> kubernetesOption, IApiKeyService apiKeyService)
     {
         _graphQLAppService = graphQLAppService;
-        _apiTrafficService = apiTrafficService;
+        _apiKeyService = apiKeyService;
         _kubernetesOption = kubernetesOption.Value;
     }
     
@@ -36,13 +37,13 @@ public class GraphqlController : AbpController
     public virtual async Task<IActionResult> GraphqlForward([FromBody] GraphQLQueryInput input, string key, string appId,
         string version = null)
     {
-        await _apiTrafficService.IncreaseRequestCountAsync(key);
-        
         var response =
             await _graphQLAppService.RequestForwardAsync(appId, version, _kubernetesOption.OriginName, input);
 
         if (response.IsSuccessStatusCode)
         {
+            await _apiKeyService.IncreaseQueryAeIndexerCountAsync(key, appId, GetOriginHost());
+            
             var responseContent = await response.Content.ReadAsStringAsync();
             return Content(responseContent, "application/json");
         }

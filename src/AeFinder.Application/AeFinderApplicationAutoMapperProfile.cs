@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using AeFinder.ApiKeys;
 using AeFinder.App.Es;
 using AeFinder.AppResources;
 using AeFinder.Apps;
@@ -144,5 +145,6 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         
         // Api Key
         CreateMap<ApiKeyState, ApiKeyInfo>();
+        CreateMap<ApiKeySummaryState, ApiKeySummaryInfo>();
     }
 }

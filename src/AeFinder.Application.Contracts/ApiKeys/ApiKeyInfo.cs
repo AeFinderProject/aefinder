@@ -1,6 +1,8 @@
-using AeFinder.ApiKeys;
+using System;
+using System.Collections.Generic;
+using Orleans;
 
-namespace AeFinder.Grains.Grain.ApiKeys;
+namespace AeFinder.ApiKeys;
 
 [GenerateSerializer]
 public class ApiKeyInfo
@@ -14,7 +16,7 @@ public class ApiKeyInfo
     public decimal SpendingLimitUsdt { get; set; }
     public HashSet<string> AuthorisedAeIndexers { get; set; } = new();
     public HashSet<string> AuthorisedDomains { get; set; } = new();
-    public Dictionary<BasicDataApiType, bool> AuthorisedApis = new();
+    public HashSet<BasicDataApiType> AuthorisedApis = new();
     public long TotalQuery { get; set; }
     public DateTime LastQueryTime { get; set; }
     public bool IsDeleted { get; set; }

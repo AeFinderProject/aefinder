@@ -1,3 +1,5 @@
+using AeFinder.ApiKeys;
+
 namespace AeFinder.Grains.Grain.ApiKeys;
 
 public interface IApiKeyGrain : IGrainWithGuidKey
@@ -11,6 +13,7 @@ public interface IApiKeyGrain : IGrainWithGuidKey
     Task DeleteAuthorisedAeIndexersAsync(List<string> appIds);
     Task SetAuthorisedDomainsAsync(List<string> domains);
     Task DeleteAuthorisedDomainsAsync(List<string> domains);
+    Task SetAuthorisedApisAsync(Dictionary<BasicDataApiType, bool> apis);
     Task RecordQueryCountAsync(long query, DateTime dateTime);
     Task<ApiKeyInfo> GetAsync();
     Task<long?> GetAvailabilityQueryAsync(DateTime dateTime);

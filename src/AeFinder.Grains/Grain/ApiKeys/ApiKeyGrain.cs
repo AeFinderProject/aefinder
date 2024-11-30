@@ -86,6 +86,23 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
         }
         await WriteStateAsync();
     }
+    
+    public async Task SetAuthorisedApisAsync(Dictionary<BasicDataApiType,bool> apis)
+    {
+        await ReadStateAsync();
+        foreach (var api in apis)
+        {
+            if (api.Value)
+            {
+                State.AuthorisedApis.Add(api.Key);
+            }
+            else
+            {
+                State.AuthorisedApis.Remove(api.Key);
+            }
+        }
+        await WriteStateAsync();
+    }
 
     public async Task SetAuthorisedDomainsAsync(List<string> domains)
     {

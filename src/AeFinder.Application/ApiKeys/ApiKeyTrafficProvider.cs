@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Timing;
 
@@ -12,8 +14,8 @@ namespace AeFinder.ApiKeys;
 
 public interface IApiKeyTrafficProvider
 {
-    Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain, DateTime dateTime);
-    Task IncreaseBasicDataQueryAsync(string apiKey, BasicDataApiType basicDataApiType, string domain, DateTime dateTime);
+    Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain);
+    Task IncreaseBasicDataQueryAsync(string apiKey, BasicDataApiType basicDataApiType, string domain);
     Task FlushAsync();
 }
 
@@ -21,28 +23,35 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
 {
     private readonly ConcurrentDictionary<string, AeIndexerApiTrafficSegment> _aeIndexerApiTraffics = new();
     private readonly ConcurrentDictionary<string, BasicDataApiTrafficSegment> _basicDataApiTraffics = new();
-    private readonly ConcurrentDictionary<Guid, ApiKeyInfo> _apiKeys = new();
-    private readonly ConcurrentDictionary<string, Guid> _apiKeyIdMapping = new();
-    private readonly ConcurrentDictionary<Guid, ApiKeyUsage> _apiKeyUsages = new();
+    
     private readonly ApiKeyOptions _apiKeyOptions;
     private readonly IClusterClient _clusterClient;
     private readonly IClock _clock;
+    private readonly IApiKeyInfoProvider _apiKeyInfoProvider;
 
-    public ApiKeyTrafficProvider(IClusterClient clusterClient, IClock clock, IOptionsSnapshot<ApiKeyOptions> apiKeyOptions)
+    public ApiKeyTrafficProvider(IClusterClient clusterClient, IClock clock,
+        IOptionsSnapshot<ApiKeyOptions> apiKeyOptions, IApiKeyInfoProvider apiKeyInfoProvider)
     {
         _clusterClient = clusterClient;
         _clock = clock;
+        _apiKeyInfoProvider = apiKeyInfoProvider;
         _apiKeyOptions = apiKeyOptions.Value;
     }
 
-    public async Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain, DateTime dateTime)
+    public async Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain)
     {
-        var apiKeyId = await GetApiKeyIdAsync(apiKey);
+        var dateTime = _clock.Now;
+        var apiKeyInfo = await _apiKeyInfoProvider.GetApiKeyInfoAsync(apiKey);
+        await CheckApiKeyAsync(apiKeyInfo, domain,appId,null,dateTime);
+        await IncreaseAeIndexerQueryAsync(apiKeyInfo, appId, dateTime);
     }
 
-    public async Task IncreaseBasicDataQueryAsync(string apiKey, BasicDataApiType basicDataApiType, string domain, DateTime dateTime)
+    public async Task IncreaseBasicDataQueryAsync(string apiKey, BasicDataApiType basicDataApiType, string domain)
     {
-        throw new NotImplementedException();
+        var dateTime = _clock.Now;
+        var apiKeyInfo = await _apiKeyInfoProvider.GetApiKeyInfoAsync(apiKey);
+        await CheckApiKeyAsync(apiKeyInfo, domain,null,basicDataApiType,dateTime);
+        await IncreaseBasicDataQueryAsync(apiKeyInfo, basicDataApiType, dateTime);
     }
 
     public async Task FlushAsync()
@@ -126,36 +135,57 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
         });
     }
 
-    private async Task VerifyAsync(Guid organizationId, Guid apiKeyId, string domain)
+    private async Task CheckApiKeyAsync(ApiKeyInfo apiKeyInfo, string domain, string appId,
+        BasicDataApiType? basicDataApiType, DateTime dateTime)
     {
-        
-    }
-
-    private async Task<Guid> GetApiKeyIdAsync(string key)
-    {
-        if (_apiKeyIdMapping.TryGetValue(key, out var id))
+        var limit = await _apiKeyInfoProvider.GetApiKeyLimitAsync(apiKeyInfo.OrganizationId);
+        var used = await _apiKeyInfoProvider.GetApiKeyUsedAsync(apiKeyInfo.OrganizationId, dateTime);
+        if (used >= limit)
         {
-            // TODO: Get id from es
-            id = Guid.Empty;
-            _apiKeyIdMapping[key] = id;
+            throw new UserFriendlyException("Api key query times insufficient.");
         }
 
-        return id;
-    }
-
-    private async Task<ApiKeyInfo> GetApiKeyInfoAsync(Guid apiKeyId)
-    {
-        if (_apiKeys.TryGetValue(apiKeyId, out var info))
+        if (apiKeyInfo.Status != ApiKeyStatus.Active)
         {
-            var apiKeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKeyId);
-            info = await apiKeyGrain.GetAsync();
-            
-            _apiKeys[apiKeyId] = info;
+            throw new UserFriendlyException("Api key unavailable.");
         }
 
-        return info;
+        if (!appId.IsNullOrWhiteSpace() && apiKeyInfo.AuthorisedAeIndexers.Any() && !apiKeyInfo.AuthorisedAeIndexers.Contains(appId))
+        {
+            throw new UserFriendlyException("Unauthorized AeIndexer.");
+        }
+
+        if (basicDataApiType.HasValue && apiKeyInfo.AuthorisedApis.Any() &&
+            !apiKeyInfo.AuthorisedApis.Contains(basicDataApiType.Value))
+        {
+            throw new UserFriendlyException("Unauthorized api.");
+        }
+
+        if (apiKeyInfo.AuthorisedDomains.Any() && !CheckApiKeyDomain(apiKeyInfo, domain))
+        {
+            throw new UserFriendlyException("Unauthorized domain.");
+        }
     }
 
+    private bool CheckApiKeyDomain(ApiKeyInfo apiKeyInfo, string domain)
+    {
+        foreach (var authorisedDomain in apiKeyInfo.AuthorisedDomains)
+        {
+            if (authorisedDomain.StartsWith("*.") && (domain.EndsWith(authorisedDomain.RemovePreFix("*")) ||
+                                                      domain == authorisedDomain.RemovePreFix("*.")))
+            {
+                return true;
+            }
+
+            if (authorisedDomain == domain)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
     private string GetAeIndexerApiTrafficKey(Guid apiKeyId, string appId, DateTime dateTime)
     {
         return $"{apiKeyId:N}-{appId}-{dateTime}";

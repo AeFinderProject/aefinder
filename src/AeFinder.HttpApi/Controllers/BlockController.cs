@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AeFinder.ApiKeys;
 using AeFinder.ApiTraffic;
 using AeFinder.Block;
 using AeFinder.Block.Dtos;
@@ -13,15 +14,15 @@ namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("Block")]
-public class BlockController : AbpController
+public class BlockController : AeFinderController
 {
     private readonly IBlockAppService _blockAppService;
-    private readonly IApiTrafficService _apiTrafficService;
+    private readonly IApiKeyService _apiKeyService;
 
-    public BlockController(IBlockAppService blockAppService, IApiTrafficService apiTrafficService)
+    public BlockController(IBlockAppService blockAppService, IApiKeyService apiKeyService)
     {
         _blockAppService = blockAppService;
-        _apiTrafficService = apiTrafficService;
+        _apiKeyService = apiKeyService;
     }
 
     [HttpPost]
@@ -29,7 +30,7 @@ public class BlockController : AbpController
     [Authorize]
     public virtual async Task<List<BlockDto>> GetBlocksAsync(string key, GetBlocksInput input)
     {
-        await _apiTrafficService.IncreaseRequestCountAsync(key);
+        await _apiKeyService.IncreaseQueryBasicDataCountAsync(key, BasicDataApiType.Block, GetOriginHost());
         return await _blockAppService.GetBlocksAsync(input);
     }
 
@@ -38,7 +39,7 @@ public class BlockController : AbpController
     [Authorize]
     public virtual async Task<List<TransactionDto>> GetTransactionsAsync(string key, GetTransactionsInput input)
     {
-        await _apiTrafficService.IncreaseRequestCountAsync(key);
+        await _apiKeyService.IncreaseQueryBasicDataCountAsync(key, BasicDataApiType.Transaction, GetOriginHost());
         return await _blockAppService.GetTransactionsAsync(input);
     }
 
@@ -47,7 +48,7 @@ public class BlockController : AbpController
     [Authorize]
     public virtual async Task<List<LogEventDto>> GetLogEventsAsync(string key, GetLogEventsInput input)
     {
-        await _apiTrafficService.IncreaseRequestCountAsync(key);
+        await _apiKeyService.IncreaseQueryBasicDataCountAsync(key, BasicDataApiType.LogEvent, GetOriginHost());
         return await _blockAppService.GetLogEventsAsync(input);
     }
     

@@ -1,10 +1,18 @@
 using AeFinder.ApiKeys;
 using AeFinder.Grains.State.ApiKeys;
+using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.ApiKeys;
 
 public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySummaryGrain
 {
+    private readonly IObjectMapper _objectMapper;
+
+    public ApiKeySummaryGrain(IObjectMapper objectMapper)
+    {
+        _objectMapper = objectMapper;
+    }
+
     public async Task IncreaseQueryLimitAsync(Guid organizationId, long query)
     {
         await ReadStateAsync();
@@ -40,10 +48,15 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
                 GrainIdHelper.GenerateApiKeyQueryBasicDataGrainId(apiKeyId, basicDataApiType))
             .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, basicDataApiType, query, dateTime);
     }
-    
+
+    public async Task<ApiKeySummaryInfo> GetApiKeySummaryInfoAsync()
+    {
+        await ReadStateAsync();
+        return _objectMapper.Map<ApiKeySummaryState, ApiKeySummaryInfo>(State);
+    }
+
     private async Task<bool> RecordQueryCountAsync(ApiKeyInfo apiKeyInfo, long query, DateTime dateTime)
     {
-
         var monthlySnapshotKey =
             GrainIdHelper.GenerateApiKeySummaryMonthlySnapshotGrainId(apiKeyInfo.OrganizationId, dateTime);
         var monthlySnapshotGrain = GrainFactory.GetGrain<IApiKeySummarySnapshotGrain>(monthlySnapshotKey);
