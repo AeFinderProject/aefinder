@@ -97,7 +97,8 @@ public class AeFinderHttpApiHostModule : AbpModule
             option.MultipartBodyLengthLimit = 60485760;
         });
         Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
-        context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
+        Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
+        Configure<PodResourceLevelOptions>(configuration.GetSection("PodResourceLevel"));
     }
 
     private void ConfigureCache(IConfiguration configuration)

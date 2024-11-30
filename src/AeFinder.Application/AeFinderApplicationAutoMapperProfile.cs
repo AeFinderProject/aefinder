@@ -11,8 +11,10 @@ using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.Apps;
+using AeFinder.Grains.State.Market;
 using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Logger.Entities;
+using AeFinder.Market;
 using AeFinder.Subscriptions;
 using AeFinder.Subscriptions.Dto;
 using AeFinder.User;
@@ -140,5 +142,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();
         CreateMap<IdentityUserExtension, UserExtensionDto>();
         CreateMap<IdentityUser, IdentityUserExtensionDto>();
+        
+        CreateMap<ProductDto, ProductState>();
     }
 }
