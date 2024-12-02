@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using AElf.EntityMapping.Repositories;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -13,6 +14,10 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     private readonly IApiKeyTrafficProvider _apiKeyTrafficProvider;
     private readonly IApiKeyInfoProvider _apiKeyInfoProvider;
     private readonly IClusterClient _clusterClient;
+    private readonly IEntityMappingRepository<ApiKeyIndex, Guid> _apiKeyIndexRepository;
+    private readonly IEntityMappingRepository<ApiKeyQueryAeIndexerIndex, string> _apiKeyQueryAeIndexerIndexRepository;
+    private readonly IEntityMappingRepository<ApiKeyQueryBasicDataIndex, string> _apiKeyQueryBasicDataIndexRepository;
+    private readonly IEntityMappingRepository<ApiKeySummaryIndex, string> _apiKeySummaryIndexRepository;
 
     public ApiKeyService(IApiKeyTrafficProvider apiKeyTrafficProvider, IClusterClient clusterClient,
         IApiKeyInfoProvider apiKeyInfoProvider)
@@ -45,5 +50,25 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     public async Task UpdateApiKeyUsedCacheAsync(Guid organizationId, long used)
     {
         await _apiKeyInfoProvider.SetApiKeyUsedAsync(organizationId, used);
+    }
+
+    public Task AddOrUpdateApiKeyIndexAsync(ApiKeyEto input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task AddOrUpdateApiKeyQueryAeIndexerIndexAsync(ApiKeyQueryAeIndexerEto input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task AddOrUpdateApiKeyQueryBasicDataIndexAsync(ApiKeyQueryBasicDataEto input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task AddOrUpdateApiKeySummaryIndexAsync(ApiKeySummaryEto input)
+    {
+        throw new NotImplementedException();
     }
 }
