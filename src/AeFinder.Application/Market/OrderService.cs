@@ -45,7 +45,6 @@ public class OrderService: ApplicationService, IOrderService
                 await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, dto.UserId, dto.AppId);
         }
         
-        
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
         var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
@@ -56,6 +55,11 @@ public class OrderService: ApplicationService, IOrderService
             {
                 throw new UserFriendlyException(
                     "Please wait until the payment for the existing order is completed before initiating a new one.");
+            }
+
+            if (oldOrderInfo.OrderAmount == 0)
+            {
+                return billList;
             }
 
             //Calculate old order charge fee
@@ -114,6 +118,20 @@ public class OrderService: ApplicationService, IOrderService
             //Create new order
             var newOrder = await ordersGrain.CreateAsync(dto);
             decimal monthlyFee = dto.ProductNumber * productInfo.MonthlyUnitPrice;
+            if (monthlyFee == 0)
+            {
+                await renewalGrain.CreateAsync(new CreateRenewalDto()
+                {
+                    OrganizationId = dto.OrganizationId,
+                    UserId = dto.UserId,
+                    AppId = dto.AppId,
+                    OrderId = newOrder.OrderId,
+                    ProductId = dto.ProductId,
+                    ProductNumber=1,
+                    RenewalPeriod = RenewalPeriod.OneMonth
+                });
+                return billList;
+            }
             var firstMonthFee = await billsGrain.CalculateFirstMonthAmount(monthlyFee);
             var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
             {

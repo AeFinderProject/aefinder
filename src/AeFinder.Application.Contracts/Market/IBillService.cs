@@ -4,6 +4,5 @@ namespace AeFinder.Market;
 
 public interface IBillService
 {
-    Task<BillingPlanDto> GetFullPodResourceBillingPlanAsync(string productId);
-    Task<BillingPlanDto> GetApiQueryCountBillingPlanAsync(string productId, int monthCount);
+    Task<BillingPlanDto> GetProductBillingPlanAsync(string productId, int productNum, int monthCount);
 }
