@@ -182,4 +182,33 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         renewalState.IsActive = false;
         await WriteStateAsync();
     }
+
+    public async Task<int> GetUserMonthlyApiQueryAllowanceAsync(string organizationId,string userId)
+    {
+        var apiQueryCountSubscriptions =
+            State.Where(r =>
+                r.OrganizationId == organizationId && r.UserId == userId &&
+                r.ProductType == ProductType.ApiQueryCount && r.IsActive == true).ToList();
+        var totalQueryCount = 0;
+        foreach (var renewalState in apiQueryCountSubscriptions)
+        {
+            var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
+            var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalState.ProductId);
+            var productQueryCount = Convert.ToInt32(productInfo.ProductSpecifications);
+            totalQueryCount = totalQueryCount + (productQueryCount * renewalState.ProductNumber);
+        }
+
+        return totalQueryCount;
+    }
+
+    public async Task<string> GetCurrentSubscriptionIdAsync(string orderId)
+    {
+        var renewalState = State.FirstOrDefault(r => r.OrderId == orderId && r.IsActive == true);
+        if (renewalState == null)
+        {
+            return null;
+        }
+
+        return renewalState.SubscriptionId;
+    }
 }

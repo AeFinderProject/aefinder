@@ -12,8 +12,20 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
     {
         _objectMapper = objectMapper;
     }
+    
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        await ReadStateAsync();
+        await base.OnActivateAsync(cancellationToken);
+    }
 
-    public async Task<BillDto> CreateOrderLockBillAsync(CreateOrderBillDto dto)
+    public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
+    {
+        await WriteStateAsync();
+        await base.OnDeactivateAsync(reason, cancellationToken);
+    }
+
+    public async Task<BillDto> CreateOrderLockBillAsync(CreateOrderLockBillDto dto)
     {
         await ReadStateAsync();
         if (State == null)
@@ -21,7 +33,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
             State = new List<BillState>();
         }
         
-        var billItem=_objectMapper.Map<CreateOrderBillDto, BillState>(dto);
+        var billItem=_objectMapper.Map<CreateOrderLockBillDto, BillState>(dto);
         billItem.BillingId = GenerateId();
         billItem.BillingType = BillingType.Lock;
         billItem.BillingDate = DateTime.UtcNow;
@@ -37,7 +49,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
             var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
             var productInfo = await productsGrain.GetProductInfoByIdAsync(orderInfo.ProductId);
             decimal monthlyFee = orderInfo.ProductNumber * productInfo.MonthlyUnitPrice;
-            billItem.BillingAmount = CalculateOrderAmount(monthlyFee);
+            billItem.BillingAmount = await CalculateFirstMonthAmount(monthlyFee);
         }
         
         billItem.BillingStatus = BillingStatus.PendingPayment;
@@ -111,7 +123,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
             var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
             var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalInfo.ProductId);
             decimal monthlyFee = renewalInfo.ProductNumber * productInfo.MonthlyUnitPrice;
-            billItem.BillingAmount = CalculateChargeAmount(renewalInfo, monthlyFee);
+            billItem.BillingAmount = await CalculateChargeAmount(renewalInfo, monthlyFee);
         }
         billItem.BillingStatus = BillingStatus.PendingPayment;
         await ReadStateAsync();
@@ -131,7 +143,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return _objectMapper.Map<BillState, BillDto>(latestLockedBill);
     }
 
-    public async Task CreateRefundBillAsync(CreateRefundBillDto dto)
+    public async Task<BillDto> CreateRefundBillAsync(CreateRefundBillDto dto)
     {
         await ReadStateAsync();
         var billItem=_objectMapper.Map<CreateRefundBillDto, BillState>(dto);
@@ -142,6 +154,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         billItem.BillingStatus = BillingStatus.PendingPayment;
         State.Add(billItem);
         await WriteStateAsync();
+        return _objectMapper.Map<BillState, BillDto>(billItem);
     }
     
     private string GenerateId()
@@ -150,7 +163,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
     }
     
     //The first payment only requires covering the usage fees for the current month.
-    private decimal CalculateOrderAmount(decimal monthlyFee)
+    public async Task<decimal> CalculateFirstMonthAmount(decimal monthlyFee)
     {
         DateTime today = DateTime.Today;
         DateTime firstOfNextMonth = new DateTime(today.Year, today.Month, 1).AddMonths(1);
@@ -161,7 +174,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return amountDue;
     }
 
-    private decimal CalculateChargeAmount(RenewalDto renewalInfo, decimal monthlyFee)
+    public async Task<decimal> CalculateChargeAmount(RenewalDto renewalInfo, decimal monthlyFee)
     {
         var lastBillingDate = renewalInfo.LastChargeDate;
         var endDate = DateTime.UtcNow;

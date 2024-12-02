@@ -2,7 +2,7 @@ using System;
 
 namespace AeFinder.Market;
 
-public class CreateOrderBillDto
+public class CreateOrderLockBillDto
 {
     public string OrganizationId { get; set; }
     public string OrderId { get; set; }

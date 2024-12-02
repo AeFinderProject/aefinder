@@ -15,6 +15,18 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         _objectMapper = objectMapper;
     }
     
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        await ReadStateAsync();
+        await base.OnActivateAsync(cancellationToken);
+    }
+
+    public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
+    {
+        await WriteStateAsync();
+        await base.OnDeactivateAsync(reason, cancellationToken);
+    }
+    
     public async Task<OrderDto> CreateAsync(CreateOrderDto dto)
     {
         await ReadStateAsync();
@@ -103,5 +115,37 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         //     "Order canceled");
         
         // return bill;
+    }
+
+    public async Task<OrderDto> GetLatestApiQueryCountOrderAsync(string organizationId, string userId)
+    {
+        var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
+        
+        var oldUserOrderStates = State.Where(o =>
+            o.OrganizationId == organizationId && o.UserId == userId && o.ProductType == ProductType.ApiQueryCount &&
+            o.OrderStatus != OrderStatus.Canceled).ToList();
+
+        foreach (var orderState in oldUserOrderStates)
+        {
+            var productInfo = await productsGrain.GetProductInfoByIdAsync(orderState.ProductId);
+            if (productInfo.MonthlyUnitPrice == 0)
+            {
+                continue;
+            }
+            return _objectMapper.Map<OrderState, OrderDto>(orderState);
+        }
+        return null;
+    }
+
+    public async Task<OrderDto> GetLatestPodResourceOrderAsync(string organizationId, string userId, string appId)
+    {
+        var oldUserOrderState = State.FirstOrDefault(o =>
+            o.OrganizationId == organizationId && o.UserId == userId && o.ProductType == ProductType.FullPodResource &&
+            o.AppId == appId && o.OrderStatus != OrderStatus.Canceled);
+        if (oldUserOrderState == null)
+        {
+            return null;
+        }
+        return _objectMapper.Map<OrderState, OrderDto>(oldUserOrderState);
     }
 }

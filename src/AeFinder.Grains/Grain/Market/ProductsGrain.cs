@@ -13,6 +13,11 @@ public class ProductsGrain : AeFinderGrain<List<ProductState>>, IProductsGrain
         _objectMapper = objectMapper;
     }
 
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        await ReadStateAsync();
+        await base.OnActivateAsync(cancellationToken);
+    }
 
     public async Task InitializeProductsInfoAsync(ProductDto dto)
     {
@@ -56,5 +61,17 @@ public class ProductsGrain : AeFinderGrain<List<ProductState>>, IProductsGrain
         var product = State.FirstOrDefault(p => p.ProductId == productId);
         return _objectMapper.Map<ProductState, ProductDto>(product);
     }
-    
+
+    public async Task<int> GetFreeApiQueryCountAsync()
+    {
+        var productState = State.FirstOrDefault(p =>
+            p.ProductType == ProductType.ApiQueryCount && p.IsActive == true && p.MonthlyUnitPrice == 0);
+        return Convert.ToInt32(productState.ProductSpecifications);
+    }
+
+    public async Task<List<ProductDto>> GetFullPodResourceProductsAsync()
+    {
+        var products = State.Where(p => p.ProductType == ProductType.FullPodResource && p.IsActive == true).ToList();
+        return _objectMapper.Map<List<ProductState>, List<ProductDto>>(products);
+    }
 }

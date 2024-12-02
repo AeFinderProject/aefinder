@@ -15,4 +15,6 @@ public interface IRenewalGrain: IGrainWithStringKey
         string productId);
 
     Task CancelRenewalByIdAsync(string subscriptionId);
+    Task<int> GetUserMonthlyApiQueryAllowanceAsync(string organizationId, string userId);
+    Task<string> GetCurrentSubscriptionIdAsync(string orderId);
 }
