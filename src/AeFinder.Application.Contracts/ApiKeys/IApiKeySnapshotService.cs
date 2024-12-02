@@ -6,7 +6,7 @@ namespace AeFinder.ApiKeys;
 public interface IApiKeySnapshotService
 {
     Task AddOrUpdateApiKeyQueryAeIndexerSnapshotIndexAsync(ApiKeyQueryAeIndexerSnapshotEto input);
-    Task AddOrUpdateApiKeyQueryBasicDataSnapshotIndexAsync(ApiKeyQueryBasicDataSnapshotEto input);
+    Task AddOrUpdateApiKeyQueryBasicApiSnapshotIndexAsync(ApiKeyQueryBasicApiSnapshotEto input);
     Task AddOrUpdateApiKeySnapshotIndexAsync(ApiKeySnapshotEto input);
     Task AddOrUpdateApiKeySummarySnapshotAsync(ApiKeySummarySnapshotEto input);
 }

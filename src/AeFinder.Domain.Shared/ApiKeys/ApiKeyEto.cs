@@ -14,7 +14,7 @@ public class ApiKeyEto
     public decimal SpendingLimitUsdt { get; set; }
     public HashSet<string> AuthorisedAeIndexers { get; set; } = new();
     public HashSet<string> AuthorisedDomains { get; set; } = new();
-    public HashSet<BasicDataApiType> AuthorisedApis = new();
+    public HashSet<BasicApi> AuthorisedApis = new();
     public long TotalQuery { get; set; }
     public DateTime LastQueryTime { get; set; }
     public bool IsDeleted { get; set; }

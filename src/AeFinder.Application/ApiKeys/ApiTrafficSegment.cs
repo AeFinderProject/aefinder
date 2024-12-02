@@ -16,7 +16,7 @@ public class AeIndexerApiTrafficSegment: ApiTrafficSegmentBase
     public string AppId { get; set; }
 }
 
-public class BasicDataApiTrafficSegment: ApiTrafficSegmentBase
+public class BasicApiTrafficSegment: ApiTrafficSegmentBase
 {
-    public BasicDataApiType BasicDataApiType { get; set; }
+    public BasicApi Api { get; set; }
 }

@@ -15,14 +15,14 @@ namespace AeFinder.ApiKeys;
 public interface IApiKeyTrafficProvider
 {
     Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain);
-    Task IncreaseBasicDataQueryAsync(string apiKey, BasicDataApiType basicDataApiType, string domain);
+    Task IncreaseBasicApiQueryAsync(string apiKey, BasicApi api, string domain);
     Task FlushAsync();
 }
 
 public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependency
 {
     private readonly ConcurrentDictionary<string, AeIndexerApiTrafficSegment> _aeIndexerApiTraffics = new();
-    private readonly ConcurrentDictionary<string, BasicDataApiTrafficSegment> _basicDataApiTraffics = new();
+    private readonly ConcurrentDictionary<string, BasicApiTrafficSegment> _basicApiTraffics = new();
     
     private readonly ApiKeyOptions _apiKeyOptions;
     private readonly IClusterClient _clusterClient;
@@ -46,12 +46,12 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
         await IncreaseAeIndexerQueryAsync(apiKeyInfo, appId, dateTime);
     }
 
-    public async Task IncreaseBasicDataQueryAsync(string apiKey, BasicDataApiType basicDataApiType, string domain)
+    public async Task IncreaseBasicApiQueryAsync(string apiKey, BasicApi api, string domain)
     {
         var dateTime = _clock.Now;
         var apiKeyInfo = await _apiKeyInfoProvider.GetApiKeyInfoAsync(apiKey);
-        await CheckApiKeyAsync(apiKeyInfo, domain,null,basicDataApiType,dateTime);
-        await IncreaseBasicDataQueryAsync(apiKeyInfo, basicDataApiType, dateTime);
+        await CheckApiKeyAsync(apiKeyInfo, domain,null,api,dateTime);
+        await IncreaseBasicApiQueryAsync(apiKeyInfo, api, dateTime);
     }
 
     public async Task FlushAsync()
@@ -76,14 +76,14 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
                 value.LastQueryTime);
         }
         
-        foreach (var item in _basicDataApiTraffics)
+        foreach (var item in _basicApiTraffics)
         {
             if (item.Value.SegmentTime >= segmentTime)
             {
                 continue;
             }
 
-            if (!_basicDataApiTraffics.TryRemove(item.Key, out var value))
+            if (!_basicApiTraffics.TryRemove(item.Key, out var value))
             {
                 continue;
             }
@@ -91,7 +91,7 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
             var apiKeyGrain =
                 _clusterClient.GetGrain<IApiKeySummaryGrain>(
                     GrainIdHelper.GenerateApiKeySummaryGrainId(value.OrganizationId));
-            await apiKeyGrain.RecordQueryBasicDataCountAsync(value.ApiKeyId, value.BasicDataApiType, value.Query,
+            await apiKeyGrain.RecordQueryBasicApiCountAsync(value.ApiKeyId, value.Api, value.Query,
                 value.LastQueryTime);
         }
     }
@@ -116,16 +116,16 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
         return Task.CompletedTask;
     }
     
-    private async Task IncreaseBasicDataQueryAsync(ApiKeyInfo apiKeyInfo, BasicDataApiType basicDataApiType, DateTime dateTime)
+    private async Task IncreaseBasicApiQueryAsync(ApiKeyInfo apiKeyInfo, BasicApi api, DateTime dateTime)
     {
         var segmentTime = GetSegmentTime(dateTime);
-        var key = GetBasicDataApiTrafficKey(apiKeyInfo.Id, basicDataApiType, segmentTime);
-        _basicDataApiTraffics.AddOrUpdate(key, new BasicDataApiTrafficSegment()
+        var key = GetBasicApiTrafficKey(apiKeyInfo.Id, api, segmentTime);
+        _basicApiTraffics.AddOrUpdate(key, new BasicApiTrafficSegment()
         {
             SegmentTime = segmentTime,
             OrganizationId = apiKeyInfo.OrganizationId,
             ApiKeyId = apiKeyInfo.Id,
-            BasicDataApiType = basicDataApiType,
+            Api = api,
             Query = 1,
             LastQueryTime = dateTime
         }, (s, i) =>
@@ -136,7 +136,7 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
     }
 
     private async Task CheckApiKeyAsync(ApiKeyInfo apiKeyInfo, string domain, string appId,
-        BasicDataApiType? basicDataApiType, DateTime dateTime)
+        BasicApi? api, DateTime dateTime)
     {
         var limit = await _apiKeyInfoProvider.GetApiKeyLimitAsync(apiKeyInfo.OrganizationId);
         var used = await _apiKeyInfoProvider.GetApiKeyUsedAsync(apiKeyInfo.OrganizationId, dateTime);
@@ -155,8 +155,8 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
             throw new UserFriendlyException("Unauthorized AeIndexer.");
         }
 
-        if (basicDataApiType.HasValue && apiKeyInfo.AuthorisedApis.Any() &&
-            !apiKeyInfo.AuthorisedApis.Contains(basicDataApiType.Value))
+        if (api.HasValue && apiKeyInfo.AuthorisedApis.Any() &&
+            !apiKeyInfo.AuthorisedApis.Contains(api.Value))
         {
             throw new UserFriendlyException("Unauthorized api.");
         }
@@ -191,9 +191,9 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
         return $"{apiKeyId:N}-{appId}-{dateTime}";
     }
     
-    private string GetBasicDataApiTrafficKey(Guid apiKeyId, BasicDataApiType basicDataApiType, DateTime dateTime)
+    private string GetBasicApiTrafficKey(Guid apiKeyId, BasicApi api, DateTime dateTime)
     {
-        return $"{apiKeyId:N}-{basicDataApiType}-{dateTime}";
+        return $"{apiKeyId:N}-{api}-{dateTime}";
     }
 
     private DateTime GetSegmentTime(DateTime dateTime)

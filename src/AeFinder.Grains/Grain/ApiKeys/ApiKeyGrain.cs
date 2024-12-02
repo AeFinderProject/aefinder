@@ -87,7 +87,7 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
         await WriteStateAsync();
     }
     
-    public async Task SetAuthorisedApisAsync(Dictionary<BasicDataApiType,bool> apis)
+    public async Task SetAuthorisedApisAsync(Dictionary<BasicApi,bool> apis)
     {
         await ReadStateAsync();
         foreach (var api in apis)

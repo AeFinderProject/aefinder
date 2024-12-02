@@ -16,7 +16,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     private readonly IClusterClient _clusterClient;
     private readonly IEntityMappingRepository<ApiKeyIndex, Guid> _apiKeyIndexRepository;
     private readonly IEntityMappingRepository<ApiKeyQueryAeIndexerIndex, string> _apiKeyQueryAeIndexerIndexRepository;
-    private readonly IEntityMappingRepository<ApiKeyQueryBasicDataIndex, string> _apiKeyQueryBasicDataIndexRepository;
+    private readonly IEntityMappingRepository<ApiKeyQueryBasicApiIndex, string> _apiKeyQueryBasicApiIndexRepository;
     private readonly IEntityMappingRepository<ApiKeySummaryIndex, string> _apiKeySummaryIndexRepository;
 
     public ApiKeyService(IApiKeyTrafficProvider apiKeyTrafficProvider, IClusterClient clusterClient,
@@ -32,9 +32,9 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
         await _apiKeyTrafficProvider.IncreaseAeIndexerQueryAsync(key, appId, domain);
     }
 
-    public async Task IncreaseQueryBasicDataCountAsync(string key, BasicDataApiType basicDataApiType, string domain)
+    public async Task IncreaseQueryBasicApiCountAsync(string key, BasicApi api, string domain)
     {
-        await _apiKeyTrafficProvider.IncreaseBasicDataQueryAsync(key, basicDataApiType, domain);
+        await _apiKeyTrafficProvider.IncreaseBasicApiQueryAsync(key, api, domain);
     }
 
     public async Task UpdateApiKeyInfoCacheAsync(ApiKeyInfo apiKeyInfo)
@@ -62,7 +62,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
         throw new NotImplementedException();
     }
 
-    public Task AddOrUpdateApiKeyQueryBasicDataIndexAsync(ApiKeyQueryBasicDataEto input)
+    public Task AddOrUpdateApiKeyQueryBasicApiIndexAsync(ApiKeyQueryBasicApiEto input)
     {
         throw new NotImplementedException();
     }

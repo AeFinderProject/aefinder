@@ -169,18 +169,18 @@ public static class GrainIdHelper
         return GenerateGrainId(apiKeyId.ToString("N"), appId, dateTime.ToString("yyyyMMdd"));
     }
     
-    public static string GenerateApiKeyQueryBasicDataGrainId(Guid apiKeyId, BasicDataApiType basicDataApiType)
+    public static string GenerateApiKeyQueryBasicApiGrainId(Guid apiKeyId, BasicApi api)
     {
-        return GenerateGrainId(apiKeyId.ToString("N"),basicDataApiType);
+        return GenerateGrainId(apiKeyId.ToString("N"),api);
     }
     
-    public static string GenerateApiKeyQueryBasicDataMonthlySnapshotGrainId(Guid apiKeyId, BasicDataApiType basicDataApiType, DateTime dateTime)
+    public static string GenerateApiKeyQueryBasicApiMonthlySnapshotGrainId(Guid apiKeyId, BasicApi api, DateTime dateTime)
     {
-        return GenerateGrainId(apiKeyId.ToString("N"), basicDataApiType, dateTime.ToString("yyyyMM"));
+        return GenerateGrainId(apiKeyId.ToString("N"), api, dateTime.ToString("yyyyMM"));
     }
     
-    public static string GenerateApiKeyQueryBasicDataDailySnapshotGrainId(Guid apiKeyId, BasicDataApiType basicDataApiType, DateTime dateTime)
+    public static string GenerateApiKeyQueryBasicApiDailySnapshotGrainId(Guid apiKeyId, BasicApi api, DateTime dateTime)
     {
-        return GenerateGrainId(apiKeyId.ToString("N"), basicDataApiType, dateTime.ToString("yyyyMMdd"));
+        return GenerateGrainId(apiKeyId.ToString("N"), api, dateTime.ToString("yyyyMMdd"));
     }
 }

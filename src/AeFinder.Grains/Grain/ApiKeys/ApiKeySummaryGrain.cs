@@ -36,7 +36,7 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
             .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, appId, query, dateTime);
     }
     
-    public async Task RecordQueryBasicDataCountAsync(Guid apiKeyId, BasicDataApiType basicDataApiType, long query, DateTime dateTime)
+    public async Task RecordQueryBasicApiCountAsync(Guid apiKeyId, BasicApi api, long query, DateTime dateTime)
     {
         var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId);
         var apiKeyInfo = await apiKeyGrain.GetAsync();
@@ -44,9 +44,9 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         await RecordQueryCountAsync(apiKeyInfo, query, dateTime);
 
         await GrainFactory
-            .GetGrain<IApiKeyQueryBasicDataGrain>(
-                GrainIdHelper.GenerateApiKeyQueryBasicDataGrainId(apiKeyId, basicDataApiType))
-            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, basicDataApiType, query, dateTime);
+            .GetGrain<IApiKeyQueryBasicApiGrain>(
+                GrainIdHelper.GenerateApiKeyQueryBasicApiGrainId(apiKeyId, api))
+            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, api, query, dateTime);
     }
 
     public async Task<ApiKeySummaryInfo> GetApiKeySummaryInfoAsync()

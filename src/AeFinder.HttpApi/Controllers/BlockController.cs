@@ -29,7 +29,7 @@ public class BlockController : AeFinderController
     [Authorize]
     public virtual async Task<List<BlockDto>> GetBlocksAsync(string key, GetBlocksInput input)
     {
-        await _apiKeyService.IncreaseQueryBasicDataCountAsync(key, BasicDataApiType.Block, GetOriginHost());
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync(key, BasicApi.Block, GetOriginHost());
         return await _blockAppService.GetBlocksAsync(input);
     }
 
@@ -38,7 +38,7 @@ public class BlockController : AeFinderController
     [Authorize]
     public virtual async Task<List<TransactionDto>> GetTransactionsAsync(string key, GetTransactionsInput input)
     {
-        await _apiKeyService.IncreaseQueryBasicDataCountAsync(key, BasicDataApiType.Transaction, GetOriginHost());
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync(key, BasicApi.Transaction, GetOriginHost());
         return await _blockAppService.GetTransactionsAsync(input);
     }
 
@@ -47,7 +47,7 @@ public class BlockController : AeFinderController
     [Authorize]
     public virtual async Task<List<LogEventDto>> GetLogEventsAsync(string key, GetLogEventsInput input)
     {
-        await _apiKeyService.IncreaseQueryBasicDataCountAsync(key, BasicDataApiType.LogEvent, GetOriginHost());
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync(key, BasicApi.LogEvent, GetOriginHost());
         return await _blockAppService.GetLogEventsAsync(input);
     }
     

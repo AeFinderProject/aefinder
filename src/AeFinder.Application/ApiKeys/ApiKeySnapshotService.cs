@@ -13,7 +13,7 @@ public class ApiKeySnapshotService: AeFinderAppService, IApiKeySnapshotService
         throw new System.NotImplementedException();
     }
 
-    public Task AddOrUpdateApiKeyQueryBasicDataSnapshotIndexAsync(ApiKeyQueryBasicDataSnapshotEto input)
+    public Task AddOrUpdateApiKeyQueryBasicApiSnapshotIndexAsync(ApiKeyQueryBasicApiSnapshotEto input)
     {
         throw new System.NotImplementedException();
     }
