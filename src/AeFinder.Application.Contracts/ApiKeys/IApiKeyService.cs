@@ -10,8 +10,8 @@ public interface IApiKeyService
     Task UpdateApiKeyInfoCacheAsync(ApiKeyInfo apiKeyInfo);
     Task UpdateApiKeyLimitCacheAsync(Guid organizationId, long limit);
     Task UpdateApiKeyUsedCacheAsync(Guid organizationId, long used);
-    Task AddOrUpdateApiKeyIndexAsync(ApiKeyEto input);
-    Task AddOrUpdateApiKeyQueryAeIndexerIndexAsync(ApiKeyQueryAeIndexerEto input);
-    Task AddOrUpdateApiKeyQueryBasicApiIndexAsync(ApiKeyQueryBasicApiEto input);
-    Task AddOrUpdateApiKeySummaryIndexAsync(ApiKeySummaryEto input);
+    Task AddOrUpdateApiKeyIndexAsync(ApiKeyChangedEto input);
+    Task AddOrUpdateApiKeyQueryAeIndexerIndexAsync(ApiKeyQueryAeIndexerChangedEto input);
+    Task AddOrUpdateApiKeyQueryBasicApiIndexAsync(ApiKeyQueryBasicApiChangedEto input);
+    Task AddOrUpdateApiKeySummaryIndexAsync(ApiKeySummaryChangedEto input);
 }

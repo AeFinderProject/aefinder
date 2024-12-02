@@ -1,5 +1,7 @@
 using AeFinder.ApiKeys;
 using AeFinder.Grains.State.ApiKeys;
+using Microsoft.Extensions.Options;
+using Volo.Abp;
 using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.ApiKeys;
@@ -7,10 +9,12 @@ namespace AeFinder.Grains.Grain.ApiKeys;
 public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySummaryGrain
 {
     private readonly IObjectMapper _objectMapper;
+    private readonly ApiKeyOptions _apiKeyOptions;
 
-    public ApiKeySummaryGrain(IObjectMapper objectMapper)
+    public ApiKeySummaryGrain(IObjectMapper objectMapper, IOptionsSnapshot<ApiKeyOptions> apiKeyOptions)
     {
         _objectMapper = objectMapper;
+        _apiKeyOptions = apiKeyOptions.Value;
     }
 
     public async Task IncreaseQueryLimitAsync(Guid organizationId, long query)
@@ -53,6 +57,32 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
     {
         await ReadStateAsync();
         return _objectMapper.Map<ApiKeySummaryState, ApiKeySummaryInfo>(State);
+    }
+
+    public async Task<ApiKeyInfo> CreateApiKeyAsync(Guid apiKeyId, Guid organizationId, string name)
+    {
+        await ReadStateAsync();
+        if (State.ApiKeyCount + 1 > _apiKeyOptions.MaxApiKeyCount)
+        {
+            throw new UserFriendlyException($"Api Key reached the upper limit!");
+        }
+
+        State.ApiKeyCount += 1;
+
+        var apiKeyInfo = await GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId).CreateAsync(apiKeyId, organizationId, name);
+
+        await WriteStateAsync();
+        return apiKeyInfo;
+    }
+
+    public async Task DeleteApiKeyAsync(Guid apiKeyId)
+    {
+        await ReadStateAsync();
+        
+        State.ApiKeyCount -= 1;
+        await GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId).DeleteAsync();
+
+        await WriteStateAsync();
     }
 
     private async Task<bool> RecordQueryCountAsync(ApiKeyInfo apiKeyInfo, long query, DateTime dateTime)

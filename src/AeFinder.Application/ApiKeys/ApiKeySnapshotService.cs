@@ -1,4 +1,6 @@
+using System;
 using System.Threading.Tasks;
+using AElf.EntityMapping.Repositories;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 
@@ -8,23 +10,32 @@ namespace AeFinder.ApiKeys;
 [DisableAuditing]
 public class ApiKeySnapshotService: AeFinderAppService, IApiKeySnapshotService
 {
-    public Task AddOrUpdateApiKeyQueryAeIndexerSnapshotIndexAsync(ApiKeyQueryAeIndexerSnapshotEto input)
+    private readonly IEntityMappingRepository<ApiKeyQueryAeIndexerSnapshotIndex, string> _apiKeyQueryAeIndexerSnapshotIndexRepository;
+    private readonly IEntityMappingRepository<ApiKeyQueryBasicApiSnapshotIndex, string> _apiKeyQueryBasicApiIndexRepository;
+    private readonly IEntityMappingRepository<ApiKeySnapshotIndex, string> _apiKeySnapshotIndexRepository;
+    private readonly IEntityMappingRepository<ApiKeySummarySnapshotIndex, string> _apiKeySummarySnapshotIndexRepository;
+    
+    public async Task AddOrUpdateApiKeyQueryAeIndexerSnapshotIndexAsync(ApiKeyQueryAeIndexerSnapshotChangedEto input)
     {
-        throw new System.NotImplementedException();
+        var index = ObjectMapper.Map<ApiKeyQueryAeIndexerSnapshotChangedEto, ApiKeyQueryAeIndexerSnapshotIndex>(input);
+        await _apiKeyQueryAeIndexerSnapshotIndexRepository.AddOrUpdateAsync(index);
     }
 
-    public Task AddOrUpdateApiKeyQueryBasicApiSnapshotIndexAsync(ApiKeyQueryBasicApiSnapshotEto input)
+    public async Task AddOrUpdateApiKeyQueryBasicApiSnapshotIndexAsync(ApiKeyQueryBasicApiSnapshotChangedEto input)
     {
-        throw new System.NotImplementedException();
+        var index = ObjectMapper.Map<ApiKeyQueryBasicApiSnapshotChangedEto, ApiKeyQueryBasicApiSnapshotIndex>(input);
+        await _apiKeyQueryBasicApiIndexRepository.AddOrUpdateAsync(index);
     }
 
-    public Task AddOrUpdateApiKeySnapshotIndexAsync(ApiKeySnapshotEto input)
+    public async Task AddOrUpdateApiKeySnapshotIndexAsync(ApiKeySnapshotChangedEto input)
     {
-        throw new System.NotImplementedException();
+        var index = ObjectMapper.Map<ApiKeySnapshotChangedEto, ApiKeySnapshotIndex>(input);
+        await _apiKeySnapshotIndexRepository.AddOrUpdateAsync(index);
     }
 
-    public Task AddOrUpdateApiKeySummarySnapshotAsync(ApiKeySummarySnapshotEto input)
+    public async Task AddOrUpdateApiKeySummarySnapshotIndexAsync(ApiKeySummarySnapshotChangedEto input)
     {
-        throw new System.NotImplementedException();
+        var index = ObjectMapper.Map<ApiKeySummarySnapshotChangedEto, ApiKeySummarySnapshotIndex>(input);
+        await _apiKeySummarySnapshotIndexRepository.AddOrUpdateAsync(index);
     }
 }

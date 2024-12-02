@@ -2,7 +2,7 @@ using System;
 
 namespace AeFinder.ApiKeys;
 
-public class ApiKeyQueryAeIndexerEto
+public class ApiKeyQueryAeIndexerChangedEto
 {
     public string Id { get; set; }
     public Guid OrganizationId { get; set; }

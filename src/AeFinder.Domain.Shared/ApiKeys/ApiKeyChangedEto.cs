@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AeFinder.ApiKeys;
 
-public class ApiKeyEto
+public class ApiKeyChangedEto
 {
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }

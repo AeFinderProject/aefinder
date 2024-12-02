@@ -146,5 +146,23 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         // Api Key
         CreateMap<ApiKeyState, ApiKeyInfo>();
         CreateMap<ApiKeySummaryState, ApiKeySummaryInfo>();
+        
+        CreateMap<ApiKeyChangedEto, ApiKeyIndex>();
+        CreateMap<ApiKeyQueryAeIndexerChangedEto, ApiKeyQueryAeIndexerIndex>();
+        CreateMap<ApiKeyQueryBasicApiChangedEto, ApiKeyQueryBasicApiIndex>();
+        CreateMap<ApiKeySummaryChangedEto, ApiKeySummaryIndex>();
+        CreateMap<ApiKeyQueryAeIndexerSnapshotChangedEto, ApiKeyQueryAeIndexerSnapshotIndex>();
+        CreateMap<ApiKeyQueryBasicApiSnapshotChangedEto, ApiKeyQueryBasicApiSnapshotIndex>();
+        CreateMap<ApiKeySnapshotChangedEto, ApiKeySnapshotIndex>();
+        CreateMap<ApiKeySummarySnapshotChangedEto, ApiKeySummarySnapshotIndex>();
+        
+        CreateMap<ApiKeyState, ApiKeyChangedEto>();
+        CreateMap<ApiKeyQueryAeIndexerState, ApiKeyQueryAeIndexerChangedEto>();
+        CreateMap<ApiKeyQueryBasicApiState, ApiKeyQueryBasicApiChangedEto>();
+        CreateMap<ApiKeySummaryState, ApiKeySummaryChangedEto>();
+        CreateMap<ApiKeyQueryAeIndexerSnapshotState, ApiKeyQueryAeIndexerSnapshotChangedEto>();
+        CreateMap<ApiKeyQueryBasicApiSnapshotState, ApiKeyQueryBasicApiSnapshotChangedEto>();
+        CreateMap<ApiKeySnapshotState, ApiKeySnapshotChangedEto>();
+        CreateMap<ApiKeySummarySnapshotState, ApiKeySummarySnapshotChangedEto>();
     }
 }

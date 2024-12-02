@@ -20,11 +20,18 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     private readonly IEntityMappingRepository<ApiKeySummaryIndex, string> _apiKeySummaryIndexRepository;
 
     public ApiKeyService(IApiKeyTrafficProvider apiKeyTrafficProvider, IClusterClient clusterClient,
-        IApiKeyInfoProvider apiKeyInfoProvider)
+        IApiKeyInfoProvider apiKeyInfoProvider, IEntityMappingRepository<ApiKeyIndex, Guid> apiKeyIndexRepository,
+        IEntityMappingRepository<ApiKeyQueryAeIndexerIndex, string> apiKeyQueryAeIndexerIndexRepository,
+        IEntityMappingRepository<ApiKeyQueryBasicApiIndex, string> apiKeyQueryBasicApiIndexRepository,
+        IEntityMappingRepository<ApiKeySummaryIndex, string> apiKeySummaryIndexRepository)
     {
         _apiKeyTrafficProvider = apiKeyTrafficProvider;
         _clusterClient = clusterClient;
         _apiKeyInfoProvider = apiKeyInfoProvider;
+        _apiKeyIndexRepository = apiKeyIndexRepository;
+        _apiKeyQueryAeIndexerIndexRepository = apiKeyQueryAeIndexerIndexRepository;
+        _apiKeyQueryBasicApiIndexRepository = apiKeyQueryBasicApiIndexRepository;
+        _apiKeySummaryIndexRepository = apiKeySummaryIndexRepository;
     }
 
     public async Task IncreaseQueryAeIndexerCountAsync(string key, string appId, string domain)
@@ -52,23 +59,27 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
         await _apiKeyInfoProvider.SetApiKeyUsedAsync(organizationId, used);
     }
 
-    public Task AddOrUpdateApiKeyIndexAsync(ApiKeyEto input)
+    public async Task AddOrUpdateApiKeyIndexAsync(ApiKeyChangedEto input)
     {
-        throw new NotImplementedException();
+        var index = ObjectMapper.Map<ApiKeyChangedEto, ApiKeyIndex>(input);
+        await _apiKeyIndexRepository.AddOrUpdateAsync(index);
     }
 
-    public Task AddOrUpdateApiKeyQueryAeIndexerIndexAsync(ApiKeyQueryAeIndexerEto input)
+    public async Task AddOrUpdateApiKeyQueryAeIndexerIndexAsync(ApiKeyQueryAeIndexerChangedEto input)
     {
-        throw new NotImplementedException();
+        var index = ObjectMapper.Map<ApiKeyQueryAeIndexerChangedEto, ApiKeyQueryAeIndexerIndex>(input);
+        await _apiKeyQueryAeIndexerIndexRepository.AddOrUpdateAsync(index);
     }
 
-    public Task AddOrUpdateApiKeyQueryBasicApiIndexAsync(ApiKeyQueryBasicApiEto input)
+    public async Task AddOrUpdateApiKeyQueryBasicApiIndexAsync(ApiKeyQueryBasicApiChangedEto input)
     {
-        throw new NotImplementedException();
+        var index = ObjectMapper.Map<ApiKeyQueryBasicApiChangedEto, ApiKeyQueryBasicApiIndex>(input);
+        await _apiKeyQueryBasicApiIndexRepository.AddOrUpdateAsync(index);
     }
 
-    public Task AddOrUpdateApiKeySummaryIndexAsync(ApiKeySummaryEto input)
+    public async Task AddOrUpdateApiKeySummaryIndexAsync(ApiKeySummaryChangedEto input)
     {
-        throw new NotImplementedException();
+        var index = ObjectMapper.Map<ApiKeySummaryChangedEto, ApiKeySummaryIndex>(input);
+        await _apiKeySummaryIndexRepository.AddOrUpdateAsync(index);
     }
 }
