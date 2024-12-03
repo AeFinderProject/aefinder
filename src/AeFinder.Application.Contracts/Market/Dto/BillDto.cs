@@ -17,5 +17,6 @@ public class BillDto
     public decimal TransactionAmount { get; set; }
     public string WalletAddress { get; set; }
     public decimal BillingAmount { get; set; }
+    public decimal RefundAmount { get; set; }
     public BillingStatus BillingStatus { get; set; }
 }

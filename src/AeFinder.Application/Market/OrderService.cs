@@ -68,9 +68,9 @@ public class OrderService: ApplicationService, IOrderService
             var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(subscriptionId);
             var lockedAmount = latestLockedBill.BillingAmount;
             var chargeFee = await billsGrain.CalculateChargeAmount(renewalInfo, lockedAmount);
-            var oldChargeBill = await billsGrain.CreateChargeBillAsync(dto.OrganizationId, subscriptionId,
-                "User creates a new order and processes billing settlement for the existing order.", chargeFee);
-            billList.Add(oldChargeBill);
+            // var oldChargeBill = await billsGrain.CreateChargeBillAsync(dto.OrganizationId, subscriptionId,
+            //     "User creates a new order and processes billing settlement for the existing order.", chargeFee);
+            // billList.Add(oldChargeBill);
             //Create new order
             var newOrder = await ordersGrain.CreateAsync(dto);
             var remainingLockedAmount = lockedAmount - chargeFee;
@@ -95,22 +95,25 @@ public class OrderService: ApplicationService, IOrderService
             {
                 //Calculate old order need refund fee
                 var refundAmount = remainingLockedAmount - firstMonthFee;
-                if (refundAmount == 0)
-                {
-                    return billList;
-                }
+                // if (refundAmount == 0)
+                // {
+                //     return billList;
+                // }
 
-                var refundBill = await billsGrain.CreateRefundBillAsync(new CreateRefundBillDto()
-                {
-                    OrganizationId = dto.OrganizationId,
-                    UserId = dto.UserId,
-                    AppId = dto.AppId,
-                    OrderId = oldOrderInfo.OrderId,
-                    SubscriptionId = subscriptionId,
-                    RefundFee = refundAmount,
-                    Description = "For the new order, refund the excess locked balance from the old order."
-                });
-                billList.Add(refundBill);
+                var oldChargeBill = await billsGrain.CreateChargeBillAsync(dto.OrganizationId, subscriptionId,
+                    "User creates a new order and processes billing settlement for the existing order.", chargeFee,
+                    refundAmount);
+                // var refundBill = await billsGrain.CreateRefundBillAsync(new CreateRefundBillDto()
+                // {
+                //     OrganizationId = dto.OrganizationId,
+                //     UserId = dto.UserId,
+                //     AppId = dto.AppId,
+                //     OrderId = oldOrderInfo.OrderId,
+                //     SubscriptionId = subscriptionId,
+                //     RefundFee = refundAmount,
+                //     Description = "For the new order, refund the excess locked balance from the old order."
+                // });
+                billList.Add(oldChargeBill);
             }
         }
         else

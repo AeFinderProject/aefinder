@@ -51,7 +51,9 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
             decimal monthlyFee = orderInfo.ProductNumber * productInfo.MonthlyUnitPrice;
             billItem.BillingAmount = await CalculateFirstMonthAmount(monthlyFee);
         }
-        
+
+        billItem.BillingStartDate = DateTime.UtcNow;
+        billItem.BillingEndDate = GetFirstDayOfNextMonths(billItem.BillingStartDate, 1);
         billItem.BillingStatus = BillingStatus.PendingPayment;
         State.Add(billItem);
         await WriteStateAsync();
@@ -74,25 +76,28 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(dto.SubscriptionId);
         var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
         var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalInfo.ProductId);
+        billItem.BillingStartDate = renewalInfo.NextRenewalDate;
         switch (renewalInfo.RenewalPeriod)
         {
             case RenewalPeriod.OneMonth:
             {
                 billItem.BillingAmount = renewalInfo.ProductNumber * productInfo.MonthlyUnitPrice * 1;
+                billItem.BillingEndDate = GetFirstDayOfNextMonths(billItem.BillingStartDate, 1);
                 break;
             }
             case RenewalPeriod.ThreeMonth:
             {
                 billItem.BillingAmount = renewalInfo.ProductNumber * productInfo.MonthlyUnitPrice * 3;
+                billItem.BillingEndDate = GetFirstDayOfNextMonths(billItem.BillingStartDate, 3);
                 break;
             }
             case RenewalPeriod.SixMonth:
             {
                 billItem.BillingAmount = renewalInfo.ProductNumber * productInfo.MonthlyUnitPrice * 6;
+                billItem.BillingEndDate = GetFirstDayOfNextMonths(billItem.BillingStartDate, 6);
                 break;
             }
         }
-
         billItem.BillingStatus = BillingStatus.PendingPayment;
         State.Add(billItem);
         await WriteStateAsync();
@@ -100,7 +105,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
     }
 
     public async Task<BillDto> CreateChargeBillAsync(string organizationId, string subscriptionId, string description,
-        decimal chargeFee)
+        decimal chargeFee, decimal refundAmount)
     {
         var billItem = new BillState();
         billItem.BillingId = GenerateId();
@@ -125,6 +130,10 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
             decimal monthlyFee = renewalInfo.ProductNumber * productInfo.MonthlyUnitPrice;
             billItem.BillingAmount = await CalculateChargeAmount(renewalInfo, monthlyFee);
         }
+
+        billItem.BillingStartDate = renewalInfo.LastChargeDate;
+        billItem.BillingEndDate = DateTime.UtcNow;
+        billItem.RefundAmount = refundAmount;
         billItem.BillingStatus = BillingStatus.PendingPayment;
         await ReadStateAsync();
         State.Add(billItem);
@@ -165,13 +174,19 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
     //The first payment only requires covering the usage fees for the current month.
     public async Task<decimal> CalculateFirstMonthAmount(decimal monthlyFee)
     {
-        DateTime today = DateTime.Today;
-        DateTime firstOfNextMonth = new DateTime(today.Year, today.Month, 1).AddMonths(1);
+        DateTime today = DateTime.UtcNow;
+        DateTime firstOfNextMonth = GetFirstDayOfNextMonths(today, 1);
         int daysUntilNextMonth = (firstOfNextMonth - today).Days;
         int daysInCurrentMonth = DateTime.DaysInMonth(today.Year, today.Month);
         decimal dailyFee = monthlyFee / daysInCurrentMonth;
         decimal amountDue = dailyFee * daysUntilNextMonth;
         return amountDue;
+    }
+
+    private DateTime GetFirstDayOfNextMonths(DateTime today, int months)
+    {
+        DateTime firstOfNextMonth = new DateTime(today.Year, today.Month, 1).AddMonths(months);
+        return firstOfNextMonth;
     }
 
     public async Task<decimal> CalculateChargeAmount(RenewalDto renewalInfo, decimal monthlyFee)
