@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.Grains;
@@ -30,15 +31,21 @@ public class ProductService : ApplicationService, IProductService
         var resultList = new List<FullPodResourceLevelDto>();
         foreach (var productDto in fullPodResourceProducts)
         {
-            var levelDto = new FullPodResourceLevelDto();
-            levelDto.ProductId = productDto.ProductId;
-            levelDto.LevelName = productDto.ProductSpecifications;
-            var resourceCapacity = JsonConvert.DeserializeObject<ResourceCapacity>(productDto.Description);
-            levelDto.Capacity = resourceCapacity;
-            levelDto.MonthlyUnitPrice = productDto.MonthlyUnitPrice;
+            var levelDto = ConvertToPodResourceLevelDto(productDto);
             resultList.Add(levelDto);
         }
 
         return resultList;
+    }
+
+    public FullPodResourceLevelDto ConvertToPodResourceLevelDto(ProductDto productDto)
+    {
+        var levelDto = new FullPodResourceLevelDto();
+        levelDto.ProductId = productDto.ProductId;
+        levelDto.LevelName = productDto.ProductSpecifications;
+        var resourceCapacity = JsonConvert.DeserializeObject<ResourceCapacity>(productDto.Description);
+        levelDto.Capacity = resourceCapacity;
+        levelDto.MonthlyUnitPrice = productDto.MonthlyUnitPrice;
+        return levelDto;
     }
 }

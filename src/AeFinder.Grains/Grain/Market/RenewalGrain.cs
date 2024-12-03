@@ -211,4 +211,25 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
 
         return renewalState.SubscriptionId;
     }
+
+    public async Task<bool> CheckRenewalInfoIsExistAsync(string organizationId, string userId, string productId)
+    {
+        var renewalState = State.FirstOrDefault(r =>
+            r.OrganizationId == organizationId && r.UserId == userId && r.ProductId == productId && r.IsActive == true);
+        if (renewalState == null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+    
+    public async Task<RenewalDto> GetCurrentPodResourceRenewalInfoAsync(string organizationId, string userId, string appId)
+    {
+        var renewalState = State.FirstOrDefault(o =>
+            o.OrganizationId == organizationId && o.UserId == userId && o.AppId == appId && 
+            o.ProductType == ProductType.FullPodResource && o.IsActive == true);
+        var renewalDto = _objectMapper.Map<RenewalState, RenewalDto>(renewalState);
+        return renewalDto;
+    }
 }

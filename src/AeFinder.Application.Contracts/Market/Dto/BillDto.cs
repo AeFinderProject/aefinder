@@ -16,6 +16,8 @@ public class BillDto
     public string TransactionId { get; set; }
     public decimal TransactionAmount { get; set; }
     public string WalletAddress { get; set; }
+    public DateTime BillingStartDate { get; set; }
+    public DateTime BillingEndDate { get; set; }
     public decimal BillingAmount { get; set; }
     public decimal RefundAmount { get; set; }
     public BillingStatus BillingStatus { get; set; }

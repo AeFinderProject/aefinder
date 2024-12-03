@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
@@ -45,5 +46,11 @@ public class BillService : ApplicationService, IBillService
     {
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
         return organizationIds.First().Id.ToString("N");
+    }
+    
+    private async Task<string> GetOrganizationGrainIdAsync(string organizationId)
+    {
+        var organizationGuid = Guid.Parse(organizationId);
+        return organizationGuid.ToString("N");
     }
 }

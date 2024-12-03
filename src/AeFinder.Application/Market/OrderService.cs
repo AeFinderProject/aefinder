@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,8 +27,8 @@ public class OrderService: ApplicationService, IOrderService
         var billList = new List<BillDto>();
         var productsGrain = _clusterClient.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
         var productInfo = await productsGrain.GetProductInfoByIdAsync(dto.ProductId);
-
-        var organizationGrainId = await GetOrganizationGrainIdAsync();
+        var userId = CurrentUser.Id.ToString();
+        var organizationGrainId = await GetOrganizationGrainIdAsync(dto.OrganizationId);
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         OrderDto oldOrderInfo = null;
@@ -35,14 +36,14 @@ public class OrderService: ApplicationService, IOrderService
         {
             //Check if there is an existing order for a product of the same type
             oldOrderInfo =
-                await ordersGrain.GetLatestApiQueryCountOrderAsync(dto.OrganizationId, dto.UserId);
+                await ordersGrain.GetLatestApiQueryCountOrderAsync(dto.OrganizationId, userId);
         }
 
         if (productInfo.ProductType == ProductType.FullPodResource)
         {
             //Check if there is an existing order for a product of the same type
             oldOrderInfo =
-                await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, dto.UserId, dto.AppId);
+                await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, userId, dto.AppId);
         }
         
         var billsGrain =
@@ -83,7 +84,7 @@ public class OrderService: ApplicationService, IOrderService
                 var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
                 {
                     OrganizationId = dto.OrganizationId,
-                    UserId = dto.UserId,
+                    UserId = userId,
                     AppId = dto.AppId,
                     OrderId = newOrder.OrderId,
                     LockFee = needLockFee,
@@ -126,11 +127,11 @@ public class OrderService: ApplicationService, IOrderService
                 await renewalGrain.CreateAsync(new CreateRenewalDto()
                 {
                     OrganizationId = dto.OrganizationId,
-                    UserId = dto.UserId,
+                    UserId = userId,
                     AppId = dto.AppId,
                     OrderId = newOrder.OrderId,
                     ProductId = dto.ProductId,
-                    ProductNumber=1,
+                    ProductNumber = 1,
                     RenewalPeriod = RenewalPeriod.OneMonth
                 });
                 return billList;
@@ -139,7 +140,7 @@ public class OrderService: ApplicationService, IOrderService
             var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
             {
                 OrganizationId = dto.OrganizationId,
-                UserId = dto.UserId,
+                UserId = userId,
                 AppId = dto.AppId,
                 OrderId = newOrder.OrderId,
                 LockFee = firstMonthFee,
@@ -151,9 +152,15 @@ public class OrderService: ApplicationService, IOrderService
         return billList;
     }
     
-    private async Task<string> GetOrganizationGrainIdAsync()
+    // private async Task<string> GetOrganizationGrainIdAsync()
+    // {
+    //     var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
+    //     return organizationIds.First().Id.ToString("N");
+    // }
+
+    private async Task<string> GetOrganizationGrainIdAsync(string organizationId)
     {
-        var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
-        return organizationIds.First().Id.ToString("N");
+        var organizationGuid = Guid.Parse(organizationId);
+        return organizationGuid.ToString("N");
     }
 }

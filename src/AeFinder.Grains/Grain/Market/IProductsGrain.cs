@@ -6,6 +6,6 @@ public interface IProductsGrain: IGrainWithIntegerKey
 {
     Task InitializeProductsInfoAsync(ProductDto dto);
     Task<ProductDto> GetProductInfoByIdAsync(string productId);
-    Task<int> GetFreeApiQueryCountAsync();
+    Task<ProductDto> GetFreeApiQueryCountProductAsync();
     Task<List<ProductDto>> GetFullPodResourceProductsAsync();
 }
