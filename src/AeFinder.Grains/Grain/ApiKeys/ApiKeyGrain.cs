@@ -1,5 +1,6 @@
 using AeFinder.ApiKeys;
 using AeFinder.Grains.State.ApiKeys;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
 using Volo.Abp.Timing;
 
@@ -9,14 +10,16 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
 {
     private readonly IObjectMapper _objectMapper;
     private readonly IClock _clock;
+    private readonly IDistributedEventBus _distributedEventBus;
     
     // TODO: Get prices through product information
     private const decimal QueryPrice = 4 / 100000;
 
-    public ApiKeyGrain(IObjectMapper objectMapper, IClock clock)
+    public ApiKeyGrain(IObjectMapper objectMapper, IClock clock, IDistributedEventBus distributedEventBus)
     {
         _objectMapper = objectMapper;
         _clock = clock;
+        _distributedEventBus = distributedEventBus;
     }
 
     public async Task<ApiKeyInfo> CreateAsync(Guid id, Guid organizationId, string name)
@@ -168,6 +171,18 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
         }
         
         return await CalculateAvailabilityQueryAsync(dateTime);
+    }
+
+    protected override async Task WriteStateAsync()
+    {
+        await PublishEventAsync();
+        await base.WriteStateAsync();
+    }
+
+    private async Task PublishEventAsync()
+    {
+        var eventData = _objectMapper.Map<ApiKeyState, ApiKeyChangedEto>(State);
+        await _distributedEventBus.PublishAsync(eventData);
     }
 
     private async Task<long> CalculateAvailabilityQueryAsync(DateTime dateTime)

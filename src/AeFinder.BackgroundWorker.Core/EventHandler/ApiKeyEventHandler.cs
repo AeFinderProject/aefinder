@@ -4,7 +4,7 @@ using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.BackgroundWorker.EventHandler;
 
-public class ApiKeyHandler : 
+public class ApiKeyEventHandler : 
     IDistributedEventHandler<ApiKeyChangedEto>, 
     IDistributedEventHandler<ApiKeyQueryAeIndexerChangedEto>, 
     IDistributedEventHandler<ApiKeyQueryAeIndexerSnapshotChangedEto>, 
@@ -19,7 +19,7 @@ public class ApiKeyHandler :
     private readonly IApiKeyService _apiKeyService;
     private readonly IApiKeySnapshotService _apiKeySnapshotService;
 
-    public ApiKeyHandler(IApiKeyService apiKeyService, IApiKeySnapshotService apiKeySnapshotService)
+    public ApiKeyEventHandler(IApiKeyService apiKeyService, IApiKeySnapshotService apiKeySnapshotService)
     {
         _apiKeyService = apiKeyService;
         _apiKeySnapshotService = apiKeySnapshotService;

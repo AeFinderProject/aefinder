@@ -2,6 +2,7 @@ using AeFinder.ApiKeys;
 using AeFinder.Grains.State.ApiKeys;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.ApiKeys;
@@ -10,10 +11,13 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
 {
     private readonly IObjectMapper _objectMapper;
     private readonly ApiKeyOptions _apiKeyOptions;
+    private readonly IDistributedEventBus _distributedEventBus;
 
-    public ApiKeySummaryGrain(IObjectMapper objectMapper, IOptionsSnapshot<ApiKeyOptions> apiKeyOptions)
+    public ApiKeySummaryGrain(IObjectMapper objectMapper, IOptionsSnapshot<ApiKeyOptions> apiKeyOptions,
+        IDistributedEventBus distributedEventBus)
     {
         _objectMapper = objectMapper;
+        _distributedEventBus = distributedEventBus;
         _apiKeyOptions = apiKeyOptions.Value;
     }
 
@@ -32,12 +36,13 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId);
         var apiKeyInfo = await apiKeyGrain.GetAsync();
 
-        await RecordQueryCountAsync(apiKeyInfo, query, dateTime);
-
-        await GrainFactory
-            .GetGrain<IApiKeyQueryAeIndexerGrain>(
-                GrainIdHelper.GenerateApiKeyQueryAeIndexerGrainId(apiKeyId, appId))
-            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, appId, query, dateTime);
+        if (await RecordQueryCountAsync(apiKeyInfo, query, dateTime))
+        {
+            await GrainFactory
+                .GetGrain<IApiKeyQueryAeIndexerGrain>(
+                    GrainIdHelper.GenerateApiKeyQueryAeIndexerGrainId(apiKeyId, appId))
+                .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, appId, query, dateTime);
+        }
     }
     
     public async Task RecordQueryBasicApiCountAsync(Guid apiKeyId, BasicApi api, long query, DateTime dateTime)
@@ -45,12 +50,13 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId);
         var apiKeyInfo = await apiKeyGrain.GetAsync();
 
-        await RecordQueryCountAsync(apiKeyInfo, query, dateTime);
-
-        await GrainFactory
-            .GetGrain<IApiKeyQueryBasicApiGrain>(
-                GrainIdHelper.GenerateApiKeyQueryBasicApiGrainId(apiKeyId, api))
-            .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, api, query, dateTime);
+        if (await RecordQueryCountAsync(apiKeyInfo, query, dateTime))
+        {
+            await GrainFactory
+                .GetGrain<IApiKeyQueryBasicApiGrain>(
+                    GrainIdHelper.GenerateApiKeyQueryBasicApiGrainId(apiKeyId, api))
+                .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, api, query, dateTime);
+        }
     }
 
     public async Task<ApiKeySummaryInfo> GetApiKeySummaryInfoAsync()
@@ -128,5 +134,18 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         await apiKeyGrain.RecordQueryCountAsync(query, dateTime);
 
         return true;
+    }
+    
+    protected override async Task WriteStateAsync()
+    {
+        await PublishEventAsync();
+        await base.WriteStateAsync();
+    }
+
+    private async Task PublishEventAsync()
+    {
+        var eventData =
+            _objectMapper.Map<ApiKeySummaryState, ApiKeySummaryChangedEto>(State);
+        await _distributedEventBus.PublishAsync(eventData);
     }
 }

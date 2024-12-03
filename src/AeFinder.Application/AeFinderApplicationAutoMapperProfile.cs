@@ -146,6 +146,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         // Api Key
         CreateMap<ApiKeyState, ApiKeyInfo>();
         CreateMap<ApiKeySummaryState, ApiKeySummaryInfo>();
+        CreateMap<ApiKeyChangedEto, ApiKeyInfo>();
         
         CreateMap<ApiKeyChangedEto, ApiKeyIndex>();
         CreateMap<ApiKeyQueryAeIndexerChangedEto, ApiKeyQueryAeIndexerIndex>();

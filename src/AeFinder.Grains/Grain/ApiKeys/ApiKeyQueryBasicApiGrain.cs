@@ -1,10 +1,21 @@
 using AeFinder.ApiKeys;
 using AeFinder.Grains.State.ApiKeys;
+using Volo.Abp.EventBus.Distributed;
+using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.ApiKeys;
 
 public class ApiKeyQueryBasicApiGrain : AeFinderGrain<ApiKeyQueryBasicApiState>, IApiKeyQueryBasicApiGrain
 {
+    private readonly IDistributedEventBus _distributedEventBus;
+    private readonly IObjectMapper _objectMapper;
+
+    public ApiKeyQueryBasicApiGrain(IDistributedEventBus distributedEventBus, IObjectMapper objectMapper)
+    {
+        _distributedEventBus = distributedEventBus;
+        _objectMapper = objectMapper;
+    }
+
     public async Task RecordQueryCountAsync(Guid organizationId, Guid apiKeyId, BasicApi api, long query,
         DateTime dateTime)
     {
@@ -29,5 +40,18 @@ public class ApiKeyQueryBasicApiGrain : AeFinderGrain<ApiKeyQueryBasicApiState>,
             GrainIdHelper.GenerateApiKeyQueryBasicApiDailySnapshotGrainId(apiKeyId, api, dailyDate);
         await GrainFactory.GetGrain<IApiKeyQueryBasicApiSnapshotGrain>(dailySnapshotKey)
             .RecordQueryCountAsync(organizationId, apiKeyId, api, query, dailyDate, SnapshotType.Daily);
+    }
+    
+    protected override async Task WriteStateAsync()
+    {
+        await PublishEventAsync();
+        await base.WriteStateAsync();
+    }
+
+    private async Task PublishEventAsync()
+    {
+        var eventData =
+            _objectMapper.Map<ApiKeyQueryBasicApiState, ApiKeyQueryBasicApiChangedEto>(State);
+        await _distributedEventBus.PublishAsync(eventData);
     }
 }
