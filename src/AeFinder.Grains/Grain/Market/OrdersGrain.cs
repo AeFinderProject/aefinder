@@ -59,7 +59,7 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
     private string GenerateId(CreateOrderDto dto)
     {
         string input =
-            $"{dto.UserId}-{dto.ProductId}{dto.ProductNumber}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+            $"{dto.OrganizationId}-{dto.ProductId}-{dto.ProductNumber}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
 
         using (SHA256 sha256Hash = SHA256.Create())
         {
