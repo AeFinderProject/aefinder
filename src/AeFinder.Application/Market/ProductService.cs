@@ -48,4 +48,17 @@ public class ProductService : ApplicationService, IProductService
         levelDto.MonthlyUnitPrice = productDto.MonthlyUnitPrice;
         return levelDto;
     }
+
+    public async Task<ApiQueryCountResourceDto> GetRegularApiQueryCountProductInfoAsync()
+    {
+        var productsGrain =
+            _clusterClient.GetGrain<IProductsGrain>(
+                GrainIdHelper.GenerateProductsGrainId());
+        var productInfo = await productsGrain.GetRegularApiQueryCountProductAsync();
+        var resourceDto = new ApiQueryCountResourceDto();
+        resourceDto.ProductId = productInfo.ProductId;
+        resourceDto.QueryCount = Convert.ToInt32(productInfo.ProductSpecifications);
+        resourceDto.MonthlyUnitPrice = productInfo.MonthlyUnitPrice;
+        return resourceDto;
+    }
 }

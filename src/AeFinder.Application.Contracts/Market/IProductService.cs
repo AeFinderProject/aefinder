@@ -7,4 +7,5 @@ public interface IProductService
 {
     Task<List<FullPodResourceLevelDto>> GetFullPodResourceLevelInfoAsync();
     FullPodResourceLevelDto ConvertToPodResourceLevelDto(ProductDto productDto);
+    Task<ApiQueryCountResourceDto> GetRegularApiQueryCountProductInfoAsync();
 }

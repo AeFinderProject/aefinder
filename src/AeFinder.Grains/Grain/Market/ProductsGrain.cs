@@ -70,6 +70,13 @@ public class ProductsGrain : AeFinderGrain<List<ProductState>>, IProductsGrain
         return _objectMapper.Map<ProductState, ProductDto>(productState);
     }
 
+    public async Task<ProductDto> GetRegularApiQueryCountProductAsync()
+    {
+        var productState = State.FirstOrDefault(p =>
+            p.ProductType == ProductType.ApiQueryCount && p.IsActive == true && p.MonthlyUnitPrice > 0);
+        return _objectMapper.Map<ProductState, ProductDto>(productState);
+    }
+
     public async Task<List<ProductDto>> GetFullPodResourceProductsAsync()
     {
         var products = State.Where(p => p.ProductType == ProductType.FullPodResource && p.IsActive == true).ToList();

@@ -11,7 +11,6 @@ public class ResourceLevelInfo
 {
     public string ResourceName { get; set; }
     public string LevelName { get; set; }
-    public string Description { get; set; }
     public string Cpu { get; set; }
     public string Memory { get; set; }
     public string Disk { get; set; }
