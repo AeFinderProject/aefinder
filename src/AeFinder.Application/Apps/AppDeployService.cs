@@ -8,6 +8,7 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Metrics;
+using Microsoft.IdentityModel.Tokens;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -97,4 +98,24 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     //     var podResourceResult = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podsName);
     //     return podResourceResult;
     // }
+    
+    public async Task DestroyAppPendingVersionAsync(string appId)
+    {
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        if (allSubscriptions.PendingVersion == null)
+        {
+            return;
+        }
+
+        var version = allSubscriptions.PendingVersion.Version;
+        if (version.IsNullOrEmpty())
+        {
+            return;
+        }
+        var chainIds = await GetSubscriptionChainIdAsync(appId, version);
+        await _blockScanAppService.PauseAsync(appId, version);
+        await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Stop);
+        await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
+    }
 }

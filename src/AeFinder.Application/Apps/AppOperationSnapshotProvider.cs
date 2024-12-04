@@ -28,6 +28,8 @@ public class AppOperationSnapshotProvider : IAppOperationSnapshotProvider, ISing
         var appResourceLimitInfo = await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
         appPodResourceSnapshot.AppFullPodRequestCpuCore = appResourceLimitInfo.AppFullPodRequestCpuCore;
         appPodResourceSnapshot.AppFullPodRequestMemory = appResourceLimitInfo.AppFullPodRequestMemory;
+        appPodResourceSnapshot.AppFullPodLimitCpuCore = appResourceLimitInfo.AppFullPodLimitCpuCore;
+        appPodResourceSnapshot.AppFullPodLimitMemory = appResourceLimitInfo.AppFullPodLimitMemory;
         appPodResourceSnapshot.AppQueryPodRequestCpuCore = appResourceLimitInfo.AppQueryPodRequestCpuCore;
         appPodResourceSnapshot.AppQueryPodRequestMemory = appResourceLimitInfo.AppQueryPodRequestMemory;
         appPodResourceSnapshot.AppQueryPodReplicas = appResourceLimitInfo.AppPodReplicas;

@@ -144,6 +144,8 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         var replicasCount = 1; //Only one pod instance is allowed
         var requestCpuCore = resourceLimitInfo.AppFullPodRequestCpuCore;
         var requestMemory = resourceLimitInfo.AppFullPodRequestMemory;
+        var limitCpuCore = resourceLimitInfo.AppFullPodLimitCpuCore;
+        var limitMemory = resourceLimitInfo.AppFullPodLimitMemory;
         var maxSurge = KubernetesConstants.FullPodMaxSurge;
         var maxUnavailable = KubernetesConstants.FullPodMaxUnavailable;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
@@ -152,8 +154,8 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         {
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, version,
                 KubernetesConstants.AppClientTypeFull, chainId, imageName, deploymentName, deploymentLabelName,
-                replicasCount, containerName, targetPort, configMapName, sideCarConfigName, requestCpuCore, requestMemory,
-                maxSurge, maxUnavailable);
+                replicasCount, containerName, targetPort, configMapName, sideCarConfigName, requestCpuCore,
+                requestMemory, limitCpuCore, limitMemory, maxSurge, maxUnavailable);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(
@@ -226,6 +228,8 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         var replicasCount = resourceLimitInfo.AppPodReplicas;
         var requestCpuCore = resourceLimitInfo.AppQueryPodRequestCpuCore;
         var requestMemory = resourceLimitInfo.AppQueryPodRequestMemory;
+        var limitCpuCore = string.Empty;
+        var limitMemory = string.Empty;
         var maxSurge = KubernetesConstants.QueryPodMaxSurge;
         var maxUnavailable = KubernetesConstants.QueryPodMaxUnavailable;
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
@@ -235,8 +239,8 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             var healthPath = GetGraphQLPlaygroundPath(appId, version);
             var deployment = DeploymentHelper.CreateAppDeploymentWithFileBeatSideCarDefinition(appId, version,
                 KubernetesConstants.AppClientTypeQuery, string.Empty, imageName, deploymentName, deploymentLabelName,
-                replicasCount, containerName, targetPort, configMapName, sideCarConfigName, requestCpuCore, requestMemory, 
-                maxSurge, maxUnavailable, healthPath);
+                replicasCount, containerName, targetPort, configMapName, sideCarConfigName, requestCpuCore,
+                requestMemory, limitCpuCore, limitMemory, maxSurge, maxUnavailable, healthPath);
             // Create Deployment
             await _kubernetesClientAdapter.CreateDeploymentAsync(deployment, KubernetesConstants.AppNameSpace);
             _logger.LogInformation(
@@ -765,32 +769,32 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
     }
 
     public async Task UpdateAppFullPodResourceAsync(string appId, string version, string requestCpu,
-        string requestMemory, List<string> chainIds)
+        string requestMemory, List<string> chainIds, string limitCpu, string limitMemory)
     {
         if (chainIds.Count == 0)
         {
             await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
-                KubernetesConstants.AppClientTypeFull, null);
+                KubernetesConstants.AppClientTypeFull, null, limitCpu, limitMemory, 0);
         }
         else
         {
             foreach (var chainId in chainIds)
             {
                 await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
-                    KubernetesConstants.AppClientTypeFull, chainId);
+                    KubernetesConstants.AppClientTypeFull, chainId, limitCpu, limitMemory, 0);
             }
         }
     }
 
     public async Task UpdateAppQueryPodResourceAsync(string appId, string version, string requestCpu,
-        string requestMemory)
+        string requestMemory, string limitCpu, string limitMemory, int replicasCount)
     {
         await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
-            KubernetesConstants.AppClientTypeQuery, null);
+            KubernetesConstants.AppClientTypeQuery, null, limitCpu, limitMemory, replicasCount);
     }
 
     private async Task UpdateAppResourceAsync(string appId, string version, string requestCpu, string requestMemory,
-        string clientType, string chainId)
+        string clientType, string chainId, string limitCpu, string limitMemory, int replicasCount)
     {
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
         var deploymentName =
@@ -805,6 +809,12 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             var annotations = deployment.Spec.Template.Metadata.Annotations ?? new Dictionary<string, string>();
             annotations["kubectl.kubernetes.io/restartedAt"] = DateTime.UtcNow.ToString("s");
             deployment.Spec.Template.Metadata.Annotations = annotations;
+            //Update pods count
+            if (replicasCount > 0)
+            {
+                deployment.Spec.Replicas = replicasCount;
+            }
+
             //Update container resource
             var containers = deployment.Spec.Template.Spec.Containers;
             var containerName =
@@ -813,7 +823,7 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             var container = containers.FirstOrDefault(c => c.Name == containerName);
             if (container != null)
             {
-                var resources = DeploymentHelper.CreateResources(requestCpu, requestMemory);
+                var resources = DeploymentHelper.CreateResources(requestCpu, requestMemory, limitCpu, limitMemory);
                 container.Resources = resources;
                 await _kubernetesClientAdapter.ReplaceNamespacedDeploymentAsync(deployment, deploymentName,
                     KubernetesConstants.AppNameSpace);

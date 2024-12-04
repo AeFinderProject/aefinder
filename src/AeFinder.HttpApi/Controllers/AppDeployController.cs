@@ -174,4 +174,12 @@ public class AppDeployController : AeFinderController
     // {
     //     return await _appDeployService.GetPodResourceInfoAsync(podName);
     // }
+    
+    [HttpPost]
+    [Route("destroy-pending")]
+    [Authorize]
+    public async Task DestroyAppPendingVersionAsync(AppInput input)
+    {
+        await _appDeployService.DestroyAppPendingVersionAsync(input.AppId);
+    }
 }
