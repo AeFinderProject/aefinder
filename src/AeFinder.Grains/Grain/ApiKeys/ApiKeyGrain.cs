@@ -1,4 +1,5 @@
 using AeFinder.ApiKeys;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.State.ApiKeys;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
@@ -30,6 +31,7 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
         State.Name = name;
         State.Key = GenerateKey();
         State.Status = ApiKeyStatus.Active;
+        State.CreateTime = _clock.Now;
         await WriteStateAsync();
 
         return _objectMapper.Map<ApiKeyState, ApiKeyInfo>(State);
@@ -75,7 +77,13 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
         await ReadStateAsync();
         foreach (var appId in appIds)
         {
-            State.AuthorisedAeIndexers.Add(appId);
+            var appGrain = GrainFactory.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+            var appName = (await appGrain.GetAsync()).AppName;
+            State.AuthorisedAeIndexers.Add(appId,new AppInfoImmutable
+            {
+                AppId = appId,
+                AppName = appName
+            });
         }
         await WriteStateAsync();
     }
@@ -141,8 +149,8 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
         }
 
         await WriteStateAsync();
-        
-        var monthlyDate = dateTime.Date.AddDays(-dateTime.Day + 1);
+
+        var monthlyDate = dateTime.ToMonthDate();
         var monthlySnapshotKey =
             GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(State.Id, monthlyDate);
         await GrainFactory.GetGrain<IApiKeySnapshotGrain>(monthlySnapshotKey)
@@ -175,6 +183,7 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
 
     protected override async Task WriteStateAsync()
     {
+        State.UpdateTime = _clock.Now;
         await PublishEventAsync();
         await base.WriteStateAsync();
     }
@@ -187,7 +196,7 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
 
     private async Task<long> CalculateAvailabilityQueryAsync(DateTime dateTime)
     {
-        var monthlyDate = dateTime.Date.AddDays(-dateTime.Day + 1);
+        var monthlyDate = dateTime.ToMonthDate();
         var monthlySnapshotKey =
             GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(State.Id, monthlyDate);
         var periodQuery = await GrainFactory.GetGrain<IApiKeySnapshotGrain>(monthlySnapshotKey).GetQueryCountAsync();

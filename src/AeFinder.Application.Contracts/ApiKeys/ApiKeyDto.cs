@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AeFinder.ApiKeys;
 
-public class ApiKeyChangedEto
+public class ApiKeyDto
 {
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
@@ -12,7 +12,7 @@ public class ApiKeyChangedEto
     public ApiKeyStatus Status { get; set; }
     public bool IsEnableSpendingLimit { get; set; }
     public decimal SpendingLimitUsdt { get; set; }
-    public Dictionary<string, AppInfoImmutable> AuthorisedAeIndexers { get; set; } = new();
+    public List<AppInfoImmutable> AuthorisedAeIndexers { get; set; } = new();
     public HashSet<string> AuthorisedDomains { get; set; } = new();
     public HashSet<BasicApi> AuthorisedApis = new();
     public long TotalQuery { get; set; }
@@ -20,10 +20,4 @@ public class ApiKeyChangedEto
     public bool IsDeleted { get; set; }
     public DateTime CreateTime { get; set; }
     public DateTime UpdateTime { get; set; }
-}
-
-public class AppInfoImmutable
-{
-    public string AppId { get; set; }
-    public string AppName { get; set; }
 }

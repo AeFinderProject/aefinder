@@ -21,6 +21,7 @@ using AeFinder.Subscriptions.Dto;
 using AeFinder.User;
 using AeFinder.User.Dto;
 using AutoMapper;
+using Volo.Abp.AutoMapper;
 using Volo.Abp.Identity;
 using SubscriptionInfo = AeFinder.App.Es.SubscriptionInfo;
 
@@ -145,25 +146,39 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         
         // Api Key
         CreateMap<ApiKeyState, ApiKeyInfo>();
-        CreateMap<ApiKeySummaryState, ApiKeySummaryInfo>();
         CreateMap<ApiKeyChangedEto, ApiKeyInfo>();
-        
-        CreateMap<ApiKeyChangedEto, ApiKeyIndex>();
-        CreateMap<ApiKeyQueryAeIndexerChangedEto, ApiKeyQueryAeIndexerIndex>();
-        CreateMap<ApiKeyQueryBasicApiChangedEto, ApiKeyQueryBasicApiIndex>();
-        CreateMap<ApiKeySummaryChangedEto, ApiKeySummaryIndex>();
-        CreateMap<ApiKeyQueryAeIndexerSnapshotChangedEto, ApiKeyQueryAeIndexerSnapshotIndex>();
-        CreateMap<ApiKeyQueryBasicApiSnapshotChangedEto, ApiKeyQueryBasicApiSnapshotIndex>();
+        CreateMap<ApiKeyChangedEto, ApiKeyIndex>()
+            .ForMember(destination => destination.AuthorisedAeIndexers,
+                opt => opt.MapFrom(source => source.AuthorisedAeIndexers.Values.ToList()));
         CreateMap<ApiKeySnapshotChangedEto, ApiKeySnapshotIndex>();
-        CreateMap<ApiKeySummarySnapshotChangedEto, ApiKeySummarySnapshotIndex>();
-        
         CreateMap<ApiKeyState, ApiKeyChangedEto>();
-        CreateMap<ApiKeyQueryAeIndexerState, ApiKeyQueryAeIndexerChangedEto>();
-        CreateMap<ApiKeyQueryBasicApiState, ApiKeyQueryBasicApiChangedEto>();
-        CreateMap<ApiKeySummaryState, ApiKeySummaryChangedEto>();
-        CreateMap<ApiKeyQueryAeIndexerSnapshotState, ApiKeyQueryAeIndexerSnapshotChangedEto>();
-        CreateMap<ApiKeyQueryBasicApiSnapshotState, ApiKeyQueryBasicApiSnapshotChangedEto>();
         CreateMap<ApiKeySnapshotState, ApiKeySnapshotChangedEto>();
+        CreateMap<ApiKeyIndex, ApiKeyDto>();
+        CreateMap<ApiKeyInfo, ApiKeyDto>()
+            .ForMember(destination => destination.AuthorisedAeIndexers,
+                opt => opt.MapFrom(source => source.AuthorisedAeIndexers.Values.ToList()));
+        CreateMap<ApiKeySnapshotIndex, ApiKeySnapshotDto>();
+        
+        CreateMap<ApiKeySummaryState, ApiKeySummaryInfo>();
+        CreateMap<ApiKeySummaryChangedEto, ApiKeySummaryIndex>();
+        CreateMap<ApiKeySummarySnapshotChangedEto, ApiKeySummarySnapshotIndex>();
+        CreateMap<ApiKeySummaryState, ApiKeySummaryChangedEto>();
         CreateMap<ApiKeySummarySnapshotState, ApiKeySummarySnapshotChangedEto>();
+        CreateMap<ApiKeySummaryIndex, ApiKeySummaryDto>();
+        CreateMap<ApiKeySummarySnapshotIndex, ApiKeySummarySnapshotDto>();
+        
+        CreateMap<ApiKeyQueryAeIndexerChangedEto, ApiKeyQueryAeIndexerIndex>();
+        CreateMap<ApiKeyQueryAeIndexerSnapshotChangedEto, ApiKeyQueryAeIndexerSnapshotIndex>();
+        CreateMap<ApiKeyQueryAeIndexerState, ApiKeyQueryAeIndexerChangedEto>();
+        CreateMap<ApiKeyQueryAeIndexerSnapshotState, ApiKeyQueryAeIndexerSnapshotChangedEto>();
+        CreateMap<ApiKeyQueryAeIndexerIndex, ApiKeyQueryAeIndexerDto>();
+        CreateMap<ApiKeyQueryAeIndexerSnapshotIndex, ApiKeyQueryAeIndexerSnapshotDto>();
+        
+        CreateMap<ApiKeyQueryBasicApiChangedEto, ApiKeyQueryBasicApiIndex>();
+        CreateMap<ApiKeyQueryBasicApiSnapshotChangedEto, ApiKeyQueryBasicApiSnapshotIndex>();
+        CreateMap<ApiKeyQueryBasicApiState, ApiKeyQueryBasicApiChangedEto>();
+        CreateMap<ApiKeyQueryBasicApiSnapshotState, ApiKeyQueryBasicApiSnapshotChangedEto>();
+        CreateMap<ApiKeyQueryBasicApiIndex, ApiKeyQueryApiDto>();
+        CreateMap<ApiKeyQueryBasicApiSnapshotIndex, ApiKeyQueryBasicApiSnapshotDto>();
     }
 }

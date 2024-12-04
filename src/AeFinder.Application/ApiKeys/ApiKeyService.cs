@@ -1,8 +1,12 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.Grains;
+using AeFinder.User;
 using AElf.EntityMapping.Repositories;
 using Orleans;
 using Volo.Abp;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Auditing;
 
 namespace AeFinder.ApiKeys;
@@ -81,5 +85,81 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     {
         var index = ObjectMapper.Map<ApiKeySummaryChangedEto, ApiKeySummaryIndex>(input);
         await _apiKeySummaryIndexRepository.AddOrUpdateAsync(index);
+    }
+
+    public async Task<ApiKeySummaryDto> GetApiKeySummaryAsync(Guid organizationId)
+    {
+        var summary = await _apiKeySummaryIndexRepository.GetAsync(GrainIdHelper.GenerateApiKeySummaryGrainId(organizationId));
+        return ObjectMapper.Map<ApiKeySummaryIndex, ApiKeySummaryDto>(summary);
+    }
+
+    public Task<ApiKeyDto> CreateApiKeyAsync(Guid organizationId, CreateApiKeyInput input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ApiKeyDto> GetApiKeyAsync(Guid organizationId, Guid apiKeyId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<PagedResultDto<ApiKeyDto>> GetApiKeysAsync(Guid organizationId, GetApiKeyInput input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task RenameApiKeyAsync(Guid organizationId, Guid apiKeyId, string newName)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> RegenerateKeyAsync(Guid organizationId, Guid apiKeyId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task DeleteApiKeyAsync(Guid organizationId, Guid apiKeyId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SetSpendingLimitAsync(Guid organizationId, Guid apiKeyId, SetSpendingLimitInput input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SetAuthorisedAeIndexersAsync(Guid organizationId, Guid apiKeyId, SetAuthorisedAeIndexerInput input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task DeleteAuthorisedAeIndexersAsync(Guid organizationId, Guid apiKeyId, SetAuthorisedAeIndexerInput input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SetAuthorisedDomainsAsync(Guid organizationId, Guid apiKeyId, SetAuthorisedDomainInput input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task DeleteAuthorisedDomainsAsync(Guid organizationId, Guid apiKeyId, SetAuthorisedDomainInput input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SetAuthorisedApisAsync(Guid organizationId, Guid apiKeyId, SetAuthorisedApiInput input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<PagedResultDto<ApiKeyQueryAeIndexerDto>> GetApiKeyQueryAeIndexersAsync(Guid organizationId, Guid apiKeyId, GetApiKeyQueryAeIndexerInput input)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<PagedResultDto<ApiKeyQueryApiDto>> GetApiKeyQueryApisAsync(Guid organizationId, Guid apiKeyId, GetApiKeyQueryApiInput input)
+    {
+        throw new NotImplementedException();
     }
 }

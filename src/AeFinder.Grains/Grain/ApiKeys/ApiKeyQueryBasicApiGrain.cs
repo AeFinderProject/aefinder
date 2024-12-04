@@ -29,7 +29,7 @@ public class ApiKeyQueryBasicApiGrain : AeFinderGrain<ApiKeyQueryBasicApiState>,
 
         await WriteStateAsync();
 
-        var monthlyDate = dateTime.Date.AddDays(-dateTime.Day + 1);
+        var monthlyDate = dateTime.ToMonthDate();
         var monthlySnapshotKey =
             GrainIdHelper.GenerateApiKeyQueryBasicApiMonthlySnapshotGrainId(apiKeyId, api, monthlyDate);
         await GrainFactory.GetGrain<IApiKeyQueryBasicApiSnapshotGrain>(monthlySnapshotKey)

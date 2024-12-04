@@ -10,6 +10,8 @@ public class ApiKeyQueryAeIndexerIndex: AeFinderDomainEntity<string>, IEntityMap
     public Guid ApiKeyId { get; set; }
     [Keyword]
     public string AppId { get; set; }
+    [Keyword]
+    public string AppName { get; set; }
     public long TotalQuery { get; set; }
     public DateTime LastQueryTime { get; set; }
 }

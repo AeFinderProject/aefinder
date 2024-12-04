@@ -121,8 +121,8 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         State.TotalQuery += query;
         State.LastQueryTime = dateTime;
         await WriteStateAsync();
-        
-        var monthlyDate = dateTime.Date.AddDays(-dateTime.Day + 1);
+
+        var monthlyDate = dateTime.ToMonthDate();
         await monthlySnapshotGrain.RecordQueryCountAsync(apiKeyInfo.OrganizationId, query, monthlyDate, SnapshotType.Monthly);
 
         var dailyDate = dateTime.Date;

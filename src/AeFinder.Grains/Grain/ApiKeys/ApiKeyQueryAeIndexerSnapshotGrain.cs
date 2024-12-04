@@ -1,4 +1,5 @@
 using AeFinder.ApiKeys;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.State.ApiKeys;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
@@ -28,6 +29,9 @@ public class ApiKeyQueryAeIndexerSnapshotGrain : AeFinderGrain<ApiKeyQueryAeInde
         State.Query += query;
         State.Time = dateTime;
         State.Type = type;
+
+        var appGrain = GrainFactory.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        State.AppName = (await appGrain.GetAsync()).AppName;
 
         await WriteStateAsync();
     }

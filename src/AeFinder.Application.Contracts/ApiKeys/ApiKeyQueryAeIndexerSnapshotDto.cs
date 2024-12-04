@@ -2,7 +2,7 @@ using System;
 
 namespace AeFinder.ApiKeys;
 
-public class ApiKeyQueryAeIndexerSnapshotChangedEto: QuerySnapshotEtoBase
+public class ApiKeyQueryAeIndexerSnapshotDto : QuerySnapshotDtoBase
 {
     public Guid ApiKeyId { get; set; }
     public string AppId { get; set; }

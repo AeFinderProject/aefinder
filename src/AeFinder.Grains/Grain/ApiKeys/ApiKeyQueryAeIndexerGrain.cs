@@ -1,4 +1,5 @@
 using AeFinder.ApiKeys;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.State.ApiKeys;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
@@ -26,10 +27,13 @@ public class ApiKeyQueryAeIndexerGrain : AeFinderGrain<ApiKeyQueryAeIndexerState
         State.AppId = appId;
         State.TotalQuery += query;
         State.LastQueryTime = dateTime;
+        
+        var appGrain = GrainFactory.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        State.AppName = (await appGrain.GetAsync()).AppName;
 
         await WriteStateAsync();
 
-        var monthlyDate = dateTime.Date.AddDays(-dateTime.Day + 1);
+        var monthlyDate = dateTime.ToMonthDate();
         var monthlySnapshotKey =
             GrainIdHelper.GenerateApiKeyQueryAeIndexerMonthlySnapshotGrainId(apiKeyId, appId, monthlyDate);
         await GrainFactory.GetGrain<IApiKeyQueryAeIndexerSnapshotGrain>(monthlySnapshotKey)

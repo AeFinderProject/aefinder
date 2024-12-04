@@ -2,9 +2,8 @@ using System;
 
 namespace AeFinder.ApiKeys;
 
-public class ApiKeyQueryAeIndexerChangedEto
+public class ApiKeyQueryAeIndexerDto
 {
-    public string Id { get; set; }
     public Guid OrganizationId { get; set; }
     public Guid ApiKeyId { get; set; }
     public string AppId { get; set; }
