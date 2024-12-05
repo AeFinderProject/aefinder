@@ -11,6 +11,7 @@ public class ApiKeyEventHandler :
     IDistributedEventHandler<ApiKeyChangedEto>, 
     IDistributedEventHandler<ApiKeySummaryChangedEto>, 
     IDistributedEventHandler<ApiKeySummarySnapshotChangedEto>, 
+    IDistributedEventHandler<ApiKeySnapshotChangedEto>, 
     ITransientDependency
 {
     private readonly IApiKeyService _apiKeyService;
@@ -32,15 +33,24 @@ public class ApiKeyEventHandler :
 
     public async Task HandleEventAsync(ApiKeySummaryChangedEto eventData)
     {
-        await _apiKeyService.UpdateApiKeyLimitCacheAsync(eventData.OrganizationId, eventData.QueryLimit);
+        await _apiKeyService.UpdateApiKeySummaryLimitCacheAsync(eventData.OrganizationId, eventData.QueryLimit);
     }
 
     public async Task HandleEventAsync(ApiKeySummarySnapshotChangedEto eventData)
     {
-        
-        if (eventData.Type == SnapshotType.Monthly && eventData.Time.Year == _clock.Now.Year && eventData.Time.Month == _clock.Now.Month)
+        if (eventData.Type == SnapshotType.Monthly && eventData.Time.Year == _clock.Now.Year &&
+            eventData.Time.Month == _clock.Now.Month)
         {
-            await _apiKeyService.UpdateApiKeyUsedCacheAsync(eventData.OrganizationId, eventData.Query);
+            await _apiKeyService.UpdateApiKeySummaryUsedCacheAsync(eventData.OrganizationId, eventData.Time, eventData.Query);
+        }
+    }
+
+    public async Task HandleEventAsync(ApiKeySnapshotChangedEto eventData)
+    {
+        if (eventData.Type == SnapshotType.Monthly && eventData.Time.Year == _clock.Now.Year &&
+            eventData.Time.Month == _clock.Now.Month)
+        {
+            await _apiKeyService.UpdateApiKeyUsedCacheAsync(eventData.ApiKeyId, eventData.Time, eventData.Query);
         }
     }
 }

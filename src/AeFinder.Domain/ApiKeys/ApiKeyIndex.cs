@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AeFinder.Apps;
 using AElf.EntityMapping.Entities;
 using Nest;
 
@@ -7,12 +8,12 @@ namespace AeFinder.ApiKeys;
 
 public class ApiKeyIndex: AeFinderDomainEntity<Guid>, IEntityMappingEntity
 {
+    [Keyword]
     public Guid OrganizationId { get; set; }
     [Keyword]
     public string Name { get; set; }
     [Keyword]
     public string Key { get; set; }
-    public ApiKeyStatus Status { get; set; }
     public bool IsEnableSpendingLimit { get; set; }
     public decimal SpendingLimitUsdt { get; set; }
     public List<AppInfoImmutable> AuthorisedAeIndexers { get; set; } = new();

@@ -1,7 +1,7 @@
 namespace AeFinder.ApiKeys;
 
-public enum ApiKeyStatus
-{
-    Active,
-    Stopped
-}
+// public enum ApiKeyStatus
+// {
+//     Active,
+//     Stopped
+// }

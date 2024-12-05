@@ -65,7 +65,7 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         return _objectMapper.Map<ApiKeySummaryState, ApiKeySummaryInfo>(State);
     }
 
-    public async Task<ApiKeyInfo> CreateApiKeyAsync(Guid apiKeyId, Guid organizationId, string name)
+    public async Task<ApiKeyInfo> CreateApiKeyAsync(Guid apiKeyId, Guid organizationId, CreateApiKeyInput input)
     {
         await ReadStateAsync();
         if (State.ApiKeyCount + 1 > _apiKeyOptions.MaxApiKeyCount)
@@ -75,7 +75,7 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
 
         State.ApiKeyCount += 1;
 
-        var apiKeyInfo = await GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId).CreateAsync(apiKeyId, organizationId, name);
+        var apiKeyInfo = await GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId).CreateAsync(apiKeyId, organizationId, input);
 
         await WriteStateAsync();
         return apiKeyInfo;
@@ -102,8 +102,7 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
 
         var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(apiKeyInfo.Id);
         var availabilityQuery = await apiKeyGrain.GetAvailabilityQueryAsync(dateTime);
-        if (periodQuery >= State.QueryLimit || apiKeyInfo.Status == ApiKeyStatus.Stopped ||
-            availabilityQuery is <= 0)
+        if (periodQuery >= State.QueryLimit || availabilityQuery is <= 0)
         {
             return false;
         }

@@ -11,13 +11,17 @@ namespace AeFinder.ApiKeys;
 
 [RemoteService(IsEnabled = false)]
 [DisableAuditing]
-public class ApiKeySnapshotService: AeFinderAppService, IApiKeySnapshotService
+public class ApiKeySnapshotService : AeFinderAppService, IApiKeySnapshotService
 {
-    private readonly IEntityMappingRepository<ApiKeyQueryAeIndexerSnapshotIndex, string> _apiKeyQueryAeIndexerSnapshotIndexRepository;
-    private readonly IEntityMappingRepository<ApiKeyQueryBasicApiSnapshotIndex, string> _apiKeyQueryBasicApiIndexRepository;
+    private readonly IEntityMappingRepository<ApiKeyQueryAeIndexerSnapshotIndex, string>
+        _apiKeyQueryAeIndexerSnapshotIndexRepository;
+
+    private readonly IEntityMappingRepository<ApiKeyQueryBasicApiSnapshotIndex, string>
+        _apiKeyQueryBasicApiIndexRepository;
+
     private readonly IEntityMappingRepository<ApiKeySnapshotIndex, string> _apiKeySnapshotIndexRepository;
     private readonly IEntityMappingRepository<ApiKeySummarySnapshotIndex, string> _apiKeySummarySnapshotIndexRepository;
-    
+
     private const int MaxResultCount = 1000;
 
     public ApiKeySnapshotService(
@@ -56,7 +60,8 @@ public class ApiKeySnapshotService: AeFinderAppService, IApiKeySnapshotService
         await _apiKeySummarySnapshotIndexRepository.AddOrUpdateAsync(index);
     }
 
-    public async Task<ListResultDto<ApiKeySummarySnapshotDto>> GetApiKeySummarySnapshotsAsync(Guid organizationId, GetSnapshotInput input)
+    public async Task<ListResultDto<ApiKeySummarySnapshotDto>> GetApiKeySummarySnapshotsAsync(Guid organizationId,
+        GetSnapshotInput input)
     {
         var queryable = await _apiKeySummarySnapshotIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == input.Type);
@@ -64,10 +69,12 @@ public class ApiKeySnapshotService: AeFinderAppService, IApiKeySnapshotService
         {
             queryable = queryable.Where(o => o.Time >= input.BeginTime.Value);
         }
+
         if (input.EndTime.HasValue)
         {
             queryable = queryable.Where(o => o.Time <= input.EndTime.Value);
         }
+
         var indices = queryable.OrderBy(o => o.Time).Take(MaxResultCount).ToList();
 
         return new ListResultDto<ApiKeySummarySnapshotDto>
@@ -76,18 +83,26 @@ public class ApiKeySnapshotService: AeFinderAppService, IApiKeySnapshotService
         };
     }
 
-    public async Task<ListResultDto<ApiKeySnapshotDto>> GetApiKeySnapshotsAsync(Guid organizationId, GetSnapshotInput input)
+    public async Task<ListResultDto<ApiKeySnapshotDto>> GetApiKeySnapshotsAsync(Guid organizationId, Guid? apiKeyId,
+        GetSnapshotInput input)
     {
         var queryable = await _apiKeySnapshotIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == input.Type);
+        if (apiKeyId.HasValue)
+        {
+            queryable = queryable.Where(o => o.ApiKeyId == apiKeyId.Value);
+        }
+
         if (input.BeginTime.HasValue)
         {
             queryable = queryable.Where(o => o.Time >= input.BeginTime.Value);
         }
+
         if (input.EndTime.HasValue)
         {
             queryable = queryable.Where(o => o.Time <= input.EndTime.Value);
         }
+
         var indices = queryable.OrderBy(o => o.Time).Take(MaxResultCount).ToList();
 
         return new ListResultDto<ApiKeySnapshotDto>
@@ -96,14 +111,17 @@ public class ApiKeySnapshotService: AeFinderAppService, IApiKeySnapshotService
         };
     }
 
-    public async Task<ListResultDto<ApiKeyQueryAeIndexerSnapshotDto>> GetApiKeyQueryAeIndexerSnapshotsAsync(Guid organizationId, GetQueryAeIndexerSnapshotInput input)
+    public async Task<ListResultDto<ApiKeyQueryAeIndexerSnapshotDto>> GetApiKeyQueryAeIndexerSnapshotsAsync(
+        Guid organizationId, Guid apiKeyId, GetQueryAeIndexerSnapshotInput input)
     {
         var queryable = await _apiKeyQueryAeIndexerSnapshotIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == input.Type);
+
         if (input.BeginTime.HasValue)
         {
             queryable = queryable.Where(o => o.Time >= input.BeginTime.Value);
         }
+
         if (input.EndTime.HasValue)
         {
             queryable = queryable.Where(o => o.Time <= input.EndTime.Value);
@@ -118,18 +136,23 @@ public class ApiKeySnapshotService: AeFinderAppService, IApiKeySnapshotService
 
         return new ListResultDto<ApiKeyQueryAeIndexerSnapshotDto>
         {
-            Items = ObjectMapper.Map<List<ApiKeyQueryAeIndexerSnapshotIndex>, List<ApiKeyQueryAeIndexerSnapshotDto>>(indices)
+            Items =
+                ObjectMapper.Map<List<ApiKeyQueryAeIndexerSnapshotIndex>, List<ApiKeyQueryAeIndexerSnapshotDto>>(
+                    indices)
         };
     }
 
-    public async Task<ListResultDto<ApiKeyQueryBasicApiSnapshotDto>> GetApiKeyQueryBasicApiSnapshotsAsync(Guid organizationId, GetQueryBasicApiSnapshotInput input)
+    public async Task<ListResultDto<ApiKeyQueryBasicApiSnapshotDto>> GetApiKeyQueryBasicApiSnapshotsAsync(
+        Guid organizationId, Guid apiKeyId, GetQueryBasicApiSnapshotInput input)
     {
         var queryable = await _apiKeyQueryBasicApiIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == input.Type);
+        
         if (input.BeginTime.HasValue)
         {
             queryable = queryable.Where(o => o.Time >= input.BeginTime.Value);
         }
+
         if (input.EndTime.HasValue)
         {
             queryable = queryable.Where(o => o.Time <= input.EndTime.Value);
@@ -144,7 +167,8 @@ public class ApiKeySnapshotService: AeFinderAppService, IApiKeySnapshotService
 
         return new ListResultDto<ApiKeyQueryBasicApiSnapshotDto>
         {
-            Items = ObjectMapper.Map<List<ApiKeyQueryBasicApiSnapshotIndex>, List<ApiKeyQueryBasicApiSnapshotDto>>(indices)
+            Items =
+                ObjectMapper.Map<List<ApiKeyQueryBasicApiSnapshotIndex>, List<ApiKeyQueryBasicApiSnapshotDto>>(indices)
         };
     }
 }

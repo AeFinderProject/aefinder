@@ -1,6 +1,8 @@
 using AeFinder.ApiKeys;
+using AeFinder.Apps;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.State.ApiKeys;
+using Volo.Abp;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
 using Volo.Abp.Timing;
@@ -12,9 +14,6 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
     private readonly IObjectMapper _objectMapper;
     private readonly IClock _clock;
     private readonly IDistributedEventBus _distributedEventBus;
-    
-    // TODO: Get prices through product information
-    private const decimal QueryPrice = 4 / 100000;
 
     public ApiKeyGrain(IObjectMapper objectMapper, IClock clock, IDistributedEventBus distributedEventBus)
     {
@@ -23,25 +22,42 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
         _distributedEventBus = distributedEventBus;
     }
 
-    public async Task<ApiKeyInfo> CreateAsync(Guid id, Guid organizationId, string name)
+    public async Task<ApiKeyInfo> CreateAsync(Guid id, Guid organizationId, CreateApiKeyInput input)
     {
         await ReadStateAsync();
         State.Id = id;
         State.OrganizationId = organizationId;
-        State.Name = name;
+        State.Name = input.Name;
         State.Key = GenerateKey();
-        State.Status = ApiKeyStatus.Active;
+        State.IsEnableSpendingLimit = input.IsEnableSpendingLimit;
+        State.SpendingLimitUsdt = input.SpendingLimitUsdt;
         State.CreateTime = _clock.Now;
         await WriteStateAsync();
 
         return _objectMapper.Map<ApiKeyState, ApiKeyInfo>(State);
     }
 
-    public async Task RenameAsync(string newName)
+    public async Task<ApiKeyInfo> UpdateAsync(UpdateApiKeyInput input)
     {
         await ReadStateAsync();
-        State.Name = newName;
+        if (!input.Name.IsNullOrWhiteSpace())
+        {
+            State.Name = input.Name;
+        }
+
+        if (input.IsEnableSpendingLimit.HasValue)
+        {
+            State.IsEnableSpendingLimit = input.IsEnableSpendingLimit.Value;
+        }
+
+        if (input.SpendingLimitUsdt.HasValue)
+        {
+            State.SpendingLimitUsdt = input.SpendingLimitUsdt.Value;
+        }
+
         await WriteStateAsync();
+
+        return _objectMapper.Map<ApiKeyState, ApiKeyInfo>(State);
     }
 
     public async Task<string> RegenerateKeyAsync()
@@ -57,18 +73,6 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
     {
         await ReadStateAsync();
         State.IsDeleted = true;
-        await WriteStateAsync();
-    }
-
-    public async Task SetSpendingLimitAsync(bool isEnable, decimal limitUsdt)
-    {
-        await ReadStateAsync();
-        State.IsEnableSpendingLimit = isEnable;
-        State.SpendingLimitUsdt = limitUsdt;
-        
-        var availabilityQuery = await CalculateAvailabilityQueryAsync(_clock.Now);
-        State.Status = availabilityQuery > 0 ? ApiKeyStatus.Active : ApiKeyStatus.Stopped;
-        
         await WriteStateAsync();
     }
 
@@ -141,12 +145,6 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
 
         State.TotalQuery += query;
         State.LastQueryTime = dateTime;
-        
-        var availabilityQuery = await GetAvailabilityQueryAsync(dateTime);
-        if (availabilityQuery.HasValue && query >= availabilityQuery)
-        {
-            State.Status = ApiKeyStatus.Stopped;
-        }
 
         await WriteStateAsync();
 
@@ -201,7 +199,7 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
             GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(State.Id, monthlyDate);
         var periodQuery = await GrainFactory.GetGrain<IApiKeySnapshotGrain>(monthlySnapshotKey).GetQueryCountAsync();
 
-        return (long)(State.SpendingLimitUsdt / QueryPrice) - periodQuery;
+        return (long)(State.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - periodQuery;
     }
 
     private string GenerateKey()

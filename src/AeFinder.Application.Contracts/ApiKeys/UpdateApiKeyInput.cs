@@ -3,16 +3,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AeFinder.ApiKeys;
 
-public class CreateApiKeyInput: IValidatableObject
+public class UpdateApiKeyInput: IValidatableObject
 {
     [MinLength(1),MaxLength(30)]
     public string Name { get; set; }
-    public bool IsEnableSpendingLimit { get; set; }
-    public decimal SpendingLimitUsdt { get; set; }
-    
+    public bool? IsEnableSpendingLimit { get; set; }
+    public decimal? SpendingLimitUsdt { get; set; }
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (SpendingLimitUsdt < 0)
+        if (SpendingLimitUsdt.HasValue && SpendingLimitUsdt.Value < 0)
         {
             yield return new ValidationResult("Invalid SpendingLimitUsdt.");
         }

@@ -4,11 +4,10 @@ namespace AeFinder.Grains.Grain.ApiKeys;
 
 public interface IApiKeyGrain : IGrainWithGuidKey
 {
-    Task<ApiKeyInfo> CreateAsync(Guid id, Guid organizationId, string name);
-    Task RenameAsync(string newName);
+    Task<ApiKeyInfo> CreateAsync(Guid id, Guid organizationId, CreateApiKeyInput input);
+    Task<ApiKeyInfo> UpdateAsync(UpdateApiKeyInput input);
     Task<string> RegenerateKeyAsync();
     Task DeleteAsync();
-    Task SetSpendingLimitAsync(bool isEnable, decimal limitUsdt);
     Task SetAuthorisedAeIndexersAsync(List<string> appIds);
     Task DeleteAuthorisedAeIndexersAsync(List<string> appIds);
     Task SetAuthorisedDomainsAsync(List<string> domains);

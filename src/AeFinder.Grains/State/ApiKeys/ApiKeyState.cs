@@ -9,7 +9,6 @@ public class ApiKeyState
     public Guid OrganizationId { get; set; }
     public string Name { get; set; }
     public string Key { get; set; }
-    public ApiKeyStatus Status { get; set; }
     public bool IsEnableSpendingLimit { get; set; }
     public decimal SpendingLimitUsdt { get; set; }
     public Dictionary<string, AppInfoImmutable> AuthorisedAeIndexers { get; set; } = new();

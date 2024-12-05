@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AeFinder.Apps;
 
 namespace AeFinder.ApiKeys;
 
@@ -9,7 +10,6 @@ public class ApiKeyChangedEto
     public Guid OrganizationId { get; set; }
     public string Name { get; set; }
     public string Key { get; set; }
-    public ApiKeyStatus Status { get; set; }
     public bool IsEnableSpendingLimit { get; set; }
     public decimal SpendingLimitUsdt { get; set; }
     public Dictionary<string, AppInfoImmutable> AuthorisedAeIndexers { get; set; } = new();
@@ -20,10 +20,4 @@ public class ApiKeyChangedEto
     public bool IsDeleted { get; set; }
     public DateTime CreateTime { get; set; }
     public DateTime UpdateTime { get; set; }
-}
-
-public class AppInfoImmutable
-{
-    public string AppId { get; set; }
-    public string AppName { get; set; }
 }

@@ -138,19 +138,20 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
     private async Task CheckApiKeyAsync(ApiKeyInfo apiKeyInfo, string domain, string appId,
         BasicApi? api, DateTime dateTime)
     {
-        var limit = await _apiKeyInfoProvider.GetApiKeyLimitAsync(apiKeyInfo.OrganizationId);
-        var used = await _apiKeyInfoProvider.GetApiKeyUsedAsync(apiKeyInfo.OrganizationId, dateTime);
-        if (used >= limit)
+        var limit = await _apiKeyInfoProvider.GetApiKeySummaryLimitAsync(apiKeyInfo.OrganizationId);
+        var usedSummary = await _apiKeyInfoProvider.GetApiKeySummaryUsedAsync(apiKeyInfo.OrganizationId, dateTime);
+        var used = await _apiKeyInfoProvider.GetApiKeyUsedAsync(apiKeyInfo.Id, dateTime);
+        if (usedSummary >= limit)
         {
             throw new UserFriendlyException("Api key query times insufficient.");
         }
 
-        if (apiKeyInfo.Status != ApiKeyStatus.Active)
+        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - used <= 0)
         {
             throw new UserFriendlyException("Api key unavailable.");
         }
 
-        if (!appId.IsNullOrWhiteSpace() && apiKeyInfo.AuthorisedAeIndexers.Any() && !apiKeyInfo.AuthorisedAeIndexers.Contains(appId))
+        if (!appId.IsNullOrWhiteSpace() && apiKeyInfo.AuthorisedAeIndexers.Any() && !apiKeyInfo.AuthorisedAeIndexers.ContainsKey(appId))
         {
             throw new UserFriendlyException("Unauthorized AeIndexer.");
         }
