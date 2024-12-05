@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
+using AeFinder.Apps.Dto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using Orleans;
@@ -35,8 +37,16 @@ public class AppOperationSnapshotProvider : IAppOperationSnapshotProvider, ISing
         appPodResourceSnapshot.AppQueryPodReplicas = appResourceLimitInfo.AppPodReplicas;
         appPodResourceSnapshot.PodOperationType = operationType;
         var appPodOperationSnapshotGrain =
-            _clusterClient.GetGrain<IAppPodOperationSnapshotGrain>(
-                GrainIdHelper.GenerateAppPodOperationSnapshotGrainId(appId, version));
+            _clusterClient.GetGrain<IAppPodSnapshotGrain>(
+                GrainIdHelper.GenerateAppPodSnapshotGrainId(appId));
         await appPodOperationSnapshotGrain.SetAsync(appPodResourceSnapshot);
+    }
+
+    public async Task<List<AppPodOperationSnapshotDto>> GetAppPodOperationSnapshotListAsync(string appId)
+    {
+        var appPodOperationSnapshotGrain =
+            _clusterClient.GetGrain<IAppPodSnapshotGrain>(
+                GrainIdHelper.GenerateAppPodSnapshotGrainId(appId));
+        return await appPodOperationSnapshotGrain.GetListAsync();
     }
 }

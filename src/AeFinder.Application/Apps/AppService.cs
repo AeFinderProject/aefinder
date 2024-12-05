@@ -453,13 +453,26 @@ public class AppService : AeFinderAppService, IAppService
                 dto.EndTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 dto.TotalUsageDuration = dto.EndTimestamp - dto.StartTimestamp;
             }
-        }
+        } 
         var totalCount = queryable.Count();
         return new PagedResultDto<AppPodUsageDurationDto>
         {
             TotalCount = totalCount,
             Items = list
         };
+    }
+
+    public async Task<DateTime?> GetAppPodStartTimeAsync(string appId)
+    {
+        var snapShotList = await _appOperationSnapshotProvider.GetAppPodOperationSnapshotListAsync(appId);
+        var firstSnapShot = snapShotList.Where(s => s.PodOperationType == AppPodOperationType.Start)
+            .OrderBy(s => s.Timestamp).FirstOrDefault();
+        if (firstSnapShot == null)
+        {
+            return null;
+        }
+        var firstPodStartDateTime = DateTimeHelper.FromUnixTimeMilliseconds(firstSnapShot.Timestamp);
+        return firstPodStartDateTime;
     }
     
 }

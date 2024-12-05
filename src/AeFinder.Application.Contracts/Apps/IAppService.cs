@@ -25,4 +25,5 @@ public interface IAppService
     Task<PagedResultDto<AppPodInfoDto>> GetAppPodResourceInfoListAsync(
         GetAppPodResourceInfoInput input);
     Task<PagedResultDto<AppPodUsageDurationDto>> GetAppPodUsageDurationListAsync(GetAppPodUsageDurationInput input);
+    Task<DateTime?> GetAppPodStartTimeAsync(string appId);
 }

@@ -49,7 +49,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
             var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
             var productInfo = await productsGrain.GetProductInfoByIdAsync(orderInfo.ProductId);
             decimal monthlyFee = orderInfo.ProductNumber * productInfo.MonthlyUnitPrice;
-            billItem.BillingAmount = await CalculateFirstMonthAmount(monthlyFee);
+            billItem.BillingAmount = await CalculateFirstMonthLockAmount(monthlyFee);
         }
 
         billItem.BillingStartDate = DateTime.UtcNow;
@@ -119,17 +119,17 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         billItem.BillingType = BillingType.Charge;
         billItem.BillingDate = DateTime.UtcNow;
         billItem.Description = description;
-        if (chargeFee > 0)
-        {
+        // if (chargeFee > 0)
+        // {
             billItem.BillingAmount = chargeFee;
-        }
-        else
-        {
-            var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
-            var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalInfo.ProductId);
-            decimal monthlyFee = renewalInfo.ProductNumber * productInfo.MonthlyUnitPrice;
-            billItem.BillingAmount = await CalculateChargeAmount(renewalInfo, monthlyFee);
-        }
+        // }
+        // else
+        // {
+        //     var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
+        //     var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalInfo.ProductId);
+        //     decimal monthlyFee = renewalInfo.ProductNumber * productInfo.MonthlyUnitPrice;
+        //     billItem.BillingAmount = await CalculateChargeAmount(renewalInfo, monthlyFee);
+        // }
 
         billItem.BillingStartDate = renewalInfo.LastChargeDate;
         billItem.BillingEndDate = DateTime.UtcNow;
@@ -141,9 +141,10 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return _objectMapper.Map<BillState, BillDto>(billItem);
     }
 
-    public async Task<BillDto> GetLatestLockedBillAsync(string subscriptionId)
+    public async Task<BillDto> GetLatestLockedBillAsync(string orderId)
     {
-        var latestLockedBill= State.Where(b => b.SubscriptionId == subscriptionId && b.BillingType == BillingType.Lock)
+        var latestLockedBill = State.Where(b =>
+                b.OrderId == orderId && b.BillingType == BillingType.Lock && b.BillingStatus == BillingStatus.Paid)
             .OrderByDescending(o => o.BillingDate).FirstOrDefault();
         if (latestLockedBill == null)
         {
@@ -172,7 +173,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
     }
     
     //The first payment only requires covering the usage fees for the current month.
-    public async Task<decimal> CalculateFirstMonthAmount(decimal monthlyFee)
+    public async Task<decimal> CalculateFirstMonthLockAmount(decimal monthlyFee)
     {
         DateTime today = DateTime.UtcNow;
         DateTime firstOfNextMonth = GetFirstDayOfNextMonths(today, 1);
@@ -189,11 +190,23 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return firstOfNextMonth;
     }
 
-    public async Task<decimal> CalculateChargeAmount(RenewalDto renewalInfo, decimal monthlyFee)
+    public async Task<decimal> CalculateChargeAmount(RenewalDto renewalInfo, decimal monthlyFee,
+        DateTime? podResourceStartUseDay)
     {
+        if (renewalInfo.ProductType == ProductType.FullPodResource && podResourceStartUseDay == null)
+        {
+            return 0;
+        }
+
         var lastBillingDate = renewalInfo.LastChargeDate;
         var endDate = DateTime.UtcNow;
         int daysUsed = (endDate - lastBillingDate).Days + 1;
+        if (podResourceStartUseDay != null && podResourceStartUseDay.Value > lastBillingDate)
+        {
+            //Pod resource usage duration should be calculated starting from the time the first Pod subscription begins.
+            daysUsed = (endDate - podResourceStartUseDay.Value).Days + 1;
+        }
+
         int daysInLastBillingMonth = DateTime.DaysInMonth(lastBillingDate.Year, lastBillingDate.Month);
         decimal dailyFee = monthlyFee / daysInLastBillingMonth;
         decimal usedFee = dailyFee * daysUsed;

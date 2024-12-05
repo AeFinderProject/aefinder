@@ -27,7 +27,7 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
     
-    public async Task<OrderDto> CreateAsync(CreateOrderDto dto)
+    public async Task<OrderDto> CreateOrderAsync(CreateOrderDto dto)
     {
         await ReadStateAsync();
         

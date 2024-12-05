@@ -127,6 +127,11 @@ public static class GrainIdHelper
         return GenerateGrainId(appId, version);
     }
     
+    public static string GenerateAppPodSnapshotGrainId(string appId)
+    {
+        return GenerateGrainId(appId);
+    }
+    
     public static int GenerateProductsGrainId()
     {
         return 0;
