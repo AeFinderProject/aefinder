@@ -44,6 +44,15 @@ public class BlockScanAppServiceTests : AeFinderApplicationOrleansTestBase
             .ReturnsAsync(new List<OrganizationUnitDto> { 
                 new OrganizationUnitDto { Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1") } 
             });
+        mockOrganizationAppService
+            .Setup(service => service.GetOrganizationUnitAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(
+                new OrganizationUnitDto
+                {
+                    Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1"),
+                    DisplayName = "OrganizationName"
+                } 
+            );
         return mockOrganizationAppService.Object;
     }
 

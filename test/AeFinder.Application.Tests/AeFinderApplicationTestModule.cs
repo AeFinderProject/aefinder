@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.BackgroundWorker.Core;
 using AeFinder.CodeOps;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Metrics;
@@ -16,6 +17,7 @@ namespace AeFinder;
     typeof(AeFinderApplicationModule),
     typeof(AeFinderDomainTestModule),
     typeof(AeFinderOrleansTestBaseModule),
+    typeof(AeFinderBackGroundCoreModule),
     typeof(AElfEntityMappingElasticsearchModule)
 )]
 public class AeFinderApplicationTestModule : AbpModule

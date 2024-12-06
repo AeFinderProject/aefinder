@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Orleans;
 
 namespace AeFinder.ApiKeys;
 
+[GenerateSerializer]
 public class UpdateApiKeyInput: IValidatableObject
 {
     [MinLength(1),MaxLength(30)]
