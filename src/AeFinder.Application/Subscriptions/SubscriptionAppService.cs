@@ -59,6 +59,7 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
     {
         await CheckAppExistAsync(appId);
         await CheckCodeAsync(appId, code);
+        await _appDeployService.CheckAppStatusAsync(appId);
 
         var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
         var appSubscriptionGrain =
@@ -82,6 +83,7 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
     public async Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest)
     {
         await CheckAppExistAsync(appId);
+        await _appDeployService.CheckAppStatusAsync(appId);
         
         var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
 

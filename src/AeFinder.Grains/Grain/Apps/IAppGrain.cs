@@ -10,5 +10,7 @@ public interface IAppGrain : IGrainWithStringKey
     Task SetStatusAsync(AppStatus status);
     Task<AppDto> GetAsync();
     Task<string> GetOrganizationIdAsync();
+    Task FreezeAppAsync();
+    Task UnFreezeAppAsync();
     Task ClearGrainStateAsync();
 }

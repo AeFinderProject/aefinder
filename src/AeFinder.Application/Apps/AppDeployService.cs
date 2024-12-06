@@ -45,6 +45,8 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
     {
+        await CheckAppStatusAsync(appId);
+        
         var chainIds = await GetDeployChainIdAsync(appId, version);
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(appId, version, imageName, chainIds);
         await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Start);
@@ -153,12 +155,12 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         //destroy subscription pods
         var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
-        if (allSubscriptions.CurrentVersion != null)
+        if (allSubscriptions.CurrentVersion != null && !allSubscriptions.CurrentVersion.Version.IsNullOrEmpty())
         {
             var currentVersion = allSubscriptions.CurrentVersion.Version;
             await _blockScanAppService.StopAsync(appId, currentVersion);
         }
-        if (allSubscriptions.PendingVersion != null)
+        if (allSubscriptions.PendingVersion != null && !allSubscriptions.PendingVersion.Version.IsNullOrEmpty())
         {
             var pendingVersion = allSubscriptions.PendingVersion.Version;
             await _blockScanAppService.StopAsync(appId, pendingVersion);
@@ -178,5 +180,40 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     {
         var organizationGuid = Guid.Parse(organizationId);
         return organizationGuid.ToString("N");
+    }
+
+    public async Task FreezeAppAsync(string appId)
+    {
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        if (allSubscriptions.CurrentVersion != null && !allSubscriptions.CurrentVersion.Version.IsNullOrEmpty())
+        {
+            var currentVersion = allSubscriptions.CurrentVersion.Version;
+            await DestroyAppAsync(appId, currentVersion);
+        }
+
+        if (allSubscriptions.PendingVersion != null && !allSubscriptions.PendingVersion.Version.IsNullOrEmpty())
+        {
+            var pendingVersion = allSubscriptions.PendingVersion.Version;
+            await DestroyAppAsync(appId, pendingVersion);
+        }
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        await appGrain.FreezeAppAsync();
+    }
+
+    public async Task UnFreezeAppAsync(string appId)
+    {
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        await appGrain.UnFreezeAppAsync();
+    }
+
+    public async Task CheckAppStatusAsync(string appId)
+    {
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appDto = await appGrain.GetAsync();
+        if (appDto.Status == AppStatus.Frozen)
+        {
+            throw new UserFriendlyException("The AeIndexer renewal has expired and it has been frozen. Please deposit your account first.");
+        }
     }
 }
