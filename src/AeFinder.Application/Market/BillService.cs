@@ -24,7 +24,7 @@ public class BillService : ApplicationService, IBillService
         _organizationAppService = organizationAppService;
     }
 
-    public async Task<BillingPlanDto> GetProductBillingPlanAsync(string productId, int productNum, int monthCount)
+    public async Task<BillingPlanDto> GetProductBillingPlanAsync(string productId, int productNum, int periodMonths)
     {
         var result = new BillingPlanDto();
         var productsGrain =
@@ -33,12 +33,12 @@ public class BillService : ApplicationService, IBillService
         var productInfo = await productsGrain.GetProductInfoByIdAsync(productId);
         result.MonthlyUnitPrice = productInfo.MonthlyUnitPrice;
         var monthlyFee = result.MonthlyUnitPrice * productNum;
-        result.BillingCycleMonthCount = monthCount;
+        result.BillingCycleMonthCount = periodMonths;
         result.PeriodicCost = result.BillingCycleMonthCount * monthlyFee;
         var organizationGrainId = await GetOrganizationGrainIdAsync();
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
-        result.FirstMonthCost = await billsGrain.CalculateFirstMonthAmount(monthlyFee);
+        result.FirstMonthCost = await billsGrain.CalculateFirstMonthLockAmount(monthlyFee);
         return result;
     }
 

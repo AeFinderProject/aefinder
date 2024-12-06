@@ -88,4 +88,16 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         Guid guid = Guid.ParseExact(State.OrganizationId, "N");
         return guid.ToString();
     }
+    
+    public async Task ClearGrainStateAsync()
+    {
+        //Publish app obliterate eto to background worker
+        await _distributedEventBus.PublishAsync(new AppObliterateEto()
+        {
+            AppId = State.AppId
+        });
+        
+        await base.ClearStateAsync();
+        DeactivateOnIdle();
+    }
 }

@@ -190,7 +190,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return firstOfNextMonth;
     }
 
-    public async Task<decimal> CalculateChargeAmount(RenewalDto renewalInfo, decimal monthlyFee,
+    public async Task<decimal> CalculateMidWayChargeAmount(RenewalDto renewalInfo, decimal lockedAmount,
         DateTime? podResourceStartUseDay)
     {
         if (renewalInfo.ProductType == ProductType.FullPodResource && podResourceStartUseDay == null)
@@ -208,7 +208,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         }
 
         int daysInLastBillingMonth = DateTime.DaysInMonth(lastBillingDate.Year, lastBillingDate.Month);
-        decimal dailyFee = monthlyFee / daysInLastBillingMonth;
+        decimal dailyFee = lockedAmount / daysInLastBillingMonth;
         decimal usedFee = dailyFee * daysUsed;
         return usedFee;
     }

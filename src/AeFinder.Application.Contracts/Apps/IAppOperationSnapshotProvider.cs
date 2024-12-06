@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.Apps.Dto;
@@ -8,4 +9,5 @@ public interface IAppOperationSnapshotProvider
 {
     Task SetAppPodOperationSnapshotAsync(string appId, string version, AppPodOperationType operationType);
     Task<List<AppPodOperationSnapshotDto>> GetAppPodOperationSnapshotListAsync(string appId);
+    Task<DateTime?> GetAppPodStartTimeAsync(string appId);
 }

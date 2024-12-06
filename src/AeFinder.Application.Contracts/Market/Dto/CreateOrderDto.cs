@@ -9,4 +9,5 @@ public class CreateOrderDto
     public string AppId { get; set; }
     public string ProductId { get; set; }
     public int ProductNumber { get; set; }
+    public int PeriodMonths { get; set; }
 }

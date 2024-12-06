@@ -17,13 +17,15 @@ public class OrderService: ApplicationService, IOrderService
     private readonly IClusterClient _clusterClient;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppService _appService;
+    private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
 
     public OrderService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
-        IAppService appService)
+        IAppOperationSnapshotProvider appOperationSnapshotProvider,IAppService appService)
     {
         _clusterClient = clusterClient;
         _organizationAppService = organizationAppService;
         _appService = appService;
+        _appOperationSnapshotProvider = appOperationSnapshotProvider;
     }
 
     public async Task<List<BillDto>> CreateOrderAsync(CreateOrderDto dto)
@@ -51,7 +53,7 @@ public class OrderService: ApplicationService, IOrderService
             //Check if there is an existing order for a product of the same type
             oldOrderInfo =
                 await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, dto.UserId, dto.AppId);
-            podResourceStartUseDay = await _appService.GetAppPodStartTimeAsync(dto.AppId);
+            podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(dto.AppId);
         }
         
         var billsGrain =
@@ -77,7 +79,7 @@ public class OrderService: ApplicationService, IOrderService
             var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(subscriptionId);
             var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(oldOrderInfo.OrderId);
             var lockedAmount = latestLockedBill.BillingAmount;
-            var chargeFee = await billsGrain.CalculateChargeAmount(renewalInfo, lockedAmount, podResourceStartUseDay);
+            var chargeFee = await billsGrain.CalculateMidWayChargeAmount(renewalInfo, lockedAmount, podResourceStartUseDay);
             decimal refundAmount = 0;
             
             //Create new order

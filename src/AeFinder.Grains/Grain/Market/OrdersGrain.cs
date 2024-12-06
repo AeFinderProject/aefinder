@@ -39,7 +39,34 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         orderState.ProductName = productInfo.ProductName;
         orderState.UnitPrice = productInfo.MonthlyUnitPrice;
         orderState.OrderDate = DateTime.UtcNow;
-        orderState.OrderAmount = orderState.UnitPrice * dto.ProductNumber;
+        switch (dto.PeriodMonths)
+        {
+            case 1:
+            {
+                orderState.RenewalPeriod = RenewalPeriod.OneMonth;
+                orderState.OrderAmount = orderState.UnitPrice * dto.ProductNumber * 1;
+                break;
+            }
+            case 3:
+            {
+                orderState.RenewalPeriod = RenewalPeriod.ThreeMonth;
+                orderState.OrderAmount = orderState.UnitPrice * dto.ProductNumber * 3;
+                break;
+            }
+            case 6:
+            {
+                orderState.RenewalPeriod = RenewalPeriod.SixMonth;
+                orderState.OrderAmount = orderState.UnitPrice * dto.ProductNumber * 6;
+                break;
+            }
+            default:
+            {
+                orderState.RenewalPeriod = RenewalPeriod.OneMonth;
+                orderState.OrderAmount = orderState.UnitPrice * dto.ProductNumber * 1;
+                break;
+            }
+        }
+        
         orderState.OrderStatus = OrderStatus.PendingPayment;
         orderState.EnableAutoRenewal = true;
 

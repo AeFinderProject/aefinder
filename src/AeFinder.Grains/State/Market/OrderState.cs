@@ -12,6 +12,7 @@ public class OrderState
     public int ProductNumber { get; set; }
     public decimal UnitPrice { get; set; }
     public DateTime OrderDate { get; set; }
+    public RenewalPeriod RenewalPeriod { get; set; }
     public decimal OrderAmount { get; set; }
     public OrderStatus OrderStatus { get; set; }
     public bool EnableAutoRenewal { get; set; }

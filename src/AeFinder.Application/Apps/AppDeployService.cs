@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,8 +7,11 @@ using AeFinder.Apps.Dto;
 using AeFinder.BlockScan;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.Market;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Metrics;
+using AeFinder.User;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Orleans;
 using Volo.Abp;
@@ -24,9 +28,11 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IAppDeployManager _appDeployManager;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
     private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
+    private readonly IUserAppService _userAppService;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
+        IUserAppService userAppService,
         IAppOperationSnapshotProvider appOperationSnapshotProvider,IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
@@ -34,6 +40,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _appDeployManager = appDeployManager;
         _appResourceLimitProvider = appResourceLimitProvider;
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
+        _userAppService = userAppService;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
@@ -109,7 +116,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         }
 
         var version = allSubscriptions.PendingVersion.Version;
-        if (version.IsNullOrEmpty())
+        if (CollectionUtilities.IsNullOrEmpty(version))
         {
             return;
         }
@@ -117,5 +124,59 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         await _blockScanAppService.PauseAsync(appId, version);
         await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Stop);
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
+    }
+
+    public async Task ObliterateAppAsync(string organizationId,string appId)
+    {
+        Logger.LogInformation($"User {CurrentUser.Id} Obliterate AeIndexer {appId}");
+        //charge bill
+        var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
+        var ordersGrain =
+            _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
+        var oldOrderInfo =
+            await ordersGrain.GetLatestPodResourceOrderAsync(organizationId, CurrentUser.Id.ToString(), appId);
+        var billsGrain =
+            _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
+        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
+        var podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(appId);
+        var subscriptionId = await renewalGrain.GetCurrentSubscriptionIdAsync(oldOrderInfo.OrderId);
+        var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(subscriptionId);
+        var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(oldOrderInfo.OrderId);
+        var lockedAmount = latestLockedBill.BillingAmount;
+        var chargeFee = await billsGrain.CalculateMidWayChargeAmount(renewalInfo, lockedAmount, podResourceStartUseDay);
+        var refundAmount = lockedAmount - chargeFee;
+        var oldChargeBill = await billsGrain.CreateChargeBillAsync(organizationId, subscriptionId,
+            "User creates a new order and processes billing settlement for the existing order.", chargeFee,
+            refundAmount);
+        //TODO: send charge transaction to contract
+        
+        //destroy subscription pods
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        if (allSubscriptions.CurrentVersion != null)
+        {
+            var currentVersion = allSubscriptions.CurrentVersion.Version;
+            await _blockScanAppService.StopAsync(appId, currentVersion);
+        }
+        if (allSubscriptions.PendingVersion != null)
+        {
+            var pendingVersion = allSubscriptions.PendingVersion.Version;
+            await _blockScanAppService.StopAsync(appId, pendingVersion);
+        }
+        
+        //Clear all subscription
+        await appSubscriptionGrain.ClearGrainStateAsync();
+        
+        //remove app info
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        await _userAppService.DeleteAppAuthentication(appId);
+        await _userAppService.DeleteAppRelatedTokenData(appId);
+        await appGrain.ClearGrainStateAsync();
+    }
+    
+    private async Task<string> GetOrganizationGrainIdAsync(string organizationId)
+    {
+        var organizationGuid = Guid.Parse(organizationId);
+        return organizationGuid.ToString("N");
     }
 }

@@ -47,6 +47,15 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     public async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(string displayName, Guid? parentId = null)
     {
         displayName = displayName.Trim();
+        //Check if the organization name is duplicated
+        var queryable = await _organizationEntityMappingRepository.GetQueryableAsync();
+        var organizationIndex = queryable.FirstOrDefault(o => o.OrganizationName == displayName);
+        if (organizationIndex != null)
+        {
+            throw new UserFriendlyException("An organization with the same name already exists");
+        }
+        
+        //Create organization
         var organizationUnit = new OrganizationUnit(
             GuidGenerator.Create(), // Generate a unique identifier
             displayName,           // Organizational unit Displays name
