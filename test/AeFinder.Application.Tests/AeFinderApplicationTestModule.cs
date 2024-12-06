@@ -17,7 +17,6 @@ namespace AeFinder;
     typeof(AeFinderApplicationModule),
     typeof(AeFinderDomainTestModule),
     typeof(AeFinderOrleansTestBaseModule),
-    typeof(AeFinderBackGroundCoreModule),
     typeof(AElfEntityMappingElasticsearchModule)
 )]
 public class AeFinderApplicationTestModule : AbpModule

@@ -102,7 +102,23 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     public async Task<ApiKeySummaryDto> GetApiKeySummaryAsync(Guid organizationId)
     {
         var summary = await _apiKeySummaryIndexRepository.GetAsync(GrainIdHelper.GenerateApiKeySummaryGrainId(organizationId));
-        return ObjectMapper.Map<ApiKeySummaryIndex, ApiKeySummaryDto>(summary);
+        var dto = ObjectMapper.Map<ApiKeySummaryIndex, ApiKeySummaryDto>(summary);
+        
+        var monthDate = Clock.Now.ToMonthDate();
+        var apiKeyMonthSnapshot = await _apiKeySnapshotService.GetApiKeySummarySnapshotsAsync(organizationId,
+            new GetSnapshotInput
+            {
+                Type = SnapshotType.Monthly,
+                BeginTime = monthDate,
+                EndTime = monthDate
+            });
+
+        if (apiKeyMonthSnapshot.Items.Any())
+        {
+            dto.Query = apiKeyMonthSnapshot.Items.First().Query;
+        }
+
+        return dto;
     }
 
     public async Task<ApiKeyDto> CreateApiKeyAsync(Guid organizationId, CreateApiKeyInput input)
@@ -112,7 +128,9 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
             _clusterClient.GetGrain<IApiKeySummaryGrain>(GrainIdHelper.GenerateApiKeySummaryGrainId(organizationId));
         var apiKeyInfo = await apiKeySummaryGrain.CreateApiKeyAsync(newApiKeyId, organizationId, input);
 
-        return ObjectMapper.Map<ApiKeyInfo, ApiKeyDto>(apiKeyInfo);
+        var dto = ObjectMapper.Map<ApiKeyInfo, ApiKeyDto>(apiKeyInfo);
+        dto.IsActive = true;
+        return dto;
     }
 
     public async Task<ApiKeyDto> UpdateApiKeyAsync(Guid organizationId, Guid apiKeyId, UpdateApiKeyInput input)
@@ -277,7 +295,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
         queryable = queryable.Where(o => o.OrganizationId == organizationId && o.ApiKeyId == apiKeyId);
         if (input.Api.HasValue)
         {
-            queryable = queryable.Where(o => o.Api == input.Api.Value);
+            queryable = queryable.Where(o => o.Api == (int)input.Api.Value);
         }
 
         var count = queryable.Count();
@@ -293,14 +311,15 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     private async Task CheckApiKeyAsync(IApiKeyGrain grain, Guid organizationId)
     {
         var apiKeyInfo = await grain.GetAsync();
+        
+        if (apiKeyInfo == null || apiKeyInfo.Name.IsNullOrWhiteSpace())
+        {
+            throw new EntityNotFoundException();
+        }
+        
         if (apiKeyInfo.OrganizationId != organizationId)
         {
             throw new UserFriendlyException("no permission.");
-        }
-
-        if (apiKeyInfo.Name.IsNullOrWhiteSpace())
-        {
-            throw new EntityNotFoundException();
         }
     }
 }

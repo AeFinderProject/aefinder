@@ -73,6 +73,7 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
             throw new UserFriendlyException($"Api Key reached the upper limit!");
         }
 
+        State.OrganizationId = organizationId;
         State.ApiKeyCount += 1;
 
         var apiKeyInfo = await GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId).CreateAsync(apiKeyId, organizationId, input);

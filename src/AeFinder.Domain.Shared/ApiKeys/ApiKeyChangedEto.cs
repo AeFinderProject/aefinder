@@ -12,7 +12,7 @@ public class ApiKeyChangedEto
     public string Key { get; set; }
     public bool IsEnableSpendingLimit { get; set; }
     public decimal SpendingLimitUsdt { get; set; }
-    public Dictionary<string, AppInfoImmutable> AuthorisedAeIndexers { get; set; } = new();
+    public Dictionary<string, AppInfoImmutableEto> AuthorisedAeIndexers { get; set; } = new();
     public HashSet<string> AuthorisedDomains { get; set; } = new();
     public HashSet<BasicApi> AuthorisedApis = new();
     public long TotalQuery { get; set; }

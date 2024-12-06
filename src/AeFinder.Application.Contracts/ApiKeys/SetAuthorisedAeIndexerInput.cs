@@ -5,6 +5,6 @@ namespace AeFinder.ApiKeys;
 
 public class SetAuthorisedAeIndexerInput
 {
-    [MinLength(1)]
-    public List<string> AppIds { get; set; }
+    [MinLength(1)] 
+    public List<string> AppIds { get; set; } = new();
 }

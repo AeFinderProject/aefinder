@@ -180,5 +180,10 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<ApiKeyQueryBasicApiSnapshotState, ApiKeyQueryBasicApiSnapshotChangedEto>();
         CreateMap<ApiKeyQueryBasicApiIndex, ApiKeyQueryApiDto>();
         CreateMap<ApiKeyQueryBasicApiSnapshotIndex, ApiKeyQueryBasicApiSnapshotDto>();
+
+        CreateMap<AppInfoImmutableIndex, AppInfoImmutable>();
+        CreateMap<AppInfoImmutable, AppInfoImmutableIndex>();
+        CreateMap<AppInfoImmutableEto, AppInfoImmutableIndex>();
+        CreateMap<AppInfoImmutable, AppInfoImmutableEto>();
     }
 }

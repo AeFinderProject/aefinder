@@ -64,12 +64,13 @@ public class ApiKeySnapshotService : AeFinderAppService, IApiKeySnapshotService
         GetSnapshotInput input)
     {
         var queryable = await _apiKeySummarySnapshotIndexRepository.GetQueryableAsync();
-        queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == input.Type);
+        queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == (int)input.Type);
+        
         if (input.BeginTime.HasValue)
         {
             queryable = queryable.Where(o => o.Time >= input.BeginTime.Value);
         }
-
+        
         if (input.EndTime.HasValue)
         {
             queryable = queryable.Where(o => o.Time <= input.EndTime.Value);
@@ -87,7 +88,7 @@ public class ApiKeySnapshotService : AeFinderAppService, IApiKeySnapshotService
         GetSnapshotInput input)
     {
         var queryable = await _apiKeySnapshotIndexRepository.GetQueryableAsync();
-        queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == input.Type);
+        queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == (int)input.Type);
         if (apiKeyId.HasValue)
         {
             queryable = queryable.Where(o => o.ApiKeyId == apiKeyId.Value);
@@ -115,7 +116,7 @@ public class ApiKeySnapshotService : AeFinderAppService, IApiKeySnapshotService
         Guid organizationId, Guid apiKeyId, GetQueryAeIndexerSnapshotInput input)
     {
         var queryable = await _apiKeyQueryAeIndexerSnapshotIndexRepository.GetQueryableAsync();
-        queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == input.Type);
+        queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == (int)input.Type);
 
         if (input.BeginTime.HasValue)
         {
@@ -146,7 +147,7 @@ public class ApiKeySnapshotService : AeFinderAppService, IApiKeySnapshotService
         Guid organizationId, Guid apiKeyId, GetQueryBasicApiSnapshotInput input)
     {
         var queryable = await _apiKeyQueryBasicApiIndexRepository.GetQueryableAsync();
-        queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == input.Type);
+        queryable = queryable.Where(o => o.OrganizationId == organizationId && o.Type == (int)input.Type);
         
         if (input.BeginTime.HasValue)
         {
@@ -160,7 +161,7 @@ public class ApiKeySnapshotService : AeFinderAppService, IApiKeySnapshotService
 
         if (input.Api.HasValue)
         {
-            queryable = queryable.Where(o => o.Api == input.Api.Value);
+            queryable = queryable.Where(o => o.Api == (int)input.Api.Value);
         }
 
         var indices = queryable.OrderBy(o => o.Time).Take(MaxResultCount).ToList();

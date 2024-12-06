@@ -8,5 +8,5 @@ public class ApiKeyQueryBasicApiSnapshotIndex : QuerySnapshotIndexBase, IEntityM
 {
     [Keyword]
     public Guid ApiKeyId { get; set; }
-    public BasicApi Api { get; set; }
+    public int Api { get; set; }
 }

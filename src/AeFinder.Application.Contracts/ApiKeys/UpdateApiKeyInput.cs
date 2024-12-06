@@ -8,9 +8,9 @@ namespace AeFinder.ApiKeys;
 public class UpdateApiKeyInput: IValidatableObject
 {
     [MinLength(1),MaxLength(30)]
-    public string Name { get; set; }
-    public bool? IsEnableSpendingLimit { get; set; }
-    public decimal? SpendingLimitUsdt { get; set; }
+    [Id(0)]public string Name { get; set; }
+    [Id(1)]public bool? IsEnableSpendingLimit { get; set; }
+    [Id(2)]public decimal? SpendingLimitUsdt { get; set; }
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (SpendingLimitUsdt.HasValue && SpendingLimitUsdt.Value < 0)

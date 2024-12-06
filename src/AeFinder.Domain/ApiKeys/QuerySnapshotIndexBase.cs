@@ -9,5 +9,5 @@ public class QuerySnapshotIndexBase : AeFinderDomainEntity<string>
     public long Query { get; set; }
     [Keyword]
     public Guid OrganizationId { get; set; }
-    public SnapshotType Type { get; set; }
+    public int Type { get; set; }
 }
