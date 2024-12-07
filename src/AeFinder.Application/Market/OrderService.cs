@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Apps;
+using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.User;
@@ -18,14 +19,17 @@ public class OrderService: ApplicationService, IOrderService
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppService _appService;
     private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
+    private readonly IContractProvider _contractProvider;
 
     public OrderService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
+        IContractProvider contractProvider,
         IAppOperationSnapshotProvider appOperationSnapshotProvider,IAppService appService)
     {
         _clusterClient = clusterClient;
         _organizationAppService = organizationAppService;
         _appService = appService;
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
+        _contractProvider = contractProvider;
     }
 
     public async Task<List<BillDto>> CreateOrderAsync(CreateOrderDto dto)

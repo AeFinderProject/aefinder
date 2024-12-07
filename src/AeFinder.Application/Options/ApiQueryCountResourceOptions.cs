@@ -4,7 +4,7 @@ namespace AeFinder.Options;
 
 public class ApiQueryCountResourceOptions
 {
-    public List<QueryCountResourceInfo> GraphQLQueryPackages { get; set; }
+    public List<QueryCountResourceInfo> ApiQueryCountPackages { get; set; }
 }
 
 public class QueryCountResourceInfo

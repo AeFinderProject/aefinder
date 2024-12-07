@@ -63,5 +63,6 @@ public class AeFinderApplicationModule : AbpModule
         {
             options.Kind = DateTimeKind.Utc;
         });
+        Configure<ContractOptions>(configuration.GetSection("Contract"));
     }
 }

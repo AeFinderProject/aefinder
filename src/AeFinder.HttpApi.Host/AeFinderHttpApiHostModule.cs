@@ -364,7 +364,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         }
         
         var apiQueryCountResourceOptions=context.ServiceProvider.GetService<IOptions<ApiQueryCountResourceOptions>>();
-        var apiQueryResources = apiQueryCountResourceOptions.Value.GraphQLQueryPackages;
+        var apiQueryResources = apiQueryCountResourceOptions.Value.ApiQueryCountPackages;
         foreach (var queryCountResourceInfo in apiQueryResources)
         {
             var productDto = new ProductDto();

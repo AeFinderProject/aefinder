@@ -1,4 +1,5 @@
 using AeFinder.BackgroundWorker.Options;
+using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Market;
@@ -19,16 +20,19 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
     private readonly IClusterClient _clusterClient;
     private readonly IOrganizationAppService _organizationAppService;
+    private readonly IContractProvider _contractProvider;
     
     public RenewalBillCreateWorker(AbpAsyncTimer timer, ILogger<AppInfoSyncWorker> logger,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
         IOrganizationAppService organizationAppService,IClusterClient clusterClient,
+        IContractProvider contractProvider,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
         _clusterClient = clusterClient;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
         _organizationAppService = organizationAppService;
+        _contractProvider = contractProvider;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = _scheduledTaskOptions.AppInfoSyncTaskPeriodMilliSeconds;
     }
