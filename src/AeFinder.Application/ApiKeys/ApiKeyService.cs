@@ -4,9 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
-using AeFinder.User;
 using AElf.EntityMapping.Repositories;
-using Google.Protobuf.Collections;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -45,14 +43,14 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
         _apiKeySnapshotService = apiKeySnapshotService;
     }
 
-    public async Task IncreaseQueryAeIndexerCountAsync(string key, string appId, string domain)
+    public async Task IncreaseQueryAeIndexerCountAsync(string key, string appId, string domain, DateTime dateTime)
     {
-        await _apiKeyTrafficProvider.IncreaseAeIndexerQueryAsync(key, appId, domain);
+        await _apiKeyTrafficProvider.IncreaseAeIndexerQueryAsync(key, appId, domain, dateTime);
     }
 
-    public async Task IncreaseQueryBasicApiCountAsync(string key, BasicApi api, string domain)
+    public async Task IncreaseQueryBasicApiCountAsync(string key, BasicApi api, string domain, DateTime dateTime)
     {
-        await _apiKeyTrafficProvider.IncreaseBasicApiQueryAsync(key, api, domain);
+        await _apiKeyTrafficProvider.IncreaseBasicApiQueryAsync(key, api, domain, dateTime);
     }
 
     public async Task UpdateApiKeyInfoCacheAsync(ApiKeyInfo apiKeyInfo)
@@ -159,13 +157,14 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
                 EndTime = monthDate
             });
 
+        dto.IsActive = true;
         if (apiKeyMonthSnapshot.Items.Any())
         {
             dto.PeriodQuery = apiKeyMonthSnapshot.Items.First().Query;
-            if (!dto.IsEnableSpendingLimit ||
-                (long)(dto.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - dto.PeriodQuery > 0)
+            if (dto.IsEnableSpendingLimit &&
+                (long)(dto.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - dto.PeriodQuery <= 0)
             {
-                dto.IsActive = true;
+                dto.IsActive = false;
             }
         }
 
@@ -191,13 +190,14 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
         var dtos = ObjectMapper.Map<List<ApiKeyIndex>, List<ApiKeyDto>>(indices);
         foreach (var dto in dtos)
         {
+            dto.IsActive = true;
             if (apiKeyMonthSnapshot.TryGetValue(dto.Id, out var snapshotDto))
             {
                 dto.PeriodQuery = snapshotDto.Query;
-                if (!dto.IsEnableSpendingLimit ||
-                    (long)(dto.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - snapshotDto.Query > 0)
+                if (dto.IsEnableSpendingLimit &&
+                    (long)(dto.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - snapshotDto.Query <= 0)
                 {
-                    dto.IsActive = true;
+                    dto.IsActive = false;
                 }
             }
         }
@@ -306,6 +306,25 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
             Items = ObjectMapper.Map<List<ApiKeyQueryBasicApiIndex>, List<ApiKeyQueryApiDto>>(indices),
             TotalCount = count
         };
+    }
+
+    public async Task AdjustQueryLimitAsync(Guid organizationId, long count)
+    {
+        var apiKeySummaryGrain =
+            _clusterClient.GetGrain<IApiKeySummaryGrain>(GrainIdHelper.GenerateApiKeySummaryGrainId(organizationId));
+        await apiKeySummaryGrain.AdjustQueryLimitAsync(organizationId, count);
+    }
+
+    public async Task<long> GetMonthQueryCountAsync(Guid organizationId, DateTime time)
+    {
+        var apiKeyMonthSnapshot = await _apiKeySnapshotService.GetApiKeySummarySnapshotsAsync(organizationId,
+            new GetSnapshotInput
+            {
+                Type = SnapshotType.Monthly,
+                BeginTime = time.ToMonthDate(),
+                EndTime = time.ToMonthDate(),
+            });
+        return apiKeyMonthSnapshot.Items.Count > 0 ? apiKeyMonthSnapshot.Items[0].Query : 0;
     }
 
     private async Task CheckApiKeyAsync(IApiKeyGrain grain, Guid organizationId)

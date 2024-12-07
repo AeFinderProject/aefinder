@@ -6,4 +6,5 @@ public interface IApiKeyQueryBasicApiSnapshotGrain : IGrainWithStringKey
 {
     Task RecordQueryCountAsync(Guid organizationId, Guid apiKeyId, BasicApi api, long query,
         DateTime dateTime, SnapshotType type);
+    Task<long> GetQueryCountAsync();
 }

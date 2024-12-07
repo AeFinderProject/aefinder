@@ -14,8 +14,8 @@ namespace AeFinder.ApiKeys;
 
 public interface IApiKeyTrafficProvider
 {
-    Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain);
-    Task IncreaseBasicApiQueryAsync(string apiKey, BasicApi api, string domain);
+    Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain, DateTime dateTime);
+    Task IncreaseBasicApiQueryAsync(string apiKey, BasicApi api, string domain, DateTime dateTime);
     Task FlushAsync();
 }
 
@@ -38,17 +38,15 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
         _apiKeyOptions = apiKeyOptions.Value;
     }
 
-    public async Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain)
+    public async Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain, DateTime dateTime)
     {
-        var dateTime = _clock.Now;
         var apiKeyInfo = await _apiKeyInfoProvider.GetApiKeyInfoAsync(apiKey);
         await CheckApiKeyAsync(apiKeyInfo, domain,appId,null,dateTime);
         await IncreaseAeIndexerQueryAsync(apiKeyInfo, appId, dateTime);
     }
 
-    public async Task IncreaseBasicApiQueryAsync(string apiKey, BasicApi api, string domain)
+    public async Task IncreaseBasicApiQueryAsync(string apiKey, BasicApi api, string domain, DateTime dateTime)
     {
-        var dateTime = _clock.Now;
         var apiKeyInfo = await _apiKeyInfoProvider.GetApiKeyInfoAsync(apiKey);
         await CheckApiKeyAsync(apiKeyInfo, domain,null,api,dateTime);
         await IncreaseBasicApiQueryAsync(apiKeyInfo, api, dateTime);

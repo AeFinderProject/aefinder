@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.Timing;
 
 namespace AeFinder.Controllers;
 
@@ -22,12 +23,14 @@ public class GraphqlController : AeFinderController
     private readonly IGraphQLAppService _graphQLAppService;
     private readonly KubernetesOptions _kubernetesOption;
     private readonly IApiKeyService _apiKeyService;
+    private readonly IClock _clock;
 
     public GraphqlController(IGraphQLAppService graphQLAppService,
-        IOptionsSnapshot<KubernetesOptions> kubernetesOption, IApiKeyService apiKeyService)
+        IOptionsSnapshot<KubernetesOptions> kubernetesOption, IApiKeyService apiKeyService, IClock clock)
     {
         _graphQLAppService = graphQLAppService;
         _apiKeyService = apiKeyService;
+        _clock = clock;
         _kubernetesOption = kubernetesOption.Value;
     }
     
@@ -41,7 +44,7 @@ public class GraphqlController : AeFinderController
 
         if (response.IsSuccessStatusCode)
         {
-            await _apiKeyService.IncreaseQueryAeIndexerCountAsync(key, appId, GetOriginHost());
+            await _apiKeyService.IncreaseQueryAeIndexerCountAsync(key, appId, GetOriginHost(), _clock.Now);
             
             var responseContent = await response.Content.ReadAsStringAsync();
             return Content(responseContent, "application/json");

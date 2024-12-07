@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AeFinder.Apps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
 using Orleans;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Domain.Entities;
+using Volo.Abp.ObjectMapping;
 using Volo.Abp.Timing;
 using Xunit;
 
@@ -18,6 +20,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
     private readonly IApiKeySnapshotService _apiKeySnapshotService;
     private readonly IClusterClient _clusterClient;
     private readonly IClock _clock;
+    private readonly IApiKeyTrafficProvider _apiKeyTrafficProvider;
 
     public ApiKeyServiceTests()
     {
@@ -25,10 +28,11 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         _apiKeySnapshotService = GetRequiredService<IApiKeySnapshotService>();
         _clusterClient = GetRequiredService<IClusterClient>();
         _clock = GetRequiredService<IClock>();
+        _apiKeyTrafficProvider = GetRequiredService<IApiKeyTrafficProvider>();
     }
 
     [Fact]
-    public async Task Create_Tests()
+    public async Task Create_Test()
     {
         var orgId = Guid.NewGuid();
         var createInput = new CreateApiKeyInput
@@ -72,43 +76,10 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         var apiKeySummary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
         apiKeySummary.OrganizationId.ShouldBe(orgId);
         apiKeySummary.ApiKeyCount.ShouldBe(1);
-        
-
-        // var apiKeyDto = await _apiKeyService.GetApiKeyAsync(orgId, apiKey.Id);
-        // apiKeyDto.Id.ShouldBe(apiKey.Id);
-        // apiKeyDto.OrganizationId.ShouldBe(orgId);
-        // apiKeyDto.Key.ShouldBe(apiKey.Key);
-        // apiKeyDto.Name.ShouldBe(createInput.Name);
-        // apiKeyDto.IsEnableSpendingLimit.ShouldBe(createInput.IsEnableSpendingLimit);
-        // apiKeyDto.SpendingLimitUsdt.ShouldBe(createInput.SpendingLimitUsdt);
-        // apiKeyDto.IsActive.ShouldBeTrue();
-        // apiKeyDto.AuthorisedApis.Count.ShouldBe(0);
-        // apiKeyDto.AuthorisedDomains.Count.ShouldBe(0);
-        // apiKeyDto.AuthorisedAeIndexers.Count.ShouldBe(0);
-        // apiKeyDto.TotalQuery.ShouldBe(0);
-        // apiKeyDto.PeriodQuery.ShouldBe(0);
-        // apiKeyDto.IsDeleted.ShouldBeFalse();
-        //
-        // var apiKeyList = await _apiKeyService.GetApiKeysAsync(orgId, new GetApiKeyInput());
-        // apiKeyList.TotalCount.ShouldBe(1);
-        // apiKeyList.Items.Count.ShouldBe(1);
-        // apiKeyList.Items[0].Id.ShouldBe(apiKey.Id);
-        // apiKeyList.Items[0].OrganizationId.ShouldBe(orgId);
-        // apiKeyList.Items[0].Key.ShouldBe(apiKey.Key);
-        // apiKeyList.Items[0].Name.ShouldBe(createInput.Name);
-        // apiKeyList.Items[0].IsEnableSpendingLimit.ShouldBe(createInput.IsEnableSpendingLimit);
-        // apiKeyList.Items[0].SpendingLimitUsdt.ShouldBe(createInput.SpendingLimitUsdt);
-        // apiKeyList.Items[0].IsActive.ShouldBeTrue();
-        // apiKeyList.Items[0].AuthorisedApis.Count.ShouldBe(0);
-        // apiKeyList.Items[0].AuthorisedDomains.Count.ShouldBe(0);
-        // apiKeyList.Items[0].AuthorisedAeIndexers.Count.ShouldBe(0);
-        // apiKeyList.Items[0].TotalQuery.ShouldBe(0);
-        // apiKeyList.Items[0].PeriodQuery.ShouldBe(0);
-        // apiKeyList.Items[0].IsDeleted.ShouldBeFalse();
     }
 
     [Fact]
-    public async Task Update_Tests()
+    public async Task Update_Test()
     {
         var orgId = Guid.NewGuid();
         var createInput = new CreateApiKeyInput
@@ -156,7 +127,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
     }
 
     [Fact]
-    public async Task RegenerateKey_Tests()
+    public async Task RegenerateKey_Test()
     {
         var orgId = Guid.NewGuid();
         var createInput = new CreateApiKeyInput
@@ -180,7 +151,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
     }
     
     [Fact]
-    public async Task Delete_Tests()
+    public async Task Delete_Test()
     {
         var orgId = Guid.NewGuid();
         var createInput = new CreateApiKeyInput
@@ -209,7 +180,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
     }
     
     [Fact]
-    public async Task SetAuthorisedAeIndexers_Tests()
+    public async Task SetAuthorisedAeIndexers_Test()
     {
         var orgId = Guid.NewGuid();
         var createInput = new CreateApiKeyInput
@@ -256,7 +227,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
     }
     
     [Fact]
-    public async Task SetAuthorisedDomains_Tests()
+    public async Task SetAuthorisedDomains_Test()
     {
         var orgId = Guid.NewGuid();
         var createInput = new CreateApiKeyInput
@@ -303,7 +274,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
     }
     
     [Fact]
-    public async Task SetAuthorisedApisAsync_Tests()
+    public async Task SetAuthorisedApisAsync_Test()
     {
         var orgId = Guid.NewGuid();
         var createInput = new CreateApiKeyInput
@@ -394,6 +365,9 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         summary.QueryLimit.ShouldBe(apiKeySummaryChangedEto.QueryLimit);
         summary.Query.ShouldBe(0);
         
+        var query = await _apiKeyService.GetMonthQueryCountAsync(orgId, _clock.Now);
+        query.ShouldBe(0);
+        
         apiKeySummarySnapshotChangedEto = new ApiKeySummarySnapshotChangedEto
         {
             OrganizationId = orgId,
@@ -410,10 +384,747 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         summary.LastQueryTime.ShouldBe(apiKeySummaryChangedEto.LastQueryTime);
         summary.QueryLimit.ShouldBe(apiKeySummaryChangedEto.QueryLimit);
         summary.Query.ShouldBe(20);
+
+        query = await _apiKeyService.GetMonthQueryCountAsync(orgId, _clock.Now);
+        query.ShouldBe(20);
     }
 
     [Fact]
     public async Task GetApiKey_Test()
     {
+        var id = Guid.NewGuid();
+        var orgId = Guid.NewGuid();
+        var apiKeyChangedEto = new ApiKeyChangedEto
+        {
+            Id = id,
+            OrganizationId = orgId,
+            Name = "ApiKey",
+            Key = Guid.NewGuid().ToString("N"),
+            IsEnableSpendingLimit = true,
+            SpendingLimitUsdt = 1,
+            AuthorisedAeIndexers = new Dictionary<string, AppInfoImmutableEto>
+            {
+                { "app1", new AppInfoImmutableEto { AppId = "app1", AppName = "appName1" } }
+            },
+            AuthorisedDomains = new HashSet<string> { "www.abc.com", "bc.cn" },
+            AuthorisedApis = new HashSet<BasicApi> { BasicApi.Transaction, BasicApi.LogEvent },
+            LastQueryTime = _clock.Now,
+            IsDeleted = false,
+            TotalQuery = 200,
+            CreateTime = _clock.Now,
+            UpdateTime = _clock.Now
+        };
+        await _apiKeyService.AddOrUpdateApiKeyIndexAsync(apiKeyChangedEto);
+
+        var apiKeyDto = await _apiKeyService.GetApiKeyAsync(orgId, id);
+        apiKeyDto.Id.ShouldBe(id);
+        apiKeyDto.OrganizationId.ShouldBe(orgId);
+        apiKeyDto.Name.ShouldBe(apiKeyChangedEto.Name);
+        apiKeyDto.Key.ShouldBe(apiKeyChangedEto.Key);
+        apiKeyDto.IsEnableSpendingLimit.ShouldBe(apiKeyChangedEto.IsEnableSpendingLimit);
+        apiKeyDto.SpendingLimitUsdt.ShouldBe(apiKeyChangedEto.SpendingLimitUsdt);
+        apiKeyDto.AuthorisedAeIndexers.Count.ShouldBe(1);
+        apiKeyDto.AuthorisedAeIndexers[0].AppId.ShouldBe("app1");
+        apiKeyDto.AuthorisedAeIndexers[0].AppName.ShouldBe("appName1");
+        apiKeyDto.AuthorisedDomains.Count.ShouldBe(2);
+        apiKeyDto.AuthorisedDomains.ShouldContain("www.abc.com");
+        apiKeyDto.AuthorisedDomains.ShouldContain("bc.cn");
+        apiKeyDto.AuthorisedApis.Count.ShouldBe(2);
+        apiKeyDto.AuthorisedApis.ShouldContain(BasicApi.Transaction);
+        apiKeyDto.AuthorisedApis.ShouldContain(BasicApi.LogEvent);
+        apiKeyDto.LastQueryTime.ShouldBe(apiKeyChangedEto.LastQueryTime);
+        apiKeyDto.IsDeleted.ShouldBe(apiKeyChangedEto.IsDeleted);
+        apiKeyDto.TotalQuery.ShouldBe(apiKeyChangedEto.TotalQuery);
+        apiKeyDto.CreateTime.ShouldBe(apiKeyChangedEto.CreateTime);
+        apiKeyDto.UpdateTime.ShouldBe(apiKeyChangedEto.UpdateTime);
+        apiKeyDto.PeriodQuery.ShouldBe(0);
+        apiKeyDto.IsActive.ShouldBe(true);
+
+        var apiKeyDtos = await _apiKeyService.GetApiKeysAsync(orgId, new GetApiKeyInput());
+        apiKeyDtos.TotalCount.ShouldBe(1);
+        apiKeyDtos.Items.Count.ShouldBe(1);
+        apiKeyDtos.Items[0].Id.ShouldBe(id);
+        apiKeyDtos.Items[0].PeriodQuery.ShouldBe(0);
+        apiKeyDtos.Items[0].IsActive.ShouldBe(true);
+        
+        var apiKeySnapshotChangedEto = new ApiKeySnapshotChangedEto
+        {
+            OrganizationId = orgId,
+            Id = GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(orgId, _clock.Now),
+            Query = 10,
+            Time = _clock.Now.ToMonthDate(),
+            Type = SnapshotType.Monthly,
+            ApiKeyId = id
+        };
+        await _apiKeySnapshotService.AddOrUpdateApiKeySnapshotIndexAsync(apiKeySnapshotChangedEto);
+        
+        apiKeyDto = await _apiKeyService.GetApiKeyAsync(orgId, id);
+        apiKeyDto.PeriodQuery.ShouldBe(10);
+        apiKeyDto.IsActive.ShouldBe(true);
+        
+        apiKeyDtos = await _apiKeyService.GetApiKeysAsync(orgId, new GetApiKeyInput());
+        apiKeyDtos.Items[0].PeriodQuery.ShouldBe(10);
+        apiKeyDtos.Items[0].IsActive.ShouldBe(true);
+        
+        apiKeySnapshotChangedEto = new ApiKeySnapshotChangedEto
+        {
+            OrganizationId = orgId,
+            Id = GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(orgId, _clock.Now),
+            Query = 25000,
+            Time = _clock.Now.ToMonthDate(),
+            Type = SnapshotType.Monthly,
+            ApiKeyId = id
+        };
+        await _apiKeySnapshotService.AddOrUpdateApiKeySnapshotIndexAsync(apiKeySnapshotChangedEto);
+        
+        apiKeyDto = await _apiKeyService.GetApiKeyAsync(orgId, id);
+        apiKeyDto.PeriodQuery.ShouldBe(25000);
+        apiKeyDto.IsActive.ShouldBe(false);
+        
+        apiKeyDtos = await _apiKeyService.GetApiKeysAsync(orgId, new GetApiKeyInput());
+        apiKeyDtos.Items[0].PeriodQuery.ShouldBe(25000);
+        apiKeyDtos.Items[0].IsActive.ShouldBe(false);
+    }
+
+    [Fact]
+    public async Task GetApiKeyQueryAeIndexers_Test()
+    {
+        var orgId = Guid.NewGuid();
+        var apiKeyId = Guid.NewGuid();
+        var apiKeyQueryAeIndexerChangedEto1 = new ApiKeyQueryAeIndexerChangedEto
+        {
+            Id = GrainIdHelper.GenerateApiKeyQueryAeIndexerGrainId(apiKeyId, "app1"),
+            OrganizationId = orgId,
+            AppId = "app1",
+            AppName = "appName1",
+            TotalQuery = 100,
+            LastQueryTime = _clock.Now,
+            ApiKeyId = apiKeyId
+        };
+        await _apiKeyService.AddOrUpdateApiKeyQueryAeIndexerIndexAsync(apiKeyQueryAeIndexerChangedEto1);
+        
+        var apiKeyQueryAeIndexerChangedEto2 = new ApiKeyQueryAeIndexerChangedEto
+        {
+            Id = GrainIdHelper.GenerateApiKeyQueryAeIndexerGrainId(apiKeyId, "app2"),
+            OrganizationId = orgId,
+            AppId = "app2",
+            AppName = "appName2",
+            TotalQuery = 200,
+            LastQueryTime = _clock.Now,
+            ApiKeyId = apiKeyId
+        };
+        await _apiKeyService.AddOrUpdateApiKeyQueryAeIndexerIndexAsync(apiKeyQueryAeIndexerChangedEto2);
+
+        var list = await _apiKeyService.GetApiKeyQueryAeIndexersAsync(orgId, apiKeyId,
+            new GetApiKeyQueryAeIndexerInput());
+        list.TotalCount.ShouldBe(2);
+        list.Items.Count.ShouldBe(2);
+        list.Items[0].OrganizationId.ShouldBe(orgId);
+        list.Items[0].ApiKeyId.ShouldBe(apiKeyId);
+        list.Items[0].AppId.ShouldBe(apiKeyQueryAeIndexerChangedEto1.AppId);
+        list.Items[0].AppName.ShouldBe(apiKeyQueryAeIndexerChangedEto1.AppName);
+        list.Items[0].TotalQuery.ShouldBe(apiKeyQueryAeIndexerChangedEto1.TotalQuery);
+        list.Items[0].LastQueryTime.ShouldBe(apiKeyQueryAeIndexerChangedEto1.LastQueryTime);
+        list.Items[1].OrganizationId.ShouldBe(orgId);
+        list.Items[1].ApiKeyId.ShouldBe(apiKeyId);
+        list.Items[1].AppId.ShouldBe(apiKeyQueryAeIndexerChangedEto2.AppId);
+        list.Items[1].AppName.ShouldBe(apiKeyQueryAeIndexerChangedEto2.AppName);
+        list.Items[1].TotalQuery.ShouldBe(apiKeyQueryAeIndexerChangedEto2.TotalQuery);
+        list.Items[1].LastQueryTime.ShouldBe(apiKeyQueryAeIndexerChangedEto2.LastQueryTime);
+
+        list = await _apiKeyService.GetApiKeyQueryAeIndexersAsync(orgId, apiKeyId,
+            new GetApiKeyQueryAeIndexerInput
+            {
+                AppId = "app2"
+            });
+        list.TotalCount.ShouldBe(1);
+        list.Items.Count.ShouldBe(1);
+        list.Items[0].AppId.ShouldBe(apiKeyQueryAeIndexerChangedEto2.AppId);
+    }
+    
+    [Fact]
+    public async Task GetApiKeyQueryApis_Test()
+    {
+        var orgId = Guid.NewGuid();
+        var apiKeyId = Guid.NewGuid();
+        var apiKeyQueryBasicApiChangedEto1 = new ApiKeyQueryBasicApiChangedEto
+        {
+            Id = GrainIdHelper.GenerateApiKeyQueryBasicApiGrainId(apiKeyId, BasicApi.Block),
+            OrganizationId = orgId,
+            TotalQuery = 100,
+            LastQueryTime = _clock.Now,
+            ApiKeyId = apiKeyId,
+            Api = BasicApi.Block
+        };
+        await _apiKeyService.AddOrUpdateApiKeyQueryBasicApiIndexAsync(apiKeyQueryBasicApiChangedEto1);
+        
+        var apiKeyQueryBasicApiChangedEto2 = new ApiKeyQueryBasicApiChangedEto
+        {
+            Id = GrainIdHelper.GenerateApiKeyQueryBasicApiGrainId(apiKeyId, BasicApi.Transaction),
+            OrganizationId = orgId,
+            TotalQuery = 200,
+            LastQueryTime = _clock.Now,
+            ApiKeyId = apiKeyId,
+            Api = BasicApi.Transaction
+        };
+        await _apiKeyService.AddOrUpdateApiKeyQueryBasicApiIndexAsync(apiKeyQueryBasicApiChangedEto2);
+
+        var list = await _apiKeyService.GetApiKeyQueryApisAsync(orgId, apiKeyId,
+            new GetApiKeyQueryApiInput());
+        list.TotalCount.ShouldBe(2);
+        list.Items.Count.ShouldBe(2);
+        list.Items[0].OrganizationId.ShouldBe(orgId);
+        list.Items[0].ApiKeyId.ShouldBe(apiKeyId);
+        list.Items[0].Api.ShouldBe(BasicApi.Block);
+        list.Items[0].TotalQuery.ShouldBe(apiKeyQueryBasicApiChangedEto1.TotalQuery);
+        list.Items[0].LastQueryTime.ShouldBe(apiKeyQueryBasicApiChangedEto1.LastQueryTime);
+        list.Items[1].OrganizationId.ShouldBe(orgId);
+        list.Items[1].ApiKeyId.ShouldBe(apiKeyId);
+        list.Items[1].Api.ShouldBe(BasicApi.Transaction);
+        list.Items[1].TotalQuery.ShouldBe(apiKeyQueryBasicApiChangedEto2.TotalQuery);
+        list.Items[1].LastQueryTime.ShouldBe(apiKeyQueryBasicApiChangedEto2.LastQueryTime);
+
+        list = await _apiKeyService.GetApiKeyQueryApisAsync(orgId, apiKeyId,
+            new GetApiKeyQueryApiInput
+            {
+                Api = BasicApi.Transaction
+            });
+        list.TotalCount.ShouldBe(1);
+        list.Items.Count.ShouldBe(1);
+        list.Items[0].Api.ShouldBe(apiKeyQueryBasicApiChangedEto2.Api);
+    }
+
+    [Fact]
+    public async Task IncreaseQueryAeIndexerCount_Test()
+    {
+        var orgId = Guid.NewGuid();
+        await _apiKeyService.AdjustQueryLimitAsync(orgId, 10);
+        
+        var apiKeySummaryGrain =
+            _clusterClient.GetGrain<IApiKeySummaryGrain>(GrainIdHelper.GenerateApiKeySummaryGrainId(orgId));
+        var summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.QueryLimit.ShouldBe(10);
+        
+        var createInput = new CreateApiKeyInput
+        {
+            Name = "ApiKey"
+        };
+        var apiKey = await _apiKeyService.CreateApiKeyAsync(orgId, createInput);
+        
+        var apiKeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKey.Id);
+        var apiKeyInfo = await apiKeyGrain.GetAsync();
+
+        await _apiKeyService.UpdateApiKeyInfoCacheAsync(apiKeyInfo);
+
+        var time = _clock.Now.AddMonths(-1);
+        await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "aaa.com", time);
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(0);
+        
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(1);
+        summary.LastQueryTime.ShouldBe(time);
+
+        var apiSummaryMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySummarySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeySummaryMonthlySnapshotGrainId(orgId, time));
+        var query = await apiSummaryMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        var apiSummaryDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySummarySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeySummaryDailySnapshotGrainId(orgId, time));
+        query = await apiSummaryDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        apiKeyInfo = await apiKeyGrain.GetAsync();
+        apiKeyInfo.TotalQuery.ShouldBe(1);
+        apiKeyInfo.LastQueryTime.ShouldBe(time);
+        
+        var apiMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(apiKey.Id, time));
+        query = await apiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        var apiDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyDailySnapshotGrainId(apiKey.Id, time));
+        query = await apiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+
+        var apiQueryAeIndexerGrain =
+            _clusterClient.GetGrain<IApiKeyQueryAeIndexerGrain>(
+                GrainIdHelper.GenerateApiKeyQueryAeIndexerGrainId(apiKey.Id, "app1"));
+        var apiQueryAeIndexerInfo = await apiQueryAeIndexerGrain.GetAsync();
+        apiQueryAeIndexerInfo.AppId.ShouldBe("app1");
+        apiQueryAeIndexerInfo.ApiKeyId.ShouldBe(apiKey.Id);
+        apiQueryAeIndexerInfo.TotalQuery.ShouldBe(1);
+        apiQueryAeIndexerInfo.LastQueryTime.ShouldBe(time);
+
+        var apiQueryAeIndexerMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeyQueryAeIndexerSnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyQueryAeIndexerMonthlySnapshotGrainId(apiKey.Id, "app1", time));
+        query = await apiQueryAeIndexerMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        var apiQueryAeIndexerDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeyQueryAeIndexerSnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyQueryAeIndexerDailySnapshotGrainId(apiKey.Id, "app1", time));
+        query = await apiQueryAeIndexerDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+
+        for (int i = 0; i < 10; i++)
+        {
+            await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "aaa.com", _clock.Now.AddMonths(-1));
+        }
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(10);
+        
+        query = await apiSummaryMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiSummaryDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        apiKeyInfo = await apiKeyGrain.GetAsync();
+        apiKeyInfo.TotalQuery.ShouldBe(10);
+        
+        query = await apiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        apiQueryAeIndexerInfo = await apiQueryAeIndexerGrain.GetAsync();
+        apiQueryAeIndexerInfo.TotalQuery.ShouldBe(10);
+        
+        query = await apiQueryAeIndexerMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiQueryAeIndexerDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "aaa.com", _clock.Now.AddMonths(-1));
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(10);
+        
+        query = await apiSummaryMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiSummaryDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        apiKeyInfo = await apiKeyGrain.GetAsync();
+        apiKeyInfo.TotalQuery.ShouldBe(10);
+        
+        query = await apiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        apiQueryAeIndexerInfo = await apiQueryAeIndexerGrain.GetAsync();
+        apiQueryAeIndexerInfo.TotalQuery.ShouldBe(10);
+        
+        query = await apiQueryAeIndexerMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiQueryAeIndexerDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+
+        time = _clock.Now.AddMinutes(-5);
+        await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "aaa.com", time);
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(11);
+        summary.LastQueryTime.ShouldBe(time);
+
+        apiSummaryMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySummarySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeySummaryMonthlySnapshotGrainId(orgId, time));
+        query = await apiSummaryMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        apiSummaryDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySummarySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeySummaryDailySnapshotGrainId(orgId, time));
+        query = await apiSummaryDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        apiKeyInfo = await apiKeyGrain.GetAsync();
+        apiKeyInfo.TotalQuery.ShouldBe(11);
+        apiKeyInfo.LastQueryTime.ShouldBe(time);
+        
+        apiMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(apiKey.Id, time));
+        query = await apiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        apiDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyDailySnapshotGrainId(apiKey.Id, time));
+        query = await apiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+
+        apiQueryAeIndexerGrain =
+            _clusterClient.GetGrain<IApiKeyQueryAeIndexerGrain>(
+                GrainIdHelper.GenerateApiKeyQueryAeIndexerGrainId(apiKey.Id, "app1"));
+        apiQueryAeIndexerInfo = await apiQueryAeIndexerGrain.GetAsync();
+        apiQueryAeIndexerInfo.AppId.ShouldBe("app1");
+        apiQueryAeIndexerInfo.ApiKeyId.ShouldBe(apiKey.Id);
+        apiQueryAeIndexerInfo.TotalQuery.ShouldBe(11);
+        apiQueryAeIndexerInfo.LastQueryTime.ShouldBe(time);
+
+        apiQueryAeIndexerMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeyQueryAeIndexerSnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyQueryAeIndexerMonthlySnapshotGrainId(apiKey.Id, "app1", time));
+        query = await apiQueryAeIndexerMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        apiQueryAeIndexerDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeyQueryAeIndexerSnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyQueryAeIndexerDailySnapshotGrainId(apiKey.Id, "app1", time));
+        query = await apiQueryAeIndexerDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+    }
+    
+    [Fact]
+    public async Task IncreaseQueryAeIndexerCount_Verify_Test()
+    {
+        var orgId = Guid.NewGuid();
+        await _apiKeyService.AdjustQueryLimitAsync(orgId, 0);
+
+        var createInput = new CreateApiKeyInput
+        {
+            Name = "ApiKey",
+            IsEnableSpendingLimit = true,
+            SpendingLimitUsdt = AeFinderApplicationConsts.ApiKeyQueryPrice * 3
+        };
+        var apiKey = await _apiKeyService.CreateApiKeyAsync(orgId, createInput);
+
+        await _apiKeyService.SetAuthorisedDomainsAsync(orgId, apiKey.Id, new SetAuthorisedDomainInput
+        {
+            Domains = { "aaa.com", "*.bbb.com" }
+        });
+
+        await _apiKeyService.SetAuthorisedAeIndexersAsync(orgId, apiKey.Id, new SetAuthorisedAeIndexerInput
+        {
+            AppIds = { "app1" }
+        });
+        
+        var apiKeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKey.Id);
+        var apiKeyInfo = await apiKeyGrain.GetAsync();
+
+        await _apiKeyService.UpdateApiKeyInfoCacheAsync(apiKeyInfo);
+        
+        var time = _clock.Now.AddMinutes(-5);
+        var exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "aaa.com", time));
+        exception.Message.ShouldBe("Api key query times insufficient.");
+        
+        await _apiKeyService.AdjustQueryLimitAsync(orgId, 10);
+        await _apiKeyService.UpdateApiKeySummaryLimitCacheAsync(orgId, 10);
+        
+        exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app2", "aaa.com", time));
+        exception.Message.ShouldBe("Unauthorized AeIndexer.");
+        
+        exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "a.aaa.com", time));
+        exception.Message.ShouldBe("Unauthorized domain.");
+
+        await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "aaa.com", time);
+        await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "bbb.com", time);
+        await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "b.bbb.com", time);
+
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        var apiKeySummaryGrain =
+            _clusterClient.GetGrain<IApiKeySummaryGrain>(GrainIdHelper.GenerateApiKeySummaryGrainId(orgId));
+        var summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(3);
+
+        await _apiKeyService.UpdateApiKeyUsedCacheAsync(apiKey.Id, time, 3);
+        
+        exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "aaa.com", time));
+        exception.Message.ShouldBe("Api key unavailable.");
+    }
+    
+    [Fact]
+    public async Task IncreaseQueryApiCount_Test()
+    {
+        var orgId = Guid.NewGuid();
+        await _apiKeyService.AdjustQueryLimitAsync(orgId, 10);
+        
+        var apiKeySummaryGrain =
+            _clusterClient.GetGrain<IApiKeySummaryGrain>(GrainIdHelper.GenerateApiKeySummaryGrainId(orgId));
+        var summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.QueryLimit.ShouldBe(10);
+        
+        var createInput = new CreateApiKeyInput
+        {
+            Name = "ApiKey"
+        };
+        var apiKey = await _apiKeyService.CreateApiKeyAsync(orgId, createInput);
+        
+        var apiKeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKey.Id);
+        var apiKeyInfo = await apiKeyGrain.GetAsync();
+
+        await _apiKeyService.UpdateApiKeyInfoCacheAsync(apiKeyInfo);
+
+        var time = _clock.Now.AddMonths(-1);
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.LogEvent, "aaa.com", time);
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(0);
+        
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(1);
+        summary.LastQueryTime.ShouldBe(time);
+
+        var apiSummaryMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySummarySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeySummaryMonthlySnapshotGrainId(orgId, time));
+        var query = await apiSummaryMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        var apiSummaryDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySummarySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeySummaryDailySnapshotGrainId(orgId, time));
+        query = await apiSummaryDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        apiKeyInfo = await apiKeyGrain.GetAsync();
+        apiKeyInfo.TotalQuery.ShouldBe(1);
+        apiKeyInfo.LastQueryTime.ShouldBe(time);
+        
+        var apiMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(apiKey.Id, time));
+        query = await apiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        var apiDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyDailySnapshotGrainId(apiKey.Id, time));
+        query = await apiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+
+        var apiQueryBasicApiGrain =
+            _clusterClient.GetGrain<IApiKeyQueryBasicApiGrain>(
+                GrainIdHelper.GenerateApiKeyQueryBasicApiGrainId(apiKey.Id, BasicApi.LogEvent));
+        var apiQueryBasicApiInfo = await apiQueryBasicApiGrain.GetAsync();
+        apiQueryBasicApiInfo.Api.ShouldBe(BasicApi.LogEvent);
+        apiQueryBasicApiInfo.ApiKeyId.ShouldBe(apiKey.Id);
+        apiQueryBasicApiInfo.TotalQuery.ShouldBe(1);
+        apiQueryBasicApiInfo.LastQueryTime.ShouldBe(time);
+
+        var apiQueryBasicApiMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeyQueryBasicApiSnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyQueryBasicApiMonthlySnapshotGrainId(apiKey.Id, BasicApi.LogEvent, time));
+        query = await apiQueryBasicApiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        var apiQueryBasicApiDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeyQueryBasicApiSnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyQueryBasicApiDailySnapshotGrainId(apiKey.Id, BasicApi.LogEvent, time));
+        query = await apiQueryBasicApiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+
+        for (int i = 0; i < 10; i++)
+        {
+            await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.LogEvent, "aaa.com", _clock.Now.AddMonths(-1));
+        }
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(10);
+        
+        query = await apiSummaryMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiSummaryDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        apiKeyInfo = await apiKeyGrain.GetAsync();
+        apiKeyInfo.TotalQuery.ShouldBe(10);
+        
+        query = await apiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        apiQueryBasicApiInfo = await apiQueryBasicApiGrain.GetAsync();
+        apiQueryBasicApiInfo.TotalQuery.ShouldBe(10);
+        
+        query = await apiQueryBasicApiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiQueryBasicApiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.LogEvent, "aaa.com", _clock.Now.AddMonths(-1));
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(10);
+        
+        query = await apiSummaryMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiSummaryDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        apiKeyInfo = await apiKeyGrain.GetAsync();
+        apiKeyInfo.TotalQuery.ShouldBe(10);
+        
+        query = await apiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        apiQueryBasicApiInfo = await apiQueryBasicApiGrain.GetAsync();
+        apiQueryBasicApiInfo.TotalQuery.ShouldBe(10);
+        
+        query = await apiQueryBasicApiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        query = await apiQueryBasicApiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(10);
+        
+        time = _clock.Now.AddMinutes(-5);
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.LogEvent, "aaa.com", time);
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(11);
+        summary.LastQueryTime.ShouldBe(time);
+
+        apiSummaryMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySummarySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeySummaryMonthlySnapshotGrainId(orgId, time));
+        query = await apiSummaryMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        apiSummaryDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySummarySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeySummaryDailySnapshotGrainId(orgId, time));
+        query = await apiSummaryDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        apiKeyInfo = await apiKeyGrain.GetAsync();
+        apiKeyInfo.TotalQuery.ShouldBe(11);
+        apiKeyInfo.LastQueryTime.ShouldBe(time);
+        
+        apiMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(apiKey.Id, time));
+        query = await apiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        apiDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeySnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyDailySnapshotGrainId(apiKey.Id, time));
+        query = await apiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+
+        apiQueryBasicApiGrain =
+            _clusterClient.GetGrain<IApiKeyQueryBasicApiGrain>(
+                GrainIdHelper.GenerateApiKeyQueryBasicApiGrainId(apiKey.Id, BasicApi.LogEvent));
+        apiQueryBasicApiInfo = await apiQueryBasicApiGrain.GetAsync();
+        apiQueryBasicApiInfo.Api.ShouldBe(BasicApi.LogEvent);
+        apiQueryBasicApiInfo.ApiKeyId.ShouldBe(apiKey.Id);
+        apiQueryBasicApiInfo.TotalQuery.ShouldBe(11);
+        apiQueryBasicApiInfo.LastQueryTime.ShouldBe(time);
+
+        apiQueryBasicApiMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeyQueryBasicApiSnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyQueryBasicApiMonthlySnapshotGrainId(apiKey.Id, BasicApi.LogEvent, time));
+        query = await apiQueryBasicApiMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+        
+        apiQueryBasicApiDailyMonthlyGrain =
+            _clusterClient.GetGrain<IApiKeyQueryBasicApiSnapshotGrain>(
+                GrainIdHelper.GenerateApiKeyQueryBasicApiDailySnapshotGrainId(apiKey.Id, BasicApi.LogEvent, time));
+        query = await apiQueryBasicApiDailyMonthlyGrain.GetQueryCountAsync();
+        query.ShouldBe(1);
+    }
+    
+    [Fact]
+    public async Task IncreaseQueryApiCount_Verify_Test()
+    {
+        var orgId = Guid.NewGuid();
+        await _apiKeyService.AdjustQueryLimitAsync(orgId, 0);
+
+        var createInput = new CreateApiKeyInput
+        {
+            Name = "ApiKey",
+            IsEnableSpendingLimit = true,
+            SpendingLimitUsdt = AeFinderApplicationConsts.ApiKeyQueryPrice * 3
+        };
+        var apiKey = await _apiKeyService.CreateApiKeyAsync(orgId, createInput);
+
+        await _apiKeyService.SetAuthorisedDomainsAsync(orgId, apiKey.Id, new SetAuthorisedDomainInput
+        {
+            Domains = { "aaa.com", "*.bbb.com" }
+        });
+
+        await _apiKeyService.SetAuthorisedApisAsync(orgId, apiKey.Id, new SetAuthorisedApiInput()
+        {
+            Apis = { { BasicApi.Block, true } }
+        });
+        
+        var apiKeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKey.Id);
+        var apiKeyInfo = await apiKeyGrain.GetAsync();
+
+        await _apiKeyService.UpdateApiKeyInfoCacheAsync(apiKeyInfo);
+        
+        var time = _clock.Now.AddMinutes(-5);
+        var exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "aaa.com", time));
+        exception.Message.ShouldBe("Api key query times insufficient.");
+        
+        await _apiKeyService.AdjustQueryLimitAsync(orgId, 10);
+        await _apiKeyService.UpdateApiKeySummaryLimitCacheAsync(orgId, 10);
+        
+        exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Transaction, "aaa.com", time));
+        exception.Message.ShouldBe("Unauthorized api.");
+        
+        exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "a.aaa.com", time));
+        exception.Message.ShouldBe("Unauthorized domain.");
+
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "aaa.com", time);
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "bbb.com", time);
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "b.bbb.com", time);
+
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        var apiKeySummaryGrain =
+            _clusterClient.GetGrain<IApiKeySummaryGrain>(GrainIdHelper.GenerateApiKeySummaryGrainId(orgId));
+        var summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(3);
+
+        await _apiKeyService.UpdateApiKeyUsedCacheAsync(apiKey.Id, time, 3);
+        
+        exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "aaa.com", time));
+        exception.Message.ShouldBe("Api key unavailable.");
     }
 }

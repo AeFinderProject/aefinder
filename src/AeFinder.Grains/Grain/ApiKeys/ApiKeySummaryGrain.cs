@@ -21,7 +21,7 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         _apiKeyOptions = apiKeyOptions.Value;
     }
 
-    public async Task IncreaseQueryLimitAsync(Guid organizationId, long query)
+    public async Task AdjustQueryLimitAsync(Guid organizationId, long query)
     {
         await ReadStateAsync();
 
@@ -36,12 +36,13 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId);
         var apiKeyInfo = await apiKeyGrain.GetAsync();
 
-        if (await RecordQueryCountAsync(apiKeyInfo, query, dateTime))
+        var recordQuery = await RecordQueryCountAsync(apiKeyInfo, query, dateTime);
+        if (recordQuery > 0)
         {
             await GrainFactory
                 .GetGrain<IApiKeyQueryAeIndexerGrain>(
                     GrainIdHelper.GenerateApiKeyQueryAeIndexerGrainId(apiKeyId, appId))
-                .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, appId, query, dateTime);
+                .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, appId, recordQuery, dateTime);
         }
     }
     
@@ -50,12 +51,13 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         var apiKeyGrain = GrainFactory.GetGrain<IApiKeyGrain>(apiKeyId);
         var apiKeyInfo = await apiKeyGrain.GetAsync();
 
-        if (await RecordQueryCountAsync(apiKeyInfo, query, dateTime))
+        var recordQuery = await RecordQueryCountAsync(apiKeyInfo, query, dateTime);
+        if (recordQuery > 0)
         {
             await GrainFactory
                 .GetGrain<IApiKeyQueryBasicApiGrain>(
                     GrainIdHelper.GenerateApiKeyQueryBasicApiGrainId(apiKeyId, api))
-                .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, api, query, dateTime);
+                .RecordQueryCountAsync(apiKeyInfo.OrganizationId, apiKeyId, api, recordQuery, dateTime);
         }
     }
 
@@ -92,7 +94,7 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         await WriteStateAsync();
     }
 
-    private async Task<bool> RecordQueryCountAsync(ApiKeyInfo apiKeyInfo, long query, DateTime dateTime)
+    private async Task<long> RecordQueryCountAsync(ApiKeyInfo apiKeyInfo, long query, DateTime dateTime)
     {
         var monthlySnapshotKey =
             GrainIdHelper.GenerateApiKeySummaryMonthlySnapshotGrainId(apiKeyInfo.OrganizationId, dateTime);
@@ -105,7 +107,7 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         var availabilityQuery = await apiKeyGrain.GetAvailabilityQueryAsync(dateTime);
         if (periodQuery >= State.QueryLimit || availabilityQuery is <= 0)
         {
-            return false;
+            return 0;
         }
 
         if (periodQuery + query > State.QueryLimit)
@@ -133,7 +135,7 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
 
         await apiKeyGrain.RecordQueryCountAsync(query, dateTime);
 
-        return true;
+        return query;
     }
     
     protected override async Task WriteStateAsync()

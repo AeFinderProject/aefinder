@@ -15,6 +15,12 @@ public class ApiKeyQueryBasicApiGrain : AeFinderGrain<ApiKeyQueryBasicApiState>,
         _distributedEventBus = distributedEventBus;
         _objectMapper = objectMapper;
     }
+    
+    public async Task<ApiKeyQueryBasicApiInfo> GetAsync()
+    {
+        await ReadStateAsync();
+        return _objectMapper.Map<ApiKeyQueryBasicApiState, ApiKeyQueryBasicApiInfo>(State);
+    }
 
     public async Task RecordQueryCountAsync(Guid organizationId, Guid apiKeyId, BasicApi api, long query,
         DateTime dateTime)

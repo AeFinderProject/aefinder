@@ -17,6 +17,12 @@ public class ApiKeyQueryAeIndexerGrain : AeFinderGrain<ApiKeyQueryAeIndexerState
         _objectMapper = objectMapper;
     }
 
+    public async Task<ApiKeyQueryAeIndexerInfo> GetAsync()
+    {
+        await ReadStateAsync();
+        return _objectMapper.Map<ApiKeyQueryAeIndexerState, ApiKeyQueryAeIndexerInfo>(State);
+    }
+
     public async Task RecordQueryCountAsync(Guid organizationId, Guid apiKeyId, string appId, long query,
         DateTime dateTime)
     {

@@ -6,16 +6,16 @@ namespace AeFinder.ApiKeys;
 
 public interface IApiKeyService
 {
-    Task IncreaseQueryAeIndexerCountAsync(string key, string appId, string domain);
-    Task IncreaseQueryBasicApiCountAsync(string key, BasicApi api, string domain);
+    Task IncreaseQueryAeIndexerCountAsync(string key, string appId, string domain, DateTime dateTime);
+    Task IncreaseQueryBasicApiCountAsync(string key, BasicApi api, string domain, DateTime dateTime);
     Task UpdateApiKeyInfoCacheAsync(ApiKeyInfo apiKeyInfo);
     Task UpdateApiKeySummaryLimitCacheAsync(Guid organizationId, long limit);
     Task UpdateApiKeySummaryUsedCacheAsync(Guid organizationId, DateTime dateTime, long used);
     Task UpdateApiKeyUsedCacheAsync(Guid apiKeyId, DateTime dateTime, long used);
+    Task AddOrUpdateApiKeySummaryIndexAsync(ApiKeySummaryChangedEto input);
     Task AddOrUpdateApiKeyIndexAsync(ApiKeyChangedEto input);
     Task AddOrUpdateApiKeyQueryAeIndexerIndexAsync(ApiKeyQueryAeIndexerChangedEto input);
     Task AddOrUpdateApiKeyQueryBasicApiIndexAsync(ApiKeyQueryBasicApiChangedEto input);
-    Task AddOrUpdateApiKeySummaryIndexAsync(ApiKeySummaryChangedEto input);
     Task<ApiKeySummaryDto> GetApiKeySummaryAsync(Guid organizationId);
     Task<ApiKeyDto> CreateApiKeyAsync(Guid organizationId, CreateApiKeyInput input);
     Task<ApiKeyDto> UpdateApiKeyAsync(Guid organizationId, Guid apiKeyId, UpdateApiKeyInput input);
@@ -30,4 +30,7 @@ public interface IApiKeyService
     Task SetAuthorisedApisAsync(Guid organizationId, Guid apiKeyId, SetAuthorisedApiInput input);
     Task<PagedResultDto<ApiKeyQueryAeIndexerDto>> GetApiKeyQueryAeIndexersAsync(Guid organizationId, Guid apiKeyId, GetApiKeyQueryAeIndexerInput input);
     Task<PagedResultDto<ApiKeyQueryApiDto>> GetApiKeyQueryApisAsync(Guid organizationId, Guid apiKeyId, GetApiKeyQueryApiInput input);
+    Task AdjustQueryLimitAsync(Guid organizationId, long count);
+    Task<long> GetMonthQueryCountAsync(Guid orgId, DateTime time);
+
 }

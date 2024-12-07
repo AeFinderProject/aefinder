@@ -31,7 +31,13 @@ public class ApiKeyQueryBasicApiSnapshotGrain : AeFinderGrain<ApiKeyQueryBasicAp
 
         await WriteStateAsync();
     }
-    
+
+    public async Task<long> GetQueryCountAsync()
+    {
+        await ReadStateAsync();
+        return State.Query;
+    }
+
     protected override async Task WriteStateAsync()
     {
         await PublishEventAsync();

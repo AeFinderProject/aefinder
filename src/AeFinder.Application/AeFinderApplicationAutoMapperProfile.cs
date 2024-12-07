@@ -173,6 +173,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<ApiKeyQueryAeIndexerSnapshotState, ApiKeyQueryAeIndexerSnapshotChangedEto>();
         CreateMap<ApiKeyQueryAeIndexerIndex, ApiKeyQueryAeIndexerDto>();
         CreateMap<ApiKeyQueryAeIndexerSnapshotIndex, ApiKeyQueryAeIndexerSnapshotDto>();
+        CreateMap<ApiKeyQueryAeIndexerState, ApiKeyQueryAeIndexerInfo>();
         
         CreateMap<ApiKeyQueryBasicApiChangedEto, ApiKeyQueryBasicApiIndex>();
         CreateMap<ApiKeyQueryBasicApiSnapshotChangedEto, ApiKeyQueryBasicApiSnapshotIndex>();
@@ -180,6 +181,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<ApiKeyQueryBasicApiSnapshotState, ApiKeyQueryBasicApiSnapshotChangedEto>();
         CreateMap<ApiKeyQueryBasicApiIndex, ApiKeyQueryApiDto>();
         CreateMap<ApiKeyQueryBasicApiSnapshotIndex, ApiKeyQueryBasicApiSnapshotDto>();
+        CreateMap<ApiKeyQueryBasicApiState, ApiKeyQueryBasicApiInfo>();
 
         CreateMap<AppInfoImmutableIndex, AppInfoImmutable>();
         CreateMap<AppInfoImmutable, AppInfoImmutableIndex>();

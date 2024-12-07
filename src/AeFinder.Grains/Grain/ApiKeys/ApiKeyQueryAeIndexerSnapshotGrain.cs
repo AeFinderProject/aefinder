@@ -36,6 +36,12 @@ public class ApiKeyQueryAeIndexerSnapshotGrain : AeFinderGrain<ApiKeyQueryAeInde
         await WriteStateAsync();
     }
     
+    public async Task<long> GetQueryCountAsync()
+    {
+        await ReadStateAsync();
+        return State.Query;
+    }
+    
     protected override async Task WriteStateAsync()
     {
         await PublishEventAsync();
