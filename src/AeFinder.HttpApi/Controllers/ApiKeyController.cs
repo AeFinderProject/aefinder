@@ -206,6 +206,20 @@ public class ApiKeyController : AeFinderController
         return await _apiKeySnapshotService.GetApiKeyQueryBasicApiSnapshotsAsync(orgId, id, input);
     }
     
+    [HttpPost]
+    [Route("limit")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task AdjustQueryLimitAsync(AdjustQueryLimitInput input)
+    {
+        var orgId = input.OrganizationId;
+        if (!input.OrganizationIdFormat.IsNullOrWhiteSpace())
+        {
+            orgId = Guid.Parse(input.OrganizationIdFormat);
+        }
+
+        await _apiKeyService.AdjustQueryLimitAsync(orgId, input.Count);
+    }
+    
     private async Task<Guid> GetOrganizationIdAsync()
     {
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
