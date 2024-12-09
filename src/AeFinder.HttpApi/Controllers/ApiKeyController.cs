@@ -98,7 +98,7 @@ public class ApiKeyController : AeFinderController
         return await _apiKeyService.GetApiKeyAsync(orgId, id);
     }
 
-    [HttpGet]
+    [HttpPost]
     [Route("{id}/key")]
     [Authorize]
     public async Task<RegenerateKeyDto> RegenerateKeyAsync(Guid id)
