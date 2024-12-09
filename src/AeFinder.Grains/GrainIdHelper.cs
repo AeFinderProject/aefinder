@@ -1,3 +1,5 @@
+using AeFinder.ApiKeys;
+
 namespace AeFinder.Grains;
 
 public static class GrainIdHelper
@@ -125,5 +127,60 @@ public static class GrainIdHelper
     public static string GenerateAppPodOperationSnapshotGrainId(string appId, string version)
     {
         return GenerateGrainId(appId, version);
+    }
+    
+    public static string GenerateApiKeySummaryGrainId(Guid organizationId)
+    {
+        return GenerateGrainId(organizationId.ToString("N"));
+    }
+    
+    public static string GenerateApiKeySummaryMonthlySnapshotGrainId(Guid organizationId, DateTime dateTime)
+    {
+        return GenerateGrainId(organizationId.ToString("N"), dateTime.ToString("yyyyMM"));
+    }
+    
+    public static string GenerateApiKeySummaryDailySnapshotGrainId(Guid organizationId, DateTime dateTime)
+    {
+        return GenerateGrainId(organizationId.ToString("N"), dateTime.ToString("yyyyMMdd"));
+    }
+    
+    public static string GenerateApiKeyMonthlySnapshotGrainId(Guid apiKeyId, DateTime dateTime)
+    {
+        return GenerateGrainId(apiKeyId.ToString("N"), dateTime.ToString("yyyyMM"));
+    }
+    
+    public static string GenerateApiKeyDailySnapshotGrainId(Guid apiKeyId, DateTime dateTime)
+    {
+        return GenerateGrainId(apiKeyId.ToString("N"), dateTime.ToString("yyyyMMdd"));
+    }
+    
+    public static string GenerateApiKeyQueryAeIndexerGrainId(Guid apiKeyId, string appId)
+    {
+        return GenerateGrainId(apiKeyId.ToString("N"),appId);
+    }
+    
+    public static string GenerateApiKeyQueryAeIndexerMonthlySnapshotGrainId(Guid apiKeyId, string appId, DateTime dateTime)
+    {
+        return GenerateGrainId(apiKeyId.ToString("N"), appId, dateTime.ToString("yyyyMM"));
+    }
+    
+    public static string GenerateApiKeyQueryAeIndexerDailySnapshotGrainId(Guid apiKeyId, string appId, DateTime dateTime)
+    {
+        return GenerateGrainId(apiKeyId.ToString("N"), appId, dateTime.ToString("yyyyMMdd"));
+    }
+    
+    public static string GenerateApiKeyQueryBasicApiGrainId(Guid apiKeyId, BasicApi api)
+    {
+        return GenerateGrainId(apiKeyId.ToString("N"),api);
+    }
+    
+    public static string GenerateApiKeyQueryBasicApiMonthlySnapshotGrainId(Guid apiKeyId, BasicApi api, DateTime dateTime)
+    {
+        return GenerateGrainId(apiKeyId.ToString("N"), api, dateTime.ToString("yyyyMM"));
+    }
+    
+    public static string GenerateApiKeyQueryBasicApiDailySnapshotGrainId(Guid apiKeyId, BasicApi api, DateTime dateTime)
+    {
+        return GenerateGrainId(apiKeyId.ToString("N"), api, dateTime.ToString("yyyyMMdd"));
     }
 }
