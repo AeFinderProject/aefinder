@@ -19,7 +19,7 @@ public class ApiKeyIndex: AeFinderDomainEntity<Guid>, IEntityMappingEntity
     public decimal SpendingLimitUsdt { get; set; }
     public List<AppInfoImmutableIndex> AuthorisedAeIndexers { get; set; } = new();
     public HashSet<string> AuthorisedDomains { get; set; } = new();
-    public HashSet<BasicApi> AuthorisedApis = new();
+    public HashSet<BasicApi> AuthorisedApis { get; set; } = new();
     public long TotalQuery { get; set; }
     public DateTime LastQueryTime { get; set; }
     public bool IsDeleted { get; set; }

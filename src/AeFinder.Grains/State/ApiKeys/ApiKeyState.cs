@@ -13,7 +13,7 @@ public class ApiKeyState
     public decimal SpendingLimitUsdt { get; set; }
     public Dictionary<string, AppInfoImmutable> AuthorisedAeIndexers { get; set; } = new();
     public HashSet<string> AuthorisedDomains { get; set; } = new();
-    public HashSet<BasicApi> AuthorisedApis = new();
+    public HashSet<BasicApi> AuthorisedApis { get; set; } = new();
     public long TotalQuery { get; set; }
     public DateTime LastQueryTime { get; set; }
     public bool IsDeleted { get; set; }

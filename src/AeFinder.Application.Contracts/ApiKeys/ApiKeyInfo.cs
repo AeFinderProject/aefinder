@@ -16,7 +16,7 @@ public class ApiKeyInfo
     [Id(5)]public decimal SpendingLimitUsdt { get; set; }
     [Id(6)]public Dictionary<string, AppInfoImmutable> AuthorisedAeIndexers { get; set; } = new();
     [Id(7)]public HashSet<string> AuthorisedDomains { get; set; } = new();
-    [Id(8)]public HashSet<BasicApi> AuthorisedApis = new();
+    [Id(8)] public HashSet<BasicApi> AuthorisedApis { get; set; } = new();
     [Id(9)]public long TotalQuery { get; set; }
     [Id(10)]public DateTime LastQueryTime { get; set; }
     [Id(11)]public bool IsDeleted { get; set; }

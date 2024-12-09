@@ -15,7 +15,7 @@ public class ApiKeyDto
     public decimal SpendingLimitUsdt { get; set; }
     public List<AppInfoImmutable> AuthorisedAeIndexers { get; set; } = new();
     public HashSet<string> AuthorisedDomains { get; set; } = new();
-    public HashSet<BasicApi> AuthorisedApis = new();
+    public HashSet<BasicApi> AuthorisedApis { get; set; } = new();
     public long TotalQuery { get; set; }
     public long PeriodQuery { get; set; }
     public DateTime LastQueryTime { get; set; }
