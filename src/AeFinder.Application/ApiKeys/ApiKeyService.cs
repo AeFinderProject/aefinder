@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -25,13 +26,14 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     private readonly IEntityMappingRepository<ApiKeyQueryBasicApiIndex, string> _apiKeyQueryBasicApiIndexRepository;
     private readonly IEntityMappingRepository<ApiKeySummaryIndex, string> _apiKeySummaryIndexRepository;
     private readonly IApiKeySnapshotService _apiKeySnapshotService;
+    private readonly ApiKeyOptions _options;
 
     public ApiKeyService(IApiKeyTrafficProvider apiKeyTrafficProvider, IClusterClient clusterClient,
         IApiKeyInfoProvider apiKeyInfoProvider, IEntityMappingRepository<ApiKeyIndex, Guid> apiKeyIndexRepository,
         IEntityMappingRepository<ApiKeyQueryAeIndexerIndex, string> apiKeyQueryAeIndexerIndexRepository,
         IEntityMappingRepository<ApiKeyQueryBasicApiIndex, string> apiKeyQueryBasicApiIndexRepository,
         IEntityMappingRepository<ApiKeySummaryIndex, string> apiKeySummaryIndexRepository,
-        IApiKeySnapshotService apiKeySnapshotService)
+        IApiKeySnapshotService apiKeySnapshotService, IOptionsSnapshot<ApiKeyOptions> options)
     {
         _apiKeyTrafficProvider = apiKeyTrafficProvider;
         _clusterClient = clusterClient;
@@ -41,6 +43,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
         _apiKeyQueryBasicApiIndexRepository = apiKeyQueryBasicApiIndexRepository;
         _apiKeySummaryIndexRepository = apiKeySummaryIndexRepository;
         _apiKeySnapshotService = apiKeySnapshotService;
+        _options = options.Value;
     }
 
     public async Task IncreaseQueryAeIndexerCountAsync(string key, string appId, string domain, DateTime dateTime)
@@ -101,6 +104,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     {
         var summary = await _apiKeySummaryIndexRepository.GetAsync(GrainIdHelper.GenerateApiKeySummaryGrainId(organizationId));
         var dto = ObjectMapper.Map<ApiKeySummaryIndex, ApiKeySummaryDto>(summary);
+        dto.MaxApiKeyCount = _options.MaxApiKeyCount;
         
         var monthDate = Clock.Now.ToMonthDate();
         var apiKeyMonthSnapshot = await _apiKeySnapshotService.GetApiKeySummarySnapshotsAsync(organizationId,
