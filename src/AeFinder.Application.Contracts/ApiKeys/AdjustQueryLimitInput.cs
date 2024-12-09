@@ -6,5 +6,4 @@ public class AdjustQueryLimitInput
 {
     public Guid OrganizationId { get; set; }
     public long Count { get; set; }
-    public string OrganizationIdFormat { get; set; }
 }

@@ -212,11 +212,6 @@ public class ApiKeyController : AeFinderController
     public async Task AdjustQueryLimitAsync(AdjustQueryLimitInput input)
     {
         var orgId = input.OrganizationId;
-        if (!input.OrganizationIdFormat.IsNullOrWhiteSpace())
-        {
-            orgId = Guid.Parse(input.OrganizationIdFormat);
-        }
-
         await _apiKeyService.AdjustQueryLimitAsync(orgId, input.Count);
     }
     
