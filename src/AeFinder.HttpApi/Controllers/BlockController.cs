@@ -29,7 +29,6 @@ public class BlockController : AeFinderController
 
     [HttpPost]
     [Route("api/{key}/block/blocks")]
-    [Authorize]
     public virtual async Task<List<BlockDto>> GetBlocksAsync(string key, GetBlocksInput input)
     {
         await _apiKeyService.IncreaseQueryBasicApiCountAsync(key, BasicApi.Block, GetOriginHost(), _clock.Now);
@@ -38,7 +37,6 @@ public class BlockController : AeFinderController
 
     [HttpPost]
     [Route("api/{key}/block/transactions")]
-    [Authorize]
     public virtual async Task<List<TransactionDto>> GetTransactionsAsync(string key, GetTransactionsInput input)
     {
         await _apiKeyService.IncreaseQueryBasicApiCountAsync(key, BasicApi.Transaction, GetOriginHost(), _clock.Now);
@@ -47,7 +45,6 @@ public class BlockController : AeFinderController
 
     [HttpPost]
     [Route("api/{key}/block/logevents")]
-    [Authorize]
     public virtual async Task<List<LogEventDto>> GetLogEventsAsync(string key, GetLogEventsInput input)
     {
         await _apiKeyService.IncreaseQueryBasicApiCountAsync(key, BasicApi.LogEvent, GetOriginHost(), _clock.Now);
@@ -56,7 +53,6 @@ public class BlockController : AeFinderController
     
     [HttpPost]
     [Route("api/app/block/summaries")]
-    [Authorize]
     public virtual Task<List<SummaryDto>> GetSummariesAsync(GetSummariesInput input)
     {
         return _blockAppService.GetSummariesAsync(input);
