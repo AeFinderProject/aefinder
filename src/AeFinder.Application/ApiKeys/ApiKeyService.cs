@@ -143,7 +143,8 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     public async Task<ApiKeyDto> GetApiKeyAsync(Guid organizationId, Guid apiKeyId)
     {
         var queryable = await _apiKeyIndexRepository.GetQueryableAsync();
-        var apiKey = queryable.FirstOrDefault(o => o.OrganizationId == organizationId && o.Id == apiKeyId);
+        var apiKey = queryable.FirstOrDefault(o =>
+            o.OrganizationId == organizationId && o.Id == apiKeyId && o.IsDeleted == false);
 
         var dto = ObjectMapper.Map<ApiKeyIndex, ApiKeyDto>(apiKey);
 
@@ -174,19 +175,19 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     public async Task<PagedResultDto<ApiKeyDto>> GetApiKeysAsync(Guid organizationId, GetApiKeyInput input)
     {
         var queryable = await _apiKeyIndexRepository.GetQueryableAsync();
-        queryable = queryable.Where(o => o.OrganizationId == organizationId);
+        queryable = queryable.Where(o => o.OrganizationId == organizationId && o.IsDeleted == false);
         var count = queryable.Count();
         var indices = queryable.OrderBy(o => o.Name).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
-        
+
         var monthDate = Clock.Now.ToMonthDate();
-        var apiKeyMonthSnapshot = (await _apiKeySnapshotService.GetApiKeySnapshotsAsync(organizationId,null,
+        var apiKeyMonthSnapshot = (await _apiKeySnapshotService.GetApiKeySnapshotsAsync(organizationId, null,
             new GetSnapshotInput
             {
                 Type = SnapshotType.Monthly,
                 BeginTime = monthDate,
                 EndTime = monthDate
             })).Items.ToDictionary(o => o.ApiKeyId, o => o);
-        
+
         var dtos = ObjectMapper.Map<List<ApiKeyIndex>, List<ApiKeyDto>>(indices);
         foreach (var dto in dtos)
         {
@@ -208,6 +209,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
             TotalCount = count
         };
     }
+
     public async Task<RegenerateKeyDto> RegenerateKeyAsync(Guid organizationId, Guid apiKeyId)
     {
         var apikeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKeyId);
