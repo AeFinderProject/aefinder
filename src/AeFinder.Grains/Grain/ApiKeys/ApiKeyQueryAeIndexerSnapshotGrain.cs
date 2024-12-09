@@ -52,6 +52,7 @@ public class ApiKeyQueryAeIndexerSnapshotGrain : AeFinderGrain<ApiKeyQueryAeInde
     {
         var eventData =
             _objectMapper.Map<ApiKeyQueryAeIndexerSnapshotState, ApiKeyQueryAeIndexerSnapshotChangedEto>(State);
+        eventData.Id = this.GetPrimaryKeyString();
         await _distributedEventBus.PublishAsync(eventData);
     }
 }

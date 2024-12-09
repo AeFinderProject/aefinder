@@ -148,6 +148,7 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
     {
         var eventData =
             _objectMapper.Map<ApiKeySummaryState, ApiKeySummaryChangedEto>(State);
+        eventData.Id = this.GetPrimaryKeyString();
         await _distributedEventBus.PublishAsync(eventData);
     }
 }

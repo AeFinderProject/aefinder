@@ -46,6 +46,7 @@ public class ApiKeySnapshotGrain : AeFinderGrain<ApiKeySnapshotState>, IApiKeySn
     {
         var eventData =
             _objectMapper.Map<ApiKeySnapshotState, ApiKeySnapshotChangedEto>(State);
+        eventData.Id = this.GetPrimaryKeyString();
         await _distributedEventBus.PublishAsync(eventData);
     }
 }
