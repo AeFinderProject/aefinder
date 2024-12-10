@@ -69,7 +69,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         }
         var billItem=_objectMapper.Map<CreateSubscriptionBillDto, BillState>(dto);
         billItem.BillingId = GenerateId();
-        billItem.BillingType = BillingType.Lock;
+        billItem.BillingType = BillingType.LockFrom;
         billItem.BillingDate = DateTime.UtcNow;
         var renewalGrain =
             GrainFactory.GetGrain<IRenewalGrain>(GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(dto.OrganizationId)));
@@ -104,24 +104,20 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return _objectMapper.Map<BillState, BillDto>(billItem);
     }
 
-    public async Task<BillDto> CreateChargeBillAsync(string organizationId, string subscriptionId, string description,
-        decimal chargeFee, decimal refundAmount)
+    public async Task<BillDto> CreateChargeBillAsync(CreateChargeBillDto dto)
     {
-        var billItem = new BillState();
+        var billItem=_objectMapper.Map<CreateChargeBillDto, BillState>(dto);
         billItem.BillingId = GenerateId();
-        billItem.OrganizationId = organizationId;
-        billItem.SubscriptionId = subscriptionId;
         var renewalGrain =
-            GrainFactory.GetGrain<IRenewalGrain>(GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));
-        var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(subscriptionId);
+            GrainFactory.GetGrain<IRenewalGrain>(GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(dto.OrganizationId)));
+        var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(dto.SubscriptionId);
         billItem.UserId = renewalInfo.UserId;
         billItem.AppId = renewalInfo.AppId;
         billItem.BillingType = BillingType.Charge;
         billItem.BillingDate = DateTime.UtcNow;
-        billItem.Description = description;
         // if (chargeFee > 0)
         // {
-            billItem.BillingAmount = chargeFee;
+        billItem.BillingAmount = dto.ChargeFee;
         // }
         // else
         // {
@@ -133,7 +129,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
 
         billItem.BillingStartDate = renewalInfo.LastChargeDate;
         billItem.BillingEndDate = DateTime.UtcNow;
-        billItem.RefundAmount = refundAmount;
+        billItem.RefundAmount = dto.RefundAmount;
         billItem.BillingStatus = BillingStatus.PendingPayment;
         await ReadStateAsync();
         State.Add(billItem);
@@ -236,6 +232,19 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
             billState.BillingStatus = BillingStatus.PartiallyPaid;
         }
 
+        var billDto = _objectMapper.Map<BillState, BillDto>(billState);
+        return billDto;
+    }
+
+    public async Task<BillDto> GetPendingChargeBillByOrderIdAsync(string orderId)
+    {
+        var billState = State.FirstOrDefault(b =>
+            b.OrderId == orderId && b.BillingType == BillingType.Charge &&
+            b.BillingStatus == BillingStatus.PendingPayment);
+        if (billState == null)
+        {
+            return null;
+        }
         var billDto = _objectMapper.Map<BillState, BillDto>(billState);
         return billDto;
     }

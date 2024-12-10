@@ -7,7 +7,7 @@ public interface IRenewalGrain: IGrainWithStringKey
     Task<RenewalDto> CreateAsync(CreateRenewalDto dto);
     Task<RenewalDto> GetRenewalSubscriptionInfoByIdAsync(string subscriptionId);
     Task UpdateRenewalDateToNextPeriodAsync(string subscriptionId);
-
+    Task UpdateLastChargeDateAsync(string subscriptionId, DateTime lastChargeDate);
     Task<RenewalDto> GetApiQueryCountRenewalInfoAsync(string organizationId, string userId,
         string productId);
 
@@ -20,4 +20,6 @@ public interface IRenewalGrain: IGrainWithStringKey
     Task<bool> CheckRenewalInfoIsExistAsync(string organizationId, string userId, string productId);
     Task<RenewalDto> GetCurrentPodResourceRenewalInfoAsync(string organizationId, string userId, string appId);
     Task<List<RenewalDto>> GetAllActiveRenewalInfosAsync(string organizationId);
+    Task<RenewalDto> GetRenewalInfoByOrderIdAsync(string orderId);
+    Task<RenewalDto> GetRenewalInfoByProductTypeAsync(ProductType productType, string appId, string userId);
 }

@@ -164,15 +164,23 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         return null;
     }
 
-    public async Task<OrderDto> GetLatestPodResourceOrderAsync(string organizationId, string userId, string appId)
+    public async Task<OrderDto> GetLatestPodResourceOrderAsync(string organizationId, string appId)
     {
         var oldUserOrderState = State.FirstOrDefault(o =>
-            o.OrganizationId == organizationId && o.UserId == userId && o.ProductType == ProductType.FullPodResource &&
+            o.OrganizationId == organizationId && o.ProductType == ProductType.FullPodResource &&
             o.AppId == appId && o.OrderStatus != OrderStatus.Canceled);
         if (oldUserOrderState == null)
         {
             return null;
         }
         return _objectMapper.Map<OrderState, OrderDto>(oldUserOrderState);
+    }
+
+    public async Task UpdateOrderStatusAsync(string orderId, OrderStatus orderStatus)
+    {
+        await ReadStateAsync();
+        var orderState = State.FirstOrDefault(o => o.OrderId == orderId);
+        orderState.OrderStatus = orderStatus;
+        await WriteStateAsync();
     }
 }

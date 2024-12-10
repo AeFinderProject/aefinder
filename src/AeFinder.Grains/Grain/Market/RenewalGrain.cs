@@ -151,8 +151,14 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
                 break;
             }
         }
+        await WriteStateAsync();
+    }
 
-        renewalState.LastChargeDate = DateTime.UtcNow;
+    public async Task UpdateLastChargeDateAsync(string subscriptionId, DateTime lastChargeDate)
+    {
+        await ReadStateAsync();
+        var renewalState = State.FirstOrDefault(o => o.SubscriptionId == subscriptionId);
+        renewalState.LastChargeDate = lastChargeDate;
         await WriteStateAsync();
     }
 
@@ -238,4 +244,40 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         var renewalInfoList = State.Where(r => r.OrganizationId == organizationId && r.IsActive == true).ToList();
         return _objectMapper.Map<List<RenewalState>, List<RenewalDto>>(renewalInfoList);
     }
+
+    public async Task<RenewalDto> GetRenewalInfoByOrderIdAsync(string orderId)
+    {
+        var renewalState = State.FirstOrDefault(o => o.OrderId == orderId && o.IsActive == true);
+        if (renewalState == null)
+        {
+            return null;
+        }
+        var renewalDto = _objectMapper.Map<RenewalState, RenewalDto>(renewalState);
+        return renewalDto;
+    }
+
+    public async Task<RenewalDto> GetRenewalInfoByProductTypeAsync(ProductType productType, string appId, string userId)
+    {
+        RenewalState renewalState = null;
+        if (productType == ProductType.FullPodResource)
+        {
+            renewalState =
+                State.FirstOrDefault(o => o.AppId == appId && o.ProductType == productType && o.IsActive == true);
+        }
+
+        if (productType == ProductType.ApiQueryCount)
+        {
+            renewalState =
+                State.FirstOrDefault(o => o.UserId == userId && o.ProductType == productType && o.IsActive == true);
+        }
+        
+        if (renewalState == null)
+        {
+            return null;
+        }
+
+        var renewalDto = _objectMapper.Map<RenewalState, RenewalDto>(renewalState);
+        return renewalDto;
+    }
+    
 }

@@ -12,6 +12,9 @@ using AeFinder.Options;
 using AeFinder.User;
 using AElf.EntityMapping;
 using AElf.EntityMapping.Elasticsearch;
+using GraphQL.Client.Abstractions;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.Newtonsoft;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Volo.Abp.Account;
@@ -64,5 +67,8 @@ public class AeFinderApplicationModule : AbpModule
             options.Kind = DateTimeKind.Utc;
         });
         Configure<ContractOptions>(configuration.GetSection("Contract"));
+        context.Services.AddSingleton(new GraphQLHttpClient(configuration["GraphQL:Configuration"],
+            new NewtonsoftJsonSerializer()));
+        context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
     }
 }

@@ -5,12 +5,15 @@ using System.Threading.Tasks;
 using AeFinder.App.Deploy;
 using AeFinder.Apps.Dto;
 using AeFinder.BlockScan;
+using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Market;
 using AeFinder.Metrics;
 using AeFinder.User;
+using AeFinder.User.Provider;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Orleans;
@@ -29,11 +32,14 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
     private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
     private readonly IUserAppService _userAppService;
+    private readonly IContractProvider _contractProvider;
+    private readonly IOrganizationInformationProvider _organizationInformationProvider;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
-        IUserAppService userAppService,
-        IAppOperationSnapshotProvider appOperationSnapshotProvider,IAppResourceLimitProvider appResourceLimitProvider)
+        IUserAppService userAppService, IContractProvider contractProvider,
+        IOrganizationInformationProvider organizationInformationProvider,
+        IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
         _blockScanAppService = blockScanAppService;
@@ -41,6 +47,8 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _appResourceLimitProvider = appResourceLimitProvider;
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _userAppService = userAppService;
+        _contractProvider = contractProvider;
+        _organizationInformationProvider = organizationInformationProvider;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
@@ -136,7 +144,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         var oldOrderInfo =
-            await ordersGrain.GetLatestPodResourceOrderAsync(organizationId, CurrentUser.Id.ToString(), appId);
+            await ordersGrain.GetLatestPodResourceOrderAsync(organizationId, appId);
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
         var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
@@ -147,10 +155,20 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var lockedAmount = latestLockedBill.BillingAmount;
         var chargeFee = await billsGrain.CalculateMidWayChargeAmount(renewalInfo, lockedAmount, podResourceStartUseDay);
         var refundAmount = lockedAmount - chargeFee;
-        var oldChargeBill = await billsGrain.CreateChargeBillAsync(organizationId, subscriptionId,
-            "User creates a new order and processes billing settlement for the existing order.", chargeFee,
-            refundAmount);
-        //TODO: send charge transaction to contract
+        var oldChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
+            {
+                OrganizationId = organizationId,
+                OrderId = oldOrderInfo.OrderId,
+                SubscriptionId = subscriptionId,
+                ChargeFee = chargeFee,
+                Description = "User creates a new order and processes billing settlement for the existing order.",
+                RefundAmount = refundAmount
+            });
+        //Send charge transaction to contract
+        var organizationWalletAddress =
+            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId);
+        await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, refundAmount,
+            oldChargeBill.BillingId);
         
         //destroy subscription pods
         var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));

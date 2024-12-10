@@ -56,7 +56,7 @@ public class OrderService: ApplicationService, IOrderService
         {
             //Check if there is an existing order for a product of the same type
             oldOrderInfo =
-                await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, dto.UserId, dto.AppId);
+                await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, dto.AppId);
             podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(dto.AppId);
         }
         
@@ -86,8 +86,7 @@ public class OrderService: ApplicationService, IOrderService
             var chargeFee = await billsGrain.CalculateMidWayChargeAmount(renewalInfo, lockedAmount, podResourceStartUseDay);
             decimal refundAmount = 0;
             
-            //Create new order
-            var newOrder = await ordersGrain.CreateOrderAsync(dto);
+            
             var remainingLockedAmount = lockedAmount - chargeFee;
             decimal monthlyFee = dto.ProductNumber * productInfo.MonthlyUnitPrice;
             var firstMonthFee = await billsGrain.CalculateFirstMonthLockAmount(monthlyFee);
@@ -95,6 +94,12 @@ public class OrderService: ApplicationService, IOrderService
             {
                 //Calculate new order need lock fee
                 var needLockFee = firstMonthFee - remainingLockedAmount;
+                //TODO Check user organization balance
+                
+                //Create new order
+                var newOrder = await ordersGrain.CreateOrderAsync(dto);
+                
+                //Create lock bill
                 var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
                 {
                     OrganizationId = dto.OrganizationId,
@@ -122,26 +127,31 @@ public class OrderService: ApplicationService, IOrderService
                 // });
                 // billList.Add(oldChargeBill);
             }
-            
-            var oldChargeBill = await billsGrain.CreateChargeBillAsync(dto.OrganizationId, subscriptionId,
-                "User creates a new order and processes billing settlement for the existing order.", chargeFee,
-                refundAmount);
-            //TODO: send charge transaction to contract
+
+            var oldChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
+            {
+                OrganizationId = dto.OrganizationId,
+                OrderId = oldOrderInfo.OrderId,
+                SubscriptionId = subscriptionId,
+                Description = "User creates a new order and processes billing settlement for the existing order.",
+                ChargeFee = chargeFee,
+                RefundAmount = refundAmount
+            });
             
         }
         else
         {
-            //Create new order
-            var newOrder = await ordersGrain.CreateOrderAsync(dto);
             decimal monthlyFee = dto.ProductNumber * productInfo.MonthlyUnitPrice;
             if (monthlyFee == 0)
             {
+                //Create new order
+                var newFreeOrder = await ordersGrain.CreateOrderAsync(dto);
                 await renewalGrain.CreateAsync(new CreateRenewalDto()
                 {
                     OrganizationId = dto.OrganizationId,
                     UserId = dto.UserId,
                     AppId = dto.AppId,
-                    OrderId = newOrder.OrderId,
+                    OrderId = newFreeOrder.OrderId,
                     ProductId = dto.ProductId,
                     ProductNumber = 1,
                     RenewalPeriod = RenewalPeriod.OneMonth
@@ -149,6 +159,10 @@ public class OrderService: ApplicationService, IOrderService
                 return billList;
             }
             var firstMonthFee = await billsGrain.CalculateFirstMonthLockAmount(monthlyFee);
+            //TODO Check user organization balance
+            
+            //Create new order
+            var newOrder = await ordersGrain.CreateOrderAsync(dto);
             var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
             {
                 OrganizationId = dto.OrganizationId,

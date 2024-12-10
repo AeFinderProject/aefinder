@@ -8,5 +8,6 @@ public interface IOrdersGrain: IGrainWithStringKey
     Task<OrderDto> GetOrderByIdAsync(string id);
     Task CancelOrderByIdAsync(string id);
     Task<OrderDto> GetLatestApiQueryCountOrderAsync(string organizationId, string userId);
-    Task<OrderDto> GetLatestPodResourceOrderAsync(string organizationId, string userId, string appId);
+    Task<OrderDto> GetLatestPodResourceOrderAsync(string organizationId, string appId);
+    Task UpdateOrderStatusAsync(string orderId, OrderStatus orderStatus);
 }

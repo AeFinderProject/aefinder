@@ -4,6 +4,7 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Market;
 using AeFinder.User;
+using AeFinder.User.Provider;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,11 +22,12 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     private readonly IClusterClient _clusterClient;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IContractProvider _contractProvider;
+    private readonly IOrganizationInformationProvider _organizationInformationProvider;
     
     public RenewalBillCreateWorker(AbpAsyncTimer timer, ILogger<AppInfoSyncWorker> logger,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
         IOrganizationAppService organizationAppService,IClusterClient clusterClient,
-        IContractProvider contractProvider,
+        IContractProvider contractProvider,IOrganizationInformationProvider organizationInformationProvider,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -33,6 +35,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         _scheduledTaskOptions = scheduledTaskOptions.Value;
         _organizationAppService = organizationAppService;
         _contractProvider = contractProvider;
+        _organizationInformationProvider = organizationInformationProvider;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = _scheduledTaskOptions.AppInfoSyncTaskPeriodMilliSeconds;
     }
@@ -70,13 +73,22 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 //Charge for previous billing cycle
                 var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(renewalDto.OrderId);
                 var chargeFee = latestLockedBill.BillingAmount;
-                var chargeBill = await billsGrain.CreateChargeBillAsync(organizationId, renewalDto.SubscriptionId,
-                    "Auto-renewal charge for the existing order.", chargeFee,
-                    0);
-                //TODO: send charge transaction to contract
+                var chargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
+                    {
+                        OrganizationId = organizationId,
+                        OrderId = renewalDto.OrderId,
+                        SubscriptionId = renewalDto.SubscriptionId,
+                        ChargeFee = chargeFee,
+                        Description = "Auto-renewal charge for the existing order.",
+                        RefundAmount = 0
+                    });
+                //Send charge transaction to contract
+                var organizationWalletAddress =
+                    await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId);
+                await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, 0,
+                    chargeBill.BillingId);
                 
-                
-                //TODO: Check user balance
+                //TODO: Check user organization balance
                 
                 
                 //TODO: If Balance not enough, freeze the AeIndexer, cancel the order & subscription
@@ -93,9 +105,9 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     OrderId = renewalDto.OrderId,
                     Description = $"Auto-renewal lock for the existing order."
                 });
-                //TODO: send lock transaction to contract
-                
-                
+                //Send lockFrom transaction to contract
+                await _contractProvider.BillingLockFromAsync(organizationWalletAddress, newLockBill.BillingAmount,
+                    newLockBill.BillingId);
             }
         }
     }
