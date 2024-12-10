@@ -550,6 +550,17 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         apiKeyDtos = await _apiKeyService.GetApiKeysAsync(orgId, new GetApiKeyInput());
         apiKeyDtos.Items[0].PeriodQuery.ShouldBe(25000);
         apiKeyDtos.Items[0].IsActive.ShouldBe(false);
+
+        apiKeyChangedEto.IsEnableSpendingLimit = false;
+        await _apiKeyService.AddOrUpdateApiKeyIndexAsync(apiKeyChangedEto);
+        
+        apiKeyDto = await _apiKeyService.GetApiKeyAsync(orgId, id);
+        apiKeyDto.PeriodQuery.ShouldBe(25000);
+        apiKeyDto.IsActive.ShouldBe(true);
+        
+        apiKeyDtos = await _apiKeyService.GetApiKeysAsync(orgId, new GetApiKeyInput());
+        apiKeyDtos.Items[0].PeriodQuery.ShouldBe(25000);
+        apiKeyDtos.Items[0].IsActive.ShouldBe(true);
     }
 
     [Fact]
