@@ -143,6 +143,8 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();
         CreateMap<IdentityUserExtension, UserExtensionDto>();
         CreateMap<IdentityUser, IdentityUserExtensionDto>();
+
+        CreateMap<AppInfoIndex, AppInfoImmutable>();
         
         // Api Key
         CreateMap<ApiKeyState, ApiKeyInfo>();

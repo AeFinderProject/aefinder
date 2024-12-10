@@ -200,4 +200,51 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         limit.Items[0].DeployLimit.MaxAppAttachmentSize.ShouldBe(index.DeployLimit.MaxAppAttachmentSize);
         limit.Items[0].ResourceLimit.EnableMultipleInstances.ShouldBeTrue();
     }
+    
+    [Fact]
+    public async Task App_Search_Test()
+    {
+        var orgId = Guid.NewGuid();
+        await _appIndexRepository.AddAsync(new AppInfoIndex
+        {
+            AppId = "Test App 1".Trim().ToLower().Replace(" ", "_"),
+            AppName = "App1",
+            OrganizationId = orgId.ToString("N"),
+            OrganizationName = "OrganizationName",
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now,
+            Id = "AppId1"
+        });
+        
+        await _appIndexRepository.AddAsync(new AppInfoIndex
+        {
+            AppId = "Test Ap".Trim().ToLower().Replace(" ", "_"),
+            AppName = "App1",
+            OrganizationId = orgId.ToString("N"),
+            OrganizationName = "OrganizationName",
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now,
+            Id = "AppId2"
+        });
+        
+        await _appIndexRepository.AddAsync(new AppInfoIndex
+        {
+            AppId = "Search App 1".Trim().ToLower().Replace(" ", "_"),
+            AppName = "App1",
+            OrganizationId = orgId.ToString("N"),
+            OrganizationName = "OrganizationName",
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now,
+            Id = "AppId3"
+        });
+        
+        var apps = await _appService.SearchAsync(orgId, "Test");
+        apps.Items.Count.ShouldBe(2);
+        
+        apps = await _appService.SearchAsync(orgId, "test app");
+        apps.Items.Count.ShouldBe(1);
+        
+        apps = await _appService.SearchAsync(orgId, "ap");
+        apps.Items.Count.ShouldBe(3);
+    }
 }
