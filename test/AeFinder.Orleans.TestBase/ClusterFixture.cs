@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;
 using Moq;
+using Orleans.Serialization;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
@@ -75,6 +76,9 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     var mockDistributedEventBus = new Mock<IDistributedEventBus>();
                     // mock IDistributedEventBus
                     services.AddSingleton<IDistributedEventBus>(mockDistributedEventBus.Object);
+        
+                    services.Configure<ExceptionSerializationOptions>(options =>
+                        options.SupportedNamespacePrefixes.Add("Volo.Abp"));
                 })
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")

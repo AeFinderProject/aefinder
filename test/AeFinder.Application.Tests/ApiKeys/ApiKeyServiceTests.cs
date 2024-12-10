@@ -10,6 +10,7 @@ using Volo.Abp;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.ObjectMapping;
 using Volo.Abp.Timing;
+using Volo.Abp.Validation;
 using Xunit;
 
 namespace AeFinder.ApiKeys;
@@ -76,6 +77,46 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         var apiKeySummary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
         apiKeySummary.OrganizationId.ShouldBe(orgId);
         apiKeySummary.ApiKeyCount.ShouldBe(1);
+        
+        createInput = new CreateApiKeyInput
+        {
+            Name = "ApiKey",
+            IsEnableSpendingLimit = true,
+            SpendingLimitUsdt = -1
+        };
+        await Assert.ThrowsAsync<AbpValidationException>(async () =>
+            await _apiKeyService.CreateApiKeyAsync(orgId, createInput));
+        
+        createInput = new CreateApiKeyInput
+        {
+            Name = "",
+        };
+        await Assert.ThrowsAsync<AbpValidationException>(async () =>
+            await _apiKeyService.CreateApiKeyAsync(orgId, createInput));
+        
+        createInput = new CreateApiKeyInput
+        {
+            Name = "1234567890123456789012345678901",
+        };
+        await Assert.ThrowsAsync<AbpValidationException>(async () =>
+            await _apiKeyService.CreateApiKeyAsync(orgId, createInput));
+
+        for (int i = 0; i < 9; i++)
+        {
+            createInput = new CreateApiKeyInput
+            {
+                Name = "ApiKey"+i
+            };
+
+            await _apiKeyService.CreateApiKeyAsync(orgId, createInput); 
+        }
+        
+        createInput = new CreateApiKeyInput
+        {
+            Name = "ApiKey10"
+        };
+        await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _apiKeyService.CreateApiKeyAsync(orgId, createInput));
     }
 
     [Fact]
@@ -124,6 +165,31 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         apiKeyInfo.Name.ShouldBe("NewApiKey");
         apiKeyInfo.IsEnableSpendingLimit.ShouldBe(updateInput.IsEnableSpendingLimit.Value);
         apiKeyInfo.SpendingLimitUsdt.ShouldBe(updateInput.SpendingLimitUsdt.Value);
+        
+        updateInput = new UpdateApiKeyInput
+        {
+            Name = "NewApiKey",
+            SpendingLimitUsdt = -1
+        };
+
+        await Assert.ThrowsAsync<AbpValidationException>(async () =>
+            await _apiKeyService.UpdateApiKeyAsync(orgId, apiKey.Id, updateInput));
+        
+        updateInput = new UpdateApiKeyInput
+        {
+            Name = ""
+        };
+
+        await Assert.ThrowsAsync<AbpValidationException>(async () =>
+            await _apiKeyService.UpdateApiKeyAsync(orgId, apiKey.Id, updateInput));
+        
+        updateInput = new UpdateApiKeyInput
+        {
+            Name = "1234567890123456789012345678901"
+        };
+
+        await Assert.ThrowsAsync<AbpValidationException>(async () =>
+            await _apiKeyService.UpdateApiKeyAsync(orgId, apiKey.Id, updateInput));
     }
 
     [Fact]
@@ -1126,5 +1192,21 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
             await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "aaa.com", time));
         exception.Message.ShouldBe("Api key unavailable.");
+        
+        var createInput2 = new CreateApiKeyInput
+        {
+            Name = "ApiKey2",
+            IsEnableSpendingLimit = true,
+            SpendingLimitUsdt = AeFinderApplicationConsts.ApiKeyQueryPrice * 3
+        };
+        var apiKey2 = await _apiKeyService.CreateApiKeyAsync(orgId, createInput2);
+        apiKeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKey.Id);
+        apiKeyInfo = await apiKeyGrain.GetAsync();
+        await _apiKeyService.UpdateApiKeyInfoCacheAsync(apiKeyInfo);
+
+        await _apiKeyService.UpdateApiKeySummaryUsedCacheAsync(orgId, time, 10);
+        exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "aaa.com", time));
+        exception.Message.ShouldBe("Api key query times insufficient.");
     }
 }
