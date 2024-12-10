@@ -15,4 +15,6 @@ public interface IBillsGrain: IGrainWithStringKey
     Task<decimal> CalculateFirstMonthLockAmount(decimal monthlyFee);
     Task<decimal> CalculateMidWayChargeAmount(RenewalDto renewalInfo, decimal monthlyFee,
         DateTime? podResourceStartUseDay);
+    Task<BillDto> UpdateBillingTransactionInfoAsync(string billingId, string transactionId,
+        decimal transactionAmount, string walletAddress);
 }

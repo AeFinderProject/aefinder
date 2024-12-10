@@ -219,4 +219,24 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         var billDto = _objectMapper.Map<BillState, BillDto>(billState);
         return billDto;
     }
+
+    public async Task<BillDto> UpdateBillingTransactionInfoAsync(string billingId, string transactionId,
+        decimal transactionAmount, string walletAddress)
+    {
+        var billState = State.FirstOrDefault(o => o.BillingId == billingId);
+        billState.TransactionId = transactionId;
+        billState.TransactionAmount = transactionAmount;
+        billState.WalletAddress = walletAddress;
+        if (transactionAmount == billState.BillingAmount)
+        {
+            billState.BillingStatus = BillingStatus.Paid;
+        }
+        else
+        {
+            billState.BillingStatus = BillingStatus.PartiallyPaid;
+        }
+
+        var billDto = _objectMapper.Map<BillState, BillDto>(billState);
+        return billDto;
+    }
 }

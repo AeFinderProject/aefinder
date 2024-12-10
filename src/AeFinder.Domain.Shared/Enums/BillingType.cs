@@ -4,5 +4,6 @@ public enum BillingType
 { 
     Lock,
     Charge,
-    Refund
+    Refund,
+    LockFrom
 }
