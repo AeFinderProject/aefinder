@@ -128,7 +128,7 @@ public class ApiKeyController : AeFinderController
     [HttpDelete]
     [Route("{id}/aeindexer")]
     [Authorize]
-    public async Task DeleteAuthorisedAeIndexersAsync(Guid id, SetAuthorisedAeIndexerInput input)
+    public async Task DeleteAuthorisedAeIndexersAsync(Guid id, [FromBody]SetAuthorisedAeIndexerInput input)
     {
         var orgId = await GetOrganizationIdAsync();
         await _apiKeyService.DeleteAuthorisedAeIndexersAsync(orgId, id, input);
@@ -146,7 +146,7 @@ public class ApiKeyController : AeFinderController
     [HttpDelete]
     [Route("{id}/domain")]
     [Authorize]
-    public async Task DeleteAuthorisedDomainsAsync(Guid id, SetAuthorisedDomainInput input)
+    public async Task DeleteAuthorisedDomainsAsync(Guid id, [FromBody]SetAuthorisedDomainInput input)
     {
         var orgId = await GetOrganizationIdAsync();
         await _apiKeyService.DeleteAuthorisedDomainsAsync(orgId, id, input);

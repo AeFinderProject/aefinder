@@ -83,11 +83,11 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
         {
             var appGrain = GrainFactory.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
             var appName = (await appGrain.GetAsync()).AppName;
-            State.AuthorisedAeIndexers.Add(appId,new AppInfoImmutable
+            State.AuthorisedAeIndexers[appId] = new AppInfoImmutable
             {
                 AppId = appId,
                 AppName = appName
-            });
+            };
         }
         await WriteStateAsync();
     }
