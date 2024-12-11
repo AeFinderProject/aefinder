@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using AeFinder.ApiTraffic;
+using AeFinder.ApiKeys;
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.Kubernetes;
@@ -323,7 +323,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         //Sync app limit info into es
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppExtensionInfoSyncWorker>());
         
-        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<ApiTrafficWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<ApiKeyTrafficWorker>());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)

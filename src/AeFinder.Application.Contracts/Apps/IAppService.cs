@@ -14,6 +14,7 @@ public interface IAppService
     Task<PagedResultDto<AppDto>> GetListAsync();
     Task<AppIndexDto> GetIndexAsync(string appId);
     Task<PagedResultDto<AppIndexDto>> GetIndexListAsync(GetAppInput input);
+    Task<ListResultDto<AppInfoImmutable>> SearchAsync(Guid organizationId, string keyword);
     Task<AppSyncStateDto> GetSyncStateAsync(string appId);
     Task SetMaxAppCountAsync(Guid organizationId, int appCount);
     Task<int> GetMaxAppCountAsync(Guid organizationId);

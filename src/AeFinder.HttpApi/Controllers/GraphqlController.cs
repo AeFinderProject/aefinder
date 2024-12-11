@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using AeFinder.ApiTraffic;
+using AeFinder.ApiKeys;
 using AeFinder.GraphQL;
 using AeFinder.GraphQL.Dto;
 using AeFinder.Kubernetes;
@@ -11,23 +11,26 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.Timing;
 
 namespace AeFinder.Controllers;
 
 [RemoteService]
 [ControllerName("Graphql")]
 [AggregateExecutionTime]
-public class GraphqlController : AbpController
+public class GraphqlController : AeFinderController
 {
     private readonly IGraphQLAppService _graphQLAppService;
     private readonly KubernetesOptions _kubernetesOption;
-    private readonly IApiTrafficService _apiTrafficService;
+    private readonly IApiKeyService _apiKeyService;
+    private readonly IClock _clock;
 
     public GraphqlController(IGraphQLAppService graphQLAppService,
-        IOptionsSnapshot<KubernetesOptions> kubernetesOption, IApiTrafficService apiTrafficService)
+        IOptionsSnapshot<KubernetesOptions> kubernetesOption, IApiKeyService apiKeyService, IClock clock)
     {
         _graphQLAppService = graphQLAppService;
-        _apiTrafficService = apiTrafficService;
+        _apiKeyService = apiKeyService;
+        _clock = clock;
         _kubernetesOption = kubernetesOption.Value;
     }
     
@@ -36,13 +39,13 @@ public class GraphqlController : AbpController
     public virtual async Task<IActionResult> GraphqlForward([FromBody] GraphQLQueryInput input, string key, string appId,
         string version = null)
     {
-        await _apiTrafficService.IncreaseRequestCountAsync(key);
-        
         var response =
             await _graphQLAppService.RequestForwardAsync(appId, version, _kubernetesOption.OriginName, input);
 
         if (response.IsSuccessStatusCode)
         {
+            await _apiKeyService.IncreaseQueryAeIndexerCountAsync(key, appId, GetOriginHost(), _clock.Now);
+            
             var responseContent = await response.Content.ReadAsStringAsync();
             return Content(responseContent, "application/json");
         }
