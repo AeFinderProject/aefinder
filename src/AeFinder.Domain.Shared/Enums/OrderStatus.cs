@@ -2,8 +2,8 @@ namespace AeFinder;
 
 public enum OrderStatus
 {
-    PendingPayment,
-    Paid,
-    PartiallyPaid,
-    Canceled
+    PendingPayment = 0,
+    Paid = 1,
+    PartiallyPaid = 2,
+    Canceled = 3
 }

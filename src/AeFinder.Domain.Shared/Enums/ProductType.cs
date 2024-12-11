@@ -2,6 +2,6 @@ namespace AeFinder;
 
 public enum ProductType
 {
-    ApiQueryCount,
-    FullPodResource
+    ApiQueryCount = 0,
+    FullPodResource = 1
 }

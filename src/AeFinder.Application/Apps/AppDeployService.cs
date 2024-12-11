@@ -12,6 +12,7 @@ using AeFinder.Grains.Grain.Market;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Market;
 using AeFinder.Metrics;
+using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
 using Microsoft.Extensions.Logging;
@@ -34,11 +35,14 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IUserAppService _userAppService;
     private readonly IContractProvider _contractProvider;
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
+    private readonly AppDeployOptions _appDeployOptions;
+    private readonly IUserInformationProvider _userInformationProvider;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
         IUserAppService userAppService, IContractProvider contractProvider,
-        IOrganizationInformationProvider organizationInformationProvider,
+        IUserInformationProvider userInformationProvider,
+        IOrganizationInformationProvider organizationInformationProvider,AppDeployOptions appDeployOptions,
         IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
@@ -48,7 +52,9 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _userAppService = userAppService;
         _contractProvider = contractProvider;
+        _appDeployOptions = appDeployOptions;
         _organizationInformationProvider = organizationInformationProvider;
+        _userInformationProvider = userInformationProvider;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
@@ -59,6 +65,29 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(appId, version, imageName, chainIds);
         await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Start);
         return graphqlUrl;
+    }
+
+    public async Task ReDeployAppAsync(string appId)
+    {
+        await CheckAppStatusAsync(appId);
+        
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        if (allSubscriptions.CurrentVersion != null && !allSubscriptions.CurrentVersion.Version.IsNullOrEmpty())
+        {
+            var currentVersion = allSubscriptions.CurrentVersion.Version;
+            var chainIds = await GetDeployChainIdAsync(appId, currentVersion);
+            await _appDeployManager.CreateNewAppAsync(appId, currentVersion, _appDeployOptions.AppImageName, chainIds);
+            await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, currentVersion, AppPodOperationType.Start);
+        }
+        if (allSubscriptions.PendingVersion != null && !allSubscriptions.PendingVersion.Version.IsNullOrEmpty())
+        {
+            var pendingVersion = allSubscriptions.PendingVersion.Version;
+            var chainIds = await GetDeployChainIdAsync(appId, pendingVersion);
+            await _appDeployManager.CreateNewAppAsync(appId, pendingVersion, _appDeployOptions.AppImageName, chainIds);
+            await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, pendingVersion, AppPodOperationType.Start);
+        }
+        
     }
 
     public async Task DestroyAppAsync(string appId, string version)
@@ -155,18 +184,27 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var lockedAmount = latestLockedBill.BillingAmount;
         var chargeFee = await billsGrain.CalculateMidWayChargeAmount(renewalInfo, lockedAmount, podResourceStartUseDay);
         var refundAmount = lockedAmount - chargeFee;
-        var oldChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
-            {
-                OrganizationId = organizationId,
-                OrderId = oldOrderInfo.OrderId,
-                SubscriptionId = subscriptionId,
-                ChargeFee = chargeFee,
-                Description = "User creates a new order and processes billing settlement for the existing order.",
-                RefundAmount = refundAmount
-            });
+        
         //Send charge transaction to contract
+        var userExtensionDto =
+            await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(oldOrderInfo.UserId));
         var organizationWalletAddress =
-            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId);
+            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
+                userExtensionDto.WalletAddress);
+        if (string.IsNullOrEmpty(organizationWalletAddress))
+        {
+            Logger.LogError($"The organization wallet address has not yet been linked to user {oldOrderInfo.UserId}");
+            throw new UserFriendlyException("The organization wallet address has not yet been linked");
+        }
+        var oldChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
+        {
+            OrganizationId = organizationId,
+            OrderId = oldOrderInfo.OrderId,
+            SubscriptionId = subscriptionId,
+            ChargeFee = chargeFee,
+            Description = "User creates a new order and processes billing settlement for the existing order.",
+            RefundAmount = refundAmount
+        });
         await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, refundAmount,
             oldChargeBill.BillingId);
         
@@ -234,4 +272,5 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             throw new UserFriendlyException("The AeIndexer renewal has expired and it has been frozen. Please deposit your account first.");
         }
     }
+
 }

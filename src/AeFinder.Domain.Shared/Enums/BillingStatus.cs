@@ -2,7 +2,7 @@ namespace AeFinder;
 
 public enum BillingStatus
 {
-    PendingPayment,
-    Paid,
-    PartiallyPaid
+    PendingPayment = 0,
+    Paid = 1,
+    PartiallyPaid = 2
 }

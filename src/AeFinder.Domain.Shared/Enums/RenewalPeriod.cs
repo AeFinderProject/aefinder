@@ -2,7 +2,7 @@ namespace AeFinder;
 
 public enum RenewalPeriod
 {
-    OneMonth,
-    ThreeMonth,
-    SixMonth
+    OneMonth = 0,
+    ThreeMonth = 1,
+    SixMonth = 2
 }

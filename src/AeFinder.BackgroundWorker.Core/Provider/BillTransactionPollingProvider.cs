@@ -1,4 +1,5 @@
 using AeFinder.Apps;
+using AeFinder.Apps.Dto;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Common;
 using AeFinder.Grains;
@@ -25,10 +26,16 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
     private readonly IClusterClient _clusterClient;
     private readonly IContractProvider _contractProvider;
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
+    private readonly IAppService _appService;
+    private readonly IProductService _productService;
+    private readonly IAppDeployService _appDeployService;
+    private readonly IUserInformationProvider _userInformationProvider;
 
     public BillTransactionPollingProvider(ILogger<BillTransactionPollingProvider> logger,
         IAeFinderIndexerProvider indexerProvider, IClusterClient clusterClient,
         IContractProvider contractProvider, IOrganizationInformationProvider organizationInformationProvider,
+        IAppService appService, IProductService productService, IAppDeployService appDeployService,
+        IUserInformationProvider userInformationProvider,
         IOptionsMonitor<TransactionPollingOptions> transactionPollingOptions)
     {
         _logger = logger;
@@ -36,6 +43,10 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
         _indexerProvider = indexerProvider;
         _contractProvider = contractProvider;
         _organizationInformationProvider = organizationInformationProvider;
+        _userInformationProvider = userInformationProvider;
+        _appService = appService;
+        _productService = productService;
+        _appDeployService = appDeployService;
         _transactionPollingOptions = transactionPollingOptions;
     }
 
@@ -117,14 +128,28 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                 if (oldOrderChargeBill != null)
                 {
                     //Send charge transaction to contract
+                    var userExtensionDto =
+                        await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(oldRenewalInfo.UserId));
                     var organizationWalletAddress =
-                        await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId);
+                        await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
+                            userExtensionDto.WalletAddress);
                     var sendTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress,
                         oldOrderChargeBill.BillingAmount, oldOrderChargeBill.RefundAmount,
                         oldOrderChargeBill.BillingId);
                 }
                 
-                //TODO ReDeploy Indexer?
+                //Update App pod resource config
+                if (orderDto.ProductType == ProductType.FullPodResource)
+                {
+                    var productsGrain = _clusterClient.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
+                    var productInfo = await productsGrain.GetProductInfoByIdAsync(orderDto.ProductId);
+                    var resourceDto = _productService.ConvertToPodResourceLevelDto(productInfo);
+                    await _appService.SetAppResourceLimitAsync(orderDto.AppId, new SetAppResourceLimitDto()
+                    {
+                        AppFullPodLimitCpuCore = resourceDto.Capacity.Cpu,
+                        AppFullPodLimitMemory = resourceDto.Capacity.Memory
+                    });
+                }
                 
                 break;
             }
@@ -154,8 +179,8 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                     if (app.Status == AppStatus.Frozen)
                     {
                         await appGrain.UnFreezeAppAsync();
-                        //TODO ReDeploy Indexer?
-
+                        //ReDeploy Indexer
+                        await _appDeployService.ReDeployAppAsync(renewalInfo.AppId);
                     }
                 }
                 break;
