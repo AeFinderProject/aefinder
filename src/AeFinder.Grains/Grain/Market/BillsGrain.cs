@@ -148,20 +148,6 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         }
         return _objectMapper.Map<BillState, BillDto>(latestLockedBill);
     }
-
-    public async Task<BillDto> CreateRefundBillAsync(CreateRefundBillDto dto)
-    {
-        await ReadStateAsync();
-        var billItem=_objectMapper.Map<CreateRefundBillDto, BillState>(dto);
-        billItem.BillingId = GenerateId();
-        billItem.BillingType = BillingType.Refund;
-        billItem.BillingDate = DateTime.UtcNow;
-        billItem.BillingAmount = dto.RefundFee;
-        billItem.BillingStatus = BillingStatus.PendingPayment;
-        State.Add(billItem);
-        await WriteStateAsync();
-        return _objectMapper.Map<BillState, BillDto>(billItem);
-    }
     
     private string GenerateId()
     {

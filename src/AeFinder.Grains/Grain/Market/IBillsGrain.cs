@@ -10,7 +10,6 @@ public interface IBillsGrain: IGrainWithStringKey
     Task<BillDto> GetBillByIdAsync(string billingId);
     Task<BillDto> CreateChargeBillAsync(CreateChargeBillDto dto);
     Task<BillDto> GetLatestLockedBillAsync(string subscriptionId);
-    Task<BillDto> CreateRefundBillAsync(CreateRefundBillDto dto);
     Task<decimal> CalculateFirstMonthLockAmount(decimal monthlyFee);
     Task<decimal> CalculateMidWayChargeAmount(RenewalDto renewalInfo, decimal monthlyFee,
         DateTime? podResourceStartUseDay);

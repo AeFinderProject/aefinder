@@ -49,13 +49,15 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         _contractOptions = contractOptions.Value;
         _appDeployService = appDeployService;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
-        Timer.Period = _scheduledTaskOptions.AppInfoSyncTaskPeriodMilliSeconds;
+        Timer.Period = CalculateNextExecutionDelay();
     }
     
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
         await ProcessRenewalAsync();
+        
+        Timer.Period = CalculateNextExecutionDelay();
     }
 
     private async Task ProcessRenewalAsync()
@@ -148,5 +150,14 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     private string GetOrganizationGrainId(Guid orgId)
     {
         return GrainIdHelper.GenerateOrganizationAppGrainId(orgId.ToString("N"));
+    }
+
+    private int CalculateNextExecutionDelay()
+    {
+        var now = DateTime.UtcNow;
+        var firstDayNextMonth =
+            new DateTime(now.Year, now.Month, _scheduledTaskOptions.RenewalBillDay, 2, 0, 0, DateTimeKind.Utc)
+                .AddMonths(1);
+        return (int)(firstDayNextMonth - now).TotalMilliseconds;
     }
 }
