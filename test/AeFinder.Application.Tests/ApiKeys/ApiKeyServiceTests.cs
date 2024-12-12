@@ -873,6 +873,18 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
                 GrainIdHelper.GenerateApiKeyQueryAeIndexerDailySnapshotGrainId(apiKey.Id, "app1", time));
         query = await apiQueryAeIndexerDailyMonthlyGrain.GetQueryCountAsync();
         query.ShouldBe(1);
+        
+        await _apiKeyService.IncreaseQueryAeIndexerCountAsync("App", "app1", "aaa.com", time);
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(11);
+        
+        await _apiKeyService.IncreaseQueryAeIndexerCountAsync("app", "app1", "aaa.com", time);
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(11);
     }
     
     [Fact]
@@ -1140,6 +1152,18 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
                 GrainIdHelper.GenerateApiKeyQueryBasicApiDailySnapshotGrainId(apiKey.Id, BasicApi.LogEvent, time));
         query = await apiQueryBasicApiDailyMonthlyGrain.GetQueryCountAsync();
         query.ShouldBe(1);
+        
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync("App", BasicApi.LogEvent, "aaa.com", time);
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(11);
+        
+        await _apiKeyService.IncreaseQueryBasicApiCountAsync("app", BasicApi.LogEvent, "aaa.com", time);
+        await _apiKeyTrafficProvider.FlushAsync();
+        
+        summary = await apiKeySummaryGrain.GetApiKeySummaryInfoAsync();
+        summary.TotalQuery.ShouldBe(11);
     }
     
     [Fact]

@@ -48,11 +48,20 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
 
     public async Task IncreaseQueryAeIndexerCountAsync(string key, string appId, string domain, DateTime dateTime)
     {
+        if (_options.IgnoreKeys.Contains(key.ToLower()))
+        {
+            return;
+        }
+
         await _apiKeyTrafficProvider.IncreaseAeIndexerQueryAsync(key, appId, domain, dateTime);
     }
 
     public async Task IncreaseQueryBasicApiCountAsync(string key, BasicApi api, string domain, DateTime dateTime)
     {
+        if (_options.IgnoreKeys.Contains(key.ToLower()))
+        {
+            return;
+        }
         await _apiKeyTrafficProvider.IncreaseBasicApiQueryAsync(key, api, domain, dateTime);
     }
 
