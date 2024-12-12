@@ -209,7 +209,7 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         {
             AppId = "Test App 1".Trim().ToLower().Replace(" ", "_"),
             AppName = "App1",
-            OrganizationId = orgId.ToString("N"),
+            OrganizationId = orgId.ToString(),
             OrganizationName = "OrganizationName",
             CreateTime = DateTime.Now,
             UpdateTime = DateTime.Now,
@@ -220,7 +220,7 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         {
             AppId = "Test Ap".Trim().ToLower().Replace(" ", "_"),
             AppName = "App1",
-            OrganizationId = orgId.ToString("N"),
+            OrganizationId = orgId.ToString(),
             OrganizationName = "OrganizationName",
             CreateTime = DateTime.Now,
             UpdateTime = DateTime.Now,
@@ -231,14 +231,17 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         {
             AppId = "Search App 1".Trim().ToLower().Replace(" ", "_"),
             AppName = "App1",
-            OrganizationId = orgId.ToString("N"),
+            OrganizationId = orgId.ToString(),
             OrganizationName = "OrganizationName",
             CreateTime = DateTime.Now,
             UpdateTime = DateTime.Now,
             Id = "AppId3"
         });
         
-        var apps = await _appService.SearchAsync(orgId, "Test");
+        var apps = await _appService.SearchAsync(orgId, "");
+        apps.Items.Count.ShouldBe(3);
+        
+        apps = await _appService.SearchAsync(orgId, "Test");
         apps.Items.Count.ShouldBe(2);
         
         apps = await _appService.SearchAsync(orgId, "test app");
