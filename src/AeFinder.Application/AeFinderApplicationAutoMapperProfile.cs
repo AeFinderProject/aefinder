@@ -153,5 +153,6 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<BillState, BillDto>();
         CreateMap<CreateSubscriptionBillDto, BillState>();
         CreateMap<CreateChargeBillDto, BillState>();
+        CreateMap<BillDto, InvoiceInfoDto>();
     }
 }

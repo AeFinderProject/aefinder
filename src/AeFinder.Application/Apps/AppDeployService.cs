@@ -165,9 +165,11 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
     }
 
-    public async Task ObliterateAppAsync(string organizationId,string appId)
+    public async Task ObliterateAppAsync(string organizationId, string appId)
     {
         Logger.LogInformation($"User {CurrentUser.Id} Obliterate AeIndexer {appId}");
+        //TODO: Check organization id
+
         //charge bill
         var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
         var ordersGrain =
@@ -184,7 +186,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var lockedAmount = latestLockedBill.BillingAmount;
         var chargeFee = await billsGrain.CalculateMidWayChargeAmount(renewalInfo, lockedAmount, podResourceStartUseDay);
         var refundAmount = lockedAmount - chargeFee;
-        
+
         //Send charge transaction to contract
         var userExtensionDto =
             await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(oldOrderInfo.UserId));
@@ -196,6 +198,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             Logger.LogError($"The organization wallet address has not yet been linked to user {oldOrderInfo.UserId}");
             throw new UserFriendlyException("The organization wallet address has not yet been linked");
         }
+
         var oldChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
         {
             OrganizationId = organizationId,
@@ -207,31 +210,33 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         });
         await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, refundAmount,
             oldChargeBill.BillingId);
-        
+
         //destroy subscription pods
-        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var appSubscriptionGrain =
+            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
         if (allSubscriptions.CurrentVersion != null && !allSubscriptions.CurrentVersion.Version.IsNullOrEmpty())
         {
             var currentVersion = allSubscriptions.CurrentVersion.Version;
             await _blockScanAppService.StopAsync(appId, currentVersion);
         }
+
         if (allSubscriptions.PendingVersion != null && !allSubscriptions.PendingVersion.Version.IsNullOrEmpty())
         {
             var pendingVersion = allSubscriptions.PendingVersion.Version;
             await _blockScanAppService.StopAsync(appId, pendingVersion);
         }
-        
+
         //Clear all subscription
         await appSubscriptionGrain.ClearGrainStateAsync();
-        
+
         //remove app info
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         await _userAppService.DeleteAppAuthentication(appId);
         await _userAppService.DeleteAppRelatedTokenData(appId);
         await appGrain.ClearGrainStateAsync();
     }
-    
+
     private async Task<string> GetOrganizationGrainIdAsync(string organizationId)
     {
         var organizationGuid = Guid.Parse(organizationId);

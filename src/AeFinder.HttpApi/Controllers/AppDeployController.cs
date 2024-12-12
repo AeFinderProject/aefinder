@@ -182,4 +182,12 @@ public class AppDeployController : AeFinderController
     {
         await _appDeployService.DestroyAppPendingVersionAsync(input.AppId);
     }
+
+    [HttpPost]
+    [Route("obliterate")]
+    [Authorize]
+    public async Task ObliterateAppAsync(ObliterateAppInput input)
+    {
+        await _appDeployService.ObliterateAppAsync(input.OrganizationId, input.AppId);
+    }
 }

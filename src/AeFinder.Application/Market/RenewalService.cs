@@ -24,6 +24,8 @@ public class RenewalService: ApplicationService, IRenewalService
     
     public async Task<int> GetUserApiQueryFreeCountAsync(string organizationId)
     {
+        //TODO: Check organization id
+
         var productsGrain =
             _clusterClient.GetGrain<IProductsGrain>(
                 GrainIdHelper.GenerateProductsGrainId());
@@ -42,6 +44,8 @@ public class RenewalService: ApplicationService, IRenewalService
 
     public async Task<int> GetUserMonthlyApiQueryAllowanceAsync(string organizationId)
     {
+        //TODO: Check organization id
+        
         var renewalGrain =
             _clusterClient.GetGrain<IRenewalGrain>(
                 GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));
@@ -52,6 +56,8 @@ public class RenewalService: ApplicationService, IRenewalService
 
     public async Task<FullPodResourceLevelDto> GetUserCurrentFullPodResourceAsync(string organizationId,string appId)
     {
+        //TODO: Check organization id
+        
         var renewalGrain =
             _clusterClient.GetGrain<IRenewalGrain>(
                 GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));

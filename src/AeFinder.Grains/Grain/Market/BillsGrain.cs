@@ -234,4 +234,11 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         var billDto = _objectMapper.Map<BillState, BillDto>(billState);
         return billDto;
     }
+
+    public async Task<List<BillDto>> GetUserAllBillsAsync(string userId)
+    {
+        var bills = State.Where(b => b.UserId == userId).ToList();
+        var billDtoList = _objectMapper.Map<List<BillState>, List<BillDto>>(bills);
+        return billDtoList;
+    }
 }

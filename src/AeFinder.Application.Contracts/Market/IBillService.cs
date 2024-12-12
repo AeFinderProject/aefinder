@@ -1,8 +1,10 @@
 using System.Threading.Tasks;
+using Volo.Abp.Application.Dtos;
 
 namespace AeFinder.Market;
 
 public interface IBillService
 {
-    Task<BillingPlanDto> GetProductBillingPlanAsync(string productId, int productNum, int monthCount);
+    Task<BillingPlanDto> GetProductBillingPlanAsync(GetBillingPlanInput input);
+    Task<PagedResultDto<InvoiceInfoDto>> GetInvoicesAsync(string organizationId);
 }

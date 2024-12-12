@@ -16,4 +16,5 @@ public interface IBillsGrain: IGrainWithStringKey
     Task<BillDto> UpdateBillingTransactionInfoAsync(string billingId, string transactionId,
         decimal transactionAmount, string walletAddress);
     Task<BillDto> GetPendingChargeBillByOrderIdAsync(string orderId);
+    Task<List<BillDto>> GetUserAllBillsAsync(string userId);
 }
