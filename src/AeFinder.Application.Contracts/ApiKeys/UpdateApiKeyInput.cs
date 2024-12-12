@@ -15,7 +15,7 @@ public class UpdateApiKeyInput: IValidatableObject
     {
         if (SpendingLimitUsdt.HasValue && SpendingLimitUsdt.Value < 0)
         {
-            yield return new ValidationResult("Invalid SpendingLimitUsdt.");
+            yield return new ValidationResult("The spending limit cannot be less than 0.");
         }
     }
 }

@@ -16,7 +16,7 @@ public class CreateApiKeyInput: IValidatableObject
     {
         if (SpendingLimitUsdt < 0)
         {
-            yield return new ValidationResult("Invalid SpendingLimitUsdt.");
+            yield return new ValidationResult("The spending limit cannot be less than 0.");
         }
     }
 }
