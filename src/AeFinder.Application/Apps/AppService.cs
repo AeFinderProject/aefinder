@@ -166,8 +166,13 @@ public class AppService : AeFinderAppService, IAppService
     public async Task<ListResultDto<AppInfoImmutable>> SearchAsync(Guid organizationId, string keyword)
     {
         var queryable = await _appIndexRepository.GetQueryableAsync();
-        keyword = keyword.Trim().ToLower().Replace(" ", "_");
-        queryable = queryable.Where(o => o.OrganizationId == organizationId.ToString("N") && o.AppId.Contains(keyword));
+        queryable = queryable.Where(o => o.OrganizationId == organizationId.ToString());
+
+        if (!keyword.IsNullOrWhiteSpace())
+        {
+            keyword = keyword.Trim().ToLower().Replace(" ", "_");
+            queryable = queryable.Where(o => o.AppId.Contains(keyword));
+        }
 
         var apps = queryable.OrderBy(o => o.AppName).Take(10).ToList();
 
