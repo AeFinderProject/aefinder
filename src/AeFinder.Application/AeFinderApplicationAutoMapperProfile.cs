@@ -189,5 +189,6 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppInfoImmutable, AppInfoImmutableIndex>();
         CreateMap<AppInfoImmutableEto, AppInfoImmutableIndex>();
         CreateMap<AppInfoImmutable, AppInfoImmutableEto>();
+        CreateMap<AppInfoImmutableEto, AppInfoImmutable>();
     }
 }
