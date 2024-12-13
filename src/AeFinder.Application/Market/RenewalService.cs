@@ -53,7 +53,7 @@ public class RenewalService: ApplicationService, IRenewalService
         return queryCount;
     }
 
-    public async Task<FullPodResourceLevelDto> GetUserCurrentFullPodResourceAsync(string organizationId,string appId)
+    public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string organizationId,string appId)
     {
         //TODO: Check organization id
         
@@ -66,7 +66,7 @@ public class RenewalService: ApplicationService, IRenewalService
             _clusterClient.GetGrain<IProductsGrain>(
                 GrainIdHelper.GenerateProductsGrainId());
         var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalInfo.ProductId);
-        var levelDto = _productService.ConvertToPodResourceLevelDto(productInfo);
+        var levelDto = _productService.ConvertToFullPodResourceDto(productInfo);
         return levelDto;
     }
 }

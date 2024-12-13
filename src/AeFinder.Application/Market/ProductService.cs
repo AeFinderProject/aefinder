@@ -22,25 +22,25 @@ public class ProductService : ApplicationService, IProductService
         _clusterClient = clusterClient;
     }
     
-    public async Task<List<FullPodResourceLevelDto>> GetFullPodResourceLevelInfoAsync()
+    public async Task<List<FullPodResourceDto>> GetFullPodResourceLevelInfoAsync()
     {
         var productsGrain =
             _clusterClient.GetGrain<IProductsGrain>(
                 GrainIdHelper.GenerateProductsGrainId());
         var fullPodResourceProducts = await productsGrain.GetFullPodResourceProductsAsync();
-        var resultList = new List<FullPodResourceLevelDto>();
+        var resultList = new List<FullPodResourceDto>();
         foreach (var productDto in fullPodResourceProducts)
         {
-            var levelDto = ConvertToPodResourceLevelDto(productDto);
+            var levelDto = ConvertToFullPodResourceDto(productDto);
             resultList.Add(levelDto);
         }
 
         return resultList;
     }
 
-    public FullPodResourceLevelDto ConvertToPodResourceLevelDto(ProductDto productDto)
+    public FullPodResourceDto ConvertToFullPodResourceDto(ProductDto productDto)
     {
-        var levelDto = new FullPodResourceLevelDto();
+        var levelDto = new FullPodResourceDto();
         levelDto.ProductId = productDto.ProductId;
         levelDto.LevelName = productDto.ProductSpecifications;
         var resourceCapacity = JsonConvert.DeserializeObject<ResourceCapacity>(productDto.Description);

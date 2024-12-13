@@ -32,7 +32,7 @@ public class MarketController : AeFinderController
     [HttpGet]
     [Route("pod-resources/level")]
     [Authorize]
-    public async Task<List<FullPodResourceLevelDto>> GetFullPodResourceLevelInfoAsync()
+    public async Task<List<FullPodResourceDto>> GetFullPodResourceLevelInfoAsync()
     {
         return await _productService.GetFullPodResourceLevelInfoAsync();
     }
@@ -40,7 +40,7 @@ public class MarketController : AeFinderController
     [HttpGet]
     [Route("pod-resource/full")]
     [Authorize]
-    public async Task<FullPodResourceLevelDto> GetUserCurrentFullPodResourceAsync(string organizationId, string appId)
+    public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string organizationId, string appId)
     {
         return await _renewalService.GetUserCurrentFullPodResourceAsync(organizationId, appId);
     }

@@ -1,6 +1,6 @@
 namespace AeFinder.Market;
 
-public class FullPodResourceLevelDto
+public class FullPodResourceDto
 {
     public string ProductId { get; set; }
     public string LevelName { get; set; }

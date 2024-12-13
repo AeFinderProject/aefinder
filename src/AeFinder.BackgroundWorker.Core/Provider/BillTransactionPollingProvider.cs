@@ -142,7 +142,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                 {
                     var productsGrain = _clusterClient.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
                     var productInfo = await productsGrain.GetProductInfoByIdAsync(orderDto.ProductId);
-                    var resourceDto = _productService.ConvertToPodResourceLevelDto(productInfo);
+                    var resourceDto = _productService.ConvertToFullPodResourceDto(productInfo);
                     await _appService.SetAppResourceLimitAsync(orderDto.AppId, new SetAppResourceLimitDto()
                     {
                         AppFullPodLimitCpuCore = resourceDto.Capacity.Cpu,
