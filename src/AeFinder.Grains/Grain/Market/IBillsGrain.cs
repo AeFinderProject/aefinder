@@ -11,8 +11,9 @@ public interface IBillsGrain: IGrainWithStringKey
     Task<BillDto> CreateChargeBillAsync(CreateChargeBillDto dto);
     Task<BillDto> GetLatestLockedBillAsync(string subscriptionId);
     Task<decimal> CalculateFirstMonthLockAmount(decimal monthlyFee);
-    Task<decimal> CalculateMidWayChargeAmount(RenewalDto renewalInfo, decimal monthlyFee,
+    Task<decimal> CalculatePodResourceMidWayChargeAmountAsync(RenewalDto renewalInfo, decimal monthlyFee,
         DateTime? podResourceStartUseDay);
+    Task<decimal> CalculateApiQueryMonthlyChargeAmountAsync(int monthlyQueryCount);
     Task<BillDto> UpdateBillingTransactionInfoAsync(string billingId, string transactionId,
         decimal transactionAmount, string walletAddress);
     Task<BillDto> GetPendingChargeBillByOrderIdAsync(string orderId);

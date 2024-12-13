@@ -87,6 +87,15 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 //Charge for previous billing cycle
                 var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(renewalDto.OrderId);
                 var chargeFee = latestLockedBill.BillingAmount;
+                decimal refundAmount = 0;
+                if (renewalDto.ProductType == ProductType.ApiQueryCount)
+                {
+                    //Charge based on usage query count
+                    var monthlyQueryCount = 10;//TODO Get monthly query count
+                    chargeFee = await billsGrain.CalculateApiQueryMonthlyChargeAmountAsync(monthlyQueryCount);
+                    var monthlyFee = renewalDto.ProductNumber * productInfo.MonthlyUnitPrice;
+                    refundAmount = monthlyFee - chargeFee;
+                }
                 
                 //Send charge transaction to contract
                 var userExtensionDto =
@@ -105,7 +114,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     SubscriptionId = renewalDto.SubscriptionId,
                     ChargeFee = chargeFee,
                     Description = "Auto-renewal charge for the existing order.",
-                    RefundAmount = 0
+                    RefundAmount = refundAmount
                 });
                 await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, 0,
                     chargeBill.BillingId);

@@ -150,7 +150,7 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         
         var oldUserOrderStates = State.Where(o =>
             o.OrganizationId == organizationId && o.ProductType == ProductType.ApiQueryCount &&
-            o.OrderStatus != OrderStatus.Canceled).ToList();
+            o.OrderStatus != OrderStatus.Canceled).OrderByDescending(o=>o.OrderDate).ToList();
 
         foreach (var orderState in oldUserOrderStates)
         {

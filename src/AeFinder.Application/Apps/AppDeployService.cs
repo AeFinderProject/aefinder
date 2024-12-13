@@ -155,7 +155,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         }
 
         var version = allSubscriptions.PendingVersion.Version;
-        if (CollectionUtilities.IsNullOrEmpty(version))
+        if (string.IsNullOrEmpty(version))
         {
             return;
         }
@@ -184,7 +184,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(subscriptionId);
         var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(oldOrderInfo.OrderId);
         var lockedAmount = latestLockedBill.BillingAmount;
-        var chargeFee = await billsGrain.CalculateMidWayChargeAmount(renewalInfo, lockedAmount, podResourceStartUseDay);
+        var chargeFee = await billsGrain.CalculatePodResourceMidWayChargeAmountAsync(renewalInfo, lockedAmount, podResourceStartUseDay);
         var refundAmount = lockedAmount - chargeFee;
 
         //Send charge transaction to contract

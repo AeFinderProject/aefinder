@@ -44,7 +44,7 @@ public class OrderService: ApplicationService, IOrderService
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         OrderDto oldOrderInfo = null;
-        DateTime? podResourceStartUseDay = null;
+        
         if (productInfo.ProductType == ProductType.ApiQueryCount)
         {
             //Check if there is an existing order for a product of the same type
@@ -57,7 +57,6 @@ public class OrderService: ApplicationService, IOrderService
             //Check if there is an existing order for a product of the same type
             oldOrderInfo =
                 await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, dto.AppId);
-            podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(dto.AppId);
         }
         
         var billsGrain =
@@ -83,17 +82,31 @@ public class OrderService: ApplicationService, IOrderService
             var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(subscriptionId);
             var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(oldOrderInfo.OrderId);
             var lockedAmount = latestLockedBill.BillingAmount;
-            var chargeFee = await billsGrain.CalculateMidWayChargeAmount(renewalInfo, lockedAmount, podResourceStartUseDay);
+            decimal chargeFee = 0;
             decimal refundAmount = 0;
-            
-            
-            var remainingLockedAmount = lockedAmount - chargeFee;
             decimal monthlyFee = dto.ProductNumber * productInfo.MonthlyUnitPrice;
-            var firstMonthFee = await billsGrain.CalculateFirstMonthLockAmount(monthlyFee);
-            if (firstMonthFee > remainingLockedAmount)
+            decimal firstMonthLockFee = 0;
+            if (oldOrderInfo.ProductType == ProductType.FullPodResource)
+            {
+                //Charge based on usage duration
+                DateTime? podResourceStartUseDay = null;
+                podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(dto.AppId);
+                chargeFee = await billsGrain.CalculatePodResourceMidWayChargeAmountAsync(renewalInfo, lockedAmount, podResourceStartUseDay);
+                firstMonthLockFee = await billsGrain.CalculateFirstMonthLockAmount(monthlyFee);
+            }
+
+            if (oldOrderInfo.ProductType == ProductType.ApiQueryCount)
+            {
+                //Charge based on usage query count
+                var monthlyQueryCount = 10;//TODO Get monthly query count
+                chargeFee = await billsGrain.CalculateApiQueryMonthlyChargeAmountAsync(monthlyQueryCount);
+                firstMonthLockFee = monthlyFee;
+            }
+            var remainingLockedAmount = lockedAmount - chargeFee;
+            if (firstMonthLockFee > remainingLockedAmount)
             {
                 //Calculate new order need lock fee
-                var needLockFee = firstMonthFee - remainingLockedAmount;
+                var needLockFee = firstMonthLockFee - remainingLockedAmount;
                 //TODO Check user organization balance
                 
                 //Create new order
@@ -107,14 +120,15 @@ public class OrderService: ApplicationService, IOrderService
                     AppId = dto.AppId,
                     OrderId = newOrder.OrderId,
                     LockFee = needLockFee,
-                    Description = $"Old order remaining locked amount: {remainingLockedAmount}, New order first month required locked amount: {firstMonthFee}, Additional amount needed to be locked: {needLockFee}."
+                    Description =
+                        $"Old order remaining locked amount: {remainingLockedAmount}, New order first month required locked amount: {firstMonthLockFee}, Additional amount needed to be locked: {needLockFee}."
                 });
                 billList.Add(newLockBill);
             }
             else
             {
                 //Calculate old order need refund fee
-                refundAmount = remainingLockedAmount - firstMonthFee;
+                refundAmount = remainingLockedAmount - firstMonthLockFee;
                 // var refundBill = await billsGrain.CreateRefundBillAsync(new CreateRefundBillDto()
                 // {
                 //     OrganizationId = dto.OrganizationId,

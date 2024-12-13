@@ -172,7 +172,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return firstOfNextMonth;
     }
 
-    public async Task<decimal> CalculateMidWayChargeAmount(RenewalDto renewalInfo, decimal lockedAmount,
+    public async Task<decimal> CalculatePodResourceMidWayChargeAmountAsync(RenewalDto renewalInfo, decimal lockedAmount,
         DateTime? podResourceStartUseDay)
     {
         if (renewalInfo.ProductType == ProductType.FullPodResource && podResourceStartUseDay == null)
@@ -192,6 +192,17 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         int daysInLastBillingMonth = DateTime.DaysInMonth(lastBillingDate.Year, lastBillingDate.Month);
         decimal dailyFee = lockedAmount / daysInLastBillingMonth;
         decimal usedFee = dailyFee * daysUsed;
+        return usedFee;
+    }
+
+    public async Task<decimal> CalculateApiQueryMonthlyChargeAmountAsync(int monthlyQueryCount)
+    {
+        var productsGrain =
+            GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
+        var regularProductInfo = await productsGrain.GetRegularApiQueryCountProductAsync();
+        var singleQueryUnitPrice = regularProductInfo.MonthlyUnitPrice /
+                                   Convert.ToInt32(regularProductInfo.ProductSpecifications);
+        var usedFee = singleQueryUnitPrice * monthlyQueryCount;
         return usedFee;
     }
 
