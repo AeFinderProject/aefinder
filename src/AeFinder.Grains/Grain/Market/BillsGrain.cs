@@ -235,9 +235,9 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return billDto;
     }
 
-    public async Task<List<BillDto>> GetUserAllBillsAsync(string userId)
+    public async Task<List<BillDto>> GetOrganizationAllBillsAsync(string organizationId)
     {
-        var bills = State.Where(b => b.UserId == userId).ToList();
+        var bills = State.Where(b => b.OrganizationId == organizationId).ToList();
         var billDtoList = _objectMapper.Map<List<BillState>, List<BillDto>>(bills);
         return billDtoList;
     }

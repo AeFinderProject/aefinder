@@ -121,14 +121,14 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         if (orderState.ProductType == ProductType.ApiQueryCount)
         {
             var apiQueryCountRenewal = await renewalGrain.GetApiQueryCountRenewalInfoAsync(orderState.OrganizationId,
-                orderState.UserId, orderState.ProductId);
+                orderState.ProductId);
             subscriptionId = apiQueryCountRenewal.SubscriptionId;
         }
 
         if (orderState.ProductType == ProductType.FullPodResource)
         {
             var podResourceRenewal = await renewalGrain.GetPodResourceRenewalInfoAsync(orderState.OrganizationId,
-                orderState.UserId, orderState.AppId, orderState.ProductId);
+                orderState.AppId, orderState.ProductId);
             subscriptionId = podResourceRenewal.SubscriptionId;
         }
         orderState.OrderStatus = OrderStatus.Canceled;
@@ -144,12 +144,12 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         // return bill;
     }
 
-    public async Task<OrderDto> GetLatestApiQueryCountOrderAsync(string organizationId, string userId)
+    public async Task<OrderDto> GetLatestApiQueryCountOrderAsync(string organizationId)
     {
         var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
         
         var oldUserOrderStates = State.Where(o =>
-            o.OrganizationId == organizationId && o.UserId == userId && o.ProductType == ProductType.ApiQueryCount &&
+            o.OrganizationId == organizationId && o.ProductType == ProductType.ApiQueryCount &&
             o.OrderStatus != OrderStatus.Canceled).ToList();
 
         foreach (var orderState in oldUserOrderStates)

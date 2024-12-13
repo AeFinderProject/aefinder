@@ -33,8 +33,7 @@ public class RenewalService: ApplicationService, IRenewalService
         var renewalGrain =
             _clusterClient.GetGrain<IRenewalGrain>(
                 GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));
-        if (await renewalGrain.CheckRenewalInfoIsExistAsync(organizationId, CurrentUser.Id.ToString(),
-                freeProduct.ProductId))
+        if (await renewalGrain.CheckRenewalInfoIsExistAsync(organizationId, freeProduct.ProductId))
         {
             return Convert.ToInt32(freeProduct.ProductSpecifications);
         }
@@ -50,7 +49,7 @@ public class RenewalService: ApplicationService, IRenewalService
             _clusterClient.GetGrain<IRenewalGrain>(
                 GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));
         var queryCount =
-            await renewalGrain.GetUserMonthlyApiQueryAllowanceAsync(organizationId, CurrentUser.Id.ToString());
+            await renewalGrain.GetOrganizationMonthlyApiQueryAllowanceAsync(organizationId);
         return queryCount;
     }
 
@@ -62,7 +61,7 @@ public class RenewalService: ApplicationService, IRenewalService
             _clusterClient.GetGrain<IRenewalGrain>(
                 GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));
         var renewalInfo =
-            await renewalGrain.GetCurrentPodResourceRenewalInfoAsync(organizationId, CurrentUser.Id.ToString(), appId);
+            await renewalGrain.GetCurrentPodResourceRenewalInfoAsync(organizationId, appId);
         var productsGrain =
             _clusterClient.GetGrain<IProductsGrain>(
                 GrainIdHelper.GenerateProductsGrainId());

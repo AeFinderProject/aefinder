@@ -71,7 +71,6 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
             
             if (oldApiQueryRenewal == null)
             {
-                
                 State.Add(renewalItem);
                 await WriteStateAsync();
                 return _objectMapper.Map<RenewalState, RenewalDto>(renewalItem);
@@ -162,20 +161,20 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         await WriteStateAsync();
     }
 
-    public async Task<RenewalDto> GetApiQueryCountRenewalInfoAsync(string organizationId, string userId,
+    public async Task<RenewalDto> GetApiQueryCountRenewalInfoAsync(string organizationId,
         string productId)
     {
         var renewalState = State.FirstOrDefault(o =>
-            o.OrganizationId == organizationId && o.UserId == userId && o.ProductId == productId && o.IsActive == true);
+            o.OrganizationId == organizationId && o.ProductId == productId && o.IsActive == true);
         var renewalDto = _objectMapper.Map<RenewalState, RenewalDto>(renewalState);
         return renewalDto;
     }
 
-    public async Task<RenewalDto> GetPodResourceRenewalInfoAsync(string organizationId, string userId, string appId,
+    public async Task<RenewalDto> GetPodResourceRenewalInfoAsync(string organizationId, string appId,
         string productId)
     {
         var renewalState = State.FirstOrDefault(o =>
-            o.OrganizationId == organizationId && o.UserId == userId && o.AppId == appId && o.ProductId == productId &&
+            o.OrganizationId == organizationId && o.AppId == appId && o.ProductId == productId &&
             o.IsActive == true);
         var renewalDto = _objectMapper.Map<RenewalState, RenewalDto>(renewalState);
         return renewalDto;
@@ -189,11 +188,11 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         await WriteStateAsync();
     }
 
-    public async Task<int> GetUserMonthlyApiQueryAllowanceAsync(string organizationId,string userId)
+    public async Task<int> GetOrganizationMonthlyApiQueryAllowanceAsync(string organizationId)
     {
         var apiQueryCountSubscriptions =
             State.Where(r =>
-                r.OrganizationId == organizationId && r.UserId == userId &&
+                r.OrganizationId == organizationId &&
                 r.ProductType == ProductType.ApiQueryCount && r.IsActive == true).ToList();
         var totalQueryCount = 0;
         foreach (var renewalState in apiQueryCountSubscriptions)
@@ -218,10 +217,10 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         return renewalState.SubscriptionId;
     }
 
-    public async Task<bool> CheckRenewalInfoIsExistAsync(string organizationId, string userId, string productId)
+    public async Task<bool> CheckRenewalInfoIsExistAsync(string organizationId, string productId)
     {
         var renewalState = State.FirstOrDefault(r =>
-            r.OrganizationId == organizationId && r.UserId == userId && r.ProductId == productId && r.IsActive == true);
+            r.OrganizationId == organizationId && r.ProductId == productId && r.IsActive == true);
         if (renewalState == null)
         {
             return false;
@@ -230,10 +229,10 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         return true;
     }
     
-    public async Task<RenewalDto> GetCurrentPodResourceRenewalInfoAsync(string organizationId, string userId, string appId)
+    public async Task<RenewalDto> GetCurrentPodResourceRenewalInfoAsync(string organizationId, string appId)
     {
         var renewalState = State.FirstOrDefault(o =>
-            o.OrganizationId == organizationId && o.UserId == userId && o.AppId == appId && 
+            o.OrganizationId == organizationId && o.AppId == appId && 
             o.ProductType == ProductType.FullPodResource && o.IsActive == true);
         var renewalDto = _objectMapper.Map<RenewalState, RenewalDto>(renewalState);
         return renewalDto;
@@ -256,7 +255,7 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         return renewalDto;
     }
 
-    public async Task<RenewalDto> GetRenewalInfoByProductTypeAsync(ProductType productType, string appId, string userId)
+    public async Task<RenewalDto> GetRenewalInfoByProductTypeAsync(ProductType productType, string appId)
     {
         RenewalState renewalState = null;
         if (productType == ProductType.FullPodResource)
@@ -268,9 +267,9 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         if (productType == ProductType.ApiQueryCount)
         {
             renewalState =
-                State.FirstOrDefault(o => o.UserId == userId && o.ProductType == productType && o.IsActive == true);
+                State.FirstOrDefault(o => o.ProductType == productType && o.RenewalPeriod > 0 && o.IsActive == true);
         }
-        
+
         if (renewalState == null)
         {
             return null;

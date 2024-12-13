@@ -96,8 +96,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                 
                 //Check if there is the same type of product's subscription & order
                 var oldRenewalInfo =
-                    await renewalGrain.GetRenewalInfoByProductTypeAsync(orderDto.ProductType, orderDto.AppId,
-                        orderDto.UserId);
+                    await renewalGrain.GetRenewalInfoByProductTypeAsync(orderDto.ProductType, orderDto.AppId);
                 
                 //Check the order subscription is existed or Create new subscription
                 var renewalInfo = await renewalGrain.GetRenewalInfoByOrderIdAsync(orderDto.OrderId);

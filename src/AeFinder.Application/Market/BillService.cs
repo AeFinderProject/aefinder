@@ -51,7 +51,7 @@ public class BillService : ApplicationService, IBillService
         var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
-        var bills=await billsGrain.GetUserAllBillsAsync(CurrentUser.Id.ToString());
+        var bills=await billsGrain.GetOrganizationAllBillsAsync(organizationId);
         var invoiceInfoList = new List<InvoiceInfoDto>();
         foreach (var billDto in bills)
         {

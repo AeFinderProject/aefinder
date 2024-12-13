@@ -49,7 +49,7 @@ public class OrderService: ApplicationService, IOrderService
         {
             //Check if there is an existing order for a product of the same type
             oldOrderInfo =
-                await ordersGrain.GetLatestApiQueryCountOrderAsync(dto.OrganizationId, dto.UserId);
+                await ordersGrain.GetLatestApiQueryCountOrderAsync(dto.OrganizationId);
         }
 
         if (productInfo.ProductType == ProductType.FullPodResource)
