@@ -246,6 +246,41 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         identityUserExtensionDto.WalletAddress = extensionInfo.WalletAddress;
         return identityUserExtensionDto;
     }
+    
+    public async Task RegisterAsync(RegisterUserInput input)
+    {
+        var orgName = input.OrganizationName.Trim();
+        var organizationUnit = await _organizationUnitRepository.GetAsync(orgName);
+        if (organizationUnit != null)
+        {
+            throw new UserFriendlyException("Organization already exists.");
+        }
+        
+        var userName = input.UserName.Trim();
+        var email = input.Email.Trim();
+        var user = new IdentityUser(GuidGenerator.Create(), userName, email, CurrentTenant.Id);
+        user.SetIsActive(false);
+
+        var createResult = await UserManager.CreateAsync(user, input.Password);
+        if (!createResult.Succeeded)
+        {
+            throw new UserFriendlyException("Failed to create user. " + createResult.Errors.Select(e => e.Description)
+                .Aggregate((errors, error) => errors + ", " + error));
+        }
+        
+        //add appAdmin role into user
+        var normalizedRoleName = _lookupNormalizer.NormalizeName(AeFinderConsts.AppAdminRoleName);
+        var identityUser = await UserManager.FindByIdAsync(user.Id.ToString());
+        var appAdminRole = await RoleRepository.FindByNormalizedNameAsync(normalizedRoleName);
+        if (appAdminRole != null)
+        {
+            await UserManager.AddToRoleAsync(identityUser, appAdminRole.Name);
+        }
+        
+        
+    }
+    
+    
 
     [ExceptionHandler([typeof(SignatureVerifyException)], TargetType = typeof(UserAppService),
         MethodName = nameof(HandleSignatureVerifyExceptionAsync))]
