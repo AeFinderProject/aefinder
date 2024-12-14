@@ -19,6 +19,9 @@ using AeFinder.ScheduledTask;
 using AElf.OpenTelemetry;
 using AspNetCoreRateLimit;
 using AspNetCoreRateLimit.Redis;
+using GraphQL.Client.Abstractions;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.Newtonsoft;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -107,6 +110,9 @@ public class AeFinderHttpApiHostModule : AbpModule
         Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
         Configure<PodResourceLevelOptions>(configuration.GetSection("PodResourceLevel"));
         Configure<ApiQueryCountResourceOptions>(configuration.GetSection("ApiQueryCountResource"));
+        context.Services.AddSingleton(new GraphQLHttpClient(configuration["GraphQL:Configuration"],
+            new NewtonsoftJsonSerializer()));
+        context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
     }
 
     private void ConfigureCache(IConfiguration configuration)
