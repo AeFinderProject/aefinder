@@ -1,13 +1,15 @@
 using System;
+using Orleans;
 
 namespace AeFinder.Market;
 
+[GenerateSerializer]
 public class CreateOrderDto
 {
-    public string OrganizationId { get; set; }
-    public string UserId { get; set; }
-    public string AppId { get; set; }
-    public string ProductId { get; set; }
-    public int ProductNumber { get; set; }
-    public int PeriodMonths { get; set; }
+    [Id(0)]public string OrganizationId { get; set; }
+    [Id(1)]public string UserId { get; set; }
+    [Id(2)]public string AppId { get; set; }
+    [Id(3)]public string ProductId { get; set; }
+    [Id(4)]public int ProductNumber { get; set; }
+    [Id(5)]public int PeriodMonths { get; set; }
 }

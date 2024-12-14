@@ -3,10 +3,14 @@ using AeFinder.Apps;
 using AeFinder.BackgroundWorker.Core;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.BackgroundWorker.ScheduledTask;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Market;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
+using AeFinder.Market;
 using AeFinder.Metrics;
 using AeFinder.MongoDb;
+using AeFinder.Options;
 using AElf.EntityMapping.Options;
 using AElf.OpenTelemetry;
 using GraphQL.Client.Abstractions;
@@ -21,6 +25,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using Newtonsoft.Json;
 using Volo.Abp;
 using Volo.Abp.Autofac;
 using Volo.Abp.AutoMapper;
@@ -61,6 +66,8 @@ public class AeFinderBackGroundModule : AbpModule
         ConfigureMongoDbService(configuration, context);
         context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
         context.Services.Configure<TransactionRepairOptions>(configuration.GetSection("TransactionRepair"));
+        Configure<PodResourceLevelOptions>(configuration.GetSection("PodResourceLevel"));
+        Configure<ApiQueryCountResourceOptions>(configuration.GetSection("ApiQueryCountResource"));
         context.Services.AddSingleton(new GraphQLHttpClient(configuration["GraphQL:Configuration"],
             new NewtonsoftJsonSerializer()));
         context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
@@ -152,6 +159,51 @@ public class AeFinderBackGroundModule : AbpModule
         if (transactionRepairOptions.Enable)
         {
             AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<TransactionRepairWorker>());
+        }
+        
+        //Initialize products info
+        AsyncHelper.RunSync(async () => await InitializeProductsInfoAsync(context));
+        
+    }
+    
+    private async Task InitializeProductsInfoAsync(ApplicationInitializationContext context)
+    {
+        var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        var productsGrain =
+            clusterClient.GetGrain<IProductsGrain>(
+                GrainIdHelper.GenerateProductsGrainId());
+        var podResourceLevelOptions = context.ServiceProvider.GetService<IOptions<PodResourceLevelOptions>>();
+        var levels = podResourceLevelOptions.Value.FullPodResourceLevels;
+        foreach (var resourceLevelInfo in levels)
+        {
+            var productDto = new ProductDto();
+            productDto.ProductId = Guid.NewGuid().ToString();
+            productDto.ProductSpecifications = resourceLevelInfo.LevelName;
+            productDto.ProductType = ProductType.FullPodResource;
+            productDto.ProductName = resourceLevelInfo.ResourceName;
+            var capacity = new ResourceCapacity();
+            capacity.Cpu = resourceLevelInfo.Cpu;
+            capacity.Memory = resourceLevelInfo.Memory;
+            capacity.Disk = resourceLevelInfo.Disk;
+            productDto.Description = JsonConvert.SerializeObject(capacity);
+            productDto.MonthlyUnitPrice = resourceLevelInfo.MonthlyUnitPrice;
+            productDto.IsActive = true;
+            await productsGrain.InitializeProductsInfoAsync(productDto);
+        }
+        
+        var apiQueryCountResourceOptions=context.ServiceProvider.GetService<IOptions<ApiQueryCountResourceOptions>>();
+        var apiQueryResources = apiQueryCountResourceOptions.Value.ApiQueryCountPackages;
+        foreach (var queryCountResourceInfo in apiQueryResources)
+        {
+            var productDto = new ProductDto();
+            productDto.ProductId = Guid.NewGuid().ToString();
+            productDto.ProductSpecifications = queryCountResourceInfo.QueryCount.ToString();
+            productDto.ProductType = ProductType.ApiQueryCount;
+            productDto.ProductName = queryCountResourceInfo.ResourceName;
+            productDto.Description = queryCountResourceInfo.Description;
+            productDto.MonthlyUnitPrice = queryCountResourceInfo.MonthlyUnitPrice;
+            productDto.IsActive = true;
+            await productsGrain.InitializeProductsInfoAsync(productDto);
         }
     }
 

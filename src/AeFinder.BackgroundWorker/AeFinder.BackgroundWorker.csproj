@@ -53,6 +53,10 @@
       <Content Include="appsettings.apollo.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
+      <None Remove="KubeConfig\config.txt" />
+      <Content Include="KubeConfig\config.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>
