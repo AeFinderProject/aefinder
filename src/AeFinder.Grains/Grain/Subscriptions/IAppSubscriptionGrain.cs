@@ -18,4 +18,5 @@ public interface IAppSubscriptionGrain : IGrainWithStringKey
     Task StartAsync(string version);
     Task PauseAsync(string version);
     Task StopAsync(string version);
+    Task ClearGrainStateAsync();
 }

@@ -9,6 +9,11 @@ using AeFinder.Metrics;
 using AeFinder.MongoDb;
 using AElf.EntityMapping.Options;
 using AElf.OpenTelemetry;
+using Hangfire;
+using Hangfire.Mongo;
+using Hangfire.Mongo.CosmosDB;
+using Hangfire.Mongo.Migration.Strategies;
+using Hangfire.Mongo.Migration.Strategies.Backup;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -46,6 +51,7 @@ public class AeFinderBackGroundModule : AbpModule
         context.Services.AddTransient<IAppDeployManager, KubernetesAppManager>();
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
         context.Services.AddTransient<IKubernetesAppMonitor, KubernetesAppMonitor>();
+        ConfigureHangfire(context, configuration);
         ConfigureTokenCleanupService();
         ConfigureEsIndexCreation();
         ConfigureCache(configuration);
@@ -81,6 +87,50 @@ public class AeFinderBackGroundModule : AbpModule
     private void ConfigureEsIndexCreation()
     {
         Configure<CollectionCreateOptions>(x => { x.AddModule(typeof(AeFinderDomainModule)); });
+    }
+    
+    private void ConfigureHangfire(ServiceConfigurationContext context, IConfiguration configuration)
+    {
+        var mongoType = configuration["Hangfire:MongoType"];
+        var connectionString = configuration["Hangfire:ConnectionString"];
+        if(connectionString.IsNullOrEmpty()) return;
+
+        if (mongoType.IsNullOrEmpty() ||
+            mongoType.Equals(MongoType.MongoDb.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            context.Services.AddHangfire(x =>
+            {
+                x.UseMongoStorage(connectionString, new MongoStorageOptions
+                {
+                    MigrationOptions = new MongoMigrationOptions
+                    {
+                        MigrationStrategy = new MigrateMongoMigrationStrategy(),
+                        BackupStrategy = new CollectionMongoBackupStrategy()
+                    },
+                    CheckConnection = true,
+                    CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection
+                });
+            });
+        }
+        else if (mongoType.Equals(MongoType.DocumentDb.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            context.Services.AddHangfire(config =>
+            {
+                var mongoUrlBuilder = new MongoUrlBuilder(connectionString);
+                var mongoClient = new MongoClient(mongoUrlBuilder.ToMongoUrl());
+                var opt = new CosmosStorageOptions
+                {
+                    MigrationOptions = new MongoMigrationOptions
+                    {
+                        BackupStrategy = new NoneMongoBackupStrategy(),
+                        MigrationStrategy = new DropMongoMigrationStrategy(),
+                    }
+                };
+                config.UseCosmosStorage(mongoClient, mongoUrlBuilder.DatabaseName, opt);
+            });
+
+            context.Services.AddHangfireServer(opt => { opt.Queues = new[] { "default", "notDefault" }; });
+        }
     }
     
     public override void OnApplicationInitialization(ApplicationInitializationContext context)

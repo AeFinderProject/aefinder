@@ -43,7 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Contract\" />
+    <Folder Include="Generated\" />
   </ItemGroup>
     
 </Project>

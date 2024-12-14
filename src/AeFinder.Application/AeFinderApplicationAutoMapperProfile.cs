@@ -14,8 +14,10 @@ using AeFinder.Grains.Grain.ApiKeys;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.ApiKeys;
 using AeFinder.Grains.State.Apps;
+using AeFinder.Grains.State.Market;
 using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Logger.Entities;
+using AeFinder.Market;
 using AeFinder.Subscriptions;
 using AeFinder.Subscriptions.Dto;
 using AeFinder.User;
@@ -111,6 +113,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppSubscriptionPodIndex, AppResourceDto>();
         
         CreateMap<AppLogIndex, AppLogRecordDto>();
+        CreateMap<AppLogDetail, AppLogInfo>();
         CreateMap<AppResourceLimitState, AppResourceLimitDto>();
         CreateMap<AppResourceLimitDto, SetAppResourceLimitDto>();
         CreateMap<AppPodOperationSnapshotDto, AppPodOperationSnapshotState>();
@@ -190,5 +193,17 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppInfoImmutableEto, AppInfoImmutableIndex>();
         CreateMap<AppInfoImmutable, AppInfoImmutableEto>();
         CreateMap<AppInfoImmutableEto, AppInfoImmutable>();
+        
+        CreateMap<ProductDto, ProductState>();
+        CreateMap<ProductState, ProductDto>();
+        CreateMap<CreateOrderDto, OrderState>();
+        CreateMap<OrderState, OrderDto>();
+        CreateMap<CreateRenewalDto, RenewalState>();
+        CreateMap<RenewalState, RenewalDto>();
+        CreateMap<CreateOrderLockBillDto, BillState>();
+        CreateMap<BillState, BillDto>();
+        CreateMap<CreateSubscriptionBillDto, BillState>();
+        CreateMap<CreateChargeBillDto, BillState>();
+        CreateMap<BillDto, InvoiceInfoDto>();
     }
 }

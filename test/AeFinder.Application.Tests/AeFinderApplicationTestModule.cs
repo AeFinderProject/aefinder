@@ -1,14 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.CodeOps;
 using AeFinder.Grains.Grain.ApiKeys;
 using AeFinder.Grains.Grain.BlockPush;
+using AeFinder.Logger;
+using AeFinder.Logger.Entities;
 using AeFinder.Metrics;
 using AeFinder.Orleans.TestBase;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Nest;
+using Volo.Abp;
 using Volo.Abp.Modularity;
 
 namespace AeFinder;
@@ -39,10 +44,32 @@ public class AeFinderApplicationTestModule : AbpModule
         });
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
         context.Services.AddTransient<IKubernetesAppMonitor, DefaultKubernetesAppMonitor>();
-        
         context.Services.Configure<ApiKeyOptions>(o =>
         {
             o.IgnoreKeys = new HashSet<string> { "app" };
         });
+        context.Services.AddTransient<ILogService, LogElasticSearchService>();
+        context.Services.AddSingleton<ElasticClient>(provider =>
+        {
+            var settings = new ConnectionSettings(new Uri("http://localhost:9200"))
+                .EnableHttpCompression();
+            return new ElasticClient(settings);
+        });
+        context.Services.Configure<LogElasticSearchOptions>(options =>
+        {
+            options.Uris = new List<string>(){"http://localhost:9200"};
+        });
+    }
+
+    public override void OnApplicationInitialization(ApplicationInitializationContext context)
+    {
+        var elasticClient = context.ServiceProvider.GetRequiredService<ElasticClient>();
+        
+    }
+
+    public override void OnApplicationShutdown(ApplicationShutdownContext context)
+    {
+        var elasticClient = context.ServiceProvider.GetRequiredService<ElasticClient>();
+        elasticClient.Indices.Delete("aefinder-app-testindexer*");
     }
 }

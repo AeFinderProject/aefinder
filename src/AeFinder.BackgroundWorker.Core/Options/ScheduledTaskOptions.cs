@@ -7,4 +7,5 @@ public class ScheduledTaskOptions
     public int MaxAppRescanTimes { get; set; } = 3;
     public int AppPodListSyncTaskPeriodMilliSeconds { get; set; } = 600000;
     public int AppPodResourceSyncTaskPeriodMilliSeconds { get; set; } = 180000;
+    public int RenewalBillDay = 1;
 }

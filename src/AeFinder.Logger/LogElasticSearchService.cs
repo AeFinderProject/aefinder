@@ -1,3 +1,4 @@
+using System.Text;
 using AeFinder.Logger.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -60,14 +61,13 @@ public class LogElasticSearchService:ILogService
 
             return f.Bool(b => boolQuery);
         }
-        
+
         var response = await _elasticClient.SearchAsync<AppLogIndex>(s => s
             .Index(indexName)
             .Sort(so => so
                 .Descending(f => f.App_log.Time))
             .Size(pageSize)
             .Query(Filter));
-
         return response.Documents.ToList();
     }
 

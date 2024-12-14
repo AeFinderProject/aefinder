@@ -128,7 +128,7 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(appId, version);
     }
-    
+
     public static string GenerateApiKeySummaryGrainId(Guid organizationId)
     {
         return GenerateGrainId(organizationId.ToString("N"));
@@ -178,9 +178,34 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(apiKeyId.ToString("N"), api, dateTime.ToString("yyyyMM"));
     }
-    
+
     public static string GenerateApiKeyQueryBasicApiDailySnapshotGrainId(Guid apiKeyId, BasicApi api, DateTime dateTime)
     {
         return GenerateGrainId(apiKeyId.ToString("N"), api, dateTime.ToString("yyyyMMdd"));
+    }
+
+    public static string GenerateAppPodSnapshotGrainId(string appId)
+    {
+        return GenerateGrainId(appId);
+    }
+    
+    public static int GenerateProductsGrainId()
+    {
+        return 0;
+    }
+    
+    public static string GenerateOrdersGrainId(Guid orgId)
+    {
+        return GenerateGrainId(orgId.ToString("N"));
+    }
+    
+    public static string GenerateRenewalGrainId(Guid orgId)
+    {
+        return GenerateGrainId(orgId.ToString("N"));
+    }
+    
+    public static string GenerateBillsGrainId(Guid orgId)
+    {
+        return GenerateGrainId(orgId.ToString("N"));
     }
 }

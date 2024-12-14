@@ -2,11 +2,15 @@ using System;
 using System.IO;
 using System.Linq;
 using AeFinder.ApiKeys;
+using System.Threading.Tasks;
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Market;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.Logger;
+using AeFinder.Market;
 using AeFinder.Metrics;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
@@ -25,7 +29,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
+using Orleans;
 using StackExchange.Redis;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
@@ -97,7 +104,9 @@ public class AeFinderHttpApiHostModule : AbpModule
             option.MultipartBodyLengthLimit = 60485760;
         });
         Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
-        context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
+        Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
+        Configure<PodResourceLevelOptions>(configuration.GetSection("PodResourceLevel"));
+        Configure<ApiQueryCountResourceOptions>(configuration.GetSection("ApiQueryCountResource"));
     }
 
     private void ConfigureCache(IConfiguration configuration)
@@ -324,6 +333,50 @@ public class AeFinderHttpApiHostModule : AbpModule
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppExtensionInfoSyncWorker>());
         
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<ApiKeyTrafficWorker>());
+        
+        //Initialize products info
+        AsyncHelper.RunSync(() => InitializeProductsInfoAsync(context));
+    }
+
+    private async Task InitializeProductsInfoAsync(ApplicationInitializationContext context)
+    {
+        var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        var productsGrain =
+            clusterClient.GetGrain<IProductsGrain>(
+                GrainIdHelper.GenerateProductsGrainId());
+        var podResourceLevelOptions = context.ServiceProvider.GetService<IOptions<PodResourceLevelOptions>>();
+        var levels = podResourceLevelOptions.Value.FullPodResourceLevels;
+        foreach (var resourceLevelInfo in levels)
+        {
+            var productDto = new ProductDto();
+            productDto.ProductId = Guid.NewGuid().ToString();
+            productDto.ProductSpecifications = resourceLevelInfo.LevelName;
+            productDto.ProductType = ProductType.FullPodResource;
+            productDto.ProductName = resourceLevelInfo.ResourceName;
+            var capacity = new ResourceCapacity();
+            capacity.Cpu = resourceLevelInfo.Cpu;
+            capacity.Memory = resourceLevelInfo.Memory;
+            capacity.Disk = resourceLevelInfo.Disk;
+            productDto.Description = JsonConvert.SerializeObject(capacity);
+            productDto.MonthlyUnitPrice = resourceLevelInfo.MonthlyUnitPrice;
+            productDto.IsActive = true;
+            await productsGrain.InitializeProductsInfoAsync(productDto);
+        }
+        
+        var apiQueryCountResourceOptions=context.ServiceProvider.GetService<IOptions<ApiQueryCountResourceOptions>>();
+        var apiQueryResources = apiQueryCountResourceOptions.Value.ApiQueryCountPackages;
+        foreach (var queryCountResourceInfo in apiQueryResources)
+        {
+            var productDto = new ProductDto();
+            productDto.ProductId = Guid.NewGuid().ToString();
+            productDto.ProductSpecifications = queryCountResourceInfo.QueryCount.ToString();
+            productDto.ProductType = ProductType.ApiQueryCount;
+            productDto.ProductName = queryCountResourceInfo.ResourceName;
+            productDto.Description = queryCountResourceInfo.Description;
+            productDto.MonthlyUnitPrice = queryCountResourceInfo.MonthlyUnitPrice;
+            productDto.IsActive = true;
+            await productsGrain.InitializeProductsInfoAsync(productDto);
+        }
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
