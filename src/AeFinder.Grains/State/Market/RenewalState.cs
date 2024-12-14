@@ -1,19 +1,20 @@
 namespace AeFinder.Grains.State.Market;
 
+[GenerateSerializer]
 public class RenewalState
 {
-    public string SubscriptionId { get; set; }
-    public string OrganizationId { get; set; }
-    public string OrderId { get; set; }
-    public string UserId { get; set; }
-    public string AppId { get; set; }
-    public string ProductId { get; set; }
-    public ProductType ProductType { get; set; }
-    public int ProductNumber { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime LastChargeDate { get; set; }
-    public DateTime NextRenewalDate { get; set; }
-    public RenewalPeriod RenewalPeriod { get; set; }
-    public decimal PeriodicCost { get; set; }
-    public bool IsActive { get; set; }
+    [Id(0)]public string SubscriptionId { get; set; }
+    [Id(1)]public string OrganizationId { get; set; }
+    [Id(2)]public string OrderId { get; set; }
+    [Id(3)]public string UserId { get; set; }
+    [Id(4)]public string AppId { get; set; }
+    [Id(5)]public string ProductId { get; set; }
+    [Id(6)]public ProductType ProductType { get; set; }
+    [Id(7)]public int ProductNumber { get; set; }
+    [Id(8)]public DateTime StartDate { get; set; }
+    [Id(9)]public DateTime LastChargeDate { get; set; }
+    [Id(10)]public DateTime NextRenewalDate { get; set; }
+    [Id(11)]public RenewalPeriod RenewalPeriod { get; set; }
+    [Id(12)]public decimal PeriodicCost { get; set; }
+    [Id(13)]public bool IsActive { get; set; }
 }
