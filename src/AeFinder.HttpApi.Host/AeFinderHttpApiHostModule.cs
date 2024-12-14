@@ -108,8 +108,6 @@ public class AeFinderHttpApiHostModule : AbpModule
         });
         Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
         Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
-        Configure<PodResourceLevelOptions>(configuration.GetSection("PodResourceLevel"));
-        Configure<ApiQueryCountResourceOptions>(configuration.GetSection("ApiQueryCountResource"));
         context.Services.AddSingleton(new GraphQLHttpClient(configuration["GraphQL:Configuration"],
             new NewtonsoftJsonSerializer()));
         context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
@@ -337,57 +335,10 @@ public class AeFinderHttpApiHostModule : AbpModule
         
         //Sync app limit info into es
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppExtensionInfoSyncWorker>());
-        
+
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<ApiKeyTrafficWorker>());
-        
-        //Initialize products info
-        AsyncHelper.RunSync(async () => await InitializeProductsInfoAsync(context));
     }
 
-    private async Task InitializeProductsInfoAsync(ApplicationInitializationContext context)
-    {
-        var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
-        if (clusterClient == null)
-        {
-            throw new Exception("[InitializeProductsInfoAsync]ClusterClient is null");
-        }
-        var productsGrain =
-            clusterClient.GetGrain<IProductsGrain>(
-                GrainIdHelper.GenerateProductsGrainId());
-        var podResourceLevelOptions = context.ServiceProvider.GetService<IOptions<PodResourceLevelOptions>>();
-        var levels = podResourceLevelOptions.Value.FullPodResourceLevels;
-        foreach (var resourceLevelInfo in levels)
-        {
-            var productDto = new ProductDto();
-            productDto.ProductId = Guid.NewGuid().ToString();
-            productDto.ProductSpecifications = resourceLevelInfo.LevelName;
-            productDto.ProductType = ProductType.FullPodResource;
-            productDto.ProductName = resourceLevelInfo.ResourceName;
-            var capacity = new ResourceCapacity();
-            capacity.Cpu = resourceLevelInfo.Cpu;
-            capacity.Memory = resourceLevelInfo.Memory;
-            capacity.Disk = resourceLevelInfo.Disk;
-            productDto.Description = JsonConvert.SerializeObject(capacity);
-            productDto.MonthlyUnitPrice = resourceLevelInfo.MonthlyUnitPrice;
-            productDto.IsActive = true;
-            await productsGrain.InitializeProductsInfoAsync(productDto);
-        }
-        
-        var apiQueryCountResourceOptions=context.ServiceProvider.GetService<IOptions<ApiQueryCountResourceOptions>>();
-        var apiQueryResources = apiQueryCountResourceOptions.Value.ApiQueryCountPackages;
-        foreach (var queryCountResourceInfo in apiQueryResources)
-        {
-            var productDto = new ProductDto();
-            productDto.ProductId = Guid.NewGuid().ToString();
-            productDto.ProductSpecifications = queryCountResourceInfo.QueryCount.ToString();
-            productDto.ProductType = ProductType.ApiQueryCount;
-            productDto.ProductName = queryCountResourceInfo.ResourceName;
-            productDto.Description = queryCountResourceInfo.Description;
-            productDto.MonthlyUnitPrice = queryCountResourceInfo.MonthlyUnitPrice;
-            productDto.IsActive = true;
-            await productsGrain.InitializeProductsInfoAsync(productDto);
-        }
-    }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {

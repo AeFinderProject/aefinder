@@ -16,6 +16,7 @@ using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Orleans;
 using Volo.Abp;
@@ -42,7 +43,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
         IUserAppService userAppService, IContractProvider contractProvider,
         IUserInformationProvider userInformationProvider,
-        IOrganizationInformationProvider organizationInformationProvider,AppDeployOptions appDeployOptions,
+        IOrganizationInformationProvider organizationInformationProvider,IOptionsSnapshot<AppDeployOptions> appDeployOptions,
         IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
@@ -52,7 +53,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _userAppService = userAppService;
         _contractProvider = contractProvider;
-        _appDeployOptions = appDeployOptions;
+        _appDeployOptions = appDeployOptions.Value;
         _organizationInformationProvider = organizationInformationProvider;
         _userInformationProvider = userInformationProvider;
     }
