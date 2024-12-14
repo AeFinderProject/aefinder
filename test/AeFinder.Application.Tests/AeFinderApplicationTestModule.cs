@@ -5,6 +5,7 @@ using AeFinder.CodeOps;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Metrics;
 using AeFinder.Orleans.TestBase;
+using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -38,5 +39,10 @@ public class AeFinderApplicationTestModule : AbpModule
         });
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
         context.Services.AddTransient<IKubernetesAppMonitor, DefaultKubernetesAppMonitor>();
+
+        context.Services.Configure<UserRegisterOptions>(o =>
+        {
+            o.EmailSendingInterval = 0;
+        });
     }
 }

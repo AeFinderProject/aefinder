@@ -14,11 +14,11 @@ public class RegisterUserInput
     public string Password { get; set; }
     
     [Required(ErrorMessage = "Email is required.")]
-    [EmailAddress(ErrorMessage = "Invalid Email Address")]
+    [EmailAddress(ErrorMessage = "Invalid email address.")]
     public string Email { get; set; }
     
     [Required]
-    [MaxLength(50, ErrorMessage = "DisplayName cannot exceed 50 characters.")]
-    [RegularExpression("^[a-zA-Z0-9]*$", ErrorMessage = "DisplayName can only contain letters and digits.")]
+    [MaxLength(50, ErrorMessage = "Organization name cannot exceed 50 characters.")]
+    [RegularExpression("^[a-zA-Z0-9]*$", ErrorMessage = "Organization name can only contain letters and digits.")]
     public string OrganizationName { get; set; }
 }

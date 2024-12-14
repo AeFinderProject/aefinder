@@ -2,19 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Users;
 using AeFinder.User.Dto;
 using AeFinder.User.Provider;
 using AElf;
 using AElf.ExceptionHandler;
 using AElf.Types;
+using GraphQL.Validation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
+using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Identity;
+using Volo.Abp.Timing;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder.User;
@@ -29,6 +34,9 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IWalletLoginProvider _walletLoginProvider;
+    private readonly UserRegisterOptions _userRegisterOptions;
+    private readonly IClusterClient _clusterClient;
+    private readonly IClock _clock;
 
     public UserAppService(
         IdentityUserManager userManager,
@@ -41,7 +49,8 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         IOrganizationUnitRepository organizationUnitRepository,
         IUserInformationProvider userInformationProvider,
         IWalletLoginProvider walletLoginProvider,
-        IPermissionChecker permissionChecker)
+        IPermissionChecker permissionChecker, IOptionsSnapshot<UserRegisterOptions> userRegisterOptions,
+        IClusterClient clusterClient, IClock clock)
         : base(userManager, userRepository, roleRepository, identityOptions, permissionChecker)
     {
         _organizationUnitRepository = organizationUnitRepository;
@@ -50,6 +59,9 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         _organizationAppService = organizationAppService;
         _userInformationProvider = userInformationProvider;
         _walletLoginProvider = walletLoginProvider;
+        _userRegisterOptions = userRegisterOptions.Value;
+        _clusterClient = clusterClient;
+        _clock = clock;
     }
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)
@@ -249,6 +261,19 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
     
     public async Task RegisterAsync(RegisterUserInput input)
     {
+        var userName = input.UserName.Trim();
+        var email = input.Email.Trim();
+        
+        var codeGrain =
+            _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
+                GrainIdHelper.GenerateRegisterVerificationCodeGrainId(email));
+        var oldCode = await codeGrain.GetCodeAsync();
+        if (!oldCode.Code.IsNullOrWhiteSpace() && _clock.Now < oldCode.SendingTime.AddSeconds(_userRegisterOptions.EmailSendingInterval))
+        {
+            throw new UserFriendlyException("The operation is too frequent, please try again later.");
+        }
+        await codeGrain.RemoveAsync();
+        
         var orgName = input.OrganizationName.Trim();
         var organizationUnit = await _organizationUnitRepository.GetAsync(orgName);
         if (organizationUnit != null)
@@ -256,10 +281,9 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
             throw new UserFriendlyException("Organization already exists.");
         }
         
-        var userName = input.UserName.Trim();
-        var email = input.Email.Trim();
         var user = new IdentityUser(GuidGenerator.Create(), userName, email, CurrentTenant.Id);
         user.SetIsActive(false);
+        user.SetEmailConfirmed(false);
 
         var createResult = await UserManager.CreateAsync(user, input.Password);
         if (!createResult.Succeeded)
@@ -277,10 +301,93 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
             await UserManager.AddToRoleAsync(identityUser, appAdminRole.Name);
         }
         
+        var newCode = GuidGenerator.Create().ToString("N");
+        await codeGrain.SetCodeAsync(newCode, _clock.Now);
         
+        var registerGrain = _clusterClient.GetGrain<IUserRegisterGrain>(GrainIdHelper.GenerateUserRegisterGrainId(newCode));
+        await registerGrain.SetAsync(user.Id, input.OrganizationName);
+        
+        await SendRegisterEmailAsync(email, newCode);
     }
-    
-    
+
+    public async Task RegisterConfirmAsync(string code)
+    {
+        var registerGrain =
+            _clusterClient.GetGrain<IUserRegisterGrain>(GrainIdHelper.GenerateUserRegisterGrainId(code));
+        var register = await registerGrain.GetAsync();
+        if (register.OrganizationName.IsNullOrWhiteSpace())
+        {
+            throw new UserFriendlyException("Register information not found.");
+        }
+        
+        var user = await UserManager.FindByIdAsync(register.UserId.ToString());
+        if (user == null)
+        {
+            throw new UserFriendlyException("User information not found.");
+        }
+        
+        var codeGrain =
+            _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
+                GrainIdHelper.GenerateRegisterVerificationCodeGrainId(user.Email));
+        var verificationCode = await codeGrain.GetCodeAsync();
+        if (verificationCode.Code.IsNullOrWhiteSpace() ||
+            verificationCode.Code != code.ToLower() ||
+            _clock.Now > verificationCode.SendingTime.AddSeconds(_userRegisterOptions.CodeExpires))
+        {
+            throw new UserFriendlyException("The activated link is invalid.");
+        }
+        
+        user.SetEmailConfirmed(true);
+        user.SetIsActive(true);
+        await UserManager.UpdateAsync(user);
+        
+        await _organizationAppService.CreateOrganizationUnitAsync(register.OrganizationName);
+        var organizationUnit = await _organizationUnitRepository.GetAsync(register.OrganizationName);
+        await UserManager.AddToOrganizationUnitAsync(user, organizationUnit);
+        await _organizationAppService.AddUserToOrganizationUnitAsync(user.Id,organizationUnit.Id);
+
+        await codeGrain.RemoveAsync();
+    }
+
+    public async Task ResendRegisterEmailAsync(ResendEmailInput input)
+    {
+        var email = input.Email.Trim();
+        var codeGrain =
+            _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
+                GrainIdHelper.GenerateRegisterVerificationCodeGrainId(email));
+        var oldCode = await codeGrain.GetCodeAsync();
+        if (oldCode.Code.IsNullOrWhiteSpace())
+        {
+            throw new UserFriendlyException("Register information not found.");
+        }
+
+        if (_clock.Now < oldCode.SendingTime.AddSeconds(_userRegisterOptions.EmailSendingInterval))
+        {
+            throw new UserFriendlyException("The operation is too frequent, please try again later.");
+        }
+
+        var registerGrain =
+            _clusterClient.GetGrain<IUserRegisterGrain>(GrainIdHelper.GenerateUserRegisterGrainId(oldCode.Code));
+        var register = await registerGrain.GetAsync();
+        if (register.OrganizationName.IsNullOrWhiteSpace())
+        {
+            throw new UserFriendlyException("Register information not found.");
+        }
+
+        var newCode = GuidGenerator.Create().ToString("N");
+        await codeGrain.SetCodeAsync(newCode, _clock.Now);
+
+        registerGrain = _clusterClient.GetGrain<IUserRegisterGrain>(GrainIdHelper.GenerateUserRegisterGrainId(newCode));
+        await registerGrain.SetAsync(register.UserId, register.OrganizationName);
+
+        await SendRegisterEmailAsync(email, newCode);
+    }
+
+    private async Task SendRegisterEmailAsync(string email, string code)
+    {
+        // TODO: Send email
+        Logger.LogInformation($"Temporary test: {email} - {code}");
+    }
 
     [ExceptionHandler([typeof(SignatureVerifyException)], TargetType = typeof(UserAppService),
         MethodName = nameof(HandleSignatureVerifyExceptionAsync))]

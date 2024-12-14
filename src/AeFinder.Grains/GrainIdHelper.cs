@@ -126,4 +126,14 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(appId, version);
     }
+    
+    public static string GenerateUserRegisterGrainId(string code)
+    {
+        return GenerateGrainId(code.ToLower());
+    }
+    
+    public static string GenerateRegisterVerificationCodeGrainId(string email)
+    {
+        return GenerateGrainId(email.ToLower());
+    }
 }

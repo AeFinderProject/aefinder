@@ -1,7 +1,10 @@
+using AeFinder.User.Dto;
+
 namespace AeFinder.Grains.Grain.Users;
 
 public interface IRegisterVerificationCodeGrain : IGrainWithStringKey
 {
-    Task<string> GenerationCodeAsync();
-    Task<string> GetCodeAsync();
+    Task SetCodeAsync(string code, DateTime sendingTime);
+    Task<RegisterVerificationCodeInfo> GetCodeAsync();
+    Task RemoveAsync();
 }
