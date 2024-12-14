@@ -129,6 +129,7 @@ public class OrderService: ApplicationService, IOrderService
                 });
                 await _distributedEventBus.PublishAsync(new BillCreateEto()
                 {
+                    OrganizationId = newLockBill.OrganizationId,
                     BillingId = newLockBill.BillingId
                 });
                 billList.Add(newLockBill);
@@ -161,6 +162,7 @@ public class OrderService: ApplicationService, IOrderService
             });
             await _distributedEventBus.PublishAsync(new BillCreateEto()
             {
+                OrganizationId = oldChargeBill.OrganizationId,
                 BillingId = oldChargeBill.BillingId
             });
         }
@@ -199,6 +201,7 @@ public class OrderService: ApplicationService, IOrderService
             });
             await _distributedEventBus.PublishAsync(new BillCreateEto()
             {
+                OrganizationId = newLockBill.OrganizationId,
                 BillingId = newLockBill.BillingId
             });
             billList.Add(newLockBill);

@@ -123,6 +123,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 });
                 await _distributedEventBus.PublishAsync(new BillCreateEto()
                 {
+                    OrganizationId = chargeBill.OrganizationId,
                     BillingId = chargeBill.BillingId
                 });
                 await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, 0,
@@ -167,6 +168,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 });
                 await _distributedEventBus.PublishAsync(new BillCreateEto()
                 {
+                    OrganizationId = newLockBill.OrganizationId,
                     BillingId = newLockBill.BillingId
                 });
                 //Send lockFrom transaction to contract

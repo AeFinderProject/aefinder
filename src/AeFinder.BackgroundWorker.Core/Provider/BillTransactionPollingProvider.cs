@@ -114,27 +114,25 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                     });
                 }
 
-                if (oldRenewalInfo == null)
+                if (oldRenewalInfo != null)
                 {
-                    break;
-                }
+                    //Stop old subscription, cancel old order
+                    await ordersGrain.CancelOrderByIdAsync(oldRenewalInfo.OrderId);
                 
-                //Stop old subscription, cancel old order
-                await ordersGrain.CancelOrderByIdAsync(oldRenewalInfo.OrderId);
-                
-                //Find old order pending bill, call contract to charge bill
-                var oldOrderChargeBill = await billsGrain.GetPendingChargeBillByOrderIdAsync(oldRenewalInfo.OrderId);
-                if (oldOrderChargeBill != null)
-                {
-                    //Send charge transaction to contract
-                    var userExtensionDto =
-                        await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(oldRenewalInfo.UserId));
-                    var organizationWalletAddress =
-                        await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
-                            userExtensionDto.WalletAddress);
-                    var sendTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress,
-                        oldOrderChargeBill.BillingAmount, oldOrderChargeBill.RefundAmount,
-                        oldOrderChargeBill.BillingId);
+                    //Find old order pending bill, call contract to charge bill
+                    var oldOrderChargeBill = await billsGrain.GetPendingChargeBillByOrderIdAsync(oldRenewalInfo.OrderId);
+                    if (oldOrderChargeBill != null)
+                    {
+                        //Send charge transaction to contract
+                        var userExtensionDto =
+                            await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(oldRenewalInfo.UserId));
+                        var organizationWalletAddress =
+                            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
+                                userExtensionDto.WalletAddress);
+                        var sendTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress,
+                            oldOrderChargeBill.BillingAmount, oldOrderChargeBill.RefundAmount,
+                            oldOrderChargeBill.BillingId);
+                    }
                 }
                 
                 //Update App pod resource config
