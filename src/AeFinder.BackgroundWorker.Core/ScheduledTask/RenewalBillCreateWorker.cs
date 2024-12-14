@@ -4,6 +4,7 @@ using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Market;
+using AeFinder.Market.Eto;
 using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Threading;
 using Volo.Abp.Uow;
 
@@ -29,6 +31,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     private readonly IAeFinderIndexerProvider _indexerProvider;
     private readonly ContractOptions _contractOptions;
     private readonly IAppDeployService _appDeployService;
+    private readonly IDistributedEventBus _distributedEventBus;
     
     public RenewalBillCreateWorker(AbpAsyncTimer timer, ILogger<AppInfoSyncWorker> logger,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
@@ -36,6 +39,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         IContractProvider contractProvider,IOrganizationInformationProvider organizationInformationProvider,
         IUserInformationProvider userInformationProvider,IAeFinderIndexerProvider indexerProvider,
         IOptionsSnapshot<ContractOptions> contractOptions,IAppDeployService appDeployService,
+        IDistributedEventBus distributedEventBus,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -48,6 +52,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         _indexerProvider = indexerProvider;
         _contractOptions = contractOptions.Value;
         _appDeployService = appDeployService;
+        _distributedEventBus = distributedEventBus;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = CalculateNextExecutionDelay();
     }
@@ -116,8 +121,19 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     Description = "Auto-renewal charge for the existing order.",
                     RefundAmount = refundAmount
                 });
+                await _distributedEventBus.PublishAsync(new BillCreateEto()
+                {
+                    BillingId = chargeBill.BillingId
+                });
                 await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, 0,
                     chargeBill.BillingId);
+                
+                //Check if the renewal date has arrived
+                var today = DateTime.UtcNow;
+                if (renewalDto.NextRenewalDate > today.AddDays(1))
+                {
+                    continue;
+                }
                 
                 //Check user organization balance
                 var userOrganizationBalanceInfoDto =
@@ -148,6 +164,10 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     AppId = renewalDto.AppId,
                     OrderId = renewalDto.OrderId,
                     Description = $"Auto-renewal lock for the existing order."
+                });
+                await _distributedEventBus.PublishAsync(new BillCreateEto()
+                {
+                    BillingId = newLockBill.BillingId
                 });
                 //Send lockFrom transaction to contract
                 await _contractProvider.BillingLockFromAsync(organizationWalletAddress, newLockBill.BillingAmount,

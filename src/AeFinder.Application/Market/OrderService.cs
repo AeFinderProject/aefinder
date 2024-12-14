@@ -6,10 +6,12 @@ using AeFinder.Apps;
 using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
+using AeFinder.Market.Eto;
 using AeFinder.User;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
+using Volo.Abp.EventBus.Distributed;
 
 namespace AeFinder.Market;
 
@@ -20,16 +22,18 @@ public class OrderService: ApplicationService, IOrderService
     private readonly IAppService _appService;
     private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
     private readonly IContractProvider _contractProvider;
+    private readonly IDistributedEventBus _distributedEventBus;
 
     public OrderService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
-        IContractProvider contractProvider,
-        IAppOperationSnapshotProvider appOperationSnapshotProvider,IAppService appService)
+        IContractProvider contractProvider, IDistributedEventBus distributedEventBus,
+        IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppService appService)
     {
         _clusterClient = clusterClient;
         _organizationAppService = organizationAppService;
         _appService = appService;
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _contractProvider = contractProvider;
+        _distributedEventBus = distributedEventBus;
     }
 
     public async Task<List<BillDto>> CreateOrderAsync(CreateOrderDto dto)
@@ -123,6 +127,10 @@ public class OrderService: ApplicationService, IOrderService
                     Description =
                         $"Old order remaining locked amount: {remainingLockedAmount}, New order first month required locked amount: {firstMonthLockFee}, Additional amount needed to be locked: {needLockFee}."
                 });
+                await _distributedEventBus.PublishAsync(new BillCreateEto()
+                {
+                    BillingId = newLockBill.BillingId
+                });
                 billList.Add(newLockBill);
             }
             else
@@ -151,7 +159,10 @@ public class OrderService: ApplicationService, IOrderService
                 ChargeFee = chargeFee,
                 RefundAmount = refundAmount
             });
-            
+            await _distributedEventBus.PublishAsync(new BillCreateEto()
+            {
+                BillingId = oldChargeBill.BillingId
+            });
         }
         else
         {
@@ -185,6 +196,10 @@ public class OrderService: ApplicationService, IOrderService
                 OrderId = newOrder.OrderId,
                 LockFee = firstMonthFee,
                 Description = $"Lock a portion of the balance for the new order."
+            });
+            await _distributedEventBus.PublishAsync(new BillCreateEto()
+            {
+                BillingId = newLockBill.BillingId
             });
             billList.Add(newLockBill);
         }

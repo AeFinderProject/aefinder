@@ -6,8 +6,12 @@ using AeFinder.App;
 using AeFinder.App.Es;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
+using AeFinder.Market;
+using AeFinder.Options;
 using AeFinder.User.Dto;
+using AeFinder.User.Provider;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -28,11 +32,18 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     private readonly IIdentityUserRepository _identityUserRepository;
     private readonly IClusterClient _clusterClient;
     private readonly IEntityMappingRepository<OrganizationIndex, string> _organizationEntityMappingRepository;
+    private readonly IOrganizationInformationProvider _organizationInformationProvider;
+    private readonly IUserInformationProvider _userInformationProvider;
+    private readonly IAeFinderIndexerProvider _indexerProvider;
+    private readonly ContractOptions _contractOptions;
 
     public OrganizationAppService(IClusterClient clusterClient, 
         OrganizationUnitManager organizationUnitManager,
         IRepository<OrganizationUnit, Guid> organizationUnitRepository,
         IIdentityUserRepository identityUserRepository,
+        IOrganizationInformationProvider organizationInformationProvider,
+        IUserInformationProvider userInformationProvider,
+        IAeFinderIndexerProvider indexerProvider,IOptionsSnapshot<ContractOptions> contractOptions,
         IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
         IdentityUserManager identityUserManager)
     {
@@ -42,6 +53,10 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         _identityUserManager = identityUserManager;
         _identityUserRepository = identityUserRepository;
         _organizationEntityMappingRepository = organizationEntityMappingRepository;
+        _organizationInformationProvider = organizationInformationProvider;
+        _userInformationProvider = userInformationProvider;
+        _indexerProvider = indexerProvider;
+        _contractOptions = contractOptions.Value;
     }
     
     public async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(string displayName, Guid? parentId = null)
@@ -149,5 +164,38 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
 
         var result = ObjectMapper.Map<List<OrganizationUnit>, List<OrganizationUnitDto>>(organizationUnits);
         return result;
+    }
+    
+    public async Task<List<OrganizationUnitDto>> GetOrganizationUnitsByUserIdAsync()
+    {
+        var organizationUnits = await _identityUserRepository.GetOrganizationUnitsAsync(CurrentUser.Id.Value);
+
+        var result = ObjectMapper.Map<List<OrganizationUnit>, List<OrganizationUnitDto>>(organizationUnits);
+        return result;
+    }
+
+    public async Task<OrganizationBalanceDto> GetOrganizationBalanceAsync(string organizationId)
+    {
+        var userExtensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
+        if (userExtensionInfo.WalletAddress.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("Please bind your user wallet first.");
+        }
+
+        var organizationWalletAddress = await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(
+            organizationId, userExtensionInfo.WalletAddress);
+        var indexerBalanceDto =
+            await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
+                _contractOptions.BillingContractChainId);
+        if (indexerBalanceDto == null || indexerBalanceDto.UserBalance == null ||
+            indexerBalanceDto.UserBalance.Items == null || indexerBalanceDto.UserBalance.Items.Count == 0)
+        {
+            return new OrganizationBalanceDto();
+        }
+
+        var balanceInfo = indexerBalanceDto.UserBalance.Items[0];
+        var organizationAccountBalance = ObjectMapper.Map<UserBalanceDto,OrganizationBalanceDto>(balanceInfo);
+        organizationAccountBalance.ChainId = balanceInfo.Metadata.ChainId;
+        return organizationAccountBalance;
     }
 }

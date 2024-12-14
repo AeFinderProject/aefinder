@@ -80,4 +80,18 @@ public class OrganizationUnitsController : AeFinderController
     {
         return await _appService.GetMaxAppCountAsync(id);
     }
+    
+    [HttpGet("user/all")]
+    [Authorize]
+    public virtual async Task<List<OrganizationUnitDto>> GetUserOrganizationUnitsAsync()
+    {
+        return await _organizationAppService.GetOrganizationUnitsByUserIdAsync();
+    }
+    
+    [HttpGet("balance")]
+    [Authorize]
+    public virtual async Task<OrganizationBalanceDto> GetOrganizationBalanceAsync(string organizationId)
+    {
+        return await _organizationAppService.GetOrganizationBalanceAsync(organizationId);
+    }
 }
