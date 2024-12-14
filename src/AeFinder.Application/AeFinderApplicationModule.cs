@@ -67,8 +67,5 @@ public class AeFinderApplicationModule : AbpModule
             options.Kind = DateTimeKind.Utc;
         });
         Configure<ContractOptions>(configuration.GetSection("Contract"));
-        context.Services.AddSingleton(new GraphQLHttpClient(configuration["GraphQL:Configuration"],
-            new NewtonsoftJsonSerializer()));
-        context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
     }
 }
