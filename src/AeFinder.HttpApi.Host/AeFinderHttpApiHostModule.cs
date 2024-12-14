@@ -113,6 +113,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         context.Services.AddSingleton(new GraphQLHttpClient(configuration["GraphQL:Configuration"],
             new NewtonsoftJsonSerializer()));
         context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
+        context.Services.AddHostedService<AeFinderHostedService>();
     }
 
     private void ConfigureCache(IConfiguration configuration)
