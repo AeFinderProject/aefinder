@@ -341,12 +341,16 @@ public class AeFinderHttpApiHostModule : AbpModule
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<ApiTrafficWorker>());
         
         //Initialize products info
-        AsyncHelper.RunSync(() => InitializeProductsInfoAsync(context));
+        AsyncHelper.RunSync(async () => await InitializeProductsInfoAsync(context));
     }
 
     private async Task InitializeProductsInfoAsync(ApplicationInitializationContext context)
     {
         var clusterClient = context.ServiceProvider.GetRequiredService<IClusterClient>();
+        if (clusterClient == null)
+        {
+            throw new Exception("[InitializeProductsInfoAsync]ClusterClient is null");
+        }
         var productsGrain =
             clusterClient.GetGrain<IProductsGrain>(
                 GrainIdHelper.GenerateProductsGrainId());
