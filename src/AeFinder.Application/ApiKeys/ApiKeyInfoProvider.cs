@@ -50,7 +50,7 @@ public class ApiKeyInfoProvider : IApiKeyInfoProvider, ISingletonDependency
             var apiKeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKeyId);
             info = await apiKeyGrain.GetAsync();
 
-            if (info == null || info.Key.IsNullOrWhiteSpace())
+            if (info == null || info.Key.IsNullOrWhiteSpace() || info.IsDeleted)
             {
                 throw new UserFriendlyException("Api key not exist.");
             }
@@ -66,7 +66,7 @@ public class ApiKeyInfoProvider : IApiKeyInfoProvider, ISingletonDependency
         if (!_apiKeyIdMapping.TryGetValue(apiKey, out var id))
         {
             var queryable = await _apiKeyIndexRepository.GetQueryableAsync();
-            var index = queryable.FirstOrDefault(o => o.Key == apiKey);
+            var index = queryable.FirstOrDefault(o => o.Key == apiKey && o.IsDeleted == false);
             if (index == null)
             {
                 throw new UserFriendlyException("Api key not exist.");
@@ -81,6 +81,13 @@ public class ApiKeyInfoProvider : IApiKeyInfoProvider, ISingletonDependency
 
     public Task SetApiKeyInfoAsync(ApiKeyInfo apiKeyInfo)
     {
+        if (apiKeyInfo.IsDeleted)
+        {
+            _apiKeyIdMapping.TryRemove(apiKeyInfo.Key, out _);
+            _apiKeys.TryRemove(apiKeyInfo.Id, out _);
+            return Task.CompletedTask;
+        }
+
         if (_apiKeys.TryGetValue(apiKeyInfo.Id, out var oldApiKeyInfo) && oldApiKeyInfo.Key != apiKeyInfo.Key)
         {
             _apiKeyIdMapping.Remove(oldApiKeyInfo.Key, out _);
