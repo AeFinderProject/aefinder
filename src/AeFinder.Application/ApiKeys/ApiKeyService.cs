@@ -323,11 +323,11 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
         };
     }
 
-    public async Task AdjustQueryLimitAsync(Guid organizationId, long count)
+    public async Task SetQueryLimitAsync(Guid organizationId, long count)
     {
         var apiKeySummaryGrain =
             _clusterClient.GetGrain<IApiKeySummaryGrain>(GrainIdHelper.GenerateApiKeySummaryGrainId(organizationId));
-        await apiKeySummaryGrain.AdjustQueryLimitAsync(organizationId, count);
+        await apiKeySummaryGrain.SetQueryLimitAsync(organizationId, count);
     }
 
     public async Task<long> GetMonthQueryCountAsync(Guid organizationId, DateTime time)

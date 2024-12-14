@@ -30,7 +30,7 @@ public interface IApiKeyService
     Task SetAuthorisedApisAsync(Guid organizationId, Guid apiKeyId, SetAuthorisedApiInput input);
     Task<PagedResultDto<ApiKeyQueryAeIndexerDto>> GetApiKeyQueryAeIndexersAsync(Guid organizationId, Guid apiKeyId, GetApiKeyQueryAeIndexerInput input);
     Task<PagedResultDto<ApiKeyQueryApiDto>> GetApiKeyQueryApisAsync(Guid organizationId, Guid apiKeyId, GetApiKeyQueryApiInput input);
-    Task AdjustQueryLimitAsync(Guid organizationId, long count);
+    Task SetQueryLimitAsync(Guid organizationId, long count);
     Task<long> GetMonthQueryCountAsync(Guid orgId, DateTime time);
 
 }
