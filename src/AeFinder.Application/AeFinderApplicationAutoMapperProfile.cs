@@ -142,6 +142,5 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<IdentityUser, IdentityUserExtensionDto>();
         
         CreateMap<UserRegisterState, UserRegisterInfo>();
-        CreateMap<RegisterVerificationCodeState, RegisterVerificationCodeInfo>();
     }
 }
