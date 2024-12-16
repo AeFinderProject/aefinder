@@ -38,6 +38,11 @@ public class BillService : ApplicationService, IBillService
         result.BillingCycleMonthCount = input.PeriodMonths;
         result.PeriodicCost = result.BillingCycleMonthCount * monthlyFee;
         var organizationGrainId = await GetOrganizationGrainIdAsync(input.OrganizationId);
+        if (productInfo.ProductType == ProductType.ApiQueryCount)
+        {
+            result.FirstMonthCost = monthlyFee;
+            return result;
+        }
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
         result.FirstMonthCost = await billsGrain.CalculateFirstMonthLockAmount(monthlyFee);

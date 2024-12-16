@@ -5,7 +5,7 @@ namespace AeFinder.Market;
 
 public interface IProductService
 {
-    Task<List<FullPodResourceDto>> GetFullPodResourceLevelInfoAsync();
+    Task<List<FullPodResourceDto>> GetFullPodResourceInfoAsync();
     FullPodResourceDto ConvertToFullPodResourceDto(ProductDto productDto);
     Task<ApiQueryCountResourceDto> GetRegularApiQueryCountProductInfoAsync();
 }

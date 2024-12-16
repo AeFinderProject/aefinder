@@ -66,7 +66,7 @@ public class RenewalService: ApplicationService, IRenewalService
             _clusterClient.GetGrain<IProductsGrain>(
                 GrainIdHelper.GenerateProductsGrainId());
         var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalInfo.ProductId);
-        var levelDto = _productService.ConvertToFullPodResourceDto(productInfo);
-        return levelDto;
+        var resourceDto = _productService.ConvertToFullPodResourceDto(productInfo);
+        return resourceDto;
     }
 }
