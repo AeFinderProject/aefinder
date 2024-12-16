@@ -41,6 +41,15 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
             .ReturnsAsync(new List<OrganizationUnitDto> { 
                 new OrganizationUnitDto { Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1") } 
             });
+        mockOrganizationAppService
+            .Setup(service => service.GetOrganizationUnitAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(
+                new OrganizationUnitDto
+                {
+                    Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1"),
+                    DisplayName = "OrganizationName"
+                } 
+            );
         return mockOrganizationAppService.Object;
     }
 
@@ -190,5 +199,55 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         limit.Items[0].DeployLimit.MaxAppCodeSize.ShouldBe(index.DeployLimit.MaxAppCodeSize);
         limit.Items[0].DeployLimit.MaxAppAttachmentSize.ShouldBe(index.DeployLimit.MaxAppAttachmentSize);
         limit.Items[0].ResourceLimit.EnableMultipleInstances.ShouldBeTrue();
+    }
+    
+    [Fact]
+    public async Task App_Search_Test()
+    {
+        var orgId = Guid.NewGuid();
+        await _appIndexRepository.AddAsync(new AppInfoIndex
+        {
+            AppId = "Test App 1".Trim().ToLower().Replace(" ", "_"),
+            AppName = "App1",
+            OrganizationId = orgId.ToString(),
+            OrganizationName = "OrganizationName",
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now,
+            Id = "AppId1"
+        });
+        
+        await _appIndexRepository.AddAsync(new AppInfoIndex
+        {
+            AppId = "Test Ap".Trim().ToLower().Replace(" ", "_"),
+            AppName = "App1",
+            OrganizationId = orgId.ToString(),
+            OrganizationName = "OrganizationName",
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now,
+            Id = "AppId2"
+        });
+        
+        await _appIndexRepository.AddAsync(new AppInfoIndex
+        {
+            AppId = "Search App 1".Trim().ToLower().Replace(" ", "_"),
+            AppName = "App1",
+            OrganizationId = orgId.ToString(),
+            OrganizationName = "OrganizationName",
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now,
+            Id = "AppId3"
+        });
+        
+        var apps = await _appService.SearchAsync(orgId, "");
+        apps.Items.Count.ShouldBe(3);
+        
+        apps = await _appService.SearchAsync(orgId, "Test");
+        apps.Items.Count.ShouldBe(2);
+        
+        apps = await _appService.SearchAsync(orgId, "test app");
+        apps.Items.Count.ShouldBe(1);
+        
+        apps = await _appService.SearchAsync(orgId, "ap");
+        apps.Items.Count.ShouldBe(3);
     }
 }

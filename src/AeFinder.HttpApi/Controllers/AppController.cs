@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using AeFinder.Apps.Dto;
 using AeFinder.Kubernetes;
 using AeFinder.Models;
 using AeFinder.Options;
+using AeFinder.User;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,12 +28,14 @@ public class AppController : AeFinderController
     private readonly IAppService _appService;
     private readonly IAppLogService _appLogService;
     private readonly KubernetesOptions _kubernetesOption;
+    private readonly IOrganizationAppService _organizationAppService;
 
     public AppController(IAppService appService, IAppLogService appLogService,
-        IOptionsSnapshot<KubernetesOptions> kubernetesOption)
+        IOptionsSnapshot<KubernetesOptions> kubernetesOption, IOrganizationAppService organizationAppService)
     {
         _appService = appService;
         _appLogService = appLogService;
+        _organizationAppService = organizationAppService;
         _kubernetesOption = kubernetesOption.Value;
     }
 
@@ -143,5 +147,19 @@ public class AppController : AeFinderController
         return await _appService.GetAppPodUsageDurationListAsync(input);
     }
     
+    [HttpGet]
+    [Route("search")]
+    [Authorize]
+    public async Task<ListResultDto<AppInfoImmutable>> SearchAsync(string keyword)
+    {
+        var orgId = await GetOrganizationIdAsync();
+        return await _appService.SearchAsync(orgId, keyword);
+    }
     
+    private async Task<Guid> GetOrganizationIdAsync()
+    {
+        var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
+        return organizationIds.First().Id;
+    }
+
 }

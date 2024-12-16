@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.CodeOps;
+using AeFinder.Grains.Grain.ApiKeys;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Logger;
 using AeFinder.Logger.Entities;
@@ -53,6 +54,10 @@ public class AeFinderApplicationTestModule : AbpModule
         context.Services.Configure<LogElasticSearchOptions>(options =>
         {
             options.Uris = new List<string>(){"http://localhost:9200"};
+        });
+        context.Services.Configure<ApiKeyOptions>(o =>
+        {
+            o.IgnoreKeys = new HashSet<string> { "app" };
         });
     }
 
