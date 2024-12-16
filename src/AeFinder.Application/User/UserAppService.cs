@@ -273,6 +273,12 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
             throw new UserFriendlyException("User name already exists.");
         }
         
+        existUser = await UserManager.FindByEmailAsync(email);
+        if (existUser != null)
+        {
+            throw new UserFriendlyException("Email already exists.");
+        }
+        
         var verificationCodeGrain =
             _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
                 GrainIdHelper.GenerateRegisterVerificationCodeGrainId(email));
