@@ -47,9 +47,8 @@ public class AppResourceService : AeFinderAppService, IAppResourceService
         }
 
         var pods = queryable.OrderBy(o => o.PodName).ToList();
-        // var totalCount = queryable.Count();
         var podsResourceInfoList = ObjectMapper.Map<List<AppPodInfoIndex>, List<AppPodInfoDto>>(pods);
-        var fullPodResourUsageInfoList = new List<AppFullPodResourceUsageDto>();
+        var fullPodResourceUsageInfoList = new List<AppFullPodResourceUsageDto>();
         foreach (var podResourceInfo in podsResourceInfoList)
         {
             foreach (var containerDto in podResourceInfo.Containers)
@@ -59,10 +58,10 @@ public class AppResourceService : AeFinderAppService, IAppResourceService
                     var fullPodResourceUsage = ObjectMapper.Map<PodContainerDto, AppFullPodResourceUsageDto>(containerDto);
                     fullPodResourceUsage.AppId = podResourceInfo.AppId;
                     fullPodResourceUsage.AppVersion = podResourceInfo.AppVersion;
-                    fullPodResourUsageInfoList.Add(fullPodResourceUsage);
+                    fullPodResourceUsageInfoList.Add(fullPodResourceUsage);
                 }
             }
         }
-        return fullPodResourUsageInfoList;
+        return fullPodResourceUsageInfoList;
     }
 }

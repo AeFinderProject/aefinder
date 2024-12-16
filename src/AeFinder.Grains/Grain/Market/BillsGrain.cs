@@ -195,7 +195,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return usedFee;
     }
 
-    public async Task<decimal> CalculateApiQueryMonthlyChargeAmountAsync(int monthlyQueryCount)
+    public async Task<decimal> CalculateApiQueryMonthlyChargeAmountAsync(long monthlyQueryCount)
     {
         var productsGrain =
             GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
