@@ -1,5 +1,7 @@
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.Common;
+using AeFinder.Commons;
 using AeFinder.Grains;
 using AeFinder.MongoDb;
 using AElf.ExceptionHandler.Orleans.Extensions;
@@ -36,7 +38,7 @@ public class AeFinderOrleansSiloModule : AbpModule
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
-        
+        context.Services.AddTransient<IElasticSearchIndexHelper, ElasticSearchIndexIndexHelper>();
         context.Services.AddOrleansExceptionHandler();
     }
 
