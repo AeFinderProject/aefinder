@@ -2,6 +2,7 @@
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.CodeOps;
+using AeFinder.Grains.Grain.ApiKeys;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Users;
 using AeFinder.Metrics;
@@ -40,6 +41,11 @@ public class AeFinderApplicationTestModule : AbpModule
         });
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
         context.Services.AddTransient<IKubernetesAppMonitor, DefaultKubernetesAppMonitor>();
+        
+        context.Services.Configure<ApiKeyOptions>(o =>
+        {
+            o.IgnoreKeys = new HashSet<string> { "app" };
+        });
 
         context.Services.Configure<UserRegisterOptions>(o =>
         {

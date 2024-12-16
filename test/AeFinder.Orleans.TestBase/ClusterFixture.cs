@@ -6,10 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;
 using Moq;
+using Orleans.Serialization;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
 using Volo.Abp.Reflection;
+using Volo.Abp.Timing;
 
 namespace AeFinder.Orleans.TestBase;
 
@@ -40,6 +42,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     services.AddSingleton<IBlockGrain, BlockGrain>();
                     services.AddTransient(p => Mock.Of<IBlockFilterAppService>());
                     services.AddAutoMapper(typeof(AeFinderApplicationModule).Assembly);
+                    services.AddTransient<IClock, Clock>();
                     services.OnExposing(onServiceExposingContext =>
                     {
                         //Register types for IObjectMapper<TSource, TDestination> if implements
@@ -73,6 +76,9 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     var mockDistributedEventBus = new Mock<IDistributedEventBus>();
                     // mock IDistributedEventBus
                     services.AddSingleton<IDistributedEventBus>(mockDistributedEventBus.Object);
+        
+                    services.Configure<ExceptionSerializationOptions>(options =>
+                        options.SupportedNamespacePrefixes.Add("Volo.Abp"));
                 })
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
