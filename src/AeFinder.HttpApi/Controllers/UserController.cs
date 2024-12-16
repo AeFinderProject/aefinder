@@ -63,22 +63,18 @@ public class UserController : AeFinderController
     }
     
     [HttpPost("register")]
-    [Authorize]
     public virtual async Task RegisterAsync(RegisterUserInput input)
     {
         await _userAppService.RegisterAsync(input);
     }
     
     [HttpPost("register/confirm/{code}")]
-    [Authorize]
     public virtual async Task RegisterAsync(string code)
     {
         await _userAppService.RegisterConfirmAsync(code);
     }
     
-    [HttpPost("register/resend")]
-    [Authorize]
-    public virtual async Task ResendRegisterEmailAsync(ResendEmailInput input)
+    [HttpPost("register/resend")]    public virtual async Task ResendRegisterEmailAsync(ResendEmailInput input)
     {
         await _userAppService.ResendRegisterEmailAsync(input);
     }
