@@ -7,6 +7,7 @@ using AeFinder.Grains.Grain.ApiKeys;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Logger;
 using AeFinder.Logger.Entities;
+using AeFinder.Grains.Grain.Users;
 using AeFinder.Metrics;
 using AeFinder.Orleans.TestBase;
 using AeFinder.User;
@@ -60,10 +61,15 @@ public class AeFinderApplicationTestModule : AbpModule
         {
             options.Uris = new List<string>(){"http://localhost:9200"};
         });
-        context.Services.Configure<UserRegisterOptions>(o => { o.EmailSendingInterval = 0; });
+        
         context.Services.Configure<ApiKeyOptions>(o =>
         {
             o.IgnoreKeys = new HashSet<string> { "app" };
+        });
+
+        context.Services.Configure<UserRegisterOptions>(o =>
+        {
+            o.EmailSendingInterval = 0;
         });
     }
 

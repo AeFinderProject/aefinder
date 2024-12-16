@@ -154,16 +154,6 @@ public static class GrainIdHelper
         return GenerateGrainId(orgId.ToString("N"));
     }
     
-    public static string GenerateUserRegisterGrainId(string code)
-    {
-        return GenerateGrainId(code.ToLower());
-    }
-
-    public static string GenerateRegisterVerificationCodeGrainId(string email)
-    {
-        return GenerateGrainId(email.ToLower());
-    }
-
     public static string GenerateApiKeySummaryGrainId(Guid organizationId)
     {
         return GenerateGrainId(organizationId.ToString("N"));
@@ -217,5 +207,15 @@ public static class GrainIdHelper
     public static string GenerateApiKeyQueryBasicApiDailySnapshotGrainId(Guid apiKeyId, BasicApi api, DateTime dateTime)
     {
         return GenerateGrainId(apiKeyId.ToString("N"), api, dateTime.ToString("yyyyMMdd"));
+    }
+    
+    public static string GenerateUserRegisterGrainId(string code)
+    {
+        return GenerateGrainId(code.ToLower());
+    }
+
+    public static string GenerateRegisterVerificationCodeGrainId(string email)
+    {
+        return GenerateGrainId(email.ToLower());
     }
 }

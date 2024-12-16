@@ -48,7 +48,7 @@ public class UserAppServiceTests: AeFinderApplicationAppTestBase
                 GrainIdHelper.GenerateRegisterVerificationCodeGrainId(user.Email));
         var verificationCode = await codeGrain.GetCodeAsync();
 
-        await _userAppService.RegisterConfirmAsync(verificationCode.Code);
+        await _userAppService.RegisterConfirmAsync(verificationCode);
 
         var org = await _organizationUnitRepository.GetAsync(registerUserInput.OrganizationName);
         org.DisplayName.ShouldBe(registerUserInput.OrganizationName);
@@ -86,12 +86,12 @@ public class UserAppServiceTests: AeFinderApplicationAppTestBase
         });
         
         var newCode = await codeGrain.GetCodeAsync();
-        newCode.Code.ShouldNotBe(oldCode.Code);
+        newCode.ShouldNotBe(oldCode);
 
         await Assert.ThrowsAsync<UserFriendlyException>(async () =>
-            await _userAppService.RegisterConfirmAsync(oldCode.Code));
+            await _userAppService.RegisterConfirmAsync(oldCode));
 
-        await _userAppService.RegisterConfirmAsync(newCode.Code);
+        await _userAppService.RegisterConfirmAsync(newCode);
 
         var org = await _organizationUnitRepository.GetAsync(registerUserInput.OrganizationName);
         org.DisplayName.ShouldBe(registerUserInput.OrganizationName);

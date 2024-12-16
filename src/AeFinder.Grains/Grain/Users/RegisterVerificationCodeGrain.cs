@@ -11,25 +11,54 @@ public class RegisterVerificationCodeGrain : AeFinderGrain<RegisterVerificationC
     IRegisterVerificationCodeGrain
 {
     private readonly IObjectMapper _objectMapper;
+    private readonly UserRegisterOptions _userRegisterOptions;
+    private readonly IClock _clock;
 
-    public RegisterVerificationCodeGrain(IObjectMapper objectMapper)
+    public RegisterVerificationCodeGrain(IObjectMapper objectMapper,
+        IOptionsSnapshot<UserRegisterOptions> userRegisterOptions, IClock clock)
     {
         _objectMapper = objectMapper;
+        _clock = clock;
+        _userRegisterOptions = userRegisterOptions.Value;
     }
-
-    public async Task SetCodeAsync(string code, DateTime sendingTime)
+    
+    public async Task<string> GetCodeAsync()
     {
-        await WriteStateAsync();
-        State.Code = code;
-        State.SendingTime = sendingTime;
-        await WriteStateAsync();
+        await ReadStateAsync();
+        return State.Code;
     }
-
-    public async Task<RegisterVerificationCodeInfo> GetCodeAsync()
+    
+    public async Task<string> GenerateCodeAsync()
     {
         await ReadStateAsync();
 
-        return _objectMapper.Map<RegisterVerificationCodeState, RegisterVerificationCodeInfo>(State);
+        if (!State.Code.IsNullOrWhiteSpace() && _clock.Now < State.GenerationTime.AddSeconds(_userRegisterOptions.EmailSendingInterval))
+        {
+            throw new UserFriendlyException("The operation is too frequent, please try again later.");
+        }
+
+        State.Code = Guid.NewGuid().ToString("N");
+        State.GenerationTime = _clock.Now;
+
+        await WriteStateAsync();
+
+        return State.Code;
+    }
+
+    public async Task VerifyAsync(string code)
+    {
+        code = code.Trim().ToLower();
+        await WriteStateAsync();
+        
+        if (State.Code.IsNullOrWhiteSpace() || code != State.Code)
+        {
+            throw new UserFriendlyException("The activation information is invalid.");
+        }
+        
+        if (_clock.Now > State.GenerationTime.AddSeconds(_userRegisterOptions.CodeExpires))
+        {
+            throw new UserFriendlyException("The activation information has expired.");
+        }
     }
 
     public async Task RemoveAsync()
