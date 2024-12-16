@@ -160,7 +160,8 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
             throw new UserFriendlyException("Unauthorized api.");
         }
 
-        if (apiKeyInfo.AuthorisedDomains.Any() && !CheckApiKeyDomain(apiKeyInfo, domain))
+        if (apiKeyInfo.AuthorisedDomains.Any() &&
+            (domain.IsNullOrWhiteSpace() || !CheckApiKeyDomain(apiKeyInfo, domain)))
         {
             throw new UserFriendlyException("Unauthorized domain.");
         }
