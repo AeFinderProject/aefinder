@@ -10,6 +10,7 @@ public class RegisterUserInput
     public string UserName { get; set; }
     
     [Required]
+    [DataType(DataType.Password)]
     [StringLength(50, MinimumLength = 8, ErrorMessage = "The password must be at least 8 characters long and not exceed 50 characters.")]
     public string Password { get; set; }
     
