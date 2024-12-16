@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.ApiKeys;
 using AeFinder.App.Deploy;
 using AeFinder.App.Es;
 using AeFinder.Apps.Dto;
@@ -159,6 +160,25 @@ public class AppService : AeFinderAppService, IAppService
         {
             TotalCount = totalCount,
             Items = ObjectMapper.Map<List<AppInfoIndex>,List<AppIndexDto>>(apps)
+        };
+    }
+
+    public async Task<ListResultDto<AppInfoImmutable>> SearchAsync(Guid organizationId, string keyword)
+    {
+        var queryable = await _appIndexRepository.GetQueryableAsync();
+        queryable = queryable.Where(o => o.OrganizationId == organizationId.ToString());
+
+        if (!keyword.IsNullOrWhiteSpace())
+        {
+            keyword = keyword.Trim().ToLower().Replace(" ", "_");
+            queryable = queryable.Where(o => o.AppId.Contains(keyword));
+        }
+
+        var apps = queryable.OrderBy(o => o.AppName).Take(10).ToList();
+
+        return new ListResultDto<AppInfoImmutable>
+        {
+            Items = ObjectMapper.Map<List<AppInfoIndex>, List<AppInfoImmutable>>(apps)
         };
     }
 
