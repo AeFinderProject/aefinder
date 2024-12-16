@@ -61,7 +61,7 @@ public class ContractProvider: IContractProvider, ISingletonDependency
         param.Symbol = ContractConstant.USDT;
         param.Amount = Convert.ToInt64(lockAmount * ContractConstant.USDTDecimals);
         param.BillingId = billingId;
-        return await SendTransactionAsync<ChargeInput>(AElfContractMethodName.BillingContractLockFrom, param,
+        return await SendTransactionAsync<LockFromInput>(AElfContractMethodName.BillingContractLockFrom, param,
             BillingContractAddress);
     }
 
