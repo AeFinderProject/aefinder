@@ -73,9 +73,6 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         if (this.State == null || this.State.Count == 0)
         {
             State = new List<OrderState>();
-            State.Add(orderState);
-            await WriteStateAsync();
-            return _objectMapper.Map<OrderState, OrderDto>(orderState);
         }
         
         State.Add(orderState);
