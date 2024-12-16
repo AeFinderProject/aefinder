@@ -34,7 +34,6 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
     private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
-    private readonly IElasticIndexService _elasticIndexService;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appIndexRepository;
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitIndexRepository;
     private readonly IDistributedEventBus _distributedEventBus;
@@ -47,7 +46,6 @@ public class AppService : AeFinderAppService, IAppService
         IAppOperationSnapshotProvider appOperationSnapshotProvider,
         IAppDeployManager appDeployManager,
         IDistributedEventBus distributedEventBus,
-        IElasticIndexService elasticIndexService,
         IOrganizationAppService organizationAppService,
         IEntityMappingRepository<AppInfoIndex, string> appIndexRepository,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitIndexRepository,
@@ -61,7 +59,6 @@ public class AppService : AeFinderAppService, IAppService
         _appLimitIndexRepository = appLimitIndexRepository;
         _appResourceLimitProvider = appResourceLimitProvider;
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
-        _elasticIndexService = elasticIndexService;
         _distributedEventBus = distributedEventBus;
         _appDeployManager = appDeployManager;
         _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
@@ -431,10 +428,7 @@ public class AppService : AeFinderAppService, IAppService
         };
     }
 
-    public async Task DeleteAppIndexAsync(string indexName)
-    {
-        await _elasticIndexService.DeleteIndexAsync(indexName);
-    }
+    
     
     public async Task<PagedResultDto<AppPodInfoDto>> GetAppPodResourceInfoListAsync(
         GetAppPodResourceInfoInput input)

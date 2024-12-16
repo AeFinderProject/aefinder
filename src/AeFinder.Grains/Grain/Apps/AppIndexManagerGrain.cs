@@ -1,4 +1,5 @@
 using AeFinder.Apps;
+using AeFinder.Commons;
 using AeFinder.Grains.State.Apps;
 using Microsoft.Extensions.Logging;
 
@@ -6,12 +7,12 @@ namespace AeFinder.Grains.Grain.Apps;
 
 public class AppIndexManagerGrain : AeFinderGrain<AppIndexManagerState>, IAppIndexManagerGrain
 {
-    private readonly IAppService _appService;
+    private readonly IElasticSearchIndexHelper _elasticSearchIndexHelper;
     private readonly ILogger<AppIndexManagerGrain> _logger;
 
-    public AppIndexManagerGrain(IAppService appService, ILogger<AppIndexManagerGrain> logger)
+    public AppIndexManagerGrain(IElasticSearchIndexHelper elasticSearchIndexHelper, ILogger<AppIndexManagerGrain> logger)
     {
-        _appService = appService;
+        _elasticSearchIndexHelper = elasticSearchIndexHelper;
         _logger = logger;
     }
 
@@ -45,7 +46,7 @@ public class AppIndexManagerGrain : AeFinderGrain<AppIndexManagerState>, IAppInd
         }
         foreach (var indexName in State.IndexNameList)
         {
-            await _appService.DeleteAppIndexAsync(indexName);
+            await _elasticSearchIndexHelper.DeleteAppIndexAsync(indexName);
         }
     }
     
