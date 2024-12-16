@@ -23,9 +23,11 @@ public class OrderService: ApplicationService, IOrderService
     private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
     private readonly IContractProvider _contractProvider;
     private readonly IDistributedEventBus _distributedEventBus;
+    private readonly IBillService _billService;
 
     public OrderService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
         IContractProvider contractProvider, IDistributedEventBus distributedEventBus,
+        IBillService billService,
         IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppService appService)
     {
         _clusterClient = clusterClient;
@@ -34,6 +36,7 @@ public class OrderService: ApplicationService, IOrderService
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _contractProvider = contractProvider;
         _distributedEventBus = distributedEventBus;
+        _billService = billService;
     }
 
     public async Task<List<BillDto>> CreateOrderAsync(CreateOrderDto dto)
@@ -47,25 +50,36 @@ public class OrderService: ApplicationService, IOrderService
         var organizationGrainId = await GetOrganizationGrainIdAsync(dto.OrganizationId);
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
-        OrderDto oldOrderInfo = null;
+        var billsGrain =
+            _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
+        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
         
+        //Calculate first month lock fee
+        decimal firstMonthLockFee = 0;
+        var billingPlan = await _billService.GetProductBillingPlanAsync(new GetBillingPlanInput()
+        {
+            OrganizationId = dto.OrganizationId,
+            ProductId = dto.ProductId,
+            ProductNum = dto.ProductNumber,
+            PeriodMonths = dto.PeriodMonths
+        });
+        firstMonthLockFee = billingPlan.FirstMonthCost;
+        decimal monthlyFee = dto.ProductNumber * productInfo.MonthlyUnitPrice;
+        
+        //Check if there is an existing order for a product of the same type
+        OrderDto oldOrderInfo = null;
         if (productInfo.ProductType == ProductType.ApiQueryCount)
         {
-            //Check if there is an existing order for a product of the same type
             oldOrderInfo =
                 await ordersGrain.GetLatestApiQueryCountOrderAsync(dto.OrganizationId);
         }
 
         if (productInfo.ProductType == ProductType.FullPodResource)
         {
-            //Check if there is an existing order for a product of the same type
             oldOrderInfo =
                 await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, dto.AppId);
         }
         
-        var billsGrain =
-            _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
-        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
         //If it exists, create a charge billing for the existing order
         if (oldOrderInfo != null)
         {
@@ -88,15 +102,12 @@ public class OrderService: ApplicationService, IOrderService
             var lockedAmount = latestLockedBill.BillingAmount;
             decimal chargeFee = 0;
             decimal refundAmount = 0;
-            decimal monthlyFee = dto.ProductNumber * productInfo.MonthlyUnitPrice;
-            decimal firstMonthLockFee = 0;
             if (oldOrderInfo.ProductType == ProductType.FullPodResource)
             {
                 //Charge based on usage duration
                 DateTime? podResourceStartUseDay = null;
                 podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(dto.AppId);
                 chargeFee = await billsGrain.CalculatePodResourceMidWayChargeAmountAsync(renewalInfo, lockedAmount, podResourceStartUseDay);
-                firstMonthLockFee = await billsGrain.CalculateFirstMonthLockAmount(monthlyFee);
             }
 
             if (oldOrderInfo.ProductType == ProductType.ApiQueryCount)
@@ -104,7 +115,6 @@ public class OrderService: ApplicationService, IOrderService
                 //Charge based on usage query count
                 var monthlyQueryCount = 10;//TODO Get monthly query count
                 chargeFee = await billsGrain.CalculateApiQueryMonthlyChargeAmountAsync(monthlyQueryCount);
-                firstMonthLockFee = monthlyFee;
             }
             var remainingLockedAmount = lockedAmount - chargeFee;
             if (firstMonthLockFee > remainingLockedAmount)
@@ -168,7 +178,6 @@ public class OrderService: ApplicationService, IOrderService
         }
         else
         {
-            decimal monthlyFee = dto.ProductNumber * productInfo.MonthlyUnitPrice;
             if (monthlyFee == 0)
             {
                 //Create new order
@@ -185,7 +194,6 @@ public class OrderService: ApplicationService, IOrderService
                 });
                 return billList;
             }
-            var firstMonthFee = await billsGrain.CalculateFirstMonthLockAmount(monthlyFee);
             //TODO Check user organization balance
             
             //Create new order
@@ -196,7 +204,7 @@ public class OrderService: ApplicationService, IOrderService
                 UserId = dto.UserId,
                 AppId = dto.AppId,
                 OrderId = newOrder.OrderId,
-                LockFee = firstMonthFee,
+                LockFee = firstMonthLockFee,
                 Description = $"Lock a portion of the balance for the new order."
             });
             await _distributedEventBus.PublishAsync(new BillCreateEto()
