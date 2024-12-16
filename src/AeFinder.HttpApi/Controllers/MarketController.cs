@@ -32,7 +32,7 @@ public class MarketController : AeFinderController
     [HttpGet]
     [Route("pod-resources/level")]
     [Authorize]
-    public async Task<List<FullPodResourceDto>> GetFullPodResourceLevelInfoAsync()
+    public async Task<List<FullPodResourceDto>> GetFullPodResourceInfoAsync()
     {
         return await _productService.GetFullPodResourceInfoAsync();
     }
