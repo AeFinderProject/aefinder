@@ -22,7 +22,7 @@ public class ProductService : ApplicationService, IProductService
         _clusterClient = clusterClient;
     }
     
-    public async Task<List<FullPodResourceDto>> GetFullPodResourceLevelInfoAsync()
+    public async Task<List<FullPodResourceDto>> GetFullPodResourceInfoAsync()
     {
         var productsGrain =
             _clusterClient.GetGrain<IProductsGrain>(
@@ -31,8 +31,8 @@ public class ProductService : ApplicationService, IProductService
         var resultList = new List<FullPodResourceDto>();
         foreach (var productDto in fullPodResourceProducts)
         {
-            var levelDto = ConvertToFullPodResourceDto(productDto);
-            resultList.Add(levelDto);
+            var resourceDto = ConvertToFullPodResourceDto(productDto);
+            resultList.Add(resourceDto);
         }
 
         return resultList;
@@ -40,13 +40,13 @@ public class ProductService : ApplicationService, IProductService
 
     public FullPodResourceDto ConvertToFullPodResourceDto(ProductDto productDto)
     {
-        var levelDto = new FullPodResourceDto();
-        levelDto.ProductId = productDto.ProductId;
-        levelDto.LevelName = productDto.ProductSpecifications;
+        var podResourceDto = new FullPodResourceDto();
+        podResourceDto.ProductId = productDto.ProductId;
+        podResourceDto.LevelName = productDto.ProductSpecifications;
         var resourceCapacity = JsonConvert.DeserializeObject<ResourceCapacity>(productDto.Description);
-        levelDto.Capacity = resourceCapacity;
-        levelDto.MonthlyUnitPrice = productDto.MonthlyUnitPrice;
-        return levelDto;
+        podResourceDto.Capacity = resourceCapacity;
+        podResourceDto.MonthlyUnitPrice = productDto.MonthlyUnitPrice;
+        return podResourceDto;
     }
 
     public async Task<ApiQueryCountResourceDto> GetRegularApiQueryCountProductInfoAsync()
