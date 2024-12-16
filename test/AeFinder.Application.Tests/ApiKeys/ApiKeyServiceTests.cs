@@ -675,7 +675,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
     public async Task IncreaseQueryAeIndexerCount_Test()
     {
         var orgId = Guid.NewGuid();
-        await _apiKeyService.AdjustQueryLimitAsync(orgId, 10);
+        await _apiKeyService.SetQueryLimitAsync(orgId, 10);
         
         var apiKeySummaryGrain =
             _clusterClient.GetGrain<IApiKeySummaryGrain>(GrainIdHelper.GenerateApiKeySummaryGrainId(orgId));
@@ -891,7 +891,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
     public async Task IncreaseQueryAeIndexerCount_Verify_Test()
     {
         var orgId = Guid.NewGuid();
-        await _apiKeyService.AdjustQueryLimitAsync(orgId, 0);
+        await _apiKeyService.SetQueryLimitAsync(orgId, 0);
 
         var createInput = new CreateApiKeyInput
         {
@@ -921,7 +921,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
             await _apiKeyService.IncreaseQueryAeIndexerCountAsync(apiKey.Key, "app1", "aaa.com", time));
         exception.Message.ShouldBe("Api key query times insufficient.");
         
-        await _apiKeyService.AdjustQueryLimitAsync(orgId, 10);
+        await _apiKeyService.SetQueryLimitAsync(orgId, 10);
         await _apiKeyService.UpdateApiKeySummaryLimitCacheAsync(orgId, 10);
         
         exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
@@ -954,7 +954,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
     public async Task IncreaseQueryApiCount_Test()
     {
         var orgId = Guid.NewGuid();
-        await _apiKeyService.AdjustQueryLimitAsync(orgId, 10);
+        await _apiKeyService.SetQueryLimitAsync(orgId, 10);
         
         var apiKeySummaryGrain =
             _clusterClient.GetGrain<IApiKeySummaryGrain>(GrainIdHelper.GenerateApiKeySummaryGrainId(orgId));
@@ -1170,7 +1170,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
     public async Task IncreaseQueryApiCount_Verify_Test()
     {
         var orgId = Guid.NewGuid();
-        await _apiKeyService.AdjustQueryLimitAsync(orgId, 0);
+        await _apiKeyService.SetQueryLimitAsync(orgId, 0);
 
         var createInput = new CreateApiKeyInput
         {
@@ -1200,7 +1200,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
             await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "aaa.com", time));
         exception.Message.ShouldBe("Api key query times insufficient.");
         
-        await _apiKeyService.AdjustQueryLimitAsync(orgId, 10);
+        await _apiKeyService.SetQueryLimitAsync(orgId, 10);
         await _apiKeyService.UpdateApiKeySummaryLimitCacheAsync(orgId, 10);
         
         exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>

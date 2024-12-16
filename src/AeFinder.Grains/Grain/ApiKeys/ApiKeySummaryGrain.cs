@@ -21,12 +21,12 @@ public class ApiKeySummaryGrain : AeFinderGrain<ApiKeySummaryState>, IApiKeySumm
         _apiKeyOptions = apiKeyOptions.Value;
     }
 
-    public async Task AdjustQueryLimitAsync(Guid organizationId, long query)
+    public async Task SetQueryLimitAsync(Guid organizationId, long query)
     {
         await ReadStateAsync();
 
         State.OrganizationId = organizationId;
-        State.QueryLimit += query;
+        State.QueryLimit = query;
 
         await WriteStateAsync();
     }

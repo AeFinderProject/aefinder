@@ -60,10 +60,10 @@ public class AeFinderApplicationTestModule : AbpModule
         {
             options.Uris = new List<string>(){"http://localhost:9200"};
         });
-        
-        context.Services.Configure<UserRegisterOptions>(o =>
+        context.Services.Configure<UserRegisterOptions>(o => { o.EmailSendingInterval = 0; });
+        context.Services.Configure<ApiKeyOptions>(o =>
         {
-            o.EmailSendingInterval = 0;
+            o.IgnoreKeys = new HashSet<string> { "app" };
         });
     }
 

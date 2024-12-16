@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using AeFinder.ApiKeys;
 using System.Threading.Tasks;
+using AeFinder.ApiKeys;
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.Grains;
@@ -335,7 +336,6 @@ public class AeFinderHttpApiHostModule : AbpModule
         
         //Sync app limit info into es
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppExtensionInfoSyncWorker>());
-
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<ApiKeyTrafficWorker>());
     }
 

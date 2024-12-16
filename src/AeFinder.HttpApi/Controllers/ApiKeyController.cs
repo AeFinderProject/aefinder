@@ -209,10 +209,10 @@ public class ApiKeyController : AeFinderController
     [HttpPost]
     [Route("limit")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public async Task AdjustQueryLimitAsync(AdjustQueryLimitInput input)
+    public async Task SetQueryLimitAsync(AdjustQueryLimitInput input)
     {
         var orgId = input.OrganizationId;
-        await _apiKeyService.AdjustQueryLimitAsync(orgId, input.Count);
+        await _apiKeyService.SetQueryLimitAsync(orgId, input.Count);
     }
     
     private async Task<Guid> GetOrganizationIdAsync()

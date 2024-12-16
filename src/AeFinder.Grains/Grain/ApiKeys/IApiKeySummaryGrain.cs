@@ -4,7 +4,7 @@ namespace AeFinder.Grains.Grain.ApiKeys;
 
 public interface IApiKeySummaryGrain : IGrainWithStringKey
 {
-    Task AdjustQueryLimitAsync(Guid organizationId, long query);
+    Task SetQueryLimitAsync(Guid organizationId, long query);
     Task RecordQueryAeIndexerCountAsync(Guid apiKeyId, string appId, long query, DateTime dateTime);
     Task RecordQueryBasicApiCountAsync(Guid apiKeyId, BasicApi api, long query, DateTime dateTime);
     Task<ApiKeySummaryInfo> GetApiKeySummaryInfoAsync();
