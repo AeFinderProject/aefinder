@@ -5,7 +5,6 @@ namespace AeFinder.Grains.Grain.Market;
 public interface IBillsGrain: IGrainWithStringKey
 {
     Task<BillDto> CreateOrderLockBillAsync(CreateOrderLockBillDto dto);
-
     Task<BillDto> CreateSubscriptionLockBillAsync(CreateSubscriptionBillDto dto);
     Task<BillDto> GetBillByIdAsync(string billingId);
     Task<BillDto> CreateChargeBillAsync(CreateChargeBillDto dto);
@@ -18,4 +17,5 @@ public interface IBillsGrain: IGrainWithStringKey
         decimal transactionAmount, string walletAddress);
     Task<BillDto> GetPendingChargeBillByOrderIdAsync(string orderId);
     Task<List<BillDto>> GetOrganizationAllBillsAsync(string organizationId);
+    Task<List<BillDto>> GetAllPendingBillAsync();
 }

@@ -7,7 +7,6 @@ using AeFinder.Apps;
 using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
-using AeFinder.Market.Eto;
 using AeFinder.User;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -143,11 +142,6 @@ public class OrderService: ApplicationService, IOrderService
                     Description =
                         $"Old order remaining locked amount: {remainingLockedAmount}, New order first month required locked amount: {firstMonthLockFee}, Additional amount needed to be locked: {needLockFee}."
                 });
-                await _distributedEventBus.PublishAsync(new BillCreateEto()
-                {
-                    OrganizationId = newLockBill.OrganizationId,
-                    BillingId = newLockBill.BillingId
-                });
                 billList.Add(newLockBill);
             }
             else
@@ -175,11 +169,6 @@ public class OrderService: ApplicationService, IOrderService
                 Description = "User creates a new order and processes billing settlement for the existing order.",
                 ChargeFee = chargeFee,
                 RefundAmount = refundAmount
-            });
-            await _distributedEventBus.PublishAsync(new BillCreateEto()
-            {
-                OrganizationId = oldChargeBill.OrganizationId,
-                BillingId = oldChargeBill.BillingId
             });
         }
         else
@@ -212,11 +201,6 @@ public class OrderService: ApplicationService, IOrderService
                 OrderId = newOrder.OrderId,
                 LockFee = firstMonthLockFee,
                 Description = $"Lock a portion of the balance for the new order."
-            });
-            await _distributedEventBus.PublishAsync(new BillCreateEto()
-            {
-                OrganizationId = newLockBill.OrganizationId,
-                BillingId = newLockBill.BillingId
             });
             billList.Add(newLockBill);
         }
