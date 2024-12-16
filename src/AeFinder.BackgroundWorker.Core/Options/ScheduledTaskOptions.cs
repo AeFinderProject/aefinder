@@ -8,4 +8,5 @@ public class ScheduledTaskOptions
     public int AppPodListSyncTaskPeriodMilliSeconds { get; set; } = 600000;
     public int AppPodResourceSyncTaskPeriodMilliSeconds { get; set; } = 180000;
     public int RenewalBillDay = 1;
+    public int BillingIndexerPollingTaskPeriodMilliSeconds { get; set; } = 10000;
 }

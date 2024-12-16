@@ -5,7 +5,6 @@ using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Market;
-using AeFinder.Market.Eto;
 using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
@@ -118,8 +117,8 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,userExtensionDto.WalletAddress);
                 if (string.IsNullOrEmpty(organizationWalletAddress))
                 {
-                    _logger.LogError($"The organization wallet address has not yet been linked to user {renewalDto.UserId}");
-                    throw new Exception("The organization wallet address has not yet been linked");
+                    _logger.LogError($"[ProcessRenewalAsync]The organization wallet address has not yet been linked to user {renewalDto.UserId}");
+                    continue;
                 }
                 var chargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
                 {
@@ -129,11 +128,6 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     ChargeFee = chargeFee,
                     Description = "Auto-renewal charge for the existing order.",
                     RefundAmount = refundAmount
-                });
-                await _distributedEventBus.PublishAsync(new BillCreateEto()
-                {
-                    OrganizationId = chargeBill.OrganizationId,
-                    BillingId = chargeBill.BillingId
                 });
                 await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, 0,
                     chargeBill.BillingId);
@@ -169,7 +163,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                         var organizationGuid = Guid.Parse(renewalDto.OrganizationId);
                         await _apiKeyService.SetQueryLimitAsync(organizationGuid, freeQueryAllowance);
                     }
-                    break;
+                    continue;
                 }
                 
                 //Lock for next billing cycle
@@ -182,11 +176,6 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     AppId = renewalDto.AppId,
                     OrderId = renewalDto.OrderId,
                     Description = $"Auto-renewal lock for the existing order."
-                });
-                await _distributedEventBus.PublishAsync(new BillCreateEto()
-                {
-                    OrganizationId = newLockBill.OrganizationId,
-                    BillingId = newLockBill.BillingId
                 });
                 //Send lockFrom transaction to contract
                 await _contractProvider.BillingLockFromAsync(organizationWalletAddress, newLockBill.BillingAmount,
