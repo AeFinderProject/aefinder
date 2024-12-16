@@ -1,3 +1,4 @@
+using AeFinder.ApiKeys;
 using AeFinder.Apps;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Common;
@@ -32,14 +33,17 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     private readonly ContractOptions _contractOptions;
     private readonly IAppDeployService _appDeployService;
     private readonly IDistributedEventBus _distributedEventBus;
-    
+    private readonly IApiKeyService _apiKeyService;
+    private readonly IRenewalService _renewalService;
+
     public RenewalBillCreateWorker(AbpAsyncTimer timer, ILogger<AppInfoSyncWorker> logger,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
-        IOrganizationAppService organizationAppService,IClusterClient clusterClient,
-        IContractProvider contractProvider,IOrganizationInformationProvider organizationInformationProvider,
-        IUserInformationProvider userInformationProvider,IAeFinderIndexerProvider indexerProvider,
-        IOptionsSnapshot<ContractOptions> contractOptions,IAppDeployService appDeployService,
-        IDistributedEventBus distributedEventBus,
+        IOrganizationAppService organizationAppService, IClusterClient clusterClient,
+        IContractProvider contractProvider, IOrganizationInformationProvider organizationInformationProvider,
+        IUserInformationProvider userInformationProvider, IAeFinderIndexerProvider indexerProvider,
+        IOptionsSnapshot<ContractOptions> contractOptions, IAppDeployService appDeployService,
+        IDistributedEventBus distributedEventBus, IApiKeyService apiKeyService,
+        IRenewalService renewalService,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -53,10 +57,12 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         _contractOptions = contractOptions.Value;
         _appDeployService = appDeployService;
         _distributedEventBus = distributedEventBus;
+        _apiKeyService = apiKeyService;
+        _renewalService = renewalService;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = CalculateNextExecutionDelay();
     }
-    
+
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
@@ -96,7 +102,10 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 if (renewalDto.ProductType == ProductType.ApiQueryCount)
                 {
                     //Charge based on usage query count
-                    var monthlyQueryCount = 10;//TODO Get monthly query count
+                    var organizationGuid = Guid.Parse(renewalDto.OrganizationId);
+                    var monthTime = DateTime.UtcNow.AddMonths(-1);
+                    var monthlyQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, monthTime);
+                    Logger.LogInformation($"[ProcessRenewalAsync]Api monthly query count:{monthlyQueryCount} time:{monthTime.ToString()}");
                     chargeFee = await billsGrain.CalculateApiQueryMonthlyChargeAmountAsync(monthlyQueryCount);
                     var monthlyFee = renewalDto.ProductNumber * productInfo.MonthlyUnitPrice;
                     refundAmount = monthlyFee - chargeFee;
@@ -151,6 +160,14 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     if (renewalDto.ProductType == ProductType.FullPodResource)
                     {
                         await _appDeployService.FreezeAppAsync(renewalDto.AppId);
+                        _logger.LogInformation($"[ProcessRenewalAsync]App {renewalDto.AppId} is frozen.");
+                    }
+
+                    if (renewalDto.ProductType == ProductType.FullPodResource)
+                    {
+                        var freeQueryAllowance = await _renewalService.GetUserApiQueryFreeCountAsync(renewalDto.OrganizationId);
+                        var organizationGuid = Guid.Parse(renewalDto.OrganizationId);
+                        await _apiKeyService.SetQueryLimitAsync(organizationGuid, freeQueryAllowance);
                     }
                     break;
                 }

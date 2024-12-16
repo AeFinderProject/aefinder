@@ -41,7 +41,7 @@ public class RenewalService: ApplicationService, IRenewalService
         return 0;
     }
 
-    public async Task<int> GetUserMonthlyApiQueryAllowanceAsync(string organizationId)
+    public async Task<long> GetUserMonthlyApiQueryAllowanceAsync(string organizationId)
     {
         //TODO: Check organization id
         

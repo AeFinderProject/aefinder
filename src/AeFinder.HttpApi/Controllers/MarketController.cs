@@ -56,7 +56,7 @@ public class MarketController : AeFinderController
     [HttpGet]
     [Route("api-query-count/monthly")]
     [Authorize]
-    public async Task<int> GetUserMonthlyApiQueryAllowanceAsync(string organizationId)
+    public async Task<long> GetUserMonthlyApiQueryAllowanceAsync(string organizationId)
     {
         return await _renewalService.GetUserMonthlyApiQueryAllowanceAsync(organizationId);
     }

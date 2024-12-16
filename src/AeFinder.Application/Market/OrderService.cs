@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.ApiKeys;
 using AeFinder.Apps;
 using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Market.Eto;
 using AeFinder.User;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -24,10 +26,11 @@ public class OrderService: ApplicationService, IOrderService
     private readonly IContractProvider _contractProvider;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IBillService _billService;
+    private readonly IApiKeyService _apiKeyService;
 
     public OrderService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
         IContractProvider contractProvider, IDistributedEventBus distributedEventBus,
-        IBillService billService,
+        IBillService billService,IApiKeyService apiKeyService,
         IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppService appService)
     {
         _clusterClient = clusterClient;
@@ -37,6 +40,7 @@ public class OrderService: ApplicationService, IOrderService
         _contractProvider = contractProvider;
         _distributedEventBus = distributedEventBus;
         _billService = billService;
+        _apiKeyService = apiKeyService;
     }
 
     public async Task<List<BillDto>> CreateOrderAsync(CreateOrderDto dto)
@@ -113,7 +117,9 @@ public class OrderService: ApplicationService, IOrderService
             if (oldOrderInfo.ProductType == ProductType.ApiQueryCount)
             {
                 //Charge based on usage query count
-                var monthlyQueryCount = 10;//TODO Get monthly query count
+                var organizationGuid = Guid.Parse(dto.OrganizationId);
+                var monthlyQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, DateTime.UtcNow);
+                Logger.LogInformation($"[CreateOrderAsync]Api monthly query count:{monthlyQueryCount} time:{DateTime.UtcNow.ToString()}");
                 chargeFee = await billsGrain.CalculateApiQueryMonthlyChargeAmountAsync(monthlyQueryCount);
             }
             var remainingLockedAmount = lockedAmount - chargeFee;
