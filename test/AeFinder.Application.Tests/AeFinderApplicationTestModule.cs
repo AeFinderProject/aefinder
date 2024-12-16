@@ -9,6 +9,7 @@ using AeFinder.Logger;
 using AeFinder.Logger.Entities;
 using AeFinder.Metrics;
 using AeFinder.Orleans.TestBase;
+using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -58,6 +59,11 @@ public class AeFinderApplicationTestModule : AbpModule
         context.Services.Configure<LogElasticSearchOptions>(options =>
         {
             options.Uris = new List<string>(){"http://localhost:9200"};
+        });
+        
+        context.Services.Configure<UserRegisterOptions>(o =>
+        {
+            o.EmailSendingInterval = 0;
         });
     }
 

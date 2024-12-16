@@ -16,6 +16,7 @@ using AeFinder.Grains.State.ApiKeys;
 using AeFinder.Grains.State.Apps;
 using AeFinder.Grains.State.Market;
 using AeFinder.Grains.State.Subscriptions;
+using AeFinder.Grains.State.Users;
 using AeFinder.Logger.Entities;
 using AeFinder.Market;
 using AeFinder.Subscriptions;
@@ -205,5 +206,8 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<CreateSubscriptionBillDto, BillState>();
         CreateMap<CreateChargeBillDto, BillState>();
         CreateMap<BillDto, InvoiceInfoDto>();
+        
+        CreateMap<UserRegisterState, UserRegisterInfo>();
+        CreateMap<RegisterVerificationCodeState, RegisterVerificationCodeInfo>();
     }
 }

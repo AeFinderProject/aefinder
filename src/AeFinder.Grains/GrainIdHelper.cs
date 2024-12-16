@@ -208,4 +208,14 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(orgId.ToString("N"));
     }
+    
+    public static string GenerateUserRegisterGrainId(string code)
+    {
+        return GenerateGrainId(code.ToLower());
+    }
+    
+    public static string GenerateRegisterVerificationCodeGrainId(string email)
+    {
+        return GenerateGrainId(email.ToLower());
+    }
 }
