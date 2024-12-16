@@ -141,6 +141,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<PodContainerDto, PodContainerInfo>();
         CreateMap<AppPodInfoIndex, AppPodInfoDto>();
         CreateMap<PodContainerInfo, PodContainerDto>();
+        CreateMap<PodContainerDto, AppFullPodResourceUsageDto>();
 
         CreateMap<UserExtensionDto, IdentityUserExtension>();
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();
