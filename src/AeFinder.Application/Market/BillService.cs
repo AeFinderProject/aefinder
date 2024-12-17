@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.User;
+using AeFinder.User.Provider;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -19,11 +20,19 @@ public class BillService : ApplicationService, IBillService
 {
     private readonly IClusterClient _clusterClient;
     private readonly IOrganizationAppService _organizationAppService;
+    private readonly IAeFinderIndexerProvider _indexerProvider;
+    private readonly IUserInformationProvider _userInformationProvider;
+    private readonly IOrganizationInformationProvider _organizationInformationProvider;
 
-    public BillService(IClusterClient clusterClient, IOrganizationAppService organizationAppService)
+    public BillService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
+        IAeFinderIndexerProvider indexerProvider,IUserInformationProvider userInformationProvider,
+        IOrganizationInformationProvider organizationInformationProvider)
     {
         _clusterClient = clusterClient;
         _organizationAppService = organizationAppService;
+        _indexerProvider = indexerProvider;
+        _userInformationProvider = userInformationProvider;
+        _organizationInformationProvider = organizationInformationProvider;
     }
 
     public async Task<BillingPlanDto> GetProductBillingPlanAsync(GetBillingPlanInput input)
@@ -47,6 +56,72 @@ public class BillService : ApplicationService, IBillService
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
         result.FirstMonthCost = await billsGrain.CalculateFirstMonthLockAmount(monthlyFee);
         return result;
+    }
+
+    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync(string organizationId)
+    {
+        //TODO: Check organization id
+
+        var userExtensionDto =
+            await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
+        var organizationWalletAddress =
+            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,userExtensionDto.WalletAddress);
+        if (organizationWalletAddress.IsNullOrEmpty())
+        {
+            return new PagedResultDto<TransactionHistoryDto>();
+        }
+        var indexerUserFundRecordDto = await _indexerProvider.GetUserFundRecordAsync(organizationWalletAddress, null);
+        if (indexerUserFundRecordDto == null || indexerUserFundRecordDto.UserFundRecord == null)
+        {
+            return new PagedResultDto<TransactionHistoryDto>();
+        }
+
+        var result = new List<TransactionHistoryDto>();
+        foreach (var userFundRecordDto in indexerUserFundRecordDto.UserFundRecord.Items)
+        {
+            var dto = new TransactionHistoryDto();
+            dto.TransactionId = userFundRecordDto.TransactionId;
+            switch (userFundRecordDto.Type)
+            {
+                case UserFundRecordType.Deposit:
+                {
+                    dto.TransactionDescription = "Balance Deposit";
+                    break;
+                }
+                case UserFundRecordType.Charge:
+                {
+                    dto.TransactionDescription = "Charge Locked Balance";
+                    break;
+                }
+                case UserFundRecordType.Lock:
+                {
+                    dto.TransactionDescription = "Lock Balance";
+                    break;
+                }
+                case UserFundRecordType.Unlock:
+                {
+                    dto.TransactionDescription = "Balance Unlock";
+                    break;
+                }
+                case UserFundRecordType.Withdrawal:
+                {
+                    dto.TransactionDescription = "Balance Withdrawal";
+                    break;
+                }
+            }
+
+            dto.TransactionAmount = userFundRecordDto.Amount;
+            dto.BalanceAfter = userFundRecordDto.Balance;
+            dto.LockedBalance = userFundRecordDto.LockedBalance;
+            dto.PaymentMethod = userFundRecordDto.Token.Symbol;
+            result.Add(dto);
+        }
+
+        return new PagedResultDto<TransactionHistoryDto>()
+        {
+            TotalCount = indexerUserFundRecordDto.UserFundRecord.TotalCount,
+            Items = result
+        };
     }
 
     public async Task<PagedResultDto<InvoiceInfoDto>> GetInvoicesAsync(string organizationId)
