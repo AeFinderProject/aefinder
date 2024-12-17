@@ -84,10 +84,39 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         var organizationUnitDto = ObjectMapper.Map<OrganizationUnit, OrganizationUnitDto>(organizationUnit);
         
         //Synchronize organization info into grain & es
+        var organizationGrainId = GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id.ToString("N"));
         var organizationAppGain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(
-                GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id.ToString("N")));
+                organizationGrainId);
         await organizationAppGain.AddOrganizationAsync(organizationUnit.DisplayName);
+        
+        //Automatically place an order for a free API query package for the organization.
+        var productsGrain =
+            _clusterClient.GetGrain<IProductsGrain>(
+                GrainIdHelper.GenerateProductsGrainId());
+        var ordersGrain =
+            _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
+        var freeProduct = await productsGrain.GetFreeApiQueryCountProductAsync();
+        var newFreeOrder = await ordersGrain.CreateOrderAsync(new CreateOrderDto()
+        {
+            OrganizationId = organizationUnitDto.Id.ToString(),
+            AppId = String.Empty,
+            ProductId = freeProduct.ProductId,
+            UserId = CurrentUser.Id.ToString(),
+            ProductNumber = 1,
+            PeriodMonths = 1
+        });
+        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
+        await renewalGrain.CreateAsync(new CreateRenewalDto()
+        {
+            OrganizationId = organizationUnitDto.Id.ToString(),
+            UserId = CurrentUser.Id.ToString(),
+            AppId = String.Empty,
+            OrderId = newFreeOrder.OrderId,
+            ProductId = freeProduct.ProductId,
+            ProductNumber = 1,
+            RenewalPeriod = RenewalPeriod.OneMonth
+        });
         
         return organizationUnitDto;
     }
