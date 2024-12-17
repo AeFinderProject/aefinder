@@ -28,7 +28,7 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
             Query = @"
 			    query($address:String,$billingId:String,$skipCount:Int!,$maxResultCount:Int!) {
                     userFundRecord(input: {address:$address,billingId:$billingId,skipCount:$skipCount,maxResultCount:$maxResultCount}){
-                            items{id,chainId,address,transactionId,amount,token{symbol},balance,lockedBalance,type,billingId},totalCount}
+                            items{id,metadata{chainId,block{blockHash,blockHeight,blockTime}},address,transactionId,amount,token{symbol},balance,lockedBalance,type,billingId},totalCount}
                 }",
             Variables = new
             {
@@ -44,7 +44,7 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
             Query = @"
 			    query($address:String,$chainId:String,$skipCount:Int!,$maxResultCount:Int!) {
                     userBalance(input: {address:$address,chainId:$chainId,skipCount:$skipCount,maxResultCount:$maxResultCount}){
-                            items{id,chainId,address,symbol,balance,lockedBalance,token{symbol}},totalCount}
+                            items{id,metadata{chainId,block{blockHash,blockHeight,blockTime}},address,symbol,balance,lockedBalance,token{symbol}},totalCount}
                 }",
             Variables = new
             {
@@ -60,7 +60,7 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
             Query = @"
 			    query($memberAddress:String,$chainId:String,$skipCount:Int!,$maxResultCount:Int!) {
                     organization(input: {memberAddress:$memberAddress,chainId:$chainId,skipCount:$skipCount,maxResultCount:$maxResultCount}){
-                            items{id,chainId,address,members{address,role}},totalCount}
+                            items{id,metadata{chainId,block{blockHash,blockHeight,blockTime}},address,members{address,role}},totalCount}
                 }",
             Variables = new
             {
