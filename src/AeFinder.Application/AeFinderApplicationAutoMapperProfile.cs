@@ -148,6 +148,19 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();
         CreateMap<IdentityUserExtension, UserExtensionDto>();
         CreateMap<IdentityUser, IdentityUserExtensionDto>();
+        
+        CreateMap<ProductDto, ProductState>();
+        CreateMap<ProductState, ProductDto>();
+        CreateMap<CreateOrderDto, OrderState>();
+        CreateMap<OrderState, OrderDto>();
+        CreateMap<CreateRenewalDto, RenewalState>();
+        CreateMap<RenewalState, RenewalDto>();
+        CreateMap<CreateOrderLockBillDto, BillState>();
+        CreateMap<BillState, BillDto>();
+        CreateMap<CreateSubscriptionBillDto, BillState>();
+        CreateMap<CreateChargeBillDto, BillState>();
+        CreateMap<BillDto, InvoiceInfoDto>();
+        CreateMap<UserBalanceDto, OrganizationBalanceDto>();
 
         CreateMap<AppInfoIndex, AppInfoImmutable>();
         
