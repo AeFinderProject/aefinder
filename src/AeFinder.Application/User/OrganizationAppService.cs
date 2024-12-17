@@ -192,6 +192,8 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         {
             throw new UserFriendlyException($"The user has not linked any organization wallet address yet.");
         }
+        Logger.LogInformation(
+            $"userWalletAddress:{userExtensionInfo.WalletAddress} organizationWalletAddress:{organizationWalletAddress}");
         var indexerBalanceDto =
             await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
                 _contractOptions.BillingContractChainId);
