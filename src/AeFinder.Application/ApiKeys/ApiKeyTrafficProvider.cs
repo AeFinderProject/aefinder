@@ -42,8 +42,6 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
         _apiKeyInfoProvider = apiKeyInfoProvider;
         _productService = productService;
         _apiKeyOptions = apiKeyOptions.Value;
-
-        _apiQueryPrice = AsyncHelper.RunSync(async () => await GetApiKeyQueryPriceAsync());
     }
 
     public async Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain, DateTime dateTime)
@@ -152,7 +150,7 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
             throw new UserFriendlyException("Api key query times insufficient.");
         }
 
-        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / _apiQueryPrice) - used <= 0)
+        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / await GetApiKeyQueryPriceAsync()) - used <= 0)
         {
             throw new UserFriendlyException("Api key unavailable.");
         }
@@ -212,7 +210,12 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
     
     private async Task<decimal> GetApiKeyQueryPriceAsync()
     {
-        var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
-        return apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
+        if (_apiQueryPrice == 0)
+        {
+            var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
+            _apiQueryPrice = apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
+        }
+
+        return _apiQueryPrice;
     }
 }
