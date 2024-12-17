@@ -64,6 +64,10 @@ public class BillService : ApplicationService, IBillService
 
         var userExtensionDto =
             await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
+        if (userExtensionDto.WalletAddress.IsNullOrEmpty())
+        {
+            return new PagedResultDto<TransactionHistoryDto>();
+        }
         var organizationWalletAddress =
             await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,userExtensionDto.WalletAddress);
         if (organizationWalletAddress.IsNullOrEmpty())

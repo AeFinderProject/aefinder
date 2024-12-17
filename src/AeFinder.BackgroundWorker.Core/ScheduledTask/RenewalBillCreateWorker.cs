@@ -113,6 +113,11 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 //Send charge transaction to contract
                 var userExtensionDto =
                     await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(renewalDto.UserId));
+                if (userExtensionDto.WalletAddress.IsNullOrEmpty())
+                {
+                    _logger.LogError($"[ProcessRenewalAsync]Please bind user wallet first. user id {renewalDto.UserId}");
+                    continue;
+                }
                 var organizationWalletAddress =
                     await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,userExtensionDto.WalletAddress);
                 if (string.IsNullOrEmpty(organizationWalletAddress))
