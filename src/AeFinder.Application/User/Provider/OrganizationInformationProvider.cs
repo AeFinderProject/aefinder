@@ -5,6 +5,7 @@ using AeFinder.Options;
 using AeFinder.User.Dto;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.ObjectMapping;
@@ -33,6 +34,7 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
     public async Task<string> GetUserOrganizationWalletAddressAsync(string organizationId, string userWalletAddress)
     {
         var organizationGuid = Guid.Parse(organizationId);
+        _logger.LogInformation($"[GetUserOrganizationWalletAddressAsync]find organizationId:{organizationGuid.ToString()}");
         var organizationUnitExtension = await _organizationExtensionRepository.FindAsync(organizationGuid);
         if (organizationUnitExtension == null)
         {
@@ -44,6 +46,7 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
                 indexerOrganizationInfoDto.Organization.Items.Count > 0)
             {
                 var organizationInfo = indexerOrganizationInfoDto.Organization.Items[0];
+                _logger.LogInformation($"[GetUserOrganizationWalletAddressAsync]indexer organization:{JsonConvert.SerializeObject(organizationInfo)}");
                 await SaveOrganizationExtensionInfoAsync(new OrganizationExtensionDto()
                 {
                     OrganizationId = organizationGuid,
@@ -54,7 +57,7 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
 
             return null;
         }
-
+        _logger.LogInformation($"[GetUserOrganizationWalletAddressAsync]organization:{JsonConvert.SerializeObject(organizationUnitExtension)}");
         return organizationUnitExtension.OrganizationWalletAddress;
     }
 
