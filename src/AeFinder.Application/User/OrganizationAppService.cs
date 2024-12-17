@@ -12,6 +12,7 @@ using AeFinder.Options;
 using AeFinder.User.Dto;
 using AeFinder.User.Provider;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
@@ -180,6 +181,8 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         var userExtensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
         if (userExtensionInfo.WalletAddress.IsNullOrEmpty())
         {
+            Logger.LogError(
+                $"user:{CurrentUser.Id.Value} does not bind any wallet");
             throw new UserFriendlyException("Please bind your user wallet first.");
         }
 
