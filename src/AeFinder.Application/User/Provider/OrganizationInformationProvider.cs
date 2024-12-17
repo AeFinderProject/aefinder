@@ -38,6 +38,10 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
         var organizationUnitExtension = await _organizationExtensionRepository.FindAsync(organizationGuid);
         if (organizationUnitExtension == null)
         {
+            if (string.IsNullOrEmpty(userWalletAddress))
+            {
+                throw new Exception("user wallet address can not be null");
+            }
             var indexerOrganizationInfoDto =
                 await _indexerProvider.GetUserOrganizationInfoAsync(userWalletAddress,
                     _contractOptions.BillingContractChainId);
