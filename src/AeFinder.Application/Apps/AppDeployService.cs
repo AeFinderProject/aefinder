@@ -191,6 +191,10 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         //Send charge transaction to contract
         var userExtensionDto =
             await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(oldOrderInfo.UserId));
+        if (userExtensionDto.WalletAddress.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("Please bind your user wallet first.");
+        }
         var organizationWalletAddress =
             await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
                 userExtensionDto.WalletAddress);
