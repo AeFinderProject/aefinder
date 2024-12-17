@@ -86,13 +86,18 @@ public class OrderService: ApplicationService, IOrderService
         //Get user organization account balance
         var userExtensionDto =
             await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
+        if (userExtensionDto.WalletAddress.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("Please bind your user wallet first.");
+        }
         var organizationWalletAddress =
             await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(dto.OrganizationId,userExtensionDto.WalletAddress);
         if (string.IsNullOrEmpty(organizationWalletAddress))
         {
             throw new UserFriendlyException($"The user has not linked any organization wallet address yet.");
         }
-        Logger.LogInformation($"organizationWalletAddress:{organizationWalletAddress}");
+        Logger.LogInformation(
+            $"userWalletAddress:{userExtensionDto.WalletAddress} organizationWalletAddress:{organizationWalletAddress}");
         var userOrganizationBalanceInfoDto =
             await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
                 _contractOptions.BillingContractChainId);
