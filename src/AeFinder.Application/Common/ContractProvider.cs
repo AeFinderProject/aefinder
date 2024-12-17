@@ -10,6 +10,7 @@ using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.Common;
@@ -52,7 +53,7 @@ public class ContractProvider: IContractProvider, ISingletonDependency
         var contractTransaction = await SendTransactionAsync<ChargeInput>(AElfContractMethodName.BillingContractCharge,
             param, BillingContractAddress);
         _logger.LogInformation(
-            $"[BillingChargeAsync] Send contract transaction {contractTransaction.TransactionId} successfully.");
+            $"[BillingChargeAsync] Send contract transaction {JsonConvert.SerializeObject(contractTransaction)} successfully.");
         return contractTransaction;
     }
 
@@ -68,7 +69,7 @@ public class ContractProvider: IContractProvider, ISingletonDependency
             AElfContractMethodName.BillingContractLockFrom, param,
             BillingContractAddress);
         _logger.LogInformation(
-            $"[BillingLockFromAsync] Send contract transaction {contractTransaction.TransactionId} successfully.");
+            $"[BillingLockFromAsync] Send contract transaction {JsonConvert.SerializeObject(contractTransaction)} successfully.");
         return contractTransaction;
     }
 
