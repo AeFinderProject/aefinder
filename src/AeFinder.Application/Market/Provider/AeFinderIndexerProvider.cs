@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using AeFinder.Common;
+using AeFinder.Commons;
 using GraphQL;
 using Volo.Abp.DependencyInjection;
 
@@ -23,7 +24,7 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
 
     public async Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string address, string billingId)
     {
-        return await _graphQlHelper.QueryAsync<IndexerUserFundRecordDto>(new GraphQLRequest
+        var result= await _graphQlHelper.QueryAsync<IndexerUserFundRecordDto>(new GraphQLRequest
         {
             Query = @"
 			    query($address:String,$billingId:String,$skipCount:Int!,$maxResultCount:Int!) {
@@ -35,11 +36,25 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
                 address, billingId, skipCount = 0, maxResultCount = 10
             }
         });
+        if (result != null && result.UserFundRecord != null && result.UserFundRecord.Items != null &&
+            result.UserFundRecord.Items.Count > 0)
+        {
+            foreach (var userFundRecordDto in result.UserFundRecord.Items)
+            {
+                userFundRecordDto.LockedBalance = userFundRecordDto.LockedBalance / ContractConstant.USDTDecimals;
+                userFundRecordDto.Balance = userFundRecordDto.Balance / ContractConstant.USDTDecimals;
+                userFundRecordDto.Amount = userFundRecordDto.Amount / ContractConstant.USDTDecimals;
+            }
+
+            return result;
+        }
+
+        return result;
     }
 
     public async Task<IndexerUserBalanceDto> GetUserBalanceAsync(string address, string chainId)
     {
-        return await _graphQlHelper.QueryAsync<IndexerUserBalanceDto>(new GraphQLRequest
+        var result= await _graphQlHelper.QueryAsync<IndexerUserBalanceDto>(new GraphQLRequest
         {
             Query = @"
 			    query($address:String,$chainId:String,$skipCount:Int!,$maxResultCount:Int!) {
@@ -51,6 +66,19 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
                 address, chainId, skipCount = 0, maxResultCount = 10
             }
         });
+        if (result != null && result.UserBalance != null && result.UserBalance.Items != null &&
+            result.UserBalance.Items.Count > 0)
+        {
+            foreach (var userBalanceDto in result.UserBalance.Items)
+            {
+                userBalanceDto.Balance = userBalanceDto.Balance / ContractConstant.USDTDecimals;
+                userBalanceDto.LockedBalance = userBalanceDto.LockedBalance / ContractConstant.USDTDecimals;
+            }
+
+            return result;
+        }
+
+        return result;
     }
 
     public async Task<IndexerOrganizationInfoDto> GetUserOrganizationInfoAsync(string memberAddress, string chainId)
