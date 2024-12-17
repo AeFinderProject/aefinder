@@ -83,6 +83,21 @@ public class OrderService: ApplicationService, IOrderService
         firstMonthLockFee = billingPlan.FirstMonthCost;
         decimal monthlyFee = dto.ProductNumber * productInfo.MonthlyUnitPrice;
         
+        //Get user organization account balance
+        var userExtensionDto =
+            await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
+        var organizationWalletAddress =
+            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(dto.OrganizationId,userExtensionDto.WalletAddress);
+        if (string.IsNullOrEmpty(organizationWalletAddress))
+        {
+            throw new UserFriendlyException($"The user has not linked any organization wallet address yet.");
+        }
+        Logger.LogInformation($"organizationWalletAddress:{organizationWalletAddress}");
+        var userOrganizationBalanceInfoDto =
+            await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
+                _contractOptions.BillingContractChainId);
+        var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
+        
         //Check if there is an existing order for a product of the same type
         OrderDto oldOrderInfo = null;
         if (productInfo.ProductType == ProductType.ApiQueryCount)
@@ -96,20 +111,6 @@ public class OrderService: ApplicationService, IOrderService
             oldOrderInfo =
                 await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, dto.AppId);
         }
-        
-        //Get user organization account balance
-        var userExtensionDto =
-            await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
-        var organizationWalletAddress =
-            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(dto.OrganizationId,userExtensionDto.WalletAddress);
-        if (string.IsNullOrEmpty(organizationWalletAddress))
-        {
-            throw new UserFriendlyException($"The organization wallet address has not yet been linked to user");
-        }
-        var userOrganizationBalanceInfoDto =
-            await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
-                _contractOptions.BillingContractChainId);
-        var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
         
         //If it exists, create a charge billing for the existing order
         if (oldOrderInfo != null)
