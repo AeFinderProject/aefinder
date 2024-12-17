@@ -7,8 +7,11 @@ using AeFinder.Apps;
 using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
+using AeFinder.Options;
 using AeFinder.User;
+using AeFinder.User.Provider;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -26,10 +29,17 @@ public class OrderService: ApplicationService, IOrderService
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IBillService _billService;
     private readonly IApiKeyService _apiKeyService;
+    private readonly IUserInformationProvider _userInformationProvider;
+    private readonly IOrganizationInformationProvider _organizationInformationProvider;
+    private readonly IAeFinderIndexerProvider _indexerProvider;
+    private readonly ContractOptions _contractOptions;
 
     public OrderService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
         IContractProvider contractProvider, IDistributedEventBus distributedEventBus,
-        IBillService billService,IApiKeyService apiKeyService,
+        IBillService billService, IApiKeyService apiKeyService,
+        IUserInformationProvider userInformationProvider,
+        IOrganizationInformationProvider organizationInformationProvider,
+        IAeFinderIndexerProvider indexerProvider, IOptionsSnapshot<ContractOptions> contractOptions,
         IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppService appService)
     {
         _clusterClient = clusterClient;
@@ -40,6 +50,10 @@ public class OrderService: ApplicationService, IOrderService
         _distributedEventBus = distributedEventBus;
         _billService = billService;
         _apiKeyService = apiKeyService;
+        _userInformationProvider = userInformationProvider;
+        _organizationInformationProvider = organizationInformationProvider;
+        _indexerProvider = indexerProvider;
+        _contractOptions = contractOptions.Value;
     }
 
     public async Task<List<BillDto>> CreateOrderAsync(CreateOrderDto dto)
@@ -82,6 +96,20 @@ public class OrderService: ApplicationService, IOrderService
             oldOrderInfo =
                 await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, dto.AppId);
         }
+        
+        //Get user organization account balance
+        var userExtensionDto =
+            await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
+        var organizationWalletAddress =
+            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(dto.OrganizationId,userExtensionDto.WalletAddress);
+        if (string.IsNullOrEmpty(organizationWalletAddress))
+        {
+            throw new UserFriendlyException($"The organization wallet address has not yet been linked to user");
+        }
+        var userOrganizationBalanceInfoDto =
+            await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
+                _contractOptions.BillingContractChainId);
+        var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
         
         //If it exists, create a charge billing for the existing order
         if (oldOrderInfo != null)
@@ -126,7 +154,11 @@ public class OrderService: ApplicationService, IOrderService
             {
                 //Calculate new order need lock fee
                 var needLockFee = firstMonthLockFee - remainingLockedAmount;
-                //TODO Check user organization balance
+                //Check user organization balance
+                if (organizationAccountBalance < needLockFee)
+                {
+                    throw new UserFriendlyException("The user's organization account has insufficient balance.");
+                }
                 
                 //Create new order
                 var newOrder = await ordersGrain.CreateOrderAsync(dto);
@@ -189,7 +221,11 @@ public class OrderService: ApplicationService, IOrderService
                 });
                 return billList;
             }
-            //TODO Check user organization balance
+            //Check user organization balance
+            if (organizationAccountBalance < firstMonthLockFee)
+            {
+                throw new UserFriendlyException("The user's organization account has insufficient balance.");
+            }
             
             //Create new order
             var newOrder = await ordersGrain.CreateOrderAsync(dto);
