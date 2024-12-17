@@ -56,7 +56,7 @@ public class MarketController : AeFinderController
     [HttpGet]
     [Route("api-query-count/monthly")]
     [Authorize]
-    public async Task<int> GetUserMonthlyApiQueryAllowanceAsync(string organizationId)
+    public async Task<long> GetUserMonthlyApiQueryAllowanceAsync(string organizationId)
     {
         return await _renewalService.GetUserMonthlyApiQueryAllowanceAsync(organizationId);
     }
@@ -83,6 +83,14 @@ public class MarketController : AeFinderController
     public async Task<List<BillDto>> CreateOrderAsync(CreateOrderDto dto)
     {
         return await _orderService.CreateOrderAsync(dto);
+    }
+    
+    [HttpGet]
+    [Route("transaction-history")]
+    [Authorize]
+    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync(string organizationId)
+    {
+        return await _billService.GetOrganizationTransactionHistoryAsync(organizationId);
     }
     
     [HttpGet]

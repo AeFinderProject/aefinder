@@ -1,10 +1,10 @@
+using AeFinder.ApiKeys;
 using AeFinder.Apps;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Market;
-using AeFinder.Market.Eto;
 using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
@@ -32,14 +32,17 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     private readonly ContractOptions _contractOptions;
     private readonly IAppDeployService _appDeployService;
     private readonly IDistributedEventBus _distributedEventBus;
-    
+    private readonly IApiKeyService _apiKeyService;
+    private readonly IRenewalService _renewalService;
+
     public RenewalBillCreateWorker(AbpAsyncTimer timer, ILogger<AppInfoSyncWorker> logger,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
-        IOrganizationAppService organizationAppService,IClusterClient clusterClient,
-        IContractProvider contractProvider,IOrganizationInformationProvider organizationInformationProvider,
-        IUserInformationProvider userInformationProvider,IAeFinderIndexerProvider indexerProvider,
-        IOptionsSnapshot<ContractOptions> contractOptions,IAppDeployService appDeployService,
-        IDistributedEventBus distributedEventBus,
+        IOrganizationAppService organizationAppService, IClusterClient clusterClient,
+        IContractProvider contractProvider, IOrganizationInformationProvider organizationInformationProvider,
+        IUserInformationProvider userInformationProvider, IAeFinderIndexerProvider indexerProvider,
+        IOptionsSnapshot<ContractOptions> contractOptions, IAppDeployService appDeployService,
+        IDistributedEventBus distributedEventBus, IApiKeyService apiKeyService,
+        IRenewalService renewalService,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -53,10 +56,12 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         _contractOptions = contractOptions.Value;
         _appDeployService = appDeployService;
         _distributedEventBus = distributedEventBus;
+        _apiKeyService = apiKeyService;
+        _renewalService = renewalService;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = CalculateNextExecutionDelay();
     }
-    
+
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
@@ -96,7 +101,10 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 if (renewalDto.ProductType == ProductType.ApiQueryCount)
                 {
                     //Charge based on usage query count
-                    var monthlyQueryCount = 10;//TODO Get monthly query count
+                    var organizationGuid = Guid.Parse(renewalDto.OrganizationId);
+                    var monthTime = DateTime.UtcNow.AddMonths(-1);
+                    var monthlyQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, monthTime);
+                    Logger.LogInformation($"[ProcessRenewalAsync]Api monthly query count:{monthlyQueryCount} time:{monthTime.ToString()}");
                     chargeFee = await billsGrain.CalculateApiQueryMonthlyChargeAmountAsync(monthlyQueryCount);
                     var monthlyFee = renewalDto.ProductNumber * productInfo.MonthlyUnitPrice;
                     refundAmount = monthlyFee - chargeFee;
@@ -109,8 +117,8 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,userExtensionDto.WalletAddress);
                 if (string.IsNullOrEmpty(organizationWalletAddress))
                 {
-                    _logger.LogError($"The organization wallet address has not yet been linked to user {renewalDto.UserId}");
-                    throw new Exception("The organization wallet address has not yet been linked");
+                    _logger.LogError($"[ProcessRenewalAsync]The organization wallet address has not yet been linked to user {renewalDto.UserId}");
+                    continue;
                 }
                 var chargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
                 {
@@ -120,11 +128,6 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     ChargeFee = chargeFee,
                     Description = "Auto-renewal charge for the existing order.",
                     RefundAmount = refundAmount
-                });
-                await _distributedEventBus.PublishAsync(new BillCreateEto()
-                {
-                    OrganizationId = chargeBill.OrganizationId,
-                    BillingId = chargeBill.BillingId
                 });
                 await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, 0,
                     chargeBill.BillingId);
@@ -151,8 +154,16 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     if (renewalDto.ProductType == ProductType.FullPodResource)
                     {
                         await _appDeployService.FreezeAppAsync(renewalDto.AppId);
+                        _logger.LogInformation($"[ProcessRenewalAsync]App {renewalDto.AppId} is frozen.");
                     }
-                    break;
+
+                    if (renewalDto.ProductType == ProductType.FullPodResource)
+                    {
+                        var freeQueryAllowance = await _renewalService.GetUserApiQueryFreeCountAsync(renewalDto.OrganizationId);
+                        var organizationGuid = Guid.Parse(renewalDto.OrganizationId);
+                        await _apiKeyService.SetQueryLimitAsync(organizationGuid, freeQueryAllowance);
+                    }
+                    continue;
                 }
                 
                 //Lock for next billing cycle
@@ -165,11 +176,6 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     AppId = renewalDto.AppId,
                     OrderId = renewalDto.OrderId,
                     Description = $"Auto-renewal lock for the existing order."
-                });
-                await _distributedEventBus.PublishAsync(new BillCreateEto()
-                {
-                    OrganizationId = newLockBill.OrganizationId,
-                    BillingId = newLockBill.BillingId
                 });
                 //Send lockFrom transaction to contract
                 await _contractProvider.BillingLockFromAsync(organizationWalletAddress, newLockBill.BillingAmount,

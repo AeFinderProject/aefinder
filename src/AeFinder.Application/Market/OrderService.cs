@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.ApiKeys;
 using AeFinder.Apps;
 using AeFinder.Common;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
-using AeFinder.Market.Eto;
 using AeFinder.User;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -24,10 +25,11 @@ public class OrderService: ApplicationService, IOrderService
     private readonly IContractProvider _contractProvider;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IBillService _billService;
+    private readonly IApiKeyService _apiKeyService;
 
     public OrderService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
         IContractProvider contractProvider, IDistributedEventBus distributedEventBus,
-        IBillService billService,
+        IBillService billService,IApiKeyService apiKeyService,
         IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppService appService)
     {
         _clusterClient = clusterClient;
@@ -37,6 +39,7 @@ public class OrderService: ApplicationService, IOrderService
         _contractProvider = contractProvider;
         _distributedEventBus = distributedEventBus;
         _billService = billService;
+        _apiKeyService = apiKeyService;
     }
 
     public async Task<List<BillDto>> CreateOrderAsync(CreateOrderDto dto)
@@ -113,7 +116,9 @@ public class OrderService: ApplicationService, IOrderService
             if (oldOrderInfo.ProductType == ProductType.ApiQueryCount)
             {
                 //Charge based on usage query count
-                var monthlyQueryCount = 10;//TODO Get monthly query count
+                var organizationGuid = Guid.Parse(dto.OrganizationId);
+                var monthlyQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, DateTime.UtcNow);
+                Logger.LogInformation($"[CreateOrderAsync]Api monthly query count:{monthlyQueryCount} time:{DateTime.UtcNow.ToString()}");
                 chargeFee = await billsGrain.CalculateApiQueryMonthlyChargeAmountAsync(monthlyQueryCount);
             }
             var remainingLockedAmount = lockedAmount - chargeFee;
@@ -136,11 +141,6 @@ public class OrderService: ApplicationService, IOrderService
                     LockFee = needLockFee,
                     Description =
                         $"Old order remaining locked amount: {remainingLockedAmount}, New order first month required locked amount: {firstMonthLockFee}, Additional amount needed to be locked: {needLockFee}."
-                });
-                await _distributedEventBus.PublishAsync(new BillCreateEto()
-                {
-                    OrganizationId = newLockBill.OrganizationId,
-                    BillingId = newLockBill.BillingId
                 });
                 billList.Add(newLockBill);
             }
@@ -169,11 +169,6 @@ public class OrderService: ApplicationService, IOrderService
                 Description = "User creates a new order and processes billing settlement for the existing order.",
                 ChargeFee = chargeFee,
                 RefundAmount = refundAmount
-            });
-            await _distributedEventBus.PublishAsync(new BillCreateEto()
-            {
-                OrganizationId = oldChargeBill.OrganizationId,
-                BillingId = oldChargeBill.BillingId
             });
         }
         else
@@ -206,11 +201,6 @@ public class OrderService: ApplicationService, IOrderService
                 OrderId = newOrder.OrderId,
                 LockFee = firstMonthLockFee,
                 Description = $"Lock a portion of the balance for the new order."
-            });
-            await _distributedEventBus.PublishAsync(new BillCreateEto()
-            {
-                OrganizationId = newLockBill.OrganizationId,
-                BillingId = newLockBill.BillingId
             });
             billList.Add(newLockBill);
         }

@@ -189,7 +189,7 @@ public class DeploymentHelper
     public static V1ResourceRequirements CreateResources(string requestCpu, string requestMemory, string limitCpu,
         string limitMemory)
     {
-        if (!string.IsNullOrEmpty(limitCpu) && string.IsNullOrEmpty(limitMemory))
+        if (!string.IsNullOrEmpty(limitCpu) && !string.IsNullOrEmpty(limitMemory))
         {
             return new V1ResourceRequirements
             {

@@ -1,3 +1,4 @@
+using AeFinder.ApiKeys;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.BackgroundWorker.Options;
@@ -28,14 +29,17 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
     private readonly IAppService _appService;
     private readonly IProductService _productService;
+    private readonly IRenewalService _renewalService;
     private readonly IAppDeployService _appDeployService;
     private readonly IUserInformationProvider _userInformationProvider;
+    private readonly IApiKeyService _apiKeyService;
 
     public BillTransactionPollingProvider(ILogger<BillTransactionPollingProvider> logger,
         IAeFinderIndexerProvider indexerProvider, IClusterClient clusterClient,
         IContractProvider contractProvider, IOrganizationInformationProvider organizationInformationProvider,
         IAppService appService, IProductService productService, IAppDeployService appDeployService,
-        IUserInformationProvider userInformationProvider,
+        IUserInformationProvider userInformationProvider, IRenewalService renewalService,
+        IApiKeyService apiKeyService,
         IOptionsMonitor<TransactionPollingOptions> transactionPollingOptions)
     {
         _logger = logger;
@@ -46,7 +50,9 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
         _userInformationProvider = userInformationProvider;
         _appService = appService;
         _productService = productService;
+        _renewalService = renewalService;
         _appDeployService = appDeployService;
+        _apiKeyService = apiKeyService;
         _transactionPollingOptions = transactionPollingOptions;
     }
 
@@ -54,16 +60,16 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
     {
         var billTransactionResult = await _indexerProvider.GetUserFundRecordAsync(null, billingId);
         
-        var times = 0;
-        while ((billTransactionResult == null || billTransactionResult.UserFundRecord == null ||
-                billTransactionResult.UserFundRecord.Items == null ||
-                billTransactionResult.UserFundRecord.Items.Count == 0) &&
-               times < _transactionPollingOptions.CurrentValue.RetryTimes)
-        {
-            times++;
-            await Task.Delay(_transactionPollingOptions.CurrentValue.DelaySeconds);
-            billTransactionResult = await _indexerProvider.GetUserFundRecordAsync(null, billingId);
-        }
+        // var times = 0;
+        // while ((billTransactionResult == null || billTransactionResult.UserFundRecord == null ||
+        //         billTransactionResult.UserFundRecord.Items == null ||
+        //         billTransactionResult.UserFundRecord.Items.Count == 0) &&
+        //        times < _transactionPollingOptions.CurrentValue.RetryTimes)
+        // {
+        //     times++;
+        //     await Task.Delay(_transactionPollingOptions.CurrentValue.DelaySeconds);
+        //     billTransactionResult = await _indexerProvider.GetUserFundRecordAsync(null, billingId);
+        // }
 
         if (billTransactionResult == null || billTransactionResult.UserFundRecord == null ||
             billTransactionResult.UserFundRecord.Items == null ||
@@ -76,6 +82,8 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
 
         //Update bill transaction id & status
         var transactionResultDto = billTransactionResult.UserFundRecord.Items[0];
+        _logger.LogInformation(
+            $"[HandleTransactionAsync]Get transaction {transactionResultDto.TransactionId} of billing {transactionResultDto.BillingId}");
         var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
@@ -146,6 +154,14 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                         AppFullPodLimitCpuCore = resourceDto.Capacity.Cpu,
                         AppFullPodLimitMemory = resourceDto.Capacity.Memory
                     });
+                }
+                
+                //Update Api query limit
+                if (orderDto.ProductType == ProductType.ApiQueryCount)
+                {
+                    var queryAllowance = await _renewalService.GetUserMonthlyApiQueryAllowanceAsync(orderDto.OrganizationId);
+                    var organizationGuid = Guid.Parse(orderDto.OrganizationId);
+                    await _apiKeyService.SetQueryLimitAsync(organizationGuid, queryAllowance);
                 }
                 
                 break;

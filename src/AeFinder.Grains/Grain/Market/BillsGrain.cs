@@ -195,7 +195,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return usedFee;
     }
 
-    public async Task<decimal> CalculateApiQueryMonthlyChargeAmountAsync(int monthlyQueryCount)
+    public async Task<decimal> CalculateApiQueryMonthlyChargeAmountAsync(long monthlyQueryCount)
     {
         var productsGrain =
             GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
@@ -249,6 +249,14 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
     public async Task<List<BillDto>> GetOrganizationAllBillsAsync(string organizationId)
     {
         var bills = State.Where(b => b.OrganizationId == organizationId).ToList();
+        var billDtoList = _objectMapper.Map<List<BillState>, List<BillDto>>(bills);
+        return billDtoList;
+    }
+
+    public async Task<List<BillDto>> GetAllPendingBillAsync()
+    {
+        var bills = State.Where(b => b.BillingStatus == BillingStatus.PendingPayment).OrderBy(b => b.BillingDate)
+            .ToList();
         var billDtoList = _objectMapper.Map<List<BillState>, List<BillDto>>(bills);
         return billDtoList;
     }

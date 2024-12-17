@@ -188,13 +188,13 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         await WriteStateAsync();
     }
 
-    public async Task<int> GetOrganizationMonthlyApiQueryAllowanceAsync(string organizationId)
+    public async Task<long> GetOrganizationMonthlyApiQueryAllowanceAsync(string organizationId)
     {
         var apiQueryCountSubscriptions =
             State.Where(r =>
                 r.OrganizationId == organizationId &&
                 r.ProductType == ProductType.ApiQueryCount && r.IsActive == true).ToList();
-        var totalQueryCount = 0;
+        long totalQueryCount = 0;
         foreach (var renewalState in apiQueryCountSubscriptions)
         {
             var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
