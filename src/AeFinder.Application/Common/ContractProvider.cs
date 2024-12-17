@@ -49,8 +49,11 @@ public class ContractProvider: IContractProvider, ISingletonDependency
         param.BillingId = billingId;
         param.ChargeAmount = Convert.ToInt64(chargeAmount * ContractConstant.USDTDecimals);
         param.UnlockAmount = Convert.ToInt64(unlockAmount * ContractConstant.USDTDecimals);
-        return await SendTransactionAsync<ChargeInput>(AElfContractMethodName.BillingContractCharge, param,
-            BillingContractAddress);
+        var contractTransaction = await SendTransactionAsync<ChargeInput>(AElfContractMethodName.BillingContractCharge,
+            param, BillingContractAddress);
+        _logger.LogInformation(
+            $"[BillingChargeAsync] Send contract transaction {contractTransaction.TransactionId} successfully.");
+        return contractTransaction;
     }
 
     public async Task<SendTransactionOutput> BillingLockFromAsync(string organizationWalletAddress, decimal lockAmount,
@@ -61,8 +64,12 @@ public class ContractProvider: IContractProvider, ISingletonDependency
         param.Symbol = ContractConstant.USDT;
         param.Amount = Convert.ToInt64(lockAmount * ContractConstant.USDTDecimals);
         param.BillingId = billingId;
-        return await SendTransactionAsync<LockFromInput>(AElfContractMethodName.BillingContractLockFrom, param,
+        var contractTransaction = await SendTransactionAsync<LockFromInput>(
+            AElfContractMethodName.BillingContractLockFrom, param,
             BillingContractAddress);
+        _logger.LogInformation(
+            $"[BillingLockFromAsync] Send contract transaction {contractTransaction.TransactionId} successfully.");
+        return contractTransaction;
     }
 
     private async Task<SendTransactionOutput> SendTransactionAsync<T>(string methodName, IMessage param,string contractAddress)

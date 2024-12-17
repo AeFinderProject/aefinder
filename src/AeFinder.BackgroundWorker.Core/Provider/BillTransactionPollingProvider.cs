@@ -60,16 +60,16 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
     {
         var billTransactionResult = await _indexerProvider.GetUserFundRecordAsync(null, billingId);
         
-        var times = 0;
-        while ((billTransactionResult == null || billTransactionResult.UserFundRecord == null ||
-                billTransactionResult.UserFundRecord.Items == null ||
-                billTransactionResult.UserFundRecord.Items.Count == 0) &&
-               times < _transactionPollingOptions.CurrentValue.RetryTimes)
-        {
-            times++;
-            await Task.Delay(_transactionPollingOptions.CurrentValue.DelaySeconds);
-            billTransactionResult = await _indexerProvider.GetUserFundRecordAsync(null, billingId);
-        }
+        // var times = 0;
+        // while ((billTransactionResult == null || billTransactionResult.UserFundRecord == null ||
+        //         billTransactionResult.UserFundRecord.Items == null ||
+        //         billTransactionResult.UserFundRecord.Items.Count == 0) &&
+        //        times < _transactionPollingOptions.CurrentValue.RetryTimes)
+        // {
+        //     times++;
+        //     await Task.Delay(_transactionPollingOptions.CurrentValue.DelaySeconds);
+        //     billTransactionResult = await _indexerProvider.GetUserFundRecordAsync(null, billingId);
+        // }
 
         if (billTransactionResult == null || billTransactionResult.UserFundRecord == null ||
             billTransactionResult.UserFundRecord.Items == null ||
@@ -82,6 +82,8 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
 
         //Update bill transaction id & status
         var transactionResultDto = billTransactionResult.UserFundRecord.Items[0];
+        _logger.LogInformation(
+            $"[HandleTransactionAsync]Get transaction {transactionResultDto.TransactionId} of billing {transactionResultDto.BillingId}");
         var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);

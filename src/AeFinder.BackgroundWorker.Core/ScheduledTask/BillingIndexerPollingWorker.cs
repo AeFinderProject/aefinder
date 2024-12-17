@@ -50,7 +50,7 @@ public class BillingIndexerPollingWorker : AsyncPeriodicBackgroundWorkerBase, IS
         {
             var organizationId = organizationUnitDto.Id.ToString();
             var organizationName = organizationUnitDto.DisplayName;
-            _logger.LogInformation("[RenewalBillCreateWorker] Check organization: {0}.", organizationId);
+            
             var organizationGrainId = GetOrganizationGrainId(organizationUnitDto.Id);
             var billsGrain =
                 _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
@@ -59,9 +59,11 @@ public class BillingIndexerPollingWorker : AsyncPeriodicBackgroundWorkerBase, IS
             {
                 continue;
             }
-
+            
             foreach (var billDto in pendingBills)
             {
+                _logger.LogInformation("[RenewalBillCreateWorker] Organization: {0} has pending bill: {1}.",
+                    organizationName, billDto.BillingId);
                 await _billTransactionPollingProvider.HandleTransactionAsync(billDto.BillingId, billDto.OrganizationId);
             }
         }
