@@ -37,14 +37,13 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IAeFinderIndexerProvider _indexerProvider;
     private readonly ContractOptions _contractOptions;
-    private readonly IOrderService _orderService;
 
     public OrganizationAppService(IClusterClient clusterClient,
         OrganizationUnitManager organizationUnitManager,
         IRepository<OrganizationUnit, Guid> organizationUnitRepository,
         IIdentityUserRepository identityUserRepository,
         IOrganizationInformationProvider organizationInformationProvider,
-        IUserInformationProvider userInformationProvider, IOrderService orderService,
+        IUserInformationProvider userInformationProvider,
         IAeFinderIndexerProvider indexerProvider, IOptionsSnapshot<ContractOptions> contractOptions,
         IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
         IdentityUserManager identityUserManager)
@@ -59,7 +58,6 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         _userInformationProvider = userInformationProvider;
         _indexerProvider = indexerProvider;
         _contractOptions = contractOptions.Value;
-        _orderService = orderService;
     }
 
     public async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(string displayName, Guid? parentId = null)
@@ -89,20 +87,6 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
             _clusterClient.GetGrain<IOrganizationAppGrain>(
                 GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id.ToString("N")));
         await organizationAppGain.AddOrganizationAsync(organizationUnit.DisplayName);
-        
-        //Automatically place an order for a free API query package for the organization.
-        var productsGrain =
-            _clusterClient.GetGrain<IProductsGrain>(
-                GrainIdHelper.GenerateProductsGrainId());
-        var freeProduct = await productsGrain.GetFreeApiQueryCountProductAsync();
-        await _orderService.CreateOrderAsync(new CreateOrderDto()
-        {
-            OrganizationId = organizationUnitDto.Id.ToString(),
-            UserId = CurrentUser.Id.ToString(),
-            ProductId = freeProduct.ProductId,
-            ProductNumber = 1,
-            PeriodMonths = 1
-        });
         
         return organizationUnitDto;
     }
