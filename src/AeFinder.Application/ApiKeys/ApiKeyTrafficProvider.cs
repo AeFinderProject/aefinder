@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
+using AeFinder.Market;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Threading;
 using Volo.Abp.Timing;
 
 namespace AeFinder.ApiKeys;
@@ -23,19 +25,25 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
 {
     private readonly ConcurrentDictionary<string, AeIndexerApiTrafficSegment> _aeIndexerApiTraffics = new();
     private readonly ConcurrentDictionary<string, BasicApiTrafficSegment> _basicApiTraffics = new();
+    private decimal _apiQueryPrice = 0;
     
     private readonly ApiKeyOptions _apiKeyOptions;
     private readonly IClusterClient _clusterClient;
     private readonly IClock _clock;
     private readonly IApiKeyInfoProvider _apiKeyInfoProvider;
+    private readonly IProductService _productService;
 
     public ApiKeyTrafficProvider(IClusterClient clusterClient, IClock clock,
-        IOptionsSnapshot<ApiKeyOptions> apiKeyOptions, IApiKeyInfoProvider apiKeyInfoProvider)
+        IOptionsSnapshot<ApiKeyOptions> apiKeyOptions, IApiKeyInfoProvider apiKeyInfoProvider,
+        IProductService productService)
     {
         _clusterClient = clusterClient;
         _clock = clock;
         _apiKeyInfoProvider = apiKeyInfoProvider;
+        _productService = productService;
         _apiKeyOptions = apiKeyOptions.Value;
+
+        _apiQueryPrice = AsyncHelper.RunSync(async () => await GetApiKeyQueryPriceAsync());
     }
 
     public async Task IncreaseAeIndexerQueryAsync(string apiKey, string appId, string domain, DateTime dateTime)
@@ -144,7 +152,7 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
             throw new UserFriendlyException("Api key query times insufficient.");
         }
 
-        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - used <= 0)
+        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / _apiQueryPrice) - used <= 0)
         {
             throw new UserFriendlyException("Api key unavailable.");
         }
@@ -200,5 +208,11 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
     {
         var minute = (dateTime.Minute / _apiKeyOptions.FlushPeriod) * _apiKeyOptions.FlushPeriod;
         return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, minute, 0, _clock.Kind);
+    }
+    
+    private async Task<decimal> GetApiKeyQueryPriceAsync()
+    {
+        var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
+        return apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
     }
 }
