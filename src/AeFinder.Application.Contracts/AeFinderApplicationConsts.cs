@@ -14,9 +14,6 @@ public class AeFinderApplicationConsts
     public const int AppCurrentVersionCacheHours = 24 * 30;
     public const string VerificationCodePlaceholder = "[VerificationCode]";
     
-    // TODO: Get prices using the ApiKey commodity api
-    public const decimal ApiKeyQueryPrice = (decimal)4 / 100000;
-    
     public static readonly HashSet<string> AppInterestedExtraPropertiesKey = new HashSet<string>
         { "RefBlockNumber", "RefBlockPrefix", "ReturnValue", "Error", "TransactionFee", "ResourceFee" };
 }
