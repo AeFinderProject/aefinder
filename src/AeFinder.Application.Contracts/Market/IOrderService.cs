@@ -6,5 +6,5 @@ namespace AeFinder.Market;
 public interface IOrderService
 {
     Task<List<BillDto>> CreateOrderAsync(CreateOrderDto dto);
-    Task CancelOrderAsync(string organizationId, string orderId);
+    Task CancelOrderAndBillAsync(string organizationId, string orderId, string billingId);
 }

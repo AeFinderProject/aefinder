@@ -103,9 +103,9 @@ public class MarketController : AeFinderController
 
     [HttpPost]
     [Route("cancel/order")]
-    [Authorize]
-    public async Task CancelOrderAsync(string organizationId, string orderId)
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task CancelOrderAndBillAsync(string organizationId, string orderId, string billingId)
     {
-        await _orderService.CancelOrderAsync(organizationId, orderId);
+        await _orderService.CancelOrderAndBillAsync(organizationId, orderId, billingId);
     }
 }
