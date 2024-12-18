@@ -362,14 +362,14 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
                 GrainIdHelper.GenerateRegisterVerificationCodeGrainId(user.Email));
         await verificationCodeGrain.VerifyAsync(code);
         
-        user.SetEmailConfirmed(true);
-        user.SetIsActive(true);
-        await UserManager.UpdateAsync(user);
-        
         await _organizationAppService.CreateOrganizationUnitAsync(register.OrganizationName);
         var organizationUnit = await _organizationUnitRepository.GetAsync(register.OrganizationName);
         await UserManager.AddToOrganizationUnitAsync(user, organizationUnit);
         await _organizationAppService.AddUserToOrganizationUnitAsync(user.Id,organizationUnit.Id);
+        
+        user.SetEmailConfirmed(true);
+        user.SetIsActive(true);
+        await UserManager.UpdateAsync(user);
 
         await verificationCodeGrain.RemoveAsync();
     }
