@@ -144,6 +144,8 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                         var sendTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress,
                             oldOrderChargeBill.BillingAmount, oldOrderChargeBill.RefundAmount,
                             oldOrderChargeBill.BillingId);
+                        _logger.LogInformation("Send charge transaction " + sendTransactionOutput.TransactionId +
+                                              " of bill " + oldOrderChargeBill.BillingId);
                     }
                 }
                 
