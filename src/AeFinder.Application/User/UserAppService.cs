@@ -285,7 +285,18 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         identityUserExtensionDto.WalletAddress = extensionInfo.WalletAddress;
         return identityUserExtensionDto;
     }
-    
+
+    public async Task<bool> IsRegisterPendingAsync(string email)
+    {
+        var existUser = await UserManager.FindByEmailAsync(email.Trim());
+        if (existUser != null && existUser.IsActive == false)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public async Task RegisterAsync(RegisterUserInput input)
     {
         var userName = input.UserName.Trim();
