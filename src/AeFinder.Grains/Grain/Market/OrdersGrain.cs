@@ -117,19 +117,28 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         {
             var apiQueryCountRenewal = await renewalGrain.GetApiQueryCountRenewalInfoAsync(orderState.OrganizationId,
                 orderState.ProductId);
-            subscriptionId = apiQueryCountRenewal.SubscriptionId;
+            if (apiQueryCountRenewal != null)
+            {
+                subscriptionId = apiQueryCountRenewal.SubscriptionId;
+            }
         }
 
         if (orderState.ProductType == ProductType.FullPodResource)
         {
             var podResourceRenewal = await renewalGrain.GetPodResourceRenewalInfoAsync(orderState.OrganizationId,
                 orderState.AppId, orderState.ProductId);
-            subscriptionId = podResourceRenewal.SubscriptionId;
+            if (podResourceRenewal != null)
+            {
+                subscriptionId = podResourceRenewal.SubscriptionId;
+            }
         }
         orderState.OrderStatus = OrderStatus.Canceled;
         await WriteStateAsync();
-        
-        await renewalGrain.CancelRenewalByIdAsync(subscriptionId);
+
+        if (!string.IsNullOrEmpty(subscriptionId))
+        {
+            await renewalGrain.CancelRenewalByIdAsync(subscriptionId);
+        }
     }
 
     public async Task<OrderDto> GetLatestApiQueryCountOrderAsync(string organizationId)
