@@ -144,10 +144,10 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
     public async Task<OrderDto> GetLatestApiQueryCountOrderAsync(string organizationId)
     {
         var productsGrain = GrainFactory.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
-        
+
         var oldUserOrderStates = State.Where(o =>
             o.OrganizationId == organizationId && o.ProductType == ProductType.ApiQueryCount &&
-            o.OrderStatus != OrderStatus.Canceled).OrderByDescending(o=>o.OrderDate).ToList();
+            o.OrderStatus != OrderStatus.Canceled && o.OrderAmount > 0).OrderByDescending(o => o.OrderDate).ToList();
 
         foreach (var orderState in oldUserOrderStates)
         {
@@ -156,8 +156,10 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
             {
                 continue;
             }
+
             return _objectMapper.Map<OrderState, OrderDto>(orderState);
         }
+
         return null;
     }
 
