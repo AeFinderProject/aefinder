@@ -256,10 +256,11 @@ public class OrderService: ApplicationService, IOrderService
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         await ordersGrain.CancelOrderByIdAsync(orderId);
-
+        Logger.LogInformation($"Order {orderId} canceled");
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
         await billsGrain.CancelBillAsync(billingId);
+        Logger.LogInformation($"Bill {billingId} canceled");
     }
 
     // private async Task<string> GetOrganizationGrainIdAsync()
