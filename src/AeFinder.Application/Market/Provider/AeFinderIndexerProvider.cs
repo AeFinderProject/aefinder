@@ -8,7 +8,7 @@ namespace AeFinder.Market;
 
 public interface IAeFinderIndexerProvider
 {
-    Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string address, string billingId);
+    Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string chainId,string address, string billingId);
     Task<IndexerUserBalanceDto> GetUserBalanceAsync(string address, string chainId);
     Task<IndexerOrganizationInfoDto> GetUserOrganizationInfoAsync(string memberAddress, string chainId);
 }
@@ -22,18 +22,18 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
         _graphQlHelper = graphQlHelper;
     }
 
-    public async Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string address, string billingId)
+    public async Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string chainId,string address, string billingId)
     {
         var result= await _graphQlHelper.QueryAsync<IndexerUserFundRecordDto>(new GraphQLRequest
         {
             Query = @"
-			    query($address:String,$billingId:String,$skipCount:Int!,$maxResultCount:Int!) {
-                    userFundRecord(input: {address:$address,billingId:$billingId,skipCount:$skipCount,maxResultCount:$maxResultCount}){
+			    query($address:String,$chainId:String,$billingId:String,$skipCount:Int!,$maxResultCount:Int!) {
+                    userFundRecord(input: {address:$address,chainId:$chainId,billingId:$billingId,skipCount:$skipCount,maxResultCount:$maxResultCount}){
                             items{id,metadata{chainId,block{blockHash,blockHeight,blockTime}},address,transactionId,amount,token{symbol},balance,lockedBalance,type,billingId},totalCount}
                 }",
             Variables = new
             {
-                address, billingId, skipCount = 0, maxResultCount = 10
+                address,chainId, billingId, skipCount = 0, maxResultCount = 10
             }
         });
         // if (result != null && result.UserFundRecord != null && result.UserFundRecord.Items != null &&

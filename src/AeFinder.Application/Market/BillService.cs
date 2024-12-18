@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
+using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -23,9 +25,11 @@ public class BillService : ApplicationService, IBillService
     private readonly IAeFinderIndexerProvider _indexerProvider;
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
+    private readonly ContractOptions _contractOptions;
 
     public BillService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
         IAeFinderIndexerProvider indexerProvider,IUserInformationProvider userInformationProvider,
+        IOptionsSnapshot<ContractOptions> contractOptions,
         IOrganizationInformationProvider organizationInformationProvider)
     {
         _clusterClient = clusterClient;
@@ -33,6 +37,7 @@ public class BillService : ApplicationService, IBillService
         _indexerProvider = indexerProvider;
         _userInformationProvider = userInformationProvider;
         _organizationInformationProvider = organizationInformationProvider;
+        _contractOptions = contractOptions.Value;
     }
 
     public async Task<BillingPlanDto> GetProductBillingPlanAsync(GetBillingPlanInput input)
@@ -90,7 +95,10 @@ public class BillService : ApplicationService, IBillService
         {
             return new PagedResultDto<TransactionHistoryDto>();
         }
-        var indexerUserFundRecordDto = await _indexerProvider.GetUserFundRecordAsync(organizationWalletAddress, null);
+
+        var indexerUserFundRecordDto =
+            await _indexerProvider.GetUserFundRecordAsync(_contractOptions.BillingContractChainId,
+                organizationWalletAddress, null);
         if (indexerUserFundRecordDto == null || indexerUserFundRecordDto.UserFundRecord == null)
         {
             return new PagedResultDto<TransactionHistoryDto>();
