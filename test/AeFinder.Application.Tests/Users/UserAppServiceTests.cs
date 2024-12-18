@@ -101,4 +101,49 @@ public class UserAppServiceTests: AeFinderApplicationAppTestBase
         user.EmailConfirmed.ShouldBeTrue();
         user.OrganizationUnits.First().OrganizationUnitId.ShouldBe(org.Id);
     }
+
+    [Fact]
+    public async Task Register_SameOrganization_Test()
+    {
+        var registerUserInput1 = new RegisterUserInput
+        {
+            Email = "test1@email.com",
+            OrganizationName = "TestOrg",
+            UserName = "TestUser1",
+            Password = "Asdf@123456"
+        };
+        await _userAppService.RegisterAsync(registerUserInput1);
+        
+        var registerUserInput2 = new RegisterUserInput
+        {
+            Email = "test2@email.com",
+            OrganizationName = "TestOrg",
+            UserName = "TestUser2",
+            Password = "Asdf@123456"
+        };
+        await _userAppService.RegisterAsync(registerUserInput2);
+        
+        var codeGrain =
+            _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
+                GrainIdHelper.GenerateRegisterVerificationCodeGrainId(registerUserInput1.Email));
+        var verificationCode = await codeGrain.GetCodeAsync();
+
+        await _userAppService.RegisterConfirmAsync(verificationCode);
+        
+        codeGrain =
+            _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
+                GrainIdHelper.GenerateRegisterVerificationCodeGrainId(registerUserInput2.Email));
+        verificationCode = await codeGrain.GetCodeAsync();
+
+        await Assert.ThrowsAsync<BusinessException>(async () =>
+            await _userAppService.RegisterConfirmAsync(verificationCode));
+        
+        var user1 = await _userManager.FindByEmailAsync(registerUserInput1.Email);
+        user1.IsActive.ShouldBeTrue();
+        user1.EmailConfirmed.ShouldBeTrue();
+        
+        var user2 = await _userManager.FindByEmailAsync(registerUserInput2.Email);
+        user2.IsActive.ShouldBeFalse();
+        user2.EmailConfirmed.ShouldBeFalse();
+    }
 }
