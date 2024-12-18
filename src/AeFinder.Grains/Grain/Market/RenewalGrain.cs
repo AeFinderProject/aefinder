@@ -184,7 +184,10 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
     {
         await ReadStateAsync();
         var renewalState = State.FirstOrDefault(o => o.SubscriptionId == subscriptionId);
-        renewalState.IsActive = false;
+        if (renewalState != null)
+        {
+            renewalState.IsActive = false;
+        }
         await WriteStateAsync();
     }
 

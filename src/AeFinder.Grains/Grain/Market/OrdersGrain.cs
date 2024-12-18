@@ -112,8 +112,6 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         var orderState = State.FirstOrDefault(o => o.OrderId == id);
         var renewalGrain =
             GrainFactory.GetGrain<IRenewalGrain>(GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(orderState.OrganizationId)));
-        var billsGrain = GrainFactory.GetGrain<IBillsGrain>(
-            GrainIdHelper.GenerateBillsGrainId(Guid.Parse(orderState.OrganizationId)));
         var subscriptionId = string.Empty;
         if (orderState.ProductType == ProductType.ApiQueryCount)
         {
@@ -132,13 +130,6 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         await WriteStateAsync();
         
         await renewalGrain.CancelRenewalByIdAsync(subscriptionId);
-        
-        
-        // //Create charge bill
-        // var bill = await billsGrain.CreateChargeBillAsync(orderState.OrganizationId, subscriptionId,
-        //     "Order canceled");
-        
-        // return bill;
     }
 
     public async Task<OrderDto> GetLatestApiQueryCountOrderAsync(string organizationId)
