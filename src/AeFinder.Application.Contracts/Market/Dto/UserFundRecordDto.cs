@@ -1,4 +1,4 @@
-using AeFinder.GraphQL.Dto;
+using AeFinder.Sdk.Dtos;
 
 namespace AeFinder.Market;
 

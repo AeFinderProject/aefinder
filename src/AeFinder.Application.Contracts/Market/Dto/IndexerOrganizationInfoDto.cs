@@ -1,6 +1,8 @@
+using Volo.Abp.Application.Dtos;
+
 namespace AeFinder.Market;
 
 public class IndexerOrganizationInfoDto
 {
-    public  MemberOrganization Organization { get; set; }
+    public PagedResultDto<MemberOrganizationDto> Organization { get; set; }
 }

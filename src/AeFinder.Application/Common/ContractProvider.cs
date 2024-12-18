@@ -99,34 +99,24 @@ public class ContractProvider: IContractProvider, ISingletonDependency
     private async Task<T> CallTransactionAsync<T>(string methodName, IMessage param,
         string contractAddress) where T : class, IMessage<T>, new()
     {
-        try
+        var client = new AElfClient(AElfNodeBaseUrl);
+        await client.IsConnectedAsync();
+        var address = client.GetAddressFromPrivateKey(TreasurerAccountPrivateKeyForCallTx);
+
+        var transaction =
+            await client.GenerateTransactionAsync(address, contractAddress,
+                methodName, param);
+
+        _logger.LogDebug("Call tx methodName is: {methodName} param is: {transaction}", methodName, transaction);
+
+        var txWithSign = client.SignTransaction(TreasurerAccountPrivateKeyForCallTx, transaction);
+        var result = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
         {
-            var client = new AElfClient(AElfNodeBaseUrl);
-            await client.IsConnectedAsync();
-            var address = client.GetAddressFromPrivateKey(TreasurerAccountPrivateKeyForCallTx);
+            RawTransaction = txWithSign.ToByteArray().ToHex()
+        });
 
-            var transaction =
-                await client.GenerateTransactionAsync(address, contractAddress,
-                    methodName, param);
-
-            // _logger.LogDebug("Call tx methodName is: {methodName} param is: {transaction}", methodName, transaction);
-            
-            var txWithSign = client.SignTransaction(TreasurerAccountPrivateKeyForCallTx, transaction);
-            var result = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
-            {
-                RawTransaction = txWithSign.ToByteArray().ToHex()
-            });
-
-            var value = new T();
-            value.MergeFrom(ByteArrayHelper.HexStringToByteArray(result));
-            return value;
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "CallTransaction error, contractAddress:{contractAddress}, methodName:{methodName}",
-                contractAddress,
-                methodName);
-            return null;
-        }
+        var value = new T();
+        value.MergeFrom(ByteArrayHelper.HexStringToByteArray(result));
+        return value;
     }
 }

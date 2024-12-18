@@ -7,12 +7,12 @@ namespace AeFinder.Grains.Grain.Apps;
 
 public class AppIndexManagerGrain : AeFinderGrain<AppIndexManagerState>, IAppIndexManagerGrain
 {
-    private readonly IElasticSearchIndexHelper _elasticSearchIndexHelper;
+    private readonly IElasticSearchCommonService _elasticSearchCommonService;
     private readonly ILogger<AppIndexManagerGrain> _logger;
 
-    public AppIndexManagerGrain(IElasticSearchIndexHelper elasticSearchIndexHelper, ILogger<AppIndexManagerGrain> logger)
+    public AppIndexManagerGrain(IElasticSearchCommonService elasticSearchCommonService, ILogger<AppIndexManagerGrain> logger)
     {
-        _elasticSearchIndexHelper = elasticSearchIndexHelper;
+        _elasticSearchCommonService = elasticSearchCommonService;
         _logger = logger;
     }
 
@@ -46,7 +46,7 @@ public class AppIndexManagerGrain : AeFinderGrain<AppIndexManagerState>, IAppInd
         }
         foreach (var indexName in State.IndexNameList)
         {
-            await _elasticSearchIndexHelper.DeleteAppIndexAsync(indexName);
+            await _elasticSearchCommonService.DeleteAppIndexAsync(indexName);
         }
     }
     
