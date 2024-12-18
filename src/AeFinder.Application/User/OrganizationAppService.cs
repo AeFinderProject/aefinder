@@ -238,4 +238,15 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         organizationAccountBalance.ChainId = balanceInfo.Metadata.ChainId;
         return organizationAccountBalance;
     }
+    
+    public async Task<OrganizationUnit> GetUserDefaultOrganizationAsync(Guid userId)
+    {
+        var organizationUnits = await _identityUserRepository.GetOrganizationUnitsAsync(userId);
+        if (organizationUnits == null)
+        {
+            return null;
+        }
+
+        return organizationUnits.FirstOrDefault();
+    }
 }

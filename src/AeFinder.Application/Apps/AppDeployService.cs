@@ -17,7 +17,6 @@ using AeFinder.User;
 using AeFinder.User.Provider;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -38,11 +37,12 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IUserInformationProvider _userInformationProvider;
+    private readonly IOrganizationAppService _organizationAppService;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
         IUserAppService userAppService, IContractProvider contractProvider,
-        IUserInformationProvider userInformationProvider,
+        IUserInformationProvider userInformationProvider,IOrganizationAppService organizationAppService,
         IOrganizationInformationProvider organizationInformationProvider,IOptionsSnapshot<AppDeployOptions> appDeployOptions,
         IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppResourceLimitProvider appResourceLimitProvider)
     {
@@ -56,6 +56,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _appDeployOptions = appDeployOptions.Value;
         _organizationInformationProvider = organizationInformationProvider;
         _userInformationProvider = userInformationProvider;
+        _organizationAppService = organizationAppService;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
@@ -148,6 +149,24 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     
     public async Task DestroyAppPendingVersionAsync(string appId)
     {
+        //Get organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
+        
+        //Check App is belong user's organization
+        var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
+        var organizationAppGain =
+            _clusterClient.GetGrain<IOrganizationAppGrain>(organizationGrainId);
+        if (!await organizationAppGain.CheckAppIsExistAsync(appId))
+        {
+            throw new UserFriendlyException("This app does not belong to the user's organization. Please verify.");
+        }
+        
         var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
         var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
         if (allSubscriptions.PendingVersion == null)
@@ -166,13 +185,28 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
     }
 
-    public async Task ObliterateAppAsync(string organizationId, string appId)
+    public async Task ObliterateAppAsync(string appId)
     {
         Logger.LogInformation($"User {CurrentUser.Id} Obliterate AeIndexer {appId}");
-        //TODO: Check organization id
+        //Get organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
+        
+        //Check App is belong user's organization
+        var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
+        var organizationAppGain =
+            _clusterClient.GetGrain<IOrganizationAppGrain>(organizationGrainId);
+        if (!await organizationAppGain.CheckAppIsExistAsync(appId))
+        {
+            throw new UserFriendlyException("This app does not belong to the user's organization. Please verify.");
+        }
 
         //charge bill
-        var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         var oldOrderInfo =

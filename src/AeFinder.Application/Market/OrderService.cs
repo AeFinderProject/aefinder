@@ -61,8 +61,25 @@ public class OrderService: ApplicationService, IOrderService
         var billList = new List<BillDto>();
         var productsGrain = _clusterClient.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
         var productInfo = await productsGrain.GetProductInfoByIdAsync(dto.ProductId);
+        if (productInfo == null)
+        {
+            throw new UserFriendlyException($"Invalid product id {dto.ProductId}");
+        }
+        
+        if (productInfo.MonthlyUnitPrice == 0)
+        {
+            throw new UserFriendlyException(
+                "Can not reorder free product.");
+        }
         dto.UserId = CurrentUser.Id.ToString();
-        //TODO: Check organization id
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        dto.OrganizationId = organizationUnit.Id.ToString();
         
         var organizationGrainId = await GetOrganizationGrainIdAsync(dto.OrganizationId);
         var ordersGrain =
@@ -75,7 +92,6 @@ public class OrderService: ApplicationService, IOrderService
         decimal firstMonthLockFee = 0;
         var billingPlan = await _billService.GetProductBillingPlanAsync(new GetBillingPlanInput()
         {
-            OrganizationId = dto.OrganizationId,
             ProductId = dto.ProductId,
             ProductNum = dto.ProductNumber,
             PeriodMonths = dto.PeriodMonths
@@ -124,12 +140,6 @@ public class OrderService: ApplicationService, IOrderService
             {
                 throw new UserFriendlyException(
                     "Please wait until the payment for the existing order is completed before initiating a new one.");
-            }
-            
-            if (oldOrderInfo.OrderAmount == 0)
-            {
-                throw new UserFriendlyException(
-                    "Can not reorder free product.");
             }
             
             //Calculate old order charge fee
@@ -273,5 +283,44 @@ public class OrderService: ApplicationService, IOrderService
     {
         var organizationGuid = Guid.Parse(organizationId);
         return organizationGuid.ToString("N");
+    }
+
+    public async Task OrderFreeApiQueryCountAsync(string organizationId)
+    {
+        var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
+        //Automatically place an order for a free API query package for the organization.
+        var productsGrain =
+            _clusterClient.GetGrain<IProductsGrain>(
+                GrainIdHelper.GenerateProductsGrainId());
+        var freeProduct = await productsGrain.GetFreeApiQueryCountProductAsync();
+        var ordersGrain =
+            _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
+        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
+        //Check 
+        if (await renewalGrain.CheckRenewalInfoIsExistAsync(organizationId, freeProduct.ProductId))
+        {
+            throw new UserFriendlyException("The user's organization is already equipped with a free API query allowance.");
+        }
+        
+        var newFreeOrder = await ordersGrain.CreateOrderAsync(new CreateOrderDto()
+        {
+            OrganizationId = organizationId,
+            AppId = String.Empty,
+            ProductId = freeProduct.ProductId,
+            UserId = CurrentUser.Id.ToString(),
+            ProductNumber = 1,
+            PeriodMonths = 1
+        });
+        
+        await renewalGrain.CreateAsync(new CreateRenewalDto()
+        {
+            OrganizationId = organizationId,
+            UserId = CurrentUser.Id.ToString(),
+            AppId = String.Empty,
+            OrderId = newFreeOrder.OrderId,
+            ProductId = freeProduct.ProductId,
+            ProductNumber = 1,
+            RenewalPeriod = RenewalPeriod.OneMonth
+        });
     }
 }

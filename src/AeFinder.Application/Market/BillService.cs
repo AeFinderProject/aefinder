@@ -37,6 +37,15 @@ public class BillService : ApplicationService, IBillService
 
     public async Task<BillingPlanDto> GetProductBillingPlanAsync(GetBillingPlanInput input)
     {
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
+        
         var result = new BillingPlanDto();
         var productsGrain =
             _clusterClient.GetGrain<IProductsGrain>(
@@ -46,7 +55,7 @@ public class BillService : ApplicationService, IBillService
         var monthlyFee = result.MonthlyUnitPrice * input.ProductNum;
         result.BillingCycleMonthCount = input.PeriodMonths;
         result.PeriodicCost = result.BillingCycleMonthCount * monthlyFee;
-        var organizationGrainId = await GetOrganizationGrainIdAsync(input.OrganizationId);
+        var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
         if (productInfo.ProductType == ProductType.ApiQueryCount)
         {
             result.FirstMonthCost = monthlyFee;
@@ -58,9 +67,16 @@ public class BillService : ApplicationService, IBillService
         return result;
     }
 
-    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync(string organizationId)
+    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync()
     {
-        //TODO: Check organization id
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
 
         var userExtensionDto =
             await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
@@ -128,9 +144,16 @@ public class BillService : ApplicationService, IBillService
         };
     }
 
-    public async Task<PagedResultDto<InvoiceInfoDto>> GetInvoicesAsync(string organizationId)
+    public async Task<PagedResultDto<InvoiceInfoDto>> GetInvoicesAsync()
     {
-        //TODO: Check organization id
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
 
         var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
         var billsGrain =

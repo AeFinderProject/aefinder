@@ -186,8 +186,8 @@ public class AppDeployController : AeFinderController
     [HttpPost]
     [Route("obliterate")]
     [Authorize]
-    public async Task ObliterateAppAsync(ObliterateAppInput input)
+    public async Task ObliterateAppAsync(AppInput input)
     {
-        await _appDeployService.ObliterateAppAsync(input.OrganizationId, input.AppId);
+        await _appDeployService.ObliterateAppAsync(input.AppId);
     }
 }

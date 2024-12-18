@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
+using AeFinder.User;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -15,16 +16,25 @@ public class RenewalService: ApplicationService, IRenewalService
 {
     private readonly IClusterClient _clusterClient;
     private readonly IProductService _productService;
+    private readonly IOrganizationAppService _organizationAppService;
 
-    public RenewalService(IClusterClient clusterClient,IProductService productService)
+    public RenewalService(IClusterClient clusterClient,IProductService productService,IOrganizationAppService organizationAppService)
     {
         _clusterClient = clusterClient;
         _productService = productService;
+        _organizationAppService = organizationAppService;
     }
     
-    public async Task<int> GetUserApiQueryFreeCountAsync(string organizationId)
+    public async Task<int> GetUserApiQueryFreeCountAsync()
     {
-        //TODO: Check organization id
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
 
         var productsGrain =
             _clusterClient.GetGrain<IProductsGrain>(
@@ -40,10 +50,34 @@ public class RenewalService: ApplicationService, IRenewalService
 
         return 0;
     }
-
-    public async Task<long> GetUserMonthlyApiQueryAllowanceAsync(string organizationId)
+    
+    public async Task<int> GetUserApiQueryFreeCountAsync(string organizationId)
     {
-        //TODO: Check organization id
+        var productsGrain =
+            _clusterClient.GetGrain<IProductsGrain>(
+                GrainIdHelper.GenerateProductsGrainId());
+        var freeProduct = await productsGrain.GetFreeApiQueryCountProductAsync();
+        var renewalGrain =
+            _clusterClient.GetGrain<IRenewalGrain>(
+                GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));
+        if (await renewalGrain.CheckRenewalInfoIsExistAsync(organizationId, freeProduct.ProductId))
+        {
+            return Convert.ToInt32(freeProduct.ProductSpecifications);
+        }
+
+        return 0;
+    }
+
+    public async Task<long> GetUserMonthlyApiQueryAllowanceAsync()
+    {
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
         
         var renewalGrain =
             _clusterClient.GetGrain<IRenewalGrain>(
@@ -52,10 +86,27 @@ public class RenewalService: ApplicationService, IRenewalService
             await renewalGrain.GetOrganizationMonthlyApiQueryAllowanceAsync(organizationId);
         return queryCount;
     }
-
-    public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string organizationId,string appId)
+    
+    public async Task<long> GetUserMonthlyApiQueryAllowanceAsync(string organizationId)
     {
-        //TODO: Check organization id
+        var renewalGrain =
+            _clusterClient.GetGrain<IRenewalGrain>(
+                GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));
+        var queryCount =
+            await renewalGrain.GetOrganizationMonthlyApiQueryAllowanceAsync(organizationId);
+        return queryCount;
+    }
+
+    public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId)
+    {
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
         
         var renewalGrain =
             _clusterClient.GetGrain<IRenewalGrain>(
