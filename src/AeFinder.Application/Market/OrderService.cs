@@ -250,12 +250,16 @@ public class OrderService: ApplicationService, IOrderService
         return billList;
     }
 
-    public async Task CancelOrderAsync(string organizationId, string orderId)
+    public async Task CancelOrderAndBillAsync(string organizationId, string orderId, string billingId)
     {
         var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         await ordersGrain.CancelOrderByIdAsync(orderId);
+
+        var billsGrain =
+            _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
+        await billsGrain.CancelBillAsync(billingId);
     }
 
     // private async Task<string> GetOrganizationGrainIdAsync()
