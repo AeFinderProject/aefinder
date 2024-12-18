@@ -60,7 +60,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return _objectMapper.Map<BillState, BillDto>(billItem);
     }
 
-    public async Task<BillDto> CreateSubscriptionLockBillAsync(CreateSubscriptionBillDto dto)
+    public async Task<BillDto> CreateSubscriptionLockFromBillAsync(CreateSubscriptionBillDto dto)
     {
         await ReadStateAsync();
         if (State == null)

@@ -91,6 +91,12 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 //Skip free product
                 if (productInfo.MonthlyUnitPrice == 0)
                 {
+                    //Check if the renewal date has arrived
+                    if (renewalDto.NextRenewalDate > DateTime.UtcNow.AddDays(1))
+                    {
+                        continue;
+                    }
+                    await renewalGrain.UpdateRenewalDateToNextPeriodAsync(renewalDto.SubscriptionId);
                     continue;
                 }
                 
@@ -173,7 +179,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 
                 //Lock for next billing cycle
                 var lockFee = renewalDto.PeriodicCost;
-                var newLockBill = await billsGrain.CreateSubscriptionLockBillAsync(new CreateSubscriptionBillDto()
+                var newLockBill = await billsGrain.CreateSubscriptionLockFromBillAsync(new CreateSubscriptionBillDto()
                 {
                     OrganizationId = organizationId,
                     SubscriptionId = renewalDto.SubscriptionId,
@@ -198,7 +204,8 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     {
         var now = DateTime.UtcNow;
         var firstDayNextMonth =
-            new DateTime(now.Year, now.Month, _scheduledTaskOptions.RenewalBillDay, 2, 0, 0, DateTimeKind.Utc)
+            new DateTime(now.Year, now.Month, _scheduledTaskOptions.RenewalBillDay,
+                    _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
                 .AddMonths(1);
         return (int)(firstDayNextMonth - now).TotalMilliseconds;
     }
