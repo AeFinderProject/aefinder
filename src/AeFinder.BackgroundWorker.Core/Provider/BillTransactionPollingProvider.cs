@@ -7,6 +7,7 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Market;
+using AeFinder.Options;
 using AeFinder.User.Provider;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -33,13 +34,14 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
     private readonly IAppDeployService _appDeployService;
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IApiKeyService _apiKeyService;
+    private readonly ContractOptions _contractOptions;
 
     public BillTransactionPollingProvider(ILogger<BillTransactionPollingProvider> logger,
         IAeFinderIndexerProvider indexerProvider, IClusterClient clusterClient,
         IContractProvider contractProvider, IOrganizationInformationProvider organizationInformationProvider,
         IAppService appService, IProductService productService, IAppDeployService appDeployService,
         IUserInformationProvider userInformationProvider, IRenewalService renewalService,
-        IApiKeyService apiKeyService,
+        IApiKeyService apiKeyService,IOptionsSnapshot<ContractOptions> contractOptions,
         IOptionsMonitor<TransactionPollingOptions> transactionPollingOptions)
     {
         _logger = logger;
@@ -54,11 +56,13 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
         _appDeployService = appDeployService;
         _apiKeyService = apiKeyService;
         _transactionPollingOptions = transactionPollingOptions;
+        _contractOptions = contractOptions.Value;
     }
 
     public async Task HandleTransactionAsync(string billingId,string organizationId)
     {
-        var billTransactionResult = await _indexerProvider.GetUserFundRecordAsync(null, billingId);
+        var billTransactionResult =
+            await _indexerProvider.GetUserFundRecordAsync(_contractOptions.BillingContractChainId, null, billingId);
         
         // var times = 0;
         // while ((billTransactionResult == null || billTransactionResult.UserFundRecord == null ||

@@ -40,25 +40,25 @@ public class MarketController : AeFinderController
     [HttpGet]
     [Route("pod-resource/full")]
     [Authorize]
-    public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string organizationId, string appId)
+    public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId)
     {
-        return await _renewalService.GetUserCurrentFullPodResourceAsync(organizationId, appId);
+        return await _renewalService.GetUserCurrentFullPodResourceAsync(appId);
     }
 
     [HttpGet]
     [Route("api-query-count/free")]
     [Authorize]
-    public async Task<int> GetUserApiQueryFreeCountAsync(string organizationId)
+    public async Task<int> GetUserApiQueryFreeCountAsync()
     {
-        return await _renewalService.GetUserApiQueryFreeCountAsync(organizationId);
+        return await _renewalService.GetUserApiQueryFreeCountAsync();
     }
 
     [HttpGet]
     [Route("api-query-count/monthly")]
     [Authorize]
-    public async Task<long> GetUserMonthlyApiQueryAllowanceAsync(string organizationId)
+    public async Task<long> GetUserMonthlyApiQueryAllowanceAsync()
     {
-        return await _renewalService.GetUserMonthlyApiQueryAllowanceAsync(organizationId);
+        return await _renewalService.GetUserMonthlyApiQueryAllowanceAsync();
     }
 
     [HttpGet]
@@ -88,17 +88,17 @@ public class MarketController : AeFinderController
     [HttpGet]
     [Route("transaction-history")]
     [Authorize]
-    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync(string organizationId)
+    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync()
     {
-        return await _billService.GetOrganizationTransactionHistoryAsync(organizationId);
+        return await _billService.GetOrganizationTransactionHistoryAsync();
     }
     
     [HttpGet]
     [Route("invoices")]
     [Authorize]
-    public async Task<PagedResultDto<InvoiceInfoDto>> GetInvoicesAsync(string organizationId)
+    public async Task<PagedResultDto<InvoiceInfoDto>> GetInvoicesAsync()
     {
-        return await _billService.GetInvoicesAsync(organizationId);
+        return await _billService.GetInvoicesAsync();
     }
 
     [HttpPost]
@@ -107,5 +107,13 @@ public class MarketController : AeFinderController
     public async Task CancelOrderAndBillAsync(string organizationId, string orderId, string billingId)
     {
         await _orderService.CancelOrderAndBillAsync(organizationId, orderId, billingId);
+    }
+
+    [HttpPost]
+    [Route("order/free-api-query")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task OrderFreeApiQueryCountAsync(string organizationId)
+    {
+        await _orderService.OrderFreeApiQueryCountAsync(organizationId);
     }
 }

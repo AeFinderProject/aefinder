@@ -1,6 +1,8 @@
+using Volo.Abp.Application.Dtos;
+
 namespace AeFinder.Market;
 
 public class IndexerUserFundRecordDto
 {
-    public  UserFundRecord UserFundRecord { get; set; }
+    public PagedResultDto<UserFundRecordDto> UserFundRecord { get; set; }
 }

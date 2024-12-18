@@ -38,7 +38,7 @@ public class AeFinderOrleansSiloModule : AbpModule
         ConfigureTokenCleanupService();
         ConfigureCache(configuration);
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
-        context.Services.AddTransient<IElasticSearchIndexHelper, ElasticSearchIndexIndexHelper>();
+        context.Services.AddTransient<IElasticSearchCommonService, ElasticSearchCommonService>();
         context.Services.AddOrleansExceptionHandler();
     }
 

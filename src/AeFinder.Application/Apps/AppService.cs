@@ -68,13 +68,6 @@ public class AppService : AeFinderAppService, IAppService
     public async Task<AppDto> CreateAsync(CreateAppDto dto)
     {
         dto.AppId = dto.AppName.Trim().ToLower().Replace(" ", "_");
-        //Check if the app id is duplicated
-        var queryable = await _appIndexRepository.GetQueryableAsync();
-        var app = queryable.FirstOrDefault(o => o.AppId == dto.AppId);
-        if (app != null)
-        {
-            throw new UserFriendlyException("An app with the same name already exists");
-        }
         
         dto.DeployKey = Guid.NewGuid().ToString("N");
         

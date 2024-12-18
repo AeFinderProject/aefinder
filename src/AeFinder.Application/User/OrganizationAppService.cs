@@ -29,7 +29,8 @@ namespace AeFinder.User;
 public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
 {
     private readonly OrganizationUnitManager _organizationUnitManager;
-    private readonly IRepository<OrganizationUnit, Guid> _organizationUnitRepository;
+    // private readonly IRepository<OrganizationUnit, Guid> _organizationUnitRepository;
+    private readonly IOrganizationUnitRepository _organizationUnitRepository;
     private readonly IdentityUserManager _identityUserManager;
     private readonly IIdentityUserRepository _identityUserRepository;
     private readonly IClusterClient _clusterClient;
@@ -41,7 +42,8 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
 
     public OrganizationAppService(IClusterClient clusterClient,
         OrganizationUnitManager organizationUnitManager,
-        IRepository<OrganizationUnit, Guid> organizationUnitRepository,
+        // IRepository<OrganizationUnit, Guid> organizationUnitRepository,
+        IOrganizationUnitRepository organizationUnitRepository,
         IIdentityUserRepository identityUserRepository,
         IOrganizationInformationProvider organizationInformationProvider,
         IUserInformationProvider userInformationProvider,
@@ -65,9 +67,8 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     {
         displayName = displayName.Trim();
         //Check if the organization name is duplicated
-        var queryable = await _organizationEntityMappingRepository.GetQueryableAsync();
-        var organizationIndex = queryable.FirstOrDefault(o => o.OrganizationName == displayName);
-        if (organizationIndex != null)
+        var currentOrganization = await _organizationUnitRepository.GetAsync(displayName);
+        if (currentOrganization != null && !string.IsNullOrEmpty(currentOrganization.DisplayName))
         {
             throw new UserFriendlyException("An organization with the same name already exists");
         }
@@ -236,5 +237,16 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         var organizationAccountBalance = ObjectMapper.Map<UserBalanceDto,OrganizationBalanceDto>(balanceInfo);
         organizationAccountBalance.ChainId = balanceInfo.Metadata.ChainId;
         return organizationAccountBalance;
+    }
+    
+    public async Task<OrganizationUnit> GetUserDefaultOrganizationAsync(Guid userId)
+    {
+        var organizationUnits = await _identityUserRepository.GetOrganizationUnitsAsync(userId);
+        if (organizationUnits == null)
+        {
+            return null;
+        }
+
+        return organizationUnits.FirstOrDefault();
     }
 }
