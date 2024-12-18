@@ -100,4 +100,12 @@ public class MarketController : AeFinderController
     {
         return await _billService.GetInvoicesAsync(organizationId);
     }
+
+    [HttpPost]
+    [Route("cancel/order")]
+    [Authorize]
+    public async Task CancelOrderAsync(string organizationId, string orderId)
+    {
+        await _orderService.CancelOrderAsync(organizationId, orderId);
+    }
 }
