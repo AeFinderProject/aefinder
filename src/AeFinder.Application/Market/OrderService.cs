@@ -112,7 +112,7 @@ public class OrderService: ApplicationService, IOrderService
             await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(dto.OrganizationId,userExtensionDto.WalletAddress);
         if (string.IsNullOrEmpty(organizationWalletAddress))
         {
-            throw new UserFriendlyException($"The user has not linked any organization wallet address yet.");
+            throw new UserFriendlyException($"The user has not linked any organization wallet address yet. Please deposit your account first.");
         }
         Logger.LogInformation(
             $"userWalletAddress:{userExtensionDto.WalletAddress} organizationWalletAddress:{organizationWalletAddress}");
@@ -178,7 +178,9 @@ public class OrderService: ApplicationService, IOrderService
             {
                 //The API query count product is settled monthly in the background scheduled tasks.
                 chargeFee = 0;
-                refundAmount = lockedAmount;
+                refundAmount =
+                    (12 * (renewalInfo.NextRenewalDate.Year - DateTime.UtcNow.Year) +
+                        renewalInfo.NextRenewalDate.Month - DateTime.UtcNow.Month) * monthlyFee;
                 // //Charge based on usage query count
                 // var organizationGuid = Guid.Parse(dto.OrganizationId);
                 // var monthlyQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, DateTime.UtcNow);

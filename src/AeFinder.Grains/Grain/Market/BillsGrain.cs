@@ -140,7 +140,8 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
     public async Task<BillDto> GetLatestLockedBillAsync(string orderId)
     {
         var latestLockedBill = State.Where(b =>
-                b.OrderId == orderId && b.BillingType == BillingType.Lock && b.BillingStatus == BillingStatus.Paid)
+                b.OrderId == orderId && (b.BillingType == BillingType.Lock || b.BillingType == BillingType.LockFrom) &&
+                b.BillingStatus == BillingStatus.Paid)
             .OrderByDescending(o => o.BillingDate).FirstOrDefault();
         if (latestLockedBill == null)
         {
