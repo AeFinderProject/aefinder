@@ -28,6 +28,7 @@ public class OrderService: ApplicationService, IOrderService
     private readonly IContractProvider _contractProvider;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IBillService _billService;
+    private readonly IRenewalService _renewalService;
     private readonly IApiKeyService _apiKeyService;
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
@@ -37,7 +38,7 @@ public class OrderService: ApplicationService, IOrderService
     public OrderService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
         IContractProvider contractProvider, IDistributedEventBus distributedEventBus,
         IBillService billService, IApiKeyService apiKeyService,
-        IUserInformationProvider userInformationProvider,
+        IUserInformationProvider userInformationProvider,IRenewalService renewalService,
         IOrganizationInformationProvider organizationInformationProvider,
         IAeFinderIndexerProvider indexerProvider, IOptionsSnapshot<ContractOptions> contractOptions,
         IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppService appService)
@@ -54,6 +55,7 @@ public class OrderService: ApplicationService, IOrderService
         _organizationInformationProvider = organizationInformationProvider;
         _indexerProvider = indexerProvider;
         _contractOptions = contractOptions.Value;
+        _renewalService = renewalService;
     }
 
     public async Task<List<BillDto>> CreateOrderAsync(CreateOrderDto dto)
@@ -119,6 +121,21 @@ public class OrderService: ApplicationService, IOrderService
                 _contractOptions.BillingContractChainId);
         var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
         
+        //Check if the purchase quantity is less than the quantity already used.
+        if (productInfo.ProductType == ProductType.ApiQueryCount)
+        {
+            var freeApiQueryCount = await _renewalService.GetUserApiQueryFreeCountAsync();
+            var orderApiQueryCount = (dto.ProductNumber * Convert.ToInt32(productInfo.ProductSpecifications)) +
+                                     freeApiQueryCount;
+                var organizationGuid = Guid.Parse(dto.OrganizationId);
+            var monthlyQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, DateTime.UtcNow);
+            if (monthlyQueryCount > orderApiQueryCount)
+            {
+                throw new UserFriendlyException(
+                    "Order failed: The API query count already used by the user exceeds the purchased query count. Please adjust accordingly.");
+            }
+        }
+        
         //Check if there is an existing order for a product of the same type
         OrderDto oldOrderInfo = null;
         if (productInfo.ProductType == ProductType.ApiQueryCount)
@@ -141,7 +158,6 @@ public class OrderService: ApplicationService, IOrderService
                 throw new UserFriendlyException(
                     "Please wait until the payment for the existing order is completed before initiating a new one.");
             }
-            
             //Calculate old order charge fee
             var subscriptionId = await renewalGrain.GetCurrentSubscriptionIdAsync(oldOrderInfo.OrderId);
             var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(subscriptionId);
@@ -155,73 +171,104 @@ public class OrderService: ApplicationService, IOrderService
                 DateTime? podResourceStartUseDay = null;
                 podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(dto.AppId);
                 chargeFee = await billsGrain.CalculatePodResourceMidWayChargeAmountAsync(renewalInfo, lockedAmount, podResourceStartUseDay);
+                refundAmount = lockedAmount - chargeFee;
             }
-
+            
             if (oldOrderInfo.ProductType == ProductType.ApiQueryCount)
             {
-                //Charge based on usage query count
-                var organizationGuid = Guid.Parse(dto.OrganizationId);
-                var monthlyQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, DateTime.UtcNow);
-                Logger.LogInformation($"[CreateOrderAsync]Api monthly query count:{monthlyQueryCount} time:{DateTime.UtcNow.ToString()}");
-                chargeFee = await billsGrain.CalculateApiQueryMonthlyChargeAmountAsync(monthlyQueryCount);
+                //The API query count product is settled monthly in the background scheduled tasks.
+                chargeFee = 0;
+                refundAmount = lockedAmount;
+                // //Charge based on usage query count
+                // var organizationGuid = Guid.Parse(dto.OrganizationId);
+                // var monthlyQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, DateTime.UtcNow);
+                // Logger.LogInformation($"[CreateOrderAsync]Api monthly query count:{monthlyQueryCount} time:{DateTime.UtcNow.ToString()}");
+                // chargeFee = await billsGrain.CalculateApiQueryMonthlyChargeAmountAsync(monthlyQueryCount);
             }
-            var remainingLockedAmount = lockedAmount - chargeFee;
-            if (firstMonthLockFee > remainingLockedAmount)
+            
+            await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
             {
-                //Calculate new order need lock fee
-                var needLockFee = firstMonthLockFee - remainingLockedAmount;
-                //Check user organization balance
-                if (organizationAccountBalance < needLockFee)
-                {
-                    throw new UserFriendlyException("The user's organization account has insufficient balance.");
-                }
+                OrganizationId = dto.OrganizationId,
+                OrderId = oldOrderInfo.OrderId,
+                SubscriptionId = subscriptionId,
+                Description = $"Creates a [{productInfo.ProductType.ToString()}] charge bill for the existing order.",
+                ChargeFee = chargeFee,
+                RefundAmount = refundAmount
+            });
+            // var remainingLockedAmount = lockedAmount - chargeFee;
+            //Create new order
+            var newOrder = await ordersGrain.CreateOrderAsync(dto);
                 
-                //Create new order
-                var newOrder = await ordersGrain.CreateOrderAsync(dto);
-                
-                //Create lock bill
-                var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
-                {
-                    OrganizationId = dto.OrganizationId,
-                    UserId = dto.UserId,
-                    AppId = dto.AppId,
-                    OrderId = newOrder.OrderId,
-                    LockFee = needLockFee,
-                    Description =
-                        $"Old order remaining locked amount: {remainingLockedAmount}, New order first month required locked amount: {firstMonthLockFee}, Additional amount needed to be locked: {needLockFee}."
-                });
-                billList.Add(newLockBill);
-                
-                await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
-                {
-                    OrganizationId = dto.OrganizationId,
-                    OrderId = oldOrderInfo.OrderId,
-                    SubscriptionId = subscriptionId,
-                    Description = "User creates a new order and processes billing settlement for the existing order.",
-                    ChargeFee = chargeFee,
-                    RefundAmount = refundAmount
-                });
-            }
-            else
+            //Create lock bill
+            var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
             {
-                //Calculate old order need refund fee
-                refundAmount = remainingLockedAmount - firstMonthLockFee;
-                var oldOrderChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
-                {
-                    OrganizationId = dto.OrganizationId,
-                    OrderId = oldOrderInfo.OrderId,
-                    SubscriptionId = subscriptionId,
-                    Description = "User creates a new order and processes billing settlement for the existing order.",
-                    ChargeFee = chargeFee,
-                    RefundAmount = refundAmount
-                });
-                //Send charge transaction to contract
-                var sendTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress,
-                    chargeFee, refundAmount,
-                    oldOrderChargeBill.BillingId);
-                Logger.LogInformation("Send charge transaction " + sendTransactionOutput.TransactionId +
-                                      " of bill " + oldOrderChargeBill.BillingId);
-            }
+                OrganizationId = dto.OrganizationId,
+                UserId = dto.UserId,
+                AppId = dto.AppId,
+                OrderId = newOrder.OrderId,
+                LockFee = firstMonthLockFee,
+                Description =
+                    $"Lock organization balance for New [{productInfo.ProductType.ToString()}] order."
+            });
+            billList.Add(newLockBill);
+                
+            
+            // if (firstMonthLockFee > remainingLockedAmount)
+            // {
+            //     //Calculate new order need lock fee
+            //     var needLockFee = firstMonthLockFee - remainingLockedAmount;
+            //     //Check user organization balance
+            //     if (organizationAccountBalance < needLockFee)
+            //     {
+            //         throw new UserFriendlyException("The user's organization account has insufficient balance.");
+            //     }
+            //     
+            //     //Create new order
+            //     var newOrder = await ordersGrain.CreateOrderAsync(dto);
+            //     
+            //     //Create lock bill
+            //     var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
+            //     {
+            //         OrganizationId = dto.OrganizationId,
+            //         UserId = dto.UserId,
+            //         AppId = dto.AppId,
+            //         OrderId = newOrder.OrderId,
+            //         LockFee = needLockFee,
+            //         Description =
+            //             $"Old order remaining locked amount: {remainingLockedAmount}, New order first month required locked amount: {firstMonthLockFee}, Additional amount needed to be locked: {needLockFee}."
+            //     });
+            //     billList.Add(newLockBill);
+            //     
+            //     await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
+            //     {
+            //         OrganizationId = dto.OrganizationId,
+            //         OrderId = oldOrderInfo.OrderId,
+            //         SubscriptionId = subscriptionId,
+            //         Description = "User creates a new order and processes billing settlement for the existing order.",
+            //         ChargeFee = chargeFee,
+            //         RefundAmount = refundAmount
+            //     });
+            // }
+            // else
+            // {
+            //     //Calculate old order need refund fee
+            //     refundAmount = remainingLockedAmount - firstMonthLockFee;
+            //     var oldOrderChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
+            //     {
+            //         OrganizationId = dto.OrganizationId,
+            //         OrderId = oldOrderInfo.OrderId,
+            //         SubscriptionId = subscriptionId,
+            //         Description = "User creates a new order and processes billing settlement for the existing order.",
+            //         ChargeFee = chargeFee,
+            //         RefundAmount = refundAmount
+            //     });
+            //     //Send charge transaction to contract
+            //     var sendTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress,
+            //         chargeFee, refundAmount,
+            //         oldOrderChargeBill.BillingId);
+            //     Logger.LogInformation("Send charge transaction " + sendTransactionOutput.TransactionId +
+            //                           " of bill " + oldOrderChargeBill.BillingId);
+            // }
 
             
         }
@@ -258,7 +305,7 @@ public class OrderService: ApplicationService, IOrderService
                 AppId = dto.AppId,
                 OrderId = newOrder.OrderId,
                 LockFee = firstMonthLockFee,
-                Description = $"Lock a portion of the balance for the new order."
+                Description = $"Lock a portion of the balance for the new [{productInfo.ProductType.ToString()}] order."
             });
             billList.Add(newLockBill);
         }
