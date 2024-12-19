@@ -324,4 +324,10 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
 
         return currentVersionChainIds;
     }
+    
+    public async Task ClearGrainStateAsync()
+    {
+        await base.ClearStateAsync();
+        DeactivateOnIdle();
+    }
 }

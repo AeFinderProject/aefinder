@@ -1,8 +1,12 @@
 using AeFinder.App.Es;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Market;
+using AeFinder.Market;
 using AeFinder.User.Eto;
 using AElf.EntityMapping.Repositories;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
+using Volo.Abp.Users;
 
 namespace AeFinder.BackgroundWorker.EventHandler;
 
@@ -10,7 +14,8 @@ public class OrganizationCreateHandler: IDistributedEventHandler<OrganizationCre
 {
     private readonly IEntityMappingRepository<OrganizationIndex, string> _entityMappingRepository;
 
-    public OrganizationCreateHandler(IEntityMappingRepository<OrganizationIndex, string> entityMappingRepository)
+    public OrganizationCreateHandler(
+        IEntityMappingRepository<OrganizationIndex, string> entityMappingRepository)
     {
         _entityMappingRepository = entityMappingRepository;
     }

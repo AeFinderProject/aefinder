@@ -17,6 +17,12 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
         _distributedEventBus = distributedEventBus;
         _appSettingOptions = appSettingOptions.Value;
     }
+    
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        await ReadStateAsync();
+        await base.OnActivateAsync(cancellationToken);
+    }
 
     public async Task AddOrganizationAsync(string organizationName)
     {
@@ -73,5 +79,10 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
             OrganizationId = State.OrganizationId,
             MaxAppCount = State.MaxAppCount
         });
+    }
+
+    public async Task<bool> CheckAppIsExistAsync(string appId)
+    {
+        return State.AppIds.Contains(appId);
     }
 }

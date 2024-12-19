@@ -2,12 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.ApiKeys;
 using AeFinder.App;
 using AeFinder.App.Es;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.Market;
+using AeFinder.Market;
+using AeFinder.Options;
 using AeFinder.User.Dto;
+using AeFinder.User.Provider;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -23,16 +30,26 @@ namespace AeFinder.User;
 public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
 {
     private readonly OrganizationUnitManager _organizationUnitManager;
-    private readonly IRepository<OrganizationUnit, Guid> _organizationUnitRepository;
+    // private readonly IRepository<OrganizationUnit, Guid> _organizationUnitRepository;
+    private readonly IOrganizationUnitRepository _organizationUnitRepository;
     private readonly IdentityUserManager _identityUserManager;
     private readonly IIdentityUserRepository _identityUserRepository;
     private readonly IClusterClient _clusterClient;
     private readonly IEntityMappingRepository<OrganizationIndex, string> _organizationEntityMappingRepository;
+    private readonly IOrganizationInformationProvider _organizationInformationProvider;
+    private readonly IUserInformationProvider _userInformationProvider;
+    private readonly IAeFinderIndexerProvider _indexerProvider;
+    private readonly ContractOptions _contractOptions;
+    private readonly IApiKeyService _apiKeyService;
 
-    public OrganizationAppService(IClusterClient clusterClient, 
+    public OrganizationAppService(IClusterClient clusterClient,
         OrganizationUnitManager organizationUnitManager,
-        IRepository<OrganizationUnit, Guid> organizationUnitRepository,
-        IIdentityUserRepository identityUserRepository,
+        // IRepository<OrganizationUnit, Guid> organizationUnitRepository,
+        IOrganizationUnitRepository organizationUnitRepository,
+        IIdentityUserRepository identityUserRepository,IApiKeyService apiKeyService,
+        IOrganizationInformationProvider organizationInformationProvider,
+        IUserInformationProvider userInformationProvider,
+        IAeFinderIndexerProvider indexerProvider, IOptionsSnapshot<ContractOptions> contractOptions,
         IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
         IdentityUserManager identityUserManager)
     {
@@ -42,11 +59,24 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         _identityUserManager = identityUserManager;
         _identityUserRepository = identityUserRepository;
         _organizationEntityMappingRepository = organizationEntityMappingRepository;
+        _organizationInformationProvider = organizationInformationProvider;
+        _userInformationProvider = userInformationProvider;
+        _indexerProvider = indexerProvider;
+        _contractOptions = contractOptions.Value;
+        _apiKeyService = apiKeyService;
     }
-    
+
     public async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(string displayName, Guid? parentId = null)
     {
         displayName = displayName.Trim();
+        //Check if the organization name is duplicated
+        var currentOrganization = await _organizationUnitRepository.GetAsync(displayName);
+        if (currentOrganization != null && !string.IsNullOrEmpty(currentOrganization.DisplayName))
+        {
+            throw new UserFriendlyException("An organization with the same name already exists");
+        }
+        
+        //Create organization
         var organizationUnit = new OrganizationUnit(
             GuidGenerator.Create(), // Generate a unique identifier
             displayName,           // Organizational unit Displays name
@@ -58,10 +88,40 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         var organizationUnitDto = ObjectMapper.Map<OrganizationUnit, OrganizationUnitDto>(organizationUnit);
         
         //Synchronize organization info into grain & es
+        var organizationGrainId = GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id.ToString("N"));
         var organizationAppGain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(
-                GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id.ToString("N")));
+                organizationGrainId);
         await organizationAppGain.AddOrganizationAsync(organizationUnit.DisplayName);
+        
+        //Automatically place an order for a free API query package for the organization.
+        var productsGrain =
+            _clusterClient.GetGrain<IProductsGrain>(
+                GrainIdHelper.GenerateProductsGrainId());
+        var ordersGrain =
+            _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
+        var freeProduct = await productsGrain.GetFreeApiQueryCountProductAsync();
+        var newFreeOrder = await ordersGrain.CreateOrderAsync(new CreateOrderDto()
+        {
+            OrganizationId = organizationUnitDto.Id.ToString(),
+            AppId = String.Empty,
+            ProductId = freeProduct.ProductId,
+            UserId = CurrentUser.Id.ToString(),
+            ProductNumber = 1,
+            PeriodMonths = 1
+        });
+        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
+        await renewalGrain.CreateAsync(new CreateRenewalDto()
+        {
+            OrganizationId = organizationUnitDto.Id.ToString(),
+            UserId = CurrentUser.Id.ToString(),
+            AppId = String.Empty,
+            OrderId = newFreeOrder.OrderId,
+            ProductId = freeProduct.ProductId,
+            ProductNumber = 1,
+            RenewalPeriod = RenewalPeriod.OneMonth
+        });
+        await _apiKeyService.SetQueryLimitAsync(organizationUnitDto.Id, Convert.ToInt32(freeProduct.ProductSpecifications));
         
         return organizationUnitDto;
     }
@@ -140,5 +200,57 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
 
         var result = ObjectMapper.Map<List<OrganizationUnit>, List<OrganizationUnitDto>>(organizationUnits);
         return result;
+    }
+    
+    public async Task<List<OrganizationUnitDto>> GetOrganizationUnitsByUserIdAsync()
+    {
+        var organizationUnits = await _identityUserRepository.GetOrganizationUnitsAsync(CurrentUser.Id.Value);
+
+        var result = ObjectMapper.Map<List<OrganizationUnit>, List<OrganizationUnitDto>>(organizationUnits);
+        return result;
+    }
+
+    public async Task<OrganizationBalanceDto> GetOrganizationBalanceAsync(string organizationId)
+    {
+        var userExtensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
+        if (userExtensionInfo.WalletAddress.IsNullOrEmpty())
+        {
+            Logger.LogError(
+                $"user:{CurrentUser.Id.Value} does not bind any wallet");
+            throw new UserFriendlyException("Please bind your user wallet first.");
+        }
+
+        var organizationWalletAddress = await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(
+            organizationId, userExtensionInfo.WalletAddress);
+        if (string.IsNullOrEmpty(organizationWalletAddress))
+        {
+            throw new UserFriendlyException($"The user has not linked any organization wallet address yet.");
+        }
+        Logger.LogInformation(
+            $"userWalletAddress:{userExtensionInfo.WalletAddress} organizationWalletAddress:{organizationWalletAddress}");
+        var indexerBalanceDto =
+            await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
+                _contractOptions.BillingContractChainId);
+        if (indexerBalanceDto == null || indexerBalanceDto.UserBalance == null ||
+            indexerBalanceDto.UserBalance.Items == null || indexerBalanceDto.UserBalance.Items.Count == 0)
+        {
+            return new OrganizationBalanceDto();
+        }
+
+        var balanceInfo = indexerBalanceDto.UserBalance.Items[0];
+        var organizationAccountBalance = ObjectMapper.Map<UserBalanceDto,OrganizationBalanceDto>(balanceInfo);
+        organizationAccountBalance.ChainId = balanceInfo.Metadata.ChainId;
+        return organizationAccountBalance;
+    }
+    
+    public async Task<OrganizationUnit> GetUserDefaultOrganizationAsync(Guid userId)
+    {
+        var organizationUnits = await _identityUserRepository.GetOrganizationUnitsAsync(userId);
+        if (organizationUnits == null)
+        {
+            return null;
+        }
+
+        return organizationUnits.FirstOrDefault();
     }
 }

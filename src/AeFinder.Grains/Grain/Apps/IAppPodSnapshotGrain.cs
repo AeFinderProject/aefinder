@@ -2,9 +2,9 @@ using AeFinder.Apps.Dto;
 
 namespace AeFinder.Grains.Grain.Apps;
 
-public interface IAppPodOperationSnapshotGrain: IGrainWithStringKey
+public interface IAppPodSnapshotGrain: IGrainWithStringKey
 {
-    Task<AppPodOperationSnapshotDto> GetAsync();
+    Task<List<AppPodOperationSnapshotDto>> GetListAsync();
 
     Task SetAsync(AppPodOperationSnapshotDto dto);
 }

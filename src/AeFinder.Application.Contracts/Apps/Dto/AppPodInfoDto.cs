@@ -33,6 +33,8 @@ public class PodContainerDto
     public string CurrentState { get; set; }
     public string RequestCpu { get; set; }
     public string RequestMemory { get; set; }
+    public string LimitCpu { get; set; }
+    public string LimitMemory { get; set; }
     public long UsageTimestamp { get; set; }
     public string CpuUsage { get; set; }
     public string MemoryUsage { get; set; }

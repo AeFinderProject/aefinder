@@ -129,6 +129,31 @@ public static class GrainIdHelper
         return GenerateGrainId(appId, version);
     }
     
+    public static string GenerateAppPodSnapshotGrainId(string appId)
+    {
+        return GenerateGrainId(appId);
+    }
+    
+    public static int GenerateProductsGrainId()
+    {
+        return 0;
+    }
+    
+    public static string GenerateOrdersGrainId(Guid orgId)
+    {
+        return GenerateGrainId(orgId.ToString("N"));
+    }
+    
+    public static string GenerateRenewalGrainId(Guid orgId)
+    {
+        return GenerateGrainId(orgId.ToString("N"));
+    }
+
+    public static string GenerateBillsGrainId(Guid orgId)
+    {
+        return GenerateGrainId(orgId.ToString("N"));
+    }
+
     public static string GenerateApiKeySummaryGrainId(Guid organizationId)
     {
         return GenerateGrainId(organizationId.ToString("N"));

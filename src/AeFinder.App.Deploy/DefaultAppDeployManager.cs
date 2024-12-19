@@ -26,13 +26,13 @@ public class DefaultAppDeployManager : IAppDeployManager
     }
 
     public async Task UpdateAppFullPodResourceAsync(string appId, string version, string requestCpu,
-        string requestMemory, List<string> chainIds)
+        string requestMemory, List<string> chainIds, string limitCpu, string limitMemory)
     {
         return;
     }
 
     public async Task UpdateAppQueryPodResourceAsync(string appId, string version, string requestCpu,
-        string requestMemory)
+        string requestMemory, string limitCpu, string limitMemory, int replicasCount)
     {
         return;
     }

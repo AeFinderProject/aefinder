@@ -55,8 +55,8 @@ namespace AeFinder.BackgroundWorker
                 .ConfigureAppConfiguration(build => { build.AddJsonFile("appsettings.secrets.json", optional: true); })
                 .InitAppConfiguration(true)
                 .UseApolloForHostBuilder()
-                .ConfigureServices((hostContext, services) => { services.AddApplication<AeFinderBackGroundModule>(); })
                 .UseOrleansClient()
+                .ConfigureServices((hostContext, services) => { services.AddApplication<AeFinderBackGroundModule>(); })//module load must be after orleans client initialize
                 .UseAutofac()
                 .UseAElfExceptionHandler()
                 .UseSerilog();

@@ -1,6 +1,7 @@
 using AeFinder.ApiKeys;
 using AeFinder.Apps;
 using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.Market;
 using AeFinder.Grains.State.ApiKeys;
 using Volo.Abp;
 using Volo.Abp.EventBus.Distributed;
@@ -199,7 +200,16 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
             GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(State.Id, monthlyDate);
         var periodQuery = await GrainFactory.GetGrain<IApiKeySnapshotGrain>(monthlySnapshotKey).GetQueryCountAsync();
 
-        return (long)(State.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - periodQuery;
+        return (long)(State.SpendingLimitUsdt / await GetApiKeyQueryPriceAsync()) - periodQuery;
+    }
+
+    private async Task<decimal> GetApiKeyQueryPriceAsync()
+    {
+        var productsGrain =
+            GrainFactory.GetGrain<IProductsGrain>(
+                GrainIdHelper.GenerateProductsGrainId());
+        var productInfo = await productsGrain.GetRegularApiQueryCountProductAsync();
+        return productInfo.MonthlyUnitPrice/Convert.ToInt32(productInfo.ProductSpecifications);
     }
 
     private string GenerateKey()

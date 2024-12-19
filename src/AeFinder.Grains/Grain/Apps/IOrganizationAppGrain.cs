@@ -9,4 +9,5 @@ public interface IOrganizationAppGrain : IGrainWithStringKey
     Task<HashSet<string>> GetAppsAsync();
     Task<int> GetMaxAppCountAsync();
     Task SetMaxAppCountAsync(int maxAppCount);
+    Task<bool> CheckAppIsExistAsync(string appId);
 }

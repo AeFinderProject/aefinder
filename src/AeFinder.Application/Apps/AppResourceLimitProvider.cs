@@ -107,6 +107,18 @@ public class AppResourceLimitProvider : IAppResourceLimitProvider, ISingletonDep
         {
             resourceLimitDto.MaxAppAttachmentSize = _appDeployOptions.MaxAppAttachmentSize;
         }
+        
+        //Use grain value first
+        if (resourceLimitDto.AppFullPodLimitCpuCore.IsNullOrEmpty())
+        {
+            resourceLimitDto.AppFullPodLimitCpuCore = String.Empty;
+        }
+        
+        //Use grain value first
+        if (resourceLimitDto.AppFullPodLimitMemory.IsNullOrEmpty())
+        {
+            resourceLimitDto.AppFullPodLimitMemory = String.Empty;
+        }
 
         return resourceLimitDto;
     }

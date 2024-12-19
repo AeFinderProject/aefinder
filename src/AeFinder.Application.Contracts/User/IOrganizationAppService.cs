@@ -22,4 +22,7 @@ public interface IOrganizationAppService
     Task<List<IdentityUserDto>> GetUsersInOrganizationUnitAsync(Guid organizationUnitId);
 
     Task<List<OrganizationUnitDto>> GetOrganizationUnitsByUserIdAsync(Guid userId);
+    Task<List<OrganizationUnitDto>> GetOrganizationUnitsByUserIdAsync();
+    Task<OrganizationBalanceDto> GetOrganizationBalanceAsync(string organizationId);
+    Task<OrganizationUnit> GetUserDefaultOrganizationAsync(Guid userId);
 }

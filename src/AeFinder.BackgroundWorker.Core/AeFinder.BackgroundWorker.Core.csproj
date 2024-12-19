@@ -12,4 +12,9 @@
       <ProjectReference Include="..\AeFinder.MongoDB\AeFinder.MongoDB.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Hangfire.Core" Version="1.8.14" />
+      <PackageReference Include="Hangfire.Mongo" Version="1.7.1" />
+    </ItemGroup>
+
 </Project>

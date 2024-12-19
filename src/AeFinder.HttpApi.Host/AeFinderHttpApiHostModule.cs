@@ -1,12 +1,16 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using AeFinder.ApiKeys;
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Market;
 using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.Logger;
+using AeFinder.Market;
 using AeFinder.Metrics;
 using AeFinder.MongoDb;
 using AeFinder.MultiTenancy;
@@ -15,6 +19,9 @@ using AeFinder.ScheduledTask;
 using AElf.OpenTelemetry;
 using AspNetCoreRateLimit;
 using AspNetCoreRateLimit.Redis;
+using GraphQL.Client.Abstractions;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.Newtonsoft;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -25,7 +32,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
+using Orleans;
 using StackExchange.Redis;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
@@ -97,7 +107,10 @@ public class AeFinderHttpApiHostModule : AbpModule
             option.MultipartBodyLengthLimit = 60485760;
         });
         Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
-        context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
+        Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
+        context.Services.AddSingleton(new GraphQLHttpClient(configuration["GraphQL:Configuration"],
+            new NewtonsoftJsonSerializer()));
+        context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
     }
 
     private void ConfigureCache(IConfiguration configuration)

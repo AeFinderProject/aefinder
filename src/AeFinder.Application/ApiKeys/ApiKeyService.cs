@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
+using AeFinder.Market;
 using AElf.EntityMapping.Repositories;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -27,13 +28,15 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     private readonly IEntityMappingRepository<ApiKeySummaryIndex, string> _apiKeySummaryIndexRepository;
     private readonly IApiKeySnapshotService _apiKeySnapshotService;
     private readonly ApiKeyOptions _options;
+    private readonly IProductService _productService;
 
     public ApiKeyService(IApiKeyTrafficProvider apiKeyTrafficProvider, IClusterClient clusterClient,
         IApiKeyInfoProvider apiKeyInfoProvider, IEntityMappingRepository<ApiKeyIndex, Guid> apiKeyIndexRepository,
         IEntityMappingRepository<ApiKeyQueryAeIndexerIndex, string> apiKeyQueryAeIndexerIndexRepository,
         IEntityMappingRepository<ApiKeyQueryBasicApiIndex, string> apiKeyQueryBasicApiIndexRepository,
         IEntityMappingRepository<ApiKeySummaryIndex, string> apiKeySummaryIndexRepository,
-        IApiKeySnapshotService apiKeySnapshotService, IOptionsSnapshot<ApiKeyOptions> options)
+        IApiKeySnapshotService apiKeySnapshotService, IOptionsSnapshot<ApiKeyOptions> options,
+        IProductService productService)
     {
         _apiKeyTrafficProvider = apiKeyTrafficProvider;
         _clusterClient = clusterClient;
@@ -43,6 +46,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
         _apiKeyQueryBasicApiIndexRepository = apiKeyQueryBasicApiIndexRepository;
         _apiKeySummaryIndexRepository = apiKeySummaryIndexRepository;
         _apiKeySnapshotService = apiKeySnapshotService;
+        _productService = productService;
         _options = options.Value;
     }
 
@@ -172,11 +176,12 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
             });
 
         dto.IsActive = true;
+        var apiQueryPrice = await GetApiKeyQueryPriceAsync();
         if (apiKeyMonthSnapshot.Items.Any())
         {
             dto.PeriodQuery = apiKeyMonthSnapshot.Items.First().Query;
             if (dto.IsEnableSpendingLimit &&
-                (long)(dto.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - dto.PeriodQuery <= 0)
+                (long)(dto.SpendingLimitUsdt / apiQueryPrice) - dto.PeriodQuery <= 0)
             {
                 dto.IsActive = false;
             }
@@ -202,6 +207,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
             })).Items.ToDictionary(o => o.ApiKeyId, o => o);
 
         var dtos = ObjectMapper.Map<List<ApiKeyIndex>, List<ApiKeyDto>>(indices);
+        var apiQueryPrice = await GetApiKeyQueryPriceAsync();
         foreach (var dto in dtos)
         {
             dto.IsActive = true;
@@ -209,7 +215,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
             {
                 dto.PeriodQuery = snapshotDto.Query;
                 if (dto.IsEnableSpendingLimit &&
-                    (long)(dto.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - snapshotDto.Query <= 0)
+                    (long)(dto.SpendingLimitUsdt / apiQueryPrice) - snapshotDto.Query <= 0)
                 {
                     dto.IsActive = false;
                 }
@@ -340,6 +346,12 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
                 EndTime = time.ToMonthDate(),
             });
         return apiKeyMonthSnapshot.Items.Count > 0 ? apiKeyMonthSnapshot.Items[0].Query : 0;
+    }
+    
+    private async Task<decimal> GetApiKeyQueryPriceAsync()
+    {
+        var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
+        return apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
     }
 
     private async Task CheckApiKeyAsync(IApiKeyGrain grain, Guid organizationId)

@@ -161,4 +161,5 @@ public class AppController : AeFinderController
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
         return organizationIds.First().Id;
     }
+
 }

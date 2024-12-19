@@ -9,6 +9,8 @@ public interface IUserAppService
     Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input);
 
     Task RegisterAppAuthentication(string appId, string deployKey);
+    Task DeleteAppAuthentication(string appId);
+    Task DeleteAppRelatedTokenData(string appId);
 
     Task<IdentityUserExtensionDto> GetUserInfoAsync();
 
@@ -17,4 +19,5 @@ public interface IUserAppService
     Task<string> GetClientDisplayNameAsync(string clientId);
 
     Task<IdentityUserExtensionDto> BindUserWalletAsync(BindUserWalletInput input);
+    
 }

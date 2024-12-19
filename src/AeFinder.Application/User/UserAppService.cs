@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AeFinder.User.Dto;
 using AeFinder.User.Provider;
@@ -29,6 +30,8 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IWalletLoginProvider _walletLoginProvider;
+    private readonly IOpenIddictAuthorizationManager _authorizationManager;
+    private readonly IOpenIddictTokenManager _tokenManager;
 
     public UserAppService(
         IdentityUserManager userManager,
@@ -41,6 +44,8 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         IOrganizationUnitRepository organizationUnitRepository,
         IUserInformationProvider userInformationProvider,
         IWalletLoginProvider walletLoginProvider,
+        IOpenIddictAuthorizationManager authorizationManager,
+        IOpenIddictTokenManager tokenManager,
         IPermissionChecker permissionChecker)
         : base(userManager, userRepository, roleRepository, identityOptions, permissionChecker)
     {
@@ -50,6 +55,8 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         _organizationAppService = organizationAppService;
         _userInformationProvider = userInformationProvider;
         _walletLoginProvider = walletLoginProvider;
+        _authorizationManager = authorizationManager;
+        _tokenManager = tokenManager;
     }
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)
@@ -130,6 +137,30 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
                 
             }
         });
+    }
+    
+    public async Task DeleteAppAuthentication(string appId)
+    {
+        var application = await _applicationManager.FindByClientIdAsync(appId);
+        if (application == null)
+        {
+            throw new UserFriendlyException("App not found in Authentication.");
+        }
+
+        await _applicationManager.DeleteAsync(application);
+    }
+
+    public async Task DeleteAppRelatedTokenData(string appId)
+    {
+        await foreach (var authorization in _authorizationManager.FindByApplicationIdAsync(appId))
+        {
+            await _authorizationManager.DeleteAsync(authorization);
+        }
+
+        await foreach (var token in _tokenManager.FindByApplicationIdAsync(appId))
+        {
+            await _tokenManager.DeleteAsync(token);
+        }
     }
 
     public async Task<IdentityUserExtensionDto> GetUserInfoAsync()
