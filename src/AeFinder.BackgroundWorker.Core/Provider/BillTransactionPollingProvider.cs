@@ -105,10 +105,10 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
             {
                 //Update order lock payment status
                 await ordersGrain.UpdateOrderStatusAsync(orderDto.OrderId, OrderStatus.Paid);
-                
+                _logger.LogInformation($"Order {orderDto.OrderId} status updated paid");
                 //Check if there is the same type of product's subscription & order
-                var oldRenewalInfo =
-                    await renewalGrain.GetRenewalInfoByProductTypeAsync(orderDto.ProductType, orderDto.AppId);
+                // var oldRenewalInfo =
+                //     await renewalGrain.GetRenewalInfoByProductTypeAsync(orderDto.ProductType, orderDto.AppId);
                 
                 //Check the order subscription is existed or Create new subscription
                 var renewalInfo = await renewalGrain.GetRenewalInfoByOrderIdAsync(orderDto.OrderId);
@@ -126,27 +126,39 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                     });
                 }
 
-                if (oldRenewalInfo != null)
+                //Find old order pending bill, call contract to charge bill
+                var pendingBills = await billsGrain.GetPendingChargeBillsAsync();
+                if (pendingBills != null)
                 {
-                    //Stop old subscription, cancel old order
-                    await ordersGrain.CancelOrderByIdAsync(oldRenewalInfo.OrderId);
-                
-                    //Find old order pending bill, call contract to charge bill
-                    var oldOrderChargeBill = await billsGrain.GetPendingChargeBillByOrderIdAsync(oldRenewalInfo.OrderId);
-                    if (oldOrderChargeBill != null)
+                    foreach (var oldOrderChargeBill in pendingBills)
                     {
+                        var oldOrderInfo = await ordersGrain.GetOrderByIdAsync(oldOrderChargeBill.OrderId);
+                        if (oldOrderInfo.ProductType != orderDto.ProductType)
+                        {
+                            continue;
+                        }
+
+                        _logger.LogInformation(
+                            $"Find pending {oldOrderInfo.ProductType.ToString()} charge bill {oldOrderChargeBill.BillingId}");
+                        //Stop old subscription, cancel old order
+                        await ordersGrain.CancelOrderByIdAsync(oldOrderChargeBill.OrderId);
+                            
                         //Send charge transaction to contract
                         var userExtensionDto =
-                            await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(oldRenewalInfo.UserId));
+                            await _userInformationProvider.GetUserExtensionInfoByIdAsync(
+                                Guid.Parse(oldOrderInfo.UserId));
                         var organizationWalletAddress =
                             await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
                                 userExtensionDto.WalletAddress);
-                        var sendTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress,
+                        var sendTransactionOutput = await _contractProvider.BillingChargeAsync(
+                            organizationWalletAddress,
                             oldOrderChargeBill.BillingAmount, oldOrderChargeBill.RefundAmount,
                             oldOrderChargeBill.BillingId);
                         _logger.LogInformation("Send charge transaction " + sendTransactionOutput.TransactionId +
-                                              " of bill " + oldOrderChargeBill.BillingId);
+                                               " of bill " + oldOrderChargeBill.BillingId);
+
                     }
+
                 }
                 
                 //Update App pod resource config
