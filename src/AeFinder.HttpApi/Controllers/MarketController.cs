@@ -116,4 +116,12 @@ public class MarketController : AeFinderController
     {
         await _orderService.OrderFreeApiQueryCountAsync(organizationId);
     }
+    
+    [HttpGet]
+    [Route("all/renewals")]
+    [Authorize]
+    public async Task<List<RenewalDto>> GetAllActiveRenewalListAsync()
+    {
+        return await _renewalService.GetAllActiveRenewalListAsync();
+    }
 }

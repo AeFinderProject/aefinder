@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
@@ -119,5 +120,23 @@ public class RenewalService: ApplicationService, IRenewalService
         var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalInfo.ProductId);
         var resourceDto = _productService.ConvertToFullPodResourceDto(productInfo);
         return resourceDto;
+    }
+
+    public async Task<List<RenewalDto>> GetAllActiveRenewalListAsync()
+    {
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
+        
+        var renewalGrain =
+            _clusterClient.GetGrain<IRenewalGrain>(
+                GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));
+        var renewalList = await renewalGrain.GetAllActiveRenewalInfosAsync(organizationId);
+        return renewalList;
     }
 }

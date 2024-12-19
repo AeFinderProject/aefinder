@@ -22,5 +22,4 @@ public interface IRenewalGrain: IGrainWithStringKey
     Task<List<RenewalDto>> GetAllActiveRenewalInfosAsync(string organizationId);
     Task<RenewalDto> GetRenewalInfoByOrderIdAsync(string orderId);
     Task<RenewalDto> GetRenewalInfoByProductTypeAsync(ProductType productType, string appId);
-    Task<List<RenewalDto>> GetAllActiveRenewalInfoListAsync();
 }
