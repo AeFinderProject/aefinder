@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.ApiKeys;
 using AeFinder.App;
 using AeFinder.App.Es;
 using AeFinder.Grains;
@@ -39,12 +40,13 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IAeFinderIndexerProvider _indexerProvider;
     private readonly ContractOptions _contractOptions;
+    private readonly IApiKeyService _apiKeyService;
 
     public OrganizationAppService(IClusterClient clusterClient,
         OrganizationUnitManager organizationUnitManager,
         // IRepository<OrganizationUnit, Guid> organizationUnitRepository,
         IOrganizationUnitRepository organizationUnitRepository,
-        IIdentityUserRepository identityUserRepository,
+        IIdentityUserRepository identityUserRepository,IApiKeyService apiKeyService,
         IOrganizationInformationProvider organizationInformationProvider,
         IUserInformationProvider userInformationProvider,
         IAeFinderIndexerProvider indexerProvider, IOptionsSnapshot<ContractOptions> contractOptions,
@@ -61,6 +63,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         _userInformationProvider = userInformationProvider;
         _indexerProvider = indexerProvider;
         _contractOptions = contractOptions.Value;
+        _apiKeyService = apiKeyService;
     }
 
     public async Task<OrganizationUnitDto> CreateOrganizationUnitAsync(string displayName, Guid? parentId = null)
@@ -118,6 +121,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
             ProductNumber = 1,
             RenewalPeriod = RenewalPeriod.OneMonth
         });
+        await _apiKeyService.SetQueryLimitAsync(organizationUnitDto.Id, Convert.ToInt32(freeProduct.ProductSpecifications));
         
         return organizationUnitDto;
     }

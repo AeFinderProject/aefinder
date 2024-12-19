@@ -377,5 +377,8 @@ public class OrderService: ApplicationService, IOrderService
             ProductNumber = 1,
             RenewalPeriod = RenewalPeriod.OneMonth
         });
+        var queryAllowance = await _renewalService.GetUserMonthlyApiQueryAllowanceAsync(organizationId);
+        var organizationGuid = Guid.Parse(organizationId);
+        await _apiKeyService.SetQueryLimitAsync(organizationGuid, queryAllowance);
     }
 }
