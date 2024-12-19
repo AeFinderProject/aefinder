@@ -161,6 +161,8 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                             ? TransactionState.Mined
                             : TransactionState.Failed;
                         await billsGrain.UpdateTransactionStatus(oldOrderChargeBill.BillingId, status);
+                        _logger.LogInformation(
+                            $"After {times} times retry, get transaction {transactionId} status {status}");
                     }
 
                 }
