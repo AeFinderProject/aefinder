@@ -80,12 +80,14 @@ public class ContractProvider: IContractProvider, ISingletonDependency
         await client.IsConnectedAsync();
         
         var address = client.GetAddressFromPrivateKey(TreasurerAccountPrivateKeyForCallTx);
-
+        _logger.LogInformation(
+            "[ContractProvider]Generate tx methodName is: {methodName} From address is: {address} To address is {contractAddress}, Param is: {param}",
+            methodName, address, contractAddress, param);
         var transaction =
             await client.GenerateTransactionAsync(address, contractAddress,
                 methodName, param);
 
-        // _logger.LogDebug("Send tx methodName iss: {methodName} param is: {transaction}", methodName, transaction);
+        _logger.LogInformation("[ContractProvider]Send tx methodName iss: {methodName} param is: {transaction}", methodName, transaction);
             
         var txWithSign = client.SignTransaction(TreasurerAccountPrivateKeyForCallTx, transaction);
 
