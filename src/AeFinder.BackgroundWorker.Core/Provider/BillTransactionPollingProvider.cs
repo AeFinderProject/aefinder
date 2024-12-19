@@ -124,7 +124,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                         ProductNumber = orderDto.ProductNumber,
                         RenewalPeriod = orderDto.RenewalPeriod
                     });
-                    _logger.LogInformation($"[HandleTransactionAsync]a new renewal created, subscription id {newRenewal.SubscriptionId}");
+                    _logger.LogInformation($"[HandleTransactionAsync]a new renewal created, subscription id {newRenewal.SubscriptionId} IsActive {newRenewal.IsActive}");
                 }
 
                 //Find old order pending bill, call contract to charge bill

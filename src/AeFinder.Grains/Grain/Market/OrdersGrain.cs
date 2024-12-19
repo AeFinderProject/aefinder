@@ -106,35 +106,21 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         return orderInfo;
     }
 
-    public async Task CancelOrderByIdAsync(string id)
+    public async Task CancelOrderByIdAsync(string orderId)
     {
         await ReadStateAsync();
-        var orderState = State.FirstOrDefault(o => o.OrderId == id);
-        var renewalGrain =
-            GrainFactory.GetGrain<IRenewalGrain>(GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(orderState.OrganizationId)));
-        var subscriptionId = string.Empty;
-        if (orderState.ProductType == ProductType.ApiQueryCount)
-        {
-            var apiQueryCountRenewal = await renewalGrain.GetApiQueryCountRenewalInfoAsync(orderState.OrganizationId,
-                orderState.ProductId);
-            if (apiQueryCountRenewal != null)
-            {
-                subscriptionId = apiQueryCountRenewal.SubscriptionId;
-            }
-        }
-
-        if (orderState.ProductType == ProductType.FullPodResource)
-        {
-            var podResourceRenewal = await renewalGrain.GetPodResourceRenewalInfoAsync(orderState.OrganizationId,
-                orderState.AppId, orderState.ProductId);
-            if (podResourceRenewal != null)
-            {
-                subscriptionId = podResourceRenewal.SubscriptionId;
-            }
-        }
+        var orderState = State.FirstOrDefault(o => o.OrderId == orderId);
         orderState.OrderStatus = OrderStatus.Canceled;
         await WriteStateAsync();
-
+        
+        var renewalGrain =
+            GrainFactory.GetGrain<IRenewalGrain>(GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(orderState.OrganizationId)));
+        var renewalInfo = await renewalGrain.GetRenewalInfoByOrderIdAsync(orderId);
+        if (renewalInfo == null)
+        {
+            return;
+        }
+        var subscriptionId = renewalInfo.SubscriptionId;
         if (!string.IsNullOrEmpty(subscriptionId))
         {
             await renewalGrain.CancelRenewalByIdAsync(subscriptionId);
