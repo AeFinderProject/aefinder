@@ -3,12 +3,14 @@ using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Common;
+using AeFinder.Commons;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Market;
 using AeFinder.Options;
 using AeFinder.User.Provider;
+using AElf.Client.Dto;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Volo.Abp.DependencyInjection;
@@ -63,24 +65,11 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
     {
         var billTransactionResult =
             await _indexerProvider.GetUserFundRecordAsync(_contractOptions.BillingContractChainId, null, billingId);
-        
-        // var times = 0;
-        // while ((billTransactionResult == null || billTransactionResult.UserFundRecord == null ||
-        //         billTransactionResult.UserFundRecord.Items == null ||
-        //         billTransactionResult.UserFundRecord.Items.Count == 0) &&
-        //        times < _transactionPollingOptions.CurrentValue.RetryTimes)
-        // {
-        //     times++;
-        //     await Task.Delay(_transactionPollingOptions.CurrentValue.DelaySeconds);
-        //     billTransactionResult = await _indexerProvider.GetUserFundRecordAsync(null, billingId);
-        // }
 
         if (billTransactionResult == null || billTransactionResult.UserFundRecord == null ||
             billTransactionResult.UserFundRecord.Items == null ||
             billTransactionResult.UserFundRecord.Items.Count == 0)
         {
-            //TODO Record bill transactions that could not be retrieved from the Indexer
-            
             return;
         }
 
@@ -106,9 +95,6 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                 //Update order lock payment status
                 await ordersGrain.UpdateOrderStatusAsync(orderDto.OrderId, OrderStatus.Paid);
                 _logger.LogInformation($"[HandleTransactionAsync]Order {orderDto.OrderId} status updated paid");
-                //Check if there is the same type of product's subscription & order
-                // var oldRenewalInfo =
-                //     await renewalGrain.GetRenewalInfoByProductTypeAsync(orderDto.ProductType, orderDto.AppId);
                 
                 //Check the order subscription is existed or Create new subscription
                 var renewalInfo = await renewalGrain.GetRenewalInfoByOrderIdAsync(orderDto.OrderId);
@@ -133,6 +119,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                 {
                     foreach (var oldOrderChargeBill in pendingBills)
                     {
+                        //Check if there is the same type of product's subscription & order
                         var oldOrderInfo = await ordersGrain.GetOrderByIdAsync(oldOrderChargeBill.OrderId);
                         if (oldOrderInfo.ProductType != orderDto.ProductType)
                         {
@@ -157,7 +144,23 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                             oldOrderChargeBill.BillingId);
                         _logger.LogInformation("Send charge transaction " + sendTransactionOutput.TransactionId +
                                                " of bill " + oldOrderChargeBill.BillingId);
+                        var transactionId = sendTransactionOutput.TransactionId;
+                        // not existed->retry  pending->wait  other->fail
+                        var transactionResult = await QueryTransactionResultAsync(transactionId);
+                        var times = 0;
+                        while (transactionResult.Status == TransactionState.NotExisted &&
+                               times < _transactionPollingOptions.CurrentValue.RetryTimes)
+                        {
+                            times++;
 
+                            await Task.Delay(_transactionPollingOptions.CurrentValue.DelaySeconds);
+                            transactionResult = await QueryTransactionResultAsync(transactionId);
+                        }
+
+                        var status = transactionResult.Status == TransactionState.Mined
+                            ? TransactionState.Mined
+                            : TransactionState.Failed;
+                        await billsGrain.UpdateTransactionStatus(oldOrderChargeBill.BillingId, status);
                     }
 
                 }
@@ -225,5 +228,18 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
     {
         var organizationGuid = Guid.Parse(organizationId);
         return organizationGuid.ToString("N");
+    }
+
+    private async Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId)
+    {
+        // var transactionId = transaction.GetHash().ToHex();
+        var transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
+        while (transactionResult.Status == TransactionState.Pending)
+        {
+            await Task.Delay(_transactionPollingOptions.CurrentValue.RetryTimes);
+            transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
+        }
+
+        return transactionResult;
     }
 }

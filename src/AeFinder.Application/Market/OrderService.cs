@@ -10,6 +10,7 @@ using AeFinder.Grains.Grain.Market;
 using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
+using Amazon.Runtime.Internal.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -176,11 +177,12 @@ public class OrderService: ApplicationService, IOrderService
             
             if (oldOrderInfo.ProductType == ProductType.ApiQueryCount)
             {
+                var oldOrderMonthlyFee = oldOrderInfo.ProductNumber * productInfo.MonthlyUnitPrice;
                 //The API query count product is settled monthly in the background scheduled tasks.
                 chargeFee = 0;
                 refundAmount =
                     (12 * (renewalInfo.NextRenewalDate.Year - DateTime.UtcNow.Year) +
-                        renewalInfo.NextRenewalDate.Month - DateTime.UtcNow.Month) * monthlyFee;
+                        renewalInfo.NextRenewalDate.Month - DateTime.UtcNow.Month) * oldOrderMonthlyFee;
                 // //Charge based on usage query count
                 // var organizationGuid = Guid.Parse(dto.OrganizationId);
                 // var monthlyQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, DateTime.UtcNow);
