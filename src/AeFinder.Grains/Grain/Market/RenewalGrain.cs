@@ -281,12 +281,5 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         var renewalDto = _objectMapper.Map<RenewalState, RenewalDto>(renewalState);
         return renewalDto;
     }
-
-    public async Task<List<RenewalDto>> GetAllActiveRenewalInfoListAsync()
-    {
-        var renewalStateList = State.Where(r => r.IsActive == true).ToList();
-        var renewalDtoList = _objectMapper.Map<List<RenewalState>, List<RenewalDto>>(renewalStateList);
-        return renewalDtoList;
-    }
     
 }

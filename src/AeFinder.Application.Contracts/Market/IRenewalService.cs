@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace AeFinder.Market;
@@ -9,4 +10,5 @@ public interface IRenewalService
     Task<long> GetUserMonthlyApiQueryAllowanceAsync();
     Task<long> GetUserMonthlyApiQueryAllowanceAsync(string organizationId);
     Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId);
+    Task<List<RenewalDto>> GetAllActiveRenewalListAsync();
 }

@@ -105,7 +105,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
             {
                 //Update order lock payment status
                 await ordersGrain.UpdateOrderStatusAsync(orderDto.OrderId, OrderStatus.Paid);
-                _logger.LogInformation($"Order {orderDto.OrderId} status updated paid");
+                _logger.LogInformation($"[HandleTransactionAsync]Order {orderDto.OrderId} status updated paid");
                 //Check if there is the same type of product's subscription & order
                 // var oldRenewalInfo =
                 //     await renewalGrain.GetRenewalInfoByProductTypeAsync(orderDto.ProductType, orderDto.AppId);
@@ -139,7 +139,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                         }
 
                         _logger.LogInformation(
-                            $"Find pending {oldOrderInfo.ProductType.ToString()} charge bill {oldOrderChargeBill.BillingId}");
+                            $"[HandleTransactionAsync]Find pending {oldOrderInfo.ProductType.ToString()} charge bill {oldOrderChargeBill.BillingId}");
                         //Stop old subscription, cancel old order
                         await ordersGrain.CancelOrderByIdAsync(oldOrderChargeBill.OrderId);
                             
