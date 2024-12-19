@@ -246,6 +246,15 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         var billDto = _objectMapper.Map<BillState, BillDto>(billState);
         return billDto;
     }
+    
+    public async Task<List<BillDto>> GetPendingChargeBillsAsync()
+    {
+        var billStateList = State.Where(b =>
+            b.BillingType == BillingType.Charge &&
+            b.BillingStatus == BillingStatus.PendingPayment).ToList();
+        var billDtoList = _objectMapper.Map<List<BillState>, List<BillDto>>(billStateList);
+        return billDtoList;
+    }
 
     public async Task<List<BillDto>> GetOrganizationAllBillsAsync(string organizationId)
     {
