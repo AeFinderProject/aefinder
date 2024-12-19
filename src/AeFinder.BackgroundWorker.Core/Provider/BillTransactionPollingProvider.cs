@@ -114,7 +114,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                 var renewalInfo = await renewalGrain.GetRenewalInfoByOrderIdAsync(orderDto.OrderId);
                 if (renewalInfo == null)
                 {
-                    await renewalGrain.CreateAsync(new CreateRenewalDto()
+                    var newRenewal = await renewalGrain.CreateAsync(new CreateRenewalDto()
                     {
                         OrganizationId = orderDto.OrganizationId,
                         OrderId = orderDto.OrderId,
@@ -124,6 +124,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                         ProductNumber = orderDto.ProductNumber,
                         RenewalPeriod = orderDto.RenewalPeriod
                     });
+                    _logger.LogInformation($"[HandleTransactionAsync]a new renewal created, subscription id {newRenewal.SubscriptionId}");
                 }
 
                 //Find old order pending bill, call contract to charge bill
