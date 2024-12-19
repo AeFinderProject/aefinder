@@ -80,22 +80,31 @@ public class ContractProvider: IContractProvider, ISingletonDependency
         await client.IsConnectedAsync();
         
         var address = client.GetAddressFromPrivateKey(TreasurerAccountPrivateKeyForCallTx);
-        _logger.LogInformation(
-            "[ContractProvider]Generate tx methodName is: {methodName} From address is: {address} To address is {contractAddress}, Param is: {param}",
-            methodName, address, contractAddress, param);
-        var transaction =
-            await client.GenerateTransactionAsync(address, contractAddress,
-                methodName, param);
-
-        _logger.LogInformation("[ContractProvider]Send tx methodName iss: {methodName} param is: {transaction}", methodName, transaction);
-            
-        var txWithSign = client.SignTransaction(TreasurerAccountPrivateKeyForCallTx, transaction);
-
-        var result = await client.SendTransactionAsync(new SendTransactionInput
+        try
         {
-            RawTransaction = txWithSign.ToByteArray().ToHex()
-        });
-        return result;
+            _logger.LogInformation(
+                "[ContractProvider]Generate tx methodName is: {methodName} From address is: {address} To address is {contractAddress}, Param is: {param}",
+                methodName, address, contractAddress, param);
+            var transaction =
+                await client.GenerateTransactionAsync(address, contractAddress,
+                    methodName, param);
+
+            _logger.LogInformation("[ContractProvider]Send tx methodName iss: {methodName} param is: {transaction}", methodName, transaction);
+            
+            var txWithSign = client.SignTransaction(TreasurerAccountPrivateKeyForCallTx, transaction);
+
+            var result = await client.SendTransactionAsync(new SendTransactionInput
+            {
+                RawTransaction = txWithSign.ToByteArray().ToHex()
+            });
+            return result;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("[ContractProvider] Send Transaction error: " + e.Message.ToString(), e.StackTrace);
+            Console.WriteLine(e);
+            throw e;
+        }
     }
 
     private async Task<T> CallTransactionAsync<T>(string methodName, IMessage param,
