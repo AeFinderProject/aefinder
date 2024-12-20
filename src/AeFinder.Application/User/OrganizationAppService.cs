@@ -232,7 +232,8 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
             organizationId, userExtensionInfo.WalletAddress);
         if (string.IsNullOrEmpty(organizationWalletAddress))
         {
-            throw new UserFriendlyException($"The user has not linked any organization wallet address yet.");
+            return new OrganizationBalanceDto();
+            // throw new UserFriendlyException($"The user has not linked any organization wallet address yet.");
         }
         Logger.LogInformation(
             $"userWalletAddress:{userExtensionInfo.WalletAddress} organizationWalletAddress:{organizationWalletAddress}");

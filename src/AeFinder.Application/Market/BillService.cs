@@ -172,10 +172,12 @@ public class BillService : ApplicationService, IBillService
         foreach (var billDto in bills)
         {
             var invoiceInfo = ObjectMapper.Map<BillDto, InvoiceInfoDto>(billDto);
+            invoiceInfo.Id = billDto.BillingId + "-" + billDto.BillingType.ToString().ToLower();
             invoiceInfoList.Add(invoiceInfo);
             if (billDto.RefundAmount > 0)
             {
                 var refundInvoiceInfo = ObjectMapper.Map<BillDto, InvoiceInfoDto>(billDto);
+                refundInvoiceInfo.Id = billDto.BillingId + "-" + BillingType.Refund.ToString().ToLower();
                 refundInvoiceInfo.BillingAmount = billDto.RefundAmount;
                 refundInvoiceInfo.BillingType = BillingType.Refund;
                 invoiceInfoList.Add(refundInvoiceInfo);

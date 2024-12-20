@@ -4,6 +4,7 @@ namespace AeFinder.Market;
 
 public class InvoiceInfoDto
 {
+    public string Id { get; set; }
     public string BillingId { get; set; }
     public BillingType BillingType { get; set; }
     public DateTime BillingDate { get; set; }
