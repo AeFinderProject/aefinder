@@ -114,6 +114,10 @@ public class RenewalService: ApplicationService, IRenewalService
                 GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));
         var renewalInfo =
             await renewalGrain.GetCurrentPodResourceRenewalInfoAsync(organizationId, appId);
+        if (renewalInfo == null)
+        {
+            return new FullPodResourceDto();
+        }
         var productsGrain =
             _clusterClient.GetGrain<IProductsGrain>(
                 GrainIdHelper.GenerateProductsGrainId());

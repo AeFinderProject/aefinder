@@ -212,6 +212,10 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         var renewalState = State.FirstOrDefault(o =>
             o.OrganizationId == organizationId && o.AppId == appId && 
             o.ProductType == ProductType.FullPodResource && o.IsActive == true);
+        if (renewalState == null)
+        {
+            return null;
+        }
         var renewalDto = _objectMapper.Map<RenewalState, RenewalDto>(renewalState);
         return renewalDto;
     }
