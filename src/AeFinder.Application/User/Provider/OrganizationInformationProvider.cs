@@ -42,9 +42,10 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
             {
                 throw new Exception("user wallet address can not be null");
             }
+
             var indexerOrganizationInfoDto =
                 await _indexerProvider.GetUserOrganizationInfoAsync(userWalletAddress,
-                    _contractOptions.BillingContractChainId);
+                    _contractOptions.BillingContractChainId, 0, 10);
             if (indexerOrganizationInfoDto != null && indexerOrganizationInfoDto.Organization != null &&
                 indexerOrganizationInfoDto.Organization.Items != null &&
                 indexerOrganizationInfoDto.Organization.Items.Count > 0)

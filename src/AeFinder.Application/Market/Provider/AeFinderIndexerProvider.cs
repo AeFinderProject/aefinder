@@ -8,9 +8,12 @@ namespace AeFinder.Market;
 
 public interface IAeFinderIndexerProvider
 {
-    Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string chainId,string address, string billingId);
-    Task<IndexerUserBalanceDto> GetUserBalanceAsync(string address, string chainId);
-    Task<IndexerOrganizationInfoDto> GetUserOrganizationInfoAsync(string memberAddress, string chainId);
+    Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string chainId, string address, string billingId,
+        int skipCount, int maxResultCount);
+    Task<IndexerUserBalanceDto> GetUserBalanceAsync(string address, string chainId, int skipCount,
+        int maxResultCount);
+    Task<IndexerOrganizationInfoDto> GetUserOrganizationInfoAsync(string memberAddress, string chainId,
+        int skipCount, int maxResultCount);
 }
 
 public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDependency
@@ -22,9 +25,10 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
         _graphQlHelper = graphQlHelper;
     }
 
-    public async Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string chainId,string address, string billingId)
+    public async Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string chainId, string address, string billingId,
+        int skipCount, int maxResultCount)
     {
-        var result= await _graphQlHelper.QueryAsync<IndexerUserFundRecordDto>(new GraphQLRequest
+        var result = await _graphQlHelper.QueryAsync<IndexerUserFundRecordDto>(new GraphQLRequest
         {
             Query = @"
 			    query($address:String,$chainId:String,$billingId:String,$skipCount:Int!,$maxResultCount:Int!) {
@@ -33,7 +37,7 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
                 }",
             Variables = new
             {
-                address,chainId, billingId, skipCount = 0, maxResultCount = 10
+                address, chainId, billingId, skipCount = skipCount, maxResultCount = maxResultCount
             }
         });
         // if (result != null && result.UserFundRecord != null && result.UserFundRecord.Items != null &&
@@ -52,9 +56,10 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
         return result;
     }
 
-    public async Task<IndexerUserBalanceDto> GetUserBalanceAsync(string address, string chainId)
+    public async Task<IndexerUserBalanceDto> GetUserBalanceAsync(string address, string chainId, int skipCount,
+        int maxResultCount)
     {
-        var result= await _graphQlHelper.QueryAsync<IndexerUserBalanceDto>(new GraphQLRequest
+        var result = await _graphQlHelper.QueryAsync<IndexerUserBalanceDto>(new GraphQLRequest
         {
             Query = @"
 			    query($address:String,$chainId:String,$skipCount:Int!,$maxResultCount:Int!) {
@@ -63,7 +68,7 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
                 }",
             Variables = new
             {
-                address, chainId, skipCount = 0, maxResultCount = 10
+                address, chainId, skipCount = skipCount, maxResultCount = maxResultCount
             }
         });
         // if (result != null && result.UserBalance != null && result.UserBalance.Items != null &&
@@ -81,7 +86,8 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
         return result;
     }
 
-    public async Task<IndexerOrganizationInfoDto> GetUserOrganizationInfoAsync(string memberAddress, string chainId)
+    public async Task<IndexerOrganizationInfoDto> GetUserOrganizationInfoAsync(string memberAddress, string chainId,
+        int skipCount, int maxResultCount)
     {
         return await _graphQlHelper.QueryAsync<IndexerOrganizationInfoDto>(new GraphQLRequest
         {
@@ -92,7 +98,7 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
                 }",
             Variables = new
             {
-                memberAddress, chainId, skipCount = 0, maxResultCount = 10
+                memberAddress, chainId, skipCount = skipCount, maxResultCount = maxResultCount
             }
         });
     }

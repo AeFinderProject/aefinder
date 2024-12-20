@@ -88,9 +88,9 @@ public class MarketController : AeFinderController
     [HttpGet]
     [Route("transaction-history")]
     [Authorize]
-    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync()
+    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync(GetTransactionHistoryInput input)
     {
-        return await _billService.GetOrganizationTransactionHistoryAsync();
+        return await _billService.GetOrganizationTransactionHistoryAsync(input);
     }
     
     [HttpGet]
