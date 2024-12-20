@@ -23,4 +23,5 @@ public class BillDto
     [Id(14)]public decimal BillingAmount { get; set; }
     [Id(15)]public decimal RefundAmount { get; set; }
     [Id(16)]public BillingStatus BillingStatus { get; set; }
+    [Id(17)]public string TransactionState { get; set; }
 }

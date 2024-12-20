@@ -22,6 +22,8 @@ public interface IContractProvider
 
     Task<SendTransactionOutput> BillingLockFromAsync(string organizationWalletAddress, decimal lockAmount,
         string billingId);
+
+    Task<TransactionResultDto> GetBillingTransactionResultAsync(string transactionId);
 }
 
 public class ContractProvider: IContractProvider, ISingletonDependency
@@ -129,5 +131,16 @@ public class ContractProvider: IContractProvider, ISingletonDependency
         var value = new T();
         value.MergeFrom(ByteArrayHelper.HexStringToByteArray(result));
         return value;
+    }
+    
+    
+    
+    public async Task<TransactionResultDto> GetBillingTransactionResultAsync(string transactionId)
+    {
+        var client = new AElfClient(AElfNodeBaseUrl);
+        await client.IsConnectedAsync();
+        
+        var result = await client.GetTransactionResultAsync(transactionId);
+        return result;
     }
 }

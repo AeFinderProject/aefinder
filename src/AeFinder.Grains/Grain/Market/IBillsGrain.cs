@@ -20,4 +20,5 @@ public interface IBillsGrain: IGrainWithStringKey
     Task<List<BillDto>> GetOrganizationAllBillsAsync(string organizationId);
     Task<List<BillDto>> GetAllPendingBillAsync();
     Task CancelBillAsync(string billingId);
+    Task UpdateTransactionStatus(string billingId, string transactionState);
 }

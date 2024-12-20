@@ -1,3 +1,4 @@
+using AeFinder.Commons;
 using AeFinder.Grains.State.Market;
 using AeFinder.Market;
 using Volo.Abp.ObjectMapping;
@@ -55,6 +56,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         billItem.BillingStartDate = DateTime.UtcNow;
         billItem.BillingEndDate = GetFirstDayOfNextMonths(billItem.BillingStartDate, 1);
         billItem.BillingStatus = BillingStatus.PendingPayment;
+        billItem.TransactionState = TransactionState.NotExisted;
         State.Add(billItem);
         await WriteStateAsync();
         return _objectMapper.Map<BillState, BillDto>(billItem);
@@ -99,6 +101,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
             }
         }
         billItem.BillingStatus = BillingStatus.PendingPayment;
+        billItem.TransactionState = TransactionState.NotExisted;
         State.Add(billItem);
         await WriteStateAsync();
         return _objectMapper.Map<BillState, BillDto>(billItem);
@@ -131,6 +134,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         billItem.BillingEndDate = DateTime.UtcNow;
         billItem.RefundAmount = dto.RefundAmount;
         billItem.BillingStatus = BillingStatus.PendingPayment;
+        billItem.TransactionState = TransactionState.NotExisted;
         await ReadStateAsync();
         State.Add(billItem);
         await WriteStateAsync();
@@ -230,6 +234,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
             billState.BillingStatus = BillingStatus.PartiallyPaid;
         }
 
+        billState.TransactionState = TransactionState.Mined;
         var billDto = _objectMapper.Map<BillState, BillDto>(billState);
         return billDto;
     }
@@ -279,6 +284,18 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         if (billState != null)
         {
             billState.BillingStatus = BillingStatus.Canceled;
+        }
+        await WriteStateAsync();
+    }
+
+    public async Task UpdateTransactionStatus(string billingId,string transactionState)
+    {
+        await ReadStateAsync();
+        var billState = State.FirstOrDefault(b =>
+            b.BillingId == billingId);
+        if (billState != null)
+        {
+            billState.TransactionState = transactionState;
         }
         await WriteStateAsync();
     }

@@ -63,7 +63,7 @@ public class BillingIndexerPollingWorker : AsyncPeriodicBackgroundWorkerBase, IS
             foreach (var billDto in pendingBills)
             {
                 _logger.LogInformation(
-                    "[RenewalBillCreateWorker] Organization: {0} has pending {1} bill {2} of order: {3}.",
+                    "[RenewalBillCreateWorker] Organization: {0} has pending {1} bill {2} of order: {3}",
                     organizationName, billDto.BillingType.ToString(), billDto.BillingId, billDto.OrderId);
                 await _billTransactionPollingProvider.HandleTransactionAsync(billDto.BillingId, billDto.OrganizationId);
             }
