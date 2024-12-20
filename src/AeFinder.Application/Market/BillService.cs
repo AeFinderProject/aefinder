@@ -60,7 +60,7 @@ public class BillService : ApplicationService, IBillService
         var monthlyFee = result.MonthlyUnitPrice * input.ProductNum;
         result.BillingCycleMonthCount = input.PeriodMonths;
         result.PeriodicCost = result.BillingCycleMonthCount * monthlyFee;
-        var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainIdAsync(organizationId);
         if (productInfo.ProductType == ProductType.ApiQueryCount)
         {
             result.FirstMonthCost = monthlyFee;
@@ -164,7 +164,7 @@ public class BillService : ApplicationService, IBillService
 
         var organizationId = organizationUnit.Id.ToString();
 
-        var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainIdAsync(organizationId);
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
         var bills=await billsGrain.GetOrganizationAllBillsAsync(organizationId);
@@ -196,9 +196,4 @@ public class BillService : ApplicationService, IBillService
         return organizationIds.First().Id.ToString("N");
     }
     
-    private async Task<string> GetOrganizationGrainIdAsync(string organizationId)
-    {
-        var organizationGuid = Guid.Parse(organizationId);
-        return organizationGuid.ToString("N");
-    }
 }
