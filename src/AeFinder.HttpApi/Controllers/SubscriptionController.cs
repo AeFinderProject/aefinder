@@ -8,6 +8,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Volo.Abp;
 
 namespace AeFinder.Controllers;
@@ -30,6 +31,7 @@ public class SubscriptionController : AeFinderController
     [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
     public async Task<string> AddSubscriptionAsync([FromForm]AddSubscriptionInput input)
     {
+        Logger.LogInformation("[AddSubscriptionAsync]CurrentUser.Id:" + CurrentUser.Id.Value.ToString());
         await _subscriptionAppService.CheckPodResourceAsync(ClientId, CurrentUser.Id.ToString());
         CheckFile(input.Code);
         return await _subscriptionAppService.AddSubscriptionAsync(ClientId, input.Manifest, input.Code.GetAllBytes(),
