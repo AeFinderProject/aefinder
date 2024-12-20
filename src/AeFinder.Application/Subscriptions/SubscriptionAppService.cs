@@ -14,6 +14,7 @@ using AeFinder.CodeOps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Market;
 using AeFinder.Options;
 using AeFinder.Subscriptions.Dto;
 using AElf.EntityMapping.Repositories;
@@ -39,10 +40,11 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
     private readonly IAppAttachmentService _appAttachmentService;
     private readonly IAppDeployService _appDeployService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
+    private readonly IRenewalService _renewalService;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
         IOptionsSnapshot<AppDeployOptions> appDeployOptions,
-        IAppAttachmentService appAttachmentService,
+        IAppAttachmentService appAttachmentService,IRenewalService renewalService,
         IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository, IAppDeployService appDeployService,IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
@@ -52,6 +54,7 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
         _appDeployOptions = appDeployOptions.Value;
         _appAttachmentService = appAttachmentService;
         _appResourceLimitProvider = appResourceLimitProvider;
+        _renewalService = renewalService;
     }
 
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code,
@@ -345,5 +348,14 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
             _clusterClient.GetGrain<IAppAttachmentGrain>(
                 GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
         return await appAttachmentGrain.GetAllAttachmentsInfoAsync();
+    }
+    
+    public async Task CheckPodResourceAsync(string appId)
+    {
+        var podResource = await _renewalService.GetUserCurrentFullPodResourceAsync(appId);
+        if (podResource == null || podResource.ProductId.IsNullOrEmpty())
+        {
+            throw new UserFriendlyException("The current AeIndexer is not equipped with any Pod resources. Please check.");
+        }
     }
 }
