@@ -45,7 +45,7 @@ public class SubscriptionController : AeFinderController
         //     throw new InvalidOperationException("User ID is not available but user is authenticated.");
         // }
         // Logger.LogInformation("[AddSubscriptionAsync]CurrentUser.Id:" + CurrentUser.Id.Value.ToString());
-        await _subscriptionAppService.CheckPodResourceAsync(ClientId, CurrentUser.Id.ToString());
+        // await _subscriptionAppService.CheckPodResourceAsync(ClientId, CurrentUser.Id.ToString());
         CheckFile(input.Code);
         return await _subscriptionAppService.AddSubscriptionAsync(ClientId, input.Manifest, input.Code.GetAllBytes(),
             input.AttachmentList);
