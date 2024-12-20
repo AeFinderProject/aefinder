@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.BlockScan;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Volo.Abp;
+using Volo.Abp.Authorization;
 
 namespace AeFinder.Controllers;
 
@@ -31,6 +33,17 @@ public class SubscriptionController : AeFinderController
     [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
     public async Task<string> AddSubscriptionAsync([FromForm]AddSubscriptionInput input)
     {
+        if (!CurrentUser.IsAuthenticated)
+        {
+            Logger.LogWarning("CurrentUser is not authenticated.");
+            throw new AbpAuthorizationException("User is not authenticated.");
+        }
+
+        if (!CurrentUser.Id.HasValue)
+        {
+            Logger.LogWarning("CurrentUser.Id is not available.");
+            throw new InvalidOperationException("User ID is not available but user is authenticated.");
+        }
         Logger.LogInformation("[AddSubscriptionAsync]CurrentUser.Id:" + CurrentUser.Id.Value.ToString());
         await _subscriptionAppService.CheckPodResourceAsync(ClientId, CurrentUser.Id.ToString());
         CheckFile(input.Code);
