@@ -90,8 +90,8 @@ public class OrganizationUnitsController : AeFinderController
     
     [HttpGet("balance")]
     [Authorize]
-    public virtual async Task<OrganizationBalanceDto> GetOrganizationBalanceAsync(string organizationId)
+    public virtual async Task<OrganizationBalanceDto> GetOrganizationBalanceAsync()
     {
-        return await _organizationAppService.GetOrganizationBalanceAsync(organizationId);
+        return await _organizationAppService.GetOrganizationBalanceAsync();
     }
 }
