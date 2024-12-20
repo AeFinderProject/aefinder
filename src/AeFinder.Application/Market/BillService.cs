@@ -138,6 +138,7 @@ public class BillService : ApplicationService, IBillService
                 }
             }
 
+            dto.TransactionDate = userFundRecordDto.Metadata.Block.BlockTime;
             dto.TransactionAmount = userFundRecordDto.Amount;
             dto.BalanceAfter = userFundRecordDto.Balance;
             dto.LockedBalance = userFundRecordDto.LockedBalance;

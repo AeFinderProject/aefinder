@@ -210,8 +210,16 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         return result;
     }
 
-    public async Task<OrganizationBalanceDto> GetOrganizationBalanceAsync(string organizationId)
+    public async Task<OrganizationBalanceDto> GetOrganizationBalanceAsync()
     {
+        var organizationUnit = await GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
+        
         var userExtensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
         if (userExtensionInfo.WalletAddress.IsNullOrEmpty())
         {
