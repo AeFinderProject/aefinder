@@ -12,4 +12,5 @@ public class InvoiceInfoDto
     public DateTime BillingEndDate { get; set; }
     public decimal BillingAmount { get; set; }
     public BillingStatus BillingStatus { get; set; }
+    public string TransactionState { get; set; }
 }
