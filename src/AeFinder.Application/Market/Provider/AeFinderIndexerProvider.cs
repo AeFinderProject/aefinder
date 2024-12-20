@@ -1,13 +1,19 @@
+using System.Net.Http;
 using System.Threading.Tasks;
 using AeFinder.Common;
 using AeFinder.Commons;
+using AeFinder.Commons.Dto;
+using AeFinder.Options;
 using GraphQL;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.Market;
 
 public interface IAeFinderIndexerProvider
 {
+    Task<long> GetCurrentVersionSyncBlockHeightAsync();
     Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string chainId, string address, string billingId,
         int skipCount, int maxResultCount);
     Task<IndexerUserBalanceDto> GetUserBalanceAsync(string address, string chainId, int skipCount,
@@ -19,10 +25,37 @@ public interface IAeFinderIndexerProvider
 public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDependency
 {
     private readonly IGraphQLHelper _graphQlHelper;
-    
-    public AeFinderIndexerProvider(IGraphQLHelper graphQlHelper)
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly GraphQLOptions _graphQlOptions;
+
+    public AeFinderIndexerProvider(IGraphQLHelper graphQlHelper, IHttpClientFactory httpClientFactory,
+        IOptionsSnapshot<GraphQLOptions> graphQlOptions)
     {
         _graphQlHelper = graphQlHelper;
+        _httpClientFactory = httpClientFactory;
+        _graphQlOptions = graphQlOptions.Value;
+    }
+
+    public async Task<long> GetCurrentVersionSyncBlockHeightAsync()
+    {
+        string result = await QueryIndexerSyncStateAsync(_graphQlOptions.BillingIndexerSyncStateUrl);
+        var resultDto = JsonConvert.DeserializeObject<IndexerSyncStateDto>(result);
+        if (resultDto == null || resultDto.CurrentVersion == null || resultDto.CurrentVersion.Items == null ||
+            resultDto.CurrentVersion.Items.Count == 0)
+        {
+            return 0;
+        }
+        return resultDto.CurrentVersion.Items[0].LongestChainHeight;
+    }
+    
+    private async Task<string> QueryIndexerSyncStateAsync(string indexerSyncStateUrl)
+    {
+        var httpClient = _httpClientFactory.CreateClient();
+        var uri = indexerSyncStateUrl;
+
+        var response = await httpClient.GetAsync(uri);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
     }
 
     public async Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string chainId, string address, string billingId,
