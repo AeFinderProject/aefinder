@@ -230,7 +230,7 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
             $"userWalletAddress:{userExtensionInfo.WalletAddress} organizationWalletAddress:{organizationWalletAddress}");
         var indexerBalanceDto =
             await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
-                _contractOptions.BillingContractChainId);
+                _contractOptions.BillingContractChainId, 0, 10);
         if (indexerBalanceDto == null || indexerBalanceDto.UserBalance == null ||
             indexerBalanceDto.UserBalance.Items == null || indexerBalanceDto.UserBalance.Items.Count == 0)
         {

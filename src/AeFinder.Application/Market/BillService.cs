@@ -72,7 +72,7 @@ public class BillService : ApplicationService, IBillService
         return result;
     }
 
-    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync()
+    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync(GetTransactionHistoryInput input)
     {
         //Check organization id
         var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
@@ -98,7 +98,7 @@ public class BillService : ApplicationService, IBillService
 
         var indexerUserFundRecordDto =
             await _indexerProvider.GetUserFundRecordAsync(_contractOptions.BillingContractChainId,
-                organizationWalletAddress, null);
+                organizationWalletAddress, null, input.SkipCount, input.MaxResultCount);
         if (indexerUserFundRecordDto == null || indexerUserFundRecordDto.UserFundRecord == null)
         {
             return new PagedResultDto<TransactionHistoryDto>();

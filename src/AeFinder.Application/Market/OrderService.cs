@@ -119,7 +119,7 @@ public class OrderService: ApplicationService, IOrderService
             $"userWalletAddress:{userExtensionDto.WalletAddress} organizationWalletAddress:{organizationWalletAddress}");
         var userOrganizationBalanceInfoDto =
             await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
-                _contractOptions.BillingContractChainId);
+                _contractOptions.BillingContractChainId, 0, 10);
         var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
         
         //Check if the purchase quantity is less than the quantity already used.

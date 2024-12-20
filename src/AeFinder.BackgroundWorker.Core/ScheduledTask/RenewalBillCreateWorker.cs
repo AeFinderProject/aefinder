@@ -153,7 +153,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 //Check user organization balance
                 var userOrganizationBalanceInfoDto =
                     await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
-                        _contractOptions.BillingContractChainId);
+                        _contractOptions.BillingContractChainId, 0, 10);
                 var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
                 
                 //If Balance not enough, freeze the AeIndexer, cancel the order & subscription

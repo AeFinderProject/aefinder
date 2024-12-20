@@ -256,14 +256,14 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
     {
         var billStateList = State.Where(b =>
             b.BillingType == BillingType.Charge &&
-            b.BillingStatus == BillingStatus.PendingPayment).ToList();
+            b.BillingStatus == BillingStatus.PendingPayment).OrderByDescending(s=>s.BillingDate).ToList();
         var billDtoList = _objectMapper.Map<List<BillState>, List<BillDto>>(billStateList);
         return billDtoList;
     }
 
     public async Task<List<BillDto>> GetOrganizationAllBillsAsync(string organizationId)
     {
-        var bills = State.Where(b => b.OrganizationId == organizationId).ToList();
+        var bills = State.Where(b => b.OrganizationId == organizationId).OrderByDescending(s=>s.BillingDate).ToList();
         var billDtoList = _objectMapper.Map<List<BillState>, List<BillDto>>(bills);
         return billDtoList;
     }

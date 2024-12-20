@@ -64,7 +64,8 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
     public async Task HandleTransactionAsync(string billingId,string organizationId)
     {
         var billTransactionResult =
-            await _indexerProvider.GetUserFundRecordAsync(_contractOptions.BillingContractChainId, null, billingId);
+            await _indexerProvider.GetUserFundRecordAsync(_contractOptions.BillingContractChainId, null, billingId, 0,
+                10);
 
         if (billTransactionResult == null || billTransactionResult.UserFundRecord == null ||
             billTransactionResult.UserFundRecord.Items == null ||
