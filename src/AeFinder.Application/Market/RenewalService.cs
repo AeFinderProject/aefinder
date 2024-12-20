@@ -99,9 +99,15 @@ public class RenewalService: ApplicationService, IRenewalService
         return queryCount;
     }
 
-    public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId)
+    public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId,string userId)
     {
-        Logger.LogInformation("[GetUserCurrentFullPodResourceAsync]CurrentUser.Id:" + CurrentUser.Id.ToString());
+        if (!string.IsNullOrEmpty(CurrentUser.Id.ToString()))
+        {
+            userId = CurrentUser.Id.Value.ToString();
+        }
+
+        Logger.LogInformation("[GetUserCurrentFullPodResourceAsync]CurrentUser.Id:" + CurrentUser.Id.ToString() +
+                              " userId:" + userId);
         //Check organization id
         var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
         if (organizationUnit == null)

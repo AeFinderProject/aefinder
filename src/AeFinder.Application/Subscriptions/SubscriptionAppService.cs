@@ -349,13 +349,14 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
                 GrainIdHelper.GenerateAppAttachmentGrainId(appId, version));
         return await appAttachmentGrain.GetAllAttachmentsInfoAsync();
     }
-    
-    public async Task CheckPodResourceAsync(string appId)
+
+    public async Task CheckPodResourceAsync(string appId, string userId)
     {
-        var podResource = await _renewalService.GetUserCurrentFullPodResourceAsync(appId);
+        var podResource = await _renewalService.GetUserCurrentFullPodResourceAsync(appId, userId);
         if (podResource == null || podResource.ProductId.IsNullOrEmpty())
         {
-            throw new UserFriendlyException("The current AeIndexer is not equipped with any Pod resources. Please check.");
+            throw new UserFriendlyException(
+                "The current AeIndexer is not equipped with any Pod resources. Please check.");
         }
     }
 }
