@@ -26,6 +26,7 @@ using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.EventBus.Distributed;
+using Volo.Abp.Security.Claims;
 
 namespace AeFinder.Subscriptions;
 
@@ -41,9 +42,10 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
     private readonly IAppDeployService _appDeployService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
     private readonly IRenewalService _renewalService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
-        IOptionsSnapshot<AppDeployOptions> appDeployOptions,
+        IOptionsSnapshot<AppDeployOptions> appDeployOptions,IHttpContextAccessor httpContextAccessor,
         IAppAttachmentService appAttachmentService,IRenewalService renewalService,
         IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository, IAppDeployService appDeployService,IAppResourceLimitProvider appResourceLimitProvider)
     {
@@ -55,6 +57,7 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
         _appAttachmentService = appAttachmentService;
         _appResourceLimitProvider = appResourceLimitProvider;
         _renewalService = renewalService;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code,
@@ -352,11 +355,19 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
 
     public async Task CheckPodResourceAsync(string appId, string userId)
     {
+        userId = GetUserById();
+        Logger.LogInformation("userId:" + userId);
         var podResource = await _renewalService.GetUserCurrentFullPodResourceAsync(appId, userId);
         if (podResource == null || podResource.ProductId.IsNullOrEmpty())
         {
             throw new UserFriendlyException(
                 "The current AeIndexer is not equipped with any Pod resources. Please check.");
         }
+    }
+    
+    public string GetUserById()
+    {
+        var claimsPrincipal = _httpContextAccessor.HttpContext.User;
+        return claimsPrincipal?.FindFirst(AbpClaimTypes.UserId)?.Value;
     }
 }
