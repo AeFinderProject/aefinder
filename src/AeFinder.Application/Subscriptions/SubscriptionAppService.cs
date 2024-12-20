@@ -355,9 +355,9 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
 
     public async Task CheckPodResourceAsync(string appId, string userId)
     {
-        userId = GetUserById();
-        Logger.LogInformation("userId:" + userId);
-        var podResource = await _renewalService.GetUserCurrentFullPodResourceAsync(appId, userId);
+        // userId = GetUserById();
+        // Logger.LogInformation("userId:" + userId);
+        var podResource = await _renewalService.GetUserCurrentFullPodResourceAsync(appId);
         if (podResource == null || podResource.ProductId.IsNullOrEmpty())
         {
             throw new UserFriendlyException(
