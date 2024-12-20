@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.User;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -100,6 +101,7 @@ public class RenewalService: ApplicationService, IRenewalService
 
     public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId)
     {
+        Logger.LogInformation("[GetUserCurrentFullPodResourceAsync]CurrentUser.Id:" + CurrentUser.Id.ToString());
         //Check organization id
         var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
         if (organizationUnit == null)
