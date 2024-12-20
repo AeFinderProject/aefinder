@@ -30,6 +30,7 @@ public class SubscriptionController : AeFinderController
     [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
     public async Task<string> AddSubscriptionAsync([FromForm]AddSubscriptionInput input)
     {
+        await _subscriptionAppService.CheckPodResourceAsync(ClientId);
         CheckFile(input.Code);
         return await _subscriptionAppService.AddSubscriptionAsync(ClientId, input.Manifest, input.Code.GetAllBytes(),
             input.AttachmentList);

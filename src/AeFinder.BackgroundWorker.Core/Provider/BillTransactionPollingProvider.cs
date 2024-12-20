@@ -37,6 +37,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IApiKeyService _apiKeyService;
     private readonly ContractOptions _contractOptions;
+    private readonly GraphQLOptions _graphQlOptions;
 
     public BillTransactionPollingProvider(ILogger<BillTransactionPollingProvider> logger,
         IAeFinderIndexerProvider indexerProvider, IClusterClient clusterClient,
@@ -44,6 +45,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
         IAppService appService, IProductService productService, IAppDeployService appDeployService,
         IUserInformationProvider userInformationProvider, IRenewalService renewalService,
         IApiKeyService apiKeyService,IOptionsSnapshot<ContractOptions> contractOptions,
+        IOptionsSnapshot<GraphQLOptions> graphQlOptions,
         IOptionsMonitor<TransactionPollingOptions> transactionPollingOptions)
     {
         _logger = logger;
@@ -59,6 +61,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
         _apiKeyService = apiKeyService;
         _transactionPollingOptions = transactionPollingOptions;
         _contractOptions = contractOptions.Value;
+        _graphQlOptions = graphQlOptions.Value;
     }
 
     public async Task HandleTransactionAsync(string billingId,string organizationId)
@@ -76,6 +79,17 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
 
         //Update bill transaction id & status
         var transactionResultDto = billTransactionResult.UserFundRecord.Items[0];
+        var currentLatestBlockHeight = await _indexerProvider.GetCurrentVersionSyncBlockHeightAsync();
+        if (currentLatestBlockHeight == 0)
+        {
+            _logger.LogError("[HandleTransactionAsync]Get current latest block height failed");
+        }
+        if (currentLatestBlockHeight <
+            (transactionResultDto.Metadata.Block.BlockHeight + _graphQlOptions.SafeBlockCount))
+        {
+            return;
+        }
+        
         _logger.LogInformation(
             $"[HandleTransactionAsync]Get transaction {transactionResultDto.TransactionId} of billing {transactionResultDto.BillingId}");
         var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);

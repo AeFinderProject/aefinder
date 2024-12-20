@@ -218,4 +218,10 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(email.ToLower());
     }
+
+    public static string GetOrganizationGrainIdAsync(string organizationId)
+    {
+        var organizationGuid = Guid.Parse(organizationId);
+        return organizationGuid.ToString("N");
+    }
 }

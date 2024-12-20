@@ -84,7 +84,7 @@ public class OrderService: ApplicationService, IOrderService
 
         dto.OrganizationId = organizationUnit.Id.ToString();
         
-        var organizationGrainId = await GetOrganizationGrainIdAsync(dto.OrganizationId);
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainIdAsync(dto.OrganizationId);
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         var billsGrain =
@@ -319,7 +319,7 @@ public class OrderService: ApplicationService, IOrderService
 
     public async Task CancelOrderAndBillAsync(string organizationId, string orderId, string billingId)
     {
-        var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainIdAsync(organizationId);
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         await ordersGrain.CancelOrderByIdAsync(orderId);
@@ -335,16 +335,11 @@ public class OrderService: ApplicationService, IOrderService
     //     var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
     //     return organizationIds.First().Id.ToString("N");
     // }
-
-    private async Task<string> GetOrganizationGrainIdAsync(string organizationId)
-    {
-        var organizationGuid = Guid.Parse(organizationId);
-        return organizationGuid.ToString("N");
-    }
+    
 
     public async Task OrderFreeApiQueryCountAsync(string organizationId)
     {
-        var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainIdAsync(organizationId);
         //Automatically place an order for a free API query package for the organization.
         var productsGrain =
             _clusterClient.GetGrain<IProductsGrain>(
