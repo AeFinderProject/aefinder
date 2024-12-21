@@ -156,15 +156,16 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
     {
         var latestLockedBill = State.Where(b =>
                 b.OrderId == orderId && (b.BillingType == BillingType.Lock || b.BillingType == BillingType.LockFrom) &&
-                b.BillingStatus == BillingStatus.Paid)
+                (b.BillingStatus == BillingStatus.Paid || b.BillingStatus == BillingStatus.PartiallyPaid))
             .OrderByDescending(o => o.BillingDate).FirstOrDefault();
         if (latestLockedBill == null)
         {
             return null;
         }
+
         return _objectMapper.Map<BillState, BillDto>(latestLockedBill);
     }
-    
+
     private string GenerateId()
     {
         return Guid.NewGuid().ToString();
