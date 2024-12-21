@@ -7,6 +7,7 @@ public interface IBillsGrain: IGrainWithStringKey
     Task<BillDto> CreateOrderLockBillAsync(CreateOrderLockBillDto dto);
     Task<BillDto> CreateSubscriptionLockFromBillAsync(CreateSubscriptionBillDto dto);
     Task UpdateBillToPendingStatusAsync(string billingId);
+    Task CancelCreatedBillAsync(string billingId);
     Task<BillDto> GetBillByIdAsync(string billingId);
     Task<BillDto> CreateChargeBillAsync(CreateChargeBillDto dto);
     Task<BillDto> GetLatestLockedBillAsync(string subscriptionId);

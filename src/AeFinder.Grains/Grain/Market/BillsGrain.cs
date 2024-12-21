@@ -283,6 +283,18 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         var billDtoList = _objectMapper.Map<List<BillState>, List<BillDto>>(bills);
         return billDtoList;
     }
+    
+    public async Task CancelCreatedBillAsync(string billingId)
+    {
+        await ReadStateAsync();
+        var billState = State.FirstOrDefault(b =>
+            b.BillingId == billingId && b.BillingStatus == BillingStatus.Created);
+        if (billState != null)
+        {
+            billState.BillingStatus = BillingStatus.Canceled;
+        }
+        await WriteStateAsync();
+    }
 
     public async Task CancelBillAsync(string billingId)
     {

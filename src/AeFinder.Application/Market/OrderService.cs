@@ -268,7 +268,7 @@ public class OrderService: ApplicationService, IOrderService
         }
     }
 
-    public async Task CancelBillAsync(string billingId)
+    public async Task CancelCreatedBillAsync(string billingId)
     {
         //Check organization id
         var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
@@ -295,10 +295,10 @@ public class OrderService: ApplicationService, IOrderService
         var orderDto = await ordersGrain.GetOrderByIdAsync(billDto.OrderId);
         
         //Cancel bill
-        await billsGrain.CancelBillAsync(billingId);
+        await billsGrain.CancelCreatedBillAsync(billingId);
 
         //Cancel order
-        await ordersGrain.CancelOrderByIdAsync(orderDto.OrderId);
+        await ordersGrain.CancelCreatedOrderByIdAsync(orderDto.OrderId);
     }
 
     public async Task CancelOrderAndBillAsync(string organizationId, string orderId, string billingId)

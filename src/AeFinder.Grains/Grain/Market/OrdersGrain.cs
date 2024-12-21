@@ -116,6 +116,17 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         var orderInfo = _objectMapper.Map<OrderState, OrderDto>(order);
         return orderInfo;
     }
+    
+    public async Task CancelCreatedOrderByIdAsync(string orderId)
+    {
+        await ReadStateAsync();
+        var orderState = State.FirstOrDefault(o => o.OrderId == orderId && o.OrderStatus == OrderStatus.Created);
+        if (orderState != null)
+        {
+            orderState.OrderStatus = OrderStatus.Canceled;
+            await WriteStateAsync();
+        }
+    }
 
     public async Task CancelOrderByIdAsync(string orderId)
     {

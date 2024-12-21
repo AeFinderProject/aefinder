@@ -85,6 +85,22 @@ public class MarketController : AeFinderController
     {
         return await _orderService.CreateOrderAsync(dto);
     }
+
+    [HttpPost]
+    [Route("bill/pending-payment")]
+    [Authorize]
+    public async Task UpdateBillToPendingStatusAsync(string billingId)
+    {
+        await _orderService.UpdateBillToPendingStatusAsync(billingId);
+    }
+    
+    [HttpPost]
+    [Route("bill/cancel")]
+    [Authorize]
+    public async Task CancelBillAsync(string billingId)
+    {
+        await _orderService.CancelCreatedBillAsync(billingId);
+    }
     
     [HttpGet]
     [Route("transaction-history")]
@@ -125,4 +141,6 @@ public class MarketController : AeFinderController
     {
         return await _renewalService.GetAllActiveRenewalListAsync();
     }
+    
+    
 }
