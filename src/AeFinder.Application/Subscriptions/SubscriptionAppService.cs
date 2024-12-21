@@ -379,6 +379,7 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
                 $"CurrentUser.Id is not available.so get organization id {app.OrganizationId} from app grain");
         }
 
+        Logger.LogInformation($"[CheckPodResourceAsync]appId:{appId} organizationId:{organizationId}");
         var podResource = await _renewalService.GetUserCurrentFullPodResourceAsync(appId, organizationId);
         if (podResource == null || podResource.ProductId.IsNullOrEmpty())
         {
