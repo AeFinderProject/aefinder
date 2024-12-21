@@ -42,7 +42,8 @@ public class MarketController : AeFinderController
     [Authorize]
     public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId)
     {
-        return await _renewalService.GetUserCurrentFullPodResourceAsync(appId);
+        var organizationId = await _renewalService.CheckUserOrganizationAsync();
+        return await _renewalService.GetUserCurrentFullPodResourceAsync(appId, organizationId);
     }
 
     [HttpGet]

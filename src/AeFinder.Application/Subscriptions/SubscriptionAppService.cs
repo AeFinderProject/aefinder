@@ -17,6 +17,7 @@ using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Market;
 using AeFinder.Options;
 using AeFinder.Subscriptions.Dto;
+using AeFinder.User;
 using AElf.EntityMapping.Repositories;
 using AElf.ExceptionHandler;
 using Microsoft.AspNetCore.Http;
@@ -42,12 +43,14 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
     private readonly IAppDeployService _appDeployService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
     private readonly IRenewalService _renewalService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IOrganizationAppService _organizationAppService;
 
     public SubscriptionAppService(IClusterClient clusterClient, ICodeAuditor codeAuditor,
-        IOptionsSnapshot<AppDeployOptions> appDeployOptions,IHttpContextAccessor httpContextAccessor,
-        IAppAttachmentService appAttachmentService,IRenewalService renewalService,
-        IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository, IAppDeployService appDeployService,IAppResourceLimitProvider appResourceLimitProvider)
+        IOptionsSnapshot<AppDeployOptions> appDeployOptions, IHttpContextAccessor httpContextAccessor,
+        IAppAttachmentService appAttachmentService, IRenewalService renewalService,
+        IOrganizationAppService organizationAppService,
+        IEntityMappingRepository<AppSubscriptionIndex, string> subscriptionIndexRepository,
+        IAppDeployService appDeployService, IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
         _codeAuditor = codeAuditor;
@@ -57,7 +60,7 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
         _appAttachmentService = appAttachmentService;
         _appResourceLimitProvider = appResourceLimitProvider;
         _renewalService = renewalService;
-        _httpContextAccessor = httpContextAccessor;
+        _organizationAppService = organizationAppService;
     }
 
     public async Task<string> AddSubscriptionAsync(string appId, SubscriptionManifestDto manifest, byte[] code,
@@ -353,11 +356,30 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
         return await appAttachmentGrain.GetAllAttachmentsInfoAsync();
     }
 
-    public async Task CheckPodResourceAsync(string appId, string userId)
+    public async Task CheckPodResourceAsync(string appId)
     {
-        // userId = GetUserById();
-        // Logger.LogInformation("userId:" + userId);
-        var podResource = await _renewalService.GetUserCurrentFullPodResourceAsync(appId);
+        var organizationId = string.Empty;
+        if (CurrentUser.Id.HasValue)
+        {
+            //Check organization id
+            var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+            if (organizationUnit == null)
+            {
+                throw new UserFriendlyException("User has not yet bind any organization");
+            }
+
+            organizationId = organizationUnit.Id.ToString();
+        }
+        else
+        {
+            var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+            var app = await appGrain.GetAsync();
+            organizationId = app.OrganizationId;
+            Logger.LogWarning(
+                $"CurrentUser.Id is not available.so get organization id {app.OrganizationId} from app grain");
+        }
+
+        var podResource = await _renewalService.GetUserCurrentFullPodResourceAsync(appId, organizationId);
         if (podResource == null || podResource.ProductId.IsNullOrEmpty())
         {
             throw new UserFriendlyException(
@@ -365,9 +387,4 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
         }
     }
     
-    public string GetUserById()
-    {
-        var claimsPrincipal = _httpContextAccessor.HttpContext.User;
-        return claimsPrincipal?.FindFirst(AbpClaimTypes.UserId)?.Value;
-    }
 }

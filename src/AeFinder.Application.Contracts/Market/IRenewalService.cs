@@ -9,6 +9,7 @@ public interface IRenewalService
     Task<int> GetUserApiQueryFreeCountAsync(string organizationId);
     Task<long> GetUserMonthlyApiQueryAllowanceAsync();
     Task<long> GetUserMonthlyApiQueryAllowanceAsync(string organizationId);
-    Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId);
+    Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId,string organizationId);
     Task<List<RenewalDto>> GetAllActiveRenewalListAsync();
+    Task<string> CheckUserOrganizationAsync();
 }
