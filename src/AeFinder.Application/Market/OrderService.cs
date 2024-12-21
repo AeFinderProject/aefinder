@@ -192,11 +192,6 @@ public class OrderService: ApplicationService, IOrderService
         }
         var orderDto = await ordersGrain.GetOrderByIdAsync(billDto.OrderId);
 
-        //Update bill to pending status
-        await billsGrain.UpdateBillToPendingStatusAsync(billingId);
-        //Update order to pending status
-        await ordersGrain.UpdateOrderToPendingStatusAsync(billDto.OrderId);
-
         //Create charge bill
         var productsGrain = _clusterClient.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
         var productInfo = await productsGrain.GetProductInfoByIdAsync(orderDto.ProductId);
@@ -266,6 +261,11 @@ public class OrderService: ApplicationService, IOrderService
                 RefundAmount = refundAmount
             });
         }
+        
+        //Update bill to pending status
+        await billsGrain.UpdateBillToPendingStatusAsync(billingId);
+        //Update order to pending status
+        await ordersGrain.UpdateOrderToPendingStatusAsync(billDto.OrderId);
     }
 
     public async Task CancelCreatedBillAsync(string billingId)
