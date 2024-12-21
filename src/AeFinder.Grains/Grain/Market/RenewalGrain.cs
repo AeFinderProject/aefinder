@@ -98,6 +98,18 @@ public class RenewalGrain: AeFinderGrain<List<RenewalState>>, IRenewalGrain
         return null;
     }
 
+    public async Task CancelRenewalByOrderIdAsync(string orderId)
+    {
+        await ReadStateAsync();
+        var renewalState = State.FirstOrDefault(o => o.OrderId == orderId && o.IsActive == true);
+        if (renewalState == null)
+        {
+            return;
+        }
+        renewalState.IsActive = false;
+        await WriteStateAsync();
+    }
+
     private string GenerateId(CreateRenewalDto dto)
     {
         return Guid.NewGuid().ToString();

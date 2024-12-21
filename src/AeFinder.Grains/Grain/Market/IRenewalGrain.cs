@@ -5,6 +5,7 @@ namespace AeFinder.Grains.Grain.Market;
 public interface IRenewalGrain: IGrainWithStringKey
 {
     Task<RenewalDto> CreateAsync(CreateRenewalDto dto);
+    Task CancelRenewalByOrderIdAsync(string orderId);
     Task<RenewalDto> GetRenewalSubscriptionInfoByIdAsync(string subscriptionId);
     Task UpdateRenewalDateToNextPeriodAsync(string subscriptionId);
     Task UpdateLastChargeDateAsync(string subscriptionId, DateTime lastChargeDate);

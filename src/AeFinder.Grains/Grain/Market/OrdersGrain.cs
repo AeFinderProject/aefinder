@@ -67,7 +67,7 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
             }
         }
         
-        orderState.OrderStatus = OrderStatus.PendingPayment;
+        orderState.OrderStatus = OrderStatus.Created;
         orderState.EnableAutoRenewal = true;
 
         if (this.State == null || this.State.Count == 0)
@@ -78,6 +78,17 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         State.Add(orderState);
         await WriteStateAsync();
         return _objectMapper.Map<OrderState, OrderDto>(orderState);
+    }
+
+    public async Task UpdateOrderToPendingStatusAsync(string orderId)
+    {
+        await ReadStateAsync();
+        var order = State.FirstOrDefault(o => o.OrderId == orderId);
+        if (order.OrderStatus == OrderStatus.Created)
+        {
+            order.OrderStatus = OrderStatus.PendingPayment;
+            await WriteStateAsync();
+        }
     }
     
     private string GenerateId(CreateOrderDto dto)
@@ -112,19 +123,6 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
         var orderState = State.FirstOrDefault(o => o.OrderId == orderId);
         orderState.OrderStatus = OrderStatus.Canceled;
         await WriteStateAsync();
-        
-        var renewalGrain =
-            GrainFactory.GetGrain<IRenewalGrain>(GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(orderState.OrganizationId)));
-        var renewalInfo = await renewalGrain.GetRenewalInfoByOrderIdAsync(orderId);
-        if (renewalInfo == null)
-        {
-            return;
-        }
-        var subscriptionId = renewalInfo.SubscriptionId;
-        if (!string.IsNullOrEmpty(subscriptionId))
-        {
-            await renewalGrain.CancelRenewalByIdAsync(subscriptionId);
-        }
     }
 
     public async Task<OrderDto> GetLatestApiQueryCountOrderAsync(string organizationId)
@@ -133,7 +131,7 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
 
         var oldUserOrderStates = State.Where(o =>
             o.OrganizationId == organizationId && o.ProductType == ProductType.ApiQueryCount &&
-            o.OrderStatus != OrderStatus.Canceled && o.OrderAmount > 0).OrderByDescending(o => o.OrderDate).ToList();
+            o.OrderStatus != OrderStatus.Canceled && o.OrderStatus != OrderStatus.Created && o.OrderAmount > 0).OrderByDescending(o => o.OrderDate).ToList();
 
         foreach (var orderState in oldUserOrderStates)
         {
@@ -153,7 +151,7 @@ public class OrdersGrain : AeFinderGrain<List<OrderState>>, IOrdersGrain
     {
         var oldUserOrderState = State.FirstOrDefault(o =>
             o.OrganizationId == organizationId && o.ProductType == ProductType.FullPodResource &&
-            o.AppId == appId && o.OrderStatus != OrderStatus.Canceled);
+            o.AppId == appId && o.OrderStatus != OrderStatus.Canceled && o.OrderStatus != OrderStatus.Created);
         if (oldUserOrderState == null)
         {
             return null;
