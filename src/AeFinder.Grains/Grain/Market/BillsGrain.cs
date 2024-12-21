@@ -240,14 +240,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         billState.TransactionId = transactionId;
         billState.TransactionAmount = transactionAmount;
         billState.WalletAddress = walletAddress;
-        if (transactionAmount == billState.BillingAmount)
-        {
-            billState.BillingStatus = BillingStatus.Paid;
-        }
-        else
-        {
-            billState.BillingStatus = BillingStatus.PartiallyPaid;
-        }
+        billState.BillingStatus = BillingStatus.Paid;
 
         billState.TransactionState = TransactionState.Mined;
         var billDto = _objectMapper.Map<BillState, BillDto>(billState);
