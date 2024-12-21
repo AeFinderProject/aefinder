@@ -126,8 +126,8 @@ public class OrderService: ApplicationService, IOrderService
             await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
                 _contractOptions.BillingContractChainId, 0, 10);
         var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
-        var lockedBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].LockedBalance;
-        var unLockedBalance = organizationAccountBalance - lockedBalance;
+        // var lockedBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].LockedBalance;
+        // var unLockedBalance = organizationAccountBalance - lockedBalance;
 
         //Check if the purchase quantity is less than the quantity already used.
         if (productInfo.ProductType == ProductType.ApiQueryCount)
@@ -145,7 +145,7 @@ public class OrderService: ApplicationService, IOrderService
         }
 
         //Check user organization balance
-        if (unLockedBalance < firstMonthLockFee)
+        if (organizationAccountBalance < firstMonthLockFee)
         {
             throw new UserFriendlyException("The user's organization account has insufficient balance.");
         }
