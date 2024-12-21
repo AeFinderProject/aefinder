@@ -99,17 +99,8 @@ public class RenewalService: ApplicationService, IRenewalService
         return queryCount;
     }
 
-    public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId)
+    public async Task<FullPodResourceDto> GetUserCurrentFullPodResourceAsync(string appId, string organizationId)
     {
-        //Check organization id
-        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
-        if (organizationUnit == null)
-        {
-            throw new UserFriendlyException("User has not yet bind any organization");
-        }
-
-        var organizationId = organizationUnit.Id.ToString();
-        
         var renewalGrain =
             _clusterClient.GetGrain<IRenewalGrain>(
                 GrainIdHelper.GenerateRenewalGrainId(Guid.Parse(organizationId)));
@@ -119,12 +110,26 @@ public class RenewalService: ApplicationService, IRenewalService
         {
             return new FullPodResourceDto();
         }
+
         var productsGrain =
             _clusterClient.GetGrain<IProductsGrain>(
                 GrainIdHelper.GenerateProductsGrainId());
         var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalInfo.ProductId);
         var resourceDto = _productService.ConvertToFullPodResourceDto(productInfo);
         return resourceDto;
+    }
+
+    public async Task<string> CheckUserOrganizationAsync()
+    {
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
+        return organizationId;
     }
 
     public async Task<List<RenewalDto>> GetAllActiveRenewalListAsync()

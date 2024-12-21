@@ -18,5 +18,5 @@ public interface ISubscriptionAppService
     Task<AllSubscriptionDto> GetSubscriptionManifestAsync(string appId);
     Task<List<SubscriptionIndexDto>> GetSubscriptionManifestIndexAsync(string appId);
     Task<List<AttachmentInfoDto>> GetSubscriptionAttachmentsAsync(string appId, string version);
-    Task CheckPodResourceAsync(string appId, string userId);
+    Task CheckPodResourceAsync(string appId);
 }
