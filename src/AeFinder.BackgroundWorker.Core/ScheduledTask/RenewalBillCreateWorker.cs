@@ -162,6 +162,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     var ordersGrain =
                         _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
                     await ordersGrain.CancelOrderByIdAsync(renewalDto.OrderId);
+                    await renewalGrain.CancelRenewalByIdAsync(renewalDto.SubscriptionId);
                     if (renewalDto.ProductType == ProductType.FullPodResource)
                     {
                         await _appDeployService.FreezeAppAsync(renewalDto.AppId);

@@ -68,12 +68,13 @@ public class OrderService: ApplicationService, IOrderService
         {
             throw new UserFriendlyException($"Invalid product id {dto.ProductId}");
         }
-        
+
         if (productInfo.MonthlyUnitPrice == 0)
         {
             throw new UserFriendlyException(
                 "Can not reorder free product.");
         }
+
         dto.UserId = CurrentUser.Id.ToString();
         //Check organization id
         var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
@@ -83,14 +84,14 @@ public class OrderService: ApplicationService, IOrderService
         }
 
         dto.OrganizationId = organizationUnit.Id.ToString();
-        
+
         var organizationGrainId = GrainIdHelper.GetOrganizationGrainIdAsync(dto.OrganizationId);
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
         var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
-        
+
         //Calculate first month lock fee
         decimal firstMonthLockFee = 0;
         var billingPlan = await _billService.GetProductBillingPlanAsync(new GetBillingPlanInput()
@@ -101,7 +102,7 @@ public class OrderService: ApplicationService, IOrderService
         });
         firstMonthLockFee = billingPlan.FirstMonthCost;
         decimal monthlyFee = dto.ProductNumber * productInfo.MonthlyUnitPrice;
-        
+
         //Get user organization account balance
         var userExtensionDto =
             await _userInformationProvider.GetUserExtensionInfoByIdAsync(CurrentUser.Id.Value);
@@ -109,26 +110,32 @@ public class OrderService: ApplicationService, IOrderService
         {
             throw new UserFriendlyException("Please bind your user wallet first.");
         }
+
         var organizationWalletAddress =
-            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(dto.OrganizationId,userExtensionDto.WalletAddress);
+            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(dto.OrganizationId,
+                userExtensionDto.WalletAddress);
         if (string.IsNullOrEmpty(organizationWalletAddress))
         {
-            throw new UserFriendlyException($"The user has not linked any organization wallet address yet. Please deposit your account first.");
+            throw new UserFriendlyException(
+                $"The user has not linked any organization wallet address yet. Please deposit your account first.");
         }
+
         Logger.LogInformation(
             $"userWalletAddress:{userExtensionDto.WalletAddress} organizationWalletAddress:{organizationWalletAddress}");
         var userOrganizationBalanceInfoDto =
             await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
                 _contractOptions.BillingContractChainId, 0, 10);
         var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
-        
+        var lockedBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].LockedBalance;
+        var unLockedBalance = organizationAccountBalance - lockedBalance;
+
         //Check if the purchase quantity is less than the quantity already used.
         if (productInfo.ProductType == ProductType.ApiQueryCount)
         {
             var freeApiQueryCount = await _renewalService.GetUserApiQueryFreeCountAsync();
             var orderApiQueryCount = (dto.ProductNumber * Convert.ToInt32(productInfo.ProductSpecifications)) +
                                      freeApiQueryCount;
-                var organizationGuid = Guid.Parse(dto.OrganizationId);
+            var organizationGuid = Guid.Parse(dto.OrganizationId);
             var monthlyQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, DateTime.UtcNow);
             if (monthlyQueryCount > orderApiQueryCount)
             {
@@ -136,21 +143,80 @@ public class OrderService: ApplicationService, IOrderService
                     "Order failed: The API query count already used by the user exceeds the purchased query count. Please adjust accordingly.");
             }
         }
-        
-        //Check if there is an existing order for a product of the same type
-        OrderDto oldOrderInfo = null;
-        if (productInfo.ProductType == ProductType.ApiQueryCount)
+
+        //Check user organization balance
+        if (unLockedBalance < firstMonthLockFee)
         {
-            oldOrderInfo =
-                await ordersGrain.GetLatestApiQueryCountOrderAsync(dto.OrganizationId);
+            throw new UserFriendlyException("The user's organization account has insufficient balance.");
         }
 
-        if (productInfo.ProductType == ProductType.FullPodResource)
+        //Create new order
+        var newOrder = await ordersGrain.CreateOrderAsync(dto);
+        var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
+        {
+            OrganizationId = dto.OrganizationId,
+            UserId = dto.UserId,
+            AppId = dto.AppId,
+            OrderId = newOrder.OrderId,
+            LockFee = firstMonthLockFee,
+            Description = $"Lock a portion of the balance for the new [{productInfo.ProductType.ToString()}] order."
+        });
+        billList.Add(newLockBill);
+
+        return billList;
+    }
+
+    public async Task UpdateBillToPendingStatusAsync(string billingId)
+    {
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
+        
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainIdAsync(organizationId);
+        var ordersGrain =
+            _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
+        var billsGrain =
+            _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
+        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
+        
+        //Get bill & order info
+        var billDto = await billsGrain.GetBillByIdAsync(billingId);
+        if (billDto == null)
+        {
+            throw new UserFriendlyException("invalid billing id");
+        }
+        var orderDto = await ordersGrain.GetOrderByIdAsync(billDto.OrderId);
+
+        //Update bill to pending status
+        await billsGrain.UpdateBillToPendingStatusAsync(billingId);
+        //Update order to pending status
+        await ordersGrain.UpdateOrderToPendingStatusAsync(billDto.OrderId);
+
+        //Create charge bill
+        var productsGrain = _clusterClient.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
+        var productInfo = await productsGrain.GetProductInfoByIdAsync(orderDto.ProductId);
+        if (productInfo == null)
+        {
+            throw new UserFriendlyException($"Invalid product id {orderDto.ProductId}");
+        }
+        //Check if there is an existing order for a product of the same type
+        OrderDto oldOrderInfo = null;
+        if (orderDto.ProductType == ProductType.ApiQueryCount)
         {
             oldOrderInfo =
-                await ordersGrain.GetLatestPodResourceOrderAsync(dto.OrganizationId, dto.AppId);
+                await ordersGrain.GetLatestApiQueryCountOrderAsync(organizationId);
         }
-        
+
+        if (orderDto.ProductType == ProductType.FullPodResource)
+        {
+            oldOrderInfo =
+                await ordersGrain.GetLatestPodResourceOrderAsync(organizationId, orderDto.AppId);
+        }
         //If it exists, create a charge billing for the existing order
         if (oldOrderInfo != null)
         {
@@ -170,7 +236,7 @@ public class OrderService: ApplicationService, IOrderService
             {
                 //Charge based on usage duration
                 DateTime? podResourceStartUseDay = null;
-                podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(dto.AppId);
+                podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(orderDto.AppId);
                 chargeFee = await billsGrain.CalculatePodResourceMidWayChargeAmountAsync(renewalInfo, lockedAmount, podResourceStartUseDay);
                 refundAmount = lockedAmount - chargeFee;
             }
@@ -192,129 +258,47 @@ public class OrderService: ApplicationService, IOrderService
             
             await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
             {
-                OrganizationId = dto.OrganizationId,
+                OrganizationId = organizationId,
                 OrderId = oldOrderInfo.OrderId,
                 SubscriptionId = subscriptionId,
                 Description = $"Creates a [{productInfo.ProductType.ToString()}] charge bill for the existing order.",
                 ChargeFee = chargeFee,
                 RefundAmount = refundAmount
             });
-            // var remainingLockedAmount = lockedAmount - chargeFee;
-            //Create new order
-            var newOrder = await ordersGrain.CreateOrderAsync(dto);
-                
-            //Create lock bill
-            var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
-            {
-                OrganizationId = dto.OrganizationId,
-                UserId = dto.UserId,
-                AppId = dto.AppId,
-                OrderId = newOrder.OrderId,
-                LockFee = firstMonthLockFee,
-                Description =
-                    $"Lock organization balance for New [{productInfo.ProductType.ToString()}] order."
-            });
-            billList.Add(newLockBill);
-                
-            
-            // if (firstMonthLockFee > remainingLockedAmount)
-            // {
-            //     //Calculate new order need lock fee
-            //     var needLockFee = firstMonthLockFee - remainingLockedAmount;
-            //     //Check user organization balance
-            //     if (organizationAccountBalance < needLockFee)
-            //     {
-            //         throw new UserFriendlyException("The user's organization account has insufficient balance.");
-            //     }
-            //     
-            //     //Create new order
-            //     var newOrder = await ordersGrain.CreateOrderAsync(dto);
-            //     
-            //     //Create lock bill
-            //     var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
-            //     {
-            //         OrganizationId = dto.OrganizationId,
-            //         UserId = dto.UserId,
-            //         AppId = dto.AppId,
-            //         OrderId = newOrder.OrderId,
-            //         LockFee = needLockFee,
-            //         Description =
-            //             $"Old order remaining locked amount: {remainingLockedAmount}, New order first month required locked amount: {firstMonthLockFee}, Additional amount needed to be locked: {needLockFee}."
-            //     });
-            //     billList.Add(newLockBill);
-            //     
-            //     await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
-            //     {
-            //         OrganizationId = dto.OrganizationId,
-            //         OrderId = oldOrderInfo.OrderId,
-            //         SubscriptionId = subscriptionId,
-            //         Description = "User creates a new order and processes billing settlement for the existing order.",
-            //         ChargeFee = chargeFee,
-            //         RefundAmount = refundAmount
-            //     });
-            // }
-            // else
-            // {
-            //     //Calculate old order need refund fee
-            //     refundAmount = remainingLockedAmount - firstMonthLockFee;
-            //     var oldOrderChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
-            //     {
-            //         OrganizationId = dto.OrganizationId,
-            //         OrderId = oldOrderInfo.OrderId,
-            //         SubscriptionId = subscriptionId,
-            //         Description = "User creates a new order and processes billing settlement for the existing order.",
-            //         ChargeFee = chargeFee,
-            //         RefundAmount = refundAmount
-            //     });
-            //     //Send charge transaction to contract
-            //     var sendTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress,
-            //         chargeFee, refundAmount,
-            //         oldOrderChargeBill.BillingId);
-            //     Logger.LogInformation("Send charge transaction " + sendTransactionOutput.TransactionId +
-            //                           " of bill " + oldOrderChargeBill.BillingId);
-            // }
-
-            
         }
-        else
+    }
+
+    public async Task CancelCreatedBillAsync(string billingId)
+    {
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
         {
-            if (monthlyFee == 0)
-            {
-                //Create new order
-                var newFreeOrder = await ordersGrain.CreateOrderAsync(dto);
-                await renewalGrain.CreateAsync(new CreateRenewalDto()
-                {
-                    OrganizationId = dto.OrganizationId,
-                    UserId = dto.UserId,
-                    AppId = dto.AppId,
-                    OrderId = newFreeOrder.OrderId,
-                    ProductId = dto.ProductId,
-                    ProductNumber = 1,
-                    RenewalPeriod = RenewalPeriod.OneMonth
-                });
-                return billList;
-            }
-            //Check user organization balance
-            if (organizationAccountBalance < firstMonthLockFee)
-            {
-                throw new UserFriendlyException("The user's organization account has insufficient balance.");
-            }
-            
-            //Create new order
-            var newOrder = await ordersGrain.CreateOrderAsync(dto);
-            var newLockBill = await billsGrain.CreateOrderLockBillAsync(new CreateOrderLockBillDto()
-            {
-                OrganizationId = dto.OrganizationId,
-                UserId = dto.UserId,
-                AppId = dto.AppId,
-                OrderId = newOrder.OrderId,
-                LockFee = firstMonthLockFee,
-                Description = $"Lock a portion of the balance for the new [{productInfo.ProductType.ToString()}] order."
-            });
-            billList.Add(newLockBill);
+            throw new UserFriendlyException("User has not yet bind any organization");
         }
 
-        return billList;
+        var organizationId = organizationUnit.Id.ToString();
+        
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainIdAsync(organizationId);
+        var ordersGrain =
+            _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
+        var billsGrain =
+            _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
+        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
+        
+        //Get bill & order info
+        var billDto = await billsGrain.GetBillByIdAsync(billingId);
+        if (billDto == null)
+        {
+            throw new UserFriendlyException("invalid billing id");
+        }
+        var orderDto = await ordersGrain.GetOrderByIdAsync(billDto.OrderId);
+        
+        //Cancel bill
+        await billsGrain.CancelCreatedBillAsync(billingId);
+
+        //Cancel order
+        await ordersGrain.CancelCreatedOrderByIdAsync(orderDto.OrderId);
     }
 
     public async Task CancelOrderAndBillAsync(string organizationId, string orderId, string billingId)
@@ -324,6 +308,8 @@ public class OrderService: ApplicationService, IOrderService
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         await ordersGrain.CancelOrderByIdAsync(orderId);
         Logger.LogInformation($"Order {orderId} canceled");
+        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
+        await renewalGrain.CancelRenewalByOrderIdAsync(orderId);
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
         await billsGrain.CancelBillAsync(billingId);

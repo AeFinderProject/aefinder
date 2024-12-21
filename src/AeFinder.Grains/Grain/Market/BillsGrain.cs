@@ -55,7 +55,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
 
         billItem.BillingStartDate = DateTime.UtcNow;
         billItem.BillingEndDate = GetFirstDayOfNextMonths(billItem.BillingStartDate, 1);
-        billItem.BillingStatus = BillingStatus.PendingPayment;
+        billItem.BillingStatus = BillingStatus.Created;
         billItem.TransactionState = TransactionState.NotExisted;
         State.Add(billItem);
         await WriteStateAsync();
@@ -141,6 +141,17 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         return _objectMapper.Map<BillState, BillDto>(billItem);
     }
 
+    public async Task UpdateBillToPendingStatusAsync(string billingId)
+    {
+        await ReadStateAsync();
+        var billState = State.FirstOrDefault(o => o.BillingId == billingId);
+        if (billState.BillingStatus == BillingStatus.Created)
+        {
+            billState.BillingStatus = BillingStatus.PendingPayment;
+            await WriteStateAsync();
+        }
+    }
+
     public async Task<BillDto> GetLatestLockedBillAsync(string orderId)
     {
         var latestLockedBill = State.Where(b =>
@@ -214,6 +225,10 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
     public async Task<BillDto> GetBillByIdAsync(string billingId)
     {
         var billState = State.FirstOrDefault(o => o.BillingId == billingId);
+        if (billState == null)
+        {
+            return null;
+        }
         var billDto = _objectMapper.Map<BillState, BillDto>(billState);
         return billDto;
     }
@@ -225,14 +240,7 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
         billState.TransactionId = transactionId;
         billState.TransactionAmount = transactionAmount;
         billState.WalletAddress = walletAddress;
-        if (transactionAmount == billState.BillingAmount)
-        {
-            billState.BillingStatus = BillingStatus.Paid;
-        }
-        else
-        {
-            billState.BillingStatus = BillingStatus.PartiallyPaid;
-        }
+        billState.BillingStatus = BillingStatus.Paid;
 
         billState.TransactionState = TransactionState.Mined;
         var billDto = _objectMapper.Map<BillState, BillDto>(billState);
@@ -274,6 +282,18 @@ public class BillsGrain: AeFinderGrain<List<BillState>>, IBillsGrain
             .ToList();
         var billDtoList = _objectMapper.Map<List<BillState>, List<BillDto>>(bills);
         return billDtoList;
+    }
+    
+    public async Task CancelCreatedBillAsync(string billingId)
+    {
+        await ReadStateAsync();
+        var billState = State.FirstOrDefault(b =>
+            b.BillingId == billingId && b.BillingStatus == BillingStatus.Created);
+        if (billState != null)
+        {
+            billState.BillingStatus = BillingStatus.Canceled;
+        }
+        await WriteStateAsync();
     }
 
     public async Task CancelBillAsync(string billingId)

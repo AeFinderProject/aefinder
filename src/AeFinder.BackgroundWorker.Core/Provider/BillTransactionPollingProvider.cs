@@ -145,6 +145,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                             $"[HandleTransactionAsync]Find pending {oldOrderInfo.ProductType.ToString()} charge bill {oldOrderChargeBill.BillingId}");
                         //Stop old subscription, cancel old order
                         await ordersGrain.CancelOrderByIdAsync(oldOrderChargeBill.OrderId);
+                        await renewalGrain.CancelRenewalByOrderIdAsync(oldOrderChargeBill.OrderId);
                             
                         //Send charge transaction to contract
                         var userExtensionDto =
