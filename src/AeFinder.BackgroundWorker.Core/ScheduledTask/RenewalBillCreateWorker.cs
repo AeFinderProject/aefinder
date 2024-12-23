@@ -96,6 +96,9 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 {
                     continue;
                 }
+
+                _logger.LogInformation(
+                    $"[ProcessRenewalAsync] Start process {renewalDto.ProductType.ToString()} renewal {renewalDto.SubscriptionId} of order {renewalDto.OrderId}");
                 var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalDto.ProductId);
                 //Skip free product
                 if (productInfo.MonthlyUnitPrice == 0)
@@ -119,7 +122,8 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     var monthlyFee = renewalDto.ProductNumber * productInfo.MonthlyUnitPrice;
                     refundAmount = monthlyFee - chargeFee;
                 }
-                
+                _logger.LogInformation(
+                    $"[ProcessRenewalAsync] Start process charge for previous billing cycle, chargeFee: {chargeFee} refundAmount: {refundAmount}");
                 //Send charge transaction to contract
                 var userExtensionDto =
                     await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(renewalDto.UserId));
@@ -148,26 +152,26 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     chargeBill.BillingId);
                 _logger.LogInformation("[ProcessRenewalAsync] Send charge transaction " + sendChargeTransactionOutput.TransactionId +
                                        " of bill " + chargeBill.BillingId);
-                var transactionId = sendChargeTransactionOutput.TransactionId;
+                var chargeTransactionId = sendChargeTransactionOutput.TransactionId;
                 // not existed->retry  pending->wait  other->fail
                 int delaySeconds = _transactionPollingOptions.DelaySeconds;
-                var transactionResult = await QueryTransactionResultAsync(transactionId, delaySeconds);
-                var times = 0;
-                while (transactionResult.Status == TransactionState.NotExisted &&
-                       times < _transactionPollingOptions.RetryTimes)
+                var chargeTransactionResult = await QueryTransactionResultAsync(chargeTransactionId, delaySeconds);
+                var chargeResultQueryRetryTimes = 0;
+                while (chargeTransactionResult.Status == TransactionState.NotExisted &&
+                       chargeResultQueryRetryTimes < _transactionPollingOptions.RetryTimes)
                 {
-                    times++;
+                    chargeResultQueryRetryTimes++;
 
                     await Task.Delay(delaySeconds);
-                    transactionResult = await QueryTransactionResultAsync(transactionId, delaySeconds);
+                    chargeTransactionResult = await QueryTransactionResultAsync(chargeTransactionId, delaySeconds);
                 }
 
-                var status = transactionResult.Status == TransactionState.Mined
+                var chargeTransactionStatus = chargeTransactionResult.Status == TransactionState.Mined
                     ? TransactionState.Mined
                     : TransactionState.Failed;
-                await billsGrain.UpdateTransactionStatus(chargeBill.BillingId, status);
+                await billsGrain.UpdateTransactionStatus(chargeBill.BillingId, chargeTransactionStatus);
                 _logger.LogInformation(
-                    $"[ProcessRenewalAsync] After {times} times retry, get transaction {transactionId} status {status}");
+                    $"[ProcessRenewalAsync] After {chargeResultQueryRetryTimes} times retry, get charge transaction {chargeTransactionId} status {chargeTransactionStatus}");
                 
                 
                 //Check if the renewal date has arrived
@@ -202,6 +206,8 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                         var organizationGuid = Guid.Parse(renewalDto.OrganizationId);
                         await _apiKeyService.SetQueryLimitAsync(organizationGuid, freeQueryAllowance);
                     }
+                    _logger.LogWarning(
+                        $"[ProcessRenewalAsync] Organization Account Balance is not enough, organizationAccountBalance: {organizationAccountBalance} PeriodicCost: {renewalDto.PeriodicCost}");
                     continue;
                 }
                 
@@ -219,6 +225,28 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 //Send lockFrom transaction to contract
                 var sendLockFromTransactionOutput = await _contractProvider.BillingLockFromAsync(organizationWalletAddress, newLockBill.BillingAmount,
                     newLockBill.BillingId);
+                _logger.LogInformation(
+                    $"[ProcessRenewalAsync] Send lock from transaction " + sendLockFromTransactionOutput.TransactionId +
+                " of bill " + newLockBill.BillingId);
+                var lockFromTransactionId = sendLockFromTransactionOutput.TransactionId;
+                // not existed->retry  pending->wait  other->fail
+                var lockFromTransactionResult = await QueryTransactionResultAsync(lockFromTransactionId,delaySeconds);
+                var lockFromResultQueryTimes = 0;
+                while (lockFromTransactionResult.Status == TransactionState.NotExisted &&
+                       lockFromResultQueryTimes < _transactionPollingOptions.RetryTimes)
+                {
+                    lockFromResultQueryTimes++;
+
+                    await Task.Delay(delaySeconds);
+                    lockFromTransactionResult = await QueryTransactionResultAsync(lockFromTransactionId, delaySeconds);
+                }
+
+                var status = lockFromTransactionResult.Status == TransactionState.Mined
+                    ? TransactionState.Mined
+                    : TransactionState.Failed;
+                await billsGrain.UpdateTransactionStatus(newLockBill.BillingId, status);
+                _logger.LogInformation(
+                    $"After {lockFromResultQueryTimes} times retry, get lock from transaction {lockFromTransactionId} status {status}");
             }
         }
     }
