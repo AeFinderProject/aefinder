@@ -268,6 +268,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
             new DateTime(now.Year, currentMonth, _scheduledTaskOptions.RenewalBillDay,
                     _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
                 .AddMonths(1);
+        _logger.LogInformation("currentMonth: " + currentMonth + " firstDayNextMonth:" + firstDayNextMonth.ToString());
         return (int)(firstDayNextMonth - now).TotalMilliseconds;
     }
     
