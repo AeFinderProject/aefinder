@@ -2,12 +2,14 @@ using AeFinder.ApiKeys;
 using AeFinder.Apps;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Common;
+using AeFinder.Commons;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Market;
 using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
+using AElf.Client.Dto;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -31,9 +33,9 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     private readonly IAeFinderIndexerProvider _indexerProvider;
     private readonly ContractOptions _contractOptions;
     private readonly IAppDeployService _appDeployService;
-    private readonly IDistributedEventBus _distributedEventBus;
     private readonly IApiKeyService _apiKeyService;
     private readonly IRenewalService _renewalService;
+    private readonly TransactionPollingOptions _transactionPollingOptions;
 
     public RenewalBillCreateWorker(AbpAsyncTimer timer, ILogger<AppInfoSyncWorker> logger,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
@@ -41,8 +43,8 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         IContractProvider contractProvider, IOrganizationInformationProvider organizationInformationProvider,
         IUserInformationProvider userInformationProvider, IAeFinderIndexerProvider indexerProvider,
         IOptionsSnapshot<ContractOptions> contractOptions, IAppDeployService appDeployService,
-        IDistributedEventBus distributedEventBus, IApiKeyService apiKeyService,
-        IRenewalService renewalService,
+        IApiKeyService apiKeyService,
+        IRenewalService renewalService,IOptionsSnapshot<TransactionPollingOptions> transactionPollingOptions,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -55,9 +57,9 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         _indexerProvider = indexerProvider;
         _contractOptions = contractOptions.Value;
         _appDeployService = appDeployService;
-        _distributedEventBus = distributedEventBus;
         _apiKeyService = apiKeyService;
         _renewalService = renewalService;
+        _transactionPollingOptions = transactionPollingOptions.Value;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = CalculateNextExecutionDelay();
     }
@@ -87,15 +89,15 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
             var renewalList = await renewalGrain.GetAllActiveRenewalInfosAsync(organizationId);
             foreach (var renewalDto in renewalList)
             {
+                //Check if the renewal date has arrived
+                if (renewalDto.NextRenewalDate > DateTime.UtcNow.AddDays(1))
+                {
+                    continue;
+                }
                 var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalDto.ProductId);
                 //Skip free product
                 if (productInfo.MonthlyUnitPrice == 0)
                 {
-                    //Check if the renewal date has arrived
-                    if (renewalDto.NextRenewalDate > DateTime.UtcNow.AddDays(1))
-                    {
-                        continue;
-                    }
                     await renewalGrain.UpdateRenewalDateToNextPeriodAsync(renewalDto.SubscriptionId);
                     continue;
                 }
@@ -140,8 +142,31 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     Description = "Auto-renewal charge for the existing order.",
                     RefundAmount = refundAmount
                 });
-                await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, 0,
+                var sendChargeTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, 0,
                     chargeBill.BillingId);
+                _logger.LogInformation("[ProcessRenewalAsync] Send charge transaction " + sendChargeTransactionOutput.TransactionId +
+                                       " of bill " + chargeBill.BillingId);
+                var transactionId = sendChargeTransactionOutput.TransactionId;
+                // not existed->retry  pending->wait  other->fail
+                int delaySeconds = _transactionPollingOptions.DelaySeconds;
+                var transactionResult = await QueryTransactionResultAsync(transactionId, delaySeconds);
+                var times = 0;
+                while (transactionResult.Status == TransactionState.NotExisted &&
+                       times < _transactionPollingOptions.RetryTimes)
+                {
+                    times++;
+
+                    await Task.Delay(delaySeconds);
+                    transactionResult = await QueryTransactionResultAsync(transactionId, delaySeconds);
+                }
+
+                var status = transactionResult.Status == TransactionState.Mined
+                    ? TransactionState.Mined
+                    : TransactionState.Failed;
+                await billsGrain.UpdateTransactionStatus(chargeBill.BillingId, status);
+                _logger.LogInformation(
+                    $"[ProcessRenewalAsync] After {times} times retry, get transaction {transactionId} status {status}");
+                
                 
                 //Check if the renewal date has arrived
                 var today = DateTime.UtcNow;
@@ -190,7 +215,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     Description = $"Auto-renewal lock for the existing order."
                 });
                 //Send lockFrom transaction to contract
-                await _contractProvider.BillingLockFromAsync(organizationWalletAddress, newLockBill.BillingAmount,
+                var sendLockFromTransactionOutput = await _contractProvider.BillingLockFromAsync(organizationWalletAddress, newLockBill.BillingAmount,
                     newLockBill.BillingId);
             }
         }
@@ -209,5 +234,18 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
                 .AddMonths(1);
         return (int)(firstDayNextMonth - now).TotalMilliseconds;
+    }
+    
+    private async Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, int delaySeconds)
+    {
+        // var transactionId = transaction.GetHash().ToHex();
+        var transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
+        while (transactionResult.Status == TransactionState.Pending)
+        {
+            await Task.Delay(delaySeconds);
+            transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
+        }
+
+        return transactionResult;
     }
 }
