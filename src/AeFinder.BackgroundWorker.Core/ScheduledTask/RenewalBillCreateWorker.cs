@@ -231,8 +231,13 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     private int CalculateNextExecutionDelay()
     {
         var now = DateTime.UtcNow;
+        var currentMonth = now.Month;
+        if (_scheduledTaskOptions.RenewalBillMonth > 0)
+        {
+            currentMonth = _scheduledTaskOptions.RenewalBillMonth;
+        }
         var firstDayNextMonth =
-            new DateTime(now.Year, now.Month, _scheduledTaskOptions.RenewalBillDay,
+            new DateTime(now.Year, currentMonth, _scheduledTaskOptions.RenewalBillDay,
                     _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
                 .AddMonths(1);
         return (int)(firstDayNextMonth - now).TotalMilliseconds;
