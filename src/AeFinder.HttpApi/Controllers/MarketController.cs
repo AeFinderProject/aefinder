@@ -142,5 +142,11 @@ public class MarketController : AeFinderController
         return await _renewalService.GetAllActiveRenewalListAsync();
     }
     
-    
+    [HttpGet]
+    [Route("pending/bills")]
+    [Authorize]
+    public async Task<List<PendingBillDto>> GetPendingBillsAsync()
+    {
+        return await _billService.GetPendingBillsAsync();
+    }
 }

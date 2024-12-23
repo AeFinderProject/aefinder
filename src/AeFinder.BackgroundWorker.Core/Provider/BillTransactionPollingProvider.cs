@@ -25,7 +25,7 @@ public interface IBillTransactionPollingProvider
 public class BillTransactionPollingProvider: IBillTransactionPollingProvider, ISingletonDependency
 {
     private readonly ILogger<BillTransactionPollingProvider> _logger;
-    private readonly IOptionsMonitor<TransactionPollingOptions> _transactionPollingOptions;
+    private readonly TransactionPollingOptions _transactionPollingOptions;
     private readonly IAeFinderIndexerProvider _indexerProvider;
     private readonly IClusterClient _clusterClient;
     private readonly IContractProvider _contractProvider;
@@ -46,7 +46,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
         IUserInformationProvider userInformationProvider, IRenewalService renewalService,
         IApiKeyService apiKeyService,IOptionsSnapshot<ContractOptions> contractOptions,
         IOptionsSnapshot<GraphQLOptions> graphQlOptions,
-        IOptionsMonitor<TransactionPollingOptions> transactionPollingOptions)
+        IOptionsSnapshot<TransactionPollingOptions> transactionPollingOptions)
     {
         _logger = logger;
         _clusterClient = clusterClient;
@@ -59,7 +59,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
         _renewalService = renewalService;
         _appDeployService = appDeployService;
         _apiKeyService = apiKeyService;
-        _transactionPollingOptions = transactionPollingOptions;
+        _transactionPollingOptions = transactionPollingOptions.Value;
         _contractOptions = contractOptions.Value;
         _graphQlOptions = graphQlOptions.Value;
     }
@@ -77,7 +77,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
             return;
         }
 
-        //Update bill transaction id & status
+        //Wait until approaching the safe height of LIB before processing
         var transactionResultDto = billTransactionResult.UserFundRecord.Items[0];
         var currentLatestBlockHeight = await _indexerProvider.GetCurrentVersionSyncBlockHeightAsync();
         if (currentLatestBlockHeight == 0)
@@ -90,6 +90,7 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
             return;
         }
         
+        //Update bill transaction id & status
         _logger.LogInformation(
             $"[HandleTransactionAsync]Get transaction {transactionResultDto.TransactionId} of billing {transactionResultDto.BillingId}");
         var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
@@ -162,15 +163,16 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                                                " of bill " + oldOrderChargeBill.BillingId);
                         var transactionId = sendTransactionOutput.TransactionId;
                         // not existed->retry  pending->wait  other->fail
-                        var transactionResult = await QueryTransactionResultAsync(transactionId);
+                        int delaySeconds = _transactionPollingOptions.DelaySeconds;
+                        var transactionResult = await QueryTransactionResultAsync(transactionId,delaySeconds);
                         var times = 0;
                         while (transactionResult.Status == TransactionState.NotExisted &&
-                               times < _transactionPollingOptions.CurrentValue.RetryTimes)
+                               times < _transactionPollingOptions.RetryTimes)
                         {
                             times++;
 
-                            await Task.Delay(_transactionPollingOptions.CurrentValue.DelaySeconds);
-                            transactionResult = await QueryTransactionResultAsync(transactionId);
+                            await Task.Delay(delaySeconds);
+                            transactionResult = await QueryTransactionResultAsync(transactionId, delaySeconds);
                         }
 
                         var status = transactionResult.Status == TransactionState.Mined
@@ -248,13 +250,13 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
         return organizationGuid.ToString("N");
     }
 
-    private async Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId)
+    private async Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, int delaySeconds)
     {
         // var transactionId = transaction.GetHash().ToHex();
         var transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
         while (transactionResult.Status == TransactionState.Pending)
         {
-            await Task.Delay(_transactionPollingOptions.CurrentValue.RetryTimes);
+            await Task.Delay(delaySeconds);
             transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
         }
 
