@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.ApiKeys;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Market;
 using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
@@ -26,10 +28,11 @@ public class BillService : ApplicationService, IBillService
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
     private readonly ContractOptions _contractOptions;
+    private readonly IApiKeyService _apiKeyService;
 
     public BillService(IClusterClient clusterClient, IOrganizationAppService organizationAppService,
-        IAeFinderIndexerProvider indexerProvider,IUserInformationProvider userInformationProvider,
-        IOptionsSnapshot<ContractOptions> contractOptions,
+        IAeFinderIndexerProvider indexerProvider, IUserInformationProvider userInformationProvider,
+        IOptionsSnapshot<ContractOptions> contractOptions, IApiKeyService apiKeyService,
         IOrganizationInformationProvider organizationInformationProvider)
     {
         _clusterClient = clusterClient;
@@ -38,6 +41,7 @@ public class BillService : ApplicationService, IBillService
         _userInformationProvider = userInformationProvider;
         _organizationInformationProvider = organizationInformationProvider;
         _contractOptions = contractOptions.Value;
+        _apiKeyService = apiKeyService;
     }
 
     public async Task<BillingPlanDto> GetProductBillingPlanAsync(GetBillingPlanInput input)
@@ -223,5 +227,91 @@ public class BillService : ApplicationService, IBillService
 
         return pendingBillDtoList;
     }
-    
+
+    public async Task<ApiQueryBillingOverviewDto> GetApiQueryDailyAndMonthlyCostAverageAsync()
+    {
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var result = new ApiQueryBillingOverviewDto();
+
+        var organizationId = organizationUnit.Id.ToString();
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainIdAsync(organizationId);
+        var billsGrain =
+            _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
+        var allBills = await billsGrain.GetOrganizationAllBillsAsync(organizationId);
+        var ordersGrain =
+            _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
+        var productsGrain =
+            _clusterClient.GetGrain<IProductsGrain>(
+                GrainIdHelper.GenerateProductsGrainId());
+        decimal totalLockApiQueryBalance = 0;
+        decimal totalChargeAmount = 0;
+        DateTime startUseTime = DateTime.UtcNow;
+        foreach (var billDto in allBills)
+        {
+            var orderDto = await ordersGrain.GetOrderByIdAsync(billDto.OrderId);
+            if (orderDto == null)
+            {
+                Logger.LogError($"the order of billing {billDto.BillingId} is null");
+            }
+
+            if (orderDto.ProductType != ProductType.ApiQueryCount)
+            {
+                continue;
+            }
+
+            if (billDto.BillingType == BillingType.Lock || billDto.BillingType == BillingType.LockFrom)
+            {
+                totalLockApiQueryBalance = totalLockApiQueryBalance + billDto.BillingAmount;
+            }
+
+            if (billDto.BillingType == BillingType.Charge || billDto.BillingType == BillingType.Refund)
+            {
+                totalLockApiQueryBalance = totalLockApiQueryBalance - billDto.BillingAmount - billDto.RefundAmount;
+                totalChargeAmount = totalChargeAmount + billDto.BillingAmount;
+            }
+
+            if (billDto.BillingDate < startUseTime)
+            {
+                startUseTime = billDto.BillingDate;
+            }
+        }
+
+        result.ApiQueryLockedBalance = totalLockApiQueryBalance;
+        var organizationGuid = organizationUnit.Id;
+        var monthTime = DateTime.UtcNow;
+        var currentMonthQueryCount = await _apiKeyService.GetMonthQueryCountAsync(organizationGuid, monthTime);
+        int currentMonthUseDays = DateTime.DaysInMonth(DateTime.UtcNow.Year, DateTime.UtcNow.Month);
+        int totalUseMonths = 1;
+        if (startUseTime > new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1))
+        {
+            currentMonthUseDays = (DateTime.UtcNow - startUseTime).Days;
+        }
+
+        var totalUseDays = (DateTime.UtcNow - startUseTime).Days;
+        if (totalUseDays > 30)
+        {
+            totalUseMonths = totalUseDays / 30;
+        }
+
+        var freeProduct = await productsGrain.GetFreeApiQueryCountProductAsync();
+        var chargeQueryCount = currentMonthQueryCount - Convert.ToInt32(freeProduct.ProductSpecifications);
+        var regularProduct = await productsGrain.GetRegularApiQueryCountProductAsync();
+        decimal signalQueryUnitPrice =
+            regularProduct.MonthlyUnitPrice / Convert.ToInt32(regularProduct.ProductSpecifications);
+        decimal currentMonthChargeFee = 0;
+        if (chargeQueryCount > 0)
+        {
+            currentMonthChargeFee = chargeQueryCount * signalQueryUnitPrice;
+        }
+
+        result.ApiQueryMonthlyCostAverage = (totalChargeAmount + currentMonthChargeFee) / totalUseMonths;
+        result.ApiQueryDailyCostAverage = (totalChargeAmount + currentMonthChargeFee) / totalUseDays;
+        return result;
+    }
 }

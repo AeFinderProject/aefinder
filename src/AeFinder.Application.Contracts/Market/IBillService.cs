@@ -10,4 +10,5 @@ public interface IBillService
     Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync(GetTransactionHistoryInput input);
     Task<PagedResultDto<InvoiceInfoDto>> GetInvoicesAsync();
     Task<List<PendingBillDto>> GetPendingBillsAsync();
+    Task<ApiQueryBillingOverviewDto> GetApiQueryDailyAndMonthlyCostAverageAsync();
 }

@@ -149,4 +149,12 @@ public class MarketController : AeFinderController
     {
         return await _billService.GetPendingBillsAsync();
     }
+
+    [HttpGet]
+    [Route("billing/overview/api-query")]
+    [Authorize]
+    public async Task<ApiQueryBillingOverviewDto> GetApiQueryDailyAndMonthlyCostAverageAsync()
+    {
+        return await _billService.GetApiQueryDailyAndMonthlyCostAverageAsync();
+    }
 }
