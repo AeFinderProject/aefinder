@@ -196,7 +196,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                         _logger.LogInformation($"[ProcessRenewalAsync]App {renewalDto.AppId} is frozen.");
                     }
 
-                    if (renewalDto.ProductType == ProductType.FullPodResource)
+                    if (renewalDto.ProductType == ProductType.ApiQueryCount)
                     {
                         var freeQueryAllowance = await _renewalService.GetUserApiQueryFreeCountAsync(renewalDto.OrganizationId);
                         var organizationGuid = Guid.Parse(renewalDto.OrganizationId);

@@ -195,5 +195,33 @@ public class BillService : ApplicationService, IBillService
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
         return organizationIds.First().Id.ToString("N");
     }
+
+    public async Task<List<PendingBillDto>> GetPendingBillsAsync()
+    {
+        //Check organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainIdAsync(organizationId);
+        var billsGrain =
+            _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
+        var bills = await billsGrain.GetAllPendingBillAsync();
+        var pendingBillDtoList = new List<PendingBillDto>();
+        var ordersGrain =
+            _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
+        foreach (var billDto in bills)
+        {
+            var pendingBill = ObjectMapper.Map<BillDto, PendingBillDto>(billDto);
+            var orderDto = await ordersGrain.GetOrderByIdAsync(billDto.OrderId);
+            pendingBill.ProductType = orderDto.ProductType;
+            pendingBillDtoList.Add(pendingBill);
+        }
+
+        return pendingBillDtoList;
+    }
     
 }

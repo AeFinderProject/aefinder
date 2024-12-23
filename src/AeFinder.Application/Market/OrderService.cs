@@ -90,7 +90,17 @@ public class OrderService: ApplicationService, IOrderService
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         var billsGrain =
             _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
-        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
+        
+        //Check if existing pending bill
+        var pendingBills = await billsGrain.GetAllPendingBillAsync();
+        foreach (var pendingBill in pendingBills)
+        {
+            if (pendingBill.BillingType == BillingType.Lock)
+            {
+                throw new UserFriendlyException(
+                    "Please wait until the payment for the existing order is completed before initiating a new one.");
+            }
+        }
 
         //Calculate first month lock fee
         decimal firstMonthLockFee = 0;

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 
@@ -8,4 +9,5 @@ public interface IBillService
     Task<BillingPlanDto> GetProductBillingPlanAsync(GetBillingPlanInput input);
     Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync(GetTransactionHistoryInput input);
     Task<PagedResultDto<InvoiceInfoDto>> GetInvoicesAsync();
+    Task<List<PendingBillDto>> GetPendingBillsAsync();
 }
