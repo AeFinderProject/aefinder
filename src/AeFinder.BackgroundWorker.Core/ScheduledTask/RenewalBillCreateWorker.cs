@@ -61,7 +61,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         _renewalService = renewalService;
         _transactionPollingOptions = transactionPollingOptions.Value;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
-        Timer.Period = CalculateNextExecutionDelay();
+        Timer.Period = InitializeNextExecutionDelay();
         _logger.LogInformation($"RenewalBillCreateWorker will run after {Timer.Period/1000} seconds");
     }
 
@@ -256,7 +256,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         return GrainIdHelper.GenerateOrganizationAppGrainId(orgId.ToString("N"));
     }
 
-    private int CalculateNextExecutionDelay()
+    private int InitializeNextExecutionDelay()
     {
         var now = DateTime.UtcNow;
         var currentMonth = now.Month;
@@ -269,6 +269,17 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
                 .AddMonths(1);
         _logger.LogInformation("currentMonth: " + currentMonth + " firstDayNextMonth:" + firstDayNextMonth.ToString());
+        return (int)(firstDayNextMonth - now).TotalMilliseconds;
+    }
+    
+    private int CalculateNextExecutionDelay()
+    {
+        var now = DateTime.UtcNow;
+        var firstDayNextMonth =
+            new DateTime(now.Year, now.Month, _scheduledTaskOptions.RenewalBillDay,
+                    _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
+                .AddMonths(1);
+        _logger.LogInformation(" firstDayNextMonth:" + firstDayNextMonth.ToString());
         return (int)(firstDayNextMonth - now).TotalMilliseconds;
     }
     
