@@ -45,7 +45,7 @@ public class RenewalBalanceCheckWorker : AsyncPeriodicBackgroundWorkerBase, ISin
         IOrganizationInformationProvider organizationInformationProvider,
         IOptionsSnapshot<ContractOptions> contractOptions,
         IApiKeyService apiKeyService, IRenewalService renewalService,
-        IContractProvider contractProvider, TransactionPollingOptions transactionPollingOptions,
+        IContractProvider contractProvider, IOptionsSnapshot<TransactionPollingOptions> transactionPollingOptions,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -60,7 +60,7 @@ public class RenewalBalanceCheckWorker : AsyncPeriodicBackgroundWorkerBase, ISin
         _apiKeyService = apiKeyService;
         _renewalService = renewalService;
         _contractProvider = contractProvider;
-        _transactionPollingOptions = transactionPollingOptions;
+        _transactionPollingOptions = transactionPollingOptions.Value;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = _scheduledTaskOptions.RenewalBalanceCheckTaskPeriodMilliSeconds;
     }
