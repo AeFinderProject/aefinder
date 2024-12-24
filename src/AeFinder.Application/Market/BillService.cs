@@ -310,8 +310,17 @@ public class BillService : ApplicationService, IBillService
             currentMonthChargeFee = chargeQueryCount * signalQueryUnitPrice;
         }
 
+
         result.ApiQueryMonthlyCostAverage = (totalChargeAmount + currentMonthChargeFee) / totalUseMonths;
-        result.ApiQueryDailyCostAverage = (totalChargeAmount + currentMonthChargeFee) / totalUseDays;
+        if (totalUseDays == 0)
+        {
+            result.ApiQueryDailyCostAverage = 0;
+        }
+        else
+        {
+            result.ApiQueryDailyCostAverage = (totalChargeAmount + currentMonthChargeFee) / totalUseDays;
+        }
+
         return result;
     }
 }
