@@ -188,6 +188,16 @@ public class BillTransactionPollingProvider: IBillTransactionPollingProvider, IS
                 //Update App pod resource config
                 if (orderDto.ProductType == ProductType.FullPodResource)
                 {
+                    //Unfreeze app
+                    var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(orderDto.AppId));
+                    var appInfo = await appGrain.GetAsync();
+                    if (appInfo.Status == AppStatus.Frozen)
+                    {
+                        await _appDeployService.UnFreezeAppAsync(orderDto.AppId);
+                        _logger.LogInformation($"[HandleTransactionAsync] App {orderDto.AppId} is UnFrozen");
+                    }
+                    
+                    //Update App pod resource config
                     var productsGrain = _clusterClient.GetGrain<IProductsGrain>(GrainIdHelper.GenerateProductsGrainId());
                     var productInfo = await productsGrain.GetProductInfoByIdAsync(orderDto.ProductId);
                     var resourceDto = _productService.ConvertToFullPodResourceDto(productInfo);
