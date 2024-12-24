@@ -190,4 +190,12 @@ public class AppDeployController : AeFinderController
     {
         await _appDeployService.ObliterateAppAsync(input.AppId);
     }
+
+    [HttpPost]
+    [Route("unfreeze")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task UnFreezeAppAsync(AppInput input)
+    {
+        await _appDeployService.UnFreezeAppAsync(input.AppId);
+    }
 }

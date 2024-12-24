@@ -61,19 +61,26 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         _renewalService = renewalService;
         _transactionPollingOptions = transactionPollingOptions.Value;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
-        var executionDelay = InitializeNextExecutionDelay();
-        _logger.LogInformation($"RenewalBillCreateWorker will run after {executionDelay/1000} seconds");
-        Timer.Period = executionDelay;
-        // Timer.Start();
+        // var executionDelay = InitializeNextExecutionDelay();
+        // _logger.LogInformation($"RenewalBillCreateWorker will run after {executionDelay/1000} seconds");
+        Timer.Period = 86400000;
     }
 
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
-        await ProcessRenewalAsync();
-        
-        Timer.Period = CalculateNextExecutionDelay();
-        _logger.LogInformation($"RenewalBillCreateWorker will run after {Timer.Period/1000} seconds");
+        var now = DateTime.UtcNow;
+        if (now.Day == 1)
+        {
+            _logger.LogInformation("[RenewalBillCreateWorker] Today is the first day of the month. Executing task.");
+            await ProcessRenewalAsync();
+        }
+        else
+        {
+            _logger.LogInformation("[RenewalBillCreateWorker] Today is not the first day of the month. Task will not be executed.");
+        }
+        // Timer.Period = CalculateNextExecutionDelay();
+        // _logger.LogInformation($"RenewalBillCreateWorker will run after {Timer.Period/1000} seconds");
     }
 
     private async Task ProcessRenewalAsync()
@@ -261,29 +268,24 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     private int InitializeNextExecutionDelay()
     {
         var now = DateTime.UtcNow;
-        var currentMonth = now.Month;
-        if (_scheduledTaskOptions.RenewalBillMonth > 0)
-        {
-            currentMonth = _scheduledTaskOptions.RenewalBillMonth;
-        }
         var firstDayNextMonth =
-            new DateTime(now.Year, currentMonth, _scheduledTaskOptions.RenewalBillDay,
+            new DateTime(now.Year, now.Month, _scheduledTaskOptions.RenewalBillDay,
                     _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
                 .AddMonths(1);
-        _logger.LogInformation("currentMonth: " + currentMonth + " firstDayNextMonth:" + firstDayNextMonth.ToString());
-        var delayMilliseconds = (firstDayNextMonth - now).TotalMilliseconds;
-        if (delayMilliseconds > int.MaxValue)
-        {
-            _logger.LogWarning($"delayMilliseconds {delayMilliseconds} is large than int.MaxValue {int.MaxValue}");
-            delayMilliseconds = int.MaxValue;
-        }
-        else if (delayMilliseconds < 0)
-        {
-            _logger.LogWarning($"delayMilliseconds {delayMilliseconds} is less than 0");
-            delayMilliseconds = 0; // Or some minimum valid delay
-        }
+        // var delayMilliseconds = (firstDayNextMonth - now).TotalMilliseconds;
+        // if (delayMilliseconds > int.MaxValue)
+        // {
+        //     _logger.LogWarning($"delayMilliseconds {delayMilliseconds} is large than int.MaxValue {int.MaxValue}");
+        //     delayMilliseconds = int.MaxValue;
+        // }
+        // else if (delayMilliseconds < 0)
+        // {
+        //     _logger.LogWarning($"delayMilliseconds {delayMilliseconds} is less than 0");
+        //     delayMilliseconds = 0; // Or some minimum valid delay
+        // }
 
-        return (int)delayMilliseconds;
+        // return (int)delayMilliseconds;
+        return 0;
     }
     
     private int CalculateNextExecutionDelay()
