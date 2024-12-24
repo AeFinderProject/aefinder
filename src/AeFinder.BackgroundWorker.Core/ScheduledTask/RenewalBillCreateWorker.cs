@@ -63,7 +63,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         var executionDelay = InitializeNextExecutionDelay();
         _logger.LogInformation($"RenewalBillCreateWorker will run after {executionDelay/1000} seconds");
-        Timer.Period = InitializeNextExecutionDelay();
+        Timer.Period = executionDelay;
         Timer.Start();
     }
 
@@ -271,7 +271,19 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
                 .AddMonths(1);
         _logger.LogInformation("currentMonth: " + currentMonth + " firstDayNextMonth:" + firstDayNextMonth.ToString());
-        return (int)(firstDayNextMonth - now).TotalMilliseconds;
+        var delayMilliseconds = (firstDayNextMonth - now).TotalMilliseconds;
+        if (delayMilliseconds > int.MaxValue)
+        {
+            _logger.LogWarning($"delayMilliseconds {delayMilliseconds} is large than int.MaxValue {int.MaxValue}");
+            delayMilliseconds = int.MaxValue;
+        }
+        else if (delayMilliseconds < 0)
+        {
+            _logger.LogWarning($"delayMilliseconds {delayMilliseconds} is less than 0");
+            delayMilliseconds = 0; // Or some minimum valid delay
+        }
+
+        return (int)delayMilliseconds;
     }
     
     private int CalculateNextExecutionDelay()
