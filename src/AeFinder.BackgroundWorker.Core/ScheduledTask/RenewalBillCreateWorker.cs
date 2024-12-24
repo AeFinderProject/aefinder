@@ -63,6 +63,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = InitializeNextExecutionDelay();
         _logger.LogInformation($"RenewalBillCreateWorker will run after {Timer.Period/1000} seconds");
+        Timer.Start();
     }
 
     [UnitOfWork]
