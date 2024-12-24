@@ -12,4 +12,5 @@ public class ScheduledTaskOptions
     public int RenewalBillHour { get; set; }  = 2;
     public int RenewalBillMinute { get; set; }  = 0;
     public int BillingIndexerPollingTaskPeriodMilliSeconds { get; set; } = 10000;
+    public int RenewalBalanceCheckTaskPeriodMilliSeconds { get; set; } = 86400000;
 }

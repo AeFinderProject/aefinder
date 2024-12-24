@@ -1,6 +1,9 @@
+using AeFinder.Apps;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Market;
+using AeFinder.Options;
 using AeFinder.User;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -18,9 +21,13 @@ public class RenewalBalanceCheckWorker : AsyncPeriodicBackgroundWorkerBase, ISin
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
     private readonly IClusterClient _clusterClient;
     private readonly IOrganizationAppService _organizationAppService;
+    private readonly GraphQLOptions _graphQlOptions;
+    private readonly IAppDeployService _appDeployService;
     
     public RenewalBalanceCheckWorker(AbpAsyncTimer timer, ILogger<AppInfoSyncWorker> logger,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
+        IOptionsSnapshot<GraphQLOptions> graphQlOptions,
+        IAppDeployService appDeployService,
         IOrganizationAppService organizationAppService,IClusterClient clusterClient,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
@@ -28,8 +35,10 @@ public class RenewalBalanceCheckWorker : AsyncPeriodicBackgroundWorkerBase, ISin
         _clusterClient = clusterClient;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
         _organizationAppService = organizationAppService;
+        _graphQlOptions = graphQlOptions.Value;
+        _appDeployService = appDeployService;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
-        Timer.Period = _scheduledTaskOptions.AppInfoSyncTaskPeriodMilliSeconds;
+        Timer.Period = _scheduledTaskOptions.RenewalBalanceCheckTaskPeriodMilliSeconds;
     }
     
     [UnitOfWork]
@@ -55,7 +64,15 @@ public class RenewalBalanceCheckWorker : AsyncPeriodicBackgroundWorkerBase, ISin
             var renewalList = await renewalGrain.GetAllActiveRenewalInfosAsync(organizationId);
             foreach (var renewalDto in renewalList)
             {
-                
+                if (renewalDto.AppId == _graphQlOptions.BillingIndexerId)
+                {
+                    var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(renewalDto.AppId));
+                    var appInfo = await appGrain.GetAsync();
+                    if (appInfo.Status == AppStatus.Frozen)
+                    {
+                        await _appDeployService.UnFreezeAppAsync(renewalDto.AppId);
+                    }
+                }
             }
         }
     }
