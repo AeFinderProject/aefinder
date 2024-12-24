@@ -92,10 +92,10 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
             foreach (var renewalDto in renewalList)
             {
                 //Check if the renewal date has arrived
-                if (renewalDto.NextRenewalDate > DateTime.UtcNow.AddDays(1))
-                {
-                    continue;
-                }
+                // if (renewalDto.NextRenewalDate > DateTime.UtcNow.AddDays(1))
+                // {
+                //     continue;
+                // }
 
                 _logger.LogInformation(
                     $"[ProcessRenewalAsync] Start process {renewalDto.ProductType.ToString()} renewal {renewalDto.SubscriptionId} of order {renewalDto.OrderId}");
@@ -176,10 +176,10 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                 
                 //Check if the renewal date has arrived
                 var today = DateTime.UtcNow;
-                if (renewalDto.NextRenewalDate > today.AddDays(1))
-                {
-                    continue;
-                }
+                // if (renewalDto.NextRenewalDate > today.AddDays(1))
+                // {
+                //     continue;
+                // }
                 
                 //Check user organization balance
                 var userOrganizationBalanceInfoDto =
