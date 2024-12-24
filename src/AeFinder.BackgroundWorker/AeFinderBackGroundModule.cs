@@ -165,6 +165,7 @@ public class AeFinderBackGroundModule : AbpModule
         //Initialize products info
         AsyncHelper.RunSync(async () => await InitializeProductsInfoAsync(context));
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<RenewalBillCreateWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<RenewalBalanceCheckWorker>());
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<BillingIndexerPollingWorker>());
     }
     
