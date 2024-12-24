@@ -161,6 +161,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<CreateChargeBillDto, BillState>();
         CreateMap<BillDto, InvoiceInfoDto>();
         CreateMap<UserBalanceDto, OrganizationBalanceDto>();
+        CreateMap<BillDto, PendingBillDto>();
 
         CreateMap<AppInfoIndex, AppInfoImmutable>();
         
