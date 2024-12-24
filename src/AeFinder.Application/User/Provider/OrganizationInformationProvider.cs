@@ -83,4 +83,16 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
 
         return false;
     }
+
+    public async Task<string> GetOrganizationWalletAddressAsync(string organizationId)
+    {
+        var organizationGuid = Guid.Parse(organizationId);
+        var organizationUnitExtension = await _organizationExtensionRepository.FindAsync(organizationGuid);
+        if (organizationUnitExtension == null)
+        {
+            return null;
+        }
+        return organizationUnitExtension.OrganizationWalletAddress;
+    }
+    
 }

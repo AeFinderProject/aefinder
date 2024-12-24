@@ -1,4 +1,6 @@
 using AeFinder.BackgroundWorker.Options;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Market;
 using AeFinder.User;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -42,7 +44,24 @@ public class RenewalBalanceCheckWorker : AsyncPeriodicBackgroundWorkerBase, ISin
         var organizationUnitList = await _organizationAppService.GetAllOrganizationUnitsAsync();
         foreach (var organizationUnitDto in organizationUnitList)
         {
+            var organizationId = organizationUnitDto.Id.ToString();
+            var organizationName = organizationUnitDto.DisplayName;
+            _logger.LogInformation("[RenewalBalanceCheckWorker] Check organization: {0}.", organizationId);
+            var organizationGrainId = GetOrganizationGrainId(organizationUnitDto.Id);
             
+            //Get organization account balance
+            
+            var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
+            var renewalList = await renewalGrain.GetAllActiveRenewalInfosAsync(organizationId);
+            foreach (var renewalDto in renewalList)
+            {
+                
+            }
         }
+    }
+    
+    private string GetOrganizationGrainId(Guid orgId)
+    {
+        return GrainIdHelper.GenerateOrganizationAppGrainId(orgId.ToString("N"));
     }
 }
