@@ -113,8 +113,11 @@ public class RenewalBalanceCheckWorker : AsyncPeriodicBackgroundWorkerBase, ISin
                 //subscription is already expired
                 if (renewalDto.NextRenewalDate < now.AddDays(-1))
                 {
+                    _logger.LogInformation($"Subscription {renewalDto.SubscriptionId} found to be expired");
+                    //subscription is not charged
                     if (renewalDto.LastChargeDate.AddDays(2) < renewalDto.NextRenewalDate)
                     {
+                        _logger.LogInformation($"Subscription {renewalDto.SubscriptionId} found to be not yet charged");
                         var productInfo = await productsGrain.GetProductInfoByIdAsync(renewalDto.ProductId);
                         //Charge for previous billing cycle
                         var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(renewalDto.OrderId);
@@ -213,6 +216,8 @@ public class RenewalBalanceCheckWorker : AsyncPeriodicBackgroundWorkerBase, ISin
             
             if (organizationAccountBalance < totalPeriodCost)
             {
+                _logger.LogInformation(
+                    $"Organization {organizationName} account balance {organizationAccountBalance} is not enough pay for period cost {totalPeriodCost}");
                 //TODO Send email to remind user deposit
             }
         }
