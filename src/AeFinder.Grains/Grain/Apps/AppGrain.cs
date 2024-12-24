@@ -99,7 +99,7 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
     public async Task UnFreezeAppAsync()
     {
         await ReadStateAsync();
-        State.Status = AppStatus.UnDeployed;
+        State.Status = AppStatus.Deployed;
         await WriteStateAsync();
     }
     

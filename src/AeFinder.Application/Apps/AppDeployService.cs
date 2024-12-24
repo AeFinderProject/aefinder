@@ -305,6 +305,22 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     {
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         await appGrain.UnFreezeAppAsync();
+
+        var imageName = _appDeployOptions.AppImageName;
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        if (allSubscriptions.CurrentVersion != null && !allSubscriptions.CurrentVersion.Version.IsNullOrEmpty())
+        {
+            var currentVersion = allSubscriptions.CurrentVersion.Version;
+            await DeployNewAppAsync(appId, currentVersion, imageName);
+        }
+
+        if (allSubscriptions.PendingVersion != null && !allSubscriptions.PendingVersion.Version.IsNullOrEmpty())
+        {
+            var pendingVersion = allSubscriptions.PendingVersion.Version;
+            await DeployNewAppAsync(appId, pendingVersion, imageName);
+        }
+        
     }
 
     public async Task CheckAppStatusAsync(string appId)
