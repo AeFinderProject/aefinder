@@ -64,15 +64,15 @@ public class RenewalBalanceCheckWorker : AsyncPeriodicBackgroundWorkerBase, ISin
             var renewalList = await renewalGrain.GetAllActiveRenewalInfosAsync(organizationId);
             foreach (var renewalDto in renewalList)
             {
-                if (renewalDto.AppId == _graphQlOptions.BillingIndexerId)
-                {
-                    var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(renewalDto.AppId));
-                    var appInfo = await appGrain.GetAsync();
-                    if (appInfo.Status == AppStatus.Frozen)
-                    {
-                        await _appDeployService.UnFreezeAppAsync(renewalDto.AppId);
-                    }
-                }
+                // if (renewalDto.AppId == _graphQlOptions.BillingIndexerId)
+                // {
+                //     var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(renewalDto.AppId));
+                //     var appInfo = await appGrain.GetAsync();
+                //     if (appInfo.Status == AppStatus.Frozen)
+                //     {
+                //         await _appDeployService.UnFreezeAppAsync(renewalDto.AppId);
+                //     }
+                // }
             }
         }
     }

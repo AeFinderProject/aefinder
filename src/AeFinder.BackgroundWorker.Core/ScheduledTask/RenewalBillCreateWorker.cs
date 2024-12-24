@@ -36,6 +36,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
     private readonly IApiKeyService _apiKeyService;
     private readonly IRenewalService _renewalService;
     private readonly TransactionPollingOptions _transactionPollingOptions;
+    private readonly GraphQLOptions _graphQlOptions;
 
     public RenewalBillCreateWorker(AbpAsyncTimer timer, ILogger<AppInfoSyncWorker> logger,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
@@ -43,7 +44,7 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         IContractProvider contractProvider, IOrganizationInformationProvider organizationInformationProvider,
         IUserInformationProvider userInformationProvider, IAeFinderIndexerProvider indexerProvider,
         IOptionsSnapshot<ContractOptions> contractOptions, IAppDeployService appDeployService,
-        IApiKeyService apiKeyService,
+        IApiKeyService apiKeyService,IOptionsSnapshot<GraphQLOptions> graphQlOptions,
         IRenewalService renewalService,IOptionsSnapshot<TransactionPollingOptions> transactionPollingOptions,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
@@ -60,17 +61,18 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         _apiKeyService = apiKeyService;
         _renewalService = renewalService;
         _transactionPollingOptions = transactionPollingOptions.Value;
+        _graphQlOptions = graphQlOptions.Value;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         // var executionDelay = InitializeNextExecutionDelay();
         // _logger.LogInformation($"RenewalBillCreateWorker will run after {executionDelay/1000} seconds");
-        Timer.Period = 86400000;
+        Timer.Period = _scheduledTaskOptions.RenewalBillCreateTaskPeriodMilliSeconds;
     }
 
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
         var now = DateTime.UtcNow;
-        if (now.Day == 1)
+        if (now.Day == _scheduledTaskOptions.RenewalBillDay)
         {
             _logger.LogInformation("[RenewalBillCreateWorker] Today is the first day of the month. Executing task.");
             await ProcessRenewalAsync();
@@ -205,8 +207,11 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
                     await renewalGrain.CancelRenewalByIdAsync(renewalDto.SubscriptionId);
                     if (renewalDto.ProductType == ProductType.FullPodResource)
                     {
-                        await _appDeployService.FreezeAppAsync(renewalDto.AppId);
-                        _logger.LogInformation($"[ProcessRenewalAsync]App {renewalDto.AppId} is frozen.");
+                        if (renewalDto.AppId != _graphQlOptions.BillingIndexerId)
+                        {
+                            await _appDeployService.FreezeAppAsync(renewalDto.AppId);
+                            _logger.LogInformation($"[ProcessRenewalAsync]App {renewalDto.AppId} is frozen.");
+                        }
                     }
 
                     if (renewalDto.ProductType == ProductType.ApiQueryCount)
@@ -265,39 +270,38 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         return GrainIdHelper.GenerateOrganizationAppGrainId(orgId.ToString("N"));
     }
 
-    private int InitializeNextExecutionDelay()
-    {
-        var now = DateTime.UtcNow;
-        var firstDayNextMonth =
-            new DateTime(now.Year, now.Month, _scheduledTaskOptions.RenewalBillDay,
-                    _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
-                .AddMonths(1);
-        // var delayMilliseconds = (firstDayNextMonth - now).TotalMilliseconds;
-        // if (delayMilliseconds > int.MaxValue)
-        // {
-        //     _logger.LogWarning($"delayMilliseconds {delayMilliseconds} is large than int.MaxValue {int.MaxValue}");
-        //     delayMilliseconds = int.MaxValue;
-        // }
-        // else if (delayMilliseconds < 0)
-        // {
-        //     _logger.LogWarning($"delayMilliseconds {delayMilliseconds} is less than 0");
-        //     delayMilliseconds = 0; // Or some minimum valid delay
-        // }
-
-        // return (int)delayMilliseconds;
-        return 0;
-    }
+    // private int InitializeNextExecutionDelay()
+    // {
+    //     var now = DateTime.UtcNow;
+    //     var firstDayNextMonth =
+    //         new DateTime(now.Year, now.Month, _scheduledTaskOptions.RenewalBillDay,
+    //                 _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
+    //             .AddDays(1);
+    //     // var delayMilliseconds = (firstDayNextMonth - now).TotalMilliseconds;
+    //     // if (delayMilliseconds > int.MaxValue)
+    //     // {
+    //     //     _logger.LogWarning($"delayMilliseconds {delayMilliseconds} is large than int.MaxValue {int.MaxValue}");
+    //     //     delayMilliseconds = int.MaxValue;
+    //     // }
+    //     // else if (delayMilliseconds < 0)
+    //     // {
+    //     //     _logger.LogWarning($"delayMilliseconds {delayMilliseconds} is less than 0");
+    //     //     delayMilliseconds = 0; // Or some minimum valid delay
+    //     // }
+    //
+    //     // return (int)delayMilliseconds;
+    // }
     
-    private int CalculateNextExecutionDelay()
-    {
-        var now = DateTime.UtcNow;
-        var firstDayNextMonth =
-            new DateTime(now.Year, now.Month, _scheduledTaskOptions.RenewalBillDay,
-                    _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
-                .AddMonths(1);
-        _logger.LogInformation(" firstDayNextMonth:" + firstDayNextMonth.ToString());
-        return (int)(firstDayNextMonth - now).TotalMilliseconds;
-    }
+    // private int CalculateNextExecutionDelay()
+    // {
+    //     var now = DateTime.UtcNow;
+    //     var firstDayNextMonth =
+    //         new DateTime(now.Year, now.Month, _scheduledTaskOptions.RenewalBillDay,
+    //                 _scheduledTaskOptions.RenewalBillHour, _scheduledTaskOptions.RenewalBillMinute, 0, DateTimeKind.Utc)
+    //             .AddMonths(1);
+    //     _logger.LogInformation(" firstDayNextMonth:" + firstDayNextMonth.ToString());
+    //     return (int)(firstDayNextMonth - now).TotalMilliseconds;
+    // }
     
     private async Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, int delaySeconds)
     {
