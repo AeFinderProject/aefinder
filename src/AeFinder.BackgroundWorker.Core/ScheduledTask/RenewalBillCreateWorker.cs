@@ -61,8 +61,9 @@ public class RenewalBillCreateWorker : AsyncPeriodicBackgroundWorkerBase, ISingl
         _renewalService = renewalService;
         _transactionPollingOptions = transactionPollingOptions.Value;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
+        var executionDelay = InitializeNextExecutionDelay();
+        _logger.LogInformation($"RenewalBillCreateWorker will run after {executionDelay/1000} seconds");
         Timer.Period = InitializeNextExecutionDelay();
-        _logger.LogInformation($"RenewalBillCreateWorker will run after {Timer.Period/1000} seconds");
         Timer.Start();
     }
 
