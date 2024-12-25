@@ -6,6 +6,7 @@ using AeFinder.App.Deploy;
 using AeFinder.Apps.Dto;
 using AeFinder.BlockScan;
 using AeFinder.Common;
+using AeFinder.Commons;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Market;
@@ -15,6 +16,7 @@ using AeFinder.Metrics;
 using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
+using AElf.Client.Dto;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -38,12 +40,14 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IOrganizationAppService _organizationAppService;
+    private readonly TransactionPollingOptions _transactionPollingOptions;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
         IUserAppService userAppService, IContractProvider contractProvider,
         IUserInformationProvider userInformationProvider,IOrganizationAppService organizationAppService,
         IOrganizationInformationProvider organizationInformationProvider,IOptionsSnapshot<AppDeployOptions> appDeployOptions,
+        IOptionsSnapshot<TransactionPollingOptions> transactionPollingOptions,
         IAppOperationSnapshotProvider appOperationSnapshotProvider, IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
@@ -57,6 +61,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _organizationInformationProvider = organizationInformationProvider;
         _userInformationProvider = userInformationProvider;
         _organizationAppService = organizationAppService;
+        _transactionPollingOptions = transactionPollingOptions.Value;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
@@ -185,18 +190,21 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
     }
 
-    public async Task ObliterateAppAsync(string appId)
+    public async Task ObliterateAppAsync(string appId,string organizationId)
     {
-        Logger.LogInformation($"User {CurrentUser.Id} Obliterate AeIndexer {appId}");
-        //Get organization id
-        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
-        if (organizationUnit == null)
+        if (organizationId.IsNullOrEmpty())
         {
-            throw new UserFriendlyException("User has not yet bind any organization");
+            Logger.LogInformation($"User {CurrentUser.Id} Obliterate AeIndexer {appId}");
+            //Get organization id
+            var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+            if (organizationUnit == null)
+            {
+                throw new UserFriendlyException("User has not yet bind any organization");
+            }
+
+            organizationId = organizationUnit.Id.ToString();
         }
 
-        var organizationId = organizationUnit.Id.ToString();
-        
         //Check App is belong user's organization
         var organizationGrainId = await GetOrganizationGrainIdAsync(organizationId);
         var organizationAppGain =
@@ -206,7 +214,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             throw new UserFriendlyException("This app does not belong to the user's organization. Please verify.");
         }
 
-        //charge bill
+        //get renewal info
         var ordersGrain =
             _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
         var oldOrderInfo =
@@ -217,38 +225,67 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(appId);
         var subscriptionId = await renewalGrain.GetCurrentSubscriptionIdAsync(oldOrderInfo.OrderId);
         var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(subscriptionId);
-        var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(oldOrderInfo.OrderId);
-        var lockedAmount = latestLockedBill.BillingAmount;
-        var chargeFee = await billsGrain.CalculatePodResourceMidWayChargeAmountAsync(renewalInfo, lockedAmount, podResourceStartUseDay);
-        var refundAmount = lockedAmount - chargeFee;
 
-        //Send charge transaction to contract
-        var userExtensionDto =
-            await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(oldOrderInfo.UserId));
-        if (userExtensionDto.WalletAddress.IsNullOrEmpty())
+        if (renewalInfo.LastChargeDate.AddDays(1) < renewalInfo.NextRenewalDate)
         {
-            throw new UserFriendlyException("Please bind your user wallet first.");
-        }
-        var organizationWalletAddress =
-            await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
-                userExtensionDto.WalletAddress);
-        if (string.IsNullOrEmpty(organizationWalletAddress))
-        {
-            Logger.LogError($"The organization wallet address has not yet been linked to user {oldOrderInfo.UserId}");
-            throw new UserFriendlyException("The organization wallet address has not yet been linked");
-        }
+            //charge bill
+            var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(oldOrderInfo.OrderId);
+            var lockedAmount = latestLockedBill.BillingAmount;
+            var chargeFee = await billsGrain.CalculatePodResourceMidWayChargeAmountAsync(renewalInfo, lockedAmount, podResourceStartUseDay);
+            var refundAmount = lockedAmount - chargeFee;
 
-        var oldChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
-        {
-            OrganizationId = organizationId,
-            OrderId = oldOrderInfo.OrderId,
-            SubscriptionId = subscriptionId,
-            ChargeFee = chargeFee,
-            Description = "User creates a new order and processes billing settlement for the existing order.",
-            RefundAmount = refundAmount
-        });
-        await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, refundAmount,
-            oldChargeBill.BillingId);
+            //Send charge transaction to contract
+            var userExtensionDto =
+                await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(oldOrderInfo.UserId));
+            if (userExtensionDto.WalletAddress.IsNullOrEmpty())
+            {
+                throw new UserFriendlyException("Please bind your user wallet first.");
+            }
+            var organizationWalletAddress =
+                await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
+                    userExtensionDto.WalletAddress);
+            if (string.IsNullOrEmpty(organizationWalletAddress))
+            {
+                Logger.LogError($"The organization wallet address has not yet been linked to user {oldOrderInfo.UserId}");
+                throw new UserFriendlyException("The organization wallet address has not yet been linked");
+            }
+
+            var oldChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
+            {
+                OrganizationId = organizationId,
+                OrderId = oldOrderInfo.OrderId,
+                SubscriptionId = subscriptionId,
+                ChargeFee = chargeFee,
+                Description = "User creates a new order and processes billing settlement for the existing order.",
+                RefundAmount = refundAmount
+            });
+            var sendChargeTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress, chargeFee, 0,
+                oldChargeBill.BillingId);
+            Logger.LogInformation("[ObliterateAppAsync] Send charge transaction " + sendChargeTransactionOutput.TransactionId +
+                                   " of bill " + oldChargeBill.BillingId);
+            var chargeTransactionId = sendChargeTransactionOutput.TransactionId;
+            // not existed->retry  pending->wait  other->fail
+            int delaySeconds = _transactionPollingOptions.DelaySeconds;
+            var chargeTransactionResult = await QueryTransactionResultAsync(chargeTransactionId, delaySeconds);
+            var chargeResultQueryRetryTimes = 0;
+            while (chargeTransactionResult.Status == TransactionState.NotExisted &&
+                   chargeResultQueryRetryTimes < _transactionPollingOptions.RetryTimes)
+            {
+                chargeResultQueryRetryTimes++;
+
+                await Task.Delay(delaySeconds);
+                chargeTransactionResult = await QueryTransactionResultAsync(chargeTransactionId, delaySeconds);
+            }
+
+            var chargeTransactionStatus = chargeTransactionResult.Status == TransactionState.Mined
+                ? TransactionState.Mined
+                : TransactionState.Failed;
+            await billsGrain.UpdateTransactionStatus(oldChargeBill.BillingId, chargeTransactionStatus);
+            Logger.LogInformation(
+                $"[ObliterateAppAsync] After {chargeResultQueryRetryTimes} times retry, get charge transaction {chargeTransactionId} status {chargeTransactionStatus}");
+        }
+        
+        await FreezeAppAsync(appId);
 
         //destroy subscription pods
         var appSubscriptionGrain =
@@ -267,13 +304,13 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         }
 
         //Clear all subscription
-        await appSubscriptionGrain.ClearGrainStateAsync();
+        // await appSubscriptionGrain.ClearGrainStateAsync();
 
         //remove app info
-        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
-        await _userAppService.DeleteAppAuthentication(appId);
-        await _userAppService.DeleteAppRelatedTokenData(appId);
-        await appGrain.ClearGrainStateAsync();
+        // var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        // await _userAppService.DeleteAppAuthentication(appId);
+        // await _userAppService.DeleteAppRelatedTokenData(appId);
+        // await appGrain.ClearGrainStateAsync();
     }
 
     private async Task<string> GetOrganizationGrainIdAsync(string organizationId)
@@ -331,6 +368,19 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         {
             throw new UserFriendlyException("The AeIndexer renewal has expired and it has been frozen. Please deposit your account first.");
         }
+    }
+    
+    private async Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, int delaySeconds)
+    {
+        // var transactionId = transaction.GetHash().ToHex();
+        var transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
+        while (transactionResult.Status == TransactionState.Pending)
+        {
+            await Task.Delay(delaySeconds);
+            transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
+        }
+
+        return transactionResult;
     }
 
 }
