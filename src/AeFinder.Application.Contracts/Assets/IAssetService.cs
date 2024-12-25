@@ -1,0 +1,14 @@
+using System;
+using System.Threading.Tasks;
+using Volo.Abp.Application.Dtos;
+
+namespace AeFinder.Assets;
+
+public interface IAssetService
+{
+    Task AddOrUpdateIndexAsync(AssetChangedEto input);
+    Task<PagedResultDto<AssetDto>> GetListsAsync(Guid organizationId, GetAssetInput input);
+    Task StartUsingAssetAsync(Guid id, DateTime dateTime);
+    Task ReleaseAssetAsync(Guid id, DateTime dateTime);
+    Task PayAsync(Guid id, decimal paidAmount);
+}
