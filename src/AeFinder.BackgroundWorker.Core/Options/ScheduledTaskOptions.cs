@@ -11,5 +11,6 @@ public class ScheduledTaskOptions
     public int RenewalBillCreateTaskPeriodMilliSeconds { get; set; } = 86400000;
     public int BillingIndexerPollingTaskPeriodMilliSeconds { get; set; } = 10000;
     public int RenewalBalanceCheckTaskPeriodMilliSeconds { get; set; } = 86400000;
-    public int RenewalAdvanceWarningDays { get; set; }= 5;
+    public int RenewalAdvanceWarningDays { get; set; } = 5;
+    public int RenewalExpirationMaximumDays { get; set; } = 15;
 }
