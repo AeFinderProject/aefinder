@@ -19,27 +19,29 @@ namespace AeFinder.Controllers;
 public class AssetController : AeFinderController
 {
     private readonly IOrganizationAppService _organizationAppService;
-    private readonly IClock _clock;
+    private readonly IAssetService _assetService;
 
-    public AssetController(IOrganizationAppService organizationAppService, IClock clock)
+    public AssetController(IOrganizationAppService organizationAppService, IAssetService assetService)
     {
         _organizationAppService = organizationAppService;
-        _clock = clock;
+        _assetService = assetService;
     }
 
     [HttpGet]
     [Authorize]
     public async Task<PagedResultDto<AssetDto>> GetListsAsync(GetAssetInput input)
     {
-        throw new NotImplementedException();
+        var orgId = await GetOrganizationIdAsync();
+        return await _assetService.GetListsAsync(orgId, input);
     }
     
-    [HttpGet]
-    [Route("monthly-cost")]
+    [HttpPost]
+    [Route("relate")]
     [Authorize]
-    public async Task<decimal> GetMonthlyCostAsync(DateTime dateTime)
+    public async Task RelateAppAsync(RelateAppInput input)
     {
-        throw new NotImplementedException();
+        var orgId = await GetOrganizationIdAsync();
+        await _assetService.RelateAppAsync(orgId, input);
     }
     
     private async Task<Guid> GetOrganizationIdAsync()

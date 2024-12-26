@@ -18,7 +18,7 @@ public class AssetIndex : AeFinderDomainEntity<Guid>, IEntityMappingEntity
     public DateTime CreateTime { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
-    public AssetStatus Status { get; set; }
+    public int Status { get; set; }
     [Keyword] 
     public string AppId { get; set; }
 }

@@ -20,12 +20,10 @@ namespace AeFinder.Controllers;
 public class BillingController : AeFinderController
 {
     private readonly IOrganizationAppService _organizationAppService;
-    private readonly IClock _clock;
 
-    public BillingController(IOrganizationAppService organizationAppService, IClock clock)
+    public BillingController(IOrganizationAppService organizationAppService)
     {
         _organizationAppService = organizationAppService;
-        _clock = clock;
     }
 
     [HttpGet]

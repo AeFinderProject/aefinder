@@ -1,5 +1,7 @@
 using AeFinder.Assets;
+using AeFinder.Grains.Grain.Merchandises;
 using AeFinder.Grains.State.Assets;
+using AeFinder.Merchandises;
 using Volo.Abp;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
@@ -17,13 +19,21 @@ public class AssetGrain : AeFinderGrain<AssetState>, IAssetGrain
         _distributedEventBus = distributedEventBus;
     }
 
-    public async Task CreateAssetAsync(Guid id, Guid organizationId, CreateAssetInput input)
+    public async Task<AssetState> CreateAssetAsync(Guid id, Guid organizationId, CreateAssetInput input)
     {
         State = _objectMapper.Map<CreateAssetInput, AssetState>(input);
         State.Id = id;
         State.OrganizationId = organizationId;
         State.Status = AssetStatus.Unused;
         await WriteStateAsync();
+
+        return State;
+    }
+
+    public async Task<AssetState> GetAsync()
+    {
+        await ReadStateAsync();
+        return State;
     }
 
     public async Task PayAsync(decimal paidAmount)
@@ -36,6 +46,15 @@ public class AssetGrain : AeFinderGrain<AssetState>, IAssetGrain
     public async Task RelateAppAsync(string appId)
     {
         await ReadStateAsync();
+
+        var merchandiseGrain = GrainFactory.GetGrain<IMerchandiseGrain>(State.MerchandiseId);
+        var merchandise = await merchandiseGrain.GetAsync();
+
+        if (!State.AppId.IsNullOrEmpty() || merchandise.Category != MerchandiseCategory.Resource)
+        {
+            throw new UserFriendlyException($"Asset: {State.Id} cannot relate {appId}");
+        }
+
         State.AppId = appId;
         await WriteStateAsync();
     }

@@ -1,21 +1,21 @@
 using AeFinder.Assets;
-using AeFinder.Grains.State.Merchandises;
 
 namespace AeFinder.Grains.State.Assets;
 
+[GenerateSerializer]
 public class AssetState
 {
-    public Guid Id { get; set; }
-    public Guid OrganizationId { get; set; }
-    public Guid MerchandiseId { get; set; }
-    public decimal PaidAmount { get; set; }
-    public long Quantity { get; set; }
-    public long Replicas { get; set; }
-    public long FreeQuantity { get; set; }
-    public long FreeReplicas { get; set; }
-    public DateTime CreateTime { get; set; }
-    public DateTime StartTime { get; set; }
-    public DateTime EndTime { get; set; }
-    public AssetStatus Status { get; set; }
-    public string AppId { get; set; }
+    [Id(0)]public Guid Id { get; set; }
+    [Id(1)]public Guid OrganizationId { get; set; }
+    [Id(2)]public Guid MerchandiseId { get; set; }
+    [Id(3)]public decimal PaidAmount { get; set; }
+    [Id(4)]public long Quantity { get; set; }
+    [Id(5)]public long Replicas { get; set; }
+    [Id(6)]public long FreeQuantity { get; set; }
+    [Id(7)]public long FreeReplicas { get; set; }
+    [Id(8)]public DateTime CreateTime { get; set; }
+    [Id(9)]public DateTime StartTime { get; set; }
+    [Id(10)]public DateTime EndTime { get; set; }
+    [Id(11)]public AssetStatus Status { get; set; }
+    [Id(12)]public string AppId { get; set; }
 }
