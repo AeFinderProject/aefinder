@@ -109,6 +109,19 @@ public class RenewalBalanceCheckWorker : AsyncPeriodicBackgroundWorkerBase, ISin
                 {
                     continue;
                 }
+
+                //Exceeded the maximum days for expiration, clearing assets
+                if (renewalDto.NextRenewalDate < now.AddDays(_scheduledTaskOptions.RenewalExpirationMaximumDays))
+                {
+                    if (renewalDto.ProductType == ProductType.FullPodResource)
+                    {
+                        if (renewalDto.AppId != _graphQlOptions.BillingIndexerId)
+                        {
+                            //TODO Obliterate app
+                            _logger.LogInformation($"[ProcessRenewalBalanceCheckAsync]App {renewalDto.AppId} is Obliterated.");
+                        }
+                    }
+                }
                 
                 //subscription is already expired
                 if (renewalDto.NextRenewalDate < now.AddDays(-1))

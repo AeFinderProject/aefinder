@@ -1,4 +1,4 @@
-namespace AeFinder.BackgroundWorker.Options;
+namespace AeFinder.Options;
 
 public class TransactionPollingOptions
 {
