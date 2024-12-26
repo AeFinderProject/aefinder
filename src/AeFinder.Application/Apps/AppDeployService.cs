@@ -226,7 +226,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var subscriptionId = await renewalGrain.GetCurrentSubscriptionIdAsync(oldOrderInfo.OrderId);
         var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(subscriptionId);
 
-        if (renewalInfo.IsActive==true)
+        if (renewalInfo.IsActive)
         {
             if (renewalInfo.LastChargeDate.AddDays(1) < renewalInfo.NextRenewalDate)
             {
@@ -299,8 +299,8 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             await renewalGrain.CancelRenewalByIdAsync(renewalInfo.SubscriptionId);
         }
         
-        //Freeze or delete app
-        await FreezeAppAsync(appId);
+        // //Freeze app
+        // await FreezeAppAsync(appId);
 
         //stop and destroy subscriptions
         var appSubscriptionGrain =
@@ -317,6 +317,10 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             var pendingVersion = allSubscriptions.PendingVersion.Version;
             await _blockScanAppService.StopAsync(appId, pendingVersion);
         }
+        
+        //Delete app
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        await appGrain.DeleteAppAsync();
 
         //Clear all subscription
         // await appSubscriptionGrain.ClearGrainStateAsync();
@@ -382,6 +386,11 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         if (appDto.Status == AppStatus.Frozen)
         {
             throw new UserFriendlyException("The AeIndexer renewal has expired and it has been frozen. Please deposit your account first.");
+        }
+
+        if (appDto.Status == AppStatus.Deleted)
+        {
+            throw new UserFriendlyException($"The app is already deleted in {appDto.DeleteTime.ToUniversalTime()}");
         }
     }
     

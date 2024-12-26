@@ -124,11 +124,13 @@ public class AppService : AeFinderAppService, IAppService
         });
 
         var apps = await tasks.WhenAll();
+        //filer deleted apps
+        var appList = apps.Where(a => a.Status != AppStatus.Deleted).OrderByDescending(o => o.UpdateTime).ToList();
 
         return new PagedResultDto<AppDto>
         {
-            TotalCount = apps.Length,
-            Items = apps.OrderByDescending(o => o.UpdateTime).ToList()
+            TotalCount = appList.Count,
+            Items = appList
         };
     }
     
