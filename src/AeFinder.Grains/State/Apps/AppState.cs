@@ -15,4 +15,5 @@ public class AppState
     [Id(7)]public AppStatus Status { get; set; }
     [Id(8)]public DateTime CreateTime { get; set; }
     [Id(9)]public DateTime UpdateTime { get; set; }
+    [Id(10)]public DateTime DeleteTime { get; set; }
 }

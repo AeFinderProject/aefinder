@@ -373,18 +373,19 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
         else
         {
             var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
-            var app = await appGrain.GetAsync();
-            organizationId = app.OrganizationId;
-            if (!organizationId.Contains("-"))
-            {
-                string formattedGuid = organizationId.Insert(8, "-")
-                    .Insert(13, "-")
-                    .Insert(18, "-")
-                    .Insert(23, "-");
-                organizationId = formattedGuid;
-            }
+            organizationId = await appGrain.GetOrganizationIdAsync();
+            // var app = await appGrain.GetAsync();
+            // organizationId = app.OrganizationId;
+            // if (!organizationId.Contains("-"))
+            // {
+            //     string formattedGuid = organizationId.Insert(8, "-")
+            //         .Insert(13, "-")
+            //         .Insert(18, "-")
+            //         .Insert(23, "-");
+            //     organizationId = formattedGuid;
+            // }
             Logger.LogWarning(
-                $"CurrentUser.Id is not available.so get organization id {app.OrganizationId} from app grain");
+                $"CurrentUser.Id is not available.so get organization id {organizationId} from app grain");
         }
 
         Logger.LogInformation($"[CheckPodResourceAsync]appId:{appId} organizationId:{organizationId}");

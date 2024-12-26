@@ -4,5 +4,6 @@ public enum AppStatus
 {
     UnDeployed,
     Deployed,
-    Frozen
+    Frozen,
+    Deleted
 }

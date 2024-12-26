@@ -103,6 +103,21 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         await WriteStateAsync();
     }
     
+    public async Task DeleteAppAsync()
+    {
+        await ReadStateAsync();
+        State.Status = AppStatus.Deleted;
+        State.DeleteTime = DateTime.UtcNow;
+        await WriteStateAsync();
+
+        await _distributedEventBus.PublishAsync(new AppDeleteEto()
+        {
+            AppId = State.AppId,
+            Status = State.Status,
+            DeleteTime = State.DeleteTime
+        });
+    }
+    
     public async Task ClearGrainStateAsync()
     {
         //Publish app obliterate eto to background worker
