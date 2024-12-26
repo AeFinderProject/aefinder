@@ -77,23 +77,32 @@ public class AssetService : AeFinderAppService, IAssetService
     {
         foreach (var orderDetail in input.Details)
         {
-            var originalGrain = _clusterClient.GetGrain<IAssetGrain>(orderDetail.OriginalAsset.Id);
-            if (orderDetail.Merchandise.ChargeType == ChargeType.Time)
+            if (orderDetail.Merchandise != null)
             {
-                await originalGrain.UpdateQuantityAsync(orderDetail.Quantity, orderDetail.Replicas);
-            }
-            else
-            {
-                await originalGrain.SuspendAsync();
-                // udpate origin paid amount
-                
-                // create new
-                // relaete app
-                if (input.ExtraData.ContainsKey("AppId"))
+                var originalGrain = _clusterClient.GetGrain<IAssetGrain>(orderDetail.OriginalAsset.Id);
+                if (orderDetail.Merchandise.Type == MerchandiseType.ApiQuery)
                 {
-                    
+                    await originalGrain.SuspendAsync();
+                }
+                else
+                {
+                    await originalGrain.ReleaseAsync(input.OrderTime);
                 }
             }
+
+            var newAssetId = GuidGenerator.Create();
+            var newAssetGrain = _clusterClient.GetGrain<IAssetGrain>(newAssetId);
+            await newAssetGrain.CreateAssetAsync(newAssetId, input.OrganizationId, new CreateAssetInput
+            {
+                
+            });
+
+            if (input.ExtraData.TryGetValue("AppId", out var appId))
+            {
+                await newAssetGrain.RelateAppAsync(appId);
+            }
+
+            
         }
     }
 
