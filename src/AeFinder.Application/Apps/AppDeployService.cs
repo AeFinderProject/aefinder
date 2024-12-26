@@ -267,7 +267,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
                     RefundAmount = refundAmount
                 });
                 var sendChargeTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress,
-                    chargeFee, 0,
+                    oldChargeBill.BillingAmount, oldChargeBill.RefundAmount,
                     oldChargeBill.BillingId);
                 Logger.LogInformation("[ObliterateAppAsync] Send charge transaction " +
                                       sendChargeTransactionOutput.TransactionId +
