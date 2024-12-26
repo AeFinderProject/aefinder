@@ -114,7 +114,8 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         {
             AppId = State.AppId,
             Status = State.Status,
-            DeleteTime = State.DeleteTime
+            DeleteTime = State.DeleteTime,
+            OrganizationId = await GetOrganizationIdAsync()
         });
     }
     

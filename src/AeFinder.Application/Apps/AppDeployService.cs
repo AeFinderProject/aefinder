@@ -214,110 +214,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         {
             throw new UserFriendlyException("This app does not belong to the user's organization. Please verify.");
         }
-
-        //get renewal info
-        var ordersGrain =
-            _clusterClient.GetGrain<IOrdersGrain>(organizationGrainId);
-        var oldOrderInfo =
-            await ordersGrain.GetLatestPodResourceOrderAsync(organizationId, appId);
-        var billsGrain =
-            _clusterClient.GetGrain<IBillsGrain>(organizationGrainId);
-        var renewalGrain = _clusterClient.GetGrain<IRenewalGrain>(organizationGrainId);
-        var podResourceStartUseDay = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(appId);
-        var subscriptionId = await renewalGrain.GetCurrentSubscriptionIdAsync(oldOrderInfo.OrderId);
-        var renewalInfo = await renewalGrain.GetRenewalSubscriptionInfoByIdAsync(subscriptionId);
-
-        if (renewalInfo.IsActive)
-        {
-            if (renewalInfo.LastChargeDate.AddDays(1) < renewalInfo.NextRenewalDate)
-            {
-                //charge bill
-                var latestLockedBill = await billsGrain.GetLatestLockedBillAsync(oldOrderInfo.OrderId);
-                var lockedAmount = latestLockedBill.BillingAmount;
-                var chargeFee =
-                    await billsGrain.CalculatePodResourceMidWayChargeAmountAsync(renewalInfo, lockedAmount,
-                        podResourceStartUseDay);
-                var refundAmount = lockedAmount - chargeFee;
-
-                //Send charge transaction to contract
-                var userExtensionDto =
-                    await _userInformationProvider.GetUserExtensionInfoByIdAsync(Guid.Parse(oldOrderInfo.UserId));
-                if (userExtensionDto.WalletAddress.IsNullOrEmpty())
-                {
-                    throw new UserFriendlyException("Please bind your user wallet first.");
-                }
-
-                var organizationWalletAddress =
-                    await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
-                        userExtensionDto.WalletAddress);
-                if (string.IsNullOrEmpty(organizationWalletAddress))
-                {
-                    Logger.LogError(
-                        $"The organization wallet address has not yet been linked to user {oldOrderInfo.UserId}");
-                    throw new UserFriendlyException("The organization wallet address has not yet been linked");
-                }
-
-                var oldChargeBill = await billsGrain.CreateChargeBillAsync(new CreateChargeBillDto()
-                {
-                    OrganizationId = organizationId,
-                    OrderId = oldOrderInfo.OrderId,
-                    SubscriptionId = subscriptionId,
-                    ChargeFee = chargeFee,
-                    Description = "User creates a new order and processes billing settlement for the existing order.",
-                    RefundAmount = refundAmount
-                });
-                var sendChargeTransactionOutput = await _contractProvider.BillingChargeAsync(organizationWalletAddress,
-                    oldChargeBill.BillingAmount, oldChargeBill.RefundAmount,
-                    oldChargeBill.BillingId);
-                Logger.LogInformation("[ObliterateAppAsync] Send charge transaction " +
-                                      sendChargeTransactionOutput.TransactionId +
-                                      " of bill " + oldChargeBill.BillingId);
-                var chargeTransactionId = sendChargeTransactionOutput.TransactionId;
-                // not existed->retry  pending->wait  other->fail
-                int delaySeconds = _transactionPollingOptions.DelaySeconds;
-                var chargeTransactionResult = await QueryTransactionResultAsync(chargeTransactionId, delaySeconds);
-                var chargeResultQueryRetryTimes = 0;
-                while (chargeTransactionResult.Status == TransactionState.NotExisted &&
-                       chargeResultQueryRetryTimes < _transactionPollingOptions.RetryTimes)
-                {
-                    chargeResultQueryRetryTimes++;
-
-                    await Task.Delay(delaySeconds);
-                    chargeTransactionResult = await QueryTransactionResultAsync(chargeTransactionId, delaySeconds);
-                }
-
-                var chargeTransactionStatus = chargeTransactionResult.Status == TransactionState.Mined
-                    ? TransactionState.Mined
-                    : TransactionState.Failed;
-                await billsGrain.UpdateTransactionStatus(oldChargeBill.BillingId, chargeTransactionStatus);
-                Logger.LogInformation(
-                    $"[ObliterateAppAsync] After {chargeResultQueryRetryTimes} times retry, get charge transaction {chargeTransactionId} status {chargeTransactionStatus}");
-
-            }
-            
-            //Cancel order
-            await ordersGrain.CancelOrderByIdAsync(renewalInfo.OrderId);
-            await renewalGrain.CancelRenewalByIdAsync(renewalInfo.SubscriptionId);
-        }
-        
-        // //Freeze app
-        // await FreezeAppAsync(appId);
-
-        //stop and destroy subscriptions
-        var appSubscriptionGrain =
-            _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
-        if (allSubscriptions.CurrentVersion != null && !allSubscriptions.CurrentVersion.Version.IsNullOrEmpty())
-        {
-            var currentVersion = allSubscriptions.CurrentVersion.Version;
-            await _blockScanAppService.StopAsync(appId, currentVersion);
-        }
-
-        if (allSubscriptions.PendingVersion != null && !allSubscriptions.PendingVersion.Version.IsNullOrEmpty())
-        {
-            var pendingVersion = allSubscriptions.PendingVersion.Version;
-            await _blockScanAppService.StopAsync(appId, pendingVersion);
-        }
         
         //Delete app
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
@@ -396,17 +292,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         }
     }
     
-    private async Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, int delaySeconds)
-    {
-        // var transactionId = transaction.GetHash().ToHex();
-        var transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
-        while (transactionResult.Status == TransactionState.Pending)
-        {
-            await Task.Delay(delaySeconds);
-            transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
-        }
-
-        return transactionResult;
-    }
+    
 
 }
