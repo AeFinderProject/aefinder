@@ -192,9 +192,10 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
     public async Task ObliterateAppAsync(string appId,string organizationId)
     {
+        Logger.LogInformation($"[ObliterateAppAsync]Obliterate AeIndexer {appId}");
         if (organizationId.IsNullOrEmpty())
         {
-            Logger.LogInformation($"User {CurrentUser.Id} Obliterate AeIndexer {appId}");
+            Logger.LogInformation($"User {CurrentUser.Id.ToString()} Obliterate AeIndexer {appId}");
             //Get organization id
             var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
             if (organizationUnit == null)
@@ -321,6 +322,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         //Delete app
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         await appGrain.DeleteAppAsync();
+        Logger.LogInformation($"[ObliterateAppAsync] App {appId} is deleted.");
 
         //Clear all subscription
         // await appSubscriptionGrain.ClearGrainStateAsync();
