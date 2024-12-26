@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
-using AeFinder.Market;
 using AElf.EntityMapping.Repositories;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -28,15 +27,13 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     private readonly IEntityMappingRepository<ApiKeySummaryIndex, string> _apiKeySummaryIndexRepository;
     private readonly IApiKeySnapshotService _apiKeySnapshotService;
     private readonly ApiKeyOptions _options;
-    private readonly IProductService _productService;
 
     public ApiKeyService(IApiKeyTrafficProvider apiKeyTrafficProvider, IClusterClient clusterClient,
         IApiKeyInfoProvider apiKeyInfoProvider, IEntityMappingRepository<ApiKeyIndex, Guid> apiKeyIndexRepository,
         IEntityMappingRepository<ApiKeyQueryAeIndexerIndex, string> apiKeyQueryAeIndexerIndexRepository,
         IEntityMappingRepository<ApiKeyQueryBasicApiIndex, string> apiKeyQueryBasicApiIndexRepository,
         IEntityMappingRepository<ApiKeySummaryIndex, string> apiKeySummaryIndexRepository,
-        IApiKeySnapshotService apiKeySnapshotService, IOptionsSnapshot<ApiKeyOptions> options,
-        IProductService productService)
+        IApiKeySnapshotService apiKeySnapshotService, IOptionsSnapshot<ApiKeyOptions> options)
     {
         _apiKeyTrafficProvider = apiKeyTrafficProvider;
         _clusterClient = clusterClient;
@@ -46,7 +43,6 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
         _apiKeyQueryBasicApiIndexRepository = apiKeyQueryBasicApiIndexRepository;
         _apiKeySummaryIndexRepository = apiKeySummaryIndexRepository;
         _apiKeySnapshotService = apiKeySnapshotService;
-        _productService = productService;
         _options = options.Value;
     }
 
@@ -350,8 +346,10 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
     
     private async Task<decimal> GetApiKeyQueryPriceAsync()
     {
-        var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
-        return apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
+        // TODO: Get price
+        return 0;
+        // var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
+        // return apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
     }
 
     private async Task CheckApiKeyAsync(IApiKeyGrain grain, Guid organizationId)

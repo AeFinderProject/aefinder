@@ -4,10 +4,6 @@ using System.Threading.Tasks;
 using AeFinder.Apps;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
-using AeFinder.Grains.Grain.Market;
-using AeFinder.Market;
-using AeFinder.Options;
-using Microsoft.Extensions.Options;
 using Orleans;
 using Shouldly;
 using Volo.Abp;
@@ -27,7 +23,6 @@ public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
     private readonly IClusterClient _clusterClient;
     private readonly IClock _clock;
     private readonly IApiKeyTrafficProvider _apiKeyTrafficProvider;
-    private readonly IProductService _productService;
 
     public ApiKeyServiceTests()
     {
@@ -36,7 +31,6 @@ public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
         _clusterClient = GetRequiredService<IClusterClient>();
         _clock = GetRequiredService<IClock>();
         _apiKeyTrafficProvider = GetRequiredService<IApiKeyTrafficProvider>();
-        _productService = GetRequiredService<IProductService>();
     }
 
     [Fact]
@@ -1254,7 +1248,9 @@ public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
     
     private async Task<decimal> GetApiKeyQueryPriceAsync()
     {
-        var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
-        return apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
+        // TODO: Get price
+        return 0;
+        // var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
+        // return apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
     }
 }

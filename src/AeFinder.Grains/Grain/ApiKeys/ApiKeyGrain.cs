@@ -1,7 +1,6 @@
 using AeFinder.ApiKeys;
 using AeFinder.Apps;
 using AeFinder.Grains.Grain.Apps;
-using AeFinder.Grains.Grain.Market;
 using AeFinder.Grains.State.ApiKeys;
 using Volo.Abp;
 using Volo.Abp.EventBus.Distributed;
@@ -205,11 +204,13 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
 
     private async Task<decimal> GetApiKeyQueryPriceAsync()
     {
-        var productsGrain =
-            GrainFactory.GetGrain<IProductsGrain>(
-                GrainIdHelper.GenerateProductsGrainId());
-        var productInfo = await productsGrain.GetRegularApiQueryCountProductAsync();
-        return productInfo.MonthlyUnitPrice/Convert.ToInt32(productInfo.ProductSpecifications);
+        // TODO: Get price
+        return 0;
+        // var productsGrain =
+        //     GrainFactory.GetGrain<IProductsGrain>(
+        //         GrainIdHelper.GenerateProductsGrainId());
+        // var productInfo = await productsGrain.GetRegularApiQueryCountProductAsync();
+        // return productInfo.MonthlyUnitPrice/Convert.ToInt32(productInfo.ProductSpecifications);
     }
 
     private string GenerateKey()

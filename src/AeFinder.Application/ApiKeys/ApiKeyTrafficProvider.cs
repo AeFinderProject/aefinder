@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
-using AeFinder.Market;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
@@ -31,16 +30,13 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
     private readonly IClusterClient _clusterClient;
     private readonly IClock _clock;
     private readonly IApiKeyInfoProvider _apiKeyInfoProvider;
-    private readonly IProductService _productService;
 
     public ApiKeyTrafficProvider(IClusterClient clusterClient, IClock clock,
-        IOptionsSnapshot<ApiKeyOptions> apiKeyOptions, IApiKeyInfoProvider apiKeyInfoProvider,
-        IProductService productService)
+        IOptionsSnapshot<ApiKeyOptions> apiKeyOptions, IApiKeyInfoProvider apiKeyInfoProvider)
     {
         _clusterClient = clusterClient;
         _clock = clock;
         _apiKeyInfoProvider = apiKeyInfoProvider;
-        _productService = productService;
         _apiKeyOptions = apiKeyOptions.Value;
     }
 
@@ -212,8 +208,9 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
     {
         if (_apiQueryPrice == 0)
         {
-            var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
-            _apiQueryPrice = apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
+            // TODO: Get price 
+            // var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
+            // _apiQueryPrice = apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
         }
 
         return _apiQueryPrice;
