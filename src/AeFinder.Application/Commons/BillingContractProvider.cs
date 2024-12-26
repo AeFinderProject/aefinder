@@ -22,6 +22,7 @@ public interface IBillingContractProvider
         string billingId);
 
     Task<TransactionResultDto> GetBillingTransactionResultAsync(string transactionId);
+    Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, int delaySeconds);
 }
 
 public class BillingContractProvider
@@ -138,5 +139,18 @@ public class BillingContractProvider
         
         var result = await client.GetTransactionResultAsync(transactionId);
         return result;
+    }
+    
+    public async Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, int delaySeconds)
+    {
+        // var transactionId = transaction.GetHash().ToHex();
+        var transactionResult = await GetBillingTransactionResultAsync(transactionId);
+        while (transactionResult.Status == TransactionState.Pending)
+        {
+            await Task.Delay(delaySeconds);
+            transactionResult = await GetBillingTransactionResultAsync(transactionId);
+        }
+
+        return transactionResult;
     }
 }

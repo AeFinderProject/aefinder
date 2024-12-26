@@ -10,15 +10,15 @@ using Volo.Abp.Uow;
 
 namespace AeFinder.BackgroundWorker.ScheduledTask;
 
-public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
+public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
 {
-    private readonly ILogger<MonthlyAutomaticChargeWorker> _logger;
+    private readonly ILogger<ChargeWarningWorker> _logger;
     private readonly IClusterClient _clusterClient;
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
     private readonly IOrganizationAppService _organizationAppService;
     
-    public MonthlyAutomaticChargeWorker(AbpAsyncTimer timer, 
-        ILogger<MonthlyAutomaticChargeWorker> logger, IClusterClient clusterClient, 
+    public ChargeWarningWorker(AbpAsyncTimer timer, 
+        ILogger<ChargeWarningWorker> logger, IClusterClient clusterClient, 
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
         IOrganizationAppService organizationAppService,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
@@ -28,33 +28,24 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
         _scheduledTaskOptions = scheduledTaskOptions.Value;
         _organizationAppService = organizationAppService;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
-        Timer.Period = _scheduledTaskOptions.MonthlyAutomaticChargeTaskPeriodMilliSeconds;
+        Timer.Period = _scheduledTaskOptions.ChargeWarningTaskPeriodMilliSeconds;
     }
-    
+
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
-        var now = DateTime.UtcNow;
-        if (now.Day == _scheduledTaskOptions.MonthlyAutomaticChargeDay)
-        {
-            _logger.LogInformation($"[MonthlyAutomaticChargeWorker] Today is the {_scheduledTaskOptions.MonthlyAutomaticChargeDay}th day of the month. Executing task.");
-            await ProcessMonthlyChargeCheckAsync();
-        }
-        else
-        {
-            _logger.LogInformation($"[MonthlyAutomaticChargeWorker] Today is not the {_scheduledTaskOptions.MonthlyAutomaticChargeDay}th day of the month. Task will not be executed.");
-        }
+        await ProcessWarningCheckAsync();
     }
 
-    private async Task ProcessMonthlyChargeCheckAsync()
+    private async Task ProcessWarningCheckAsync()
     {
-        _logger.LogInformation("[MonthlyAutomaticChargeWorker] Process Monthly Charge Check Async.");
+        _logger.LogInformation("[ChargeWarningWorker] Process Charge Warning Check Async.");
         var organizationUnitList = await _organizationAppService.GetAllOrganizationUnitsAsync();
         foreach (var organizationUnitDto in organizationUnitList)
         {
             var organizationId = organizationUnitDto.Id.ToString();
             var organizationName = organizationUnitDto.DisplayName;
-            _logger.LogInformation("[MonthlyAutomaticChargeWorker] Check organization {0} {1}.", organizationName,
+            _logger.LogInformation("[ChargeWarningWorker] Check organization {0} {1}.", organizationName,
                 organizationId);
             
         }

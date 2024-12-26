@@ -183,4 +183,15 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(apiKeyId.ToString("N"), api, dateTime.ToString("yyyyMMdd"));
     }
+    
+    public static string GetOrganizationGrainId(Guid orgId)
+    {
+        return GenerateOrganizationAppGrainId(orgId.ToString("N"));
+    }
+    
+    public static string GetOrganizationGrainId(string organizationId)
+    {
+        var organizationGuid = Guid.Parse(organizationId);
+        return organizationGuid.ToString("N");
+    }
 }
