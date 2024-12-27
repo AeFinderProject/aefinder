@@ -8,6 +8,10 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Metrics;
+using AeFinder.Options;
+using AeFinder.User;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -23,20 +27,29 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IAppDeployManager _appDeployManager;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
     private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
+    private readonly IOrganizationAppService _organizationAppService;
+    private readonly AppDeployOptions _appDeployOptions;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
-        IAppOperationSnapshotProvider appOperationSnapshotProvider,IAppResourceLimitProvider appResourceLimitProvider)
+        IOrganizationAppService organizationAppService,
+        IOptionsSnapshot<AppDeployOptions> appDeployOptions,
+        IAppOperationSnapshotProvider appOperationSnapshotProvider,
+        IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
         _blockScanAppService = blockScanAppService;
         _appDeployManager = appDeployManager;
         _appResourceLimitProvider = appResourceLimitProvider;
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
+        _organizationAppService = organizationAppService;
+        _appDeployOptions = appDeployOptions.Value;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
     {
+        await CheckAppStatusAsync(appId);
+        
         var chainIds = await GetDeployChainIdAsync(appId, version);
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(appId, version, imageName, chainIds);
         await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Start);
@@ -97,4 +110,92 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     //     var podResourceResult = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podsName);
     //     return podResourceResult;
     // }
+    
+    public async Task ObliterateAppAsync(string appId,string organizationId)
+    {
+        Logger.LogInformation($"[ObliterateAppAsync]Obliterate AeIndexer {appId}");
+        if (string.IsNullOrEmpty(organizationId))
+        {
+            Logger.LogInformation($"User {CurrentUser.Id.ToString()} Obliterate AeIndexer {appId}");
+            //Get organization id
+            var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+            if (organizationUnit == null)
+            {
+                throw new UserFriendlyException("User has not yet bind any organization");
+            }
+
+            organizationId = organizationUnit.Id.ToString();
+        }
+
+        //Check App is belong user's organization
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainId(organizationId);
+        var organizationAppGain =
+            _clusterClient.GetGrain<IOrganizationAppGrain>(organizationGrainId);
+        if (!await organizationAppGain.CheckAppIsExistAsync(appId))
+        {
+            throw new UserFriendlyException("This app does not belong to the user's organization. Please verify.");
+        }
+        
+        //Delete app
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        await appGrain.DeleteAppAsync();
+        Logger.LogInformation($"[ObliterateAppAsync] App {appId} is deleted.");
+    }
+    
+    public async Task FreezeAppAsync(string appId)
+    {
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        if (allSubscriptions.CurrentVersion != null && !string.IsNullOrEmpty(allSubscriptions.CurrentVersion.Version))
+        {
+            var currentVersion = allSubscriptions.CurrentVersion.Version;
+            await DestroyAppAsync(appId, currentVersion);
+        }
+
+        if (allSubscriptions.PendingVersion != null && !string.IsNullOrEmpty(allSubscriptions.PendingVersion.Version))
+        {
+            var pendingVersion = allSubscriptions.PendingVersion.Version;
+            await DestroyAppAsync(appId, pendingVersion);
+        }
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        await appGrain.FreezeAppAsync();
+    }
+    
+    public async Task UnFreezeAppAsync(string appId)
+    {
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        await appGrain.UnFreezeAppAsync();
+
+        var imageName = _appDeployOptions.AppImageName;
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        if (allSubscriptions.CurrentVersion != null && !string.IsNullOrEmpty(allSubscriptions.CurrentVersion.Version))
+        {
+            var currentVersion = allSubscriptions.CurrentVersion.Version;
+            await DeployNewAppAsync(appId, currentVersion, imageName);
+        }
+
+        if (allSubscriptions.PendingVersion != null && !string.IsNullOrEmpty(allSubscriptions.PendingVersion.Version))
+        {
+            var pendingVersion = allSubscriptions.PendingVersion.Version;
+            await DeployNewAppAsync(appId, pendingVersion, imageName);
+        }
+        
+    }
+    
+    public async Task CheckAppStatusAsync(string appId)
+    {
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var appDto = await appGrain.GetAsync();
+        if (appDto.Status == AppStatus.Frozen)
+        {
+            throw new UserFriendlyException("The AeIndexer renewal has expired and it has been frozen. Please deposit your account first.");
+        }
+
+        if (appDto.Status == AppStatus.Deleted)
+        {
+            throw new UserFriendlyException($"The app is already deleted in {appDto.DeleteTime.ToUniversalTime()}");
+        }
+    }
+    
 }

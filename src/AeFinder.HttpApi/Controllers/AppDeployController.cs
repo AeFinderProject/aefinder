@@ -174,4 +174,12 @@ public class AppDeployController : AeFinderController
     // {
     //     return await _appDeployService.GetPodResourceInfoAsync(podName);
     // }
+    
+    [HttpPost]
+    [Route("obliterate")]
+    [Authorize]
+    public async Task ObliterateAppAsync(AppInput input)
+    {
+        await _appDeployService.ObliterateAppAsync(input.AppId, null);
+    }
 }

@@ -74,4 +74,9 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
             MaxAppCount = State.MaxAppCount
         });
     }
+    
+    public async Task<bool> CheckAppIsExistAsync(string appId)
+    {
+        return State.AppIds.Contains(appId);
+    }
 }

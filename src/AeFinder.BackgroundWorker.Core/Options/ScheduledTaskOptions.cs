@@ -10,4 +10,5 @@ public class ScheduledTaskOptions
     public int MonthlyAutomaticChargeDay { get; set; } = 2;
     public int MonthlyAutomaticChargeTaskPeriodMilliSeconds { get; set; } = 86400000;
     public int ChargeWarningTaskPeriodMilliSeconds { get; set; } = 86400000;
+    public int RenewalAdvanceWarningDays { get; set; } = 5;
 }
