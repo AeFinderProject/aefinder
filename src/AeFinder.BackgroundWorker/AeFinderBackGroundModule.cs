@@ -7,8 +7,12 @@ using AeFinder.Kubernetes;
 using AeFinder.Kubernetes.Manager;
 using AeFinder.Metrics;
 using AeFinder.MongoDb;
+using AeFinder.Options;
 using AElf.EntityMapping.Options;
 using AElf.OpenTelemetry;
+using GraphQL.Client.Abstractions;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.Newtonsoft;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -52,6 +56,11 @@ public class AeFinderBackGroundModule : AbpModule
         ConfigureMongoDbService(configuration, context);
         context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
         context.Services.Configure<TransactionRepairOptions>(configuration.GetSection("TransactionRepair"));
+        context.Services.AddSingleton(new GraphQLHttpClient(configuration["GraphQL:Configuration"],
+            new NewtonsoftJsonSerializer()));
+        context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
+        context.Services.Configure<GraphQLOptions>(configuration.GetSection("GraphQL"));
+        Configure<ContractOptions>(configuration.GetSection("Contract"));
     }
     
     //Disable TokenCleanupBackgroundWorker

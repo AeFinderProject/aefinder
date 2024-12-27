@@ -1,5 +1,9 @@
 using AeFinder.BackgroundWorker.Options;
+using AeFinder.Billings;
+using AeFinder.Commons;
+using AeFinder.Options;
 using AeFinder.User;
+using AeFinder.User.Provider;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -16,21 +20,32 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
     private readonly IClusterClient _clusterClient;
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
     private readonly IOrganizationAppService _organizationAppService;
-    
-    public MonthlyAutomaticChargeWorker(AbpAsyncTimer timer, 
-        ILogger<MonthlyAutomaticChargeWorker> logger, IClusterClient clusterClient, 
+    private readonly IBillingService _billingService;
+    private readonly IBillingContractProvider _billingContractProvider;
+    private readonly IOrganizationInformationProvider _organizationInformationProvider;
+    private readonly ContractOptions _contractOptions;
+
+    public MonthlyAutomaticChargeWorker(AbpAsyncTimer timer,
+        ILogger<MonthlyAutomaticChargeWorker> logger, IClusterClient clusterClient,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
+        IOptionsSnapshot<ContractOptions> contractOptions,
         IOrganizationAppService organizationAppService,
+        IOrganizationInformationProvider organizationInformationProvider,
+        IBillingService billingService, IBillingContractProvider billingContractProvider,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
         _clusterClient = clusterClient;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
+        _contractOptions = contractOptions.Value;
         _organizationAppService = organizationAppService;
+        _billingService = billingService;
+        _billingContractProvider = billingContractProvider;
+        _organizationInformationProvider = organizationInformationProvider;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = _scheduledTaskOptions.MonthlyAutomaticChargeTaskPeriodMilliSeconds;
     }
-    
+
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
@@ -49,6 +64,7 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
     private async Task ProcessMonthlyChargeCheckAsync()
     {
         _logger.LogInformation("[MonthlyAutomaticChargeWorker] Process Monthly Charge Check Async.");
+        var now = DateTime.UtcNow;
         var organizationUnitList = await _organizationAppService.GetAllOrganizationUnitsAsync();
         foreach (var organizationUnitDto in organizationUnitList)
         {
@@ -56,6 +72,75 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
             var organizationName = organizationUnitDto.DisplayName;
             _logger.LogInformation("[MonthlyAutomaticChargeWorker] Check organization {0} {1}.", organizationName,
                 organizationId);
+            
+            //Check is already exist previous month bill
+            var previousMonth = now.AddMonths(-1);
+            var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
+            var lastDayOfLastMonth = firstDayOfThisMonth.AddDays(-1);
+            var billBeginTime = new DateTime(previousMonth.Year, previousMonth.Month, 1, 0, 0, 0);
+            var billEndTime = new DateTime(lastDayOfLastMonth.Year, lastDayOfLastMonth.Month, lastDayOfLastMonth.Day,
+                23, 59, 59);
+            var historySettlementBills = await _billingService.GetListsAsync(organizationUnitDto.Id, new GetBillingInput()
+            {
+                BeginTime = billBeginTime,
+                EndTime = billEndTime,
+                Type = BillingType.Settlement
+            });
+            if (historySettlementBills != null && historySettlementBills.TotalCount > 0)
+            {
+                continue;
+            }
+            //Get organization wallet address
+            var organizationWalletAddress = await _organizationInformationProvider.GetOrganizationWalletAddressAsync(organizationId);
+            if (string.IsNullOrEmpty(organizationWalletAddress))
+            {
+                _logger.LogError("Organization wallet address is null or empty, please check.");
+                continue;
+            }
+
+            //Create charge bill
+            var settlementBill =
+                await _billingService.CreateAsync(organizationUnitDto.Id, BillingType.Settlement, billBeginTime);
+            if (settlementBill == null)
+            {
+                _logger.LogWarning($"[MonthlyAutomaticChargeWorker] the previous settlement bill of organization {organizationName} is null");
+                continue;
+            }
+            
+            //Send transaction to billing contract
+            var sendChargeTransactionOutput = await _billingContractProvider.BillingChargeAsync(organizationWalletAddress, settlementBill.PaidAmount, settlementBill.RefundAmount,
+                settlementBill.Id.ToString());
+            _logger.LogInformation("[MonthlyAutomaticChargeWorker] Send charge transaction " + sendChargeTransactionOutput.TransactionId +
+                                   " of bill " + settlementBill.Id.ToString());
+            var chargeTransactionId = sendChargeTransactionOutput.TransactionId;
+            // not existed->retry  pending->wait  other->fail
+            int delaySeconds = _contractOptions.DelaySeconds;
+            var chargeTransactionResult = await _billingContractProvider.QueryTransactionResultAsync(chargeTransactionId, delaySeconds);
+            var chargeResultQueryRetryTimes = 0;
+            while (chargeTransactionResult.Status == TransactionState.NotExisted &&
+                   chargeResultQueryRetryTimes < _contractOptions.ResultQueryRetryTimes)
+            {
+                chargeResultQueryRetryTimes++;
+
+                await Task.Delay(delaySeconds);
+                chargeTransactionResult = await _billingContractProvider.QueryTransactionResultAsync(chargeTransactionId, delaySeconds);
+            }
+
+            var chargeTransactionStatus = chargeTransactionResult.Status == TransactionState.Mined
+                ? TransactionState.Mined
+                : TransactionState.Failed;
+            _logger.LogInformation(
+                $"[MonthlyAutomaticChargeWorker] After {chargeResultQueryRetryTimes} times retry, get charge transaction {chargeTransactionId} status {chargeTransactionStatus}");
+            if (chargeTransactionStatus == TransactionState.Mined)
+            {
+                await _billingService.PayAsync(settlementBill.Id, chargeTransactionId, DateTime.UtcNow);
+                _logger.LogInformation($"Bill {settlementBill.Id.ToString()} is paying.");
+            }
+            else
+            {
+                _logger.LogWarning($"Bill {settlementBill.Id.ToString()} payment failed");
+                //TODO Set bill status to failed
+            }
             
         }
     }
