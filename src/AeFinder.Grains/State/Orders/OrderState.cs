@@ -4,31 +4,32 @@ using AeFinder.Orders;
 
 namespace AeFinder.Grains.State.Orders;
 
+[GenerateSerializer]
 public class OrderState
 {
-    public string Id  { get; set; }
-    public Guid OrganizationId { get; set; }
-    public List<OrderDetail> Details  { get; set; }
-    public decimal Amount { get; set; }
-    public decimal DeductionAmount { get; set; }
-    public decimal ActualAmount { get; set; }
-    public OrderStatus Status  { get; set; }
-    public PaymentType PaymentType  { get; set; }
-    public DateTime OrderTime  { get; set; }
-    public DateTime PaymentTime { get; set; }
-    public Dictionary<string,string> ExtraData { get; set; } = new();
-    public Guid UserId { get; set; }
-    public string TransactionId { get; set; }
+    [Id(0)]public Guid Id  { get; set; }
+    [Id(1)]public Guid OrganizationId { get; set; }
+    [Id(2)] public List<OrderDetailState> Details { get; set; } = new();
+    [Id(3)]public decimal Amount { get; set; }
+    [Id(4)]public decimal DeductionAmount { get; set; }
+    [Id(5)]public decimal ActualAmount { get; set; }
+    [Id(6)]public OrderStatus Status  { get; set; }
+    [Id(7)]public PaymentType PaymentType  { get; set; }
+    [Id(8)]public DateTime OrderTime  { get; set; }
+    [Id(9)]public DateTime PaymentTime { get; set; }
+    [Id(10)]public Dictionary<string,string> ExtraData { get; set; } = new();
+    [Id(11)]public Guid UserId { get; set; }
+    [Id(12)]public string TransactionId { get; set; }
 }
 
-public class OrderDetail
+[GenerateSerializer]
+public class OrderDetailState
 {
-    // TODO: 
-    public AssetState OriginalAsset { get; set; }
-    public MerchandiseState Merchandise { get; set; }
-    public long Quantity { get; set; }
-    public long Replicas { get; set; }
-    public decimal Amount { get; set; }
-    public decimal DeductionAmount { get; set; }
-    public decimal ActualAmount { get; set; }
+    [Id(0)]public AssetState OriginalAsset { get; set; }
+    [Id(1)]public MerchandiseState Merchandise { get; set; }
+    [Id(2)]public long Quantity { get; set; }
+    [Id(3)]public long Replicas { get; set; }
+    [Id(4)]public decimal Amount { get; set; }
+    [Id(5)]public decimal DeductionAmount { get; set; }
+    [Id(6)]public decimal ActualAmount { get; set; }
 }

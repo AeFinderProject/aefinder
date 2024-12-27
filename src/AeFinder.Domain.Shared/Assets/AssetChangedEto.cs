@@ -12,9 +12,11 @@ public class AssetChangedEto
     public long Replicas { get; set; }
     public long FreeQuantity { get; set; }
     public long FreeReplicas { get; set; }
+    public AssetFreeType FreeType { get; set; }
     public DateTime CreateTime { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public AssetStatus Status { get; set; }
     public string AppId { get; set; }
+    public bool IsLocked { get; set; }
 }

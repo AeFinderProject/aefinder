@@ -15,10 +15,12 @@ public class AssetIndex : AeFinderDomainEntity<Guid>, IEntityMappingEntity
     public long Replicas { get; set; }
     public long FreeQuantity { get; set; }
     public long FreeReplicas { get; set; }
+    public int FreeType { get; set; }
     public DateTime CreateTime { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public int Status { get; set; }
     [Keyword] 
     public string AppId { get; set; }
+    public bool IsLocked { get; set; }
 }

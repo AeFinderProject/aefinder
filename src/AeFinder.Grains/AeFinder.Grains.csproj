@@ -22,8 +22,4 @@
       <ProjectReference Include="..\AeFinder.Application.Contracts\AeFinder.Application.Contracts.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Grain\Orders\" />
-    </ItemGroup>
-
 </Project>

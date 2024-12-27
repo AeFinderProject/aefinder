@@ -122,7 +122,7 @@ public class AssetService : AeFinderAppService, IAssetService
                 CreateTime = input.OrderTime,
                 EndTime = input.OrderTime.AddYears(AeFinderApplicationConsts.DefaultAssetExpiration)
             };
-            if (orderDetail.Merchandise.Type == MerchandiseType.ApiQuery)
+            if (orderDetail.OriginalAsset != null && orderDetail.OriginalAsset.FreeType == AssetFreeType.Permanent)
             {
                 newAssetInput.FreeQuantity = orderDetail.OriginalAsset.FreeQuantity;
                 newAssetInput.FreeReplicas = orderDetail.OriginalAsset.FreeReplicas;
@@ -199,5 +199,11 @@ public class AssetService : AeFinderAppService, IAssetService
     {
         var grain = _clusterClient.GetGrain<IAssetGrain>(id);
         await grain.ReleaseAsync(dateTime);
+    }
+
+    public async Task LockAsync(Guid id, bool isLock)
+    {
+        var grain = _clusterClient.GetGrain<IAssetGrain>(id);
+        await grain.LockAsync(isLock);
     }
 }

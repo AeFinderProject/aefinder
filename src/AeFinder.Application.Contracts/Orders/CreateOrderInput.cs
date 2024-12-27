@@ -1,18 +1,21 @@
 using System;
 using System.Collections.Generic;
+using Orleans;
 
 namespace AeFinder.Orders;
 
+[GenerateSerializer]
 public class CreateOrderInput
 {
-    public List<CreateOrderDetail> Details  { get; set; }
-    public Dictionary<string,string> ExtendedData { get; set; }
+    [Id(0)]public List<CreateOrderDetail> Details  { get; set; }
+    [Id(1)]public Dictionary<string,string> ExtraData { get; set; }
 }
 
+[GenerateSerializer]
 public class CreateOrderDetail
 {
-    public Guid? OriginalAssetId { get; set; }
-    public Guid MerchandiseId { get; set; }
-    public long Quantity { get; set; }
-    public long Replicas { get; set; }
+    [Id(0)]public Guid? OriginalAssetId { get; set; }
+    [Id(1)]public Guid MerchandiseId { get; set; }
+    [Id(2)]public long Quantity { get; set; }
+    [Id(3)]public long Replicas { get; set; }
 }

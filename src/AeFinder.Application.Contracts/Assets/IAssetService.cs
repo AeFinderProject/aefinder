@@ -15,4 +15,5 @@ public interface IAssetService
     Task PayAsync(Guid id, decimal paidAmount);
     Task RelateAppAsync(Guid organizationId, RelateAppInput input);
     Task<decimal> CalculateMonthlyCostAsync(Guid organizationId, DateTime dateTime);
+    Task LockAsync(Guid id, bool isLock);
 }

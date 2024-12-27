@@ -7,7 +7,7 @@ namespace AeFinder.Orders;
 
 public class OrderChangedEto
 {
-    public string Id  { get; set; }
+    public Guid Id  { get; set; }
     public Guid OrganizationId { get; set; }
     public List<OrderDetailEto> Details  { get; set; }
     public decimal Amount { get; set; }

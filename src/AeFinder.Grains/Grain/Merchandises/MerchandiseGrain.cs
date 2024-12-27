@@ -16,29 +16,29 @@ public class MerchandiseGrain : AeFinderGrain<MerchandiseState>, IMerchandiseGra
         _distributedEventBus = distributedEventBus;
     }
 
-    public async Task<MerchandiseDto> CreateAsync(Guid id, CreateMerchandiseInput input)
+    public async Task<MerchandiseState> CreateAsync(Guid id, CreateMerchandiseInput input)
     {
         await ReadStateAsync();
         State = _objectMapper.Map<CreateMerchandiseInput, MerchandiseState>(input);
         State.Id = id;
         await WriteStateAsync();
-        
-        return _objectMapper.Map<MerchandiseState, MerchandiseDto>(State);
+
+        return State;
     }
 
-    public async Task<MerchandiseDto> UpdateAsync(UpdateMerchandiseInput input)
+    public async Task<MerchandiseState> UpdateAsync(UpdateMerchandiseInput input)
     {
         await ReadStateAsync();
         _objectMapper.Map<UpdateMerchandiseInput, MerchandiseState>(input, State);
         await WriteStateAsync();
         
-        return _objectMapper.Map<MerchandiseState, MerchandiseDto>(State);
+        return State;
     }
 
-    public async Task<MerchandiseDto> GetAsync()
+    public async Task<MerchandiseState> GetAsync()
     {
         await ReadStateAsync();
-        return _objectMapper.Map<MerchandiseState, MerchandiseDto>(State);
+        return State;
     }
     
     protected override async Task WriteStateAsync()
