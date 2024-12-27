@@ -13,5 +13,6 @@ public class CreateOrderDetail
 {
     public Guid? OriginalAssetId { get; set; }
     public Guid MerchandiseId { get; set; }
-    public int MerchandiseQuantity { get; set; }
+    public long Quantity { get; set; }
+    public long Replicas { get; set; }
 }

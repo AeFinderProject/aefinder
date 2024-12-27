@@ -5,12 +5,14 @@ namespace AeFinder.Billings;
 
 public class GetBillingInput: PagedResultRequestDto
 {
-    public DateTime DateTime { get; set; }
-    public BillingType Type { get; set; }
-    public GetBillingSortType SortType { get; set; }
+    public DateTime? BeginTime { get; set; }
+    public DateTime? EndTime { get; set; }
+    public BillingType? Type { get; set; }
+    public BillingSortType Sort { get; set; } = BillingSortType.BillingTimeDesc;
 }
 
-public enum GetBillingSortType
+public enum BillingSortType
 {
-    
+    BillingTimeAsc,
+    BillingTimeDesc
 }

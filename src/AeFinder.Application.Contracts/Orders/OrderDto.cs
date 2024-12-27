@@ -26,7 +26,8 @@ public class OrderDetail
 {
     public AssetDto OriginalAsset { get; set; }
     public MerchandiseDto Merchandise { get; set; }
-    public int MerchandiseQuantity { get; set; }
+    public long Quantity { get; set; }
+    public long Replicas { get; set; }
     public decimal Amount { get; set; }
     public decimal DeductionAmount { get; set; }
     public decimal ActualAmount { get; set; }

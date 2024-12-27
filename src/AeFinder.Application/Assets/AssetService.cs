@@ -48,7 +48,7 @@ public class AssetService : AeFinderAppService, IAssetService
     {
         var queryable = await _assetIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o =>
-            o.OrganizationId == organizationId && (o.Status == AssetStatus.Unused || o.Status == AssetStatus.Using));
+            o.OrganizationId == organizationId && (o.Status == (int)AssetStatus.Unused || o.Status == (int)AssetStatus.Using));
         if (!input.AppId.IsNullOrWhiteSpace())
         {
             queryable = queryable.Where(o => o.AppId == input.AppId);
@@ -182,6 +182,11 @@ public class AssetService : AeFinderAppService, IAssetService
         }
         
         await _distributedEventBus.PublishAsync(appAssetChangedEto);
+    }
+
+    public Task<decimal> CalculateMonthlyCostAsync(Guid organizationId, DateTime dateTime)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task StartUsingAssetAsync(Guid id, DateTime dateTime)

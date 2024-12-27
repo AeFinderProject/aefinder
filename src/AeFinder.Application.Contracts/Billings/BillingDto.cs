@@ -22,13 +22,13 @@ public class BillingDto
 
 public class BillingDetailDto
 {
-    public string MerchandiseName { get; set; }
+    public string Name { get; set; }
     public string AppId { get; set; }
     public MerchandiseType Type { get; set; }
     public string Unit { get; set; }
     public decimal Price { get; set; }
     public int Quantity { get; set; }
-    public int Duration { get; set; }
+    public int Replicas { get; set; }
     public decimal RefundAmount { get; set; }
     public decimal PaidAmount { get; set; }
 }
