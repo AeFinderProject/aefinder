@@ -9,13 +9,14 @@ using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.ObjectMapping;
+using Volo.Abp.Threading;
 using Volo.Abp.Timing;
 using Volo.Abp.Validation;
 using Xunit;
 
 namespace AeFinder.ApiKeys;
 
-public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
+public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
 {
     private readonly IApiKeyService _apiKeyService;
     private readonly IApiKeySnapshotService _apiKeySnapshotService;
@@ -897,7 +898,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         {
             Name = "ApiKey",
             IsEnableSpendingLimit = true,
-            SpendingLimitUsdt = AeFinderApplicationConsts.ApiKeyQueryPrice * 3
+            SpendingLimitUsdt = await GetApiKeyQueryPriceAsync() * 3
         };
         var apiKey = await _apiKeyService.CreateApiKeyAsync(orgId, createInput);
 
@@ -1176,7 +1177,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         {
             Name = "ApiKey",
             IsEnableSpendingLimit = true,
-            SpendingLimitUsdt = AeFinderApplicationConsts.ApiKeyQueryPrice * 3
+            SpendingLimitUsdt = await GetApiKeyQueryPriceAsync() * 3
         };
         var apiKey = await _apiKeyService.CreateApiKeyAsync(orgId, createInput);
 
@@ -1232,7 +1233,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         {
             Name = "ApiKey2",
             IsEnableSpendingLimit = true,
-            SpendingLimitUsdt = AeFinderApplicationConsts.ApiKeyQueryPrice * 3
+            SpendingLimitUsdt = await GetApiKeyQueryPriceAsync() * 3
         };
         var apiKey2 = await _apiKeyService.CreateApiKeyAsync(orgId, createInput2);
         apiKeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKey.Id);
@@ -1243,5 +1244,13 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
             await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "aaa.com", time));
         exception.Message.ShouldBe("Api key query times insufficient.");
+    }
+    
+    private async Task<decimal> GetApiKeyQueryPriceAsync()
+    {
+        // TODO: Get price
+        return 0;
+        // var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
+        // return apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
     }
 }

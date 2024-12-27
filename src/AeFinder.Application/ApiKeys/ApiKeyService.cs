@@ -172,11 +172,12 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
             });
 
         dto.IsActive = true;
+        var apiQueryPrice = await GetApiKeyQueryPriceAsync();
         if (apiKeyMonthSnapshot.Items.Any())
         {
             dto.PeriodQuery = apiKeyMonthSnapshot.Items.First().Query;
             if (dto.IsEnableSpendingLimit &&
-                (long)(dto.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - dto.PeriodQuery <= 0)
+                (long)(dto.SpendingLimitUsdt / apiQueryPrice) - dto.PeriodQuery <= 0)
             {
                 dto.IsActive = false;
             }
@@ -202,6 +203,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
             })).Items.ToDictionary(o => o.ApiKeyId, o => o);
 
         var dtos = ObjectMapper.Map<List<ApiKeyIndex>, List<ApiKeyDto>>(indices);
+        var apiQueryPrice = await GetApiKeyQueryPriceAsync();
         foreach (var dto in dtos)
         {
             dto.IsActive = true;
@@ -209,7 +211,7 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
             {
                 dto.PeriodQuery = snapshotDto.Query;
                 if (dto.IsEnableSpendingLimit &&
-                    (long)(dto.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - snapshotDto.Query <= 0)
+                    (long)(dto.SpendingLimitUsdt / apiQueryPrice) - snapshotDto.Query <= 0)
                 {
                     dto.IsActive = false;
                 }
@@ -340,6 +342,14 @@ public class ApiKeyService : AeFinderAppService, IApiKeyService
                 EndTime = time.ToMonthDate(),
             });
         return apiKeyMonthSnapshot.Items.Count > 0 ? apiKeyMonthSnapshot.Items[0].Query : 0;
+    }
+    
+    private async Task<decimal> GetApiKeyQueryPriceAsync()
+    {
+        // TODO: Get price
+        return 0;
+        // var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
+        // return apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
     }
 
     private async Task CheckApiKeyAsync(IApiKeyGrain grain, Guid organizationId)

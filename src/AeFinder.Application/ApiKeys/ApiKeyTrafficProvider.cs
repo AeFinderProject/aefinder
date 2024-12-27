@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Threading;
 using Volo.Abp.Timing;
 
 namespace AeFinder.ApiKeys;
@@ -23,6 +24,7 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
 {
     private readonly ConcurrentDictionary<string, AeIndexerApiTrafficSegment> _aeIndexerApiTraffics = new();
     private readonly ConcurrentDictionary<string, BasicApiTrafficSegment> _basicApiTraffics = new();
+    private decimal _apiQueryPrice = 0;
     
     private readonly ApiKeyOptions _apiKeyOptions;
     private readonly IClusterClient _clusterClient;
@@ -144,7 +146,7 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
             throw new UserFriendlyException("Api key query times insufficient.");
         }
 
-        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - used <= 0)
+        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / await GetApiKeyQueryPriceAsync()) - used <= 0)
         {
             throw new UserFriendlyException("Api key unavailable.");
         }
@@ -160,7 +162,8 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
             throw new UserFriendlyException("Unauthorized api.");
         }
 
-        if (apiKeyInfo.AuthorisedDomains.Any() && !CheckApiKeyDomain(apiKeyInfo, domain))
+        if (apiKeyInfo.AuthorisedDomains.Any() &&
+            (domain.IsNullOrWhiteSpace() || !CheckApiKeyDomain(apiKeyInfo, domain)))
         {
             throw new UserFriendlyException("Unauthorized domain.");
         }
@@ -199,5 +202,17 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
     {
         var minute = (dateTime.Minute / _apiKeyOptions.FlushPeriod) * _apiKeyOptions.FlushPeriod;
         return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, minute, 0, _clock.Kind);
+    }
+    
+    private async Task<decimal> GetApiKeyQueryPriceAsync()
+    {
+        if (_apiQueryPrice == 0)
+        {
+            // TODO: Get price 
+            // var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
+            // _apiQueryPrice = apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
+        }
+
+        return _apiQueryPrice;
     }
 }

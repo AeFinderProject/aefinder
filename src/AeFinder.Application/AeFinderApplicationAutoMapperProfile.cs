@@ -6,6 +6,7 @@ using AeFinder.AppResources;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Apps.Eto;
+using AeFinder.Assets;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
 using AeFinder.Entities.Es;
@@ -14,8 +15,11 @@ using AeFinder.Grains.Grain.ApiKeys;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.ApiKeys;
 using AeFinder.Grains.State.Apps;
+using AeFinder.Grains.State.Assets;
+using AeFinder.Grains.State.Merchandises;
 using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Logger.Entities;
+using AeFinder.Merchandises;
 using AeFinder.Subscriptions;
 using AeFinder.Subscriptions.Dto;
 using AeFinder.User;
@@ -190,5 +194,19 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppInfoImmutableEto, AppInfoImmutableIndex>();
         CreateMap<AppInfoImmutable, AppInfoImmutableEto>();
         CreateMap<AppInfoImmutableEto, AppInfoImmutable>();
+        
+        // Merchandise
+        CreateMap<MerchandiseState, MerchandiseDto>();
+        CreateMap<CreateMerchandiseInput, MerchandiseState>();
+        CreateMap<UpdateMerchandiseInput, MerchandiseState>();
+        CreateMap<MerchandiseState, MerchandiseChangedEto>();
+        CreateMap<MerchandiseChangedEto, MerchandiseIndex>();
+        CreateMap<MerchandiseIndex, MerchandiseDto>();
+        
+        // Asset
+        CreateMap<CreateAssetInput, AssetState>();
+        CreateMap<AssetState, AssetChangedEto>();
+        CreateMap<AssetChangedEto, AssetIndex>();
+        CreateMap<AssetIndex, AssetDto>();
     }
 }
