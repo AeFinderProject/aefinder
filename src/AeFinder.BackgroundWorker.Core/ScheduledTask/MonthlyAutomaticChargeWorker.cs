@@ -17,7 +17,6 @@ namespace AeFinder.BackgroundWorker.ScheduledTask;
 public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
 {
     private readonly ILogger<MonthlyAutomaticChargeWorker> _logger;
-    private readonly IClusterClient _clusterClient;
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IBillingService _billingService;
@@ -26,7 +25,7 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
     private readonly ContractOptions _contractOptions;
 
     public MonthlyAutomaticChargeWorker(AbpAsyncTimer timer,
-        ILogger<MonthlyAutomaticChargeWorker> logger, IClusterClient clusterClient,
+        ILogger<MonthlyAutomaticChargeWorker> logger, 
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
         IOptionsSnapshot<ContractOptions> contractOptions,
         IOrganizationAppService organizationAppService,
@@ -35,7 +34,6 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
-        _clusterClient = clusterClient;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
         _contractOptions = contractOptions.Value;
         _organizationAppService = organizationAppService;
@@ -94,7 +92,7 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
             var organizationWalletAddress = await _organizationInformationProvider.GetOrganizationWalletAddressAsync(organizationId);
             if (string.IsNullOrEmpty(organizationWalletAddress))
             {
-                _logger.LogError("Organization wallet address is null or empty, please check.");
+                _logger.LogError($"Organization {organizationId} wallet address is null or empty, please check.");
                 continue;
             }
 

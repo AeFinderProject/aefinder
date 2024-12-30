@@ -11,4 +11,6 @@ public class ScheduledTaskOptions
     public int MonthlyAutomaticChargeTaskPeriodMilliSeconds { get; set; } = 86400000;
     public int ChargeWarningTaskPeriodMilliSeconds { get; set; } = 86400000;
     public int RenewalAdvanceWarningDays { get; set; } = 5;
+    public int BillingIndexerPollingTaskPeriodMilliSeconds { get; set; } = 10000;
+    public int UnpaidBillTimeoutMinutes { get; set; } = 30;
 }
