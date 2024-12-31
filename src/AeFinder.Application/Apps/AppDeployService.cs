@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
 using AeFinder.Apps.Dto;
+using AeFinder.Assets;
 using AeFinder.BlockScan;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
@@ -29,6 +30,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly AppDeployOptions _appDeployOptions;
+    private readonly IAssetService _assetService;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
@@ -52,6 +54,13 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         
         var chainIds = await GetDeployChainIdAsync(appId, version);
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(appId, version, imageName, chainIds);
+        var posStartUseTime = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(appId);
+        if (posStartUseTime == null)
+        {
+            //TODO Start use app resource asset
+            // var currentAssetList=await _assetService.GetListsAsync()
+            // await _assetService.StartUsingAssetAsync(appId);
+        }
         await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Start);
         return graphqlUrl;
     }
@@ -110,6 +119,44 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     //     var podResourceResult = await _kubernetesAppMonitor.GetAppPodsResourceInfoFromPrometheusAsync(podsName);
     //     return podResourceResult;
     // }
+    
+    public async Task DestroyAppPendingVersionAsync(string appId)
+    {
+        //Get organization id
+        var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
+        if (organizationUnit == null)
+        {
+            throw new UserFriendlyException("User has not yet bind any organization");
+        }
+
+        var organizationId = organizationUnit.Id.ToString();
+        
+        //Check App is belong user's organization
+        var organizationGrainId = GrainIdHelper.GetOrganizationGrainId(organizationId);
+        var organizationAppGain =
+            _clusterClient.GetGrain<IOrganizationAppGrain>(organizationGrainId);
+        if (!await organizationAppGain.CheckAppIsExistAsync(appId))
+        {
+            throw new UserFriendlyException("This app does not belong to the user's organization. Please verify.");
+        }
+        
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        if (allSubscriptions.PendingVersion == null)
+        {
+            return;
+        }
+
+        var version = allSubscriptions.PendingVersion.Version;
+        if (string.IsNullOrEmpty(version))
+        {
+            return;
+        }
+        var chainIds = await GetSubscriptionChainIdAsync(appId, version);
+        await _blockScanAppService.PauseAsync(appId, version);
+        await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Stop);
+        await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
+    }
     
     public async Task ObliterateAppAsync(string appId,string organizationId)
     {

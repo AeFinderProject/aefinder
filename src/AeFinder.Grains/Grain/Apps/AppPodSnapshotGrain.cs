@@ -6,12 +6,12 @@ using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.Grains.Grain.Apps;
 
-public class AppPodOperationSnapshotGrain : AeFinderGrain<AppPodOperationSnapshotState>, IAppPodOperationSnapshotGrain
+public class AppPodSnapshotGrain : AeFinderGrain<List<AppPodOperationSnapshotState>>, IAppPodSnapshotGrain
 {
     private readonly IObjectMapper _objectMapper;
     private readonly IDistributedEventBus _distributedEventBus;
     
-    public AppPodOperationSnapshotGrain(IObjectMapper objectMapper,IDistributedEventBus distributedEventBus)
+    public AppPodSnapshotGrain(IObjectMapper objectMapper,IDistributedEventBus distributedEventBus)
     {
         _objectMapper = objectMapper;
         _distributedEventBus = distributedEventBus;
@@ -23,18 +23,24 @@ public class AppPodOperationSnapshotGrain : AeFinderGrain<AppPodOperationSnapsho
         await base.OnActivateAsync(cancellationToken);
     }
     
-    public Task<AppPodOperationSnapshotDto> GetAsync()
+    public async Task<List<AppPodOperationSnapshotDto>> GetListAsync()
     {
-        return Task.FromResult(_objectMapper.Map<AppPodOperationSnapshotState, AppPodOperationSnapshotDto>(State));
+        if (State == null)
+        {
+            return new List<AppPodOperationSnapshotDto>();
+        }
+        return _objectMapper.Map<List<AppPodOperationSnapshotState>, List<AppPodOperationSnapshotDto>>(State);
     }
     
     public async Task SetAsync(AppPodOperationSnapshotDto dto)
     {
-        this.State = _objectMapper.Map<AppPodOperationSnapshotDto, AppPodOperationSnapshotState>(dto);
+        await ReadStateAsync();
+        var snapshotState= _objectMapper.Map<AppPodOperationSnapshotDto, AppPodOperationSnapshotState>(dto);
+        this.State.Add(snapshotState);
         await WriteStateAsync();
         
         //Publish organization create eto to background worker
-        var eto = _objectMapper.Map<AppPodOperationSnapshotState, AppPodOperationSnapshotCreateEto>(State);
+        var eto = _objectMapper.Map<AppPodOperationSnapshotState, AppPodOperationSnapshotCreateEto>(snapshotState);
         await _distributedEventBus.PublishAsync(eto);
     }
 }

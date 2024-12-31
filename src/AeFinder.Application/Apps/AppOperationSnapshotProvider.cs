@@ -1,5 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
+using AeFinder.Apps.Dto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using Orleans;
@@ -33,8 +37,29 @@ public class AppOperationSnapshotProvider : IAppOperationSnapshotProvider, ISing
         appPodResourceSnapshot.AppQueryPodReplicas = appResourceLimitInfo.AppPodReplicas;
         appPodResourceSnapshot.PodOperationType = operationType;
         var appPodOperationSnapshotGrain =
-            _clusterClient.GetGrain<IAppPodOperationSnapshotGrain>(
+            _clusterClient.GetGrain<IAppPodSnapshotGrain>(
                 GrainIdHelper.GenerateAppPodOperationSnapshotGrainId(appId, version));
         await appPodOperationSnapshotGrain.SetAsync(appPodResourceSnapshot);
+    }
+    
+    private async Task<List<AppPodOperationSnapshotDto>> GetAppPodOperationSnapshotListAsync(string appId)
+    {
+        var appPodOperationSnapshotGrain =
+            _clusterClient.GetGrain<IAppPodSnapshotGrain>(
+                GrainIdHelper.GenerateAppPodSnapshotGrainId(appId));
+        return await appPodOperationSnapshotGrain.GetListAsync();
+    }
+    
+    public async Task<DateTime?> GetAppPodStartTimeAsync(string appId)
+    {
+        var snapShotList = await GetAppPodOperationSnapshotListAsync(appId);
+        var firstSnapShot = snapShotList.Where(s => s.PodOperationType == AppPodOperationType.Start)
+            .OrderBy(s => s.Timestamp).FirstOrDefault();
+        if (firstSnapShot == null)
+        {
+            return null;
+        }
+        var firstPodStartDateTime = DateTimeHelper.FromUnixTimeMilliseconds(firstSnapShot.Timestamp);
+        return firstPodStartDateTime;
     }
 }
