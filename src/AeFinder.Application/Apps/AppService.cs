@@ -318,20 +318,24 @@ public class AppService : AeFinderAppService, IAppService
         bool isResourceChanged = false;
         //Check if need update full pod resource
         if (appOldLimit.AppFullPodRequestCpuCore != appLimit.AppFullPodRequestCpuCore ||
-            appOldLimit.AppFullPodRequestMemory != appLimit.AppFullPodRequestMemory)
+            appOldLimit.AppFullPodRequestMemory != appLimit.AppFullPodRequestMemory ||
+            appOldLimit.AppFullPodLimitCpuCore != appLimit.AppFullPodLimitCpuCore ||
+            appOldLimit.AppFullPodLimitMemory != appLimit.AppFullPodLimitMemory)
         {
             if (!currentVersion.IsNullOrEmpty())
             {
                 var chainIds = await GetDeployChainIdAsync(appId, currentVersion);
                 await _appDeployManager.UpdateAppFullPodResourceAsync(appId, currentVersion,
-                    appLimit.AppFullPodRequestCpuCore, appLimit.AppFullPodRequestMemory, chainIds);
+                    appLimit.AppFullPodRequestCpuCore, appLimit.AppFullPodRequestMemory, chainIds,
+                    appLimit.AppFullPodLimitCpuCore, appLimit.AppFullPodLimitMemory);
             }
 
             if (!pendingVersion.IsNullOrEmpty())
             {
                 var chainIds = await GetDeployChainIdAsync(appId, pendingVersion);
                 await _appDeployManager.UpdateAppFullPodResourceAsync(appId, pendingVersion,
-                    appLimit.AppFullPodRequestCpuCore, appLimit.AppFullPodRequestMemory, chainIds);
+                    appLimit.AppFullPodRequestCpuCore, appLimit.AppFullPodRequestMemory, chainIds,
+                    appLimit.AppFullPodLimitCpuCore, appLimit.AppFullPodLimitMemory);
             }
             isResourceChanged = true;
         }
@@ -342,13 +346,13 @@ public class AppService : AeFinderAppService, IAppService
             if (!currentVersion.IsNullOrEmpty())
             {
                 await _appDeployManager.UpdateAppQueryPodResourceAsync(appId, currentVersion,
-                    appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory);
+                    appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory,null, null, 0);
             }
 
             if (!pendingVersion.IsNullOrEmpty())
             {
                 await _appDeployManager.UpdateAppQueryPodResourceAsync(appId, pendingVersion,
-                    appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory);
+                    appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory,null, null, 0);
             }
             isResourceChanged = true;
         }
