@@ -246,7 +246,10 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                 foreach (var assetDto in processorAssets.Items)
                 {
                     var appId = assetDto.AppId;
-                    await _appDeployService.FreezeAppAsync(appId);
+                    if (appId != _graphQlOptions.BillingIndexerId)
+                    {
+                        await _appDeployService.FreezeAppAsync(appId);
+                    }
                 }
 
                 return;
