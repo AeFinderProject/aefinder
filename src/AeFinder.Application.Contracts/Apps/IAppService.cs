@@ -20,7 +20,6 @@ public interface IAppService
     Task<int> GetMaxAppCountAsync(Guid organizationId);
     Task<string> GetAppCodeAsync(string appId, string version);
     Task<PagedResultDto<AppResourceLimitIndexDto>> GetAppResourceLimitIndexListAsync(GetAppResourceLimitInput input);
-    Task DeleteAppIndexAsync(string indexName);
     Task<PagedResultDto<AppPodInfoDto>> GetAppPodResourceInfoListAsync(
         GetAppPodResourceInfoInput input);
     Task<PagedResultDto<AppPodUsageDurationDto>> GetAppPodUsageDurationListAsync(GetAppPodUsageDurationInput input);

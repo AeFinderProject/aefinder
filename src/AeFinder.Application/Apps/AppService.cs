@@ -33,7 +33,6 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IUserAppService _userAppService;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
-    private readonly IElasticIndexService _elasticIndexService;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appIndexRepository;
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitIndexRepository;
     private readonly IDistributedEventBus _distributedEventBus;
@@ -43,7 +42,6 @@ public class AppService : AeFinderAppService, IAppService
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
         IDistributedEventBus distributedEventBus,
-        IElasticIndexService elasticIndexService,
         IOrganizationAppService organizationAppService,
         IEntityMappingRepository<AppInfoIndex, string> appIndexRepository,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitIndexRepository,
@@ -56,7 +54,6 @@ public class AppService : AeFinderAppService, IAppService
         _appIndexRepository = appIndexRepository;
         _appLimitIndexRepository = appLimitIndexRepository;
         _appResourceLimitProvider = appResourceLimitProvider;
-        _elasticIndexService = elasticIndexService;
         _distributedEventBus = distributedEventBus;
         _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
         _appPodUsageDurationEntityMappingRepository = appPodUsageDurationEntityMappingRepository;
@@ -303,11 +300,6 @@ public class AppService : AeFinderAppService, IAppService
             TotalCount = totalCount,
             Items = ObjectMapper.Map<List<AppLimitInfoIndex>, List<AppResourceLimitIndexDto>>(apps)
         };
-    }
-
-    public async Task DeleteAppIndexAsync(string indexName)
-    {
-        await _elasticIndexService.DeleteIndexAsync(indexName);
     }
     
     public async Task<PagedResultDto<AppPodInfoDto>> GetAppPodResourceInfoListAsync(

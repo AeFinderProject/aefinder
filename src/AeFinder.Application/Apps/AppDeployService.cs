@@ -31,12 +31,14 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IOrganizationAppService _organizationAppService;
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IAssetService _assetService;
+    private readonly InternalOrganizationOptions _internalOrganizationOptions;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
         IOrganizationAppService organizationAppService,
         IOptionsSnapshot<AppDeployOptions> appDeployOptions,
         IAppOperationSnapshotProvider appOperationSnapshotProvider,
+        IOptionsSnapshot<InternalOrganizationOptions> internalOrganizationOptions,
         IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
@@ -46,11 +48,13 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _organizationAppService = organizationAppService;
         _appDeployOptions = appDeployOptions.Value;
+        _internalOrganizationOptions = internalOrganizationOptions.Value;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
     {
         await CheckAppStatusAsync(appId);
+        await CheckAppAssetAsync(appId);
         
         var chainIds = await GetDeployChainIdAsync(appId, version);
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(appId, version, imageName, chainIds);
@@ -243,6 +247,28 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         {
             throw new UserFriendlyException($"The app is already deleted in {appDto.DeleteTime.ToUniversalTime()}");
         }
+    }
+
+    public async Task CheckAppAssetAsync(string appId)
+    {
+        //TODO Get app current asset
+        AssetDto processorAsset = null;
+        
+        //If app asset is null, check if it is internal organization
+        if (processorAsset == null)
+        {
+            if (!_internalOrganizationOptions.InternalApps.Contains(appId))
+            {
+                throw new UserFriendlyException("Please purchase pod operational capacity before proceeding with deployment.");
+            }
+
+            await _appResourceLimitProvider.SetAppResourceLimitAsync(appId, new AppResourceLimitDto()
+            {
+                AppFullPodLimitCpuCore = _internalOrganizationOptions.DefaultFullPodLimitCpuCore,
+                AppFullPodLimitMemory = _internalOrganizationOptions.DefaultFullPodLimitMemory
+            });
+        }
+        
     }
     
 }

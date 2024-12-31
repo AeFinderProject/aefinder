@@ -17,4 +17,5 @@ public interface IAppDeployService
     Task CheckAppStatusAsync(string appId);
     Task FreezeAppAsync(string appId);
     Task UnFreezeAppAsync(string appId);
+    Task CheckAppAssetAsync(string appId);
 }

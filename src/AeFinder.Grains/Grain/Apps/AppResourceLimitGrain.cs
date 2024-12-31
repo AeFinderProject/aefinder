@@ -91,6 +91,16 @@ public class AppResourceLimitGrain : AeFinderGrain<AppResourceLimitState>, IAppR
         {
             State.EnableMultipleInstances = dto.EnableMultipleInstances.Value;
         }
+        
+        if (!dto.AppFullPodLimitCpuCore.IsNullOrEmpty())
+        {
+            State.AppFullPodLimitCpuCore = dto.AppFullPodLimitCpuCore;
+        }
+
+        if (!dto.AppFullPodLimitMemory.IsNullOrEmpty())
+        {
+            State.AppFullPodLimitMemory = dto.AppFullPodLimitMemory;
+        }
 
         await WriteStateAsync();
     }

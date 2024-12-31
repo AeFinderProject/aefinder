@@ -60,6 +60,7 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
         await CheckAppExistAsync(appId);
         await CheckCodeAsync(appId, code);
         await _appDeployService.CheckAppStatusAsync(appId);
+        await _appDeployService.CheckAppAssetAsync(appId);
 
         var subscription = ObjectMapper.Map<SubscriptionManifestDto, SubscriptionManifest>(manifest);
         var appSubscriptionGrain =
