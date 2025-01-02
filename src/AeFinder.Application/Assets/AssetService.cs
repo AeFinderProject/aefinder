@@ -44,7 +44,7 @@ public class AssetService : AeFinderAppService, IAssetService
         await _assetIndexRepository.AddOrUpdateAsync(index);
     }
 
-    public async Task<PagedResultDto<AssetDto>> GetListsAsync(Guid organizationId, GetAssetInput input)
+    public async Task<PagedResultDto<AssetDto>> GetListAsync(Guid organizationId, GetAssetInput input)
     {
         var queryable = await _assetIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o =>

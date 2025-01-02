@@ -7,6 +7,8 @@ public interface IOrderGrain : IGrainWithGuidKey
 {
     Task<OrderState> CreateAsync(Guid id, Guid organizationId, Guid userId, CreateOrderInput input);
     Task<OrderState> GetAsync();
-    Task UpdateOrderStatusAsync(OrderStatus status);
+    Task PayAsync(PaymentType paymentType);
     Task ConfirmPaymentAsync(string transactionId, DateTime paymentTime);
+    Task PaymentFailedAsync();
+    Task CancelAsync();
 }

@@ -4,6 +4,7 @@ using AeFinder.Grains.Grain.Merchandises;
 using AeFinder.Grains.State.Orders;
 using AeFinder.Merchandises;
 using AeFinder.Orders;
+using Volo.Abp;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
@@ -56,16 +57,23 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         await ReadStateAsync();
         return State;
     }
-
-    public async Task UpdateOrderStatusAsync(OrderStatus status)
+    
+    public async Task PayAsync(PaymentType paymentType)
     {
         await ReadStateAsync();
+        
         if (State.Id == Guid.Empty)
         {
             throw new EntityNotFoundException();
         }
-
-        State.Status = status;
+        
+        if (State.Status != OrderStatus.Unpaid || State.Status != OrderStatus.PayFailed)
+        {
+            throw new UserFriendlyException("Invalid status.");
+        }
+        
+        State.Status = OrderStatus.Confirming;
+        State.PaymentType = paymentType;
         await WriteStateAsync();
         
         await PublishOrderStatusChangedEventAsync();
@@ -79,9 +87,54 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         {
             throw new EntityNotFoundException();
         }
-        
+
+        if (State.Status != OrderStatus.Confirming)
+        {
+            throw new UserFriendlyException("Invalid status.");
+        }
+
         State.Status = OrderStatus.Paid;
         State.PaymentTime = paymentTime;
+        await WriteStateAsync();
+        
+        await PublishOrderStatusChangedEventAsync();
+    }
+    
+    public async Task PaymentFailedAsync()
+    {
+        await ReadStateAsync();
+        
+        if (State.Id == Guid.Empty)
+        {
+            throw new EntityNotFoundException();
+        }
+        
+        if (State.Status != OrderStatus.Confirming)
+        {
+            throw new UserFriendlyException("Invalid status.");
+        }
+        
+        State.Status = OrderStatus.PayFailed;
+        await WriteStateAsync();
+        
+        await PublishOrderStatusChangedEventAsync();
+    }
+    
+    public async Task CancelAsync()
+    {
+        await ReadStateAsync();
+        
+        if (State.Id == Guid.Empty)
+        {
+            throw new EntityNotFoundException();
+        }
+        
+        if (State.Status != OrderStatus.Unpaid)
+        {
+            throw new UserFriendlyException("Invalid status.");
+        }
+        
+        State.Status = OrderStatus.Canceled;
         await WriteStateAsync();
         
         await PublishOrderStatusChangedEventAsync();

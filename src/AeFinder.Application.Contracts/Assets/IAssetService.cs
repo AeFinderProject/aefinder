@@ -9,7 +9,7 @@ public interface IAssetService
 {
     Task AddOrUpdateIndexAsync(AssetChangedEto input);
     Task UpdateAssetAsync(OrderStatusChangedEto input);
-    Task<PagedResultDto<AssetDto>> GetListsAsync(Guid organizationId, GetAssetInput input);
+    Task<PagedResultDto<AssetDto>> GetListAsync(Guid organizationId, GetAssetInput input);
     Task StartUsingAssetAsync(Guid id, DateTime dateTime);
     Task ReleaseAssetAsync(Guid id, DateTime dateTime);
     Task PayAsync(Guid id, decimal paidAmount);

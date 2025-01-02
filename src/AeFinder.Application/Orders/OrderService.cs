@@ -38,7 +38,7 @@ public class OrderService : AeFinderAppService, IOrderService
         await _orderIndexRepository.AddOrUpdateAsync(index);
     }
 
-    public async Task<PagedResultDto<OrderDto>> GetListsAsync(Guid organizationId, GetOrderListInput input)
+    public async Task<PagedResultDto<OrderDto>> GetListAsync(Guid organizationId, GetOrderListInput input)
     {
         var queryable = await _orderIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o => o.OrganizationId == organizationId);
@@ -77,6 +77,13 @@ public class OrderService : AeFinderAppService, IOrderService
         };
     }
 
+    public async Task<OrderDto> GetAsync(Guid organizationId, Guid id)
+    {
+        var queryable = await _orderIndexRepository.GetQueryableAsync();
+        var order = queryable.FirstOrDefault(o => o.Id == id && o.OrganizationId == organizationId);
+        return ObjectMapper.Map<OrderIndex, OrderDto>(order);
+    }
+
     public async Task<OrderDto> CreateAsync(Guid organizationId, Guid userId, CreateOrderInput input)
     {
         var id = GuidGenerator.Create();
@@ -93,8 +100,8 @@ public class OrderService : AeFinderAppService, IOrderService
         var cost = await _orderCostProvider.CalculateCostAsync(input.Details, orderTime, endTime);
         return ObjectMapper.Map<OrderCost, OrderDto>(cost);
     }
-
-    public async Task UpdateOrderStatusAsync(Guid organizationId, Guid id, OrderStatus status)
+    
+    public async Task PayAsync(Guid organizationId, Guid id, PayInput input)
     {
         var orderGrain = _clusterClient.GetGrain<IOrderGrain>(id);
         var order = await orderGrain.GetAsync();
@@ -103,7 +110,7 @@ public class OrderService : AeFinderAppService, IOrderService
             throw new UserFriendlyException("No permission.");
         }
 
-        await orderGrain.UpdateOrderStatusAsync(status);
+        await orderGrain.PayAsync(input.PaymentType);
     }
 
     public async Task ConfirmPaymentAsync(Guid organizationId, Guid id, string transactionId, DateTime paymentTime)
@@ -115,5 +122,29 @@ public class OrderService : AeFinderAppService, IOrderService
             throw new UserFriendlyException("No permission.");
         }
         await orderGrain.ConfirmPaymentAsync(transactionId, paymentTime);
+    }
+    
+    public async Task PaymentFailedAsync(Guid organizationId, Guid id)
+    {
+        var orderGrain = _clusterClient.GetGrain<IOrderGrain>(id);
+        var order = await orderGrain.GetAsync();
+        if (order.OrganizationId != organizationId)
+        {
+            throw new UserFriendlyException("No permission.");
+        }
+
+        await orderGrain.PaymentFailedAsync();
+    }
+    
+    public async Task CancelAsync(Guid organizationId, Guid id)
+    {
+        var orderGrain = _clusterClient.GetGrain<IOrderGrain>(id);
+        var order = await orderGrain.GetAsync();
+        if (order.OrganizationId != organizationId)
+        {
+            throw new UserFriendlyException("No permission.");
+        }
+
+        await orderGrain.CancelAsync();
     }
 }

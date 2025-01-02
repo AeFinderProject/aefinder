@@ -32,7 +32,7 @@ public class AssetController : AeFinderController
     public async Task<PagedResultDto<AssetDto>> GetListsAsync(GetAssetInput input)
     {
         var orgId = await GetOrganizationIdAsync();
-        return await _assetService.GetListsAsync(orgId, input);
+        return await _assetService.GetListAsync(orgId, input);
     }
     
     [HttpPost]
