@@ -61,6 +61,7 @@ public class AeFinderBackGroundModule : AbpModule
         context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
         context.Services.Configure<GraphQLOptions>(configuration.GetSection("GraphQL"));
         Configure<ContractOptions>(configuration.GetSection("Contract"));
+        Configure<PodResourceLevelOptions>(configuration.GetSection("PodResourceLevel"));
     }
     
     //Disable TokenCleanupBackgroundWorker
