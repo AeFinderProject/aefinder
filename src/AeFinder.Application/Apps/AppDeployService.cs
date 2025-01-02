@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -251,8 +252,18 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
     public async Task CheckAppAssetAsync(string appId)
     {
-        //TODO Get app current asset
+        //Get app current asset
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var organizationId = await appGrain.GetOrganizationIdAsync();
+        var assets = await _assetService.GetListsAsync(Guid.Parse(organizationId), new GetAssetInput()
+        {
+            AppId = appId
+        });
         AssetDto processorAsset = null;
+        if (assets != null && assets.Items.Count > 0)
+        {
+            processorAsset = assets.Items.FirstOrDefault();
+        }
         
         //If app asset is null, check if it is internal organization
         if (processorAsset == null)
@@ -268,7 +279,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
                 AppFullPodLimitMemory = _internalOrganizationOptions.DefaultFullPodLimitMemory
             });
         }
-        
     }
     
 }

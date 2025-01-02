@@ -1,6 +1,9 @@
+using AeFinder.Apps;
 using AeFinder.Assets;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Commons;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Merchandises;
 using AeFinder.Options;
 using AeFinder.User;
@@ -25,6 +28,8 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
     private readonly IAeFinderIndexerProvider _indexerProvider;
     private readonly ContractOptions _contractOptions;
     private readonly IAssetService _assetService;
+    private readonly IAppDeployService _appDeployService;
+    private readonly GraphQLOptions _graphQlOptions;
     
     public ChargeWarningWorker(AbpAsyncTimer timer, 
         ILogger<ChargeWarningWorker> logger, IClusterClient clusterClient, 
@@ -33,7 +38,8 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
         IOrganizationInformationProvider organizationInformationProvider,
         IAeFinderIndexerProvider indexerProvider,
         IOptionsSnapshot<ContractOptions> contractOptions,
-        IAssetService assetService,
+        IAssetService assetService,IOptionsSnapshot<GraphQLOptions> graphQlOptions,
+        IAppDeployService appDeployService,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -43,6 +49,9 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
         _organizationInformationProvider = organizationInformationProvider;
         _indexerProvider = indexerProvider;
         _contractOptions = contractOptions.Value;
+        _assetService = assetService;
+        _appDeployService = appDeployService;
+        _graphQlOptions = graphQlOptions.Value;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = _scheduledTaskOptions.ChargeWarningTaskPeriodMilliSeconds;
     }
@@ -70,7 +79,9 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
             int daysUntilEndOfMonth = (lastDayOfMonth - today).Days;
             if (daysUntilEndOfMonth <= _scheduledTaskOptions.RenewalAdvanceWarningDays)
             {
-                //TODO Get next month Lock From fee
+                //Get next month Lock From fee
+                var currentMonthFee =
+                    await _assetService.CalculateMonthlyCostAsync(organizationUnitDto.Id, DateTime.UtcNow);
                 
                 //Get organization account balance
                 var organizationWalletAddress =
@@ -83,22 +94,67 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
                 var userOrganizationBalanceInfoDto = await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
                     _contractOptions.BillingContractChainId, 0, 10);
                 var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
+
+                if (organizationAccountBalance < currentMonthFee)
+                {
+                    //TODO Send email warning
+                    
+                    _logger.LogWarning(
+                        $"The organization account balance is insufficient to cover the current pre-deduction amount {currentMonthFee}. Please top up in time.");
+                }
             }
 
             //Check app free asset is expired
             var assets = await _assetService.GetListsAsync(organizationUnitDto.Id, new GetAssetInput()
             {
                 Category = MerchandiseCategory.Resource,
-                Type = MerchandiseType.Processor
+                Type = MerchandiseType.Processor,
+                SkipCount = 0,
+                MaxResultCount = 50
             });
+            var organizationAppGrain =
+                _clusterClient.GetGrain<IOrganizationAppGrain>(
+                    GrainIdHelper.GetOrganizationGrainId(organizationId));
+            var appIds = await organizationAppGrain.GetAppsAsync();
             if (assets == null || assets.TotalCount == 0)
             {
-                continue;
+                if (appIds != null && appIds.Count > 0)
+                {
+                    foreach (var appId in appIds)
+                    {
+                        if (appId != _graphQlOptions.BillingIndexerId)
+                        {
+                            await _appDeployService.FreezeAppAsync(appId);
+                        }
+                    }
+                }
             }
-
-            foreach (var asset in assets.Items)
+            else
             {
+                //find no asset app
+                foreach (var asset in assets.Items)
+                {
+                    if (appIds.Contains(asset.AppId))
+                    {
+                        appIds.Remove(asset.AppId);
+                    }
+                }
+                //freeze no asset app
+                if (appIds != null && appIds.Count > 0)
+                {
+                    foreach (var appId in appIds)
+                    {
+                        if (appId != _graphQlOptions.BillingIndexerId)
+                        {
+                            await _appDeployService.FreezeAppAsync(appId);
+                        }
+                    }
+                }
             }
+            
+            
+            //TODO Check app disk
         }
     }
+    
 }
