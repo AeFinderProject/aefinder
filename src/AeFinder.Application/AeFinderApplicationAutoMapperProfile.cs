@@ -7,6 +7,7 @@ using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Apps.Eto;
 using AeFinder.Assets;
+using AeFinder.Billings;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
 using AeFinder.Entities.Es;
@@ -17,6 +18,7 @@ using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.ApiKeys;
 using AeFinder.Grains.State.Apps;
 using AeFinder.Grains.State.Assets;
+using AeFinder.Grains.State.Billings;
 using AeFinder.Grains.State.Merchandises;
 using AeFinder.Grains.State.Orders;
 using AeFinder.Grains.State.Subscriptions;
@@ -226,5 +228,15 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<OrderCost, OrderDto>();
         CreateMap<OrderCostDetail, OrderDetailState>();
         CreateMap<OrderCostDetail, OrderDto>();
+        
+        // Billing
+        CreateMap<BillingState, BillingChangedEto>();
+        CreateMap<BillingChangedEto, BillingIndex>();
+        CreateMap<BillingState, BillingDto>();
+        CreateMap<BillingIndex, BillingDto>();
+        CreateMap<BillingDetailState, BillingDetailChangedEto>();
+        CreateMap<BillingDetailChangedEto, BillingDetailIndex>();
+        CreateMap<BillingDetailState, BillingDetailDto>();
+        CreateMap<BillingDetailIndex, BillingDetailDto>();
     }
 }
