@@ -257,4 +257,10 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         return await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(publicKeyVal, signatureVal,
             timestampVal, caHash, address, chainId);
     }
+
+    public async Task<List<IdentityUser>> GetUsersInOrganizationUnitAsync(Guid organizationId)
+    {
+        var users = await UserRepository.GetUsersInOrganizationUnitAsync(organizationId);
+        return users;
+    }
 }

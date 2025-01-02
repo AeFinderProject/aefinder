@@ -15,6 +15,7 @@ using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Threading;
 using Volo.Abp.Uow;
+using Volo.Abp.Users;
 
 namespace AeFinder.BackgroundWorker.ScheduledTask;
 
@@ -32,7 +33,8 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
     private readonly IAssetService _assetService;
     private readonly IAppDeployService _appDeployService;
     private readonly IBillingContractProvider _billingContractProvider;
-    
+    private readonly IUserAppService _userAppService;
+    private readonly IUserInformationProvider _userInformationProvider;
     
     public BillingIndexerPollingWorker(AbpAsyncTimer timer, 
         ILogger<BillingIndexerPollingWorker> logger, IClusterClient clusterClient, 
@@ -45,6 +47,8 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
         IOptionsSnapshot<GraphQLOptions> graphQlOptions,
         IAppDeployService appDeployService,
         IBillingContractProvider billingContractProvider,
+        IUserAppService userAppService,
+        IUserInformationProvider userInformationProvider,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -59,6 +63,8 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
         _graphQlOptions = graphQlOptions.Value;
         _appDeployService = appDeployService;
         _billingContractProvider = billingContractProvider;
+        _userAppService = userAppService;
+        _userInformationProvider = userInformationProvider;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = _scheduledTaskOptions.BillingIndexerPollingTaskPeriodMilliSeconds;
     }
@@ -78,6 +84,36 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
         {
             var organizationId = organizationUnitDto.Id.ToString();
             var organizationName = organizationUnitDto.DisplayName;
+            
+            //Check organization wallet address is bind
+            var organizationWalletAddress =
+                await _organizationInformationProvider.GetOrganizationWalletAddressAsync(organizationId);
+            if (string.IsNullOrEmpty(organizationWalletAddress))
+            {
+                var users = await _userAppService.GetUsersInOrganizationUnitAsync(organizationUnitDto.Id);
+                if (users == null)
+                {
+                    _logger.LogWarning($"No users under the organization {organizationName}");
+                    continue;
+                }
+
+                var defaultUser = users.FirstOrDefault();
+                var userExtensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(defaultUser.Id);
+                if (string.IsNullOrEmpty(userExtensionInfo.WalletAddress))
+                {
+                    _logger.LogWarning($"The user {defaultUser.Id} has not yet linked a wallet address.");
+                    continue;
+                }
+
+                organizationWalletAddress =
+                    await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
+                        userExtensionInfo.WalletAddress);
+                if (string.IsNullOrEmpty(organizationWalletAddress))
+                {
+                    _logger.LogWarning($"Organization {organizationId} wallet address is null or empty, please check.");
+                    continue;
+                }
+            }
 
             //Handle advance payment bills
             var advancePaymentBills =
