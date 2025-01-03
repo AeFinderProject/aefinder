@@ -48,29 +48,30 @@ public class AssetService : AeFinderAppService, IAssetService
     {
         var queryable = await _assetIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o =>
-            o.OrganizationId == organizationId && (o.Status == (int)AssetStatus.Unused || o.Status == (int)AssetStatus.Using));
+            o.OrganizationId == organizationId &&
+            (o.Status == (int)AssetStatus.Unused || o.Status == (int)AssetStatus.Using));
         if (!input.AppId.IsNullOrWhiteSpace())
         {
             queryable = queryable.Where(o => o.AppId == input.AppId);
         }
-        
+
         if (input.IsFree.HasValue)
         {
             queryable = queryable.Where(o => o.FreeQuantity > 0);
         }
-        
+
         if (input.Type.HasValue)
         {
             queryable = queryable.Where(o => o.Merchandise.Type == (int)input.Type);
         }
-        
+
         if (input.Category.HasValue)
         {
             queryable = queryable.Where(o => o.Merchandise.Category == (int)input.Category);
         }
 
         var totalCount = queryable.Count();
-        var indices = queryable.Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
+        var indices = queryable.OrderBy(o => o.Id).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
 
         return new PagedResultDto<AssetDto>
         {
@@ -99,15 +100,7 @@ public class AssetService : AeFinderAppService, IAssetService
             if (orderDetail.OriginalAsset != null)
             {
                 var originalGrain = _clusterClient.GetGrain<IAssetGrain>(orderDetail.OriginalAsset.Id);
-                if (orderDetail.Merchandise.Type == MerchandiseType.ApiQuery)
-                {
-                    await originalGrain.SuspendAsync();
-                }
-                else
-                {
-                    await originalGrain.ReleaseAsync(input.OrderTime);
-                }
-
+                await originalGrain.SuspendAsync();
                 changedAsset.OriginalAsset = orderDetail.OriginalAsset;
             }
 
@@ -184,9 +177,44 @@ public class AssetService : AeFinderAppService, IAssetService
         await _distributedEventBus.PublishAsync(appAssetChangedEto);
     }
 
-    public Task<decimal> CalculateMonthlyCostAsync(Guid organizationId, DateTime dateTime)
+    public async Task<decimal> CalculateMonthlyCostAsync(Guid organizationId, DateTime dateTime)
     {
-        throw new NotImplementedException();
+        var beginTime = dateTime.ToMonthDate();
+        var endTime = beginTime.AddMonths(1);
+
+        var assets = new List<AssetIndex>();
+        var queryable = await _assetIndexRepository.GetQueryableAsync();
+        queryable = queryable
+            .Where(o => o.OrganizationId == organizationId && o.StartTime < beginTime && o.EndTime >= beginTime)
+            .OrderBy(o => o.Merchandise.Type).OrderBy(o => o.StartTime);
+        assets = queryable.ToList();
+
+        var totalAmount = 0M;
+        foreach (var asset in assets)
+        {
+            var quantity = 0L;
+            switch ((ChargeType)asset.Merchandise.ChargeType)
+            {
+                case ChargeType.Hourly:
+                    quantity = (long)Math.Ceiling((endTime - beginTime).TotalHours);
+                    break;
+                case ChargeType.Time:
+                    quantity = asset.Quantity;
+                    break;
+            }
+
+            var amount =
+                (quantity * asset.Replicas - asset.FreeQuantity * asset.FreeReplicas) *
+                asset.Merchandise.Price;
+            if (amount < 0)
+            {
+                amount = 0;
+            }
+
+            totalAmount += amount;
+        }
+        
+        return totalAmount;
     }
 
     public async Task StartUsingAssetAsync(Guid id, DateTime dateTime)

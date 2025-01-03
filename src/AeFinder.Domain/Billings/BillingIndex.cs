@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AeFinder.Assets;
 using AeFinder.Merchandises;
 using AElf.EntityMapping.Entities;
 using Nest;
@@ -26,10 +27,9 @@ public class BillingIndex : AeFinderDomainEntity<Guid>, IEntityMappingEntity
 public class BillingDetailIndex
 {
     public MerchandiseIndex Merchandise { get; set; }
-    [Keyword]
-    public string AppId { get; set; }
-    public int Quantity { get; set; }
-    public int Replicas { get; set; }
+    public AssetIndex Asset { get; set; }
+    public long Quantity { get; set; }
+    public long Replicas { get; set; }
     public decimal RefundAmount { get; set; }
     public decimal PaidAmount { get; set; }
 }

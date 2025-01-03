@@ -207,12 +207,14 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<MerchandiseState, MerchandiseChangedEto>();
         CreateMap<MerchandiseChangedEto, MerchandiseIndex>();
         CreateMap<MerchandiseIndex, MerchandiseDto>();
+        CreateMap<MerchandiseIndex, MerchandiseState>();
 
         // Asset
         CreateMap<CreateAssetInput, AssetState>();
         CreateMap<AssetState, AssetChangedEto>();
         CreateMap<AssetChangedEto, AssetIndex>();
         CreateMap<AssetIndex, AssetDto>();
+        CreateMap<AssetIndex, AssetState>();
 
         // Order
         CreateMap<OrderState, OrderChangedEto>();

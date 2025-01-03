@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AeFinder.Assets;
 using AeFinder.Merchandises;
 
 namespace AeFinder.Billings;
@@ -23,9 +24,9 @@ public class BillingChangedEto
 public class BillingDetailChangedEto
 {
     public MerchandiseChangedEto Merchandise { get; set; }
-    public string AppId { get; set; }
-    public int Quantity { get; set; }
-    public int Replicas { get; set; }
+    public AssetChangedEto Asset { get; set; }
+    public long Quantity { get; set; }
+    public long Replicas { get; set; }
     public decimal RefundAmount { get; set; }
     public decimal PaidAmount { get; set; }
 }

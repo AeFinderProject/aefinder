@@ -6,6 +6,8 @@ using AElf.EntityMapping.Repositories;
 using Orleans;
 using Volo.Abp.Application.Dtos;
 using System.Linq;
+using AeFinder.Grains.Grain.Assets;
+using AeFinder.Grains.State.Billings;
 
 namespace AeFinder.Billings;
 
@@ -13,12 +15,14 @@ public class BillingService : AeFinderAppService, IBillingService
 {
     private readonly IClusterClient _clusterClient;
     private readonly IEntityMappingRepository<BillingIndex, Guid> _billingIndexRepository;
+    private readonly IEnumerable<IBillingGenerator> _billingGenerators;
 
     public BillingService(IEntityMappingRepository<BillingIndex, Guid> billingIndexRepository,
-        IClusterClient clusterClient)
+        IClusterClient clusterClient, IEnumerable<IBillingGenerator> billingGenerators)
     {
         _billingIndexRepository = billingIndexRepository;
         _clusterClient = clusterClient;
+        _billingGenerators = billingGenerators.ToList();
     }
 
     public async Task AddOrUpdateIndexAsync(BillingChangedEto eto)
@@ -77,9 +81,14 @@ public class BillingService : AeFinderAppService, IBillingService
         };
     }
 
-    public Task<BillingDto> CreateAsync(Guid organizationId, BillingType type, DateTime dateTime)
+    public async Task<BillingDto> CreateAsync(Guid organizationId, BillingType type, DateTime dateTime)
     {
-        throw new NotImplementedException();
+        var generator = _billingGenerators.First(o => o.BillingType == type);
+        var billing = await generator.GenerateBillingAsync(organizationId, dateTime);
+
+        var billingGrain = _clusterClient.GetGrain<IBillingGrain>(billing.Id);
+        await billingGrain.CreateAsync(billing);
+        return ObjectMapper.Map<BillingState, BillingDto>(billing);
     }
 
     public async Task PayAsync(Guid id, string transactionId, DateTime paymentTime)
@@ -91,6 +100,17 @@ public class BillingService : AeFinderAppService, IBillingService
     public async Task ConfirmPaymentAsync(Guid id)
     {
         var billingGrain = _clusterClient.GetGrain<IBillingGrain>(id);
+
+        var billing = await billingGrain.GetAsync();
+        if (billing.Type == BillingType.AdvancePayment)
+        {
+            foreach (var detail in billing.Details)
+            {
+                var assetGrain = _clusterClient.GetGrain<IAssetGrain>(detail.Asset.Id);
+                await assetGrain.PayAsync(detail.PaidAmount);
+            }
+        }
+
         await billingGrain.ConfirmPaymentAsync();
     }
 }

@@ -2,6 +2,7 @@ using System;
 using AeFinder.AmazonCloud;
 using AeFinder.ApiKeys;
 using AeFinder.App.Deploy;
+using AeFinder.Billings;
 using AeFinder.BlockSync;
 using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
@@ -58,6 +59,9 @@ public class AeFinderApplicationModule : AbpModule
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
         context.Services.Configure<SignatureGrantOptions>(configuration.GetSection("Signature"));
         context.Services.Configure<ChainOptions>(configuration.GetSection("Chains"));
+        context.Services.AddTransient<IBillingGenerator, AdvancePaymentBillingGenerator>();
+        context.Services.AddTransient<IBillingGenerator, SettlementBillingGenerator>();
+        context.Services.AddTransient<IResourceUsageProvider, ApiKeyUsageProvider>();
         
         Configure<AbpClockOptions>(options =>
         {
