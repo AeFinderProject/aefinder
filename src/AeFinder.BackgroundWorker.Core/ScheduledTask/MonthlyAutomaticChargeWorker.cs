@@ -141,7 +141,6 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
             else
             {
                 _logger.LogError($"Bill {settlementBill.Id.ToString()} payment failed");
-                //TODO Set charge bill status to failed
             }
             
         }

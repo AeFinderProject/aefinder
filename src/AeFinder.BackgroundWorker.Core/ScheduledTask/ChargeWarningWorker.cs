@@ -106,7 +106,7 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
 
                 if (organizationAccountBalance < nextMonthFee)
                 {
-                    //TODO Send email warning
+                    //Send email warning
                     string monthFullName = monthTime.ToString("MMMM");
                     var userInfo =
                         await _userAppService.GetDefaultUserInOrganizationUnitAsync(organizationUnitDto.Id);
@@ -119,6 +119,9 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
                 }
             }
 
+            //Check if it is within the expiration buffer period
+            
+            
             //Check app free asset is expired
             var assets = await _assetService.GetListAsync(organizationUnitDto.Id, new GetAssetInput()
             {
