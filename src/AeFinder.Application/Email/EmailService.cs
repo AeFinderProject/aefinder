@@ -14,6 +14,6 @@ public class EmailService : AeFinderAppService, IEmailService
     public async Task SendEmailTest(string email)
     {
         await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync(email, "testAddress",
-            22);
+            22,"aa123");
     }
 }

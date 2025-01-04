@@ -37,6 +37,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
     private readonly IUserAppService _userAppService;
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IBillingEmailSender _billingEmailSender;
+    private readonly IAppEmailSender _appEmailSender;
     
     public BillingIndexerPollingWorker(AbpAsyncTimer timer, 
         ILogger<BillingIndexerPollingWorker> logger, IClusterClient clusterClient, 
@@ -301,12 +302,14 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                 });
 
                 //freeze app
+                var user = await _userAppService.GetDefaultUserInOrganizationUnitAsync(organizationGuid);
                 foreach (var assetDto in processorAssets.Items)
                 {
                     var appId = assetDto.AppId;
                     if (appId != _graphQlOptions.BillingIndexerId)
                     {
                         await _appDeployService.FreezeAppAsync(appId);
+                        await _appEmailSender.SendAeIndexerFreezeNotificationAsync(user.Email, appId);
                     }
                 }
 
