@@ -48,6 +48,15 @@ public class BillingGrain : AeFinderGrain<BillingState>, IBillingGrain
         await WriteStateAsync();
     }
     
+    public async Task PaymentFailedAsync()
+    {
+        await ReadStateAsync();
+
+        State.Status = BillingStatus.Failed;
+
+        await WriteStateAsync();
+    }
+    
     protected override async Task WriteStateAsync()
     {
         await PublishEventAsync();

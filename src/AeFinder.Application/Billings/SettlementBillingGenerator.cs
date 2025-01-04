@@ -101,8 +101,9 @@ public class SettlementBillingGenerator : IBillingGenerator
         
         var queryable = await _assetIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o =>
-                o.OrganizationId == organizationId && o.Status != (int)AssetStatus.Using &&
-                o.StartTime < endTime && o.EndTime >= beginTime).OrderBy(o => o.Merchandise.Type)
+                o.OrganizationId == organizationId && 
+                o.StartTime < endTime && o.EndTime >= beginTime)
+            .OrderBy(o => o.Merchandise.Type)
             .OrderBy(o => o.StartTime)
             .Skip(skip).Take(maxCount);
         
@@ -113,8 +114,10 @@ public class SettlementBillingGenerator : IBillingGenerator
         {
             skip += maxCount;
             queryable = queryable.Where(o =>
-                    o.OrganizationId == organizationId && o.Status != (int)AssetStatus.Using &&
-                    o.StartTime < endTime && o.EndTime >= beginTime).OrderBy(o => o.Merchandise.Type)
+                    o.OrganizationId == organizationId && 
+                    o.StartTime < endTime && 
+                    o.EndTime >= beginTime)
+                .OrderBy(o => o.Merchandise.Type)
                 .OrderBy(o => o.StartTime)
                 .Skip(skip).Take(maxCount);
             assets = queryable.ToList();

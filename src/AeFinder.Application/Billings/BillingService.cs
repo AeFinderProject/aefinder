@@ -113,4 +113,10 @@ public class BillingService : AeFinderAppService, IBillingService
 
         await billingGrain.ConfirmPaymentAsync();
     }
+    
+    public async Task PaymentFailedAsync(Guid id)
+    {
+        var billingGrain = _clusterClient.GetGrain<IBillingGrain>(id);
+        await billingGrain.PaymentFailedAsync();
+    }
 }

@@ -5,6 +5,7 @@ using AeFinder.Merchandises;
 using Volo.Abp;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
+using Volo.Abp.Timing;
 
 namespace AeFinder.Grains.Grain.Assets;
 
@@ -76,6 +77,18 @@ public class AssetGrain : AeFinderGrain<AssetState>, IAssetGrain
 
         State.Status = AssetStatus.Using;
         State.StartTime = dateTime;
+        State.EndTime = State.StartTime.AddYears(AeFinderApplicationConsts.DefaultAssetExpiration);
+        
+        if (State.FreeQuantity > 0)
+        {
+            var merchandiseGrain = GrainFactory.GetGrain<IMerchandiseGrain>(State.MerchandiseId);
+            var merchandise = await merchandiseGrain.GetAsync();
+            if (merchandise.ChargeType == ChargeType.Hourly)
+            {
+                State.EndTime = State.StartTime.AddHours(State.FreeQuantity);
+            }
+        }
+
         await WriteStateAsync();
     }
     

@@ -1,6 +1,7 @@
 using AeFinder.ApiKeys;
 using AeFinder.BlockScan;
 using AeFinder.Grains.Grain.Blocks;
+using AeFinder.Grains.Grain.Orders;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,6 +46,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     services.AddTransient(p => Mock.Of<IBlockFilterAppService>());
                     services.AddAutoMapper(typeof(AeFinderApplicationModule).Assembly);
                     services.AddTransient<IClock, Clock>();
+                    services.AddTransient<IOrderCostProvider, OrderCostProvider>();
                     services.OnExposing(onServiceExposingContext =>
                     {
                         //Register types for IObjectMapper<TSource, TDestination> if implements

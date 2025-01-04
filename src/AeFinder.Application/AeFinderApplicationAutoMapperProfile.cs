@@ -215,6 +215,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AssetChangedEto, AssetIndex>();
         CreateMap<AssetIndex, AssetDto>();
         CreateMap<AssetIndex, AssetState>();
+        CreateMap<AssetState, AssetDto>();
 
         // Order
         CreateMap<OrderState, OrderChangedEto>();

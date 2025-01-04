@@ -7,8 +7,8 @@ namespace AeFinder.Orders;
 [GenerateSerializer]
 public class CreateOrderInput
 {
-    [Id(0)]public List<CreateOrderDetail> Details  { get; set; }
-    [Id(1)]public Dictionary<string,string> ExtraData { get; set; }
+    [Id(0)] public List<CreateOrderDetail> Details { get; set; } = new();
+    [Id(1)] public Dictionary<string, string> ExtraData { get; set; } = new();
 }
 
 [GenerateSerializer]

@@ -38,7 +38,7 @@ public class OrderEventHandler :
                 }
                 break;
             case OrderStatus.Paid:
-                await _assetService.UpdateAssetAsync(eventData);
+                await _assetService.ChangeAssetAsync(eventData);
                 break;
             case OrderStatus.Canceled:
                 foreach (var detail in eventData.Details)
