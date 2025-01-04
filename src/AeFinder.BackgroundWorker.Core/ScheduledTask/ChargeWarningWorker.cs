@@ -78,6 +78,7 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
         {
             var organizationId = organizationUnitDto.Id.ToString();
             var organizationName = organizationUnitDto.DisplayName;
+            var now = DateTime.UtcNow;
             _logger.LogInformation("[ChargeWarningWorker] Check organization {0} {1}.", organizationName,
                 organizationId);
             
@@ -120,7 +121,11 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
             }
 
             //Check if it is within the expiration buffer period
-            
+            var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
+            if (firstDayOfThisMonth.AddDays(_scheduledTaskOptions.UnpaidBillTimeOutDays) > now)
+            {
+                continue;
+            }
             
             //Check app free asset is expired
             var assets = await _assetService.GetListAsync(organizationUnitDto.Id, new GetAssetInput()
@@ -141,6 +146,17 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
                 {
                     foreach (var appId in appIds)
                     {
+                        var appGrain=_clusterClient.GetGrain<IAppGrain>(
+                            GrainIdHelper.GenerateAppGrainId(appId));
+                        var appDto = await appGrain.GetAsync();
+                        
+                        //TODO Check if the current AeIndexer assets are in the cancellation period
+                        
+                        if (appDto.Status == AppStatus.Frozen || appDto.Status == AppStatus.Deleted)
+                        {
+                            continue;
+                        }
+
                         if (appId != _graphQlOptions.BillingIndexerId)
                         {
                             await _appDeployService.FreezeAppAsync(appId);
@@ -164,6 +180,17 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
                 {
                     foreach (var appId in appIds)
                     {
+                        var appGrain=_clusterClient.GetGrain<IAppGrain>(
+                            GrainIdHelper.GenerateAppGrainId(appId));
+                        var appDto = await appGrain.GetAsync();
+                        
+                        //TODO Check if the current AeIndexer assets are in the cancellation period
+                        
+                        if (appDto.Status == AppStatus.Frozen || appDto.Status == AppStatus.Deleted)
+                        {
+                            continue;
+                        }
+                        
                         if (appId != _graphQlOptions.BillingIndexerId)
                         {
                             await _appDeployService.FreezeAppAsync(appId);
@@ -173,6 +200,7 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
                 }
             }
             
+            //TODO Set unpaid bills failed
             
             //TODO Check app disk
         }

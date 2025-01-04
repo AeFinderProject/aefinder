@@ -479,25 +479,25 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                     organizationName,newAdvancePaymentBill.PaidAmount, organizationAccountBalance,organizationWalletAddress
                 );
 
-                //Get organization asset
-                var processorAssets = await _assetService.GetListAsync(organizationGuid, new GetAssetInput()
-                {
-                    Type = MerchandiseType.Processor,
-                    SkipCount = 0,
-                    MaxResultCount = 50
-                });
+                // //Get organization asset
+                // var processorAssets = await _assetService.GetListAsync(organizationGuid, new GetAssetInput()
+                // {
+                //     Type = MerchandiseType.Processor,
+                //     SkipCount = 0,
+                //     MaxResultCount = 50
+                // });
 
-                //freeze app
-                var user = await _userAppService.GetDefaultUserInOrganizationUnitAsync(organizationGuid);
-                foreach (var assetDto in processorAssets.Items)
-                {
-                    var appId = assetDto.AppId;
-                    if (appId != _graphQlOptions.BillingIndexerId)
-                    {
-                        await _appDeployService.FreezeAppAsync(appId);
-                        await _appEmailSender.SendAeIndexerFreezeNotificationAsync(user.Email, appId);
-                    }
-                }
+                // //freeze app
+                // var user = await _userAppService.GetDefaultUserInOrganizationUnitAsync(organizationGuid);
+                // foreach (var assetDto in processorAssets.Items)
+                // {
+                //     var appId = assetDto.AppId;
+                //     if (appId != _graphQlOptions.BillingIndexerId)
+                //     {
+                //         await _appDeployService.FreezeAppAsync(appId);
+                //         await _appEmailSender.SendAeIndexerFreezeNotificationAsync(user.Email, appId);
+                //     }
+                // }
 
                 return;
             }
