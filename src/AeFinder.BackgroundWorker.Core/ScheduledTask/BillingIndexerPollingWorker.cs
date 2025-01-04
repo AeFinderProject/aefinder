@@ -3,6 +3,7 @@ using AeFinder.Assets;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Billings;
 using AeFinder.Commons;
+using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Merchandises;
 using AeFinder.Options;
@@ -35,6 +36,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
     private readonly IBillingContractProvider _billingContractProvider;
     private readonly IUserAppService _userAppService;
     private readonly IUserInformationProvider _userInformationProvider;
+    private readonly IBillingEmailSender _billingEmailSender;
     
     public BillingIndexerPollingWorker(AbpAsyncTimer timer, 
         ILogger<BillingIndexerPollingWorker> logger, IClusterClient clusterClient, 
@@ -49,6 +51,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
         IBillingContractProvider billingContractProvider,
         IUserAppService userAppService,
         IUserInformationProvider userInformationProvider,
+        IBillingEmailSender billingEmailSender,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -65,6 +68,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
         _billingContractProvider = billingContractProvider;
         _userAppService = userAppService;
         _userInformationProvider = userInformationProvider;
+        _billingEmailSender = billingEmailSender;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = _scheduledTaskOptions.BillingIndexerPollingTaskPeriodMilliSeconds;
     }
@@ -184,7 +188,16 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
             //Update bill transaction id & status
             _logger.LogInformation(
                 $"[BillingIndexerPollingWorker]Get transaction {transactionResultDto.TransactionId} of billing {transactionResultDto.BillingId}");
-            await _billingService.ConfirmPaymentAsync(advancePaymentBill.Id);
+            // await _billingService.ConfirmPaymentAsync(advancePaymentBill.Id);
+            await _billingService.PayAsync(advancePaymentBill.Id, transactionResultDto.TransactionId,
+                transactionResultDto.Metadata.Block.BlockTime);
+            
+            //Send email
+            var userInfo =
+                await _userAppService.GetDefaultUserInOrganizationUnitAsync(advancePaymentBill.OrganizationId);
+            await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync(userInfo.Email,
+                transactionResultDto.Address, transactionResultDto.Amount
+            );
         }
     }
 

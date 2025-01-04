@@ -20,4 +20,5 @@ public interface IUserAppService
 
     Task<IdentityUserExtensionDto> BindUserWalletAsync(BindUserWalletInput input);
     Task<List<IdentityUser>> GetUsersInOrganizationUnitAsync(Guid organizationId);
+    Task<IdentityUser> GetDefaultUserInOrganizationUnitAsync(Guid organizationId);
 }

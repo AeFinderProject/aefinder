@@ -263,4 +263,10 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         var users = await UserRepository.GetUsersInOrganizationUnitAsync(organizationId);
         return users;
     }
+
+    public async Task<IdentityUser> GetDefaultUserInOrganizationUnitAsync(Guid organizationId)
+    {
+        var users = await UserRepository.GetUsersInOrganizationUnitAsync(organizationId);
+        return users.FirstOrDefault();
+    }
 }
