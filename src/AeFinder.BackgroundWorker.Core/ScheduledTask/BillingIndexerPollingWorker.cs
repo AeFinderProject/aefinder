@@ -119,6 +119,8 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                     continue;
                 }
             }
+            
+            // var paymentOrders=await 
 
             //Handle advance payment bills
             var advancePaymentBills =

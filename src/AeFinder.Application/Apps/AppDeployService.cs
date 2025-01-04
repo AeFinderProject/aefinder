@@ -6,6 +6,7 @@ using AeFinder.App.Deploy;
 using AeFinder.Apps.Dto;
 using AeFinder.Assets;
 using AeFinder.BlockScan;
+using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
@@ -33,6 +34,8 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IAssetService _assetService;
     private readonly InternalOrganizationOptions _internalOrganizationOptions;
+    private readonly IUserAppService _userAppService;
+    private readonly IAppEmailSender _appEmailSender;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
@@ -40,6 +43,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         IOptionsSnapshot<AppDeployOptions> appDeployOptions,
         IAppOperationSnapshotProvider appOperationSnapshotProvider,
         IOptionsSnapshot<InternalOrganizationOptions> internalOrganizationOptions,
+        IUserAppService userAppService, IAppEmailSender appEmailSender,
         IAppResourceLimitProvider appResourceLimitProvider)
     {
         _clusterClient = clusterClient;
@@ -50,6 +54,8 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _organizationAppService = organizationAppService;
         _appDeployOptions = appDeployOptions.Value;
         _internalOrganizationOptions = internalOrganizationOptions.Value;
+        _userAppService = userAppService;
+        _appEmailSender = appEmailSender;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
@@ -192,6 +198,11 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         await appGrain.DeleteAppAsync();
         Logger.LogInformation($"[ObliterateAppAsync] App {appId} is deleted.");
+        
+        //Send email
+        var organizationGuid = Guid.Parse(organizationId);
+        var user = await _userAppService.GetDefaultUserInOrganizationUnitAsync(organizationGuid);
+        await _appEmailSender.SendAeIndexerDeletedNotificationAsync(user.Email, appId);
     }
     
     public async Task FreezeAppAsync(string appId)

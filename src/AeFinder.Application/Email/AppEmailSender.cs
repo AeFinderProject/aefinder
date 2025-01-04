@@ -58,15 +58,15 @@ public class AppEmailSender:IAppEmailSender, ISingletonDependency
         });
     }
     
-    public async Task SendAeIndexerDeletedNotificationAsync(string email, string appName)
+    public async Task SendAeIndexerDeletedNotificationAsync(string email, string appId)
     {
         await SendEmailAsync(new SendEmailInput
         {
             From = _awsEmailOptions.From,
             To = email,
             Body =
-                EmailBodyBuilder.BuildAeIndexerDeletedNotificationTemplate(appName),
-            Subject = $"AeIndexer {appName} is deleted"
+                EmailBodyBuilder.BuildAeIndexerDeletedNotificationTemplate(appId),
+            Subject = $"AeIndexer {appId} is deleted"
         });
     }
     
