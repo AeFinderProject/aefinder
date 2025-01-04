@@ -13,7 +13,7 @@ public interface IBillingEmailSender
     Task SendChargeBalanceSuccessfulNotificationAsync(string email, string organizationWalletAddress,
         decimal chargeAmount, string transactionId);
 
-    Task SendAutoRenewalPreDeductionSuccessfulNotificationAsync(string email, string month,
+    Task SendAutoRenewalPreDeductionFailedNotificationAsync(string email, string month,
         string organizationName, decimal billAmount, decimal lockFromAmount);
 
     Task SendPreDeductionBalanceInsufficientNotificationAsync(string email, string month,

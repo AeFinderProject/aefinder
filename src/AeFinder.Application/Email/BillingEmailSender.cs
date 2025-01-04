@@ -62,7 +62,7 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
         });
     }
 
-    public async Task SendAutoRenewalPreDeductionSuccessfulNotificationAsync(string email, string month,
+    public async Task SendAutoRenewalPreDeductionFailedNotificationAsync(string email, string month,
         string organizationName, decimal billAmount, decimal lockFromAmount)
     {
         await SendEmailAsync(new SendEmailInput
@@ -70,9 +70,9 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
             From = _awsEmailOptions.From,
             To = email,
             Body =
-                EmailBodyBuilder.BuildAutoRenewalPreDeductionSuccessfulTemplate(month, organizationName,
-                    billAmount,lockFromAmount),
-            Subject = "Auto renewal pre-deduction successfully"
+                EmailBodyBuilder.BuildAutoRenewalPreDeductionFailedTemplate(month, organizationName,
+                    billAmount, lockFromAmount),
+            Subject = "Auto renewal pre-deduction failed"
         });
     }
 

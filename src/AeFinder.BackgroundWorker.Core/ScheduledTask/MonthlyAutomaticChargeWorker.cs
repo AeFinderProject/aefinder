@@ -1,6 +1,7 @@
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Billings;
 using AeFinder.Commons;
+using AeFinder.Email;
 using AeFinder.Options;
 using AeFinder.User;
 using AeFinder.User.Provider;
@@ -23,6 +24,7 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
     private readonly IBillingContractProvider _billingContractProvider;
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
     private readonly ContractOptions _contractOptions;
+    private readonly IBillingEmailSender _billingEmailSender;
 
     public MonthlyAutomaticChargeWorker(AbpAsyncTimer timer,
         ILogger<MonthlyAutomaticChargeWorker> logger, 
@@ -31,6 +33,7 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
         IOrganizationAppService organizationAppService,
         IOrganizationInformationProvider organizationInformationProvider,
         IBillingService billingService, IBillingContractProvider billingContractProvider,
+        IBillingEmailSender billingEmailSender,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -40,6 +43,7 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
         _billingService = billingService;
         _billingContractProvider = billingContractProvider;
         _organizationInformationProvider = organizationInformationProvider;
+        _billingEmailSender = billingEmailSender;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = _scheduledTaskOptions.MonthlyAutomaticChargeTaskPeriodMilliSeconds;
     }
@@ -136,8 +140,8 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
             }
             else
             {
-                _logger.LogWarning($"Bill {settlementBill.Id.ToString()} payment failed");
-                //TODO Set bill status to failed
+                _logger.LogError($"Bill {settlementBill.Id.ToString()} payment failed");
+                //TODO Set charge bill status to failed
             }
             
         }

@@ -2,6 +2,7 @@ using AeFinder.Apps;
 using AeFinder.Assets;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Commons;
+using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Merchandises;
@@ -30,16 +31,20 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
     private readonly IAssetService _assetService;
     private readonly IAppDeployService _appDeployService;
     private readonly GraphQLOptions _graphQlOptions;
-    
-    public ChargeWarningWorker(AbpAsyncTimer timer, 
-        ILogger<ChargeWarningWorker> logger, IClusterClient clusterClient, 
+    private readonly IBillingEmailSender _billingEmailSender;
+    private readonly IUserAppService _userAppService;
+    private readonly IAppEmailSender _appEmailSender;
+
+    public ChargeWarningWorker(AbpAsyncTimer timer,
+        ILogger<ChargeWarningWorker> logger, IClusterClient clusterClient,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
         IOrganizationAppService organizationAppService,
         IOrganizationInformationProvider organizationInformationProvider,
         IAeFinderIndexerProvider indexerProvider,
         IOptionsSnapshot<ContractOptions> contractOptions,
-        IAssetService assetService,IOptionsSnapshot<GraphQLOptions> graphQlOptions,
-        IAppDeployService appDeployService,
+        IAssetService assetService, IOptionsSnapshot<GraphQLOptions> graphQlOptions,
+        IAppDeployService appDeployService, IBillingEmailSender billingEmailSender,
+        IUserAppService userAppService,IAppEmailSender appEmailSender,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -52,6 +57,9 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
         _assetService = assetService;
         _appDeployService = appDeployService;
         _graphQlOptions = graphQlOptions.Value;
+        _billingEmailSender = billingEmailSender;
+        _userAppService = userAppService;
+        _appEmailSender = appEmailSender;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
         Timer.Period = _scheduledTaskOptions.ChargeWarningTaskPeriodMilliSeconds;
     }
@@ -80,8 +88,9 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
             if (daysUntilEndOfMonth <= _scheduledTaskOptions.RenewalAdvanceWarningDays)
             {
                 //Get next month Lock From fee
-                var currentMonthFee =
-                    await _assetService.CalculateMonthlyCostAsync(organizationUnitDto.Id, DateTime.UtcNow);
+                var monthTime = DateTime.UtcNow.AddMonths(1);
+                var nextMonthFee =
+                    await _assetService.CalculateMonthlyCostAsync(organizationUnitDto.Id, monthTime);
                 
                 //Get organization account balance
                 var organizationWalletAddress =
@@ -95,12 +104,18 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
                     _contractOptions.BillingContractChainId, 0, 10);
                 var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
 
-                if (organizationAccountBalance < currentMonthFee)
+                if (organizationAccountBalance < nextMonthFee)
                 {
                     //TODO Send email warning
-                    
+                    string monthFullName = monthTime.ToString("MMMM");
+                    var userInfo =
+                        await _userAppService.GetDefaultUserInOrganizationUnitAsync(organizationUnitDto.Id);
+                    await _billingEmailSender.SendPreDeductionBalanceInsufficientNotificationAsync(userInfo.Email,
+                        monthFullName, organizationName, nextMonthFee, organizationAccountBalance,
+                        organizationWalletAddress
+                    );
                     _logger.LogWarning(
-                        $"The organization account balance is insufficient to cover the current pre-deduction amount {currentMonthFee}. Please top up in time.");
+                        $"The organization account balance is insufficient to cover the next month cost {nextMonthFee}.");
                 }
             }
 
@@ -116,6 +131,7 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
                 _clusterClient.GetGrain<IOrganizationAppGrain>(
                     GrainIdHelper.GetOrganizationGrainId(organizationId));
             var appIds = await organizationAppGrain.GetAppsAsync();
+            var user = await _userAppService.GetDefaultUserInOrganizationUnitAsync(organizationUnitDto.Id);
             if (assets == null || assets.TotalCount == 0)
             {
                 if (appIds != null && appIds.Count > 0)
@@ -125,6 +141,7 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
                         if (appId != _graphQlOptions.BillingIndexerId)
                         {
                             await _appDeployService.FreezeAppAsync(appId);
+                            await _appEmailSender.SendAeIndexerFreezeNotificationAsync(user.Email, appId);
                         }
                     }
                 }
@@ -147,6 +164,7 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
                         if (appId != _graphQlOptions.BillingIndexerId)
                         {
                             await _appDeployService.FreezeAppAsync(appId);
+                            await _appEmailSender.SendAeIndexerFreezeNotificationAsync(user.Email, appId);
                         }
                     }
                 }

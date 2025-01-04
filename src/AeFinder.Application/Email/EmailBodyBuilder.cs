@@ -35,9 +35,9 @@ public class EmailBodyBuilder
             $@" Successfully charged ${chargeAmount} from the locked balance in your organization's account {organizationWalletAddress}, Transaction id: {transactionId}.";
     }
 
-    public static string BuildAutoRenewalPreDeductionSuccessfulTemplate(string month,string organizationName,decimal billAmount, decimal lockFromAmount)
+    public static string BuildAutoRenewalPreDeductionFailedTemplate(string month,string organizationName,decimal billAmount, decimal lockFromAmount)
     {
-        return $@" The total assets bill for {month} of organization {organizationName} amounts to ${billAmount}. A pre-deduction of ${lockFromAmount} has been successfully made. Please be informed.";
+        return $@" The total assets bill for {month} of organization {organizationName} amounts to ${billAmount}. A pre-deduction of ${lockFromAmount} is failed. Please check your organization balance.";
     }
 
     public static string BuildPreDeductionBalanceInsufficientTemplate(string month,string organizationName,decimal lockFromAmount,decimal organizationBalance,string organizationWalletAddress)

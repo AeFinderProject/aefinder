@@ -284,11 +284,10 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                 await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
                     _contractOptions.BillingContractChainId, 0, 10);
             var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
-
+            string monthFullName = newAdvancePaymentBillTime.ToString("MMMM");
             if (organizationAccountBalance < newAdvancePaymentBill.PaidAmount)
             {
                 //Send email warning
-                string monthFullName = newAdvancePaymentBillTime.ToString("MMMM");
                 await _billingEmailSender.SendPreDeductionBalanceInsufficientNotificationAsync(userInfo.Email,monthFullName,
                     organizationName,newAdvancePaymentBill.PaidAmount, organizationAccountBalance,organizationWalletAddress
                 );
@@ -353,6 +352,10 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                 _logger.LogWarning($"Bill {newAdvancePaymentBill.Id.ToString()} payment failed");
                 //TODO Set bill status to failed
 
+                //Send email warning
+                await _billingEmailSender.SendAutoRenewalPreDeductionFailedNotificationAsync(userInfo.Email,
+                    monthFullName, organizationName, newAdvancePaymentBill.PaidAmount,
+                    newAdvancePaymentBill.PaidAmount);
             }
         }
     }
