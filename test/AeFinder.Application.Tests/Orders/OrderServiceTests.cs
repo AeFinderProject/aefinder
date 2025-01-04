@@ -102,7 +102,7 @@ public class OrderServiceTests : AeFinderApplicationTestBase
         orderState.PaymentType.ShouldBe(PaymentType.Wallet);
 
         var payTime = DateTime.UtcNow;
-        await _orderService.ConfirmPaymentAsync(AeFinderApplicationTestConsts.OrganizationId, order.Id, "txid", DateTime.UtcNow);
+        await _orderService.ConfirmPaymentAsync(AeFinderApplicationTestConsts.OrganizationId, order.Id, "txid", payTime);
         
         orderState = await orderGrain.GetAsync();
         orderState.Status.ShouldBe(OrderStatus.Paid);
