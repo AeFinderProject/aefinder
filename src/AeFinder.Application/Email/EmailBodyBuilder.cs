@@ -55,8 +55,8 @@ public class EmailBodyBuilder
         return $@" The AeIndexer {appId} has been unfrozen.";
     }
 
-    public static string BuildAeIndexerCreationNotificationTemplate(string appName)
+    public static string BuildAeIndexerDeletedNotificationTemplate(string appName)
     {
-        return $@" The AeIndexer {appName} has been created successfully.";
+        return $@" AeIndexer {appName} has been deleted.";
     }
 }

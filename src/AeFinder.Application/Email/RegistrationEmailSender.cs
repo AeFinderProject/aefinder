@@ -21,18 +21,6 @@ public class RegistrationEmailSender:IRegistrationEmailSender, ISingletonDepende
         _awsEmailOptions = awsEmailOptions.Value;
         _logger = logger;
     }
-
-    public async Task SendAeIndexerCreationNotificationAsync(string email, string appName)
-    {
-        await SendEmailAsync(new SendEmailInput
-        {
-            From = _awsEmailOptions.From,
-            To = email,
-            Body =
-                EmailBodyBuilder.BuildAeIndexerCreationNotificationTemplate(appName),
-            Subject = $"AeIndexer {appName} is created"
-        });
-    }
     
     private async Task SendEmailAsync(SendEmailInput input)
     {

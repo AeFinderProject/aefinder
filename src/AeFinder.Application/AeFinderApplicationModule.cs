@@ -67,7 +67,5 @@ public class AeFinderApplicationModule : AbpModule
             options.Kind = DateTimeKind.Utc;
         });
         context.Services.AddSingleton<IEmailSender, AwsEmailSender>();
-        context.Services.AddSingleton<IBillingEmailSender, BillingEmailSender>();
-        context.Services.AddSingleton<IRegistrationEmailSender, RegistrationEmailSender>();
     }
 }

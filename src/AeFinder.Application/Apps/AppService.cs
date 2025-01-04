@@ -40,7 +40,7 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitIndexRepository;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IAppDeployManager _appDeployManager;
-    private readonly IRegistrationEmailSender _registrationEmailSender;
+    private readonly IAppEmailSender _appEmailSender;
     private readonly IEntityMappingRepository<AppPodInfoIndex, string> _appPodInfoEntityMappingRepository;
     private readonly IEntityMappingRepository<AppPodUsageDurationIndex, string> _appPodUsageDurationEntityMappingRepository;
 
@@ -51,7 +51,7 @@ public class AppService : AeFinderAppService, IAppService
         IDistributedEventBus distributedEventBus,
         IElasticIndexService elasticIndexService,
         IOrganizationAppService organizationAppService,
-        IRegistrationEmailSender registrationEmailSender,
+        IAppEmailSender appEmailSender,
         IEntityMappingRepository<AppInfoIndex, string> appIndexRepository,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitIndexRepository,
         IEntityMappingRepository<AppPodUsageDurationIndex, string> appPodUsageDurationEntityMappingRepository,
@@ -67,7 +67,7 @@ public class AppService : AeFinderAppService, IAppService
         _elasticIndexService = elasticIndexService;
         _distributedEventBus = distributedEventBus;
         _appDeployManager = appDeployManager;
-        _registrationEmailSender = registrationEmailSender;
+        _appEmailSender = appEmailSender;
         _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
         _appPodUsageDurationEntityMappingRepository = appPodUsageDurationEntityMappingRepository;
     }
@@ -90,7 +90,7 @@ public class AppService : AeFinderAppService, IAppService
         
         //Send email
         var userInfo = await _userAppService.GetUserInfoAsync();
-        await _registrationEmailSender.SendAeIndexerCreationNotificationAsync(userInfo.Email, appDto.AppName);
+        await _appEmailSender.SendAeIndexerCreationNotificationAsync(userInfo.Email, appDto.AppName);
         return appDto;
     }
 

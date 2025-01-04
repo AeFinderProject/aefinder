@@ -89,29 +89,7 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
         });
     }
 
-    public async Task SendAeIndexerFreezeNotificationAsync(string email, string appId)
-    {
-        await SendEmailAsync(new SendEmailInput
-        {
-            From = _awsEmailOptions.From,
-            To = email,
-            Body =
-                EmailBodyBuilder.BuildAeIndexerFreezeNotificationTemplate(appId),
-            Subject = $"AeIndexer {appId} is frozen"
-        });
-    }
-
-    public async Task SendAeIndexerUnFreezeNotificationAsync(string email, string appId)
-    {
-        await SendEmailAsync(new SendEmailInput
-        {
-            From = _awsEmailOptions.From,
-            To = email,
-            Body =
-                EmailBodyBuilder.BuildAeIndexerUnFreezeNotificationTemplate(appId),
-            Subject = $"AeIndexer {appId} has been unfrozen"
-        });
-    }
+    
 
     private async Task SendEmailAsync(SendEmailInput input)
     {

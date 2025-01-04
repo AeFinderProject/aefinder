@@ -17,7 +17,5 @@ public interface IBillingEmailSender
 
     Task SendPreDeductionBalanceInsufficientNotificationAsync(string email, string month,
         string organizationName, decimal lockFromAmount, decimal organizationBalance, string organizationWalletAddress);
-
-    Task SendAeIndexerFreezeNotificationAsync(string email, string appId);
-    Task SendAeIndexerUnFreezeNotificationAsync(string email, string appId);
+    
 }
