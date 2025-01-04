@@ -19,7 +19,7 @@ public class EmailSenderTests: AeFinderApplicationAppTestBase
     {
         try
         {
-            await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync("949459091@qq.com", "abcdefg",
+            await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync("mooncher@yeah.net", "abcdefg",
                 22);
         }
         catch (Exception e)
