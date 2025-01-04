@@ -5,6 +5,7 @@ using AeFinder.CodeOps;
 using AeFinder.Grains.Grain.ApiKeys;
 using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Metrics;
+using AeFinder.Options;
 using AeFinder.Orleans.TestBase;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,6 +44,17 @@ public class AeFinderApplicationTestModule : AbpModule
         context.Services.Configure<ApiKeyOptions>(o =>
         {
             o.IgnoreKeys = new HashSet<string> { "app" };
+        });
+        context.Services.Configure<AwsEmailOptions>(o =>
+        {
+            o.From = "sam@XXXX.com";
+            o.ConfigSet = "MockConfigSet";
+            o.FromName = "MockName";
+            o.Host = "MockHost";
+            o.Image = "MockImage";
+            o.Port = 8000;
+            o.SmtpUsername = "MockUsername";
+            o.SmtpPassword = "MockPassword";
         });
     }
 }
