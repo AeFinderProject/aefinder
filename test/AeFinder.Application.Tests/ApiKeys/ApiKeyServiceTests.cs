@@ -23,6 +23,7 @@ public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
     private readonly IClusterClient _clusterClient;
     private readonly IClock _clock;
     private readonly IApiKeyTrafficProvider _apiKeyTrafficProvider;
+    private readonly IApiQueryPriceProvider _apiQueryPriceProvider;
 
     public ApiKeyServiceTests()
     {
@@ -31,6 +32,7 @@ public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
         _clusterClient = GetRequiredService<IClusterClient>();
         _clock = GetRequiredService<IClock>();
         _apiKeyTrafficProvider = GetRequiredService<IApiKeyTrafficProvider>();
+        _apiQueryPriceProvider = GetRequiredService<IApiQueryPriceProvider>();
     }
 
     [Fact]
@@ -898,7 +900,7 @@ public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
         {
             Name = "ApiKey",
             IsEnableSpendingLimit = true,
-            SpendingLimitUsdt = await GetApiKeyQueryPriceAsync() * 3
+            SpendingLimitUsdt = await _apiQueryPriceProvider.GetPriceAsync() * 3
         };
         var apiKey = await _apiKeyService.CreateApiKeyAsync(orgId, createInput);
 
@@ -1177,7 +1179,7 @@ public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
         {
             Name = "ApiKey",
             IsEnableSpendingLimit = true,
-            SpendingLimitUsdt = await GetApiKeyQueryPriceAsync() * 3
+            SpendingLimitUsdt = await _apiQueryPriceProvider.GetPriceAsync() * 3
         };
         var apiKey = await _apiKeyService.CreateApiKeyAsync(orgId, createInput);
 
@@ -1233,7 +1235,7 @@ public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
         {
             Name = "ApiKey2",
             IsEnableSpendingLimit = true,
-            SpendingLimitUsdt = await GetApiKeyQueryPriceAsync() * 3
+            SpendingLimitUsdt = await _apiQueryPriceProvider.GetPriceAsync() * 3
         };
         var apiKey2 = await _apiKeyService.CreateApiKeyAsync(orgId, createInput2);
         apiKeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKey.Id);
@@ -1244,13 +1246,5 @@ public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
         exception = await Assert.ThrowsAsync<UserFriendlyException>(async () =>
             await _apiKeyService.IncreaseQueryBasicApiCountAsync(apiKey.Key, BasicApi.Block, "aaa.com", time));
         exception.Message.ShouldBe("Api key query times insufficient.");
-    }
-    
-    private async Task<decimal> GetApiKeyQueryPriceAsync()
-    {
-        // TODO: Get price
-        return 0;
-        // var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
-        // return apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
     }
 }

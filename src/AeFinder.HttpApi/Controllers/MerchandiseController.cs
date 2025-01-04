@@ -30,7 +30,7 @@ public class MerchandiseController : AeFinderController
     [Authorize]
     public async Task<ListResultDto<MerchandiseDto>> GetListedMerchandisesAsync(GetMerchandiseInput input)
     {
-        return await _merchandiseService.GetList(input);
+        return await _merchandiseService.GetListAsync(input);
     }
     
     [HttpGet]
@@ -38,7 +38,7 @@ public class MerchandiseController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<ListResultDto<MerchandiseDto>> GetAllMerchandisesAsync(GetMerchandiseInput input)
     {
-        return await _merchandiseService.GetAllList(input);
+        return await _merchandiseService.GetAllListAsync(input);
     }
 
     [HttpPost]

@@ -8,4 +8,5 @@ public interface IBillingGrain : IGrainWithGuidKey
     Task CreateAsync(BillingState billing);
     Task PayAsync(string transactionId, DateTime paymentTime);
     Task ConfirmPaymentAsync();
+    Task PaymentFailedAsync();
 }

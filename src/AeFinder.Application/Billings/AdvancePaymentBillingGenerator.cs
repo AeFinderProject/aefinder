@@ -93,7 +93,9 @@ public class AdvancePaymentBillingGenerator : IBillingGenerator
         var result = new List<AssetIndex>();
         
         var queryable = await _assetIndexRepository.GetQueryableAsync();
-        queryable = queryable.Where(o => o.OrganizationId == organizationId && o.StartTime < beginTime && o.EndTime >= beginTime)
+        queryable = queryable.Where(o =>
+                o.OrganizationId == organizationId &&
+                (o.Status == (int)AssetStatus.Unused || (o.StartTime < beginTime && o.EndTime >= beginTime)))
             .OrderBy(o => o.Merchandise.Type)
             .OrderBy(o => o.StartTime)
             .Skip(skip).Take(maxCount);
@@ -104,7 +106,9 @@ public class AdvancePaymentBillingGenerator : IBillingGenerator
         while (assets.Count ==maxCount)
         {
             skip += maxCount;
-            queryable = queryable.Where(o => o.OrganizationId == organizationId && o.StartTime < beginTime && o.EndTime >= beginTime)
+            queryable = queryable.Where(o => 
+                    o.OrganizationId == organizationId && 
+                    (o.Status == (int)AssetStatus.Unused || (o.StartTime < beginTime && o.EndTime >= beginTime)))
                 .OrderBy(o => o.Merchandise.Type)
                 .OrderBy(o => o.StartTime)
                 .Skip(skip).Take(maxCount);

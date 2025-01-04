@@ -32,7 +32,7 @@ public class MerchandiseService : AeFinderAppService, IMerchandiseService
         await _merchandiseIndexRepository.AddOrUpdateAsync(index);
     }
 
-    public async Task<ListResultDto<MerchandiseDto>> GetList(GetMerchandiseInput input)
+    public async Task<ListResultDto<MerchandiseDto>> GetListAsync(GetMerchandiseInput input)
     {
         var queryable = await _merchandiseIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o => o.Status == (int)MerchandiseStatus.Listed);
@@ -54,7 +54,7 @@ public class MerchandiseService : AeFinderAppService, IMerchandiseService
         };
     }
     
-    public async Task<ListResultDto<MerchandiseDto>> GetAllList(GetMerchandiseInput input)
+    public async Task<ListResultDto<MerchandiseDto>> GetAllListAsync(GetMerchandiseInput input)
     {
         var queryable = await _merchandiseIndexRepository.GetQueryableAsync();
         if (input.Type.HasValue)

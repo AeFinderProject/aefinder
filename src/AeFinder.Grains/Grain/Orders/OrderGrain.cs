@@ -43,6 +43,13 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         var endTime = State.OrderTime.AddMonths(1).ToMonthDate();
         var orderCost = await _orderCostProvider.CalculateCostAsync(input.Details, State.OrderTime, endTime);
         // TODO: Verify order
+        foreach (var detail in orderCost.Details)
+        {
+            if (detail.OriginalAsset != null && detail.OriginalAsset.IsLocked)
+            {
+                throw new UserFriendlyException("Unable to repeat orders.");
+            }
+        }
 
         _objectMapper.Map<OrderCost, OrderState>(orderCost, State);
         
@@ -67,7 +74,7 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
             throw new EntityNotFoundException();
         }
         
-        if (State.Status != OrderStatus.Unpaid || State.Status != OrderStatus.PayFailed)
+        if (State.Status != OrderStatus.Unpaid && State.Status != OrderStatus.PayFailed)
         {
             throw new UserFriendlyException("Invalid status.");
         }
@@ -94,6 +101,7 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         }
 
         State.Status = OrderStatus.Paid;
+        State.TransactionId = transactionId;
         State.PaymentTime = paymentTime;
         await WriteStateAsync();
         

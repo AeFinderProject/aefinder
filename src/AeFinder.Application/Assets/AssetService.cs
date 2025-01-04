@@ -80,11 +80,20 @@ public class AssetService : AeFinderAppService, IAssetService
         };
     }
 
-    public async Task UpdateAssetAsync(OrderStatusChangedEto input)
+    public async Task<AssetDto> CreateAsync(Guid organizationId, CreateAssetInput input)
     {
+        var assetId = GuidGenerator.Create();
+        var assetGrain = _clusterClient.GetGrain<IAssetGrain>(assetId);
+        var asset = await assetGrain.CreateAssetAsync(assetId, organizationId, input);
+        return ObjectMapper.Map<AssetState, AssetDto>(asset);
+    }
+
+    public async Task<List<Guid>> ChangeAssetAsync(OrderStatusChangedEto input)
+    {
+        var result = new List<Guid>();;
         if (input.Status != OrderStatus.Paid)
         {
-            return;
+            return result;
         }
 
         input.ExtraData.TryGetValue(AeFinderApplicationConsts.RelateAppExtraDataKey, out var appId);
@@ -112,8 +121,7 @@ public class AssetService : AeFinderAppService, IAssetService
                 PaidAmount = orderDetail.ActualAmount,
                 Quantity = orderDetail.Quantity,
                 Replicas = orderDetail.Replicas,
-                CreateTime = input.OrderTime,
-                EndTime = input.OrderTime.AddYears(AeFinderApplicationConsts.DefaultAssetExpiration)
+                CreateTime = input.OrderTime
             };
             if (orderDetail.OriginalAsset != null && orderDetail.OriginalAsset.FreeType == AssetFreeType.Permanent)
             {
@@ -122,6 +130,7 @@ public class AssetService : AeFinderAppService, IAssetService
             }
 
             var asset = await newAssetGrain.CreateAssetAsync(newAssetId, input.OrganizationId, newAssetInput);
+            result.Add(asset.Id);
 
             if (!appId.IsNullOrEmpty())
             {
@@ -134,6 +143,8 @@ public class AssetService : AeFinderAppService, IAssetService
         }
 
         await _distributedEventBus.PublishAsync(appAssetChangedEto);
+
+        return result;
     }
 
     public async Task PayAsync(Guid id, decimal paidAmount)

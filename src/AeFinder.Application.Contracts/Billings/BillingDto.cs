@@ -12,7 +12,7 @@ public class BillingDto
     public DateTime BeginTime { get; set; }
     public DateTime EndTime { get; set; }
     public BillingType Type { get; set; }
-    public List<BillingDetailDto> Details { get; set; }
+    public List<BillingDetailDto> Details { get; set; } = new();
     public decimal RefundAmount { get; set; }
     public decimal PaidAmount { get; set; }
     public BillingStatus Status  { get; set; }

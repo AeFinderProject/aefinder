@@ -12,4 +12,5 @@ public interface IBillingService
     Task<BillingDto> CreateAsync(Guid organizationId, BillingType type, DateTime dateTime);
     Task PayAsync(Guid id, string transactionId, DateTime paymentTime);
     Task ConfirmPaymentAsync(Guid id);
+    Task PaymentFailedAsync(Guid id);
 }
