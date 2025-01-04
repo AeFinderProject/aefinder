@@ -21,15 +21,17 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
         _awsEmailOptions = awsEmailOptions.Value;
         _logger = logger;
     }
-    
-    public async Task SendLockBalanceSuccessfulNotificationAsync(string email, string organizationWalletAddress, decimal lockAmount)
+
+    public async Task SendLockBalanceSuccessfulNotificationAsync(string email, string organizationWalletAddress,
+        decimal lockAmount, string transactionId)
     {
         await SendEmailAsync(new SendEmailInput
         {
             From = _awsEmailOptions.From,
             To = email,
-            Body = 
-                EmailBodyBuilder.BuildLockBalanceSuccessfulTemplate(organizationWalletAddress, lockAmount),
+            Body =
+                EmailBodyBuilder.BuildLockBalanceSuccessfulTemplate(organizationWalletAddress, lockAmount,
+                    transactionId),
             Subject = "Lock organization balance successfully"
         });
     }
@@ -48,15 +50,14 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
     }
 
     public async Task SendChargeBalanceSuccessfulNotificationAsync(string email, string organizationWalletAddress,
-        decimal chargeAmount, decimal refundAmount)
+        decimal chargeAmount, string transactionId)
     {
         await SendEmailAsync(new SendEmailInput
         {
             From = _awsEmailOptions.From,
             To = email,
             Body =
-                EmailBodyBuilder.BuildChargeBalanceSuccessfulTemplate(organizationWalletAddress, chargeAmount,
-                    refundAmount),
+                EmailBodyBuilder.BuildChargeBalanceSuccessfulTemplate(organizationWalletAddress, chargeAmount,transactionId),
             Subject = "Charge organization balance successfully"
         });
     }

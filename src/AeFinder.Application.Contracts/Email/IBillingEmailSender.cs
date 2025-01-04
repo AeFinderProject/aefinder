@@ -4,13 +4,14 @@ namespace AeFinder.Email;
 
 public interface IBillingEmailSender
 {
-    Task SendLockBalanceSuccessfulNotificationAsync(string email, string organizationWalletAddress, decimal lockAmount);
+    Task SendLockBalanceSuccessfulNotificationAsync(string email, string organizationWalletAddress, decimal lockAmount,
+        string transactionId);
 
     Task SendLockBalanceFailedNotificationAsync(string email, string organizationWalletAddress,
         decimal lockAmount);
 
     Task SendChargeBalanceSuccessfulNotificationAsync(string email, string organizationWalletAddress,
-        decimal chargeAmount, decimal refundAmount);
+        decimal chargeAmount, string transactionId);
 
     Task SendAutoRenewalPreDeductionSuccessfulNotificationAsync(string email, string month,
         string organizationName, decimal billAmount, decimal lockFromAmount);

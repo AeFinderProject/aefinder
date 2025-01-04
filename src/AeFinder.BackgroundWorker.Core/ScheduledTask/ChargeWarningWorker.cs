@@ -105,7 +105,7 @@ public class ChargeWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonD
             }
 
             //Check app free asset is expired
-            var assets = await _assetService.GetListsAsync(organizationUnitDto.Id, new GetAssetInput()
+            var assets = await _assetService.GetListAsync(organizationUnitDto.Id, new GetAssetInput()
             {
                 Category = MerchandiseCategory.Resource,
                 Type = MerchandiseType.Processor,

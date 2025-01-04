@@ -131,7 +131,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
             var settlementBills = await GetPaymentBillingListAsync(organizationUnitDto.Id, BillingType.Settlement);
             foreach (var settlementBill in settlementBills)
             {
-                await HandleSettlementBillAsync(organizationUnitDto.Id, settlementBill);
+                await HandleSettlementBillAsync(organizationUnitDto.Id, organizationName, settlementBill);
             }
 
         }
@@ -188,20 +188,18 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
             //Update bill transaction id & status
             _logger.LogInformation(
                 $"[BillingIndexerPollingWorker]Get transaction {transactionResultDto.TransactionId} of billing {transactionResultDto.BillingId}");
-            // await _billingService.ConfirmPaymentAsync(advancePaymentBill.Id);
-            await _billingService.PayAsync(advancePaymentBill.Id, transactionResultDto.TransactionId,
-                transactionResultDto.Metadata.Block.BlockTime);
+            await _billingService.ConfirmPaymentAsync(advancePaymentBill.Id);
             
-            //Send email
+            //Send lock balance successful email
             var userInfo =
                 await _userAppService.GetDefaultUserInOrganizationUnitAsync(advancePaymentBill.OrganizationId);
             await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync(userInfo.Email,
-                transactionResultDto.Address, transactionResultDto.Amount
+                transactionResultDto.Address, transactionResultDto.Amount,transactionResultDto.TransactionId
             );
         }
     }
 
-    private async Task HandleSettlementBillAsync(Guid organizationGuid,BillingDto settlementBill)
+    private async Task HandleSettlementBillAsync(Guid organizationGuid,string organizationName,BillingDto settlementBill)
     {
         var organizationId = organizationGuid.ToString();
         if (settlementBill.Status == BillingStatus.Paid)
@@ -253,6 +251,13 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
             _logger.LogInformation(
                 $"[BillingIndexerPollingWorker]Get transaction {transactionResultDto.TransactionId} of billing {transactionResultDto.BillingId}");
             await _billingService.ConfirmPaymentAsync(settlementBill.Id);
+            
+            //Send charge successful email
+            var userInfo =
+                await _userAppService.GetDefaultUserInOrganizationUnitAsync(settlementBill.OrganizationId);
+            await _billingEmailSender.SendChargeBalanceSuccessfulNotificationAsync(userInfo.Email,
+                transactionResultDto.Address, transactionResultDto.Amount,transactionResultDto.TransactionId
+            );
 
             //Get organization wallet address
             var organizationWalletAddress =
@@ -264,8 +269,9 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
             }
 
             //Create advance payment bill for current month
+            var newAdvancePaymentBillTime = DateTime.UtcNow;
             var newAdvancePaymentBill = await _billingService.CreateAsync(organizationGuid,
-                BillingType.AdvancePayment, DateTime.UtcNow);
+                BillingType.AdvancePayment, newAdvancePaymentBillTime);
             if (newAdvancePaymentBill == null)
             {
                 _logger.LogWarning(
@@ -281,10 +287,14 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
 
             if (organizationAccountBalance < newAdvancePaymentBill.PaidAmount)
             {
-                //TODO Send email warning
+                //Send email warning
+                string monthFullName = newAdvancePaymentBillTime.ToString("MMMM");
+                await _billingEmailSender.SendPreDeductionBalanceInsufficientNotificationAsync(userInfo.Email,monthFullName,
+                    organizationName,newAdvancePaymentBill.PaidAmount, organizationAccountBalance,organizationWalletAddress
+                );
 
                 //Get organization asset
-                var processorAssets = await _assetService.GetListsAsync(organizationGuid, new GetAssetInput()
+                var processorAssets = await _assetService.GetListAsync(organizationGuid, new GetAssetInput()
                 {
                     Type = MerchandiseType.Processor,
                     SkipCount = 0,
@@ -359,7 +369,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
 
         while (true)
         {
-            var bills=await _billingService.GetListsAsync(organizationGuid, new GetBillingInput()
+            var bills=await _billingService.GetListAsync(organizationGuid, new GetBillingInput()
             {
                 BeginTime = billBeginTime,
                 EndTime = billEndTime,

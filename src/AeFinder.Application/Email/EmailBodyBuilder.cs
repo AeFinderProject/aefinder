@@ -17,10 +17,11 @@ public class EmailBodyBuilder
         return $@" Please click the link http://www.aefinder.io/email/{verifyCode} to verify your email.";
     }
 
-    public static string BuildLockBalanceSuccessfulTemplate(string organizationWalletAddress, decimal lockAmount)
+    public static string BuildLockBalanceSuccessfulTemplate(string organizationWalletAddress, decimal lockAmount,
+        string transactionId)
     {
         return
-            $@" Your organization's account {organizationWalletAddress} has successfully locked a pre-deduction amount of ${lockAmount}.";
+            $@" Your organization's account {organizationWalletAddress} has successfully locked a pre-deduction amount of ${lockAmount}, Transaction id: {transactionId}.";
     }
 
     public static string BuildLockBalanceFailedTemplate(string organizationWalletAddress, decimal lockAmount)
@@ -28,10 +29,10 @@ public class EmailBodyBuilder
         return $@" Failed to lock a pre-deduction amount of ${lockAmount} in your organization's account {organizationWalletAddress}.";
     }
 
-    public static string BuildChargeBalanceSuccessfulTemplate(string organizationWalletAddress, decimal chargeAmount,decimal refundAmount)
+    public static string BuildChargeBalanceSuccessfulTemplate(string organizationWalletAddress, decimal chargeAmount,string transactionId)
     {
         return
-            $@" Successfully charged ${chargeAmount} from the locked balance in your organization's account {organizationWalletAddress} and refunded the remaining locked amount of ${refundAmount}.";
+            $@" Successfully charged ${chargeAmount} from the locked balance in your organization's account {organizationWalletAddress}, Transaction id: {transactionId}.";
     }
 
     public static string BuildAutoRenewalPreDeductionSuccessfulTemplate(string month,string organizationName,decimal billAmount, decimal lockFromAmount)
