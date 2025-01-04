@@ -24,19 +24,21 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
 {
     private readonly ConcurrentDictionary<string, AeIndexerApiTrafficSegment> _aeIndexerApiTraffics = new();
     private readonly ConcurrentDictionary<string, BasicApiTrafficSegment> _basicApiTraffics = new();
-    private decimal _apiQueryPrice = 0;
     
     private readonly ApiKeyOptions _apiKeyOptions;
     private readonly IClusterClient _clusterClient;
     private readonly IClock _clock;
     private readonly IApiKeyInfoProvider _apiKeyInfoProvider;
+    private readonly IApiQueryPriceProvider _apiQueryPriceProvider;
 
     public ApiKeyTrafficProvider(IClusterClient clusterClient, IClock clock,
-        IOptionsSnapshot<ApiKeyOptions> apiKeyOptions, IApiKeyInfoProvider apiKeyInfoProvider)
+        IOptionsSnapshot<ApiKeyOptions> apiKeyOptions, IApiKeyInfoProvider apiKeyInfoProvider,
+        IApiQueryPriceProvider apiQueryPriceProvider)
     {
         _clusterClient = clusterClient;
         _clock = clock;
         _apiKeyInfoProvider = apiKeyInfoProvider;
+        _apiQueryPriceProvider = apiQueryPriceProvider;
         _apiKeyOptions = apiKeyOptions.Value;
     }
 
@@ -146,7 +148,7 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
             throw new UserFriendlyException("Api key query times insufficient.");
         }
 
-        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / await GetApiKeyQueryPriceAsync()) - used <= 0)
+        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / await _apiQueryPriceProvider.GetPriceAsync()) - used <= 0)
         {
             throw new UserFriendlyException("Api key unavailable.");
         }
@@ -202,17 +204,5 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
     {
         var minute = (dateTime.Minute / _apiKeyOptions.FlushPeriod) * _apiKeyOptions.FlushPeriod;
         return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, minute, 0, _clock.Kind);
-    }
-    
-    private async Task<decimal> GetApiKeyQueryPriceAsync()
-    {
-        if (_apiQueryPrice == 0)
-        {
-            // TODO: Get price 
-            // var apiQueryProduct = await _productService.GetRegularApiQueryCountProductInfoAsync();
-            // _apiQueryPrice = apiQueryProduct.MonthlyUnitPrice / apiQueryProduct.QueryCount;
-        }
-
-        return _apiQueryPrice;
     }
 }

@@ -1,3 +1,4 @@
+using AeFinder.ApiKeys;
 using AeFinder.BlockScan;
 using AeFinder.Grains.Grain.Blocks;
 using AutoMapper;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;
 using Moq;
+using NSubstitute;
 using Orleans.Serialization;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.EventBus.Distributed;
@@ -79,6 +81,13 @@ public class ClusterFixture:IDisposable,ISingletonDependency
         
                     services.Configure<ExceptionSerializationOptions>(options =>
                         options.SupportedNamespacePrefixes.Add("Volo.Abp"));
+
+                    services.AddSingleton<IApiQueryPriceProvider>(o =>
+                    {
+                        var provider = new Mock<IApiQueryPriceProvider>();
+                        provider.Setup(p => p.GetPriceAsync()).Returns(Task.FromResult<decimal>(0.00004M));
+                        return provider.Object;
+                    });
                 })
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
