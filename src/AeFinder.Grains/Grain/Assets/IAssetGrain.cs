@@ -12,4 +12,5 @@ public interface IAssetGrain : IGrainWithGuidKey
     Task SuspendAsync();
     Task StartUsingAsync(DateTime endTime);
     Task ReleaseAsync(DateTime beginTime);
+    Task LockAsync(bool isLock);
 }

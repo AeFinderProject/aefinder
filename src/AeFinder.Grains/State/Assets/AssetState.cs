@@ -13,9 +13,11 @@ public class AssetState
     [Id(5)]public long Replicas { get; set; }
     [Id(6)]public long FreeQuantity { get; set; }
     [Id(7)]public long FreeReplicas { get; set; }
-    [Id(8)]public DateTime CreateTime { get; set; }
-    [Id(9)]public DateTime StartTime { get; set; }
-    [Id(10)]public DateTime EndTime { get; set; }
-    [Id(11)]public AssetStatus Status { get; set; }
-    [Id(12)]public string AppId { get; set; }
+    [Id(8)]public AssetFreeType FreeType { get; set; }
+    [Id(9)]public DateTime CreateTime { get; set; }
+    [Id(10)]public DateTime StartTime { get; set; }
+    [Id(11)]public DateTime EndTime { get; set; }
+    [Id(12)]public AssetStatus Status { get; set; }
+    [Id(13)]public string AppId { get; set; }
+    [Id(14)]public bool IsLocked { get; set; }
 }

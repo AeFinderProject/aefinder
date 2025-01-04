@@ -12,6 +12,7 @@ public class CreateAssetInput
     [Id(3)]public long Replicas { get; set; }
     [Id(4)]public long FreeQuantity { get; set; }
     [Id(5)]public long FreeReplicas { get; set; }
-    [Id(6)]public DateTime CreateTime { get; set; }
-    [Id(7)]public DateTime EndTime { get; set; }
+    [Id(6)]public AssetFreeType FreeType { get; set; }
+    [Id(7)]public DateTime CreateTime { get; set; }
+    [Id(8)]public DateTime EndTime { get; set; }
 }

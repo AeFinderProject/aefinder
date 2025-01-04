@@ -20,17 +20,20 @@ namespace AeFinder.Controllers;
 public class BillingController : AeFinderController
 {
     private readonly IOrganizationAppService _organizationAppService;
+    private readonly IBillingService _billingService;
 
-    public BillingController(IOrganizationAppService organizationAppService)
+    public BillingController(IOrganizationAppService organizationAppService, IBillingService billingService)
     {
         _organizationAppService = organizationAppService;
+        _billingService = billingService;
     }
 
     [HttpGet]
     [Authorize]
-    public async Task<PagedResultDto<BillingDto>> GetListsAsync(GetBillingInput input)
+    public async Task<PagedResultDto<BillingDto>> GetListAsync(GetBillingInput input)
     {
-        throw new NotImplementedException();
+        var orgId = await GetOrganizationIdAsync();
+        return await _billingService.GetListAsync(orgId, input);
     }
     
     [HttpGet]
@@ -38,7 +41,8 @@ public class BillingController : AeFinderController
     [Authorize]
     public async Task<BillingDto> GetAsync(Guid id)
     {
-        throw new NotImplementedException();
+        var orgId = await GetOrganizationIdAsync();
+        return await _billingService.GetAsync(orgId, id);
     }
     
     private async Task<Guid> GetOrganizationIdAsync()

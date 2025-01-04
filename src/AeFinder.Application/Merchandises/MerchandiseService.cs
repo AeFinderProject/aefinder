@@ -8,6 +8,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Auditing;
 using System.Linq;
+using AeFinder.Grains.State.Merchandises;
 
 namespace AeFinder.Merchandises;
 
@@ -40,6 +41,11 @@ public class MerchandiseService : AeFinderAppService, IMerchandiseService
             queryable = queryable.Where(o => o.Type == (int)input.Type.Value);
         }
         
+        if (input.Category.HasValue)
+        {
+            queryable = queryable.Where(o => o.Category == (int)input.Category.Value);
+        }
+        
         var indices = queryable.OrderBy(o => o.SortWeight).ToList();
 
         return new ListResultDto<MerchandiseDto>
@@ -68,12 +74,14 @@ public class MerchandiseService : AeFinderAppService, IMerchandiseService
     {
         var id = GuidGenerator.Create();
         var grain = _clusterClient.GetGrain<IMerchandiseGrain>(id);
-        return await grain.CreateAsync(id, input);
+        var merchandise = await grain.CreateAsync(id, input);
+        return ObjectMapper.Map<MerchandiseState, MerchandiseDto>(merchandise);
     }
 
     public async Task<MerchandiseDto> UpdateAsync(Guid id, UpdateMerchandiseInput input)
     {
         var grain = _clusterClient.GetGrain<IMerchandiseGrain>(id);
-        return await grain.UpdateAsync(input);
+        var merchandise =  await grain.UpdateAsync(input);
+        return ObjectMapper.Map<MerchandiseState, MerchandiseDto>(merchandise);
     }
 }

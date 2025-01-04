@@ -86,7 +86,14 @@ public class AssetGrain : AeFinderGrain<AssetState>, IAssetGrain
         State.EndTime = dateTime;
         await WriteStateAsync();
     }
-    
+
+    public async Task LockAsync(bool isLock)
+    {
+        await ReadStateAsync();
+        State.IsLocked = isLock;
+        await WriteStateAsync();
+    }
+
     protected override async Task WriteStateAsync()
     {
         await PublishEventAsync();

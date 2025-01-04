@@ -21,49 +21,56 @@ public class OrderController : AeFinderController
 {
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IClock _clock;
+    private readonly IOrderService _orderService;
 
-    public OrderController(IOrganizationAppService organizationAppService, IClock clock)
+    public OrderController(IOrganizationAppService organizationAppService, IClock clock, IOrderService orderService)
     {
         _organizationAppService = organizationAppService;
         _clock = clock;
+        _orderService = orderService;
     }
 
     [HttpGet]
     [Authorize]
-    public async Task<PagedResultDto<OrderDto>> GetListsAsync(GetOrderListInput input)
+    public async Task<PagedResultDto<OrderDto>> GetListAsync(GetOrderListInput input)
     {
-        throw new NotImplementedException();
+        var orgId = await GetOrganizationIdAsync();
+        return await _orderService.GetListAsync(orgId, input);
     }
     
     [HttpGet]
     [Route("{id}")]
     [Authorize]
-    public async Task<ListResultDto<OrderDto>> GetAsync(Guid id)
+    public async Task<OrderDto> GetAsync(Guid id)
     {
-        throw new NotImplementedException();
+        var orgId = await GetOrganizationIdAsync();
+        return await _orderService.GetAsync(orgId, id);
     }
     
     [HttpPost]
     [Authorize]
     public async Task<OrderDto> CreateAsync(CreateOrderInput input)
     {
-        throw new NotImplementedException();
+        var orgId = await GetOrganizationIdAsync();
+        return await _orderService.CreateAsync(orgId, CurrentUser.Id.Value, input);
     }
     
     [HttpPost]
     [Route("{id}/pay")]
     [Authorize]
-    public async Task PayAsync(string id, PayInput input)
+    public async Task PayAsync(Guid id, PayInput input)
     {
-        throw new NotImplementedException();
+        var orgId = await GetOrganizationIdAsync();
+        await _orderService.PayAsync(orgId, id, input);
     }
     
     [HttpPost]
     [Route("{id}/cancel")]
     [Authorize]
-    public async Task CancelAsync(string id)
+    public async Task CancelAsync(Guid id)
     {
-        throw new NotImplementedException();
+        var orgId = await GetOrganizationIdAsync();
+        await _orderService.CancelAsync(orgId, id);
     }
     
     [HttpPost]
@@ -71,7 +78,7 @@ public class OrderController : AeFinderController
     [Authorize]
     public async Task<OrderDto> CalculateCostAsync(CreateOrderInput input)
     {
-        throw new NotImplementedException();
+        return await _orderService.CalculateCostAsync(input);
     }
     
     private async Task<Guid> GetOrganizationIdAsync()

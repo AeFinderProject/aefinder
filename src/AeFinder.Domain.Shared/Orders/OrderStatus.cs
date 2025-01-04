@@ -5,5 +5,6 @@ public enum OrderStatus
     Unpaid,
     Confirming,
     Paid,
-    Canceled
+    Canceled,
+    PayFailed
 }

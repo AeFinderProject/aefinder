@@ -11,6 +11,8 @@ public class MerchandiseIndex: AeFinderDomainEntity<Guid>, IEntityMappingEntity
     [Keyword]
     public string Description  { get; set; }
     [Keyword]
+    public string Specification { get; set; }
+    [Keyword]
     public string Unit { get; set; }
     public decimal Price { get; set; }
     public int ChargeType { get; set; }
