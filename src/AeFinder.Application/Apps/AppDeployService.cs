@@ -10,6 +10,7 @@ using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Merchandises;
 using AeFinder.Metrics;
 using AeFinder.Options;
 using AeFinder.User;
@@ -33,7 +34,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IOrganizationAppService _organizationAppService;
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IAssetService _assetService;
-    private readonly InternalOrganizationOptions _internalOrganizationOptions;
+    private readonly CustomOrganizationOptions _customOrganizationOptions;
     private readonly IUserAppService _userAppService;
     private readonly IAppEmailSender _appEmailSender;
 
@@ -42,7 +43,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         IOrganizationAppService organizationAppService,
         IOptionsSnapshot<AppDeployOptions> appDeployOptions,
         IAppOperationSnapshotProvider appOperationSnapshotProvider,
-        IOptionsSnapshot<InternalOrganizationOptions> internalOrganizationOptions,
+        IOptionsSnapshot<CustomOrganizationOptions> customOrganizationOptions,
         IUserAppService userAppService, IAppEmailSender appEmailSender,
         IAppResourceLimitProvider appResourceLimitProvider)
     {
@@ -53,7 +54,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _organizationAppService = organizationAppService;
         _appDeployOptions = appDeployOptions.Value;
-        _internalOrganizationOptions = internalOrganizationOptions.Value;
+        _customOrganizationOptions = customOrganizationOptions.Value;
         _userAppService = userAppService;
         _appEmailSender = appEmailSender;
     }
@@ -65,13 +66,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         
         var chainIds = await GetDeployChainIdAsync(appId, version);
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(appId, version, imageName, chainIds);
-        var posStartUseTime = await _appOperationSnapshotProvider.GetAppPodStartTimeAsync(appId);
-        if (posStartUseTime == null)
-        {
-            //TODO Start use app resource asset
-            // var currentAssetList=await _assetService.GetListsAsync()
-            // await _assetService.StartUsingAssetAsync(appId);
-        }
         await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Start);
         return graphqlUrl;
     }
@@ -263,33 +257,58 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
     public async Task CheckAppAssetAsync(string appId)
     {
-        //Get app current asset
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var organizationId = await appGrain.GetOrganizationIdAsync();
-        var assets = await _assetService.GetListAsync(Guid.Parse(organizationId), new GetAssetInput()
+        
+        //Check processor asset
+        var processorAssets = await _assetService.GetListAsync(Guid.Parse(organizationId), new GetAssetInput()
         {
+            Type = MerchandiseType.Processor,
             AppId = appId
         });
         AssetDto processorAsset = null;
-        if (assets != null && assets.Items.Count > 0)
+        if (processorAssets != null && processorAssets.Items.Count > 0)
         {
-            processorAsset = assets.Items.FirstOrDefault();
+            processorAsset = processorAssets.Items.FirstOrDefault();
         }
         
-        //If app asset is null, check if it is internal organization
+        //If app processor asset is null, check if it is custom organization
         if (processorAsset == null)
         {
-            if (!_internalOrganizationOptions.InternalApps.Contains(appId))
+            if (!_customOrganizationOptions.CustomApps.Contains(appId))
             {
-                throw new UserFriendlyException("Please purchase pod operational capacity before proceeding with deployment.");
+                throw new UserFriendlyException("Please purchase pod cpu & memory capacity before proceeding with deployment.");
             }
 
             await _appResourceLimitProvider.SetAppResourceLimitAsync(appId, new AppResourceLimitDto()
             {
-                AppFullPodLimitCpuCore = _internalOrganizationOptions.DefaultFullPodLimitCpuCore,
-                AppFullPodLimitMemory = _internalOrganizationOptions.DefaultFullPodLimitMemory
+                AppFullPodLimitCpuCore = _customOrganizationOptions.DefaultFullPodLimitCpuCore,
+                AppFullPodLimitMemory = _customOrganizationOptions.DefaultFullPodLimitMemory
             });
         }
+
+        //Check storage asset
+        var storageAssets = await _assetService.GetListAsync(Guid.Parse(organizationId), new GetAssetInput()
+        {
+            Type = MerchandiseType.Storage,
+            AppId = appId
+        });
+        AssetDto storageAsset = null;
+        if (storageAssets != null && storageAssets.Items.Count > 0)
+        {
+            storageAsset = storageAssets.Items.FirstOrDefault();
+        }
+        
+        //If app storage asset is null, check if it is custom organization
+        if (storageAsset == null)
+        {
+            if (!_customOrganizationOptions.CustomApps.Contains(appId))
+            {
+                throw new UserFriendlyException("Please purchase storage capacity before proceeding with deployment.");
+            }
+        }
     }
+    
+    
     
 }

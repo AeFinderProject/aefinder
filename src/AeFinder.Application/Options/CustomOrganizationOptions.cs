@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 namespace AeFinder.Options;
 
-public class InternalOrganizationOptions
+public class CustomOrganizationOptions
 {
-    public List<string> InternalApps { get; set; }
+    public List<string> CustomApps { get; set; }
     public string DefaultFullPodLimitCpuCore { get; set; }
     public string DefaultFullPodLimitMemory { get; set; }
 }
