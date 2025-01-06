@@ -2,6 +2,7 @@ using AeFinder.ApiKeys;
 using AeFinder.BlockScan;
 using AeFinder.Grains.Grain.Blocks;
 using AeFinder.Grains.Grain.Orders;
+using AeFinder.Grains.Grain.Users;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,6 +84,11 @@ public class ClusterFixture:IDisposable,ISingletonDependency
         
                     services.Configure<ExceptionSerializationOptions>(options =>
                         options.SupportedNamespacePrefixes.Add("Volo.Abp"));
+                    
+                    services.Configure<UserRegisterOptions>(o =>
+                    {
+                        o.EmailSendingInterval = 0;
+                    });
 
                     services.AddSingleton<IApiQueryPriceProvider>(o =>
                     {

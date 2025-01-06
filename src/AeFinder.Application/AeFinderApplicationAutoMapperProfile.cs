@@ -22,6 +22,7 @@ using AeFinder.Grains.State.Billings;
 using AeFinder.Grains.State.Merchandises;
 using AeFinder.Grains.State.Orders;
 using AeFinder.Grains.State.Subscriptions;
+using AeFinder.Grains.State.Users;
 using AeFinder.Logger.Entities;
 using AeFinder.Merchandises;
 using AeFinder.Orders;
@@ -199,6 +200,8 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppInfoImmutableEto, AppInfoImmutableIndex>();
         CreateMap<AppInfoImmutable, AppInfoImmutableEto>();
         CreateMap<AppInfoImmutableEto, AppInfoImmutable>();
+        
+        CreateMap<UserRegisterState, UserRegisterInfo>();
 
         // Merchandise
         CreateMap<MerchandiseState, MerchandiseDto>();

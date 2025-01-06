@@ -12,8 +12,10 @@ using AeFinder.Grains.Grain.Merchandises;
 using AeFinder.Grains.State.Assets;
 using AeFinder.Grains.State.Merchandises;
 using AeFinder.Merchandises;
+using AeFinder.Grains.Grain.Users;
 using AeFinder.Metrics;
 using AeFinder.Orleans.TestBase;
+using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -55,6 +57,11 @@ public class AeFinderApplicationTestModule : AbpModule
         context.Services.Configure<ApiKeyOptions>(o =>
         {
             o.IgnoreKeys = new HashSet<string> { "app" };
+        });
+
+        context.Services.Configure<UserRegisterOptions>(o =>
+        {
+            o.EmailSendingInterval = 0;
         });
     }
 
