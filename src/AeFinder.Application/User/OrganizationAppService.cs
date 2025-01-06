@@ -14,6 +14,7 @@ using AeFinder.User.Provider;
 using AElf.EntityMapping.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -192,6 +193,8 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         if (indexerBalanceDto == null || indexerBalanceDto.UserBalance == null ||
             indexerBalanceDto.UserBalance.Items == null || indexerBalanceDto.UserBalance.Items.Count == 0)
         {
+            Logger.LogWarning("Organization balance info is empty. indexerBalanceDto:" +
+                              JsonConvert.SerializeObject(indexerBalanceDto));
             return new OrganizationBalanceDto();
         }
 
