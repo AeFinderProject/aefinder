@@ -135,9 +135,10 @@ public class AssetService : AeFinderAppService, IAssetService
             if (!appId.IsNullOrEmpty())
             {
                 await newAssetGrain.RelateAppAsync(appId);
+                asset = await newAssetGrain.GetAsync();
             }
             
-            changedAsset.OriginalAsset = ObjectMapper.Map<AssetState, AssetChangedEto>(asset);
+            changedAsset.Asset = ObjectMapper.Map<AssetState, AssetChangedEto>(asset);
             
             appAssetChangedEto.ChangedAssets.Add(changedAsset);
         }
