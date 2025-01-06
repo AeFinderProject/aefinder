@@ -52,7 +52,7 @@ public class DeploymentHelper
     public static V1Deployment CreateAppDeploymentWithFileBeatSideCarDefinition(string appId, string version,
         string clientType, string chainId, string imageName, string deploymentName, string deploymentLabelName,
         int replicasCount, string containerName, int containerPort, string configMapName, string sideCarConfigMapName, 
-        string requestCpu, string requestMemory, string maxSurge, string maxUnavailable, string readinessProbeHealthPath = null)
+        string requestCpu, string requestMemory, string limitCpu, string limitMemory, string maxSurge, string maxUnavailable, string readinessProbeHealthPath = null)
     {
         var labels = CreateLabels(deploymentLabelName, appId, version, clientType, chainId);
         var deployment = new V1Deployment
@@ -74,7 +74,7 @@ public class DeploymentHelper
                     {
                         Affinity = CreateNodeAffinity(),
                         Containers = CreateContainers(imageName, containerName, containerPort,
-                            requestCpu, requestMemory, readinessProbeHealthPath),
+                            requestCpu, requestMemory, readinessProbeHealthPath, limitCpu, limitMemory),
                         Volumes = CreatePodTemplateVolumes(configMapName, sideCarConfigMapName)
                     }
                 }
@@ -146,7 +146,8 @@ public class DeploymentHelper
     }
     
     private static List<V1Container> CreateContainers(string imageName, string containerName, int containerPort, 
-        string requestCpu, string requestMemory, string readinessProbeHealthPath)
+        string requestCpu, string requestMemory, string readinessProbeHealthPath, string limitCpu,
+        string limitMemory)
     {
         // Main container
         var mainContainer = new V1Container
@@ -156,7 +157,7 @@ public class DeploymentHelper
             Command = new List<string> { "dotnet", "AeFinder.App.Host.dll" },
             Ports = new List<V1ContainerPort> { new V1ContainerPort(containerPort) },
             VolumeMounts = CreateMainContainerVolumeMounts(),
-            Resources = CreateResources(requestCpu, requestMemory),
+            Resources = CreateResources(requestCpu, requestMemory,limitCpu,limitMemory),
             // ReadinessProbe = CreateQueryPodReadinessProbe(readinessProbeHealthPath, containerPort)
         };
         // Add a ready probe only if the readinessProbeHealthPath is provided
@@ -184,8 +185,26 @@ public class DeploymentHelper
         };
     }
     
-    public static V1ResourceRequirements CreateResources(string requestCpu, string requestMemory)
+    public static V1ResourceRequirements CreateResources(string requestCpu, string requestMemory, string limitCpu,
+        string limitMemory)
     {
+        if (!string.IsNullOrEmpty(limitCpu) && !string.IsNullOrEmpty(limitMemory))
+        {
+            return new V1ResourceRequirements
+            {
+                Requests = new Dictionary<string, ResourceQuantity>()
+                {
+                    { "cpu", new ResourceQuantity(requestCpu) },
+                    { "memory", new ResourceQuantity(requestMemory) }
+                },
+                Limits = new Dictionary<string, ResourceQuantity>()
+                {
+                    { "cpu", new ResourceQuantity(limitCpu) },
+                    { "memory", new ResourceQuantity(limitMemory) }
+                }
+            };
+        }
+        
         return new V1ResourceRequirements
         {
             Requests = new Dictionary<string, ResourceQuantity>()

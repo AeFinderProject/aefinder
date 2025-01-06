@@ -88,4 +88,34 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         Guid guid = Guid.ParseExact(State.OrganizationId, "N");
         return guid.ToString();
     }
+    
+    public async Task FreezeAppAsync()
+    {
+        await ReadStateAsync();
+        State.Status = AppStatus.Frozen;
+        await WriteStateAsync();
+    }
+
+    public async Task UnFreezeAppAsync()
+    {
+        await ReadStateAsync();
+        State.Status = AppStatus.Deployed;
+        await WriteStateAsync();
+    }
+    
+    public async Task DeleteAppAsync()
+    {
+        await ReadStateAsync();
+        State.Status = AppStatus.Deleted;
+        State.DeleteTime = DateTime.UtcNow;
+        await WriteStateAsync();
+
+        await _distributedEventBus.PublishAsync(new AppDeleteEto()
+        {
+            AppId = State.AppId,
+            Status = State.Status,
+            DeleteTime = State.DeleteTime,
+            OrganizationId = await GetOrganizationIdAsync()
+        });
+    }
 }

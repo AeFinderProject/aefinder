@@ -7,6 +7,7 @@ using AeFinder.BlockSync;
 using AeFinder.CodeOps;
 using AeFinder.CodeOps.Policies;
 using AeFinder.DevelopmentTemplate;
+using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
 using AeFinder.Metrics;
@@ -18,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
+using Volo.Abp.Emailing;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
 using Volo.Abp.Modularity;
@@ -59,6 +61,7 @@ public class AeFinderApplicationModule : AbpModule
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
         context.Services.Configure<SignatureGrantOptions>(configuration.GetSection("Signature"));
         context.Services.Configure<ChainOptions>(configuration.GetSection("Chains"));
+        Configure<AwsEmailOptions>(configuration.GetSection("AwsEmail"));
         context.Services.AddTransient<IBillingGenerator, AdvancePaymentBillingGenerator>();
         context.Services.AddTransient<IBillingGenerator, SettlementBillingGenerator>();
         context.Services.AddTransient<IResourceUsageProvider, ApiKeyUsageProvider>();
@@ -67,5 +70,8 @@ public class AeFinderApplicationModule : AbpModule
         {
             options.Kind = DateTimeKind.Utc;
         });
+
+        Configure<ContractOptions>(configuration.GetSection("InternalOrganization"));
+        context.Services.AddSingleton<IEmailSender, AwsEmailSender>();
     }
 }

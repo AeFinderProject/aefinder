@@ -3,5 +3,7 @@ namespace AeFinder.Apps;
 public enum AppStatus
 {
     UnDeployed,
-    Deployed
+    Deployed,
+    Frozen,
+    Deleted
 }

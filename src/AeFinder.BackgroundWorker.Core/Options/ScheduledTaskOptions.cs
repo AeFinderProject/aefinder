@@ -7,4 +7,11 @@ public class ScheduledTaskOptions
     public int MaxAppRescanTimes { get; set; } = 3;
     public int AppPodListSyncTaskPeriodMilliSeconds { get; set; } = 600000;
     public int AppPodResourceSyncTaskPeriodMilliSeconds { get; set; } = 180000;
+    public int MonthlyAutomaticChargeDay { get; set; } = 2;
+    public int MonthlyAutomaticChargeTaskPeriodMilliSeconds { get; set; } = 86400000;
+    public int ChargeWarningTaskPeriodMilliSeconds { get; set; } = 86400000;
+    public int RenewalAdvanceWarningDays { get; set; } = 5;
+    public int BillingIndexerPollingTaskPeriodMilliSeconds { get; set; } = 10000;
+    public int UnpaidOrderTimeoutMinutes { get; set; } = 30;
+    public int UnpaidBillTimeOutDays { get; set; } = 7;
 }
