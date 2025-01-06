@@ -1,3 +1,4 @@
+using AeFinder.ApiKeys;
 using AeFinder.App.Es;
 using AeFinder.Assets;
 using AeFinder.Merchandises;
@@ -15,14 +16,16 @@ public class OrganizationCreateHandler: IDistributedEventHandler<OrganizationCre
     private readonly IAssetService _assetService;
     private readonly IMerchandiseService _merchandiseService;
     private readonly IClock _clock;
+    private readonly IApiKeyService _apiKeyService;
 
     public OrganizationCreateHandler(IEntityMappingRepository<OrganizationIndex, string> entityMappingRepository,
-        IAssetService assetService, IMerchandiseService merchandiseService, IClock clock)
+        IAssetService assetService, IMerchandiseService merchandiseService, IClock clock, IApiKeyService apiKeyService)
     {
         _entityMappingRepository = entityMappingRepository;
         _assetService = assetService;
         _merchandiseService = merchandiseService;
         _clock = clock;
+        _apiKeyService = apiKeyService;
     }
 
     public async Task HandleEventAsync(OrganizationCreateEto eventData)
@@ -51,16 +54,19 @@ public class OrganizationCreateHandler: IDistributedEventHandler<OrganizationCre
         });
 
         var time = _clock.Now;
+        var freeQuantity = 100000;
         var asset = await _assetService.CreateAsync(organizationId, new CreateAssetInput
         {
             MerchandiseId = apiQuery.Items.First().Id,
-            Quantity = 100000,
+            Quantity = freeQuantity,
             Replicas = 1,
-            FreeQuantity = 100000,
+            FreeQuantity = freeQuantity,
             FreeReplicas = 1,
             FreeType = AssetFreeType.Permanent,
             CreateTime = time
         });
         await _assetService.StartUsingAssetAsync(asset.Id, time);
+
+        await _apiKeyService.SetQueryLimitAsync(organizationId, freeQuantity);
     }
 }
