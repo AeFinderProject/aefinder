@@ -22,6 +22,7 @@ using AeFinder.Grains.State.Billings;
 using AeFinder.Grains.State.Merchandises;
 using AeFinder.Grains.State.Orders;
 using AeFinder.Grains.State.Subscriptions;
+using AeFinder.GraphQL.Dto;
 using AeFinder.Logger.Entities;
 using AeFinder.Merchandises;
 using AeFinder.Orders;
@@ -154,6 +155,8 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<IdentityUser, IdentityUserExtensionDto>();
 
         CreateMap<AppInfoIndex, AppInfoImmutable>();
+        
+        CreateMap<UserBalanceDto, OrganizationBalanceDto>();
 
         // Api Key
         CreateMap<ApiKeyState, ApiKeyInfo>();
