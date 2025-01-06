@@ -48,8 +48,19 @@ public class AssetService : AeFinderAppService, IAssetService
     {
         var queryable = await _assetIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o =>
-            o.OrganizationId == organizationId &&
-            (o.Status == (int)AssetStatus.Unused || o.Status == (int)AssetStatus.Using));
+            o.OrganizationId == organizationId);
+        if (input.IsDeploy)
+        {
+            queryable = queryable.Where(o => 
+                o.Status == (int)AssetStatus.Unused || o.Status == (int)AssetStatus.Using);
+        }
+        else
+        {
+            queryable = queryable.Where(o =>
+                o.Status == (int)AssetStatus.Unused || o.Status == (int)AssetStatus.Using ||
+                o.Status == (int)AssetStatus.Pending);
+        }
+
         if (!input.AppId.IsNullOrWhiteSpace())
         {
             queryable = queryable.Where(o => o.AppId == input.AppId);
@@ -135,9 +146,10 @@ public class AssetService : AeFinderAppService, IAssetService
             if (!appId.IsNullOrEmpty())
             {
                 await newAssetGrain.RelateAppAsync(appId);
+                asset = await newAssetGrain.GetAsync();
             }
             
-            changedAsset.OriginalAsset = ObjectMapper.Map<AssetState, AssetChangedEto>(asset);
+            changedAsset.Asset = ObjectMapper.Map<AssetState, AssetChangedEto>(asset);
             
             appAssetChangedEto.ChangedAssets.Add(changedAsset);
         }
