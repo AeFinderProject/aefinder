@@ -137,7 +137,7 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
             throw new EntityNotFoundException();
         }
         
-        if (State.Status != OrderStatus.Unpaid || State.Status != OrderStatus.PayFailed)
+        if (State.Status != OrderStatus.Unpaid && State.Status != OrderStatus.PayFailed)
         {
             throw new UserFriendlyException("Invalid status.");
         }
