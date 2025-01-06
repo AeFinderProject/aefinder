@@ -14,6 +14,7 @@ using AeFinder.Grains.State.Merchandises;
 using AeFinder.Merchandises;
 using AeFinder.Grains.Grain.Users;
 using AeFinder.Metrics;
+using AeFinder.Options;
 using AeFinder.Orleans.TestBase;
 using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch;
@@ -58,10 +59,17 @@ public class AeFinderApplicationTestModule : AbpModule
         {
             o.IgnoreKeys = new HashSet<string> { "app" };
         });
-
-        context.Services.Configure<UserRegisterOptions>(o =>
+        context.Services.Configure<UserRegisterOptions>(o => { o.EmailSendingInterval = 0; });
+        context.Services.Configure<AwsEmailOptions>(o =>
         {
-            o.EmailSendingInterval = 0;
+            o.From = "sam@XXXX.com";
+            o.ConfigSet = "MockConfigSet";
+            o.FromName = "MockName";
+            o.Host = "MockHost";
+            o.Image = "MockImage";
+            o.Port = 8000;
+            o.SmtpUsername = "MockUsername";
+            o.SmtpPassword = "MockPassword";
         });
     }
 

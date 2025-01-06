@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AeFinder.Domain.Shared\AeFinder.Domain.Shared.csproj" />
+    <ProjectReference Include="..\AeFinder.Sdk\AeFinder.Sdk.csproj" />
   </ItemGroup>
 
   <ItemGroup>

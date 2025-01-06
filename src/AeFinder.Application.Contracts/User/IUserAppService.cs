@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.User.Dto;
 using Volo.Abp.Identity;
@@ -17,9 +19,10 @@ public interface IUserAppService
     Task<string> GetClientDisplayNameAsync(string clientId);
 
     Task<IdentityUserExtensionDto> BindUserWalletAsync(BindUserWalletInput input);
-
     Task<bool> IsRegisterPendingAsync(string email);
     Task RegisterAsync(RegisterUserInput input);
     Task RegisterConfirmAsync(string code);
     Task ResendRegisterEmailAsync(ResendEmailInput input);
+    Task<List<IdentityUser>> GetUsersInOrganizationUnitAsync(Guid organizationId);
+    Task<IdentityUser> GetDefaultUserInOrganizationUnitAsync(Guid organizationId);
 }

@@ -7,6 +7,7 @@ using AeFinder.App.Deploy;
 using AeFinder.App.Es;
 using AeFinder.Apps.Dto;
 using AeFinder.Apps.Eto;
+using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.BlockStates;
@@ -33,22 +34,18 @@ public class AppService : AeFinderAppService, IAppService
     private readonly IUserAppService _userAppService;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
-    private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
-    private readonly IElasticIndexService _elasticIndexService;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appIndexRepository;
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitIndexRepository;
     private readonly IDistributedEventBus _distributedEventBus;
-    private readonly IAppDeployManager _appDeployManager;
+    private readonly IAppEmailSender _appEmailSender;
     private readonly IEntityMappingRepository<AppPodInfoIndex, string> _appPodInfoEntityMappingRepository;
     private readonly IEntityMappingRepository<AppPodUsageDurationIndex, string> _appPodUsageDurationEntityMappingRepository;
 
     public AppService(IClusterClient clusterClient, IUserAppService userAppService,
         IAppResourceLimitProvider appResourceLimitProvider,
-        IAppOperationSnapshotProvider appOperationSnapshotProvider,
-        IAppDeployManager appDeployManager,
         IDistributedEventBus distributedEventBus,
-        IElasticIndexService elasticIndexService,
         IOrganizationAppService organizationAppService,
+        IAppEmailSender appEmailSender,
         IEntityMappingRepository<AppInfoIndex, string> appIndexRepository,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitIndexRepository,
         IEntityMappingRepository<AppPodUsageDurationIndex, string> appPodUsageDurationEntityMappingRepository,
@@ -60,10 +57,8 @@ public class AppService : AeFinderAppService, IAppService
         _appIndexRepository = appIndexRepository;
         _appLimitIndexRepository = appLimitIndexRepository;
         _appResourceLimitProvider = appResourceLimitProvider;
-        _appOperationSnapshotProvider = appOperationSnapshotProvider;
-        _elasticIndexService = elasticIndexService;
         _distributedEventBus = distributedEventBus;
-        _appDeployManager = appDeployManager;
+        _appEmailSender = appEmailSender;
         _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
         _appPodUsageDurationEntityMappingRepository = appPodUsageDurationEntityMappingRepository;
     }
@@ -84,6 +79,9 @@ public class AppService : AeFinderAppService, IAppService
         appLimitUpdateEto.AppId = dto.AppId;
         await _distributedEventBus.PublishAsync(appLimitUpdateEto);
         
+        //Send email
+        var userInfo = await _userAppService.GetUserInfoAsync();
+        await _appEmailSender.SendAeIndexerCreationNotificationAsync(userInfo.Email, appDto.AppName);
         return appDto;
     }
 
@@ -288,113 +286,6 @@ public class AppService : AeFinderAppService, IAppService
         return Convert.ToBase64String(codeBytes);
     }
 
-    public async Task<AppResourceLimitDto> SetAppResourceLimitAsync(string appId, SetAppResourceLimitDto dto)
-    {
-        if (dto == null)
-        {
-            throw new UserFriendlyException("please input limit parameters");
-        }
-        
-        var appOldLimit = await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
-
-        var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
-            GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
-
-        await appResourceLimitGrain.SetAsync(dto);
-
-        //Publish app limit update eto to background worker
-        var appLimit = await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
-        var appLimitUpdateEto = ObjectMapper.Map<AppResourceLimitDto, AppLimitUpdateEto>(appLimit);
-        appLimitUpdateEto.AppId = appId;
-        await _distributedEventBus.PublishAsync(appLimitUpdateEto);
-        
-        var appSubscriptionGrain =
-            _clusterClient.GetGrain<IAppSubscriptionGrain>(
-                GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        var allSubscription = await appSubscriptionGrain.GetAllSubscriptionAsync();
-        var currentVersion = allSubscription.CurrentVersion?.Version;
-        var pendingVersion = allSubscription.PendingVersion?.Version;
-
-        bool isResourceChanged = false;
-        //Check if need update full pod resource
-        if (appOldLimit.AppFullPodRequestCpuCore != appLimit.AppFullPodRequestCpuCore ||
-            appOldLimit.AppFullPodRequestMemory != appLimit.AppFullPodRequestMemory)
-        {
-            if (!currentVersion.IsNullOrEmpty())
-            {
-                var chainIds = await GetDeployChainIdAsync(appId, currentVersion);
-                await _appDeployManager.UpdateAppFullPodResourceAsync(appId, currentVersion,
-                    appLimit.AppFullPodRequestCpuCore, appLimit.AppFullPodRequestMemory, chainIds);
-            }
-
-            if (!pendingVersion.IsNullOrEmpty())
-            {
-                var chainIds = await GetDeployChainIdAsync(appId, pendingVersion);
-                await _appDeployManager.UpdateAppFullPodResourceAsync(appId, pendingVersion,
-                    appLimit.AppFullPodRequestCpuCore, appLimit.AppFullPodRequestMemory, chainIds);
-            }
-            isResourceChanged = true;
-        }
-        //Check if need update query pod resource
-        if (appOldLimit.AppQueryPodRequestCpuCore != appLimit.AppQueryPodRequestCpuCore ||
-            appOldLimit.AppQueryPodRequestMemory != appLimit.AppQueryPodRequestMemory)
-        {
-            if (!currentVersion.IsNullOrEmpty())
-            {
-                await _appDeployManager.UpdateAppQueryPodResourceAsync(appId, currentVersion,
-                    appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory);
-            }
-
-            if (!pendingVersion.IsNullOrEmpty())
-            {
-                await _appDeployManager.UpdateAppQueryPodResourceAsync(appId, pendingVersion,
-                    appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory);
-            }
-            isResourceChanged = true;
-        }
-
-        if (isResourceChanged)
-        {
-            if (!currentVersion.IsNullOrEmpty())
-            {
-                await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, currentVersion,
-                    AppPodOperationType.ResourceChange);
-            }
-
-            if (!pendingVersion.IsNullOrEmpty())
-            {
-                await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, pendingVersion,
-                    AppPodOperationType.ResourceChange);
-            }
-        }
-        
-        return await appResourceLimitGrain.GetAsync();
-    }
-    
-    private async Task<List<string>> GetSubscriptionChainIdAsync(string appId, string version)
-    {
-        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        var subscription = await appSubscriptionGrain.GetSubscriptionAsync(version);
-        return subscription.SubscriptionItems.Select(o => o.ChainId).ToList();
-    }
-
-    private async Task<List<string>> GetDeployChainIdAsync(string appId, string version)
-    {
-        var chainIds = new List<string>();
-        var enableMultipleInstances = (await _appResourceLimitProvider.GetAppResourceLimitAsync(appId)).EnableMultipleInstances;
-        if (enableMultipleInstances)
-        {
-            chainIds = await GetSubscriptionChainIdAsync(appId, version);
-        }
-
-        return chainIds;
-    }
-
-    public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
-    {
-        return await _appResourceLimitProvider.GetAppResourceLimitAsync(appId);
-    }
-
     public async Task<PagedResultDto<AppResourceLimitIndexDto>> GetAppResourceLimitIndexListAsync(
         GetAppResourceLimitInput input)
     {
@@ -416,11 +307,6 @@ public class AppService : AeFinderAppService, IAppService
             TotalCount = totalCount,
             Items = ObjectMapper.Map<List<AppLimitInfoIndex>, List<AppResourceLimitIndexDto>>(apps)
         };
-    }
-
-    public async Task DeleteAppIndexAsync(string indexName)
-    {
-        await _elasticIndexService.DeleteIndexAsync(indexName);
     }
     
     public async Task<PagedResultDto<AppPodInfoDto>> GetAppPodResourceInfoListAsync(
