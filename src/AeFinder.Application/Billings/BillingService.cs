@@ -8,9 +8,13 @@ using Volo.Abp.Application.Dtos;
 using System.Linq;
 using AeFinder.Grains.Grain.Assets;
 using AeFinder.Grains.State.Billings;
+using Volo.Abp;
+using Volo.Abp.Auditing;
 
 namespace AeFinder.Billings;
 
+[RemoteService(IsEnabled = false)]
+[DisableAuditing]
 public class BillingService : AeFinderAppService, IBillingService
 {
     private readonly IClusterClient _clusterClient;

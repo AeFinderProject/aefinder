@@ -231,9 +231,9 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<OrderDetailState, OrderDetailDto>();
         CreateMap<OrderDetailIndex, OrderDetailDto>();
         CreateMap<OrderCost, OrderState>();
-        CreateMap<OrderCost, OrderDto>();
         CreateMap<OrderCostDetail, OrderDetailState>();
-        CreateMap<OrderCostDetail, OrderDto>();
+        CreateMap<OrderCost, OrderDto>();
+        CreateMap<OrderCostDetail, OrderDetailDto>();
         
         // Billing
         CreateMap<BillingState, BillingChangedEto>();
