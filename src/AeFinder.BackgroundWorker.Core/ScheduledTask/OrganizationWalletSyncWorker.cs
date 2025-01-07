@@ -35,7 +35,7 @@ public class OrganizationWalletSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
         _userAppService = userAppService;
         _userInformationProvider = userInformationProvider;
         _organizationAppService = organizationAppService;
-        Timer.Period = _scheduledTaskOptions.BillingIndexerPollingTaskPeriodMilliSeconds;
+        Timer.Period = _scheduledTaskOptions.OrganizationWalletSyncTaskPeriodMilliSeconds;
     }
     
     

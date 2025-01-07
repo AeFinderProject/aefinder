@@ -211,6 +211,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         }
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         await appGrain.FreezeAppAsync();
+        Logger.LogInformation($"App {appId} has been frozen.");
     }
     
     public async Task UnFreezeAppAsync(string appId)
@@ -232,7 +233,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             var pendingVersion = allSubscriptions.PendingVersion.Version;
             await DeployNewAppAsync(appId, pendingVersion, imageName);
         }
-        
+        Logger.LogInformation($"App {appId} is UnFreezed.");
     }
     
     public async Task CheckAppStatusAsync(string appId)
