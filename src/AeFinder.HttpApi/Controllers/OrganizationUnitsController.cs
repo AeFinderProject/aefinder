@@ -20,11 +20,14 @@ public class OrganizationUnitsController : AeFinderController
 {
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAppService _appService;
+    private readonly IOrganizationTransactionService _organizationTransactionService;
 
-    public OrganizationUnitsController(IOrganizationAppService organizationAppService, IAppService appService)
+    public OrganizationUnitsController(IOrganizationAppService organizationAppService, IAppService appService,
+        IOrganizationTransactionService organizationTransactionService)
     {
         _organizationAppService = organizationAppService;
         _appService = appService;
+        _organizationTransactionService = organizationTransactionService;
     }
 
     [HttpPost]
@@ -93,5 +96,13 @@ public class OrganizationUnitsController : AeFinderController
     public virtual async Task<OrganizationBalanceDto> GetOrganizationBalanceAsync()
     {
         return await _organizationAppService.GetOrganizationBalanceAsync();
+    }
+    
+    [HttpGet]
+    [Route("transaction-history")]
+    [Authorize]
+    public async Task<PagedResultDto<TransactionHistoryDto>> GetOrganizationTransactionHistoryAsync(GetTransactionHistoryInput input)
+    {
+        return await _organizationTransactionService.GetOrganizationTransactionHistoryAsync(input);
     }
 }
