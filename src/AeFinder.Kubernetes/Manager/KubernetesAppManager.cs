@@ -717,8 +717,10 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             info.PodIP = pod.Status.PodIP;
             info.NodeName = pod.Spec.NodeName;
             info.StartTime = pod.Status.StartTime;
-            info.ReadyContainersCount = pod.Status.ContainerStatuses.Count(cs => cs.Ready);
-            info.TotalContainersCount = pod.Status.ContainerStatuses.Count;
+            info.ReadyContainersCount = (pod.Status.ContainerStatuses == null
+                ? 0
+                : pod.Status.ContainerStatuses.Count(cs => cs.Ready));
+            info.TotalContainersCount = (pod.Status.ContainerStatuses == null ? 0 : pod.Status.ContainerStatuses.Count);
             if (pod.Metadata.CreationTimestamp.HasValue)
             {
                 var creationTime = pod.Metadata.CreationTimestamp.Value;
