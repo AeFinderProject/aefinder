@@ -38,20 +38,38 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         State.UserId = userId;
         State.ExtraData = input.ExtraData;
         State.OrderTime = _clock.Now;
-        State.Status = OrderStatus.Unpaid;
 
         var endTime = State.OrderTime.AddMonths(1).ToMonthDate();
         var orderCost = await _orderCostProvider.CalculateCostAsync(input.Details, State.OrderTime, endTime);
-        // TODO: Verify order
+
         foreach (var detail in orderCost.Details)
         {
-            if (detail.OriginalAsset != null && detail.OriginalAsset.IsLocked)
+            if (detail.OriginalAsset != null)
             {
-                throw new UserFriendlyException("Unable to repeat orders.");
+                if (detail.OriginalAsset.IsLocked || 
+                    detail.OriginalAsset.Status == AssetStatus.Pending ||
+                    detail.OriginalAsset.Status == AssetStatus.Released)
+                {
+                    throw new UserFriendlyException("Unable to repeat orders.");
+                }
+
+                if (detail.OriginalAsset.OrganizationId != organizationId)
+                {
+                    throw new UserFriendlyException("No permission.");
+                }
             }
         }
 
         _objectMapper.Map<OrderCost, OrderState>(orderCost, State);
+
+        if (State.ActualAmount == 0)
+        {
+            State.Status = OrderStatus.Paid;
+        }
+        else
+        {
+            State.Status = OrderStatus.Unpaid;
+        }
         
         await WriteStateAsync();
         await PublishOrderStatusChangedEventAsync();

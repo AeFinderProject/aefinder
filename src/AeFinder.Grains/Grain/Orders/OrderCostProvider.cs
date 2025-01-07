@@ -4,6 +4,7 @@ using AeFinder.Grains.Grain.Merchandises;
 using AeFinder.Grains.State.Orders;
 using AeFinder.Merchandises;
 using AeFinder.Orders;
+using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.Grains.Grain.Orders;
@@ -30,6 +31,12 @@ public class OrderCostProvider : IOrderCostProvider, ITransientDependency
             {
                 var asset = await _clusterClient.GetGrain<IAssetGrain>(inputDetail.OriginalAssetId.Value).GetAsync();
                 orderDetail.OriginalAsset = asset;
+                
+                var originalMerchandise = await _clusterClient.GetGrain<IMerchandiseGrain>(asset.MerchandiseId).GetAsync();
+                if (originalMerchandise.Type != merchandise.Type)
+                {
+                    throw new UserFriendlyException("Wrong merchandise type.");
+                }
 
                 if (asset.Quantity * asset.Replicas - asset.FreeQuantity * asset.FreeReplicas != 0)
                 {
@@ -71,6 +78,10 @@ public class OrderCostProvider : IOrderCostProvider, ITransientDependency
             orderDetail.Replicas = inputDetail.Replicas;
             orderDetail.Amount = (orderDetail.Quantity * orderDetail.Replicas - freeQuantity) * merchandise.Price;
             orderDetail.ActualAmount = orderDetail.Amount - orderDetail.DeductionAmount;
+            if (orderDetail.ActualAmount < 0)
+            {
+                orderDetail.ActualAmount = 0;
+            }
 
             orderCost.Details.Add(orderDetail);
             orderCost.Amount += orderDetail.Amount;

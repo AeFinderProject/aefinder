@@ -138,6 +138,7 @@ public class AssetService : AeFinderAppService, IAssetService
             {
                 newAssetInput.FreeQuantity = orderDetail.OriginalAsset.FreeQuantity;
                 newAssetInput.FreeReplicas = orderDetail.OriginalAsset.FreeReplicas;
+                newAssetInput.FreeType = AssetFreeType.Permanent;
             }
 
             var asset = await newAssetGrain.CreateAssetAsync(newAssetId, input.OrganizationId, newAssetInput);
