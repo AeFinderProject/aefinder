@@ -10,4 +10,6 @@ public class ResourceLimitInfo
     [Keyword] public string AppQueryPodRequestMemory { get; set; }
     public int AppPodReplicas { get; set; }
     public bool EnableMultipleInstances { get; set; }
+    [Keyword] public string AppFullPodLimitCpuCore { get; set; }
+    [Keyword] public string AppFullPodLimitMemory { get; set; }
 }

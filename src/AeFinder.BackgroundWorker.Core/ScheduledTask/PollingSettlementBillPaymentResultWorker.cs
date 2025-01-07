@@ -1,13 +1,8 @@
-using AeFinder.Apps;
-using AeFinder.Assets;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Billings;
 using AeFinder.Commons;
 using AeFinder.Email;
-using AeFinder.Grains;
-using AeFinder.Merchandises;
 using AeFinder.Options;
-using AeFinder.Orders;
 using AeFinder.User;
 using AeFinder.User.Provider;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,66 +12,50 @@ using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Threading;
 using Volo.Abp.Uow;
-using Volo.Abp.Users;
 
 namespace AeFinder.BackgroundWorker.ScheduledTask;
 
-public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
+public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
 {
-    private readonly ILogger<BillingIndexerPollingWorker> _logger;
-    private readonly IClusterClient _clusterClient;
+    private readonly ILogger<PollingSettlementBillPaymentResultWorker> _logger;
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
-    private readonly IOrganizationAppService _organizationAppService;
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
+    private readonly IUserAppService _userAppService;
+    private readonly IOrganizationAppService _organizationAppService;
+    private readonly IBillingService _billingService;
     private readonly IAeFinderIndexerProvider _indexerProvider;
     private readonly ContractOptions _contractOptions;
-    private readonly IOrderService _orderService;
-    private readonly IBillingService _billingService;
     private readonly GraphQLOptions _graphQlOptions;
-    private readonly IAssetService _assetService;
-    private readonly IAppDeployService _appDeployService;
-    private readonly IBillingContractProvider _billingContractProvider;
-    private readonly IUserAppService _userAppService;
-    private readonly IUserInformationProvider _userInformationProvider;
     private readonly IBillingEmailSender _billingEmailSender;
-    private readonly IAppEmailSender _appEmailSender;
-    
-    public BillingIndexerPollingWorker(AbpAsyncTimer timer, 
-        ILogger<BillingIndexerPollingWorker> logger, IClusterClient clusterClient, 
+    private readonly IBillingContractProvider _billingContractProvider;
+
+    public PollingSettlementBillPaymentResultWorker(AbpAsyncTimer timer,
+        ILogger<PollingSettlementBillPaymentResultWorker> logger, 
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
-        IOrganizationAppService organizationAppService,
         IOrganizationInformationProvider organizationInformationProvider,
+        IUserAppService userAppService,
+        IOrganizationAppService organizationAppService,
+        IBillingService billingService,
         IAeFinderIndexerProvider indexerProvider,
         IOptionsSnapshot<ContractOptions> contractOptions,
-        IOrderService orderService,
-        IBillingService billingService,
-        IAssetService assetService,
         IOptionsSnapshot<GraphQLOptions> graphQlOptions,
-        IAppDeployService appDeployService,
-        IBillingContractProvider billingContractProvider,
-        IUserAppService userAppService,
-        IUserInformationProvider userInformationProvider,
         IBillingEmailSender billingEmailSender,
+        IBillingContractProvider billingContractProvider,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
-        _clusterClient = clusterClient;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
-        _organizationAppService = organizationAppService;
         _organizationInformationProvider = organizationInformationProvider;
+        _userAppService = userAppService;
+        _organizationAppService = organizationAppService;
+        _billingService = billingService;
         _indexerProvider = indexerProvider;
         _contractOptions = contractOptions.Value;
-        _orderService = orderService;
-        _billingService = billingService;
-        _assetService = assetService;
         _graphQlOptions = graphQlOptions.Value;
-        _appDeployService = appDeployService;
-        _billingContractProvider = billingContractProvider;
-        _userAppService = userAppService;
-        _userInformationProvider = userInformationProvider;
         _billingEmailSender = billingEmailSender;
-        // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
-        Timer.Period = _scheduledTaskOptions.BillingIndexerPollingTaskPeriodMilliSeconds;
+        _billingContractProvider = billingContractProvider;
+        // Timer.Period = 3 * 60 * 1000; // 180000 milliseconds = 3 minutes
+        Timer.Period = _scheduledTaskOptions.SettlementBillPaymentResultPollingTaskPeriodMilliSeconds;
     }
     
     [UnitOfWork]
@@ -87,7 +66,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
 
     private async Task ProcessIndexerPollingAsync()
     {
-        _logger.LogInformation("[BillingIndexerPollingWorker] Process indexer polling Async.");
+        _logger.LogInformation("[PollingSettlementBillPaymentResultWorker] Process indexer polling Async.");
         
         var organizationUnitList = await _organizationAppService.GetAllOrganizationUnitsAsync();
         foreach (var organizationUnitDto in organizationUnitList)
@@ -105,30 +84,8 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                 continue;
             }
             
-            // //Handle payment orders
-            // var paymentOrders = await GetPaymentOrderListAsync(organizationUnitDto.Id);
-            // foreach (var paymentOrder in paymentOrders)
-            // {
-            //     await HandlePaymentOrderAsync(organizationUnitDto.Id, paymentOrder);
-            // }
-
-            //Handle advance payment bills
-            var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
-            var nextMonth = now.AddMonths(1);
-            var firstDayOfNextMonth = new DateTime(nextMonth.Year, nextMonth.Month, 1);
-            var lastDayOfThisMonth = firstDayOfNextMonth.AddDays(-1);
-            var advanceBillBeginTime = new DateTime(now.Year, now.Month, 1, 0, 0, 0);
-            var advanceBillEndTime = new DateTime(lastDayOfThisMonth.Year, lastDayOfThisMonth.Month, lastDayOfThisMonth.Day,
-                23, 59, 59);
-            var advancePaymentBills =
-                await GetPaymentBillingListAsync(organizationUnitDto.Id, BillingType.AdvancePayment,
-                    advanceBillBeginTime, advanceBillEndTime);
-            foreach (var advancePaymentBill in advancePaymentBills)
-            {
-                await HandleAdvancePaymentBillAsync(advancePaymentBill);
-            }
-            
             //Handle settlement bills
+            var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
             var previousMonth = now.AddMonths(-1);
             var lastDayOfLastMonth = firstDayOfThisMonth.AddDays(-1);
             var billBeginTime = new DateTime(previousMonth.Year, previousMonth.Month, 1, 0, 0, 0);
@@ -140,130 +97,9 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
             {
                 await HandleSettlementBillAsync(organizationUnitDto.Id, organizationName, settlementBill);
             }
-
         }
-        
     }
-
     
-
-    private async Task HandleAdvancePaymentBillAsync(BillingDto advancePaymentBill)
-    {
-        if (advancePaymentBill.Status == BillingStatus.Paid)
-        {
-            return;
-        }
-
-        //Automatically pay bills that have remained unpaid
-        if (advancePaymentBill.Status == BillingStatus.Unpaid)
-        {
-            var organizationId = advancePaymentBill.OrganizationId.ToString();
-            //Get organization wallet address
-            var organizationWalletAddress =
-                await _organizationInformationProvider.GetOrganizationWalletAddressAsync(organizationId);
-            if (string.IsNullOrEmpty(organizationWalletAddress))
-            {
-                _logger.LogError($"Organization {organizationId} wallet address is null or empty, please check.");
-                return;
-            }
-
-            //Check user organization balance
-            var userOrganizationBalanceInfoDto =
-                await _indexerProvider.GetUserBalanceAsync(organizationWalletAddress,
-                    _contractOptions.BillingContractChainId, 0, 10);
-            var organizationAccountBalance = userOrganizationBalanceInfoDto.UserBalance.Items[0].Balance;
-            if (organizationAccountBalance < advancePaymentBill.PaidAmount)
-            {
-                _logger.LogWarning(
-                    $"[BillingIndexerPollingWorker] Organization {organizationId} wallet balance {organizationAccountBalance} is not enough to pay advance bill amount {advancePaymentBill.PaidAmount}.");
-                return;
-            }
-
-            //Send lockFrom transaction to contract
-            var sendLockFromTransactionOutput = await _billingContractProvider.BillingLockFromAsync(
-                organizationWalletAddress, advancePaymentBill.PaidAmount,
-                advancePaymentBill.Id.ToString());
-            _logger.LogInformation(
-                $"[BillingIndexerPollingWorker] Send lock from transaction " +
-                sendLockFromTransactionOutput.TransactionId +
-                " of bill " + advancePaymentBill.Id.ToString());
-            var lockFromTransactionId = sendLockFromTransactionOutput.TransactionId;
-            // not existed->retry  pending->wait  other->fail
-            int delaySeconds = _contractOptions.DelaySeconds;
-            var lockFromTransactionResult =
-                await _billingContractProvider.QueryTransactionResultAsync(lockFromTransactionId, delaySeconds);
-            var lockFromResultQueryTimes = 0;
-            while (lockFromTransactionResult.Status == TransactionState.NotExisted &&
-                   lockFromResultQueryTimes < _contractOptions.ResultQueryRetryTimes)
-            {
-                lockFromResultQueryTimes++;
-
-                await Task.Delay(delaySeconds);
-                lockFromTransactionResult =
-                    await _billingContractProvider.QueryTransactionResultAsync(lockFromTransactionId, delaySeconds);
-            }
-
-            var lockFromTransactionStatus = lockFromTransactionResult.Status == TransactionState.Mined
-                ? TransactionState.Mined
-                : TransactionState.Failed;
-            _logger.LogInformation(
-                $"After {lockFromResultQueryTimes} times retry, get lock from transaction {lockFromTransactionId} status {lockFromTransactionStatus}");
-            if (lockFromTransactionStatus == TransactionState.Mined)
-            {
-                await _billingService.PayAsync(advancePaymentBill.Id, lockFromTransactionId, DateTime.UtcNow);
-                _logger.LogInformation($"Bill {advancePaymentBill.Id.ToString()} is paying.");
-            }
-            else
-            {
-                _logger.LogWarning($"Bill {advancePaymentBill.Id.ToString()} payment failed");
-            }
-        }
-
-        if (advancePaymentBill.Status == BillingStatus.Confirming)
-        {
-            var billingId = advancePaymentBill.Id.ToString();
-            _logger.LogInformation(
-                "[BillingIndexerPollingWorker] Found confirming {0} bill {1}",
-                advancePaymentBill.Type.ToString(), billingId);
-            var billTransactionResult =
-                await _indexerProvider.GetUserFundRecordAsync(_contractOptions.BillingContractChainId, null,
-                    billingId, 0, 10);
-            if (billTransactionResult == null || billTransactionResult.UserFundRecord == null ||
-                billTransactionResult.UserFundRecord.Items == null ||
-                billTransactionResult.UserFundRecord.Items.Count == 0)
-            {
-                return;
-            }
-
-            //Wait until approaching the safe height of LIB before processing
-            var transactionResultDto = billTransactionResult.UserFundRecord.Items[0];
-            var currentLatestBlockHeight = await _indexerProvider.GetCurrentVersionSyncBlockHeightAsync();
-            if (currentLatestBlockHeight == 0)
-            {
-                _logger.LogError("[BillingIndexerPollingWorker]Get current latest block height failed");
-                return;
-            }
-
-            if (currentLatestBlockHeight <
-                (transactionResultDto.Metadata.Block.BlockHeight + _graphQlOptions.SafeBlockCount))
-            {
-                return;
-            }
-
-            //Update bill transaction id & status
-            _logger.LogInformation(
-                $"[BillingIndexerPollingWorker]Get transaction {transactionResultDto.TransactionId} of billing {transactionResultDto.BillingId}");
-            await _billingService.ConfirmPaymentAsync(advancePaymentBill.Id);
-            
-            //Send lock balance successful email
-            var userInfo =
-                await _userAppService.GetDefaultUserInOrganizationUnitAsync(advancePaymentBill.OrganizationId);
-            await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync(userInfo.Email,
-                transactionResultDto.Address, transactionResultDto.Amount,transactionResultDto.TransactionId
-            );
-        }
-    }
-
     private async Task HandleSettlementBillAsync(Guid organizationGuid,string organizationName,BillingDto settlementBill)
     {
         var organizationId = organizationGuid.ToString();
@@ -286,7 +122,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
             //Send transaction to billing contract
             var sendChargeTransactionOutput = await _billingContractProvider.BillingChargeAsync(organizationWalletAddress, settlementBill.PaidAmount, settlementBill.RefundAmount,
                 settlementBill.Id.ToString());
-            _logger.LogInformation("[MonthlyAutomaticChargeWorker] Send charge transaction " + sendChargeTransactionOutput.TransactionId +
+            _logger.LogInformation("[PollingSettlementBillPaymentResultWorker] Send charge transaction " + sendChargeTransactionOutput.TransactionId +
                                    " of bill " + settlementBill.Id.ToString());
             var chargeTransactionId = sendChargeTransactionOutput.TransactionId;
             // not existed->retry  pending->wait  other->fail
@@ -306,7 +142,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                 ? TransactionState.Mined
                 : TransactionState.Failed;
             _logger.LogInformation(
-                $"[MonthlyAutomaticChargeWorker] After {chargeResultQueryRetryTimes} times retry, get charge transaction {chargeTransactionId} status {chargeTransactionStatus}");
+                $"[PollingSettlementBillPaymentResultWorker] After {chargeResultQueryRetryTimes} times retry, get charge transaction {chargeTransactionId} status {chargeTransactionStatus}");
             if (chargeTransactionStatus == TransactionState.Mined)
             {
                 await _billingService.PayAsync(settlementBill.Id, chargeTransactionId, DateTime.UtcNow);
@@ -322,7 +158,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
         {
             var billingId = settlementBill.Id.ToString();
             _logger.LogInformation(
-                "[BillingIndexerPollingWorker] Found confirming {0} bill {1}",
+                "[PollingSettlementBillPaymentResultWorker] Found confirming {0} bill {1}",
                 settlementBill.Type.ToString(), billingId);
             var billTransactionResult =
                 await _indexerProvider.GetUserFundRecordAsync(_contractOptions.BillingContractChainId, null, billingId,
@@ -340,7 +176,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
             var currentLatestBlockHeight = await _indexerProvider.GetCurrentVersionSyncBlockHeightAsync();
             if (currentLatestBlockHeight == 0)
             {
-                _logger.LogError("[BillingIndexerPollingWorker]Get current latest block height failed");
+                _logger.LogError("[PollingSettlementBillPaymentResultWorker]Get current latest block height failed");
                 return;
             }
 
@@ -352,7 +188,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
 
             //Update bill transaction id & status
             _logger.LogInformation(
-                $"[BillingIndexerPollingWorker]Get transaction {transactionResultDto.TransactionId} of billing {transactionResultDto.BillingId}");
+                $"[PollingSettlementBillPaymentResultWorker]Get transaction {transactionResultDto.TransactionId} of billing {transactionResultDto.BillingId}");
             await _billingService.ConfirmPaymentAsync(settlementBill.Id);
             
             //Send charge successful email
@@ -378,7 +214,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
             if (newAdvancePaymentBill == null)
             {
                 _logger.LogWarning(
-                    $"[BillingIndexerPollingWorker] create advance bill failed, the current month advance payment bill of organization {organizationId} is null");
+                    $"[PollingSettlementBillPaymentResultWorker] create advance bill failed, the current month advance payment bill of organization {organizationId} is null");
                 return;
             }
 
@@ -423,7 +259,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                 organizationWalletAddress, newAdvancePaymentBill.PaidAmount,
                 newAdvancePaymentBill.Id.ToString());
             _logger.LogInformation(
-                $"[BillingIndexerPollingWorker] Send lock from transaction " +
+                $"[PollingSettlementBillPaymentResultWorker] Send lock from transaction " +
                 sendLockFromTransactionOutput.TransactionId +
                 " of bill " + newAdvancePaymentBill.Id.ToString());
             var lockFromTransactionId = sendLockFromTransactionOutput.TransactionId;
@@ -463,7 +299,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
             }
         }
     }
-
+    
     private async Task<List<BillingDto>> GetPaymentBillingListAsync(Guid organizationGuid, BillingType type,
         DateTime billBeginTime, DateTime billEndTime)
     {
@@ -498,6 +334,4 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
 
         return resultList;
     }
-
-
 }

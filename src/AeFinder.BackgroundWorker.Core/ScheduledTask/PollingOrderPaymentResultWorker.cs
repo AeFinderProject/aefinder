@@ -15,13 +15,12 @@ using Volo.Abp.Uow;
 
 namespace AeFinder.BackgroundWorker.ScheduledTask;
 
-public class OrderPaymentResultPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
+public class PollingOrderPaymentResultWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
 {
-    private readonly ILogger<OrderPaymentResultPollingWorker> _logger;
+    private readonly ILogger<PollingOrderPaymentResultWorker> _logger;
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
     private readonly IUserAppService _userAppService;
-    private readonly IUserInformationProvider _userInformationProvider;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IOrderService _orderService;
     private readonly IAeFinderIndexerProvider _indexerProvider;
@@ -29,12 +28,11 @@ public class OrderPaymentResultPollingWorker: AsyncPeriodicBackgroundWorkerBase,
     private readonly GraphQLOptions _graphQlOptions;
     private readonly IBillingEmailSender _billingEmailSender;
 
-    public OrderPaymentResultPollingWorker(AbpAsyncTimer timer,
-        ILogger<OrderPaymentResultPollingWorker> logger, 
+    public PollingOrderPaymentResultWorker(AbpAsyncTimer timer,
+        ILogger<PollingOrderPaymentResultWorker> logger, 
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
         IOrganizationInformationProvider organizationInformationProvider,
         IUserAppService userAppService,
-        IUserInformationProvider userInformationProvider,
         IOrganizationAppService organizationAppService,
         IOrderService orderService,
         IAeFinderIndexerProvider indexerProvider,
@@ -47,13 +45,13 @@ public class OrderPaymentResultPollingWorker: AsyncPeriodicBackgroundWorkerBase,
         _scheduledTaskOptions = scheduledTaskOptions.Value;
         _organizationInformationProvider = organizationInformationProvider;
         _userAppService = userAppService;
-        _userInformationProvider = userInformationProvider;
         _organizationAppService = organizationAppService;
         _orderService = orderService;
         _indexerProvider = indexerProvider;
         _contractOptions = contractOptions.Value;
         _graphQlOptions = graphQlOptions.Value;
         _billingEmailSender = billingEmailSender;
+        // Timer.Period = 12 * 1000; // 12000 milliseconds = 12 seconds
         Timer.Period = _scheduledTaskOptions.OrderPaymentResultPollingTaskPeriodMilliSeconds;
     }
     
