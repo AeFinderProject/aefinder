@@ -101,16 +101,16 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                 await _organizationInformationProvider.GetOrganizationWalletAddressAsync(organizationId);
             if (string.IsNullOrEmpty(organizationWalletAddress))
             {
-                _logger.LogWarning($"Organization {organizationId} wallet address is null or empty, please check.");
+                // _logger.LogWarning($"Organization {organizationId} wallet address is null or empty, please check.");
                 continue;
             }
             
-            //Handle payment orders
-            var paymentOrders = await GetPaymentOrderListAsync(organizationUnitDto.Id);
-            foreach (var paymentOrder in paymentOrders)
-            {
-                await HandlePaymentOrderAsync(organizationUnitDto.Id, paymentOrder);
-            }
+            // //Handle payment orders
+            // var paymentOrders = await GetPaymentOrderListAsync(organizationUnitDto.Id);
+            // foreach (var paymentOrder in paymentOrders)
+            // {
+            //     await HandlePaymentOrderAsync(organizationUnitDto.Id, paymentOrder);
+            // }
 
             //Handle advance payment bills
             var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
@@ -145,70 +145,7 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
         
     }
 
-    private async Task HandlePaymentOrderAsync(Guid organizationGuid,OrderDto paymentOrder)
-    {
-        if (paymentOrder.Status == OrderStatus.Paid || paymentOrder.Status == OrderStatus.Canceled ||
-            paymentOrder.Status == OrderStatus.PayFailed)
-        {
-            return;
-        }
-
-        //Automatically failed order that have remained unpaid for a long time
-        if (paymentOrder.Status == OrderStatus.Unpaid)
-        {
-            if (paymentOrder.OrderTime.AddMinutes(_scheduledTaskOptions.UnpaidOrderTimeoutMinutes) <
-                DateTime.UtcNow)
-            {
-                //Set order status to failed
-                await _orderService.PaymentFailedAsync(organizationGuid, paymentOrder.Id);
-            }
-        }
-
-        if (paymentOrder.Status == OrderStatus.Confirming)
-        {
-            var orderId = paymentOrder.Id.ToString();
-            _logger.LogInformation(
-                "[BillingIndexerPollingWorker] Found confirming order {1}", orderId);
-            var orderTransactionResult =
-                await _indexerProvider.GetUserFundRecordAsync(_contractOptions.BillingContractChainId, null,
-                    orderId, 0, 10);
-            if (orderTransactionResult == null || orderTransactionResult.UserFundRecord == null ||
-                orderTransactionResult.UserFundRecord.Items == null ||
-                orderTransactionResult.UserFundRecord.Items.Count == 0)
-            {
-                return;
-            }
-            
-            //Wait until approaching the safe height of LIB before processing
-            var transactionResultDto = orderTransactionResult.UserFundRecord.Items[0];
-            var currentLatestBlockHeight = await _indexerProvider.GetCurrentVersionSyncBlockHeightAsync();
-            if (currentLatestBlockHeight == 0)
-            {
-                _logger.LogError("[BillingIndexerPollingWorker]Get current latest block height failed");
-                return;
-            }
-
-            if (currentLatestBlockHeight <
-                (transactionResultDto.Metadata.Block.BlockHeight + _graphQlOptions.SafeBlockCount))
-            {
-                return;
-            }
-            
-            //Update bill transaction id & status
-            _logger.LogInformation(
-                $"[BillingIndexerPollingWorker]Get transaction {transactionResultDto.TransactionId} of order {transactionResultDto.BillingId}");
-            await _orderService.ConfirmPaymentAsync(organizationGuid, paymentOrder.Id,
-                transactionResultDto.TransactionId,
-                transactionResultDto.Metadata.Block.BlockTime);
-            
-            //Send lock balance successful email
-            var userInfo =
-                await _userAppService.GetDefaultUserInOrganizationUnitAsync(paymentOrder.OrganizationId);
-            await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync(userInfo.Email,
-                transactionResultDto.Address, transactionResultDto.Amount,transactionResultDto.TransactionId
-            );
-        }
-    }
+    
 
     private async Task HandleAdvancePaymentBillAsync(BillingDto advancePaymentBill)
     {
@@ -525,42 +462,6 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                     newAdvancePaymentBill.PaidAmount);
             }
         }
-    }
-
-    private async Task<List<OrderDto>> GetPaymentOrderListAsync(Guid organizationGuid)
-    {
-        var resultList = new List<OrderDto>();
-        var now = DateTime.UtcNow;
-        int skipCount = 0;
-        int maxResultCount = 10;
-        var orderBeginTime = now.AddDays(-1);
-        var orderEndTime = now.AddDays(1);
-        
-        while (true)
-        {
-            var orders = await _orderService.GetListAsync(organizationGuid, new GetOrderListInput()
-            {
-                BeginTime = orderBeginTime,
-                EndTime = orderEndTime,
-                SkipCount = skipCount,
-                MaxResultCount = maxResultCount
-            });
-            if (orders?.Items == null || orders.Items.Count == 0)
-            {
-                break;
-            }
-
-            resultList.AddRange(orders.Items);
-
-            if (orders.Items.Count < maxResultCount)
-            {
-                break;
-            }
-
-            skipCount += maxResultCount;
-        }
-        
-        return resultList;
     }
 
     private async Task<List<BillingDto>> GetPaymentBillingListAsync(Guid organizationGuid, BillingType type,

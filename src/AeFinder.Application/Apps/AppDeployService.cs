@@ -316,7 +316,8 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             var processorAssets = await _assetService.GetListAsync(Guid.Parse(organizationId), new GetAssetInput()
             {
                 Type = MerchandiseType.Processor,
-                AppId = appId
+                AppId = appId,
+                IsDeploy = true
             });
             AssetDto processorAsset = null;
             if (processorAssets != null && processorAssets.Items.Count > 0)

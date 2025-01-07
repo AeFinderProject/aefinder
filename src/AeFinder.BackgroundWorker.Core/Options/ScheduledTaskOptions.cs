@@ -12,6 +12,7 @@ public class ScheduledTaskOptions
     public int ChargeWarningTaskPeriodMilliSeconds { get; set; } = 86400000;
     public int RenewalAdvanceWarningDays { get; set; } = 5;
     public int BillingIndexerPollingTaskPeriodMilliSeconds { get; set; } = 10000;
+    public int OrderPaymentResultPollingTaskPeriodMilliSeconds { get; set; } = 12000;
     public int UnpaidOrderTimeoutMinutes { get; set; } = 30;
     public int UnpaidBillTimeOutDays { get; set; } = 7;
 }
