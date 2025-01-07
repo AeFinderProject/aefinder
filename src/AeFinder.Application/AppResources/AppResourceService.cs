@@ -23,14 +23,12 @@ public class AppResourceService : AeFinderAppService, IAppResourceService
 {
     private readonly IClusterClient _clusterClient;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
-    private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
     private readonly IAppDeployManager _appDeployManager;
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IEntityMappingRepository<AppSubscriptionPodIndex, string> _appSubscriptionPodIndexRepository;
 
     public AppResourceService(IClusterClient clusterClient,
         IAppResourceLimitProvider appResourceLimitProvider,
-        IAppOperationSnapshotProvider appOperationSnapshotProvider,
         IAppDeployManager appDeployManager,IDistributedEventBus distributedEventBus,
         IEntityMappingRepository<AppSubscriptionPodIndex, string> appSubscriptionPodIndexRepository)
     {
@@ -38,7 +36,6 @@ public class AppResourceService : AeFinderAppService, IAppResourceService
         _appDeployManager = appDeployManager;
         _distributedEventBus = distributedEventBus;
         _appResourceLimitProvider = appResourceLimitProvider;
-        _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _appSubscriptionPodIndexRepository = appSubscriptionPodIndexRepository;
     }
 
@@ -77,7 +74,6 @@ public class AppResourceService : AeFinderAppService, IAppResourceService
         var currentVersion = allSubscription.CurrentVersion?.Version;
         var pendingVersion = allSubscription.PendingVersion?.Version;
 
-        bool isResourceChanged = false;
         //Check if need update full pod resource
         if (appOldLimit.AppFullPodRequestCpuCore != appLimit.AppFullPodRequestCpuCore ||
             appOldLimit.AppFullPodRequestMemory != appLimit.AppFullPodRequestMemory ||
@@ -99,7 +95,6 @@ public class AppResourceService : AeFinderAppService, IAppResourceService
                     appLimit.AppFullPodRequestCpuCore, appLimit.AppFullPodRequestMemory, chainIds,
                     appLimit.AppFullPodLimitCpuCore, appLimit.AppFullPodLimitMemory);
             }
-            isResourceChanged = true;
         }
         //Check if need update query pod resource
         if (appOldLimit.AppQueryPodRequestCpuCore != appLimit.AppQueryPodRequestCpuCore ||
@@ -115,22 +110,6 @@ public class AppResourceService : AeFinderAppService, IAppResourceService
             {
                 await _appDeployManager.UpdateAppQueryPodResourceAsync(appId, pendingVersion,
                     appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory,null, null, 0);
-            }
-            isResourceChanged = true;
-        }
-
-        if (isResourceChanged)
-        {
-            if (!string.IsNullOrEmpty(currentVersion))
-            {
-                await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, currentVersion,
-                    AppPodOperationType.ResourceChange);
-            }
-
-            if (!string.IsNullOrEmpty(pendingVersion))
-            {
-                await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, pendingVersion,
-                    AppPodOperationType.ResourceChange);
             }
         }
         

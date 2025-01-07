@@ -19,6 +19,7 @@ public class AppDto
     [Id(10)] public string OrganizationId { get; set; }
     [Id(11)] public string OrganizationName { get; set; }
     [Id(12)]public DateTime DeleteTime { get; set; }
+    [Id(13)]public DateTime? DeployTime { get; set; }
 }
 
 [GenerateSerializer]

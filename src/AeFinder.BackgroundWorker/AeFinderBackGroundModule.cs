@@ -61,7 +61,7 @@ public class AeFinderBackGroundModule : AbpModule
         context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
         context.Services.Configure<GraphQLOptions>(configuration.GetSection("GraphQL"));
         Configure<ContractOptions>(configuration.GetSection("Contract"));
-        Configure<PodResourceLevelOptions>(configuration.GetSection("PodResourceLevel"));
+        Configure<PodResourceOptions>(configuration.GetSection("PodResourceLevel"));
     }
     
     //Disable TokenCleanupBackgroundWorker
@@ -107,9 +107,10 @@ public class AeFinderBackGroundModule : AbpModule
         {
             AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<TransactionRepairWorker>());
         }
-        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<MonthlyAutomaticChargeWorker>());
-        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<ChargeWarningWorker>());
-        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<BillingIndexerPollingWorker>());
+        // AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<MonthlyAutomaticChargeWorker>());
+        // AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<ChargeWarningWorker>());
+        // AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<BillingIndexerPollingWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<OrganizationWalletSyncWorker>());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)

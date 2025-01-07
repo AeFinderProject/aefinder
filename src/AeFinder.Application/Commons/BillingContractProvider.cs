@@ -103,36 +103,11 @@ public class BillingContractProvider
         catch (Exception e)
         {
             _logger.LogError("[BillingContractProvider] Send Transaction error: " + e.Message.ToString(), e.StackTrace);
-            Console.WriteLine(e);
             throw e;
         }
     }
     
-    private async Task<T> CallTransactionAsync<T>(string methodName, IMessage param,
-        string contractAddress) where T : class, IMessage<T>, new()
-    {
-        var client = new AElfClient(SideChainNodeBaseUrl);
-        await client.IsConnectedAsync();
-        var address = client.GetAddressFromPrivateKey(TreasurerAccountPrivateKeyForCallTx);
-
-        var transaction =
-            await client.GenerateTransactionAsync(address, contractAddress,
-                methodName, param);
-
-        _logger.LogDebug("Call tx methodName is: {methodName} param is: {transaction}", methodName, transaction);
-
-        var txWithSign = client.SignTransaction(TreasurerAccountPrivateKeyForCallTx, transaction);
-        var result = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
-        {
-            RawTransaction = txWithSign.ToByteArray().ToHex()
-        });
-
-        var value = new T();
-        value.MergeFrom(ByteArrayHelper.HexStringToByteArray(result));
-        return value;
-    }
-    
-    public async Task<TransactionResultDto> GetBillingTransactionResultAsync(string transactionId)
+    public async Task<TransactionResultDto> GetTransactionResultAsync(string transactionId)
     {
         var client = new AElfClient(SideChainNodeBaseUrl);
         await client.IsConnectedAsync();
@@ -144,11 +119,11 @@ public class BillingContractProvider
     public async Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, int delaySeconds)
     {
         // var transactionId = transaction.GetHash().ToHex();
-        var transactionResult = await GetBillingTransactionResultAsync(transactionId);
+        var transactionResult = await GetTransactionResultAsync(transactionId);
         while (transactionResult.Status == TransactionState.Pending)
         {
             await Task.Delay(delaySeconds);
-            transactionResult = await GetBillingTransactionResultAsync(transactionId);
+            transactionResult = await GetTransactionResultAsync(transactionId);
         }
 
         return transactionResult;

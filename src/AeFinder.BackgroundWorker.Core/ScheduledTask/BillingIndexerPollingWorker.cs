@@ -101,29 +101,8 @@ public class BillingIndexerPollingWorker: AsyncPeriodicBackgroundWorkerBase, ISi
                 await _organizationInformationProvider.GetOrganizationWalletAddressAsync(organizationId);
             if (string.IsNullOrEmpty(organizationWalletAddress))
             {
-                var users = await _userAppService.GetUsersInOrganizationUnitAsync(organizationUnitDto.Id);
-                if (users == null)
-                {
-                    _logger.LogWarning($"No users under the organization {organizationName}");
-                    continue;
-                }
-
-                var defaultUser = users.FirstOrDefault();
-                var userExtensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(defaultUser.Id);
-                if (string.IsNullOrEmpty(userExtensionInfo.WalletAddress))
-                {
-                    _logger.LogWarning($"The user {defaultUser.Id} has not yet linked a wallet address.");
-                    continue;
-                }
-
-                organizationWalletAddress =
-                    await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
-                        userExtensionInfo.WalletAddress);
-                if (string.IsNullOrEmpty(organizationWalletAddress))
-                {
-                    _logger.LogWarning($"Organization {organizationId} wallet address is null or empty, please check.");
-                    continue;
-                }
+                _logger.LogWarning($"Organization {organizationId} wallet address is null or empty, please check.");
+                continue;
             }
             
             //Handle payment orders
