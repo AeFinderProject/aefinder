@@ -18,6 +18,7 @@ public class OrganizationWalletSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
     private readonly IOrganizationInformationProvider _organizationInformationProvider;
     private readonly IUserAppService _userAppService;
     private readonly IUserInformationProvider _userInformationProvider;
+    private readonly IOrganizationAppService _organizationAppService;
 
     public OrganizationWalletSyncWorker(AbpAsyncTimer timer,
         ILogger<OrganizationWalletSyncWorker> logger, 
@@ -25,6 +26,7 @@ public class OrganizationWalletSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
         IOrganizationInformationProvider organizationInformationProvider,
         IUserAppService userAppService,
         IUserInformationProvider userInformationProvider,
+        IOrganizationAppService organizationAppService,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -32,6 +34,7 @@ public class OrganizationWalletSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
         _organizationInformationProvider = organizationInformationProvider;
         _userAppService = userAppService;
         _userInformationProvider = userInformationProvider;
+        _organizationAppService = organizationAppService;
         Timer.Period = _scheduledTaskOptions.BillingIndexerPollingTaskPeriodMilliSeconds;
     }
     
@@ -45,38 +48,46 @@ public class OrganizationWalletSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
     private async Task ProcessSynchronizationAsync()
     {
         //Get no wallet organizations
-        var organizationList = await _organizationInformationProvider.GetOrganizationWithoutWalletListAsync();
-        foreach (var organizationId in organizationList)
+        var organizationUnitList = await _organizationAppService.GetAllOrganizationUnitsAsync();
+        foreach (var organizationUnitDto in organizationUnitList)
         {
+            var organizationId = organizationUnitDto.Id.ToString();
+            var organizationName = organizationUnitDto.DisplayName;
             //Check organization wallet address is bind
             var organizationWalletAddress =
-                await _organizationInformationProvider.GetOrganizationWalletAddressAsync(organizationId.ToString());
+                await _organizationInformationProvider.GetOrganizationWalletAddressAsync(organizationId);
+            if (!string.IsNullOrEmpty(organizationWalletAddress))
+            {
+                continue;
+            }
+
+            var users = await _userAppService.GetUsersInOrganizationUnitAsync(organizationUnitDto.Id);
+            if (users == null)
+            {
+                _logger.LogWarning($"No users under the organization {organizationName}");
+                continue;
+            }
+
+            var defaultUser = users.FirstOrDefault();
+            var userExtensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(defaultUser.Id);
+            if (string.IsNullOrEmpty(userExtensionInfo.WalletAddress))
+            {
+                _logger.LogWarning($"The user {defaultUser.Id} has not yet linked a wallet address.");
+                continue;
+            }
+
+            organizationWalletAddress =
+                await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId,
+                    userExtensionInfo.WalletAddress);
             if (string.IsNullOrEmpty(organizationWalletAddress))
             {
-                var users = await _userAppService.GetUsersInOrganizationUnitAsync(organizationId);
-                if (users == null)
-                {
-                    _logger.LogWarning($"No users under the organization {organizationId.ToString()}");
-                    continue;
-                }
-
-                var defaultUser = users.FirstOrDefault();
-                var userExtensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(defaultUser.Id);
-                if (string.IsNullOrEmpty(userExtensionInfo.WalletAddress))
-                {
-                    _logger.LogWarning($"The user {defaultUser.Id} has not yet linked a wallet address.");
-                    continue;
-                }
-
-                organizationWalletAddress =
-                    await _organizationInformationProvider.GetUserOrganizationWalletAddressAsync(organizationId.ToString(),
-                        userExtensionInfo.WalletAddress);
-                if (string.IsNullOrEmpty(organizationWalletAddress))
-                {
-                    _logger.LogWarning($"Organization {organizationId} wallet address is null or empty, please check.");
-                    continue;
-                }
+                continue;
             }
+            else
+            {
+                _logger.LogInformation($"Organization {organizationId} wallet address is bind.");
+            }
+
         }
 
     }
