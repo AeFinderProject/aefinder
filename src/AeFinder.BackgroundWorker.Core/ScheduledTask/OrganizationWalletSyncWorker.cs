@@ -69,6 +69,10 @@ public class OrganizationWalletSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
             }
 
             var defaultUser = users.FirstOrDefault();
+            if (defaultUser == null)
+            {
+                continue;
+            }
             var userExtensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(defaultUser.Id);
             if (string.IsNullOrEmpty(userExtensionInfo.WalletAddress))
             {
