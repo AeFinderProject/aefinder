@@ -59,10 +59,8 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
                 }
             }
         }
-
-        _objectMapper.Map<OrderCost, OrderState>(orderCost, State);
-
-        if (State.ActualAmount == 0)
+        
+        if (orderCost.ActualAmount == 0)
         {
             State.Status = OrderStatus.Paid;
         }
@@ -70,6 +68,8 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         {
             State.Status = OrderStatus.Unpaid;
         }
+        
+        _objectMapper.Map<OrderCost, OrderState>(orderCost, State);
         
         await WriteStateAsync();
         await PublishOrderStatusChangedEventAsync();
