@@ -60,7 +60,8 @@ public class AdvancePaymentBillingGenerator : IBillingGenerator
             switch ((ChargeType)asset.Merchandise.ChargeType)
             {
                 case ChargeType.Hourly:
-                    billingDetail.Quantity = (long)Math.Ceiling((endTime - beginTime).TotalHours);
+                    var assetEndTime = asset.EndTime < endTime ? asset.EndTime : endTime;
+                    billingDetail.Quantity = (long)Math.Ceiling((assetEndTime - beginTime).TotalHours);
                     break;
                 case ChargeType.Time:
                     billingDetail.Quantity = asset.Quantity;
