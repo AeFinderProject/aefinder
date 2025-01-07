@@ -750,13 +750,16 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
                 containerList.Add(container);
             }
 
-            foreach (var v1ContainerStatus in pod.Status.ContainerStatuses)
+            if (pod.Status.ContainerStatuses != null)
             {
-                var container = containerList.Find(c => c.ContainerName == v1ContainerStatus.Name);
-                container.ContainerID = v1ContainerStatus.ContainerID;
-                container.RestartCount = v1ContainerStatus.RestartCount;
-                container.Ready = v1ContainerStatus.Ready;
-                container.CurrentState = (v1ContainerStatus.State?.Running != null ? "Running" : "Not Running");
+                foreach (var v1ContainerStatus in pod.Status.ContainerStatuses)
+                {
+                    var container = containerList.Find(c => c.ContainerName == v1ContainerStatus.Name);
+                    container.ContainerID = v1ContainerStatus.ContainerID;
+                    container.RestartCount = v1ContainerStatus.RestartCount;
+                    container.Ready = v1ContainerStatus.Ready;
+                    container.CurrentState = (v1ContainerStatus.State?.Running != null ? "Running" : "Not Running");
+                }
             }
 
             info.Containers = containerList;
