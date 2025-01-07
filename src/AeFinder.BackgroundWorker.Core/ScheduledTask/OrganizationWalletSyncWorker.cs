@@ -27,6 +27,8 @@ public class OrganizationWalletSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
         IUserInformationProvider userInformationProvider,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
+        _logger = logger;
+        _scheduledTaskOptions = scheduledTaskOptions.Value;
         _organizationInformationProvider = organizationInformationProvider;
         _userAppService = userAppService;
         _userInformationProvider = userInformationProvider;
