@@ -44,6 +44,7 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
         appLimitInfoIndex.AppName = appDto.AppName;
         appLimitInfoIndex.OrganizationId = organizationId;
         appLimitInfoIndex.OrganizationName = organizationUnitDto.DisplayName;
+        
         appLimitInfoIndex.ResourceLimit = new ResourceLimitInfo();
         appLimitInfoIndex.ResourceLimit.AppFullPodRequestCpuCore = eventData.AppFullPodRequestCpuCore;
         appLimitInfoIndex.ResourceLimit.AppFullPodRequestMemory = eventData.AppFullPodRequestMemory;
@@ -51,6 +52,9 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
         appLimitInfoIndex.ResourceLimit.AppQueryPodRequestMemory = eventData.AppQueryPodRequestMemory;
         appLimitInfoIndex.ResourceLimit.AppPodReplicas = eventData.AppPodReplicas;
         appLimitInfoIndex.ResourceLimit.EnableMultipleInstances = eventData.EnableMultipleInstances;
+        appLimitInfoIndex.ResourceLimit.AppFullPodLimitCpuCore = eventData.AppFullPodLimitCpuCore;
+        appLimitInfoIndex.ResourceLimit.AppFullPodLimitMemory = eventData.AppFullPodLimitMemory;
+        
         appLimitInfoIndex.OperationLimit = new OperationLimitInfo();
         appLimitInfoIndex.OperationLimit.MaxEntityCallCount = eventData.MaxEntityCallCount;
         appLimitInfoIndex.OperationLimit.MaxEntitySize = eventData.MaxEntitySize;
