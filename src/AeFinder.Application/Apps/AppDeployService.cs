@@ -30,7 +30,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IAppDeployManager _appDeployManager;
     private readonly IAppResourceLimitProvider _appResourceLimitProvider;
-    private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly AppDeployOptions _appDeployOptions;
     private readonly IAssetService _assetService;
@@ -42,7 +41,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
         IOrganizationAppService organizationAppService,
         IOptionsSnapshot<AppDeployOptions> appDeployOptions,
-        IAppOperationSnapshotProvider appOperationSnapshotProvider,
         IOptionsSnapshot<CustomOrganizationOptions> customOrganizationOptions,
         IUserAppService userAppService, IAppEmailSender appEmailSender,
         IAppResourceLimitProvider appResourceLimitProvider)
@@ -51,7 +49,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _blockScanAppService = blockScanAppService;
         _appDeployManager = appDeployManager;
         _appResourceLimitProvider = appResourceLimitProvider;
-        _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _organizationAppService = organizationAppService;
         _appDeployOptions = appDeployOptions.Value;
         _customOrganizationOptions = customOrganizationOptions.Value;
@@ -66,7 +63,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         
         var chainIds = await GetDeployChainIdAsync(appId, version);
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(appId, version, imageName, chainIds);
-        // await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Start);
         await SetFirstDeployTimeAsync(appId);
         return graphqlUrl;
     }
@@ -75,7 +71,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     {
         var chainIds = await GetSubscriptionChainIdAsync(appId, version);
         await _blockScanAppService.PauseAsync(appId, version);
-        await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Stop);
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
     }
 
@@ -160,7 +155,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         }
         var chainIds = await GetSubscriptionChainIdAsync(appId, version);
         await _blockScanAppService.PauseAsync(appId, version);
-        await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Stop);
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
     }
     

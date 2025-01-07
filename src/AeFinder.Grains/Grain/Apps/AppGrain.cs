@@ -70,6 +70,10 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         State.Status = status;
         State.UpdateTime = DateTime.UtcNow;
         await WriteStateAsync();
+        
+        //Publish app update eto to background worker
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
     }
 
     public async Task<AppDto> GetAsync()
@@ -94,6 +98,10 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         await ReadStateAsync();
         State.Status = AppStatus.Frozen;
         await WriteStateAsync();
+        
+        //Publish app update eto to background worker
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
     }
 
     public async Task UnFreezeAppAsync()
@@ -101,6 +109,10 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         await ReadStateAsync();
         State.Status = AppStatus.Deployed;
         await WriteStateAsync();
+        
+        //Publish app update eto to background worker
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
     }
     
     public async Task DeleteAppAsync()
@@ -124,5 +136,9 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         await ReadStateAsync();
         State.DeleteTime = time;
         await WriteStateAsync();
+        
+        //Publish app update eto to background worker
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
     }
 }

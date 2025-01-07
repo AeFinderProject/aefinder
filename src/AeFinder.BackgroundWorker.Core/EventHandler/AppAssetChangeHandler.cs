@@ -19,7 +19,6 @@ public class AppAssetChangeHandler: IDistributedEventHandler<AppAssetChangedEto>
 {
     private readonly ILogger<AppAssetChangeHandler> _logger;
     private readonly IAssetService _assetService;
-    private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
     private readonly IAppResourceService _appResourceService;
     private readonly PodResourceOptions _podResourceOptions;
     private readonly IClusterClient _clusterClient;
@@ -27,7 +26,6 @@ public class AppAssetChangeHandler: IDistributedEventHandler<AppAssetChangedEto>
     private readonly IApiKeyService _apiKeyService;
 
     public AppAssetChangeHandler(ILogger<AppAssetChangeHandler> logger,
-        IAppOperationSnapshotProvider appOperationSnapshotProvider,
         IAppResourceService appResourceService,
         IOptionsSnapshot<PodResourceOptions> podResourceLevelOptions,
         IClusterClient clusterClient,
@@ -37,7 +35,6 @@ public class AppAssetChangeHandler: IDistributedEventHandler<AppAssetChangedEto>
     {
         _logger = logger;
         _assetService = assetService;
-        _appOperationSnapshotProvider = appOperationSnapshotProvider;
         _appResourceService = appResourceService;
         _podResourceOptions = podResourceLevelOptions.Value;
         _clusterClient = clusterClient;
