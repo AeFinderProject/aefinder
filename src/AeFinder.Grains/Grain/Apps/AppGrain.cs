@@ -118,4 +118,11 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
             OrganizationId = await GetOrganizationIdAsync()
         });
     }
+
+    public async Task SetFirstDeployTimeAsync(DateTime time)
+    {
+        await ReadStateAsync();
+        State.DeleteTime = time;
+        await WriteStateAsync();
+    }
 }

@@ -66,7 +66,8 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         
         var chainIds = await GetDeployChainIdAsync(appId, version);
         var graphqlUrl = await _appDeployManager.CreateNewAppAsync(appId, version, imageName, chainIds);
-        await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Start);
+        // await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Start);
+        await SetFirstDeployTimeAsync(appId);
         return graphqlUrl;
     }
 
@@ -280,11 +281,11 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
                 throw new UserFriendlyException("Please purchase pod cpu & memory capacity before proceeding with deployment.");
             }
 
-            await _appResourceLimitProvider.SetAppResourceLimitAsync(appId, new AppResourceLimitDto()
-            {
-                AppFullPodLimitCpuCore = _customOrganizationOptions.DefaultFullPodLimitCpuCore,
-                AppFullPodLimitMemory = _customOrganizationOptions.DefaultFullPodLimitMemory
-            });
+            // await _appResourceLimitProvider.SetAppResourceLimitAsync(appId, new AppResourceLimitDto()
+            // {
+            //     AppFullPodLimitCpuCore = _customOrganizationOptions.DefaultFullPodLimitCpuCore,
+            //     AppFullPodLimitMemory = _customOrganizationOptions.DefaultFullPodLimitMemory
+            // });
         }
 
         //Check storage asset
@@ -308,7 +309,32 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             }
         }
     }
-    
-    
+
+    private async Task SetFirstDeployTimeAsync(string appId)
+    {
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        var organizationId = await appGrain.GetOrganizationIdAsync();
+        var appDto = await appGrain.GetAsync();
+        if (appDto.DeployTime == null)
+        {
+            var now = DateTime.UtcNow;
+            await appGrain.SetFirstDeployTimeAsync(now);
+            var processorAssets = await _assetService.GetListAsync(Guid.Parse(organizationId), new GetAssetInput()
+            {
+                Type = MerchandiseType.Processor,
+                AppId = appId
+            });
+            AssetDto processorAsset = null;
+            if (processorAssets != null && processorAssets.Items.Count > 0)
+            {
+                processorAsset = processorAssets.Items.FirstOrDefault();
+            }
+
+            if (processorAsset != null)
+            {
+                await _assetService.StartUsingAssetAsync(processorAsset.Id, now);
+            }
+        }
+    }
     
 }
