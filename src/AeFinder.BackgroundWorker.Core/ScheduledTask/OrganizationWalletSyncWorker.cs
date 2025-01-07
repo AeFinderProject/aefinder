@@ -76,7 +76,7 @@ public class OrganizationWalletSyncWorker: AsyncPeriodicBackgroundWorkerBase, IS
             var userExtensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(defaultUser.Id);
             if (string.IsNullOrEmpty(userExtensionInfo.WalletAddress))
             {
-                _logger.LogWarning($"The user {defaultUser.Id} has not yet linked a wallet address.");
+                // _logger.LogWarning($"The user {defaultUser.Id} has not yet linked a wallet address.");
                 continue;
             }
 

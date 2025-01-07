@@ -36,7 +36,7 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
     public async Task<string> GetUserOrganizationWalletAddressAsync(string organizationId, string userWalletAddress)
     {
         var organizationGuid = Guid.Parse(organizationId);
-        _logger.LogInformation($"[GetUserOrganizationWalletAddressAsync]find organizationId:{organizationGuid.ToString()}");
+        // _logger.LogInformation($"[GetUserOrganizationWalletAddressAsync]find organizationId:{organizationGuid.ToString()}");
         var organizationUnitExtension = await _organizationExtensionRepository.FindAsync(organizationGuid);
         if (organizationUnitExtension == null)
         {
