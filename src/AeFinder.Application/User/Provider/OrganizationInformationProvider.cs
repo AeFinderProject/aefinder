@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Commons;
 using AeFinder.Options;
@@ -93,5 +95,12 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
             return null;
         }
         return organizationUnitExtension.OrganizationWalletAddress;
+    }
+
+    public async Task<List<Guid>> GetOrganizationWithoutWalletListAsync()
+    {
+        var organizationList =
+            await _organizationExtensionRepository.GetListAsync(o => string.IsNullOrEmpty(o.OrganizationWalletAddress));
+        return organizationList.Select(o=>o.OrganizationId).ToList();
     }
 }
