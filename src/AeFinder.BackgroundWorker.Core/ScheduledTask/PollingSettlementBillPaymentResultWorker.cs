@@ -91,6 +91,12 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
             var billBeginTime = new DateTime(previousMonth.Year, previousMonth.Month, 1, 0, 0, 0);
             var billEndTime = new DateTime(lastDayOfLastMonth.Year, lastDayOfLastMonth.Month, lastDayOfLastMonth.Day,
                 23, 59, 59);
+            //TODO Just for test, need remove later
+            if (organizationId == "28f279dc-fa61-9be9-4994-3a174c683413")
+            {
+                billBeginTime = billBeginTime.AddMonths(1);
+                billEndTime = billEndTime.AddMonths(1);
+            }
             var settlementBills = await GetPaymentBillingListAsync(organizationUnitDto.Id, BillingType.Settlement,
                 billBeginTime, billEndTime);
             foreach (var settlementBill in settlementBills)
@@ -116,6 +122,12 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
             if (string.IsNullOrEmpty(organizationWalletAddress))
             {
                 _logger.LogError($"Organization {organizationId} wallet address is null or empty, please check.");
+                return;
+            }
+
+            if (settlementBill.PaidAmount == 0 && settlementBill.RefundAmount == 0)
+            {
+                _logger.LogWarning($"[PollingSettlementBillPaymentResultWorker] Settlement {settlementBill.Id.ToString()} bill amount is {settlementBill.PaidAmount}. no action will be taken for now");
                 return;
             }
             
