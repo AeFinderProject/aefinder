@@ -99,6 +99,8 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         
         State.Status = OrderStatus.Confirming;
         State.PaymentType = paymentType;
+        State.PaymentTime = _clock.Now;
+
         await WriteStateAsync();
         
         await PublishOrderStatusChangedEventAsync();
