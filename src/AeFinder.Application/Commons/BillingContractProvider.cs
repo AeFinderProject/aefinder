@@ -10,6 +10,7 @@ using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Volo.Abp.DependencyInjection;
 
 namespace AeFinder.Commons;
 
@@ -21,11 +22,11 @@ public interface IBillingContractProvider
     Task<SendTransactionOutput> BillingLockFromAsync(string organizationWalletAddress, decimal lockAmount,
         string billingId);
 
-    Task<TransactionResultDto> GetBillingTransactionResultAsync(string transactionId);
+    Task<TransactionResultDto> GetTransactionResultAsync(string transactionId);
     Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, int delaySeconds);
 }
 
-public class BillingContractProvider
+public class BillingContractProvider: IBillingContractProvider, ISingletonDependency
 {
     private readonly ContractOptions _contractOptions;
     private readonly ILogger<BillingContractProvider> _logger;
