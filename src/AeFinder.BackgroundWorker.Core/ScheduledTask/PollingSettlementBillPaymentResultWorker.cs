@@ -255,6 +255,7 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
                 await _billingEmailSender.SendPreDeductionBalanceInsufficientNotificationAsync(userInfo.Email,monthFullName,
                     organizationName,newAdvancePaymentBill.PaidAmount, organizationAccountBalance,organizationWalletAddress
                 );
+                _logger.LogInformation($"[PollingSettlementBillPaymentResultWorker] Send balance insufficient notification email to {userInfo.Email}");
             }
         }
     }
