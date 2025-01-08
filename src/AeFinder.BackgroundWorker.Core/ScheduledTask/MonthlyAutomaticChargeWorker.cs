@@ -48,7 +48,7 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
         }
         else
         {
-            _logger.LogInformation($"[MonthlyAutomaticChargeWorker] Today is not the {_scheduledTaskOptions.MonthlyAutomaticChargeDay}th day of the month. Task will not be executed.");
+            _logger.LogInformation($"[MonthlyAutomaticChargeWorker] Today is not the {_scheduledTaskOptions.MonthlyAutomaticChargeDay}th day of the month.Monthly Task will not be executed.");
         }
     }
 
@@ -97,7 +97,12 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
                 _logger.LogWarning($"[MonthlyAutomaticChargeWorker] the previous settlement bill of organization {organizationName} is null");
                 continue;
             }
-            
+
+            _logger.LogInformation(
+                "[MonthlyAutomaticChargeWorker] A monthly {0} bill has been created. Organization: {1} Bill: {2} Amount: {3} BillDate: {4}.",
+                BillingType.Settlement.ToString(), organizationName,
+                settlementBill.Id.ToString(), settlementBill.PaidAmount, billBeginTime);
+
             // //Send transaction to billing contract
             // var sendChargeTransactionOutput = await _billingContractProvider.BillingChargeAsync(organizationWalletAddress, settlementBill.PaidAmount, settlementBill.RefundAmount,
             //     settlementBill.Id.ToString());
@@ -131,7 +136,7 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
             // {
             //     _logger.LogError($"Bill {settlementBill.Id.ToString()} payment failed");
             // }
-            
+
         }
     }
 }
