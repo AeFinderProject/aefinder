@@ -167,11 +167,11 @@ public class AppDeleteHandler : IDistributedEventHandler<AppDeleteEto>, ITransie
     private async Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, int delaySeconds)
     {
         // var transactionId = transaction.GetHash().ToHex();
-        var transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
+        var transactionResult = await _contractProvider.GetTransactionResultAsync(transactionId);
         while (transactionResult.Status == TransactionState.Pending)
         {
             await Task.Delay(delaySeconds);
-            transactionResult = await _contractProvider.GetBillingTransactionResultAsync(transactionId);
+            transactionResult = await _contractProvider.GetTransactionResultAsync(transactionId);
         }
 
         return transactionResult;
