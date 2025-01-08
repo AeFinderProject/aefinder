@@ -31,6 +31,14 @@ public class MerchandiseService : AeFinderAppService, IMerchandiseService
         var index = ObjectMapper.Map<MerchandiseChangedEto, MerchandiseIndex>(input);
         await _merchandiseIndexRepository.AddOrUpdateAsync(index);
     }
+    
+    public async Task UpdateIndexAsync(Guid id)
+    {
+        var grain = _clusterClient.GetGrain<IMerchandiseGrain>(id);
+        var merchandise = await grain.GetAsync();
+        var eto = ObjectMapper.Map<MerchandiseState, MerchandiseChangedEto>(merchandise);
+        await AddOrUpdateIndexAsync(eto);
+    }
 
     public async Task<ListResultDto<MerchandiseDto>> GetListAsync(GetMerchandiseInput input)
     {
