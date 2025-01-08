@@ -8,9 +8,12 @@ using AeFinder.User.Provider;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Auditing;
 
 namespace AeFinder.User;
 
+[RemoteService(IsEnabled = false)]
+[DisableAuditing]
 public class OrganizationTransactionService: AeFinderAppService, IOrganizationTransactionService
 {
     private readonly IOrganizationAppService _organizationAppService;
