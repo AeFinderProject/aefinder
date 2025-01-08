@@ -125,11 +125,11 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
                 return;
             }
 
-            if (settlementBill.PaidAmount == 0 && settlementBill.RefundAmount == 0)
-            {
-                _logger.LogWarning($"[PollingSettlementBillPaymentResultWorker] Settlement {settlementBill.Id.ToString()} bill amount is {settlementBill.PaidAmount}. no action will be taken for now");
-                return;
-            }
+            // if (settlementBill.PaidAmount == 0 && settlementBill.RefundAmount == 0)
+            // {
+            //     _logger.LogWarning($"[PollingSettlementBillPaymentResultWorker] Settlement {settlementBill.Id.ToString()} bill amount is {settlementBill.PaidAmount}. no action will be taken for now");
+            //     return;
+            // }
             
             //Send transaction to billing contract
             var sendChargeTransactionOutput = await _billingContractProvider.BillingChargeAsync(organizationWalletAddress, settlementBill.PaidAmount, settlementBill.RefundAmount,
@@ -238,77 +238,57 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
             string monthFullName = newAdvancePaymentBillTime.ToString("MMMM");
             if (organizationAccountBalance < newAdvancePaymentBill.PaidAmount)
             {
+                _logger.LogWarning(
+                    $"[PollingSettlementBillPaymentResultWorker] Organization {organizationId} wallet balance {organizationAccountBalance} is not enough to pay advance bill amount {newAdvancePaymentBill.PaidAmount}.");
                 //Send email warning
                 await _billingEmailSender.SendPreDeductionBalanceInsufficientNotificationAsync(userInfo.Email,monthFullName,
                     organizationName,newAdvancePaymentBill.PaidAmount, organizationAccountBalance,organizationWalletAddress
                 );
-
-                // //Get organization asset
-                // var processorAssets = await _assetService.GetListAsync(organizationGuid, new GetAssetInput()
-                // {
-                //     Type = MerchandiseType.Processor,
-                //     SkipCount = 0,
-                //     MaxResultCount = 50
-                // });
-
-                // //freeze app
-                // var user = await _userAppService.GetDefaultUserInOrganizationUnitAsync(organizationGuid);
-                // foreach (var assetDto in processorAssets.Items)
-                // {
-                //     var appId = assetDto.AppId;
-                //     if (appId != _graphQlOptions.BillingIndexerId)
-                //     {
-                //         await _appDeployService.FreezeAppAsync(appId);
-                //         await _appEmailSender.SendAeIndexerFreezeNotificationAsync(user.Email, appId);
-                //     }
-                // }
-
-                return;
             }
 
-            //Send lockFrom transaction to contract
-            var sendLockFromTransactionOutput = await _billingContractProvider.BillingLockFromAsync(
-                organizationWalletAddress, newAdvancePaymentBill.PaidAmount,
-                newAdvancePaymentBill.Id.ToString());
-            _logger.LogInformation(
-                $"[PollingSettlementBillPaymentResultWorker] Send lock from transaction " +
-                sendLockFromTransactionOutput.TransactionId +
-                " of bill " + newAdvancePaymentBill.Id.ToString());
-            var lockFromTransactionId = sendLockFromTransactionOutput.TransactionId;
-            // not existed->retry  pending->wait  other->fail
-            int delaySeconds = _contractOptions.DelaySeconds;
-            var lockFromTransactionResult =
-                await _billingContractProvider.QueryTransactionResultAsync(lockFromTransactionId, delaySeconds);
-            var lockFromResultQueryTimes = 0;
-            while (lockFromTransactionResult.Status == TransactionState.NotExisted &&
-                   lockFromResultQueryTimes < _contractOptions.ResultQueryRetryTimes)
-            {
-                lockFromResultQueryTimes++;
-
-                await Task.Delay(delaySeconds);
-                lockFromTransactionResult =
-                    await _billingContractProvider.QueryTransactionResultAsync(lockFromTransactionId, delaySeconds);
-            }
-
-            var lockFromTransactionStatus = lockFromTransactionResult.Status == TransactionState.Mined
-                ? TransactionState.Mined
-                : TransactionState.Failed;
-            _logger.LogInformation(
-                $"After {lockFromResultQueryTimes} times retry, get lock from transaction {lockFromTransactionId} status {lockFromTransactionStatus}");
-            if (lockFromTransactionStatus == TransactionState.Mined)
-            {
-                await _billingService.PayAsync(newAdvancePaymentBill.Id, lockFromTransactionId, DateTime.UtcNow);
-                _logger.LogInformation($"Bill {newAdvancePaymentBill.Id.ToString()} is paying.");
-            }
-            else
-            {
-                _logger.LogWarning($"Bill {newAdvancePaymentBill.Id.ToString()} payment failed");
-
-                //Send email warning
-                await _billingEmailSender.SendAutoRenewalPreDeductionFailedNotificationAsync(userInfo.Email,
-                    monthFullName, organizationName, newAdvancePaymentBill.PaidAmount,
-                    newAdvancePaymentBill.PaidAmount);
-            }
+            // //Send lockFrom transaction to contract
+            // var sendLockFromTransactionOutput = await _billingContractProvider.BillingLockFromAsync(
+            //     organizationWalletAddress, newAdvancePaymentBill.PaidAmount,
+            //     newAdvancePaymentBill.Id.ToString());
+            // _logger.LogInformation(
+            //     $"[PollingSettlementBillPaymentResultWorker] Send lock from transaction " +
+            //     sendLockFromTransactionOutput.TransactionId +
+            //     " of bill " + newAdvancePaymentBill.Id.ToString());
+            // var lockFromTransactionId = sendLockFromTransactionOutput.TransactionId;
+            // // not existed->retry  pending->wait  other->fail
+            // int delaySeconds = _contractOptions.DelaySeconds;
+            // var lockFromTransactionResult =
+            //     await _billingContractProvider.QueryTransactionResultAsync(lockFromTransactionId, delaySeconds);
+            // var lockFromResultQueryTimes = 0;
+            // while (lockFromTransactionResult.Status == TransactionState.NotExisted &&
+            //        lockFromResultQueryTimes < _contractOptions.ResultQueryRetryTimes)
+            // {
+            //     lockFromResultQueryTimes++;
+            //
+            //     await Task.Delay(delaySeconds);
+            //     lockFromTransactionResult =
+            //         await _billingContractProvider.QueryTransactionResultAsync(lockFromTransactionId, delaySeconds);
+            // }
+            //
+            // var lockFromTransactionStatus = lockFromTransactionResult.Status == TransactionState.Mined
+            //     ? TransactionState.Mined
+            //     : TransactionState.Failed;
+            // _logger.LogInformation(
+            //     $"After {lockFromResultQueryTimes} times retry, get lock from transaction {lockFromTransactionId} status {lockFromTransactionStatus}");
+            // if (lockFromTransactionStatus == TransactionState.Mined)
+            // {
+            //     await _billingService.PayAsync(newAdvancePaymentBill.Id, lockFromTransactionId, DateTime.UtcNow);
+            //     _logger.LogInformation($"Bill {newAdvancePaymentBill.Id.ToString()} is paying.");
+            // }
+            // else
+            // {
+            //     _logger.LogWarning($"Bill {newAdvancePaymentBill.Id.ToString()} payment failed");
+            //
+            //     //Send email warning
+            //     await _billingEmailSender.SendAutoRenewalPreDeductionFailedNotificationAsync(userInfo.Email,
+            //         monthFullName, organizationName, newAdvancePaymentBill.PaidAmount,
+            //         newAdvancePaymentBill.PaidAmount);
+            // }
         }
     }
     
