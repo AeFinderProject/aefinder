@@ -138,6 +138,7 @@ public class AssetService : AeFinderAppService, IAssetService
             {
                 newAssetInput.FreeQuantity = orderDetail.OriginalAsset.FreeQuantity;
                 newAssetInput.FreeReplicas = orderDetail.OriginalAsset.FreeReplicas;
+                newAssetInput.FreeType = AssetFreeType.Permanent;
             }
 
             var asset = await newAssetGrain.CreateAssetAsync(newAssetId, input.OrganizationId, newAssetInput);
@@ -205,12 +206,7 @@ public class AssetService : AeFinderAppService, IAssetService
         var beginTime = dateTime.ToMonthDate();
         var endTime = beginTime.AddMonths(1);
 
-        var assets = new List<AssetIndex>();
-        var queryable = await _assetIndexRepository.GetQueryableAsync();
-        queryable = queryable
-            .Where(o => o.OrganizationId == organizationId && o.StartTime < beginTime && o.EndTime >= beginTime)
-            .OrderBy(o => o.Merchandise.Type).OrderBy(o => o.StartTime);
-        assets = queryable.ToList();
+        var assets = await GetAssetsInUseAsync(organizationId, beginTime);
 
         var totalAmount = 0M;
         foreach (var asset in assets)
@@ -219,7 +215,8 @@ public class AssetService : AeFinderAppService, IAssetService
             switch ((ChargeType)asset.Merchandise.ChargeType)
             {
                 case ChargeType.Hourly:
-                    quantity = (long)Math.Ceiling((endTime - beginTime).TotalHours);
+                    var assetEndTime = asset.EndTime < endTime ? asset.EndTime : endTime;
+                    quantity = (long)Math.Ceiling((assetEndTime - beginTime).TotalHours);
                     break;
                 case ChargeType.Time:
                     quantity = asset.Quantity;
@@ -256,5 +253,39 @@ public class AssetService : AeFinderAppService, IAssetService
     {
         var grain = _clusterClient.GetGrain<IAssetGrain>(id);
         await grain.LockAsync(isLock);
+    }
+
+    private async Task<List<AssetIndex>> GetAssetsInUseAsync(Guid organizationId, DateTime beginTime)
+    {
+        var skip = 0;
+        var maxCount = 1000;
+        var result = new List<AssetIndex>();
+
+        var queryable = await _assetIndexRepository.GetQueryableAsync();
+        queryable = queryable.Where(o =>
+                o.OrganizationId == organizationId &&
+                (o.Status == (int)AssetStatus.Unused || (o.StartTime < beginTime && o.EndTime >= beginTime)))
+            .OrderBy(o => o.Merchandise.Type)
+            .OrderBy(o => o.StartTime)
+            .Skip(skip).Take(maxCount);
+
+        var assets = queryable.ToList();
+        result.AddRange(assets);
+
+        while (assets.Count == maxCount)
+        {
+            skip += maxCount;
+            queryable = queryable.Where(o =>
+                    o.OrganizationId == organizationId &&
+                    (o.Status == (int)AssetStatus.Unused || (o.StartTime < beginTime && o.EndTime >= beginTime)))
+                .OrderBy(o => o.Merchandise.Type)
+                .OrderBy(o => o.StartTime)
+                .Skip(skip).Take(maxCount);
+            assets = queryable.ToList();
+
+            result.AddRange(assets);
+        }
+
+        return result;
     }
 }

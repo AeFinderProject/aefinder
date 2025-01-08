@@ -77,16 +77,14 @@ public class AssetGrain : AeFinderGrain<AssetState>, IAssetGrain
 
         State.Status = AssetStatus.Using;
         State.StartTime = dateTime;
-        State.EndTime = State.StartTime.AddYears(AeFinderApplicationConsts.DefaultAssetExpiration);
         
-        if (State.FreeQuantity > 0)
+        if (await IsFreeAndHourlyChargeAsync())
         {
-            var merchandiseGrain = GrainFactory.GetGrain<IMerchandiseGrain>(State.MerchandiseId);
-            var merchandise = await merchandiseGrain.GetAsync();
-            if (merchandise.ChargeType == ChargeType.Hourly)
-            {
-                State.EndTime = State.StartTime.AddHours(State.FreeQuantity);
-            }
+            State.EndTime = State.StartTime.AddHours(State.FreeQuantity);
+        }
+        else
+        {
+            State.EndTime = State.StartTime.AddYears(AeFinderApplicationConsts.DefaultAssetExpiration);
         }
 
         await WriteStateAsync();
@@ -96,7 +94,11 @@ public class AssetGrain : AeFinderGrain<AssetState>, IAssetGrain
     {
         await ReadStateAsync();
         State.Status = AssetStatus.Released;
-        State.EndTime = dateTime;
+        if (!await IsFreeAndHourlyChargeAsync())
+        {
+            State.EndTime = dateTime;
+        }
+
         await WriteStateAsync();
     }
 
@@ -105,6 +107,21 @@ public class AssetGrain : AeFinderGrain<AssetState>, IAssetGrain
         await ReadStateAsync();
         State.IsLocked = isLock;
         await WriteStateAsync();
+    }
+
+    private async Task<bool> IsFreeAndHourlyChargeAsync()
+    {
+        if (State.FreeQuantity > 0)
+        {
+            var merchandiseGrain = GrainFactory.GetGrain<IMerchandiseGrain>(State.MerchandiseId);
+            var merchandise = await merchandiseGrain.GetAsync();
+            if (merchandise.ChargeType == ChargeType.Hourly)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected override async Task WriteStateAsync()
