@@ -61,14 +61,8 @@ public class BalanceWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
-        await ProcessWarningCheckAsync();
-    }
-
-    private async Task ProcessWarningCheckAsync()
-    {
-        _logger.LogInformation("[BalanceWarningWorker] Process Charge Warning Check Async.");
         //Check if it is within the warning period.
-        DateTime today = DateTime.Now;
+        DateTime today = DateTime.UtcNow;
         DateTime lastDayOfMonth = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
         int daysUntilEndOfMonth = (lastDayOfMonth - today).Days;
         if (daysUntilEndOfMonth > _scheduledTaskOptions.RenewalAdvanceWarningDays)
@@ -76,6 +70,12 @@ public class BalanceWarningWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
             return;    
         }
         
+        await ProcessWarningCheckAsync();
+    }
+
+    private async Task ProcessWarningCheckAsync()
+    {
+        _logger.LogInformation("[BalanceWarningWorker] Process Charge Warning Check Async.");
         var organizationUnitList = await _organizationAppService.GetAllOrganizationUnitsAsync();
         foreach (var organizationUnitDto in organizationUnitList)
         {

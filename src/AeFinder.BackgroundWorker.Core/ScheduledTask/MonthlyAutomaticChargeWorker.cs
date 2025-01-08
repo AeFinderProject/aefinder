@@ -109,40 +109,6 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
                 BillingType.Settlement.ToString(), organizationName,
                 settlementBill.Id.ToString(), settlementBill.PaidAmount, billBeginTime, settlementBill.RefundAmount);
 
-            // //Send transaction to billing contract
-            // var sendChargeTransactionOutput = await _billingContractProvider.BillingChargeAsync(organizationWalletAddress, settlementBill.PaidAmount, settlementBill.RefundAmount,
-            //     settlementBill.Id.ToString());
-            // _logger.LogInformation("[MonthlyAutomaticChargeWorker] Send charge transaction " + sendChargeTransactionOutput.TransactionId +
-            //                        " of bill " + settlementBill.Id.ToString());
-            // var chargeTransactionId = sendChargeTransactionOutput.TransactionId;
-            // // not existed->retry  pending->wait  other->fail
-            // int delaySeconds = _contractOptions.DelaySeconds;
-            // var chargeTransactionResult = await _billingContractProvider.QueryTransactionResultAsync(chargeTransactionId, delaySeconds);
-            // var chargeResultQueryRetryTimes = 0;
-            // while (chargeTransactionResult.Status == TransactionState.NotExisted &&
-            //        chargeResultQueryRetryTimes < _contractOptions.ResultQueryRetryTimes)
-            // {
-            //     chargeResultQueryRetryTimes++;
-            //
-            //     await Task.Delay(delaySeconds);
-            //     chargeTransactionResult = await _billingContractProvider.QueryTransactionResultAsync(chargeTransactionId, delaySeconds);
-            // }
-            //
-            // var chargeTransactionStatus = chargeTransactionResult.Status == TransactionState.Mined
-            //     ? TransactionState.Mined
-            //     : TransactionState.Failed;
-            // _logger.LogInformation(
-            //     $"[MonthlyAutomaticChargeWorker] After {chargeResultQueryRetryTimes} times retry, get charge transaction {chargeTransactionId} status {chargeTransactionStatus}");
-            // if (chargeTransactionStatus == TransactionState.Mined)
-            // {
-            //     await _billingService.PayAsync(settlementBill.Id, chargeTransactionId, DateTime.UtcNow);
-            //     _logger.LogInformation($"Bill {settlementBill.Id.ToString()} is paying.");
-            // }
-            // else
-            // {
-            //     _logger.LogError($"Bill {settlementBill.Id.ToString()} payment failed");
-            // }
-
         }
     }
 }

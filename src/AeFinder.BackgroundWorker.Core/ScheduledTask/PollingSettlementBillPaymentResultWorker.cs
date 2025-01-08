@@ -256,50 +256,6 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
                     organizationName,newAdvancePaymentBill.PaidAmount, organizationAccountBalance,organizationWalletAddress
                 );
             }
-
-            // //Send lockFrom transaction to contract
-            // var sendLockFromTransactionOutput = await _billingContractProvider.BillingLockFromAsync(
-            //     organizationWalletAddress, newAdvancePaymentBill.PaidAmount,
-            //     newAdvancePaymentBill.Id.ToString());
-            // _logger.LogInformation(
-            //     $"[PollingSettlementBillPaymentResultWorker] Send lock from transaction " +
-            //     sendLockFromTransactionOutput.TransactionId +
-            //     " of bill " + newAdvancePaymentBill.Id.ToString());
-            // var lockFromTransactionId = sendLockFromTransactionOutput.TransactionId;
-            // // not existed->retry  pending->wait  other->fail
-            // int delaySeconds = _contractOptions.DelaySeconds;
-            // var lockFromTransactionResult =
-            //     await _billingContractProvider.QueryTransactionResultAsync(lockFromTransactionId, delaySeconds);
-            // var lockFromResultQueryTimes = 0;
-            // while (lockFromTransactionResult.Status == TransactionState.NotExisted &&
-            //        lockFromResultQueryTimes < _contractOptions.ResultQueryRetryTimes)
-            // {
-            //     lockFromResultQueryTimes++;
-            //
-            //     await Task.Delay(delaySeconds);
-            //     lockFromTransactionResult =
-            //         await _billingContractProvider.QueryTransactionResultAsync(lockFromTransactionId, delaySeconds);
-            // }
-            //
-            // var lockFromTransactionStatus = lockFromTransactionResult.Status == TransactionState.Mined
-            //     ? TransactionState.Mined
-            //     : TransactionState.Failed;
-            // _logger.LogInformation(
-            //     $"After {lockFromResultQueryTimes} times retry, get lock from transaction {lockFromTransactionId} status {lockFromTransactionStatus}");
-            // if (lockFromTransactionStatus == TransactionState.Mined)
-            // {
-            //     await _billingService.PayAsync(newAdvancePaymentBill.Id, lockFromTransactionId, DateTime.UtcNow);
-            //     _logger.LogInformation($"Bill {newAdvancePaymentBill.Id.ToString()} is paying.");
-            // }
-            // else
-            // {
-            //     _logger.LogWarning($"Bill {newAdvancePaymentBill.Id.ToString()} payment failed");
-            //
-            //     //Send email warning
-            //     await _billingEmailSender.SendAutoRenewalPreDeductionFailedNotificationAsync(userInfo.Email,
-            //         monthFullName, organizationName, newAdvancePaymentBill.PaidAmount,
-            //         newAdvancePaymentBill.PaidAmount);
-            // }
         }
     }
     
