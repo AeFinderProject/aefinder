@@ -134,9 +134,13 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
     public async Task SetFirstDeployTimeAsync(DateTime time)
     {
         await ReadStateAsync();
-        State.DeleteTime = time;
-        await WriteStateAsync();
+        if (State.DeployTime != null)
+        {
+            return;
+        }
         
+        State.DeployTime = time;
+        await WriteStateAsync();
         //Publish app update eto to background worker
         var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
         await _distributedEventBus.PublishAsync(appUpdateEto);
