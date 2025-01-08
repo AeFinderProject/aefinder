@@ -125,11 +125,11 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
                 return;
             }
 
-            if (settlementBill.PaidAmount == 0 && settlementBill.RefundAmount == 0)
-            {
-                _logger.LogWarning($"[PollingSettlementBillPaymentResultWorker] Settlement {settlementBill.Id.ToString()} bill amount is {settlementBill.PaidAmount}. no action will be taken for now");
-                return;
-            }
+            // if (settlementBill.PaidAmount == 0 && settlementBill.RefundAmount == 0)
+            // {
+            //     _logger.LogWarning($"[PollingSettlementBillPaymentResultWorker] Settlement {settlementBill.Id.ToString()} bill amount is {settlementBill.PaidAmount}. no action will be taken for now");
+            //     return;
+            // }
             
             //Send transaction to billing contract
             var sendChargeTransactionOutput = await _billingContractProvider.BillingChargeAsync(organizationWalletAddress, settlementBill.PaidAmount, settlementBill.RefundAmount,
