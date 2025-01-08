@@ -93,6 +93,12 @@ public class PollingAdvanceBillPaymentResultWorker: AsyncPeriodicBackgroundWorke
             var advanceBillBeginTime = new DateTime(now.Year, now.Month, 1, 0, 0, 0);
             var advanceBillEndTime = new DateTime(lastDayOfThisMonth.Year, lastDayOfThisMonth.Month, lastDayOfThisMonth.Day,
                 23, 59, 59);
+            //TODO Just for test, need remove later
+            if (organizationId == "28f279dc-fa61-9be9-4994-3a174c683413")
+            {
+                advanceBillBeginTime = advanceBillBeginTime.AddMonths(1);
+                advanceBillEndTime = advanceBillEndTime.AddMonths(1);
+            }
             var advancePaymentBills =
                 await GetPaymentBillingListAsync(organizationUnitDto.Id, BillingType.AdvancePayment,
                     advanceBillBeginTime, advanceBillEndTime);
@@ -134,6 +140,13 @@ public class PollingAdvanceBillPaymentResultWorker: AsyncPeriodicBackgroundWorke
             {
                 _logger.LogWarning(
                     $"[PollingAdvanceBillPaymentResultWorker] Organization {organizationId} wallet balance {organizationAccountBalance} is not enough to pay advance bill amount {advancePaymentBill.PaidAmount}.");
+                return;
+            }
+            
+            if (advancePaymentBill.PaidAmount == 0)
+            {
+                _logger.LogWarning($"[PollingAdvanceBillPaymentResultWorker] Advance {advancePaymentBill.Id.ToString()} bill amount is {advancePaymentBill.PaidAmount}. The bill will be considered paid by default.");
+                await _billingService.ConfirmPaymentAsync(advancePaymentBill.Id);
                 return;
             }
 
