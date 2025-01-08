@@ -4,6 +4,7 @@ namespace AeFinder.Email;
 
 public interface IBillingEmailSender
 {
+    Task SendOrderPayFailedNotificationAsync(string email, string orderId, string orderFailedText);
     Task SendLockBalanceSuccessfulNotificationAsync(string email, string organizationWalletAddress, decimal lockAmount,
         string transactionId);
 

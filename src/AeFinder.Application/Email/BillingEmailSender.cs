@@ -22,6 +22,17 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
         _logger = logger;
     }
 
+    public async Task SendOrderPayFailedNotificationAsync(string email, string orderId, string orderFailedText)
+    {
+        await SendEmailAsync(new SendEmailInput
+        {
+            From = _awsEmailOptions.From,
+            To = email,
+            Body = orderFailedText,
+            Subject = $"Order {orderId} pay failed"
+        });
+    }
+
     public async Task SendLockBalanceSuccessfulNotificationAsync(string email, string organizationWalletAddress,
         decimal lockAmount, string transactionId)
     {
