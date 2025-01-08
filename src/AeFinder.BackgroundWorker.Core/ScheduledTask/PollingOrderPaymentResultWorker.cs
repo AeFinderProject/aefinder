@@ -91,8 +91,7 @@ public class PollingOrderPaymentResultWorker: AsyncPeriodicBackgroundWorkerBase,
     
     private async Task HandlePaymentOrderAsync(Guid organizationGuid,OrderDto paymentOrder)
     {
-        if (paymentOrder.Status == OrderStatus.Paid || paymentOrder.Status == OrderStatus.Canceled ||
-            paymentOrder.Status == OrderStatus.PayFailed)
+        if (paymentOrder.Status == OrderStatus.Paid || paymentOrder.Status == OrderStatus.Canceled)
         {
             return;
         }
@@ -110,11 +109,39 @@ public class PollingOrderPaymentResultWorker: AsyncPeriodicBackgroundWorkerBase,
             }
         }
 
+        if (paymentOrder.Status == OrderStatus.PayFailed)
+        {
+            if (paymentOrder.OrderTime.AddMinutes(_scheduledTaskOptions.PayFailedOrderTimeoutHours) <
+                DateTime.UtcNow)
+            {
+                //Set order status to canceled
+                _logger.LogInformation(
+                    "[OrderPaymentResultPollingWorker] Cancel pay failed order {1}", paymentOrder.Id);
+                await _orderService.CancelAsync(organizationGuid, paymentOrder.Id);
+            }
+        }
+
         if (paymentOrder.Status == OrderStatus.Confirming)
         {
             var orderId = paymentOrder.Id.ToString();
             _logger.LogInformation(
                 "[OrderPaymentResultPollingWorker] Found confirming order {1}", orderId);
+            
+            if (paymentOrder.OrderTime.AddMinutes(_scheduledTaskOptions.ConfirmingOrderTimeoutMinutes) <
+                DateTime.UtcNow)
+            {
+                //Set order status to pay failed
+                _logger.LogInformation(
+                    "[OrderPaymentResultPollingWorker] Order {1} pay failed, Because the order was not paid within {2} minutes",
+                    paymentOrder.Id, _scheduledTaskOptions.ConfirmingOrderTimeoutMinutes);
+                await _orderService.PaymentFailedAsync(organizationGuid, paymentOrder.Id);
+                //Send order pay failed email
+                var userInfo =
+                    await _userAppService.GetDefaultUserInOrganizationUnitAsync(paymentOrder.OrganizationId);
+                await _billingEmailSender.SendOrderPayFailedNotificationAsync(userInfo.Email, orderId,
+                    $"Order {orderId} pay failed, Because the order was not paid within {_scheduledTaskOptions.ConfirmingOrderTimeoutMinutes} minutes");
+            }
+            
             var orderTransactionResult =
                 await _indexerProvider.GetUserFundRecordAsync(_contractOptions.BillingContractChainId, null,
                     orderId, 0, 10);
@@ -139,20 +166,28 @@ public class PollingOrderPaymentResultWorker: AsyncPeriodicBackgroundWorkerBase,
             {
                 return;
             }
+
+            if (transactionResultDto.Amount == paymentOrder.ActualAmount)
+            {
+                //Update bill transaction id & status
+                _logger.LogInformation(
+                    $"[OrderPaymentResultPollingWorker]Get transaction {transactionResultDto.TransactionId} of order {transactionResultDto.BillingId}");
+                await _orderService.ConfirmPaymentAsync(organizationGuid, paymentOrder.Id,
+                    transactionResultDto.TransactionId,
+                    transactionResultDto.Metadata.Block.BlockTime);
             
-            //Update bill transaction id & status
-            _logger.LogInformation(
-                $"[OrderPaymentResultPollingWorker]Get transaction {transactionResultDto.TransactionId} of order {transactionResultDto.BillingId}");
-            await _orderService.ConfirmPaymentAsync(organizationGuid, paymentOrder.Id,
-                transactionResultDto.TransactionId,
-                transactionResultDto.Metadata.Block.BlockTime);
+                //Send lock balance successful email
+                var userInfo =
+                    await _userAppService.GetDefaultUserInOrganizationUnitAsync(paymentOrder.OrganizationId);
+                await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync(userInfo.Email,
+                    transactionResultDto.Address, transactionResultDto.Amount,transactionResultDto.TransactionId
+                );
+            }
+            else
+            {
+                _logger.LogWarning($"The transaction amount {transactionResultDto.Amount} does not match the amount {paymentOrder.ActualAmount} due for the order.");
+            }
             
-            //Send lock balance successful email
-            var userInfo =
-                await _userAppService.GetDefaultUserInOrganizationUnitAsync(paymentOrder.OrganizationId);
-            await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync(userInfo.Email,
-                transactionResultDto.Address, transactionResultDto.Amount,transactionResultDto.TransactionId
-            );
         }
     }
     

@@ -18,4 +18,6 @@ public class ScheduledTaskOptions
     public int SettlementBillPaymentResultPollingTaskPeriodMilliSeconds { get; set; } = 180000;
     public int UnpaidOrderTimeoutMinutes { get; set; } = 30;
     public int UnpaidBillTimeOutDays { get; set; } = 7;
+    public int PayFailedOrderTimeoutHours { get; set; } = 48;
+    public int ConfirmingOrderTimeoutMinutes { get; set; } = 60;
 }
