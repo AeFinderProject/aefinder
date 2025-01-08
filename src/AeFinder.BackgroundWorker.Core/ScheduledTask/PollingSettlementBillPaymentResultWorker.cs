@@ -125,11 +125,12 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
                 return;
             }
 
-            // if (settlementBill.PaidAmount == 0 && settlementBill.RefundAmount == 0)
-            // {
-            //     _logger.LogWarning($"[PollingSettlementBillPaymentResultWorker] Settlement {settlementBill.Id.ToString()} bill amount is {settlementBill.PaidAmount}. no action will be taken for now");
-            //     return;
-            // }
+            if (settlementBill.PaidAmount == 0 && settlementBill.RefundAmount == 0)
+            {
+                _logger.LogWarning($"[PollingSettlementBillPaymentResultWorker] Settlement {settlementBill.Id.ToString()} bill amount is {settlementBill.PaidAmount}. The bill will be considered paid by default.");
+                await _billingService.ConfirmPaymentAsync(settlementBill.Id);
+                return;
+            }
             
             //Send transaction to billing contract
             var sendChargeTransactionOutput = await _billingContractProvider.BillingChargeAsync(organizationWalletAddress, settlementBill.PaidAmount, settlementBill.RefundAmount,
@@ -221,6 +222,11 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
 
             //Create advance payment bill for current month
             var newAdvancePaymentBillTime = DateTime.UtcNow;
+            //TODO Just for test, need remove later
+            if (organizationId == "28f279dc-fa61-9be9-4994-3a174c683413")
+            {
+                newAdvancePaymentBillTime = newAdvancePaymentBillTime.AddMonths(1);
+            }
             var newAdvancePaymentBill = await _billingService.CreateAsync(organizationGuid,
                 BillingType.AdvancePayment, newAdvancePaymentBillTime);
             if (newAdvancePaymentBill == null)
@@ -229,6 +235,11 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
                     $"[PollingSettlementBillPaymentResultWorker] create advance bill failed, the current month advance payment bill of organization {organizationId} is null");
                 return;
             }
+
+            _logger.LogInformation(
+                "[PollingSettlementBillPaymentResultWorker] A monthly {0} bill has been created. Organization: {1} Bill: {2} Lock from amount: {3} BillDate: {4}.",
+                BillingType.AdvancePayment.ToString(), organizationName,
+                newAdvancePaymentBill.Id.ToString(), newAdvancePaymentBill.PaidAmount, newAdvancePaymentBillTime);
 
             //Check user organization balance
             var userOrganizationBalanceInfoDto =
