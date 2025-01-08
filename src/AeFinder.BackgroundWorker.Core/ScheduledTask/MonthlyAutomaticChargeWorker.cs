@@ -105,9 +105,9 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
             }
 
             _logger.LogInformation(
-                "[MonthlyAutomaticChargeWorker] A monthly {0} bill has been created. Organization: {1} Bill: {2} Amount: {3} BillDate: {4}.",
+                "[MonthlyAutomaticChargeWorker] A monthly {0} bill has been created. Organization: {1} Bill: {2} Charge amount: {3} BillDate: {4} Refund amount: {5}.",
                 BillingType.Settlement.ToString(), organizationName,
-                settlementBill.Id.ToString(), settlementBill.PaidAmount, billBeginTime);
+                settlementBill.Id.ToString(), settlementBill.PaidAmount, billBeginTime, settlementBill.RefundAmount);
 
             // //Send transaction to billing contract
             // var sendChargeTransactionOutput = await _billingContractProvider.BillingChargeAsync(organizationWalletAddress, settlementBill.PaidAmount, settlementBill.RefundAmount,
