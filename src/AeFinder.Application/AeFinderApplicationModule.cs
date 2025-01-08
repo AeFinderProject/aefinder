@@ -71,7 +71,7 @@ public class AeFinderApplicationModule : AbpModule
             options.Kind = DateTimeKind.Utc;
         });
 
-        Configure<ContractOptions>(configuration.GetSection("CustomOrganization"));
+        Configure<CustomOrganizationOptions>(configuration.GetSection("CustomOrganization"));
         context.Services.AddSingleton<IEmailSender, AwsEmailSender>();
     }
 }
