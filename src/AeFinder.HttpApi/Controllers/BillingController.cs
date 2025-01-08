@@ -45,6 +45,14 @@ public class BillingController : AeFinderController
         return await _billingService.GetAsync(orgId, id);
     }
     
+    [HttpPost]
+    [Route("{id}/index")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task UpdateIndexAsync(Guid id)
+    {
+        await _billingService.UpdateIndexAsync(id);
+    }
+    
     private async Task<Guid> GetOrganizationIdAsync()
     {
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);

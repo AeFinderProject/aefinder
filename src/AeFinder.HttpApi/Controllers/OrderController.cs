@@ -81,6 +81,14 @@ public class OrderController : AeFinderController
         return await _orderService.CalculateCostAsync(input);
     }
     
+    [HttpPost]
+    [Route("{id}/index")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task UpdateIndexAsync(Guid id)
+    {
+        await _orderService.UpdateIndexAsync(id);
+    }
+    
     private async Task<Guid> GetOrganizationIdAsync()
     {
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);

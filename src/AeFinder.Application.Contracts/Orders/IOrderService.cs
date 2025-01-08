@@ -7,6 +7,7 @@ namespace AeFinder.Orders;
 public interface IOrderService
 {
     Task AddOrUpdateIndexAsync(OrderChangedEto eto);
+    Task UpdateIndexAsync(Guid id);
     Task<PagedResultDto<OrderDto>> GetListAsync(Guid organizationId, GetOrderListInput input);
     Task<OrderDto> GetAsync(Guid organizationId, Guid id);
     Task<OrderDto> CreateAsync(Guid organizationId, Guid userId, CreateOrderInput input);

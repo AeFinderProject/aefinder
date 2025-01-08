@@ -44,6 +44,14 @@ public class AssetController : AeFinderController
         await _assetService.RelateAppAsync(orgId, input);
     }
     
+    [HttpPost]
+    [Route("{id}/index")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task UpdateIndexAsync(Guid id)
+    {
+        await _assetService.UpdateIndexAsync(id);
+    }
+    
     private async Task<Guid> GetOrganizationIdAsync()
     {
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
