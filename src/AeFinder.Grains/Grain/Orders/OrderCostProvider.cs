@@ -41,17 +41,17 @@ public class OrderCostProvider : IOrderCostProvider, ITransientDependency
                 if (asset.Quantity * asset.Replicas - asset.FreeQuantity * asset.FreeReplicas != 0)
                 {
                     var deductionQuantity = 0L;
-                    switch (merchandise.ChargeType)
+                    switch (originalMerchandise.ChargeType)
                     {
                         case ChargeType.Hourly:
                             deductionQuantity = (long)Math.Floor((endTime - orderTime).TotalHours) *
                                                 asset.Replicas;
-                            orderDetail.DeductionAmount = deductionQuantity * merchandise.Price;
+                            orderDetail.DeductionAmount = deductionQuantity * originalMerchandise.Price;
                             break;
                         case ChargeType.Time:
                             deductionQuantity = asset.Quantity * asset.Replicas -
                                                 asset.FreeQuantity * asset.FreeReplicas;
-                            orderDetail.DeductionAmount = deductionQuantity * merchandise.Price;
+                            orderDetail.DeductionAmount = deductionQuantity * originalMerchandise.Price;
                             break;
                     }
 
