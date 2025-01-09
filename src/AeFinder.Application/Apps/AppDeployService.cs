@@ -160,10 +160,13 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     
     public async Task ObliterateAppAsync(string appId,string organizationId)
     {
-        Logger.LogInformation($"[ObliterateAppAsync]Obliterate AeIndexer {appId}");
-        if (string.IsNullOrEmpty(organizationId))
+        if (CurrentUser.IsInRole("admin"))
         {
-            Logger.LogInformation($"User {CurrentUser.Id.ToString()} Obliterate AeIndexer {appId}");
+            Logger.LogInformation($"[ObliterateAppAsync] Admin obliterate AeIndexer {appId} of organization {organizationId}");
+        }
+        else
+        {
+            Logger.LogInformation($"[ObliterateAppAsync] User {CurrentUser.Id.ToString()} Obliterate AeIndexer {appId}");
             //Get organization id
             var organizationUnit = await _organizationAppService.GetUserDefaultOrganizationAsync(CurrentUser.Id.Value);
             if (organizationUnit == null)
