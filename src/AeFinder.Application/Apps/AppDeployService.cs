@@ -42,6 +42,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         IOrganizationAppService organizationAppService,
         IOptionsSnapshot<AppDeployOptions> appDeployOptions,
         IOptionsSnapshot<CustomOrganizationOptions> customOrganizationOptions,
+        IAssetService assetService,
         IUserAppService userAppService, IAppEmailSender appEmailSender,
         IAppResourceLimitProvider appResourceLimitProvider)
     {
@@ -54,6 +55,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _customOrganizationOptions = customOrganizationOptions.Value;
         _userAppService = userAppService;
         _appEmailSender = appEmailSender;
+        _assetService = assetService;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
