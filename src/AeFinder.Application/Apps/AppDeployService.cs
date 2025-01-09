@@ -283,12 +283,6 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             {
                 throw new UserFriendlyException("Please purchase pod cpu & memory capacity before proceeding with deployment.");
             }
-
-            // await _appResourceLimitProvider.SetAppResourceLimitAsync(appId, new AppResourceLimitDto()
-            // {
-            //     AppFullPodLimitCpuCore = _customOrganizationOptions.DefaultFullPodLimitCpuCore,
-            //     AppFullPodLimitMemory = _customOrganizationOptions.DefaultFullPodLimitMemory
-            // });
         }
 
         //Check storage asset
