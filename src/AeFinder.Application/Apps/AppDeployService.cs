@@ -263,7 +263,10 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var processorAssets = await _assetService.GetListAsync(Guid.Parse(organizationId), new GetAssetInput()
         {
             Type = MerchandiseType.Processor,
-            AppId = appId
+            AppId = appId,
+            SkipCount = 0,
+            MaxResultCount = 10,
+            IsDeploy = true
         });
         AssetDto processorAsset = null;
         if (processorAssets != null && processorAssets.Items.Count > 0)
@@ -290,7 +293,10 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         var storageAssets = await _assetService.GetListAsync(Guid.Parse(organizationId), new GetAssetInput()
         {
             Type = MerchandiseType.Storage,
-            AppId = appId
+            AppId = appId,
+            SkipCount = 0,
+            MaxResultCount = 10,
+            IsDeploy = true
         });
         AssetDto storageAsset = null;
         if (storageAssets != null && storageAssets.Items.Count > 0)
@@ -321,6 +327,8 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             {
                 Type = MerchandiseType.Processor,
                 AppId = appId,
+                SkipCount = 0,
+                MaxResultCount = 10,
                 IsDeploy = true
             });
             AssetDto processorAsset = null;
