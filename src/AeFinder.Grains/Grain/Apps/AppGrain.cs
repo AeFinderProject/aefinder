@@ -85,6 +85,7 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
 
     public async Task<string> GetOrganizationIdAsync()
     {
+        await ReadStateAsync();
         if (State.OrganizationId.IsNullOrEmpty())
         {
             return State.OrganizationId;
