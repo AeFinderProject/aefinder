@@ -3,6 +3,7 @@ using System.Linq;
 using AeFinder.ApiKeys;
 using AeFinder.App.Es;
 using AeFinder.AppResources;
+using AeFinder.AppResources.Dto;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Apps.Eto;
@@ -149,6 +150,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<PodContainerDto, PodContainerInfo>();
         CreateMap<AppPodInfoIndex, AppPodInfoDto>();
         CreateMap<PodContainerInfo, PodContainerDto>();
+        CreateMap<PodContainerDto, AppFullPodResourceUsageDto>();
 
         CreateMap<UserExtensionDto, IdentityUserExtension>();
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();
