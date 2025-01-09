@@ -258,7 +258,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     {
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         var organizationId = await appGrain.GetOrganizationIdAsync();
-        Logger.LogDebug($"Check app asset get organization {organizationId}");
+        Logger.LogDebug($"Check app {appId} asset get organization {organizationId}");
         //Check processor asset
         var processorAssets = await _assetService.GetListAsync(Guid.Parse(organizationId), new GetAssetInput()
         {
