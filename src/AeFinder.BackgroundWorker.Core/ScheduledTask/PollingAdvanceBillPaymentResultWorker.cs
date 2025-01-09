@@ -94,7 +94,7 @@ public class PollingAdvanceBillPaymentResultWorker: AsyncPeriodicBackgroundWorke
             var advanceBillEndTime = new DateTime(lastDayOfThisMonth.Year, lastDayOfThisMonth.Month, lastDayOfThisMonth.Day,
                 23, 59, 59);
             //TODO Just for test, need remove later
-            if (organizationId == "28f279dc-fa61-9be9-4994-3a174c683413")
+            if (organizationId == "28f279dc-fa61-9be9-4994-3a174c683413" || organizationId == "259ea99b-12c0-bb06-f658-3a175c3b6301")
             {
                 advanceBillBeginTime = advanceBillBeginTime.AddMonths(1);
                 advanceBillEndTime = advanceBillEndTime.AddMonths(1);
