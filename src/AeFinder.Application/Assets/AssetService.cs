@@ -98,6 +98,48 @@ public class AssetService : AeFinderAppService, IAssetService
             Items = ObjectMapper.Map<List<AssetIndex>, List<AssetDto>>(indices)
         };
     }
+    
+    public async Task<PagedResultDto<AssetDto>> GetAllListAsync(Guid organizationId, GetAssetInput input)
+    {
+        var queryable = await _assetIndexRepository.GetQueryableAsync();
+        queryable = queryable.Where(o =>
+            o.OrganizationId == organizationId);
+
+        if (!input.AppId.IsNullOrWhiteSpace())
+        {
+            queryable = queryable.Where(o => o.AppId == input.AppId);
+        }
+
+        if (input.IsFree.HasValue)
+        {
+            queryable = queryable.Where(o => o.FreeQuantity > 0);
+        }
+
+        if (input.Type.HasValue)
+        {
+            queryable = queryable.Where(o => o.Merchandise.Type == (int)input.Type);
+        }
+
+        if (input.Category.HasValue)
+        {
+            queryable = queryable.Where(o => o.Merchandise.Category == (int)input.Category);
+        }
+
+        var totalCount = queryable.Count();
+        var indices = queryable.OrderBy(o => o.Id).Skip(input.SkipCount).Take(input.MaxResultCount).ToList();
+
+        return new PagedResultDto<AssetDto>
+        {
+            TotalCount = totalCount,
+            Items = ObjectMapper.Map<List<AssetIndex>, List<AssetDto>>(indices)
+        };
+    }
+
+    public async Task<AssetDto> GetAsync(Guid id)
+    {
+        var asset = await _assetIndexRepository.GetAsync(id);
+        return ObjectMapper.Map<AssetIndex, AssetDto>(asset);
+    }
 
     public async Task<AssetDto> CreateAsync(Guid organizationId, CreateAssetInput input)
     {

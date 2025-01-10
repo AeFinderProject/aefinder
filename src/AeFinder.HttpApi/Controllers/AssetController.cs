@@ -39,6 +39,22 @@ public class AssetController : AeFinderController
         return await _assetService.GetListAsync(orgId, input);
     }
     
+    [HttpGet]
+    [Route("all/{orgId}")]
+    [Authorize]
+    public async Task<PagedResultDto<AssetDto>> GetAllListsAsync(Guid orgId, GetAssetInput input)
+    {
+        return await _assetService.GetAllListAsync(orgId, input);
+    }
+    
+    [HttpGet]
+    [Route("{id}")]
+    [Authorize]
+    public async Task<AssetDto> GetAsync(Guid orgId)
+    {
+        return await _assetService.GetAsync(orgId);
+    }
+    
     [HttpPost]
     [Route("relate")]
     [Authorize]

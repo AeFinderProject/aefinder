@@ -13,6 +13,8 @@ public interface IAssetService
     Task<AssetDto> CreateAsync(Guid organizationId, CreateAssetInput input);
     Task<List<Guid>> ChangeAssetAsync(OrderStatusChangedEto input);
     Task<PagedResultDto<AssetDto>> GetListAsync(Guid organizationId, GetAssetInput input);
+    Task<PagedResultDto<AssetDto>> GetAllListAsync(Guid organizationId, GetAssetInput input);
+    Task<AssetDto> GetAsync(Guid id);
     Task StartUsingAssetAsync(Guid id, DateTime dateTime);
     Task ReleaseAssetAsync(Guid id, DateTime dateTime);
     Task PayAsync(Guid id, decimal paidAmount);
