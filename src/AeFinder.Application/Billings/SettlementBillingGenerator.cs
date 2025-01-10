@@ -151,6 +151,7 @@ public class SettlementBillingGenerator : IBillingGenerator
                 {
                     var refundAmount = assetPaidAmount - timeBillingDetail.PaidAmount;
                     
+                    timeBillingDetail.Asset.PaidAmount = assetPaidAmount;
                     timeBillingDetail.RefundAmount = refundAmount;
             
                     billing.PaidAmount += timeBillingDetail.PaidAmount;
@@ -189,6 +190,7 @@ public class SettlementBillingGenerator : IBillingGenerator
         {
             var refundAmount = assetPaidAmount - timeBillingDetail.PaidAmount;
 
+            timeBillingDetail.Asset.PaidAmount = assetPaidAmount;
             timeBillingDetail.RefundAmount = refundAmount;
 
             billing.PaidAmount += timeBillingDetail.PaidAmount;
