@@ -101,7 +101,18 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
         });
     }
 
-    
+    public async Task SendTestEmail(string email, string content)
+    {
+        await SendEmailAsync(new SendEmailInput
+        {
+            From = _awsEmailOptions.From,
+            To = email,
+            Body = content,
+            Subject = "AeFinder Email Test"
+        });
+    }
+
+
 
     private async Task SendEmailAsync(SendEmailInput input)
     {
