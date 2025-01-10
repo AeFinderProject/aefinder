@@ -359,5 +359,10 @@ public class AppService : AeFinderAppService, IAppService
             Items = list
         };
     }
-    
+
+    public async Task LockAsync(string appId, bool isLock)
+    {
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+        await appGrain.LockAsync(isLock);
+    }
 }

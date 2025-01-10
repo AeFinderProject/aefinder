@@ -34,6 +34,14 @@ public class BillingService : AeFinderAppService, IBillingService
         var index = ObjectMapper.Map<BillingChangedEto, BillingIndex>(eto);
         await _billingIndexRepository.AddOrUpdateAsync(index);
     }
+    
+    public async Task UpdateIndexAsync(Guid id)
+    {
+        var grain = _clusterClient.GetGrain<IBillingGrain>(id);
+        var billing = await grain.GetAsync();
+        var eto = ObjectMapper.Map<BillingState, BillingChangedEto>(billing);
+        await AddOrUpdateIndexAsync(eto);
+    }
 
     public async Task<BillingDto> GetAsync(Guid organizationId, Guid id)
     {

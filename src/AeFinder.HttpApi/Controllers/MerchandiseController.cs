@@ -55,4 +55,12 @@ public class MerchandiseController : AeFinderController
     {
         return await _merchandiseService.UpdateAsync(id, input);
     }
+    
+    [HttpPost]
+    [Route("{id}/index")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task UpdateIndexAsync(Guid id)
+    {
+        await _merchandiseService.UpdateIndexAsync(id);
+    }
 }

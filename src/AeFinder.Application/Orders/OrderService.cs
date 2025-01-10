@@ -38,6 +38,14 @@ public class OrderService : AeFinderAppService, IOrderService
         await _orderIndexRepository.AddOrUpdateAsync(index);
     }
 
+    public async Task UpdateIndexAsync(Guid id)
+    {
+        var grain = _clusterClient.GetGrain<IOrderGrain>(id);
+        var order = await grain.GetAsync();
+        var eto = ObjectMapper.Map<OrderState, OrderChangedEto>(order);
+        await AddOrUpdateIndexAsync(eto);
+    }
+
     public async Task<PagedResultDto<OrderDto>> GetListAsync(Guid organizationId, GetOrderListInput input)
     {
         var queryable = await _orderIndexRepository.GetQueryableAsync();

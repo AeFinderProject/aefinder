@@ -54,6 +54,7 @@ public class AppUpdateHandler : AppHandlerBase, IDistributedEventHandler<AppUpda
         appInfoIndex.ImageUrl = eventData.ImageUrl;
         appInfoIndex.SourceCodeUrl = eventData.SourceCodeUrl;
         appInfoIndex.UpdateTime = eventData.UpdateTime;
+        appInfoIndex.IsLocked = eventData.IsLocked;
 
         await _appInfoEntityMappingRepository.AddOrUpdateAsync(appInfoIndex);
     }

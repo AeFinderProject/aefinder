@@ -250,4 +250,25 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         apps = await _appService.SearchAsync(orgId, "ap");
         apps.Items.Count.ShouldBe(3);
     }
+
+    [Fact]
+    public async Task Lock_Test()
+    {
+        var createDto = new CreateAppDto
+        {
+            AppName = "My App"
+        };
+        var result = await _appService.CreateAsync(createDto);
+        
+        var app = await _appService.GetAsync(result.AppId);
+        app.IsLocked.ShouldBe(false);
+
+        await _appService.LockAsync(app.AppId, true);
+        app = await _appService.GetAsync(result.AppId);
+        app.IsLocked.ShouldBe(true);
+        
+        await _appService.LockAsync(app.AppId, false);
+        app = await _appService.GetAsync(result.AppId);
+        app.IsLocked.ShouldBe(false);
+    }
 }

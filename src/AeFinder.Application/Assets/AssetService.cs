@@ -43,6 +43,14 @@ public class AssetService : AeFinderAppService, IAssetService
         index.Merchandise = merchandise;
         await _assetIndexRepository.AddOrUpdateAsync(index);
     }
+    
+    public async Task UpdateIndexAsync(Guid id)
+    {
+        var grain = _clusterClient.GetGrain<IAssetGrain>(id);
+        var asset = await grain.GetAsync();
+        var eto = ObjectMapper.Map<AssetState, AssetChangedEto>(asset);
+        await AddOrUpdateIndexAsync(eto);
+    }
 
     public async Task<PagedResultDto<AssetDto>> GetListAsync(Guid organizationId, GetAssetInput input)
     {
