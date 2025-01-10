@@ -137,7 +137,8 @@ public class SettlementBillingGenerator : IBillingGenerator
 
         billing.Details = new();
 
-        MerchandiseType? lastProcessType = null;
+        BillingDetailState timeBillingDetail = null;
+        decimal assetPaidAmount = 0M;
         foreach (var detail in details)
         {
             if (detail.Merchandise.ChargeType != ChargeType.Time)
@@ -146,31 +147,41 @@ public class SettlementBillingGenerator : IBillingGenerator
             }
             else
             {
-                if (!lastProcessType.HasValue || lastProcessType.Value != detail.Merchandise.Type)
+                if (timeBillingDetail != null && timeBillingDetail.Merchandise.Type != detail.Merchandise.Type)
                 {
+                    var refundAmount = assetPaidAmount - timeBillingDetail.PaidAmount;
+                    
+                    timeBillingDetail.RefundAmount = refundAmount;
+            
+                    billing.PaidAmount += timeBillingDetail.PaidAmount;
+                    billing.RefundAmount = billing.RefundAmount - timeBillingDetail.PaidAmount + refundAmount;
+                    
+                    billing.Details.Add(timeBillingDetail);
+
+                    timeBillingDetail = null;
+                    assetPaidAmount = 0;
+                }
+            
+                if (timeBillingDetail == null)
+                {
+                    timeBillingDetail = detail;
+                    timeBillingDetail.Asset.StartTime = billing.BeginTime;
+                    timeBillingDetail.Asset.EndTime = billing.EndTime;
+                    
                     var provider = _resourceUsageProviders.First(o => o.MerchandiseType == detail.Merchandise.Type);
                     var usage = await provider.GetUsageAsync(billing.OrganizationId, billing.BeginTime);
-                    detail.Quantity = usage;
-
-                    detail.PaidAmount =
+                    timeBillingDetail.Quantity = usage;
+            
+                    timeBillingDetail.PaidAmount =
                         (detail.Quantity * detail.Replicas - detail.Asset.FreeQuantity * detail.Asset.FreeReplicas) *
                         detail.Merchandise.Price;
-                    if (detail.PaidAmount < 0)
+                    if (timeBillingDetail.PaidAmount < 0)
                     {
-                        detail.PaidAmount = 0;
+                        timeBillingDetail.PaidAmount = 0;
                     }
-
-                    var refundAmount = detail.Asset.PaidAmount - detail.PaidAmount;
-
-                    billing.PaidAmount += detail.PaidAmount;
-                    billing.RefundAmount = billing.RefundAmount - detail.RefundAmount + refundAmount;
-
-                    detail.RefundAmount = refundAmount;
-                    
-                    billing.Details.Add(detail);
-
-                    lastProcessType = detail.Merchandise.Type;
                 }
+
+                assetPaidAmount += detail.Asset.PaidAmount;
             }
         }
 
