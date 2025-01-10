@@ -11,9 +11,8 @@ public class EmailService : AeFinderAppService, IEmailService
         _billingEmailSender = billingEmailSender;
     }
 
-    public async Task SendEmailTest(string email)
+    public async Task SendEmailTest(string email,string content)
     {
-        await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync(email, "testAddress",
-            22,"aa123");
+        await _billingEmailSender.SendTestEmail(email, content);
     }
 }

@@ -22,8 +22,8 @@ public class EmailController: AeFinderController
     [HttpPost]
     [Route("test")]
     [Authorize(Policy = "OnlyAdminAccess")]
-    public async Task TestEmailAsync(string email)
+    public async Task TestEmailAsync(string email, string content)
     {
-        await _emailService.SendEmailTest(email);
+        await _emailService.SendEmailTest(email, content);
     }
 }
