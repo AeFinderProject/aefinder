@@ -58,6 +58,7 @@ public class AeFinderApplicationModule : AbpModule
         context.Services.AddTransient<IPolicy, DefaultPolicy>();
         context.Services.Configure<SignatureGrantOptions>(configuration.GetSection("Signature"));
         context.Services.Configure<ChainOptions>(configuration.GetSection("Chains"));
+        context.Services.Configure<EmailTemplateOptions>(configuration.GetSection("EmailTemplate"));
         
         Configure<AbpClockOptions>(options =>
         {
