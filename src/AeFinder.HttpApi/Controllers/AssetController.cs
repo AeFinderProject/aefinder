@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Assets;
 using AeFinder.Merchandises;
+using AeFinder.Models;
 using AeFinder.User;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
@@ -20,11 +21,14 @@ public class AssetController : AeFinderController
 {
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAssetService _assetService;
+    private readonly IAssetInitializationService _assetInitializationService;
 
-    public AssetController(IOrganizationAppService organizationAppService, IAssetService assetService)
+    public AssetController(IOrganizationAppService organizationAppService, IAssetService assetService,
+        IAssetInitializationService assetInitializationService)
     {
         _organizationAppService = organizationAppService;
         _assetService = assetService;
+        _assetInitializationService = assetInitializationService;
     }
 
     [HttpGet]
@@ -50,6 +54,23 @@ public class AssetController : AeFinderController
     public async Task UpdateIndexAsync(Guid id)
     {
         await _assetService.UpdateIndexAsync(id);
+    }
+    
+    [HttpPost]
+    [Route("initialization")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task InitializeAsync(InitializeAssetInput input)
+    {
+        var orgIds = input.OrganizationIds;
+        if (orgIds.Count == 0)
+        {
+            orgIds = (await _organizationAppService.GetAllOrganizationUnitsAsync()).Select(o => o.Id).ToList();
+        }
+
+        foreach (var orgId in orgIds)
+        {
+            await _assetInitializationService.InitializeAsync(orgId);
+        }
     }
     
     private async Task<Guid> GetOrganizationIdAsync()

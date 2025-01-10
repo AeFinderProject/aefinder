@@ -14,4 +14,5 @@ public interface IAppGrain : IGrainWithStringKey
     Task UnFreezeAppAsync();
     Task DeleteAppAsync();
     Task SetFirstDeployTimeAsync(DateTime time);
+    Task LockAsync(bool isLock);
 }

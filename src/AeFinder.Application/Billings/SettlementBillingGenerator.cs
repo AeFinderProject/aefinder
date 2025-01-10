@@ -10,6 +10,7 @@ using AeFinder.Grains.State.Billings;
 using AeFinder.Grains.State.Merchandises;
 using AeFinder.Merchandises;
 using AElf.EntityMapping.Repositories;
+using Remotion.Linq.Clauses;
 using Volo.Abp.Guids;
 using Volo.Abp.Timing;
 using IObjectMapper = Volo.Abp.ObjectMapping.IObjectMapper;
@@ -132,36 +133,44 @@ public class SettlementBillingGenerator : IBillingGenerator
     {
         billing.Details.Reverse();
 
+        var details = billing.Details;
+
+        billing.Details = new();
+
         MerchandiseType? lastProcessType = null;
-        foreach (var detail in billing.Details)
+        foreach (var detail in details)
         {
             if (detail.Merchandise.ChargeType != ChargeType.Time)
             {
-                continue;
+                billing.Details.Add(detail);
             }
-
-            if (!lastProcessType.HasValue || lastProcessType.Value != detail.Merchandise.Type)
+            else
             {
-                var provider = _resourceUsageProviders.First(o => o.MerchandiseType == detail.Merchandise.Type);
-                var usage = await provider.GetUsageAsync(billing.OrganizationId, billing.BeginTime);
-                detail.Quantity = usage;
-
-                detail.PaidAmount =
-                    (detail.Quantity * detail.Replicas - detail.Asset.FreeQuantity * detail.Asset.FreeReplicas) *
-                    detail.Merchandise.Price;
-                if (detail.PaidAmount < 0)
+                if (!lastProcessType.HasValue || lastProcessType.Value != detail.Merchandise.Type)
                 {
-                    detail.PaidAmount = 0;
+                    var provider = _resourceUsageProviders.First(o => o.MerchandiseType == detail.Merchandise.Type);
+                    var usage = await provider.GetUsageAsync(billing.OrganizationId, billing.BeginTime);
+                    detail.Quantity = usage;
+
+                    detail.PaidAmount =
+                        (detail.Quantity * detail.Replicas - detail.Asset.FreeQuantity * detail.Asset.FreeReplicas) *
+                        detail.Merchandise.Price;
+                    if (detail.PaidAmount < 0)
+                    {
+                        detail.PaidAmount = 0;
+                    }
+
+                    var refundAmount = detail.Asset.PaidAmount - detail.PaidAmount;
+
+                    billing.PaidAmount += detail.PaidAmount;
+                    billing.RefundAmount = billing.RefundAmount - detail.RefundAmount + refundAmount;
+
+                    detail.RefundAmount = refundAmount;
+                    
+                    billing.Details.Add(detail);
+
+                    lastProcessType = detail.Merchandise.Type;
                 }
-
-                var refundAmount = detail.Asset.PaidAmount - detail.PaidAmount;
-
-                billing.PaidAmount += detail.PaidAmount;
-                billing.RefundAmount = billing.RefundAmount - detail.RefundAmount + refundAmount;
-
-                detail.RefundAmount = refundAmount;
-
-                lastProcessType = detail.Merchandise.Type;
             }
         }
 
