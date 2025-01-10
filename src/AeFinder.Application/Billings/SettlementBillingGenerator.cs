@@ -185,6 +185,18 @@ public class SettlementBillingGenerator : IBillingGenerator
             }
         }
 
+        if (timeBillingDetail != null)
+        {
+            var refundAmount = assetPaidAmount - timeBillingDetail.PaidAmount;
+
+            timeBillingDetail.RefundAmount = refundAmount;
+
+            billing.PaidAmount += timeBillingDetail.PaidAmount;
+            billing.RefundAmount = billing.RefundAmount - timeBillingDetail.PaidAmount + refundAmount;
+
+            billing.Details.Add(timeBillingDetail);
+        }
+
         billing.Details.Reverse();
         return billing;
     }
