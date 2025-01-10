@@ -97,6 +97,7 @@ public class PollingAdvanceBillPaymentResultWorker: AsyncPeriodicBackgroundWorke
             if (organizationId == "28f279dc-fa61-9be9-4994-3a174c683413" 
                 || organizationId == "259ea99b-12c0-bb06-f658-3a175c3b6301"
                 || organizationId == "179ab110-bc85-d451-b477-3a1760565cec"
+                || organizationId == "1aac7746-e277-46e6-414f-3a17610953c4"
                 || organizationId == "4f89ca02-95c7-0328-fb2f-3a176059cb6a")
             {
                 advanceBillBeginTime = advanceBillBeginTime.AddMonths(1);
