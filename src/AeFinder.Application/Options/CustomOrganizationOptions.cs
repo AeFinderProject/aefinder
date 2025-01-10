@@ -4,5 +4,5 @@ namespace AeFinder.Options;
 
 public class CustomOrganizationOptions
 {
-    public List<string> CustomApps { get; set; }
+    public List<string> CustomApps { get; set; } = new();
 }

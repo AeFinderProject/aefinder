@@ -52,7 +52,7 @@ public class AeFinderApplicationTestModule : AbpModule
         });
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
         context.Services.AddTransient<IKubernetesAppMonitor, DefaultKubernetesAppMonitor>();
-        
+        context.Services.AddHttpClient();
         context.Services.Configure<ApiKeyOptions>(o =>
         {
             o.IgnoreKeys = new HashSet<string> { "app" };
@@ -67,6 +67,13 @@ public class AeFinderApplicationTestModule : AbpModule
             o.Port = 8000;
             o.SmtpUsername = "MockUsername";
             o.SmtpPassword = "MockPassword";
+        });
+        context.Services.Configure<CustomOrganizationOptions>(c =>
+        {
+            c.CustomApps = new List<string>()
+            {
+                "appid"
+            };
         });
     }
 

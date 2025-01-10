@@ -79,9 +79,6 @@ public class AppService : AeFinderAppService, IAppService
         appLimitUpdateEto.AppId = dto.AppId;
         await _distributedEventBus.PublishAsync(appLimitUpdateEto);
         
-        //Send email
-        var userInfo = await _userAppService.GetUserInfoAsync();
-        await _appEmailSender.SendAeIndexerCreationNotificationAsync(userInfo.Email, appDto.AppName);
         return appDto;
     }
 
