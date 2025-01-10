@@ -16,6 +16,7 @@ public class AeFinderBackgroundWorkerCoreTestModule: AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddTransient<IKubernetesAppMonitor, DefaultKubernetesAppMonitor>();
+        context.Services.AddHttpClient();
     }
     //
     // public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
