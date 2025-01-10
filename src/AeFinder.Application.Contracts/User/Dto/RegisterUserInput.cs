@@ -18,8 +18,8 @@ public class RegisterUserInput
     [EmailAddress(ErrorMessage = "Invalid email address.")]
     public string Email { get; set; }
     
-    [Required]
-    [MaxLength(50, ErrorMessage = "Organization name cannot exceed 50 characters.")]
-    //[RegularExpression("^[a-zA-Z0-9]*$", ErrorMessage = "Organization name can only contain letters and digits.")]
-    public string OrganizationName { get; set; }
+    // [Required]
+    // [MaxLength(50, ErrorMessage = "Organization name cannot exceed 50 characters.")]
+    // //[RegularExpression("^[a-zA-Z0-9]*$", ErrorMessage = "Organization name can only contain letters and digits.")]
+    // public string OrganizationName { get; set; }
 }

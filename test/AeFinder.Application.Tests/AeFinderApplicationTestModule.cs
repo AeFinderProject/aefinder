@@ -22,6 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Orleans;
 using Volo.Abp;
+using Volo.Abp.Emailing;
 using Volo.Abp.Modularity;
 using Volo.Abp.ObjectMapping;
 using Volo.Abp.Threading;
@@ -47,7 +48,7 @@ public class AeFinderApplicationTestModule : AbpModule
         });
         
         context.Services.AddTransient<ICodeAuditor>(o=>Mock.Of<ICodeAuditor>());
-        
+
         context.Services.Configure<BlockPushOptions>(o =>
         {
             o.MessageStreamNamespaces = new List<string> { "MessageStreamNamespace" };
@@ -70,6 +71,21 @@ public class AeFinderApplicationTestModule : AbpModule
             o.Port = 8000;
             o.SmtpUsername = "MockUsername";
             o.SmtpPassword = "MockPassword";
+        });
+        
+        context.Services.AddSingleton<IEmailSender, NullEmailSender>();
+        context.Services.Configure<EmailTemplateOptions>(o =>
+        {
+            o.Templates = new Dictionary<string, EmailTemplate>
+            {
+                { AeFinderApplicationConsts.RegisterEmailTemplate, new EmailTemplate
+                {
+                    Body = "Body",
+                    IsBodyHtml = false,
+                    Subject = "Subject",
+                    From = "From"
+                } }
+            };
         });
     }
 

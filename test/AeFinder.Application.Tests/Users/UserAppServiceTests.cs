@@ -33,7 +33,6 @@ public class UserAppServiceTests: AeFinderApplicationAppTestBase
         var registerUserInput = new RegisterUserInput
         {
             Email = "test@email.com",
-            OrganizationName = "TestOrg",
             UserName = "TestUser",
             Password = "Asdf@123456"
         };
@@ -49,14 +48,13 @@ public class UserAppServiceTests: AeFinderApplicationAppTestBase
         var verificationCode = await codeGrain.GetCodeAsync();
 
         await _userAppService.RegisterConfirmAsync(verificationCode);
-
-        var org = await _organizationUnitRepository.GetAsync(registerUserInput.OrganizationName);
-        org.DisplayName.ShouldBe(registerUserInput.OrganizationName);
         
         user = await _userManager.FindByEmailAsync(registerUserInput.Email);
         user.IsActive.ShouldBeTrue();
         user.EmailConfirmed.ShouldBeTrue();
-        user.OrganizationUnits.First().OrganizationUnitId.ShouldBe(org.Id);
+        user.OrganizationUnits.Count.ShouldBe(1);
+        var org = await _organizationUnitRepository.GetAsync(user.OrganizationUnits.First().OrganizationUnitId);
+        org.DisplayName.ShouldNotBeEmpty();
     }
     
     [Fact]
@@ -65,7 +63,6 @@ public class UserAppServiceTests: AeFinderApplicationAppTestBase
         var registerUserInput = new RegisterUserInput
         {
             Email = "test@email.com",
-            OrganizationName = "TestOrg",
             UserName = "TestUser",
             Password = "Asdf@123456"
         };
@@ -92,58 +89,12 @@ public class UserAppServiceTests: AeFinderApplicationAppTestBase
             await _userAppService.RegisterConfirmAsync(oldCode));
 
         await _userAppService.RegisterConfirmAsync(newCode);
-
-        var org = await _organizationUnitRepository.GetAsync(registerUserInput.OrganizationName);
-        org.DisplayName.ShouldBe(registerUserInput.OrganizationName);
         
         user = await _userManager.FindByEmailAsync(registerUserInput.Email);
         user.IsActive.ShouldBeTrue();
         user.EmailConfirmed.ShouldBeTrue();
-        user.OrganizationUnits.First().OrganizationUnitId.ShouldBe(org.Id);
-    }
-
-    [Fact]
-    public async Task Register_SameOrganization_Test()
-    {
-        var registerUserInput1 = new RegisterUserInput
-        {
-            Email = "test1@email.com",
-            OrganizationName = "TestOrg",
-            UserName = "TestUser1",
-            Password = "Asdf@123456"
-        };
-        await _userAppService.RegisterAsync(registerUserInput1);
-        
-        var registerUserInput2 = new RegisterUserInput
-        {
-            Email = "test2@email.com",
-            OrganizationName = "TestOrg",
-            UserName = "TestUser2",
-            Password = "Asdf@123456"
-        };
-        await _userAppService.RegisterAsync(registerUserInput2);
-        
-        var codeGrain =
-            _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
-                GrainIdHelper.GenerateRegisterVerificationCodeGrainId(registerUserInput1.Email));
-        var verificationCode = await codeGrain.GetCodeAsync();
-
-        await _userAppService.RegisterConfirmAsync(verificationCode);
-        
-        codeGrain =
-            _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
-                GrainIdHelper.GenerateRegisterVerificationCodeGrainId(registerUserInput2.Email));
-        verificationCode = await codeGrain.GetCodeAsync();
-
-        await Assert.ThrowsAsync<BusinessException>(async () =>
-            await _userAppService.RegisterConfirmAsync(verificationCode));
-        
-        var user1 = await _userManager.FindByEmailAsync(registerUserInput1.Email);
-        user1.IsActive.ShouldBeTrue();
-        user1.EmailConfirmed.ShouldBeTrue();
-        
-        var user2 = await _userManager.FindByEmailAsync(registerUserInput2.Email);
-        user2.IsActive.ShouldBeFalse();
-        user2.EmailConfirmed.ShouldBeFalse();
+        user.OrganizationUnits.Count.ShouldBe(1);
+        var org = await _organizationUnitRepository.GetAsync(user.OrganizationUnits.First().OrganizationUnitId);
+        org.DisplayName.ShouldNotBeEmpty();
     }
 }

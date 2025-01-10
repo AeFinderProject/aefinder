@@ -18,6 +18,7 @@ using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.Authorization.Permissions;
+using Volo.Abp.Emailing;
 using Volo.Abp.Identity;
 using Volo.Abp.Timing;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
@@ -35,6 +36,8 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IWalletLoginProvider _walletLoginProvider;
     private readonly IClusterClient _clusterClient;
+    private readonly IEmailSender _emailSender;
+    private readonly EmailTemplateOptions _emailTemplateOptions;
 
     public UserAppService(
         IdentityUserManager userManager,
@@ -48,7 +51,7 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         IUserInformationProvider userInformationProvider,
         IWalletLoginProvider walletLoginProvider,
         IPermissionChecker permissionChecker,
-        IClusterClient clusterClient)
+        IClusterClient clusterClient, IEmailSender emailSender, IOptionsSnapshot<EmailTemplateOptions> emailTemplateOptions)
         : base(userManager, userRepository, roleRepository, identityOptions, permissionChecker)
     {
         _organizationUnitRepository = organizationUnitRepository;
@@ -58,6 +61,8 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         _userInformationProvider = userInformationProvider;
         _walletLoginProvider = walletLoginProvider;
         _clusterClient = clusterClient;
+        _emailSender = emailSender;
+        _emailTemplateOptions = emailTemplateOptions.Value;
     }
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)
@@ -270,13 +275,6 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
     {
         var userName = input.UserName.Trim();
         var email = input.Email.Trim();
-        
-        var orgName = input.OrganizationName.Trim();
-        var existorganizationUnit = await _organizationUnitRepository.GetAsync(orgName);
-        if (existorganizationUnit != null)
-        {
-            throw new UserFriendlyException("Organization already exists.");
-        }
 
         var existUser = await UserManager.FindByNameAsync(userName);
         if (existUser != null)
@@ -316,7 +314,7 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         }
         
         var registerGrain = _clusterClient.GetGrain<IUserRegisterGrain>(GrainIdHelper.GenerateUserRegisterGrainId(code));
-        await registerGrain.SetAsync(user.Id, input.OrganizationName);
+        await registerGrain.SetAsync(user.Id, null);
         
         await SendRegisterEmailAsync(email, code);
     }
@@ -326,10 +324,6 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         var registerGrain =
             _clusterClient.GetGrain<IUserRegisterGrain>(GrainIdHelper.GenerateUserRegisterGrainId(code));
         var register = await registerGrain.GetAsync();
-        if (register.OrganizationName.IsNullOrWhiteSpace())
-        {
-            throw new UserFriendlyException("Register information not found.");
-        }
         
         var user = await UserManager.FindByIdAsync(register.UserId.ToString());
         if (user == null)
@@ -341,7 +335,12 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
             _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
                 GrainIdHelper.GenerateRegisterVerificationCodeGrainId(user.Email));
         await verificationCodeGrain.VerifyAsync(code);
-        
+
+        if (register.OrganizationName.IsNullOrWhiteSpace())
+        {
+            register.OrganizationName = GuidGenerator.Create().ToString("N");
+        }
+
         await _organizationAppService.CreateOrganizationUnitAsync(register.OrganizationName);
         var organizationUnit = await _organizationUnitRepository.GetAsync(register.OrganizationName);
         await UserManager.AddToOrganizationUnitAsync(user, organizationUnit);
@@ -380,8 +379,12 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
 
     private async Task SendRegisterEmailAsync(string email, string code)
     {
-        // TODO: Send email
+        // TODO: Remove it
         Logger.LogInformation($"Temporary test: {email} - {code}");
+        
+        var template = _emailTemplateOptions.Templates[AeFinderApplicationConsts.RegisterEmailTemplate];
+        var body = template.Body.Replace("{{code}}", code);
+        await _emailSender.QueueAsync(template.From, email, template.Subject, body, template.IsBodyHtml);
     }
 
     [ExceptionHandler([typeof(SignatureVerifyException)], TargetType = typeof(UserAppService),
