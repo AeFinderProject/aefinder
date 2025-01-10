@@ -12,7 +12,7 @@ public class AeFinderApplicationConsts
     public const int AppLogEventId = 1;
     public const string AppCurrentVersionCacheKeyPrefix = "AppCurrentVersionCache_";
     public const int AppCurrentVersionCacheHours = 24 * 30;
-    public const string VerificationCodePlaceholder = "[VerificationCode]";
+    public const string RegisterEmailTemplate = "Register";
     
     // TODO: Get prices using the ApiKey commodity api
     public const decimal ApiKeyQueryPrice = (decimal)4 / 100000;

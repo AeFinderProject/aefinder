@@ -11,6 +11,7 @@ using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Volo.Abp.Emailing;
 using Volo.Abp.Modularity;
 
 namespace AeFinder;
@@ -34,7 +35,7 @@ public class AeFinderApplicationTestModule : AbpModule
         });
         
         context.Services.AddTransient<ICodeAuditor>(o=>Mock.Of<ICodeAuditor>());
-        
+
         context.Services.Configure<BlockPushOptions>(o =>
         {
             o.MessageStreamNamespaces = new List<string> { "MessageStreamNamespace" };
@@ -50,6 +51,21 @@ public class AeFinderApplicationTestModule : AbpModule
         context.Services.Configure<UserRegisterOptions>(o =>
         {
             o.EmailSendingInterval = 0;
+        });
+
+        context.Services.AddSingleton<IEmailSender, NullEmailSender>();
+        context.Services.Configure<EmailTemplateOptions>(o =>
+        {
+            o.Templates = new Dictionary<string, EmailTemplate>
+            {
+                { AeFinderApplicationConsts.RegisterEmailTemplate, new EmailTemplate
+                {
+                    Body = "Body",
+                    IsBodyHtml = false,
+                    Subject = "Subject",
+                    From = "From"
+                } }
+            };
         });
     }
 }
