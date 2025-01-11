@@ -18,6 +18,7 @@ using AeFinder.Options;
 using AeFinder.Orleans.TestBase;
 using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch;
+using GraphQL.Client.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Orleans;
@@ -96,6 +97,8 @@ public class AeFinderApplicationTestModule : AbpModule
                 "appid"
             };
         });
+        var mockGraphQLClient = new Mock<IGraphQLClient>();
+        context.Services.AddSingleton<IGraphQLClient>(mockGraphQLClient.Object);
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)

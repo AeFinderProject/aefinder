@@ -152,8 +152,9 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         await ReadStateAsync();
         State.IsLocked = isLock;
         await WriteStateAsync();
-        
+
         var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
         await _distributedEventBus.PublishAsync(appUpdateEto);
     }
+
 }
