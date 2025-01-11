@@ -17,5 +17,5 @@ public class AppState
     [Id(9)]public DateTime UpdateTime { get; set; }
     [Id(10)]public DateTime DeleteTime { get; set; }
     [Id(11)]public DateTime? DeployTime { get; set; }
-    [Id(12)] public bool IsLocked { get; set; }
+    [Id(12)] public bool IsLocked { get; set; } = false;
 }
