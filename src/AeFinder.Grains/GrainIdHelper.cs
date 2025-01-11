@@ -183,4 +183,14 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(apiKeyId.ToString("N"), api, dateTime.ToString("yyyyMMdd"));
     }
+    
+    public static string GenerateUserRegisterGrainId(string code)
+    {
+        return GenerateGrainId(code.ToLower());
+    }
+    
+    public static string GenerateRegisterVerificationCodeGrainId(string email)
+    {
+        return GenerateGrainId(email.ToLower());
+    }
 }
