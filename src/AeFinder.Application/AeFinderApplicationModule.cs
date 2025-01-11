@@ -2,6 +2,7 @@ using System;
 using AeFinder.AmazonCloud;
 using AeFinder.ApiKeys;
 using AeFinder.App.Deploy;
+using AeFinder.Assets;
 using AeFinder.Billings;
 using AeFinder.BlockSync;
 using AeFinder.CodeOps;
@@ -62,6 +63,7 @@ public class AeFinderApplicationModule : AbpModule
         context.Services.AddTransient<IBillingGenerator, AdvancePaymentBillingGenerator>();
         context.Services.AddTransient<IBillingGenerator, SettlementBillingGenerator>();
         context.Services.AddTransient<IResourceUsageProvider, ApiKeyUsageProvider>();
+        context.Services.Configure<AssetInitializationOptions>(configuration.GetSection("AssetInitialization"));
         
         Configure<AbpClockOptions>(options =>
         {
