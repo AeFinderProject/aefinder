@@ -99,6 +99,7 @@ public class AdvancePaymentBillingGenerator : IBillingGenerator
         queryable = queryable.Where(o =>
                 o.OrganizationId == organizationId &&
                 ((o.Status == (int)AssetStatus.Unused && o.CreateTime < beginTime) || 
+                 ((o.Status == (int)AssetStatus.Using || o.Status == (int)AssetStatus.Released) && o.CreateTime<beginTime && o.StartTime>=beginTime) ||
                  (o.StartTime < beginTime && o.EndTime >= beginTime)))
             .OrderBy(o => o.Merchandise.Type)
             .OrderBy(o => o.StartTime)
@@ -113,7 +114,9 @@ public class AdvancePaymentBillingGenerator : IBillingGenerator
             queryable = queryable.Where(o => 
                     o.OrganizationId == organizationId && 
                     ((o.Status == (int)AssetStatus.Unused && o.CreateTime < beginTime) || 
-                     (o.StartTime < beginTime && o.EndTime >= beginTime)))                .OrderBy(o => o.Merchandise.Type)
+                     ((o.Status == (int)AssetStatus.Using || o.Status == (int)AssetStatus.Released) && o.CreateTime<beginTime && o.StartTime>=beginTime) ||
+                     (o.StartTime < beginTime && o.EndTime >= beginTime)))                
+                .OrderBy(o => o.Merchandise.Type)
                 .OrderBy(o => o.StartTime)
                 .Skip(skip).Take(maxCount);
             assets = queryable.ToList();
