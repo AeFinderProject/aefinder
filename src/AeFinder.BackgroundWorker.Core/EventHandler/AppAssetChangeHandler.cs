@@ -91,6 +91,13 @@ public class AppAssetChangeHandler: IDistributedEventHandler<AppAssetChangedEto>
 
             if (merchandise.Type == MerchandiseType.Storage)
             {
+                var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+                var appDto = await appGrain.GetAsync();
+                if (appDto.DeployTime == null && !_customOrganizationOptions.CustomApps.Contains(appId))
+                {
+                    continue;
+                }
+                await appGrain.SetFirstDeployTimeAsync(now);
                 await _assetService.StartUsingAssetAsync(newAssetId, now);
             }
             
