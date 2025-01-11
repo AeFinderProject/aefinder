@@ -67,7 +67,10 @@ public class SettlementBillingGenerator : IBillingGenerator
                 case ChargeType.Hourly:
                     var assetBeginTime = asset.StartTime < beginTime ? beginTime : asset.StartTime;
                     var assetEndTime = asset.EndTime > endTime ? endTime : asset.EndTime;
-                    billingDetail.Quantity = (long)Math.Ceiling((assetEndTime - assetBeginTime).TotalHours);
+                    billingDetail.Quantity =
+                        asset.Status == (int)AssetStatus.Unused
+                            ? 0
+                            : (long)Math.Ceiling((assetEndTime - assetBeginTime).TotalHours);
                     break;
             }
 
