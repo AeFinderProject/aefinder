@@ -192,8 +192,10 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         limit.Items[0].OperationLimit.MaxEntityCallCount.ShouldBe(index.OperationLimit.MaxEntityCallCount);
         limit.Items[0].OperationLimit.MaxLogCallCount.ShouldBe(index.OperationLimit.MaxLogCallCount);
         limit.Items[0].ResourceLimit.AppPodReplicas.ShouldBe(index.ResourceLimit.AppPodReplicas);
+        limit.Items[0].ResourceLimit.AppFullPodLimitMemory.ShouldBe(index.ResourceLimit.AppFullPodLimitMemory);
         limit.Items[0].ResourceLimit.AppFullPodRequestMemory.ShouldBe(index.ResourceLimit.AppFullPodRequestMemory);
         limit.Items[0].ResourceLimit.AppQueryPodRequestMemory.ShouldBe(index.ResourceLimit.AppQueryPodRequestMemory);
+        limit.Items[0].ResourceLimit.AppFullPodLimitCpuCore.ShouldBe(index.ResourceLimit.AppFullPodLimitCpuCore);
         limit.Items[0].ResourceLimit.AppFullPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppFullPodRequestCpuCore);
         limit.Items[0].ResourceLimit.AppQueryPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppQueryPodRequestCpuCore);
         limit.Items[0].DeployLimit.MaxAppCodeSize.ShouldBe(index.DeployLimit.MaxAppCodeSize);

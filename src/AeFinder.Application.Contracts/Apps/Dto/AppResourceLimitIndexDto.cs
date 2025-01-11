@@ -19,6 +19,8 @@ public class ResourceLimitDto
     public string AppQueryPodRequestMemory { get; set; }
     public int AppPodReplicas { get; set; }
     public bool EnableMultipleInstances { get; set; }
+    public string AppFullPodLimitCpuCore { get; set; }
+    public string AppFullPodLimitMemory { get; set; }
 }
 
 public class OperationLimitDto
