@@ -15,4 +15,5 @@ public class AppIndexDto
     public AppVersion Versions { get; set; } = new();
     public string OrganizationId { get; set; }
     public string OrganizationName { get; set; }
+    public bool IsLocked { get; set; }
 }

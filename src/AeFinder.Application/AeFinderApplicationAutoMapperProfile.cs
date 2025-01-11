@@ -6,17 +6,26 @@ using AeFinder.AppResources;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Apps.Eto;
+using AeFinder.Assets;
+using AeFinder.Billings;
 using AeFinder.Block.Dtos;
 using AeFinder.BlockScan;
 using AeFinder.Entities.Es;
 using AeFinder.Etos;
 using AeFinder.Grains.Grain.ApiKeys;
+using AeFinder.Grains.Grain.Orders;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Grains.State.ApiKeys;
 using AeFinder.Grains.State.Apps;
+using AeFinder.Grains.State.Assets;
+using AeFinder.Grains.State.Billings;
+using AeFinder.Grains.State.Merchandises;
+using AeFinder.Grains.State.Orders;
 using AeFinder.Grains.State.Subscriptions;
 using AeFinder.Grains.State.Users;
 using AeFinder.Logger.Entities;
+using AeFinder.Merchandises;
+using AeFinder.Orders;
 using AeFinder.Subscriptions;
 using AeFinder.Subscriptions.Dto;
 using AeFinder.User;
@@ -74,7 +83,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
                 opt => opt.MapFrom(source => source.LogEventConditions));
         CreateMap<TransactionConditionInfo, TransactionConditionDto>();
         CreateMap<LogEventConditionInfo, LogEventConditionDto>();
-        
+
         CreateMap<AllSubscription, AllSubscriptionDto>();
         CreateMap<SubscriptionDetail, SubscriptionDetailDto>();
 
@@ -103,14 +112,14 @@ public class AeFinderApplicationAutoMapperProfile : Profile
                 opt => opt.MapFrom(source => source.ExtraProperties.Where(o =>
                     AeFinderApplicationConsts.AppInterestedExtraPropertiesKey.Contains(o.Key))));
         CreateMap<LogEventDto, AppSubscribedLogEventDto>();
-        
+
         CreateMap<AppLimitInfoIndex, AppResourceLimitIndexDto>();
         CreateMap<ResourceLimitInfo, ResourceLimitDto>();
         CreateMap<OperationLimitInfo, OperationLimitDto>();
         CreateMap<DeployLimitInfo, DeployLimitInfoDto>();
-        
+
         CreateMap<AppSubscriptionPodIndex, AppResourceDto>();
-        
+
         CreateMap<AppLogIndex, AppLogRecordDto>();
         CreateMap<AppResourceLimitState, AppResourceLimitDto>();
         CreateMap<AppResourceLimitDto, SetAppResourceLimitDto>();
@@ -120,7 +129,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppPodOperationSnapshotCreateEto, AppPodOperationSnapshotIndex>();
         CreateMap<AppPodOperationSnapshotCreateEto, AppPodUsageDurationIndex>();
         CreateMap<AppPodUsageDurationIndex, AppPodUsageDurationDto>();
-        
+
         CreateMap<AppCreateEto, AppInfoIndex>();
         CreateMap<AppDto, AppInfoIndex>()
             .ForMember(destination => destination.CreateTime,
@@ -133,7 +142,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<TransactionCondition, TransactionConditionInfo>();
         CreateMap<LogEventCondition, LogEventConditionInfo>();
         CreateMap<AppResourceLimitDto, AppLimitUpdateEto>();
-        
+
         CreateMap<AttachmentInfo, AttachmentInfoDto>();
         CreateMap<AppPodInfoDto, AppPodInfoIndex>();
         CreateMap<PodContainerDto, PodContainerInfo>();
@@ -146,7 +155,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<IdentityUser, IdentityUserExtensionDto>();
 
         CreateMap<AppInfoIndex, AppInfoImmutable>();
-        
+
         // Api Key
         CreateMap<ApiKeyState, ApiKeyInfo>();
         CreateMap<ApiKeyChangedEto, ApiKeyInfo>();
@@ -161,7 +170,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
             .ForMember(destination => destination.AuthorisedAeIndexers,
                 opt => opt.MapFrom(source => source.AuthorisedAeIndexers.Values.ToList()));
         CreateMap<ApiKeySnapshotIndex, ApiKeySnapshotDto>();
-        
+
         CreateMap<ApiKeySummaryState, ApiKeySummaryInfo>();
         CreateMap<ApiKeySummaryChangedEto, ApiKeySummaryIndex>();
         CreateMap<ApiKeySummarySnapshotChangedEto, ApiKeySummarySnapshotIndex>();
@@ -169,7 +178,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<ApiKeySummarySnapshotState, ApiKeySummarySnapshotChangedEto>();
         CreateMap<ApiKeySummaryIndex, ApiKeySummaryDto>();
         CreateMap<ApiKeySummarySnapshotIndex, ApiKeySummarySnapshotDto>();
-        
+
         CreateMap<ApiKeyQueryAeIndexerChangedEto, ApiKeyQueryAeIndexerIndex>();
         CreateMap<ApiKeyQueryAeIndexerSnapshotChangedEto, ApiKeyQueryAeIndexerSnapshotIndex>();
         CreateMap<ApiKeyQueryAeIndexerState, ApiKeyQueryAeIndexerChangedEto>();
@@ -177,7 +186,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<ApiKeyQueryAeIndexerIndex, ApiKeyQueryAeIndexerDto>();
         CreateMap<ApiKeyQueryAeIndexerSnapshotIndex, ApiKeyQueryAeIndexerSnapshotDto>();
         CreateMap<ApiKeyQueryAeIndexerState, ApiKeyQueryAeIndexerInfo>();
-        
+
         CreateMap<ApiKeyQueryBasicApiChangedEto, ApiKeyQueryBasicApiIndex>();
         CreateMap<ApiKeyQueryBasicApiSnapshotChangedEto, ApiKeyQueryBasicApiSnapshotIndex>();
         CreateMap<ApiKeyQueryBasicApiState, ApiKeyQueryBasicApiChangedEto>();
@@ -191,6 +200,48 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<AppInfoImmutableEto, AppInfoImmutableIndex>();
         CreateMap<AppInfoImmutable, AppInfoImmutableEto>();
         CreateMap<AppInfoImmutableEto, AppInfoImmutable>();
+
+        // Merchandise
+        CreateMap<MerchandiseState, MerchandiseDto>();
+        CreateMap<CreateMerchandiseInput, MerchandiseState>();
+        CreateMap<UpdateMerchandiseInput, MerchandiseState>();
+        CreateMap<MerchandiseState, MerchandiseChangedEto>();
+        CreateMap<MerchandiseChangedEto, MerchandiseIndex>();
+        CreateMap<MerchandiseIndex, MerchandiseDto>();
+        CreateMap<MerchandiseIndex, MerchandiseState>();
+
+        // Asset
+        CreateMap<CreateAssetInput, AssetState>();
+        CreateMap<AssetState, AssetChangedEto>();
+        CreateMap<AssetChangedEto, AssetIndex>();
+        CreateMap<AssetIndex, AssetDto>();
+        CreateMap<AssetIndex, AssetState>();
+        CreateMap<AssetState, AssetDto>();
+
+        // Order
+        CreateMap<OrderState, OrderChangedEto>();
+        CreateMap<OrderState, OrderStatusChangedEto>();
+        CreateMap<OrderChangedEto, OrderIndex>();
+        CreateMap<OrderState, OrderDto>();
+        CreateMap<OrderIndex, OrderDto>();
+        CreateMap<OrderDetailState, OrderDetailEto>();
+        CreateMap<OrderDetailEto, OrderDetailIndex>();
+        CreateMap<OrderDetailState, OrderDetailDto>();
+        CreateMap<OrderDetailIndex, OrderDetailDto>();
+        CreateMap<OrderCost, OrderState>();
+        CreateMap<OrderCostDetail, OrderDetailState>();
+        CreateMap<OrderCost, OrderDto>();
+        CreateMap<OrderCostDetail, OrderDetailDto>();
+        
+        // Billing
+        CreateMap<BillingState, BillingChangedEto>();
+        CreateMap<BillingChangedEto, BillingIndex>();
+        CreateMap<BillingState, BillingDto>();
+        CreateMap<BillingIndex, BillingDto>();
+        CreateMap<BillingDetailState, BillingDetailChangedEto>();
+        CreateMap<BillingDetailChangedEto, BillingDetailIndex>();
+        CreateMap<BillingDetailState, BillingDetailDto>();
+        CreateMap<BillingDetailIndex, BillingDetailDto>();
         
         CreateMap<UserRegisterState, UserRegisterInfo>();
     }
