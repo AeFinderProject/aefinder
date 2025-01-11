@@ -319,6 +319,8 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         {
             var now = DateTime.UtcNow;
             await appGrain.SetFirstDeployTimeAsync(now);
+            
+            //Start using processor
             var processorAssets = await _assetService.GetListAsync(Guid.Parse(organizationId), new GetAssetInput()
             {
                 Type = MerchandiseType.Processor,
@@ -336,6 +338,25 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             if (processorAsset != null)
             {
                 await _assetService.StartUsingAssetAsync(processorAsset.Id, now);
+            }
+            
+            //Start using storage
+            var storageAssets=await _assetService.GetListAsync(Guid.Parse(organizationId), new GetAssetInput()
+            {
+                Type = MerchandiseType.Storage,
+                AppId = appId,
+                SkipCount = 0,
+                MaxResultCount = 10,
+                IsDeploy = true
+            });
+            AssetDto storageAsset = null;
+            if (storageAssets != null && storageAssets.Items.Count > 0)
+            {
+                storageAsset = storageAssets.Items.FirstOrDefault();
+            }
+            if (storageAsset != null)
+            {
+                await _assetService.StartUsingAssetAsync(storageAsset.Id, now);
             }
         }
     }
