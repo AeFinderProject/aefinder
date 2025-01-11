@@ -3,6 +3,7 @@ using AeFinder.BlockScan;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Assets;
 using AeFinder.Grains.Grain.Blocks;
+using AeFinder.Grains.Grain.Users;
 using AeFinder.Grains.Grain.Orders;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
@@ -97,6 +98,11 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     services.AddSingleton<IOrderValidationProvider, AssetOrderValidationProvider>();
                     services.AddSingleton<IOrderHandler, AppOrderHandler>();
                     services.AddSingleton<IOrderHandler, AssetOrderHandler>();
+                    
+                    services.Configure<UserRegisterOptions>(o =>
+                    {
+                        o.EmailSendingInterval = 0;
+                    });
                 })
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")

@@ -17,4 +17,9 @@ public interface IUserAppService
     Task<string> GetClientDisplayNameAsync(string clientId);
 
     Task<IdentityUserExtensionDto> BindUserWalletAsync(BindUserWalletInput input);
+
+    Task<bool> IsRegisterPendingAsync(string email);
+    Task RegisterAsync(RegisterUserInput input);
+    Task RegisterConfirmAsync(string code);
+    Task ResendRegisterEmailAsync(ResendEmailInput input);
 }
