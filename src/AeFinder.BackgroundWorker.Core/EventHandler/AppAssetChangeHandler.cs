@@ -76,7 +76,7 @@ public class AppAssetChangeHandler: IDistributedEventHandler<AppAssetChangedEto>
                 {
                     continue;
                 }
-                var merchandiseName = merchandise.Name;
+                var merchandiseName = merchandise.Specification;
                 var resourceInfo = _podResourceOptions.FullPodResourceInfos.Find(r => r.ResourceName == merchandiseName);
             
                 await _appResourceService.SetAppResourceLimitAsync(appId, new SetAppResourceLimitDto()
