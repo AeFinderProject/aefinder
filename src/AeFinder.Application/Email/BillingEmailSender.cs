@@ -3,6 +3,7 @@ using AeFinder.Email.Dto;
 using AeFinder.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Emailing;
 
@@ -117,5 +118,7 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
     private async Task SendEmailAsync(SendEmailInput input)
     {
         await _emailSender.QueueAsync(input.From, input.To, input.Subject, input.Body, false);
+        _logger.LogInformation($"[BillingEmailSender] Send email successfully, Detail: " +
+                               JsonConvert.SerializeObject(input));
     }
 }
