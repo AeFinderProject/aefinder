@@ -4,6 +4,8 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.User;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 
@@ -15,7 +17,8 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitInfoEntityMappingRepository;
     private readonly IOrganizationAppService _organizationAppService;
 
-    public AppLimitUpdateHandler(IOrganizationAppService organizationAppService,IClusterClient clusterClient,
+    public AppLimitUpdateHandler(
+        IOrganizationAppService organizationAppService,IClusterClient clusterClient,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitInfoEntityMappingRepository)
     {
         _clusterClient = clusterClient;
@@ -65,5 +68,6 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
         appLimitInfoIndex.DeployLimit.MaxAppCodeSize = eventData.MaxAppCodeSize;
         appLimitInfoIndex.DeployLimit.MaxAppAttachmentSize = eventData.MaxAppAttachmentSize;
         await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
+        Logger.LogInformation($"App {eventData.AppId} Limit Update: {JsonConvert.SerializeObject(appLimitInfoIndex)}");
     }
 }
