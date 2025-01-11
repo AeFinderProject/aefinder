@@ -1,5 +1,7 @@
 using AeFinder.ApiKeys;
 using AeFinder.BlockScan;
+using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.Assets;
 using AeFinder.Grains.Grain.Blocks;
 using AeFinder.Grains.Grain.Orders;
 using AeFinder.Grains.Grain.Users;
@@ -96,6 +98,11 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                         provider.Setup(p => p.GetPriceAsync()).Returns(Task.FromResult<decimal>(0.00004M));
                         return provider.Object;
                     });
+                    
+                    services.AddSingleton<IOrderValidationProvider, AppOrderValidationProvider>();
+                    services.AddSingleton<IOrderValidationProvider, AssetOrderValidationProvider>();
+                    services.AddSingleton<IOrderHandler, AppOrderHandler>();
+                    services.AddSingleton<IOrderHandler, AssetOrderHandler>();
                 })
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")
