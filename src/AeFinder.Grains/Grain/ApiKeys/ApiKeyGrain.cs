@@ -14,12 +14,15 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
     private readonly IObjectMapper _objectMapper;
     private readonly IClock _clock;
     private readonly IDistributedEventBus _distributedEventBus;
+    private readonly IApiQueryPriceProvider _apiQueryPriceProvider;
 
-    public ApiKeyGrain(IObjectMapper objectMapper, IClock clock, IDistributedEventBus distributedEventBus)
+    public ApiKeyGrain(IObjectMapper objectMapper, IClock clock, IDistributedEventBus distributedEventBus,
+        IApiQueryPriceProvider apiQueryPriceProvider)
     {
         _objectMapper = objectMapper;
         _clock = clock;
         _distributedEventBus = distributedEventBus;
+        _apiQueryPriceProvider = apiQueryPriceProvider;
     }
 
     public async Task<ApiKeyInfo> CreateAsync(Guid id, Guid organizationId, CreateApiKeyInput input)
@@ -199,7 +202,7 @@ public class ApiKeyGrain : AeFinderGrain<ApiKeyState>, IApiKeyGrain
             GrainIdHelper.GenerateApiKeyMonthlySnapshotGrainId(State.Id, monthlyDate);
         var periodQuery = await GrainFactory.GetGrain<IApiKeySnapshotGrain>(monthlySnapshotKey).GetQueryCountAsync();
 
-        return (long)(State.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - periodQuery;
+        return (long)(State.SpendingLimitUsdt / await _apiQueryPriceProvider.GetPriceAsync()) - periodQuery;
     }
 
     private string GenerateKey()

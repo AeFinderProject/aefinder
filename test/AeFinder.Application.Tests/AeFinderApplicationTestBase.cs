@@ -1,4 +1,5 @@
-﻿using AeFinder.Orleans.TestBase;
+﻿using AeFinder.ApiKeys;
+using AeFinder.Orleans.TestBase;
 
 namespace AeFinder;
 
@@ -10,4 +11,9 @@ public abstract class AeFinderApplicationTestBase : AeFinderTestBase<AeFinderApp
 public class AeFinderApplicationOrleansTestBase:AeFinderOrleansTestBase<AeFinderApplicationTestModule>
 {
     
+}
+
+public abstract class AeFinderApplicationApiKeyTestBase : AeFinderTestBase<ApiKeyTestModule>
+{
+
 }
