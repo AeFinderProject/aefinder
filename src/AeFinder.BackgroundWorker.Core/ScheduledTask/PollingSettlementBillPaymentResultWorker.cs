@@ -99,6 +99,7 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
                 || organizationId == "f5f62f32-2359-0827-1223-3a17613d9124"
                 || organizationId == "176b48e6-a241-3242-7b94-3a1761b11f22"
                 || organizationId == "5153d905-0f02-ae1c-d070-3a17668a728a"
+                || organizationId == "9faafc40-e251-fd29-8fbc-3a1766e0dbb2"
                 || organizationId == "4f89ca02-95c7-0328-fb2f-3a176059cb6a")
             {
                 billBeginTime = billBeginTime.AddMonths(1);
@@ -237,6 +238,7 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
                 || organizationId == "f5f62f32-2359-0827-1223-3a17613d9124"
                 || organizationId == "176b48e6-a241-3242-7b94-3a1761b11f22"
                 || organizationId == "5153d905-0f02-ae1c-d070-3a17668a728a"
+                || organizationId == "9faafc40-e251-fd29-8fbc-3a1766e0dbb2"
                 || organizationId == "4f89ca02-95c7-0328-fb2f-3a176059cb6a")
             {
                 newAdvancePaymentBillTime = newAdvancePaymentBillTime.AddMonths(1);
