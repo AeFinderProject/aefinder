@@ -1,11 +1,16 @@
+using AeFinder.ApiKeys;
 using AeFinder.BlockScan;
+using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.Assets;
 using AeFinder.Grains.Grain.Blocks;
+using AeFinder.Grains.Grain.Orders;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.TestingHost;
 using Volo.Abp.DependencyInjection;
 using Moq;
+using NSubstitute;
 using Orleans.Serialization;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.EventBus.Distributed;
@@ -43,6 +48,7 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                     services.AddTransient(p => Mock.Of<IBlockFilterAppService>());
                     services.AddAutoMapper(typeof(AeFinderApplicationModule).Assembly);
                     services.AddTransient<IClock, Clock>();
+                    services.AddTransient<IOrderCostProvider, OrderCostProvider>();
                     services.OnExposing(onServiceExposingContext =>
                     {
                         //Register types for IObjectMapper<TSource, TDestination> if implements
@@ -79,6 +85,18 @@ public class ClusterFixture:IDisposable,ISingletonDependency
         
                     services.Configure<ExceptionSerializationOptions>(options =>
                         options.SupportedNamespacePrefixes.Add("Volo.Abp"));
+
+                    services.AddSingleton<IApiQueryPriceProvider>(o =>
+                    {
+                        var provider = new Mock<IApiQueryPriceProvider>();
+                        provider.Setup(p => p.GetPriceAsync()).Returns(Task.FromResult<decimal>(0.00004M));
+                        return provider.Object;
+                    });
+                    
+                    services.AddSingleton<IOrderValidationProvider, AppOrderValidationProvider>();
+                    services.AddSingleton<IOrderValidationProvider, AssetOrderValidationProvider>();
+                    services.AddSingleton<IOrderHandler, AppOrderHandler>();
+                    services.AddSingleton<IOrderHandler, AssetOrderHandler>();
                 })
                 .AddMemoryStreams(AeFinderApplicationConsts.MessageStreamName)
                 .AddMemoryGrainStorage("PubSubStore")

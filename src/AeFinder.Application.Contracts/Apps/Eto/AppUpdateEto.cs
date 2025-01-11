@@ -13,4 +13,5 @@ public class AppUpdateEto
     [Id(2)] public string Description { get; set; }
     [Id(3)] public string SourceCodeUrl { get; set; }
     [Id(4)] public DateTime UpdateTime { get; set; }
+    [Id(5)] public bool IsLocked { get; set; }
 }

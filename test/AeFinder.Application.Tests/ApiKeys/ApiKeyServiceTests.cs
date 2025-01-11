@@ -9,19 +9,21 @@ using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.ObjectMapping;
+using Volo.Abp.Threading;
 using Volo.Abp.Timing;
 using Volo.Abp.Validation;
 using Xunit;
 
 namespace AeFinder.ApiKeys;
 
-public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
+public class ApiKeyServiceTests : AeFinderApplicationApiKeyTestBase
 {
     private readonly IApiKeyService _apiKeyService;
     private readonly IApiKeySnapshotService _apiKeySnapshotService;
     private readonly IClusterClient _clusterClient;
     private readonly IClock _clock;
     private readonly IApiKeyTrafficProvider _apiKeyTrafficProvider;
+    private readonly IApiQueryPriceProvider _apiQueryPriceProvider;
 
     public ApiKeyServiceTests()
     {
@@ -30,6 +32,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         _clusterClient = GetRequiredService<IClusterClient>();
         _clock = GetRequiredService<IClock>();
         _apiKeyTrafficProvider = GetRequiredService<IApiKeyTrafficProvider>();
+        _apiQueryPriceProvider = GetRequiredService<IApiQueryPriceProvider>();
     }
 
     [Fact]
@@ -897,7 +900,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         {
             Name = "ApiKey",
             IsEnableSpendingLimit = true,
-            SpendingLimitUsdt = AeFinderApplicationConsts.ApiKeyQueryPrice * 3
+            SpendingLimitUsdt = await _apiQueryPriceProvider.GetPriceAsync() * 3
         };
         var apiKey = await _apiKeyService.CreateApiKeyAsync(orgId, createInput);
 
@@ -1176,7 +1179,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         {
             Name = "ApiKey",
             IsEnableSpendingLimit = true,
-            SpendingLimitUsdt = AeFinderApplicationConsts.ApiKeyQueryPrice * 3
+            SpendingLimitUsdt = await _apiQueryPriceProvider.GetPriceAsync() * 3
         };
         var apiKey = await _apiKeyService.CreateApiKeyAsync(orgId, createInput);
 
@@ -1232,7 +1235,7 @@ public class ApiKeyServiceTests : AeFinderApplicationAppTestBase
         {
             Name = "ApiKey2",
             IsEnableSpendingLimit = true,
-            SpendingLimitUsdt = AeFinderApplicationConsts.ApiKeyQueryPrice * 3
+            SpendingLimitUsdt = await _apiQueryPriceProvider.GetPriceAsync() * 3
         };
         var apiKey2 = await _apiKeyService.CreateApiKeyAsync(orgId, createInput2);
         apiKeyGrain = _clusterClient.GetGrain<IApiKeyGrain>(apiKey.Id);

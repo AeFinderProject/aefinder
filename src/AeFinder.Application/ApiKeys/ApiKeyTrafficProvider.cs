@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Threading;
 using Volo.Abp.Timing;
 
 namespace AeFinder.ApiKeys;
@@ -28,13 +29,16 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
     private readonly IClusterClient _clusterClient;
     private readonly IClock _clock;
     private readonly IApiKeyInfoProvider _apiKeyInfoProvider;
+    private readonly IApiQueryPriceProvider _apiQueryPriceProvider;
 
     public ApiKeyTrafficProvider(IClusterClient clusterClient, IClock clock,
-        IOptionsSnapshot<ApiKeyOptions> apiKeyOptions, IApiKeyInfoProvider apiKeyInfoProvider)
+        IOptionsSnapshot<ApiKeyOptions> apiKeyOptions, IApiKeyInfoProvider apiKeyInfoProvider,
+        IApiQueryPriceProvider apiQueryPriceProvider)
     {
         _clusterClient = clusterClient;
         _clock = clock;
         _apiKeyInfoProvider = apiKeyInfoProvider;
+        _apiQueryPriceProvider = apiQueryPriceProvider;
         _apiKeyOptions = apiKeyOptions.Value;
     }
 
@@ -144,7 +148,7 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
             throw new UserFriendlyException("Api key query times insufficient.");
         }
 
-        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / AeFinderApplicationConsts.ApiKeyQueryPrice) - used <= 0)
+        if (apiKeyInfo.IsEnableSpendingLimit && (long)(apiKeyInfo.SpendingLimitUsdt / await _apiQueryPriceProvider.GetPriceAsync()) - used <= 0)
         {
             throw new UserFriendlyException("Api key unavailable.");
         }
@@ -160,7 +164,8 @@ public class ApiKeyTrafficProvider : IApiKeyTrafficProvider, ISingletonDependenc
             throw new UserFriendlyException("Unauthorized api.");
         }
 
-        if (apiKeyInfo.AuthorisedDomains.Any() && !CheckApiKeyDomain(apiKeyInfo, domain))
+        if (apiKeyInfo.AuthorisedDomains.Any() &&
+            (domain.IsNullOrWhiteSpace() || !CheckApiKeyDomain(apiKeyInfo, domain)))
         {
             throw new UserFriendlyException("Unauthorized domain.");
         }
