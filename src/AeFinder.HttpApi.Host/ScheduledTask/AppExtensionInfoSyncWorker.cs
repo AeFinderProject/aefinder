@@ -92,7 +92,9 @@ public class AppExtensionInfoSyncWorker : AsyncPeriodicBackgroundWorkerBase, ISi
                         AppFullPodRequestMemory=resourceLimitDto.AppFullPodRequestMemory,
                         AppQueryPodRequestCpuCore = resourceLimitDto.AppQueryPodRequestCpuCore,
                         AppQueryPodRequestMemory = resourceLimitDto.AppQueryPodRequestMemory,
-                        EnableMultipleInstances = resourceLimitDto.EnableMultipleInstances
+                        EnableMultipleInstances = resourceLimitDto.EnableMultipleInstances,
+                        AppFullPodLimitCpuCore = resourceLimitDto.AppFullPodLimitCpuCore,
+                        AppFullPodLimitMemory = resourceLimitDto.AppFullPodLimitMemory
                     };
                 
                     appLimitInfoIndex.OperationLimit = new OperationLimitInfo()
