@@ -379,9 +379,6 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
 
     private async Task SendRegisterEmailAsync(string email, string code)
     {
-        // TODO: Remove it
-        Logger.LogInformation($"Temporary test: {email} - {code}");
-        
         var template = _emailTemplateOptions.Templates[AeFinderApplicationConsts.RegisterEmailTemplate];
         var body = template.Body.Replace("{{code}}", code);
         await _emailSender.QueueAsync(template.From, email, template.Subject, body, template.IsBodyHtml);
