@@ -173,18 +173,16 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         await PublishOrderStatusChangedEventAsync();
     }
 
-    private async Task<bool> ValidateBeforeOrderAsync()
+    private async Task ValidateBeforeOrderAsync()
     {
         foreach (var provider in _validationProviders)
         {
             if (!await provider.ValidateBeforeOrderAsync(State))
             {
                 _logger.LogWarning("Validate before order failed: {ProviderTypeName}", provider.GetType().Name);
-                return false;
+                throw new UserFriendlyException("Order validate failed.");
             }
         }
-
-        return true;
     }
 
     private async Task HandleCreatedAsync()
