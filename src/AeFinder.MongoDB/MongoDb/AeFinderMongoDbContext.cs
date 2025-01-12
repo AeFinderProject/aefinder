@@ -14,6 +14,7 @@ public class AeFinderMongoDbContext : AbpMongoDbContext
      * public IMongoCollection<Question> Questions => Collection<Question>();
      */
     public IMongoCollection<IdentityUserExtension> IdentityUserExtensionInfos { get; private set; }
+    public IMongoCollection<OrganizationUnitExtension> OrganizationUnitExtensionInfos { get; private set; }
     protected override void CreateModel(IMongoModelBuilder modelBuilder)
     {
         base.CreateModel(modelBuilder);
@@ -27,6 +28,10 @@ public class AeFinderMongoDbContext : AbpMongoDbContext
         modelBuilder.Entity<IdentityUserExtension>(b =>
         {
             b.CollectionName = "IdentityUserExtensions"; 
+        });
+        modelBuilder.Entity<OrganizationUnitExtension>(b =>
+        {
+            b.CollectionName = "OrganizationUnitExtensions"; 
         });
     }
     

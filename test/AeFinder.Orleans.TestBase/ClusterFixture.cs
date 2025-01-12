@@ -93,7 +93,6 @@ public class ClusterFixture:IDisposable,ISingletonDependency
                         provider.Setup(p => p.GetPriceAsync()).Returns(Task.FromResult<decimal>(0.00004M));
                         return provider.Object;
                     });
-                    
                     services.AddSingleton<IOrderValidationProvider, AppOrderValidationProvider>();
                     services.AddSingleton<IOrderValidationProvider, AssetOrderValidationProvider>();
                     services.AddSingleton<IOrderHandler, AppOrderHandler>();

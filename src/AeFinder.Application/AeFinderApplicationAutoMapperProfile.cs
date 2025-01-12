@@ -3,6 +3,7 @@ using System.Linq;
 using AeFinder.ApiKeys;
 using AeFinder.App.Es;
 using AeFinder.AppResources;
+using AeFinder.AppResources.Dto;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Apps.Eto;
@@ -22,6 +23,7 @@ using AeFinder.Grains.State.Billings;
 using AeFinder.Grains.State.Merchandises;
 using AeFinder.Grains.State.Orders;
 using AeFinder.Grains.State.Subscriptions;
+using AeFinder.GraphQL.Dto;
 using AeFinder.Grains.State.Users;
 using AeFinder.Logger.Entities;
 using AeFinder.Merchandises;
@@ -148,6 +150,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<PodContainerDto, PodContainerInfo>();
         CreateMap<AppPodInfoIndex, AppPodInfoDto>();
         CreateMap<PodContainerInfo, PodContainerDto>();
+        CreateMap<PodContainerDto, AppFullPodResourceUsageDto>();
 
         CreateMap<UserExtensionDto, IdentityUserExtension>();
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();
@@ -155,6 +158,8 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<IdentityUser, IdentityUserExtensionDto>();
 
         CreateMap<AppInfoIndex, AppInfoImmutable>();
+        
+        CreateMap<UserBalanceDto, OrganizationBalanceDto>();
 
         // Api Key
         CreateMap<ApiKeyState, ApiKeyInfo>();

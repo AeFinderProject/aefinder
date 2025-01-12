@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.App.Deploy;
+using AeFinder.AppResources;
 using AeFinder.Apps;
 using AeFinder.Apps.Dto;
 using AeFinder.Kubernetes;
@@ -27,14 +28,17 @@ public class AppController : AeFinderController
 {
     private readonly IAppService _appService;
     private readonly IAppLogService _appLogService;
+    private readonly IAppResourceService _appResourceService;
     private readonly KubernetesOptions _kubernetesOption;
     private readonly IOrganizationAppService _organizationAppService;
 
     public AppController(IAppService appService, IAppLogService appLogService,
+        IAppResourceService appResourceService,
         IOptionsSnapshot<KubernetesOptions> kubernetesOption, IOrganizationAppService organizationAppService)
     {
         _appService = appService;
         _appLogService = appLogService;
+        _appResourceService = appResourceService;
         _organizationAppService = organizationAppService;
         _kubernetesOption = kubernetesOption.Value;
     }
@@ -97,7 +101,7 @@ public class AppController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<AppResourceLimitDto> SetAppResourceLimitAsync(string appId,SetAppResourceLimitDto dto)
     {
-        var appResourceLimitDto = await _appService.SetAppResourceLimitAsync(appId, dto);
+        var appResourceLimitDto = await _appResourceService.SetAppResourceLimitAsync(appId, dto);
         return appResourceLimitDto;
     }
     
@@ -106,7 +110,7 @@ public class AppController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task<AppResourceLimitDto> GetAppResourceLimitAsync(string appId)
     {
-        return await _appService.GetAppResourceLimitAsync(appId);
+        return await _appResourceService.GetAppResourceLimitAsync(appId);
     }
 
     [HttpGet]
@@ -124,7 +128,7 @@ public class AppController : AeFinderController
     public async Task SetAppResourceLimitsAsync(SetAppResourceLimitsInput input)
     {
         var resourceLimitDto = ObjectMapper.Map<SetAppResourceLimitsInput, SetAppResourceLimitDto>(input);
-        var tasks = input.AppIds.Select(id => _appService.SetAppResourceLimitAsync(id, resourceLimitDto));
+        var tasks = input.AppIds.Select(id => _appResourceService.SetAppResourceLimitAsync(id, resourceLimitDto));
 
         await tasks.WhenAll();
     }

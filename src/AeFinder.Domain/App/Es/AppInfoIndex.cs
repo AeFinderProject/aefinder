@@ -25,5 +25,7 @@ public class AppInfoIndex : AeFinderEntity<string>, IEntityMappingEntity
     public DateTime CreateTime { get; set; }
     public DateTime UpdateTime { get; set; }
     public AppVersionInfo Versions { get; set; }
+    public DateTime DeleteTime { get; set; }
+    public DateTime? DeployTime { get; set; }
     public bool IsLocked { get; set; }
 }

@@ -17,4 +17,6 @@ public class SetAppResourceLimitsInput : AppIdsInput
     public long MaxAppAttachmentSize { get; set; }
     
     public bool? EnableMultipleInstances { get; set; }
+    public string AppFullPodLimitCpuCore { get; set; }
+    public string AppFullPodLimitMemory { get; set; }
 }

@@ -14,9 +14,11 @@ using AeFinder.Grains.State.Assets;
 using AeFinder.Grains.State.Merchandises;
 using AeFinder.Merchandises;
 using AeFinder.Metrics;
+using AeFinder.Options;
 using AeFinder.Orleans.TestBase;
 using AeFinder.User;
 using AElf.EntityMapping.Elasticsearch;
+using GraphQL.Client.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Volo.Abp.Emailing;
@@ -54,11 +56,31 @@ public class AeFinderApplicationTestModule : AbpModule
         });
         context.Services.AddTransient<IAppResourceLimitProvider, AppResourceLimitProvider>();
         context.Services.AddTransient<IKubernetesAppMonitor, DefaultKubernetesAppMonitor>();
-        
+        context.Services.AddHttpClient();
         context.Services.Configure<ApiKeyOptions>(o =>
         {
             o.IgnoreKeys = new HashSet<string> { "app" };
         });
+        context.Services.Configure<AwsEmailOptions>(o =>
+        {
+            o.From = "sam@XXXX.com";
+            o.ConfigSet = "MockConfigSet";
+            o.FromName = "MockName";
+            o.Host = "MockHost";
+            o.Image = "MockImage";
+            o.Port = 8000;
+            o.SmtpUsername = "MockUsername";
+            o.SmtpPassword = "MockPassword";
+        });
+        context.Services.Configure<CustomOrganizationOptions>(c =>
+        {
+            c.CustomApps = new List<string>()
+            {
+                "appid"
+            };
+        });
+        var mockGraphQLClient = new Mock<IGraphQLClient>();
+        context.Services.AddSingleton<IGraphQLClient>(mockGraphQLClient.Object);
 
         context.Services.Configure<UserRegisterOptions>(o =>
         {

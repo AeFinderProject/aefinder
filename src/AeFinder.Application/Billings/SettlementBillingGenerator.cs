@@ -138,7 +138,7 @@ public class SettlementBillingGenerator : IBillingGenerator
     private async Task<BillingState> ProcessTimesSettlementBillingAsync(BillingState billing)
     {
         billing.Details.Reverse();
-
+        
         var details = billing.Details;
 
         billing.Details = new();

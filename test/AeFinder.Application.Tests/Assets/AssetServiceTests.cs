@@ -264,6 +264,9 @@ public class AssetServiceTests : AeFinderApplicationTestBase
             }
         };
 
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId("AppId"));
+        await appGrain.LockAsync(false);
+
         orderGrain = _clusterClient.GetGrain<IOrderGrain>(orderId);
         await orderGrain.CreateAsync(orderId, AeFinderApplicationTestConsts.OrganizationId, userId, input);
         await orderGrain.PayAsync(PaymentType.Wallet);

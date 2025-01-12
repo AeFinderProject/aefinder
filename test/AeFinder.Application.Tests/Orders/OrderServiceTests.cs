@@ -96,11 +96,11 @@ public class OrderServiceTests : AeFinderApplicationTestBase
         order.Amount.ShouldBeGreaterThan(0);
         order.Status.ShouldBe(OrderStatus.Unpaid);
         order.PaymentType.ShouldBe(PaymentType.None);
-
+        
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId("appid"));
         var app = await appGrain.GetAsync();
         app.IsLocked.ShouldBeTrue();
-        
+
         await _orderService.PayAsync(AeFinderApplicationTestConsts.OrganizationId, order.Id, new PayInput
         {
             PaymentType = PaymentType.Wallet

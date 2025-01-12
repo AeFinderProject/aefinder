@@ -19,4 +19,6 @@ public class AppResourceLimitState
     [Id(11)] public long MaxAppAttachmentSize { get; set; }
 
     [Id(12)] public bool EnableMultipleInstances { get; set; } = false;
+    [Id(13)] public string AppFullPodLimitCpuCore { get; set; }
+    [Id(14)] public string AppFullPodLimitMemory { get; set; }
 }
