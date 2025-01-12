@@ -41,9 +41,9 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
             From = _awsEmailOptions.From,
             To = email,
             Body =
-                EmailBodyBuilder.BuildLockBalanceSuccessfulTemplate(organizationWalletAddress, lockAmount,
+                EmailBodyBuilder.BuildLockBalanceSuccessfulTemplate(lockAmount,
                     transactionId),
-            Subject = "Lock organization balance successfully"
+            Subject = "Lock balance successfully"
         });
     }
 
@@ -55,8 +55,8 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
             From = _awsEmailOptions.From,
             To = email,
             Body = 
-                EmailBodyBuilder.BuildLockBalanceFailedTemplate(organizationWalletAddress, lockAmount),
-            Subject = "Lock organization balance failed"
+                EmailBodyBuilder.BuildLockBalanceFailedTemplate(lockAmount),
+            Subject = "Lock balance failed"
         });
     }
 
@@ -68,8 +68,8 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
             From = _awsEmailOptions.From,
             To = email,
             Body =
-                EmailBodyBuilder.BuildChargeBalanceSuccessfulTemplate(organizationWalletAddress, chargeAmount,transactionId),
-            Subject = "Charge organization balance successfully"
+                EmailBodyBuilder.BuildChargeBalanceSuccessfulTemplate(chargeAmount,transactionId),
+            Subject = "Charge balance successfully"
         });
     }
 
@@ -81,7 +81,7 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
             From = _awsEmailOptions.From,
             To = email,
             Body =
-                EmailBodyBuilder.BuildAutoRenewalPreDeductionFailedTemplate(month, organizationName,
+                EmailBodyBuilder.BuildAutoRenewalPreDeductionFailedTemplate(month, 
                     billAmount, lockFromAmount),
             Subject = "Auto renewal pre-deduction failed"
         });
@@ -95,8 +95,8 @@ public class BillingEmailSender:IBillingEmailSender, ISingletonDependency
             From = _awsEmailOptions.From,
             To = email,
             Body =
-                EmailBodyBuilder.BuildPreDeductionBalanceInsufficientTemplate(month, organizationName,
-                    lockFromAmount, organizationBalance, organizationWalletAddress),
+                EmailBodyBuilder.BuildPreDeductionBalanceInsufficientTemplate(month, 
+                    lockFromAmount, organizationBalance),
             Subject = "Pre-deduction balance insufficient"
         });
     }

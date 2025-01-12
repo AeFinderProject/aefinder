@@ -17,33 +17,33 @@ public class EmailBodyBuilder
         return $@" Please click the link http://www.aefinder.io/email/{verifyCode} to verify your email.";
     }
 
-    public static string BuildLockBalanceSuccessfulTemplate(string organizationWalletAddress, decimal lockAmount,
+    public static string BuildLockBalanceSuccessfulTemplate(decimal lockAmount,
         string transactionId)
     {
         return
-            $@" Your organization's account {organizationWalletAddress} has successfully locked a pre-deduction amount of ${lockAmount}, Transaction id: {transactionId}.";
+            $@" Your account has successfully locked a pre-deduction amount of ${lockAmount}, Transaction id: {transactionId}.";
     }
 
-    public static string BuildLockBalanceFailedTemplate(string organizationWalletAddress, decimal lockAmount)
+    public static string BuildLockBalanceFailedTemplate(decimal lockAmount)
     {
-        return $@" Failed to lock a pre-deduction amount of ${lockAmount} in your organization's account {organizationWalletAddress}.";
+        return $@" Failed to lock a pre-deduction amount of ${lockAmount} in your account.";
     }
 
-    public static string BuildChargeBalanceSuccessfulTemplate(string organizationWalletAddress, decimal chargeAmount,string transactionId)
-    {
-        return
-            $@" Successfully charged ${chargeAmount} from the locked balance in your organization's account {organizationWalletAddress}, Transaction id: {transactionId}.";
-    }
-
-    public static string BuildAutoRenewalPreDeductionFailedTemplate(string month,string organizationName,decimal billAmount, decimal lockFromAmount)
-    {
-        return $@" The total assets bill for {month} of organization {organizationName} amounts to ${billAmount}. A pre-deduction of ${lockFromAmount} is failed. Please check your organization balance.";
-    }
-
-    public static string BuildPreDeductionBalanceInsufficientTemplate(string month,string organizationName,decimal lockFromAmount,decimal organizationBalance,string organizationWalletAddress)
+    public static string BuildChargeBalanceSuccessfulTemplate(decimal chargeAmount,string transactionId)
     {
         return
-            $@" Organization {organizationName}'s pre-deduction amount for {month} is ${lockFromAmount}, while the current organization account balance is ${organizationBalance}. The account {organizationWalletAddress} balance is insufficient; please top up promptly to avoid the risk of freezing some resources.";
+            $@" Successfully charged ${chargeAmount} from the locked balance in your account, Transaction id: {transactionId}.";
+    }
+
+    public static string BuildAutoRenewalPreDeductionFailedTemplate(string month,decimal billAmount, decimal lockFromAmount)
+    {
+        return $@" The total assets bill for {month} of your account amounts to ${billAmount}. A pre-deduction of ${lockFromAmount} is failed. Please check your organization balance.";
+    }
+
+    public static string BuildPreDeductionBalanceInsufficientTemplate(string month,decimal lockFromAmount,decimal organizationBalance)
+    {
+        return
+            $@" Your account's pre-deduction amount for {month} is ${lockFromAmount}, while the current organization account balance is ${organizationBalance}. The account balance is insufficient; please top up promptly to avoid the risk of freezing some resources.";
     }
 
     public static string BuildAeIndexerFreezeNotificationTemplate(string appId)
