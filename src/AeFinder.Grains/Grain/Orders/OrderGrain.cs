@@ -4,6 +4,8 @@ using AeFinder.Grains.Grain.Merchandises;
 using AeFinder.Grains.State.Orders;
 using AeFinder.Merchandises;
 using AeFinder.Orders;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 using Volo.Abp;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.EventBus.Distributed;
@@ -18,14 +20,21 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
     private readonly IDistributedEventBus _distributedEventBus;
     private readonly IClock _clock;
     private readonly IOrderCostProvider _orderCostProvider;
+    private readonly IEnumerable<IOrderValidationProvider> _validationProviders;
+    private readonly IEnumerable<IOrderHandler> _orderHandlers;
+    private readonly ILogger<OrderGrain> _logger;
 
     public OrderGrain(IObjectMapper objectMapper, IDistributedEventBus distributedEventBus, IClock clock,
-        IOrderCostProvider orderCostProvider)
+        IOrderCostProvider orderCostProvider, IEnumerable<IOrderValidationProvider> validationProviders,
+        IEnumerable<IOrderHandler> orderHandlers, ILogger<OrderGrain> logger)
     {
         _objectMapper = objectMapper;
         _distributedEventBus = distributedEventBus;
         _clock = clock;
         _orderCostProvider = orderCostProvider;
+        _validationProviders = validationProviders;
+        _orderHandlers = orderHandlers;
+        _logger = logger;
     }
 
     public async Task<OrderState> CreateAsync(Guid id, Guid organizationId, Guid userId, CreateOrderInput input)
@@ -41,18 +50,10 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
 
         var endTime = State.OrderTime.AddMonths(1).ToMonthDate();
         var orderCost = await _orderCostProvider.CalculateCostAsync(input.Details, State.OrderTime, endTime);
-
         foreach (var detail in orderCost.Details)
         {
             if (detail.OriginalAsset != null)
             {
-                if (detail.OriginalAsset.IsLocked || 
-                    detail.OriginalAsset.Status == AssetStatus.Pending ||
-                    detail.OriginalAsset.Status == AssetStatus.Released)
-                {
-                    throw new UserFriendlyException("Unable to repeat orders.");
-                }
-
                 if (detail.OriginalAsset.OrganizationId != organizationId)
                 {
                     throw new UserFriendlyException("No permission.");
@@ -70,10 +71,14 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         }
         
         _objectMapper.Map<OrderCost, OrderState>(orderCost, State);
+
+        await ValidateBeforeOrderAsync();
         
         await WriteStateAsync();
-        await PublishOrderStatusChangedEventAsync();
 
+        await HandleCreatedAsync();
+        
+        await PublishOrderStatusChangedEventAsync();
         return State;
     }
 
@@ -167,7 +172,29 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         
         await PublishOrderStatusChangedEventAsync();
     }
-    
+
+    private async Task<bool> ValidateBeforeOrderAsync()
+    {
+        foreach (var provider in _validationProviders)
+        {
+            if (!await provider.ValidateBeforeOrderAsync(State))
+            {
+                _logger.LogWarning("Validate before order failed: {ProviderTypeName}", provider.GetType().Name);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private async Task HandleCreatedAsync()
+    {
+        foreach (var provider in _orderHandlers)
+        {
+            await provider.HandleOrderCreatedAsync(State);
+        }
+    }
+
     protected override async Task WriteStateAsync()
     {
         await PublishEventAsync();

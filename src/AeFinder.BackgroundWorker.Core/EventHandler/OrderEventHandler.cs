@@ -31,16 +31,16 @@ public class OrderEventHandler :
     {
         switch (eventData.Status)
         {
-            case OrderStatus.Unpaid:
-                foreach (var detail in eventData.Details)
-                {
-                    if (detail.OriginalAsset != null)
-                    {
-                        await _assetService.LockAsync(detail.OriginalAsset.Id, true);
-                    }
-                }
-                await LockAppAsync(eventData, true);
-                break;
+            // case OrderStatus.Unpaid:
+            //     foreach (var detail in eventData.Details)
+            //     {
+            //         if (detail.OriginalAsset != null)
+            //         {
+            //             await _assetService.LockAsync(detail.OriginalAsset.Id, true);
+            //         }
+            //     }
+            //     await LockAppAsync(eventData, true);
+            //     break;
             case OrderStatus.Paid:
                 await _assetService.ChangeAssetAsync(eventData);
                 await LockAppAsync(eventData, false);

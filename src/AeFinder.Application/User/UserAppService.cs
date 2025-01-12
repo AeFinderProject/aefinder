@@ -2,19 +2,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Users;
 using AeFinder.User.Dto;
 using AeFinder.User.Provider;
 using AElf;
 using AElf.ExceptionHandler;
 using AElf.Types;
+using GraphQL.Validation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
+using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
 using Volo.Abp.Authorization.Permissions;
+using Volo.Abp.Emailing;
 using Volo.Abp.Identity;
+using Volo.Abp.Timing;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder.User;
@@ -29,6 +35,9 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IUserInformationProvider _userInformationProvider;
     private readonly IWalletLoginProvider _walletLoginProvider;
+    private readonly IClusterClient _clusterClient;
+    private readonly IEmailSender _emailSender;
+    private readonly EmailTemplateOptions _emailTemplateOptions;
 
     public UserAppService(
         IdentityUserManager userManager,
@@ -41,7 +50,8 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         IOrganizationUnitRepository organizationUnitRepository,
         IUserInformationProvider userInformationProvider,
         IWalletLoginProvider walletLoginProvider,
-        IPermissionChecker permissionChecker)
+        IPermissionChecker permissionChecker,
+        IClusterClient clusterClient, IEmailSender emailSender, IOptionsSnapshot<EmailTemplateOptions> emailTemplateOptions)
         : base(userManager, userRepository, roleRepository, identityOptions, permissionChecker)
     {
         _organizationUnitRepository = organizationUnitRepository;
@@ -50,6 +60,9 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         _organizationAppService = organizationAppService;
         _userInformationProvider = userInformationProvider;
         _walletLoginProvider = walletLoginProvider;
+        _clusterClient = clusterClient;
+        _emailSender = emailSender;
+        _emailTemplateOptions = emailTemplateOptions.Value;
     }
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)
@@ -245,6 +258,130 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         var extensionInfo = await _userInformationProvider.GetUserExtensionInfoByIdAsync(identityUser.Id);
         identityUserExtensionDto.WalletAddress = extensionInfo.WalletAddress;
         return identityUserExtensionDto;
+    }
+
+    public async Task<bool> IsRegisterPendingAsync(string email)
+    {
+        var existUser = await UserManager.FindByEmailAsync(email.Trim());
+        if (existUser != null && existUser.IsActive == false)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public async Task RegisterAsync(RegisterUserInput input)
+    {
+        var userName = input.UserName.Trim();
+        var email = input.Email.Trim();
+
+        var existUser = await UserManager.FindByNameAsync(userName);
+        if (existUser != null)
+        {
+            throw new UserFriendlyException("User name already exists.");
+        }
+        
+        existUser = await UserManager.FindByEmailAsync(email);
+        if (existUser != null)
+        {
+            throw new UserFriendlyException("Email already exists.");
+        }
+        
+        var verificationCodeGrain =
+            _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
+                GrainIdHelper.GenerateRegisterVerificationCodeGrainId(email));
+        var code = await verificationCodeGrain.GenerateCodeAsync();
+        
+        var user = new IdentityUser(GuidGenerator.Create(), userName, email, CurrentTenant.Id);
+        user.SetIsActive(false);
+        user.SetEmailConfirmed(false);
+
+        var createResult = await UserManager.CreateAsync(user, input.Password);
+        if (!createResult.Succeeded)
+        {
+            throw new UserFriendlyException("Failed to create user. " + createResult.Errors.Select(e => e.Description)
+                .Aggregate((errors, error) => errors + ", " + error));
+        }
+        
+        //add appAdmin role into user
+        var normalizedRoleName = _lookupNormalizer.NormalizeName(AeFinderConsts.AppAdminRoleName);
+        var identityUser = await UserManager.FindByIdAsync(user.Id.ToString());
+        var appAdminRole = await RoleRepository.FindByNormalizedNameAsync(normalizedRoleName);
+        if (appAdminRole != null)
+        {
+            await UserManager.AddToRoleAsync(identityUser, appAdminRole.Name);
+        }
+        
+        var registerGrain = _clusterClient.GetGrain<IUserRegisterGrain>(GrainIdHelper.GenerateUserRegisterGrainId(code));
+        await registerGrain.SetAsync(user.Id, null);
+        
+        await SendRegisterEmailAsync(email, code);
+    }
+
+    public async Task RegisterConfirmAsync(string code)
+    {
+        var registerGrain =
+            _clusterClient.GetGrain<IUserRegisterGrain>(GrainIdHelper.GenerateUserRegisterGrainId(code));
+        var register = await registerGrain.GetAsync();
+        
+        var user = await UserManager.FindByIdAsync(register.UserId.ToString());
+        if (user == null)
+        {
+            throw new UserFriendlyException("User information not found.");
+        }
+        
+        var verificationCodeGrain =
+            _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
+                GrainIdHelper.GenerateRegisterVerificationCodeGrainId(user.Email));
+        await verificationCodeGrain.VerifyAsync(code);
+
+        if (register.OrganizationName.IsNullOrWhiteSpace())
+        {
+            register.OrganizationName = GuidGenerator.Create().ToString("N");
+        }
+
+        await _organizationAppService.CreateOrganizationUnitAsync(register.OrganizationName);
+        var organizationUnit = await _organizationUnitRepository.GetAsync(register.OrganizationName);
+        await UserManager.AddToOrganizationUnitAsync(user, organizationUnit);
+        await _organizationAppService.AddUserToOrganizationUnitAsync(user.Id,organizationUnit.Id);
+        
+        user.SetEmailConfirmed(true);
+        user.SetIsActive(true);
+        await UserManager.UpdateAsync(user);
+
+        await verificationCodeGrain.RemoveAsync();
+    }
+
+    public async Task ResendRegisterEmailAsync(ResendEmailInput input)
+    {
+        var email = input.Email.Trim();
+        var verificationCodeGrain =
+            _clusterClient.GetGrain<IRegisterVerificationCodeGrain>(
+                GrainIdHelper.GenerateRegisterVerificationCodeGrainId(email));
+        var oldCode = await verificationCodeGrain.GetCodeAsync();
+        if (oldCode.IsNullOrWhiteSpace())
+        {
+            throw new UserFriendlyException("Register information not found.");
+        }
+        
+        var newCode = await verificationCodeGrain.GenerateCodeAsync();
+
+        var registerGrain =
+            _clusterClient.GetGrain<IUserRegisterGrain>(GrainIdHelper.GenerateUserRegisterGrainId(oldCode));
+        var register = await registerGrain.GetAsync();
+
+        registerGrain = _clusterClient.GetGrain<IUserRegisterGrain>(GrainIdHelper.GenerateUserRegisterGrainId(newCode));
+        await registerGrain.SetAsync(register.UserId, register.OrganizationName);
+
+        await SendRegisterEmailAsync(email, newCode);
+    }
+
+    private async Task SendRegisterEmailAsync(string email, string code)
+    {
+        var template = _emailTemplateOptions.Templates[AeFinderApplicationConsts.RegisterEmailTemplate];
+        var body = template.Body.Replace("{{code}}", code);
+        await _emailSender.QueueAsync(template.From, email, template.Subject, body, template.IsBodyHtml);
     }
 
     [ExceptionHandler([typeof(SignatureVerifyException)], TargetType = typeof(UserAppService),

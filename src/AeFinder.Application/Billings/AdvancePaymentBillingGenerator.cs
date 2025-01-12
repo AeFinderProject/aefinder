@@ -60,7 +60,9 @@ public class AdvancePaymentBillingGenerator : IBillingGenerator
             switch ((ChargeType)asset.Merchandise.ChargeType)
             {
                 case ChargeType.Hourly:
-                    var assetEndTime = asset.EndTime < endTime ? asset.EndTime : endTime;
+                    var assetEndTime = (asset.EndTime < endTime && asset.Status != (int)AssetStatus.Unused)
+                        ? asset.EndTime
+                        : endTime;
                     billingDetail.Quantity = (long)Math.Ceiling((assetEndTime - beginTime).TotalHours);
                     break;
                 case ChargeType.Time:
@@ -96,7 +98,9 @@ public class AdvancePaymentBillingGenerator : IBillingGenerator
         var queryable = await _assetIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o =>
                 o.OrganizationId == organizationId &&
-                (o.Status == (int)AssetStatus.Unused || (o.StartTime < beginTime && o.EndTime >= beginTime)))
+                ((o.Status == (int)AssetStatus.Unused && o.CreateTime < beginTime) || 
+                 ((o.Status == (int)AssetStatus.Using || o.Status == (int)AssetStatus.Released) && o.CreateTime<beginTime && o.StartTime>=beginTime) ||
+                 (o.StartTime < beginTime && o.EndTime >= beginTime)))
             .OrderBy(o => o.Merchandise.Type)
             .OrderBy(o => o.StartTime)
             .Skip(skip).Take(maxCount);
@@ -109,7 +113,9 @@ public class AdvancePaymentBillingGenerator : IBillingGenerator
             skip += maxCount;
             queryable = queryable.Where(o => 
                     o.OrganizationId == organizationId && 
-                    (o.Status == (int)AssetStatus.Unused || (o.StartTime < beginTime && o.EndTime >= beginTime)))
+                    ((o.Status == (int)AssetStatus.Unused && o.CreateTime < beginTime) || 
+                     ((o.Status == (int)AssetStatus.Using || o.Status == (int)AssetStatus.Released) && o.CreateTime<beginTime && o.StartTime>=beginTime) ||
+                     (o.StartTime < beginTime && o.EndTime >= beginTime)))                
                 .OrderBy(o => o.Merchandise.Type)
                 .OrderBy(o => o.StartTime)
                 .Skip(skip).Take(maxCount);

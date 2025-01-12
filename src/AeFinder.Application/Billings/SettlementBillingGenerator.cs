@@ -10,6 +10,7 @@ using AeFinder.Grains.State.Billings;
 using AeFinder.Grains.State.Merchandises;
 using AeFinder.Merchandises;
 using AElf.EntityMapping.Repositories;
+using Remotion.Linq.Clauses;
 using Volo.Abp.Guids;
 using Volo.Abp.Timing;
 using IObjectMapper = Volo.Abp.ObjectMapping.IObjectMapper;
@@ -66,7 +67,10 @@ public class SettlementBillingGenerator : IBillingGenerator
                 case ChargeType.Hourly:
                     var assetBeginTime = asset.StartTime < beginTime ? beginTime : asset.StartTime;
                     var assetEndTime = asset.EndTime > endTime ? endTime : asset.EndTime;
-                    billingDetail.Quantity = (long)Math.Ceiling((assetEndTime - assetBeginTime).TotalHours);
+                    billingDetail.Quantity =
+                        asset.Status == (int)AssetStatus.Unused
+                            ? 0
+                            : (long)Math.Ceiling((assetEndTime - assetBeginTime).TotalHours);
                     break;
             }
 
@@ -101,8 +105,10 @@ public class SettlementBillingGenerator : IBillingGenerator
         
         var queryable = await _assetIndexRepository.GetQueryableAsync();
         queryable = queryable.Where(o =>
-                o.OrganizationId == organizationId && 
-                o.StartTime < endTime && o.EndTime >= beginTime)
+                o.OrganizationId == organizationId &&
+                ((o.Status == (int)AssetStatus.Unused && o.CreateTime < endTime) ||
+                 ((o.Status == (int)AssetStatus.Using || o.Status == (int)AssetStatus.Released) && o.CreateTime < endTime && o.StartTime >= beginTime) ||
+                 (o.StartTime < endTime && o.EndTime >= beginTime)))
             .OrderBy(o => o.Merchandise.Type)
             .OrderBy(o => o.StartTime)
             .Skip(skip).Take(maxCount);
@@ -115,8 +121,9 @@ public class SettlementBillingGenerator : IBillingGenerator
             skip += maxCount;
             queryable = queryable.Where(o =>
                     o.OrganizationId == organizationId && 
-                    o.StartTime < endTime && 
-                    o.EndTime >= beginTime)
+                    ((o.Status == (int)AssetStatus.Unused && o.CreateTime < endTime) ||
+                     ((o.Status == (int)AssetStatus.Using || o.Status == (int)AssetStatus.Released) && o.CreateTime < endTime && o.StartTime >= beginTime) ||
+                     (o.StartTime < endTime && o.EndTime >= beginTime)))
                 .OrderBy(o => o.Merchandise.Type)
                 .OrderBy(o => o.StartTime)
                 .Skip(skip).Take(maxCount);
@@ -131,38 +138,71 @@ public class SettlementBillingGenerator : IBillingGenerator
     private async Task<BillingState> ProcessTimesSettlementBillingAsync(BillingState billing)
     {
         billing.Details.Reverse();
+        
+        var details = billing.Details;
 
-        MerchandiseType? lastProcessType = null;
-        foreach (var detail in billing.Details)
+        billing.Details = new();
+
+        BillingDetailState timeBillingDetail = null;
+        decimal assetPaidAmount = 0M;
+        foreach (var detail in details)
         {
             if (detail.Merchandise.ChargeType != ChargeType.Time)
             {
-                continue;
+                billing.Details.Add(detail);
             }
-
-            if (!lastProcessType.HasValue || lastProcessType.Value != detail.Merchandise.Type)
+            else
             {
-                var provider = _resourceUsageProviders.First(o => o.MerchandiseType == detail.Merchandise.Type);
-                var usage = await provider.GetUsageAsync(billing.OrganizationId, billing.BeginTime);
-                detail.Quantity = usage;
-
-                detail.PaidAmount =
-                    (detail.Quantity * detail.Replicas - detail.Asset.FreeQuantity * detail.Asset.FreeReplicas) *
-                    detail.Merchandise.Price;
-                if (detail.PaidAmount < 0)
+                if (timeBillingDetail != null && timeBillingDetail.Merchandise.Type != detail.Merchandise.Type)
                 {
-                    detail.PaidAmount = 0;
+                    var refundAmount = assetPaidAmount - timeBillingDetail.PaidAmount;
+                    
+                    timeBillingDetail.Asset.PaidAmount = assetPaidAmount;
+                    timeBillingDetail.RefundAmount = refundAmount;
+            
+                    billing.PaidAmount += timeBillingDetail.PaidAmount;
+                    billing.RefundAmount = billing.RefundAmount - assetPaidAmount + refundAmount;
+                    
+                    billing.Details.Add(timeBillingDetail);
+
+                    timeBillingDetail = null;
+                    assetPaidAmount = 0;
+                }
+            
+                if (timeBillingDetail == null)
+                {
+                    timeBillingDetail = detail;
+                    timeBillingDetail.Asset.StartTime = billing.BeginTime;
+                    timeBillingDetail.Asset.EndTime = billing.EndTime;
+                    
+                    var provider = _resourceUsageProviders.First(o => o.MerchandiseType == detail.Merchandise.Type);
+                    var usage = await provider.GetUsageAsync(billing.OrganizationId, billing.BeginTime);
+                    timeBillingDetail.Quantity = usage;
+            
+                    timeBillingDetail.PaidAmount =
+                        (detail.Quantity * detail.Replicas - detail.Asset.FreeQuantity * detail.Asset.FreeReplicas) *
+                        detail.Merchandise.Price;
+                    if (timeBillingDetail.PaidAmount < 0)
+                    {
+                        timeBillingDetail.PaidAmount = 0;
+                    }
                 }
 
-                var refundAmount = detail.Asset.PaidAmount - detail.PaidAmount;
-
-                billing.PaidAmount += detail.PaidAmount;
-                billing.RefundAmount = billing.RefundAmount - detail.RefundAmount + refundAmount;
-
-                detail.RefundAmount = refundAmount;
-
-                lastProcessType = detail.Merchandise.Type;
+                assetPaidAmount += detail.Asset.PaidAmount;
             }
+        }
+
+        if (timeBillingDetail != null)
+        {
+            var refundAmount = assetPaidAmount - timeBillingDetail.PaidAmount;
+
+            timeBillingDetail.Asset.PaidAmount = assetPaidAmount;
+            timeBillingDetail.RefundAmount = refundAmount;
+
+            billing.PaidAmount += timeBillingDetail.PaidAmount;
+            billing.RefundAmount = billing.RefundAmount - assetPaidAmount + refundAmount;
+
+            billing.Details.Add(timeBillingDetail);
         }
 
         billing.Details.Reverse();

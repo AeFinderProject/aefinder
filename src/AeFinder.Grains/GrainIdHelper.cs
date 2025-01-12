@@ -194,9 +194,19 @@ public static class GrainIdHelper
         var organizationGuid = Guid.Parse(organizationId);
         return organizationGuid.ToString("N");
     }
-    
+
     public static string GenerateAppPodSnapshotGrainId(string appId)
     {
         return GenerateGrainId(appId);
+    }
+
+    public static string GenerateUserRegisterGrainId(string code)
+    {
+        return GenerateGrainId(code.ToLower());
+    }
+    
+    public static string GenerateRegisterVerificationCodeGrainId(string email)
+    {
+        return GenerateGrainId(email.ToLower());
     }
 }

@@ -24,6 +24,7 @@ using AeFinder.Grains.State.Merchandises;
 using AeFinder.Grains.State.Orders;
 using AeFinder.Grains.State.Subscriptions;
 using AeFinder.GraphQL.Dto;
+using AeFinder.Grains.State.Users;
 using AeFinder.Logger.Entities;
 using AeFinder.Merchandises;
 using AeFinder.Orders;
@@ -246,5 +247,7 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<BillingDetailChangedEto, BillingDetailIndex>();
         CreateMap<BillingDetailState, BillingDetailDto>();
         CreateMap<BillingDetailIndex, BillingDetailDto>();
+        
+        CreateMap<UserRegisterState, UserRegisterInfo>();
     }
 }

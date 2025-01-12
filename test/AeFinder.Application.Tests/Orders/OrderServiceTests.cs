@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Assets;
+using AeFinder.Grains;
+using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Orders;
 using AeFinder.Grains.State.Orders;
 using AeFinder.Merchandises;
@@ -83,6 +85,10 @@ public class OrderServiceTests : AeFinderApplicationTestBase
                     Replicas = 1,
                     MerchandiseId = merchandise.Items.First().Id
                 }
+            },
+            ExtraData = new Dictionary<string, string>
+            {
+                { AeFinderApplicationConsts.RelateAppExtraDataKey, "appid" }
             }
         };
 
@@ -90,6 +96,10 @@ public class OrderServiceTests : AeFinderApplicationTestBase
         order.Amount.ShouldBeGreaterThan(0);
         order.Status.ShouldBe(OrderStatus.Unpaid);
         order.PaymentType.ShouldBe(PaymentType.None);
+        
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId("appid"));
+        var app = await appGrain.GetAsync();
+        app.IsLocked.ShouldBeTrue();
 
         await _orderService.PayAsync(AeFinderApplicationTestConsts.OrganizationId, order.Id, new PayInput
         {

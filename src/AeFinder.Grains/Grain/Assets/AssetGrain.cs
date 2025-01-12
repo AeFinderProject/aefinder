@@ -96,6 +96,10 @@ public class AssetGrain : AeFinderGrain<AssetState>, IAssetGrain
         State.Status = AssetStatus.Released;
         if (!await IsFreeAndHourlyChargeAsync())
         {
+            if (State.Status == AssetStatus.Unused)
+            {
+                State.StartTime = dateTime;
+            }
             State.EndTime = dateTime;
         }
 
