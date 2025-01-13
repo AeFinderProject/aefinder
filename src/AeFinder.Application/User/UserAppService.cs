@@ -381,7 +381,8 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
     {
         var template = _emailTemplateOptions.Templates[AeFinderApplicationConsts.RegisterEmailTemplate];
         var body = template.Body.Replace("{{code}}", code);
-        await _emailSender.QueueAsync(template.From, email, template.Subject, body, template.IsBodyHtml);
+        // await _emailSender.QueueAsync(template.From, email, template.Subject, body, template.IsBodyHtml);
+        await _emailSender.SendAsync(template.From, email, template.Subject, body, template.IsBodyHtml);
     }
 
     [ExceptionHandler([typeof(SignatureVerifyException)], TargetType = typeof(UserAppService),
