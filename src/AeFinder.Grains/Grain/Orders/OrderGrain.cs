@@ -50,7 +50,7 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
 
         var endTime = State.OrderTime.AddMonths(1).ToMonthDate();
         var orderCost = await _orderCostProvider.CalculateCostAsync(input.Details, State.OrderTime, endTime);
-        
+
         foreach (var detail in orderCost.Details)
         {
             if (detail.OriginalAsset != null)
@@ -173,19 +173,17 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
         
         await PublishOrderStatusChangedEventAsync();
     }
-
-    private async Task<bool> ValidateBeforeOrderAsync()
+    
+    private async Task ValidateBeforeOrderAsync()
     {
         foreach (var provider in _validationProviders)
         {
             if (!await provider.ValidateBeforeOrderAsync(State))
             {
                 _logger.LogWarning("Validate before order failed: {ProviderTypeName}", provider.GetType().Name);
-                return false;
+                throw new UserFriendlyException("Order validate failed.");
             }
         }
-
-        return true;
     }
 
     private async Task HandleCreatedAsync()
@@ -195,6 +193,7 @@ public class OrderGrain : AeFinderGrain<OrderState>, IOrderGrain
             await provider.HandleOrderCreatedAsync(State);
         }
     }
+
     protected override async Task WriteStateAsync()
     {
         await PublishEventAsync();

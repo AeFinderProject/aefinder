@@ -8,6 +8,7 @@ using AeFinder.CodeOps;
 using AeFinder.Grains.Grain.ApiKeys;
 using AeFinder.Grains.Grain.Assets;
 using AeFinder.Grains.Grain.BlockPush;
+using AeFinder.Grains.Grain.Users;
 using AeFinder.Grains.Grain.Merchandises;
 using AeFinder.Grains.State.Assets;
 using AeFinder.Grains.State.Merchandises;
@@ -21,6 +22,7 @@ using AElf.EntityMapping.Elasticsearch;
 using GraphQL.Client.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Volo.Abp.Emailing;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Emailing;
@@ -99,6 +101,26 @@ public class AeFinderApplicationTestModule : AbpModule
         });
         var mockGraphQLClient = new Mock<IGraphQLClient>();
         context.Services.AddSingleton<IGraphQLClient>(mockGraphQLClient.Object);
+
+        context.Services.Configure<UserRegisterOptions>(o =>
+        {
+            o.EmailSendingInterval = 0;
+        });
+
+        context.Services.AddSingleton<IEmailSender, NullEmailSender>();
+        context.Services.Configure<EmailTemplateOptions>(o =>
+        {
+            o.Templates = new Dictionary<string, EmailTemplate>
+            {
+                { AeFinderApplicationConsts.RegisterEmailTemplate, new EmailTemplate
+                {
+                    Body = "Body",
+                    IsBodyHtml = false,
+                    Subject = "Subject",
+                    From = "From"
+                } }
+            };
+        });
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)

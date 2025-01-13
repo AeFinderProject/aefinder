@@ -66,8 +66,8 @@ public class AeFinderApplicationModule : AbpModule
         context.Services.AddTransient<IBillingGenerator, AdvancePaymentBillingGenerator>();
         context.Services.AddTransient<IBillingGenerator, SettlementBillingGenerator>();
         context.Services.AddTransient<IResourceUsageProvider, ApiKeyUsageProvider>();
-        context.Services.Configure<EmailTemplateOptions>(configuration.GetSection("EmailTemplate"));
         context.Services.Configure<AssetInitializationOptions>(configuration.GetSection("AssetInitialization"));
+        context.Services.Configure<EmailTemplateOptions>(configuration.GetSection("EmailTemplate"));
         
         Configure<AbpClockOptions>(options =>
         {
