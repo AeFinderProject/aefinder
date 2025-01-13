@@ -199,4 +199,12 @@ public class AppDeployController : AeFinderController
     {
         await _appDeployService.UnFreezeAppAsync(input.AppId);
     }
+    
+    [HttpGet]
+    [Route("iscustomapp")]
+    [Authorize]
+    public async Task<bool> IsCustomAppAsync(string appId)
+    {
+        return await _appDeployService.IsCustomAppAsync(appId);
+    }
 }

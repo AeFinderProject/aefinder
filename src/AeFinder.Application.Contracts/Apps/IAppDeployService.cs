@@ -18,4 +18,5 @@ public interface IAppDeployService
     Task FreezeAppAsync(string appId);
     Task UnFreezeAppAsync(string appId);
     Task CheckAppAssetAsync(string appId);
+    Task<bool> IsCustomAppAsync(string appId);
 }
