@@ -73,7 +73,8 @@ public class AppEmailSender:IAppEmailSender, ISingletonDependency
     
     private async Task SendEmailAsync(SendEmailInput input)
     {
-        await _emailSender.QueueAsync(input.From, input.To, input.Subject, input.Body, false);
+        // await _emailSender.QueueAsync(input.From, input.To, input.Subject, input.Body, false);
+        await _emailSender.SendAsync(input.From, input.To, input.Subject, input.Body, false);
         _logger.LogInformation($"[AppEmailSender] Send email successfully, Detail: " +
                                JsonConvert.SerializeObject(input));
     }
