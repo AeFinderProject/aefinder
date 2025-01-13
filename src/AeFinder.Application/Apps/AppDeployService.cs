@@ -360,5 +360,14 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             }
         }
     }
-    
+
+    public async Task<bool> IsCustomAppAsync(string appId)
+    {
+        if (_customOrganizationOptions.CustomApps.Contains(appId))
+        {
+            return true;
+        }
+
+        return false;
+    }
 }
