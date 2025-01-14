@@ -22,7 +22,7 @@ public class BillingPaymentController : AeFinderController
     }
     
     [HttpPost]
-    [Route("{id}/index")]
+    [Route("repay")]
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task RepayFailedBillingAsync(RepayFailedBillingInput input)
     {
