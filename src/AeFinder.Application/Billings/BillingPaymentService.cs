@@ -164,4 +164,10 @@ public class BillingPaymentService: AeFinderAppService, IBillingPaymentService
             Logger.LogError($"[RepayFailedBillingAsync] Bill {settlementBill.Id.ToString()} payment failed");
         }
     }
+
+    public async Task<string> GetTreasurerAsync()
+    {
+        var address = await _billingContractProvider.GetTreasurerAsync();
+        return address.ToBase58();
+    }
 }

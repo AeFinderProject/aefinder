@@ -14,12 +14,10 @@ namespace AeFinder.Controllers;
 [Route("api/billing/payment")]
 public class BillingPaymentController : AeFinderController
 {
-    private readonly IOrganizationAppService _organizationAppService;
     private readonly IBillingPaymentService _billingPaymentService;
 
-    public BillingPaymentController(IOrganizationAppService organizationAppService, IBillingPaymentService billingPaymentService)
+    public BillingPaymentController(IBillingPaymentService billingPaymentService)
     {
-        _organizationAppService = organizationAppService;
         _billingPaymentService = billingPaymentService;
     }
     
@@ -29,5 +27,13 @@ public class BillingPaymentController : AeFinderController
     public async Task RepayFailedBillingAsync(RepayFailedBillingInput input)
     {
         await _billingPaymentService.RepayFailedBillingAsync(input.OrganizationId, input.BillingId);
+    }
+    
+    [HttpGet]
+    [Route("treasurer")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task<string> GetAsync()
+    {
+        return await _billingPaymentService.GetTreasurerAsync();
     }
 }
