@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.Apps.Dto;
@@ -17,6 +18,7 @@ public interface IAppDeployService
     Task CheckAppStatusAsync(string appId);
     Task FreezeAppAsync(string appId);
     Task UnFreezeAppAsync(string appId);
+    Task UnFreezeOrganizationAssetsAsync(Guid organizationId);
     Task CheckAppAssetAsync(string appId);
     Task<bool> IsCustomAppAsync(string appId);
 }

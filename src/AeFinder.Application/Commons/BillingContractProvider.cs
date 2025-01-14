@@ -7,6 +7,8 @@ using AElf.Client;
 using AElf.Client.Dto;
 using AElf.Types;
 using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
+using IdentityServer4.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -16,6 +18,7 @@ namespace AeFinder.Commons;
 
 public interface IBillingContractProvider
 {
+    Task<Address> GetTreasurerAsync();
     Task<SendTransactionOutput> BillingChargeAsync(string organizationWalletAddress, decimal chargeAmount,
         decimal unlockAmount, string billingId);
 
@@ -41,6 +44,12 @@ public class BillingContractProvider: IBillingContractProvider, ISingletonDepend
         SideChainNodeBaseUrl = _contractOptions.SideChainNodeBaseUrl;
         BillingContractAddress = _contractOptions.BillingContractAddress;
         TreasurerAccountPrivateKeyForCallTx = _contractOptions.TreasurerAccountPrivateKeyForCallTx;
+    }
+    
+    public async Task<Address> GetTreasurerAsync()
+    {
+        return await CallTransactionAsync<Address>(AElfContractMethodName.BillingContractGetTreasurer, new Empty(),
+            BillingContractAddress);
     }
     
     public async Task<SendTransactionOutput> BillingChargeAsync(string organizationWalletAddress, decimal chargeAmount,
@@ -128,5 +137,29 @@ public class BillingContractProvider: IBillingContractProvider, ISingletonDepend
         }
 
         return transactionResult;
+    }
+    
+    private async Task<T> CallTransactionAsync<T>(string methodName, IMessage param,
+        string contractAddress) where T : class, IMessage<T>, new()
+    {
+        var client = new AElfClient(SideChainNodeBaseUrl);
+        await client.IsConnectedAsync();
+        var address = client.GetAddressFromPrivateKey(TreasurerAccountPrivateKeyForCallTx);
+
+        var transaction =
+            await client.GenerateTransactionAsync(address, contractAddress,
+                methodName, param);
+
+        _logger.LogDebug("Call tx methodName is: {methodName} param is: {transaction}", methodName, transaction);
+
+        var txWithSign = client.SignTransaction(TreasurerAccountPrivateKeyForCallTx, transaction);
+        var result = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
+        {
+            RawTransaction = txWithSign.ToByteArray().ToHex()
+        });
+
+        var value = new T();
+        value.MergeFrom(ByteArrayHelper.HexStringToByteArray(result));
+        return value;
     }
 }

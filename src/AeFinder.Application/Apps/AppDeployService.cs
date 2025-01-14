@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AeFinder.ApiKeys;
 using AeFinder.App.Deploy;
 using AeFinder.Apps.Dto;
 using AeFinder.Assets;
@@ -36,6 +37,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly CustomOrganizationOptions _customOrganizationOptions;
     private readonly IUserAppService _userAppService;
     private readonly IAppEmailSender _appEmailSender;
+    private readonly IApiKeyService _apiKeyService;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
@@ -43,6 +45,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         IOptionsSnapshot<AppDeployOptions> appDeployOptions,
         IOptionsSnapshot<CustomOrganizationOptions> customOrganizationOptions,
         IAssetService assetService,
+        IApiKeyService apiKeyService,
         IUserAppService userAppService, IAppEmailSender appEmailSender,
         IAppResourceLimitProvider appResourceLimitProvider)
     {
@@ -56,6 +59,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _userAppService = userAppService;
         _appEmailSender = appEmailSender;
         _assetService = assetService;
+        _apiKeyService = apiKeyService;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
@@ -239,6 +243,41 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             await DeployNewAppAsync(appId, pendingVersion, imageName);
         }
         Logger.LogInformation($"App {appId} is UnFreezed.");
+    }
+
+    public async Task UnFreezeOrganizationAssetsAsync(Guid organizationId)
+    {
+        //Check processor asset
+        var processorAssets = await _assetService.GetListAsync(organizationId, new GetAssetInput()
+        {
+            Type = MerchandiseType.Processor,
+            SkipCount = 0,
+            MaxResultCount = 10,
+            IsDeploy = true
+        });
+        if (processorAssets != null && processorAssets.Items.Count > 0)
+        {
+            foreach (var processorAsset in processorAssets.Items)
+            {
+                await UnFreezeAppAsync(processorAsset.AppId);
+            }
+        }
+        
+        //Check api query asset
+        var apiQueryAssets=await _assetService.GetListAsync(organizationId, new GetAssetInput()
+        {
+            Type = MerchandiseType.ApiQuery,
+            SkipCount = 0,
+            MaxResultCount = 10,
+            IsDeploy = true
+        });
+        if (apiQueryAssets != null && apiQueryAssets.Items.Count > 0)
+        {
+            foreach (var apiQueryAsset in apiQueryAssets.Items)
+            {
+                await _apiKeyService.SetQueryLimitAsync(apiQueryAsset.OrganizationId, apiQueryAsset.Quantity);
+            }
+        }
     }
     
     public async Task CheckAppStatusAsync(string appId)

@@ -1,6 +1,7 @@
 using AeFinder.Apps;
 using AeFinder.Assets;
 using AeFinder.BackgroundWorker.Options;
+using AeFinder.Billings;
 using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
@@ -29,6 +30,7 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
     private readonly IAppEmailSender _appEmailSender;
     private readonly IUserAppService _userAppService;
     private readonly CustomOrganizationOptions _customOrganizationOptions;
+    private readonly IBillingService _billingService;
     
     public CleanExpiredAssetWorker(AbpAsyncTimer timer,
         ILogger<CleanExpiredAssetWorker> logger,
@@ -41,6 +43,7 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
         IAppEmailSender appEmailSender,
         IUserAppService userAppService,
         IOptionsSnapshot<CustomOrganizationOptions> customOrganizationOptions,
+        IBillingService billingService,
         IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
@@ -53,7 +56,8 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
         _appEmailSender = appEmailSender;
         _userAppService = userAppService;
         _customOrganizationOptions = customOrganizationOptions.Value;
-        // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
+        _billingService = billingService;
+        // Timer.Period = 1 * 60 * 60 * 1000; // 3600000 milliseconds = 1 hours
         Timer.Period = _scheduledTaskOptions.CleanExpiredAssetTaskPeriodMilliSeconds;
     }
     
@@ -66,94 +70,142 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
     private async Task ProcessAssetCleanAsync()
     {
         _logger.LogInformation("[CleanExpiredAssetWorker] Process Expired Asset Clean Async.");
-        var now = DateTime.UtcNow;
-            
-        //Check if it is within the expiration buffer period
-        var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
-        if (firstDayOfThisMonth.AddDays(_scheduledTaskOptions.UnpaidBillTimeOutDays) > now)
-        {
-            return;
-        }
-        
         var organizationUnitList = await _organizationAppService.GetAllOrganizationUnitsAsync();
         foreach (var organizationUnitDto in organizationUnitList)
         {
             var organizationId = organizationUnitDto.Id.ToString();
             var organizationName = organizationUnitDto.DisplayName;
             
-            //Get organization processor assets
-            var assets = await _assetService.GetListAsync(organizationUnitDto.Id, new GetAssetInput()
-            {
-                Category = MerchandiseCategory.Resource,
-                Type = MerchandiseType.Processor,
-                SkipCount = 0,
-                MaxResultCount = 50
-            });
+            var user = await _userAppService.GetDefaultUserInOrganizationUnitAsync(organizationUnitDto.Id);
+            
+            
+            //Get organization apps
             var organizationAppGrain =
                 _clusterClient.GetGrain<IOrganizationAppGrain>(
                     GrainIdHelper.GetOrganizationGrainId(organizationId));
             var appIds = await organizationAppGrain.GetAppsAsync();
-            var user = await _userAppService.GetDefaultUserInOrganizationUnitAsync(organizationUnitDto.Id);
-            if (assets == null || assets.TotalCount == 0)
+            foreach (var appId in appIds)
             {
-                if (appIds != null && appIds.Count > 0)
+                var appGrain = _clusterClient.GetGrain<IAppGrain>(
+                    GrainIdHelper.GenerateAppGrainId(appId));
+                var appDto = await appGrain.GetAsync();
+                if (appDto.DeployTime == null)
                 {
-                    foreach (var appId in appIds)
-                    {
-                        var appGrain=_clusterClient.GetGrain<IAppGrain>(
-                            GrainIdHelper.GenerateAppGrainId(appId));
-                        var appDto = await appGrain.GetAsync();
-                        
-                        if (appDto.Status == AppStatus.Frozen || appDto.Status == AppStatus.Deleted)
-                        {
-                            continue;
-                        }
+                    continue;
+                }
+                
+                if (appDto.Status == AppStatus.UnDeployed)
+                {
+                    continue;
+                }
+                
+                //Get organization processor assets
+                var appAssets = await GetAeIndexerAssetListAsync(organizationUnitDto.Id, appId);
+                if (appAssets == null || appAssets.Count == 0)
+                {
+                    continue;
+                }
 
-                        if (appId != _graphQlOptions.BillingIndexerId &&
-                            !_customOrganizationOptions.CustomApps.Contains(appId))
-                        {
-                            await _appDeployService.FreezeAppAsync(appId);
-                            await _appEmailSender.SendAeIndexerFreezeNotificationAsync(user.Email, appId);
-                        }
-                    }
+                //Check app if contains both processor and storage
+                bool isContainProcessorAsset =
+                    appAssets.Exists(a => a.AppId == appId && a.Merchandise.Type == MerchandiseType.Processor);
+                bool isContainStorageAsset =
+                    appAssets.Exists(a => a.AppId == appId && a.Merchandise.Type == MerchandiseType.Storage);
+                if (isContainProcessorAsset && isContainStorageAsset)
+                {
+                    await CheckAssetExpiredAsync(appAssets, user.Email);
+                }
+                else
+                {
+                    _logger.LogInformation($"App {appId} contain processor {isContainProcessorAsset}, storage {isContainStorageAsset}, need to be forzen.");
+                    //Freeze app
+                    await FreezeAppAsync(appId, user.Email);
+                    continue;
                 }
             }
-            else
-            {
-                //find no asset app
-                foreach (var asset in assets.Items)
-                {
-                    if (appIds.Contains(asset.AppId))
-                    {
-                        appIds.Remove(asset.AppId);
-                    }
-                }
-                //freeze no asset app
-                if (appIds != null && appIds.Count > 0)
-                {
-                    foreach (var appId in appIds)
-                    {
-                        var appGrain=_clusterClient.GetGrain<IAppGrain>(
-                            GrainIdHelper.GenerateAppGrainId(appId));
-                        var appDto = await appGrain.GetAsync();
-                        
-                        if (appDto.Status == AppStatus.Frozen || appDto.Status == AppStatus.Deleted)
-                        {
-                            continue;
-                        }
-                        
-                        if (appId != _graphQlOptions.BillingIndexerId &&
-                            !_customOrganizationOptions.CustomApps.Contains(appId))
-                        {
-                            await _appDeployService.FreezeAppAsync(appId);
-                            await _appEmailSender.SendAeIndexerFreezeNotificationAsync(user.Email, appId);
-                        }
-                    }
-                }
-            }
-            
-            //TODO Check app disk
-            
+
         }
     }
+
+    private async Task CheckAssetExpiredAsync(List<AssetDto> appAssets, string email)
+    {
+        var now = DateTime.UtcNow;
+        foreach (var asset in appAssets)
+        {
+            if (asset.Merchandise.Type == MerchandiseType.ApiQuery)
+            {
+                continue;
+            }
+
+            if (asset.Merchandise.Type == MerchandiseType.Processor ||
+                asset.Merchandise.Type == MerchandiseType.Storage)
+            {
+                if (asset.Status == AssetStatus.Using)
+                {
+                    if (asset.EndTime < now)
+                    {
+                        var appId = asset.AppId;
+                        _logger.LogInformation(
+                            "App {0} asset {1} valid until {2}, but the current date is {3}. The asset has expired, and the App needs to be frozen.",
+                            appId, asset.Merchandise.Type.ToString(), asset.EndTime.ToString(), now.ToString());
+                        //Freeze app
+                        await FreezeAppAsync(appId, email);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task FreezeAppAsync(string appId, string email)
+    {
+        var appGrain = _clusterClient.GetGrain<IAppGrain>(
+            GrainIdHelper.GenerateAppGrainId(appId));
+        var appDto = await appGrain.GetAsync();
+
+        if (appDto.Status == AppStatus.Frozen || appDto.Status == AppStatus.Deleted)
+        {
+            return;
+        }
+
+        if (appId != _graphQlOptions.BillingIndexerId &&
+            !_customOrganizationOptions.CustomApps.Contains(appId))
+        {
+            await _appDeployService.FreezeAppAsync(appId);
+            await _appEmailSender.SendAeIndexerFreezeNotificationAsync(email, appId);
+        }
+    }
+
+    private async Task<List<AssetDto>> GetAeIndexerAssetListAsync(Guid organizationGuid, string appId)
+    {
+        var resultList = new List<AssetDto>();
+        int skipCount = 0;
+        int maxResultCount = 10;
+
+        while (true)
+        {
+            var assets = await _assetService.GetListAsync(organizationGuid, new GetAssetInput()
+            {
+                AppId = appId,
+                SkipCount = skipCount,
+                MaxResultCount = maxResultCount
+            });
+            if (assets?.Items == null || assets.Items.Count == 0)
+            {
+                break;
+            }
+
+            resultList.AddRange(assets.Items);
+
+            if (assets.Items.Count < maxResultCount)
+            {
+                break;
+            }
+
+            skipCount += maxResultCount;
+        }
+
+        return resultList;
+    }
+
 }

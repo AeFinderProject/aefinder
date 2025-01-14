@@ -199,6 +199,14 @@ public class AppDeployController : AeFinderController
         await _appDeployService.UnFreezeAppAsync(input.AppId);
     }
     
+    [HttpPost]
+    [Route("unfreeze/{id}/assets")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public async Task UnFreezeOrganizationAssetsAsync(Guid id)
+    {
+        await _appDeployService.UnFreezeOrganizationAssetsAsync(id);
+    }
+    
     [HttpGet]
     [Route("iscustomapp")]
     [Authorize]
