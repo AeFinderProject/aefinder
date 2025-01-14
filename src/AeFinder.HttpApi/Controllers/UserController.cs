@@ -85,4 +85,10 @@ public class UserController : AeFinderController
     {
         await _userAppService.ResendRegisterEmailAsync(input);
     }
+    
+    [HttpGet("register/enable")]
+    public virtual async Task<bool> RegisterEnableAsync()
+    {
+        await _userAppService.IsRegisterEnableAsyncAsync();
+    }
 }
