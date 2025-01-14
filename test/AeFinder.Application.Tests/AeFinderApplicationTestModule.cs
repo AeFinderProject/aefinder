@@ -97,7 +97,7 @@ public class AeFinderApplicationTestModule : AbpModule
                     Body = "Body",
                     IsBodyHtml = false,
                     Subject = "Subject",
-                    From = "From"
+                    From = "register@test.com"
                 } }
             };
         });
