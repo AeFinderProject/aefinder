@@ -89,6 +89,6 @@ public class UserController : AeFinderController
     [HttpGet("register/enable")]
     public virtual async Task<bool> RegisterEnableAsync()
     {
-        await _userAppService.IsRegisterEnableAsyncAsync();
+        return await _userAppService.IsRegisterEnableAsyncAsync();
     }
 }
