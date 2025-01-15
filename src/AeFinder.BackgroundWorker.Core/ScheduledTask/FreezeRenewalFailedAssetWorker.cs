@@ -119,7 +119,8 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
         //Freeze all apps
         if (appIds != null && appIds.Count > 0)
         {
-            _logger.LogInformation($"[FreezeRenewalFailedAssetWorker] These [{appIds.ToString()}] AeIndexers have been found under the organization and are ready to be frozen.");
+            _logger.LogInformation(
+                $"[FreezeRenewalFailedAssetWorker] These [{string.Join(',', appIds)}] AeIndexers have been found under the organization and are ready to be frozen.");
             foreach (var appId in appIds)
             {
                 var appGrain = _clusterClient.GetGrain<IAppGrain>(
