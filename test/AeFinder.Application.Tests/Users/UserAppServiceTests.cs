@@ -12,7 +12,7 @@ using Xunit;
 
 namespace AeFinder.Users;
 
-public class UserAppServiceTests: AeFinderApplicationAppTestBase
+public class UserAppServiceTests: AeFinderApplicationTestBase
 {
     private readonly IUserAppService _userAppService;
     private readonly IdentityUserManager _userManager;
