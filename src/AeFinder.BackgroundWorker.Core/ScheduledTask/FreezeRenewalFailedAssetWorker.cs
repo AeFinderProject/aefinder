@@ -155,6 +155,9 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
             _logger.LogInformation($"[FreezeRenewalFailedAssetWorker] The organization {organizationGuid.ToString()} api query limit has been set to free quantity {freeQuantity}.");
         }
         
+        //Freeze organization
+        await _organizationAppService.FreezeOrganizationAsync(organizationGuid);
+        
         //Set bill to payment failed
         await _billingService.PaymentFailedAsync(advancePaymentBill.Id);
         _logger.LogInformation($"[FreezeRenewalFailedAssetWorker] The organization {organizationGuid.ToString()} advance bill {advancePaymentBill.Id.ToString()} payment has been failed.");

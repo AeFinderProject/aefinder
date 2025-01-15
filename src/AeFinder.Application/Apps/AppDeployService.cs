@@ -80,6 +80,23 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
     }
 
+    public async Task DestroyAppAllSubscriptionAsync(string appId)
+    {
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        if (allSubscriptions.CurrentVersion != null && !string.IsNullOrEmpty(allSubscriptions.CurrentVersion.Version))
+        {
+            var currentVersion = allSubscriptions.CurrentVersion.Version;
+            await DestroyAppAsync(appId, currentVersion);
+        }
+
+        if (allSubscriptions.PendingVersion != null && !string.IsNullOrEmpty(allSubscriptions.PendingVersion.Version))
+        {
+            var pendingVersion = allSubscriptions.PendingVersion.Version;
+            await DestroyAppAsync(appId, pendingVersion);
+        }
+    }
+
     public async Task RestartAppAsync(string appId, string version)
     {
         var chainIds = await GetDeployChainIdAsync(appId, version);
@@ -205,19 +222,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     
     public async Task FreezeAppAsync(string appId)
     {
-        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        var allSubscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
-        if (allSubscriptions.CurrentVersion != null && !string.IsNullOrEmpty(allSubscriptions.CurrentVersion.Version))
-        {
-            var currentVersion = allSubscriptions.CurrentVersion.Version;
-            await DestroyAppAsync(appId, currentVersion);
-        }
-
-        if (allSubscriptions.PendingVersion != null && !string.IsNullOrEmpty(allSubscriptions.PendingVersion.Version))
-        {
-            var pendingVersion = allSubscriptions.PendingVersion.Version;
-            await DestroyAppAsync(appId, pendingVersion);
-        }
+        await DestroyAppAllSubscriptionAsync(appId);
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         await appGrain.FreezeAppAsync();
         Logger.LogInformation($"App {appId} has been frozen.");
@@ -247,19 +252,27 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
     public async Task UnFreezeOrganizationAssetsAsync(Guid organizationId)
     {
-        //Check processor asset
-        var processorAssets = await _assetService.GetListAsync(organizationId, new GetAssetInput()
+        //UnFreeze organization
+        await _organizationAppService.UnFreezeOrganizationAsync(organizationId);
+        
+        //UnFreeze all apps
+        var organizationAppGrain =
+            _clusterClient.GetGrain<IOrganizationAppGrain>(
+                GrainIdHelper.GetOrganizationGrainId(organizationId));
+        var appIds = await organizationAppGrain.GetAppsAsync();
+
+        if (appIds != null && appIds.Count > 0)
         {
-            Type = MerchandiseType.Processor,
-            SkipCount = 0,
-            MaxResultCount = 10,
-            IsDeploy = true
-        });
-        if (processorAssets != null && processorAssets.Items.Count > 0)
-        {
-            foreach (var processorAsset in processorAssets.Items)
+            foreach (var appId in appIds)
             {
-                await UnFreezeAppAsync(processorAsset.AppId);
+                var appGrain = _clusterClient.GetGrain<IAppGrain>(
+                    GrainIdHelper.GenerateAppGrainId(appId));
+                var appDto = await appGrain.GetAsync();
+
+                if (appDto.Status == AppStatus.Frozen)
+                {
+                    await UnFreezeAppAsync(appId);
+                }
             }
         }
         

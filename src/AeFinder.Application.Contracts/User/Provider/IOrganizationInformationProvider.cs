@@ -11,4 +11,7 @@ public interface IOrganizationInformationProvider
     Task<bool> SaveOrganizationExtensionInfoAsync(OrganizationExtensionDto organizationExtensionDto);
     Task<string> GetOrganizationWalletAddressAsync(string organizationId);
     Task<List<Guid>> GetOrganizationWithoutWalletListAsync();
+    Task FreezeOrganizationAsync(Guid organizationId);
+    Task<OrganizationExtensionDto> GetOrganizationUnitExtensionInfoAsync(Guid organizationId);
+    Task UnFreezeOrganizationAsync(Guid organizationId);
 }

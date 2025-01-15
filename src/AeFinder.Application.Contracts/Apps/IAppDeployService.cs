@@ -9,6 +9,7 @@ public interface IAppDeployService
 {
     Task<string> DeployNewAppAsync(string appId, string version, string imageName);
     Task DestroyAppAsync(string appId, string version);
+    Task DestroyAppAllSubscriptionAsync(string appId);
     Task RestartAppAsync(string appId, string version);
     Task UpdateAppDockerImageAsync(string appId, string version, string imageName, bool isUpdateConfig);
     Task<AppPodsPageResultDto> GetPodListWithPagingAsync(string appId, int pageSize, string continueToken);
