@@ -94,6 +94,13 @@ public class PollingAdvanceBillPaymentResultWorker: AsyncPeriodicBackgroundWorke
             var advanceBillEndTime = new DateTime(lastDayOfThisMonth.Year, lastDayOfThisMonth.Month, lastDayOfThisMonth.Day,
                 23, 59, 59);
             
+            //TODO just for temp test, need remove later
+            if (organizationId == "75dd3f9c-adf6-8ac6-5606-3a177c283f93")
+            {
+                advanceBillBeginTime = advanceBillBeginTime.AddMonths(1);
+                advanceBillEndTime = advanceBillEndTime.AddMonths(1);
+            }
+            
             var advancePaymentBills =
                 await GetPaymentBillingListAsync(organizationUnitDto.Id, BillingType.AdvancePayment,
                     advanceBillBeginTime, advanceBillEndTime);
