@@ -746,6 +746,20 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
                         container.RequestMemory = requests["memory"].ToString();
                     }
                 }
+
+                var limits = v1Container.Resources.Limits;
+                if (limits != null)
+                {
+                    if (limits.ContainsKey("cpu"))
+                    {
+                        container.LimitCpu = limits["cpu"].ToString();
+                    }
+
+                    if (limits.ContainsKey("memory"))
+                    {
+                        container.LimitMemory = limits["memory"].ToString();
+                    }
+                }
                 container.ContainerImage = v1Container.Image;
                 containerList.Add(container);
             }
