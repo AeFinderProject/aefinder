@@ -72,12 +72,6 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
             var billBeginTime = new DateTime(previousMonth.Year, previousMonth.Month, 1, 0, 0, 0);
             var billEndTime = new DateTime(lastDayOfLastMonth.Year, lastDayOfLastMonth.Month, lastDayOfLastMonth.Day,
                 23, 59, 59);
-            //TODO just for temp test, need remove later
-            if (organizationId == "9a5356f0-ee8b-72b1-558c-3a177a3fe679")
-            {
-                billBeginTime = billBeginTime.AddMonths(1);
-                billEndTime = billEndTime.AddMonths(1);
-            }
 
             var historySettlementBills = await _billingService.GetListAsync(organizationUnitDto.Id, new GetBillingInput()
             {
