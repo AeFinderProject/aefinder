@@ -157,7 +157,8 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<UserChainAddressDto, UserChainAddressInfo>();
         CreateMap<IdentityUserExtension, UserExtensionDto>();
         CreateMap<IdentityUser, IdentityUserExtensionDto>();
-
+        CreateMap<OrganizationUnitExtension, OrganizationExtensionDto>();
+        
         CreateMap<AppInfoIndex, AppInfoImmutable>();
         
         CreateMap<UserBalanceDto, OrganizationBalanceDto>();

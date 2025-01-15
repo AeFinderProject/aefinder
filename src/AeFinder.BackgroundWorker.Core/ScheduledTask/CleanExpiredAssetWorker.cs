@@ -99,12 +99,18 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
                     continue;
                 }
                 
+                if (appId == _graphQlOptions.BillingIndexerId ||
+                    _customOrganizationOptions.CustomApps.Contains(appId))
+                {
+                    continue;
+                }
+                
                 //Get organization processor assets
                 var appAssets = await GetAeIndexerAssetListAsync(organizationUnitDto.Id, appId);
                 if (appAssets == null || appAssets.Count == 0)
                 {
-                    //Freeze app
-                    await FreezeAppAsync(appId, user.Email);
+                    // Destroy app pod
+                    await _appDeployService.DestroyAppAllSubscriptionAsync(appId);
                     continue;
                 }
 
@@ -119,9 +125,9 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
                 }
                 else
                 {
-                    _logger.LogInformation($"App {appId} contain processor {isContainProcessorAsset}, storage {isContainStorageAsset}, need to be forzen.");
-                    //Freeze app
-                    await FreezeAppAsync(appId, user.Email);
+                    _logger.LogInformation($"App {appId} contain processor {isContainProcessorAsset}, storage {isContainStorageAsset}, need to stop pod.");
+                    // Destroy app pod
+                    await _appDeployService.DestroyAppAllSubscriptionAsync(appId);
                     continue;
                 }
             }
@@ -148,10 +154,10 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
                     {
                         var appId = asset.AppId;
                         _logger.LogInformation(
-                            "App {0} asset {1} valid until {2}, but the current date is {3}. The asset has expired, and the App needs to be frozen.",
+                            "App {0} asset {1} valid until {2}, but the current date is {3}. The asset has expired, and the App needs to stop its pod.",
                             appId, asset.Merchandise.Type.ToString(), asset.EndTime.ToString(), now.ToString());
-                        //Freeze app
-                        await FreezeAppAsync(appId, email);
+                        // Destroy app pod
+                        await _appDeployService.DestroyAppAllSubscriptionAsync(appId);
                         return;
                     }
                 }

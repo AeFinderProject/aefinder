@@ -96,13 +96,6 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
             var advanceBillBeginTime = new DateTime(now.Year, now.Month, 1, 0, 0, 0);
             var advanceBillEndTime = new DateTime(lastDayOfThisMonth.Year, lastDayOfThisMonth.Month, lastDayOfThisMonth.Day,
                 23, 59, 59);
-            
-            //TODO just for temp test, need remove later
-            if (organizationId == "9a5356f0-ee8b-72b1-558c-3a177a3fe679")
-            {
-                advanceBillBeginTime = advanceBillBeginTime.AddMonths(1);
-                advanceBillEndTime = advanceBillEndTime.AddMonths(1);
-            }
 
             var advancePaymentBills =
                 await GetPaymentBillingListAsync(organizationUnitDto.Id, BillingType.AdvancePayment,
@@ -126,7 +119,8 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
         //Freeze all apps
         if (appIds != null && appIds.Count > 0)
         {
-            _logger.LogInformation($"[FreezeRenewalFailedAssetWorker] These [{appIds.ToString()}] AeIndexers have been found under the organization and are ready to be frozen.");
+            _logger.LogInformation(
+                $"[FreezeRenewalFailedAssetWorker] These [{string.Join(',', appIds)}] AeIndexers have been found under the organization and are ready to be frozen.");
             foreach (var appId in appIds)
             {
                 var appGrain = _clusterClient.GetGrain<IAppGrain>(
@@ -160,6 +154,9 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
             await _apiKeyService.SetQueryLimitAsync(organizationGuid, freeQuantity);
             _logger.LogInformation($"[FreezeRenewalFailedAssetWorker] The organization {organizationGuid.ToString()} api query limit has been set to free quantity {freeQuantity}.");
         }
+        
+        //Freeze organization
+        await _organizationAppService.FreezeOrganizationAsync(organizationGuid);
         
         //Set bill to payment failed
         await _billingService.PaymentFailedAsync(advancePaymentBill.Id);

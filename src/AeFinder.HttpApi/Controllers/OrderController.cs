@@ -2,9 +2,11 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.ApiKeys;
+using AeFinder.Enums;
 using AeFinder.Merchandises;
 using AeFinder.Orders;
 using AeFinder.User;
+using AeFinder.User.Dto;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -34,8 +36,8 @@ public class OrderController : AeFinderController
     [Authorize]
     public async Task<PagedResultDto<OrderDto>> GetListAsync(GetOrderListInput input)
     {
-        var orgId = await GetOrganizationIdAsync();
-        return await _orderService.GetListAsync(orgId, input);
+        var organization = await GetOrganizationAsync();
+        return await _orderService.GetListAsync(organization.Id, input);
     }
     
     [HttpGet]
@@ -43,16 +45,17 @@ public class OrderController : AeFinderController
     [Authorize]
     public async Task<OrderDto> GetAsync(Guid id)
     {
-        var orgId = await GetOrganizationIdAsync();
-        return await _orderService.GetAsync(orgId, id);
+        var organization = await GetOrganizationAsync();
+        return await _orderService.GetAsync(organization.Id, id);
     }
     
     [HttpPost]
     [Authorize]
     public async Task<OrderDto> CreateAsync(CreateOrderInput input)
     {
-        var orgId = await GetOrganizationIdAsync();
-        return await _orderService.CreateAsync(orgId, CurrentUser.Id.Value, input);
+        var organization = await GetOrganizationAsync();
+        await CheckOrganizationAsync(organization);
+        return await _orderService.CreateAsync(organization.Id, CurrentUser.Id.Value, input);
     }
     
     [HttpPost]
@@ -60,8 +63,9 @@ public class OrderController : AeFinderController
     [Authorize]
     public async Task PayAsync(Guid id, PayInput input)
     {
-        var orgId = await GetOrganizationIdAsync();
-        await _orderService.PayAsync(orgId, id, input);
+        var organization = await GetOrganizationAsync();
+        await CheckOrganizationAsync(organization);
+        await _orderService.PayAsync(organization.Id, id, input);
     }
     
     [HttpPost]
@@ -69,8 +73,9 @@ public class OrderController : AeFinderController
     [Authorize]
     public async Task CancelAsync(Guid id)
     {
-        var orgId = await GetOrganizationIdAsync();
-        await _orderService.CancelAsync(orgId, id);
+        var organization = await GetOrganizationAsync();
+        await CheckOrganizationAsync(organization);
+        await _orderService.CancelAsync(organization.Id, id);
     }
     
     [HttpPost]
@@ -88,10 +93,18 @@ public class OrderController : AeFinderController
     {
         await _orderService.UpdateIndexAsync(id);
     }
-    
-    private async Task<Guid> GetOrganizationIdAsync()
+
+    private async Task CheckOrganizationAsync(OrganizationUnitDto organization)
+    {
+        if (organization.OrganizationStatus != OrganizationStatus.Normal)
+        {
+            throw new UserFriendlyException("Organization status is abnormal");
+        }
+    }
+
+    private async Task<OrganizationUnitDto> GetOrganizationAsync()
     {
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
-        return organizationIds.First().Id;
+        return organizationIds.First();
     }
 }
