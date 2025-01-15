@@ -27,4 +27,5 @@ public interface IUserAppService
     Task RegisterAsync(RegisterUserInput input);
     Task RegisterConfirmAsync(string code);
     Task ResendRegisterEmailAsync(ResendEmailInput input);
+    Task<bool> IsRegisterEnableAsyncAsync();
 }

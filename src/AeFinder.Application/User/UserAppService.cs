@@ -38,6 +38,7 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
     private readonly IClusterClient _clusterClient;
     private readonly IEmailSender _emailSender;
     private readonly EmailTemplateOptions _emailTemplateOptions;
+    private readonly UserRegisterOptions _userRegisterOptions;
 
     public UserAppService(
         IdentityUserManager userManager,
@@ -51,7 +52,8 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         IUserInformationProvider userInformationProvider,
         IWalletLoginProvider walletLoginProvider,
         IPermissionChecker permissionChecker,
-        IClusterClient clusterClient, IEmailSender emailSender, IOptionsSnapshot<EmailTemplateOptions> emailTemplateOptions)
+        IClusterClient clusterClient, IEmailSender emailSender,
+        IOptionsSnapshot<EmailTemplateOptions> emailTemplateOptions, IOptionsSnapshot<UserRegisterOptions> userRegisterOptions)
         : base(userManager, userRepository, roleRepository, identityOptions, permissionChecker)
     {
         _organizationUnitRepository = organizationUnitRepository;
@@ -62,6 +64,7 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         _walletLoginProvider = walletLoginProvider;
         _clusterClient = clusterClient;
         _emailSender = emailSender;
+        _userRegisterOptions = userRegisterOptions.Value;
         _emailTemplateOptions = emailTemplateOptions.Value;
     }
 
@@ -273,6 +276,11 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
 
     public async Task RegisterAsync(RegisterUserInput input)
     {
+        if (!_userRegisterOptions.Enable)
+        {
+            throw new UserFriendlyException("Register is not supported.");
+        }
+
         var userName = input.UserName.Trim();
         var email = input.Email.Trim();
 
@@ -375,6 +383,11 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         await registerGrain.SetAsync(register.UserId, register.OrganizationName);
 
         await SendRegisterEmailAsync(email, newCode);
+    }
+
+    public async Task<bool> IsRegisterEnableAsyncAsync()
+    {
+        return _userRegisterOptions.Enable;
     }
 
     private async Task SendRegisterEmailAsync(string email, string code)
