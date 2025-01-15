@@ -14,6 +14,7 @@ using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.State.Assets;
 using AeFinder.Orders;
 using Volo.Abp.EventBus.Distributed;
+using Volo.Abp.Timing;
 
 namespace AeFinder.Assets;
 
@@ -25,15 +26,17 @@ public class AssetService : AeFinderAppService, IAssetService
     private readonly IEntityMappingRepository<MerchandiseIndex, Guid> _merchandiseIndexRepository;
     private readonly IEntityMappingRepository<AssetIndex, Guid> _assetIndexRepository;
     private readonly IDistributedEventBus _distributedEventBus;
+    private readonly IClock _clock;
 
     public AssetService(IClusterClient clusterClient,
         IEntityMappingRepository<MerchandiseIndex, Guid> merchandiseIndexRepository,
-        IEntityMappingRepository<AssetIndex, Guid> assetIndexRepository, IDistributedEventBus distributedEventBus)
+        IEntityMappingRepository<AssetIndex, Guid> assetIndexRepository, IDistributedEventBus distributedEventBus, IClock clock)
     {
         _clusterClient = clusterClient;
         _merchandiseIndexRepository = merchandiseIndexRepository;
         _assetIndexRepository = assetIndexRepository;
         _distributedEventBus = distributedEventBus;
+        _clock = clock;
     }
 
     public async Task AddOrUpdateIndexAsync(AssetChangedEto input)
@@ -59,8 +62,8 @@ public class AssetService : AeFinderAppService, IAssetService
             o.OrganizationId == organizationId);
         if (input.IsDeploy)
         {
-            queryable = queryable.Where(o => 
-                o.Status == (int)AssetStatus.Unused || o.Status == (int)AssetStatus.Using);
+            queryable = queryable.Where(o =>
+                o.Status == (int)AssetStatus.Unused || (o.Status == (int)AssetStatus.Using && o.EndTime > _clock.Now));
         }
         else
         {
