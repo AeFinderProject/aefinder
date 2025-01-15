@@ -103,6 +103,8 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
                 var appAssets = await GetAeIndexerAssetListAsync(organizationUnitDto.Id, appId);
                 if (appAssets == null || appAssets.Count == 0)
                 {
+                    //Freeze app
+                    await FreezeAppAsync(appId, user.Email);
                     continue;
                 }
 

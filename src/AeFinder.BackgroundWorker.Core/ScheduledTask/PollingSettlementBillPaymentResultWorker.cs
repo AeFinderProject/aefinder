@@ -92,6 +92,13 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
             var billEndTime = new DateTime(lastDayOfLastMonth.Year, lastDayOfLastMonth.Month, lastDayOfLastMonth.Day,
                 23, 59, 59);
             
+            //TODO just for temp test, need remove later
+            if (organizationId == "9a5356f0-ee8b-72b1-558c-3a177a3fe679")
+            {
+                billBeginTime = billBeginTime.AddMonths(1);
+                billEndTime = billEndTime.AddMonths(1);
+            }
+            
             var settlementBills = await GetPaymentBillingListAsync(organizationUnitDto.Id, BillingType.Settlement,
                 billBeginTime, billEndTime);
             foreach (var settlementBill in settlementBills)
@@ -217,6 +224,12 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
 
             //Create advance payment bill for current month
             var newAdvancePaymentBillTime = DateTime.UtcNow;
+            
+            //TODO just for temp test, need remove later
+            if (organizationId == "9a5356f0-ee8b-72b1-558c-3a177a3fe679")
+            {
+                newAdvancePaymentBillTime = newAdvancePaymentBillTime.AddMonths(1);
+            }
             
             var newAdvancePaymentBill = await _billingService.CreateAsync(organizationGuid,
                 BillingType.AdvancePayment, newAdvancePaymentBillTime);
