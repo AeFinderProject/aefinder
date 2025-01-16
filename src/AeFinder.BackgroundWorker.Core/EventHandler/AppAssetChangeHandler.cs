@@ -70,12 +70,6 @@ public class AppAssetChangeHandler: IDistributedEventHandler<AppAssetChangedEto>
 
             if (merchandise.Type == MerchandiseType.Processor)
             {
-                var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
-                var appDto = await appGrain.GetAsync();
-                if (appDto.DeployTime == null && !_customOrganizationOptions.CustomApps.Contains(appId))
-                {
-                    continue;
-                }
                 var merchandiseName = merchandise.Specification;
                 var resourceInfo = _podResourceOptions.FullPodResourceInfos.Find(r => r.ResourceName == merchandiseName);
             
@@ -84,6 +78,13 @@ public class AppAssetChangeHandler: IDistributedEventHandler<AppAssetChangedEto>
                     AppFullPodLimitCpuCore = resourceInfo.Cpu,
                     AppFullPodLimitMemory = resourceInfo.Memory
                 });
+                var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
+                var appDto = await appGrain.GetAsync();
+                if (appDto.DeployTime == null && !_customOrganizationOptions.CustomApps.Contains(appId))
+                {
+                    continue;
+                }
+                
                 await appGrain.SetFirstDeployTimeAsync(now);
                 //Start use new asset
                 await _assetService.StartUsingAssetAsync(newAssetId, now);
