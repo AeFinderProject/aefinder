@@ -73,7 +73,7 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
             var billEndTime = new DateTime(lastDayOfLastMonth.Year, lastDayOfLastMonth.Month, lastDayOfLastMonth.Day,
                 23, 59, 59);
 
-            if (organizationUnitDto.CreationTime > firstDayOfThisMonth)
+            if (organizationUnitDto.CreationTime >= firstDayOfThisMonth)
             {
                 continue;
             }
