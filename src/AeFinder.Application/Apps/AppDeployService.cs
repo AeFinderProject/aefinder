@@ -252,6 +252,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
     public async Task UnFreezeOrganizationAssetsAsync(Guid organizationId)
     {
+        Logger.LogInformation($"[UnFreezeOrganizationAssetsAsync] Admin unfreeze organization {organizationId.ToString()}");
         //UnFreeze organization
         await _organizationAppService.UnFreezeOrganizationAsync(organizationId);
         
