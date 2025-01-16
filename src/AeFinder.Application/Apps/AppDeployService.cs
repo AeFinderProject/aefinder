@@ -10,6 +10,7 @@ using AeFinder.BlockScan;
 using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.Merchandises;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Merchandises;
 using AeFinder.Metrics;
@@ -38,12 +39,14 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IUserAppService _userAppService;
     private readonly IAppEmailSender _appEmailSender;
     private readonly IApiKeyService _apiKeyService;
+    private readonly PodResourceOptions _podResourceOptions;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
         IOrganizationAppService organizationAppService,
         IOptionsSnapshot<AppDeployOptions> appDeployOptions,
         IOptionsSnapshot<CustomOrganizationOptions> customOrganizationOptions,
+        IOptionsSnapshot<PodResourceOptions> podResourceLevelOptions,
         IAssetService assetService,
         IApiKeyService apiKeyService,
         IUserAppService userAppService, IAppEmailSender appEmailSender,
@@ -56,6 +59,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _organizationAppService = organizationAppService;
         _appDeployOptions = appDeployOptions.Value;
         _customOrganizationOptions = customOrganizationOptions.Value;
+        _podResourceOptions = podResourceLevelOptions.Value;
         _userAppService = userAppService;
         _appEmailSender = appEmailSender;
         _assetService = assetService;
@@ -333,6 +337,23 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         if (processorAssets != null && processorAssets.Items.Count > 0)
         {
             processorAsset = processorAssets.Items.FirstOrDefault();
+            //Get merchandise info by Id
+            var merchandiseGrain =
+                _clusterClient.GetGrain<IMerchandiseGrain>(processorAsset.Merchandise.Id);
+            var merchandise = await merchandiseGrain.GetAsync();
+            if (merchandise.Type == MerchandiseType.Processor)
+            {
+                var merchandiseName = merchandise.Specification;
+                var resourceInfo = _podResourceOptions.FullPodResourceInfos.Find(r => r.ResourceName == merchandiseName);
+                var appResourceLimitGrain = _clusterClient.GetGrain<IAppResourceLimitGrain>(
+                    GrainIdHelper.GenerateAppResourceLimitGrainId(appId));
+
+                await appResourceLimitGrain.SetAsync(new SetAppResourceLimitDto()
+                {
+                    AppFullPodLimitCpuCore = resourceInfo.Cpu,
+                    AppFullPodLimitMemory = resourceInfo.Memory
+                });
+            }
         }
         
         //If app processor asset is null, check if it is custom organization
