@@ -10,7 +10,8 @@ public class ScheduledTaskOptions
     public int MonthlyAutomaticChargeDay { get; set; } = 2;
     public int MonthlyAutomaticChargeTaskPeriodMilliSeconds { get; set; } = 86400000;
     public int BalanceWarningTaskPeriodMilliSeconds { get; set; } = 86400000;
-    public int CleanExpiredAssetTaskPeriodMilliSeconds { get; set; } = 86400000;
+    public int CleanExpiredAssetTaskPeriodMilliSeconds { get; set; } = 3600000;
+    public int FreezeRenewalFailedAssetTaskPeriodMilliSeconds { get; set; } = 86400000;
     public int RenewalAdvanceWarningDays { get; set; } = 5;
     public int OrganizationWalletSyncTaskPeriodMilliSeconds { get; set; } = 10000;
     public int OrderPaymentResultPollingTaskPeriodMilliSeconds { get; set; } = 12000;

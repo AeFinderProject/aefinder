@@ -2,9 +2,11 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Assets;
+using AeFinder.Enums;
 using AeFinder.Merchandises;
 using AeFinder.Models;
 using AeFinder.User;
+using AeFinder.User.Dto;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,7 +37,7 @@ public class AssetController : AeFinderController
     [Authorize]
     public async Task<PagedResultDto<AssetDto>> GetListsAsync(GetAssetInput input)
     {
-        var orgId = await GetOrganizationIdAsync();
+        var orgId = (await GetOrganizationAsync()).Id;
         return await _assetService.GetListAsync(orgId, input);
     }
     
@@ -44,8 +46,13 @@ public class AssetController : AeFinderController
     [Authorize]
     public async Task RelateAppAsync(RelateAppInput input)
     {
-        var orgId = await GetOrganizationIdAsync();
-        await _assetService.RelateAppAsync(orgId, input);
+        var organization = await GetOrganizationAsync();
+        if (organization.OrganizationStatus != OrganizationStatus.Normal)
+        {
+            throw new UserFriendlyException("Organization status is abnormal");
+        }
+
+        await _assetService.RelateAppAsync(organization.Id, input);
     }
     
     [HttpPost]
@@ -73,9 +80,9 @@ public class AssetController : AeFinderController
         }
     }
     
-    private async Task<Guid> GetOrganizationIdAsync()
+    private async Task<OrganizationUnitDto> GetOrganizationAsync()
     {
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
-        return organizationIds.First().Id;
+        return organizationIds.First();
     }
 }

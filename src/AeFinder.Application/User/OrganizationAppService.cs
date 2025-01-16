@@ -130,7 +130,10 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
     {
         var organizationUnit = await _organizationUnitRepository.GetAsync(id);
         var organizationUnitDto = ObjectMapper.Map<OrganizationUnit, OrganizationUnitDto>(organizationUnit);
-            
+        var organizationExtensionInfo =
+            await _organizationInformationProvider.GetOrganizationUnitExtensionInfoAsync(organizationUnitDto.Id);
+        organizationUnitDto.OrganizationStatus = organizationExtensionInfo.OrganizationStatus;
+        organizationUnitDto.OrganizationWalletAddress = organizationExtensionInfo.OrganizationWalletAddress;
         return organizationUnitDto;
     }
 
@@ -156,6 +159,13 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         var organizationUnits = await _identityUserRepository.GetOrganizationUnitsAsync(userId);
 
         var result = ObjectMapper.Map<List<OrganizationUnit>, List<OrganizationUnitDto>>(organizationUnits);
+        foreach (var item in result)
+        {
+            var organizationExtensionInfo =
+                await _organizationInformationProvider.GetOrganizationUnitExtensionInfoAsync(item.Id);
+            item.OrganizationStatus = organizationExtensionInfo.OrganizationStatus;
+            item.OrganizationWalletAddress = organizationExtensionInfo.OrganizationWalletAddress;
+        }
         return result;
     }
     
@@ -210,5 +220,15 @@ public class OrganizationAppService: AeFinderAppService, IOrganizationAppService
         }
 
         return organizationUnits.FirstOrDefault();
+    }
+
+    public async Task FreezeOrganizationAsync(Guid organizationUnitId)
+    {
+        await _organizationInformationProvider.FreezeOrganizationAsync(organizationUnitId);
+    }
+
+    public async Task UnFreezeOrganizationAsync(Guid organizationUnitId)
+    {
+        await _organizationInformationProvider.UnFreezeOrganizationAsync(organizationUnitId);
     }
 }

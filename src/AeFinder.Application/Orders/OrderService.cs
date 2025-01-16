@@ -11,6 +11,7 @@ using Volo.Abp.Application.Dtos;
 using Volo.Abp.Auditing;
 using Volo.Abp.Timing;
 using System.Linq;
+using AeFinder.Merchandises;
 
 namespace AeFinder.Orders;
 
@@ -22,19 +23,40 @@ public class OrderService : AeFinderAppService, IOrderService
     private readonly IEntityMappingRepository<OrderIndex, Guid> _orderIndexRepository;
     private readonly IOrderCostProvider _orderCostProvider;
     private readonly IClock _clock;
+    private readonly IEntityMappingRepository<MerchandiseIndex, Guid> _merchandiseIndexRepository;
 
     public OrderService(IClusterClient clusterClient, IEntityMappingRepository<OrderIndex, Guid> orderIndexRepository,
-        IOrderCostProvider orderCostProvider, IClock clock)
+        IOrderCostProvider orderCostProvider, IClock clock,
+        IEntityMappingRepository<MerchandiseIndex, Guid> merchandiseIndexRepository)
     {
         _clusterClient = clusterClient;
         _orderIndexRepository = orderIndexRepository;
         _orderCostProvider = orderCostProvider;
         _clock = clock;
+        _merchandiseIndexRepository = merchandiseIndexRepository;
     }
 
     public async Task AddOrUpdateIndexAsync(OrderChangedEto eto)
     {
         var index = ObjectMapper.Map<OrderChangedEto, OrderIndex>(eto);
+        var originAssetMerchandise = new Dictionary<Guid, MerchandiseIndex>();
+        foreach (var detail in eto.Details)
+        {
+            if (detail.OriginalAsset != null)
+            {
+                var merchandise = await _merchandiseIndexRepository.GetAsync(detail.OriginalAsset.MerchandiseId);
+                originAssetMerchandise[detail.OriginalAsset.Id] = merchandise;
+            }
+        }
+
+        foreach (var detail in index.Details)
+        {
+            if (detail.OriginalAsset != null)
+            {
+                detail.OriginalAsset.Merchandise = originAssetMerchandise[detail.OriginalAsset.Id];
+            }
+        }
+        
         await _orderIndexRepository.AddOrUpdateAsync(index);
     }
 
