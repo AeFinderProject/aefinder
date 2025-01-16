@@ -40,6 +40,8 @@ public class PodContainerInfo
     [Keyword]public string CurrentState { get; set; }
     [Keyword]public string RequestCpu { get; set; }
     [Keyword]public string RequestMemory { get; set; }
+    [Keyword]public string LimitCpu { get; set; }
+    [Keyword]public string LimitMemory { get; set; }
     public long UsageTimestamp { get; set; }
     [Keyword]public string CpuUsage { get; set; }
     [Keyword]public string MemoryUsage { get; set; }

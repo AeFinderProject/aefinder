@@ -70,6 +70,10 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
         State.Status = status;
         State.UpdateTime = DateTime.UtcNow;
         await WriteStateAsync();
+        
+        //Publish app update eto to background worker
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
     }
 
     public async Task<AppDto> GetAsync()
@@ -81,11 +85,75 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
 
     public async Task<string> GetOrganizationIdAsync()
     {
+        await ReadStateAsync();
         if (State.OrganizationId.IsNullOrEmpty())
         {
             return State.OrganizationId;
         }
         Guid guid = Guid.ParseExact(State.OrganizationId, "N");
         return guid.ToString();
+    }
+    
+    public async Task FreezeAppAsync()
+    {
+        await ReadStateAsync();
+        State.Status = AppStatus.Frozen;
+        await WriteStateAsync();
+        
+        //Publish app update eto to background worker
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
+    }
+
+    public async Task UnFreezeAppAsync()
+    {
+        await ReadStateAsync();
+        State.Status = AppStatus.Deployed;
+        await WriteStateAsync();
+        
+        //Publish app update eto to background worker
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
+    }
+    
+    public async Task DeleteAppAsync()
+    {
+        await ReadStateAsync();
+        State.Status = AppStatus.Deleted;
+        State.DeleteTime = DateTime.UtcNow;
+        await WriteStateAsync();
+
+        await _distributedEventBus.PublishAsync(new AppDeleteEto()
+        {
+            AppId = State.AppId,
+            Status = State.Status,
+            DeleteTime = State.DeleteTime,
+            OrganizationId = await GetOrganizationIdAsync()
+        });
+    }
+
+    public async Task SetFirstDeployTimeAsync(DateTime time)
+    {
+        await ReadStateAsync();
+        if (State.DeployTime != null)
+        {
+            return;
+        }
+        
+        State.DeployTime = time;
+        await WriteStateAsync();
+        //Publish app update eto to background worker
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
+    }
+
+    public async Task LockAsync(bool isLock)
+    {
+        await ReadStateAsync();
+        State.IsLocked = isLock;
+        await WriteStateAsync();
+        
+        var appUpdateEto = _objectMapper.Map<AppState, AppUpdateEto>(State);
+        await _distributedEventBus.PublishAsync(appUpdateEto);
     }
 }

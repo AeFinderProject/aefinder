@@ -10,4 +10,9 @@ public interface IAppGrain : IGrainWithStringKey
     Task SetStatusAsync(AppStatus status);
     Task<AppDto> GetAsync();
     Task<string> GetOrganizationIdAsync();
+    Task FreezeAppAsync();
+    Task UnFreezeAppAsync();
+    Task DeleteAppAsync();
+    Task SetFirstDeployTimeAsync(DateTime time);
+    Task LockAsync(bool isLock);
 }

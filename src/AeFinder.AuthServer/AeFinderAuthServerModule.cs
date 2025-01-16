@@ -135,8 +135,8 @@ public class AeFinderAuthServerModule : AbpModule
         //add login grant type
         context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
         {
-            options.Grants.Add(LoginConsts.GrantType, new LoginTokenExtensionGrant());
-            options.Grants.Add(SignatureGrantConsts.GrantType, new SignatureGrantHandler());
+            options.Grants.Add(LoginConsts.GrantType, context.Services.GetRequiredService<LoginTokenExtensionGrant>());
+            options.Grants.Add(SignatureGrantConsts.GrantType, context.Services.GetRequiredService<SignatureGrantHandler>());
         });
 
         if (hostingEnvironment.IsDevelopment())

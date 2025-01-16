@@ -23,11 +23,9 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
     private readonly IEntityMappingRepository<AppSubscriptionIndex, string> _appSubscriptionEntityMappingRepository;
     private readonly IEntityMappingRepository<AppSubscriptionPodIndex, string> _appSubscriptionPodEntityMappingRepository;
     private readonly IOrganizationAppService _organizationAppService;
-    private readonly IAppOperationSnapshotProvider _appOperationSnapshotProvider;
 
     public AppStopHandler(IAppDeployManager kubernetesAppManager,
         IOrganizationAppService organizationAppService,IClusterClient clusterClient,
-        IAppOperationSnapshotProvider appOperationSnapshotProvider,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
         IEntityMappingRepository<AppSubscriptionIndex, string> appSubscriptionEntityMappingRepository,
         IEntityMappingRepository<AppSubscriptionPodIndex, string> appSubscriptionPodEntityMappingRepository)
@@ -38,7 +36,6 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
         _appSubscriptionEntityMappingRepository = appSubscriptionEntityMappingRepository;
         _appSubscriptionPodEntityMappingRepository = appSubscriptionPodEntityMappingRepository;
         _organizationAppService = organizationAppService;
-        _appOperationSnapshotProvider = appOperationSnapshotProvider;
     }
 
     public async Task HandleEventAsync(AppStopEto eventData)
@@ -50,7 +47,6 @@ public class AppStopHandler : AppHandlerBase,IDistributedEventHandler<AppStopEto
         var version = eventData.StopVersion;
         
         //destroy app pod
-        await _appOperationSnapshotProvider.SetAppPodOperationSnapshotAsync(appId, version, AppPodOperationType.Stop);
         await _kubernetesAppManager.DestroyAppAsync(appId, version, eventData.StopVersionChainIds);
         
         //update app info index of stopped version

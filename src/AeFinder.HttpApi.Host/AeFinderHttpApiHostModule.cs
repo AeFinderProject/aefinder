@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using AeFinder.ApiTraffic;
+using AeFinder.ApiKeys;
 using AeFinder.App.Deploy;
 using AeFinder.Apps;
 using AeFinder.Kubernetes;
@@ -15,6 +15,9 @@ using AeFinder.ScheduledTask;
 using AElf.OpenTelemetry;
 using AspNetCoreRateLimit;
 using AspNetCoreRateLimit.Redis;
+using GraphQL.Client.Abstractions;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.Newtonsoft;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -98,6 +101,12 @@ public class AeFinderHttpApiHostModule : AbpModule
         });
         Configure<OperationLimitOptions>(configuration.GetSection("OperationLimit"));
         context.Services.Configure<ScheduledTaskOptions>(configuration.GetSection("ScheduledTask"));
+        context.Services.AddSingleton(new GraphQLHttpClient(configuration["GraphQL:Configuration"],
+            new NewtonsoftJsonSerializer()));
+        context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
+        context.Services.Configure<GraphQLOptions>(configuration.GetSection("GraphQL"));
+        Configure<ContractOptions>(configuration.GetSection("Contract"));
+        Configure<PodResourceOptions>(configuration.GetSection("PodResource"));
     }
 
     private void ConfigureCache(IConfiguration configuration)
@@ -323,7 +332,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         //Sync app limit info into es
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppExtensionInfoSyncWorker>());
         
-        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<ApiTrafficWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<ApiKeyTrafficWorker>());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)

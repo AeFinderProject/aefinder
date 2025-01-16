@@ -41,6 +41,15 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
             .ReturnsAsync(new List<OrganizationUnitDto> { 
                 new OrganizationUnitDto { Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1") } 
             });
+        mockOrganizationAppService
+            .Setup(service => service.GetOrganizationUnitAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(
+                new OrganizationUnitDto
+                {
+                    Id = Guid.Parse("99e439c3-49af-4caf-ad7e-417421eb98a1"),
+                    DisplayName = "OrganizationName"
+                } 
+            );
         return mockOrganizationAppService.Object;
     }
 
@@ -183,12 +192,85 @@ public class AppServiceTests : AeFinderApplicationAppTestBase
         limit.Items[0].OperationLimit.MaxEntityCallCount.ShouldBe(index.OperationLimit.MaxEntityCallCount);
         limit.Items[0].OperationLimit.MaxLogCallCount.ShouldBe(index.OperationLimit.MaxLogCallCount);
         limit.Items[0].ResourceLimit.AppPodReplicas.ShouldBe(index.ResourceLimit.AppPodReplicas);
+        limit.Items[0].ResourceLimit.AppFullPodLimitMemory.ShouldBe(index.ResourceLimit.AppFullPodLimitMemory);
         limit.Items[0].ResourceLimit.AppFullPodRequestMemory.ShouldBe(index.ResourceLimit.AppFullPodRequestMemory);
         limit.Items[0].ResourceLimit.AppQueryPodRequestMemory.ShouldBe(index.ResourceLimit.AppQueryPodRequestMemory);
+        limit.Items[0].ResourceLimit.AppFullPodLimitCpuCore.ShouldBe(index.ResourceLimit.AppFullPodLimitCpuCore);
         limit.Items[0].ResourceLimit.AppFullPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppFullPodRequestCpuCore);
         limit.Items[0].ResourceLimit.AppQueryPodRequestCpuCore.ShouldBe(index.ResourceLimit.AppQueryPodRequestCpuCore);
         limit.Items[0].DeployLimit.MaxAppCodeSize.ShouldBe(index.DeployLimit.MaxAppCodeSize);
         limit.Items[0].DeployLimit.MaxAppAttachmentSize.ShouldBe(index.DeployLimit.MaxAppAttachmentSize);
         limit.Items[0].ResourceLimit.EnableMultipleInstances.ShouldBeTrue();
+    }
+    
+    [Fact]
+    public async Task App_Search_Test()
+    {
+        var orgId = Guid.NewGuid();
+        await _appIndexRepository.AddAsync(new AppInfoIndex
+        {
+            AppId = "Test App 1".Trim().ToLower().Replace(" ", "_"),
+            AppName = "App1",
+            OrganizationId = orgId.ToString(),
+            OrganizationName = "OrganizationName",
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now,
+            Id = "AppId1"
+        });
+        
+        await _appIndexRepository.AddAsync(new AppInfoIndex
+        {
+            AppId = "Test Ap".Trim().ToLower().Replace(" ", "_"),
+            AppName = "App1",
+            OrganizationId = orgId.ToString(),
+            OrganizationName = "OrganizationName",
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now,
+            Id = "AppId2"
+        });
+        
+        await _appIndexRepository.AddAsync(new AppInfoIndex
+        {
+            AppId = "Search App 1".Trim().ToLower().Replace(" ", "_"),
+            AppName = "App1",
+            OrganizationId = orgId.ToString(),
+            OrganizationName = "OrganizationName",
+            CreateTime = DateTime.Now,
+            UpdateTime = DateTime.Now,
+            Id = "AppId3"
+        });
+        
+        var apps = await _appService.SearchAsync(orgId, "");
+        apps.Items.Count.ShouldBe(3);
+        
+        apps = await _appService.SearchAsync(orgId, "Test");
+        apps.Items.Count.ShouldBe(2);
+        
+        apps = await _appService.SearchAsync(orgId, "test app");
+        apps.Items.Count.ShouldBe(1);
+        
+        apps = await _appService.SearchAsync(orgId, "ap");
+        apps.Items.Count.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task Lock_Test()
+    {
+        var createDto = new CreateAppDto
+        {
+            AppName = "My App"
+        };
+        var result = await _appService.CreateAsync(createDto);
+        
+        var app = await _appService.GetAsync(result.AppId);
+        app.IsLocked.ShouldBe(false);
+
+        await _appService.LockAsync(app.AppId, true);
+        app = await _appService.GetAsync(result.AppId);
+        app.IsLocked.ShouldBe(true);
+        
+        await _appService.LockAsync(app.AppId, false);
+        app = await _appService.GetAsync(result.AppId);
+        app.IsLocked.ShouldBe(false);
     }
 }

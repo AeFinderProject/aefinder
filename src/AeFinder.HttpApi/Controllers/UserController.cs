@@ -61,4 +61,34 @@ public class UserController : AeFinderController
     {
         return await _userAppService.BindUserWalletAsync(input);
     }
+
+    [HttpGet("register/pending")]
+    public virtual async Task<bool> IsRegisterPendingAsync(string email)
+    {
+        return await _userAppService.IsRegisterPendingAsync(email);
+    }
+
+    [HttpPost("register")]
+    public virtual async Task RegisterAsync(RegisterUserInput input)
+    {
+        await _userAppService.RegisterAsync(input);
+    }
+    
+    [HttpPost("register/confirm/{code}")]
+    public virtual async Task RegisterAsync(string code)
+    {
+        await _userAppService.RegisterConfirmAsync(code);
+    }
+    
+    [HttpPost("register/resend")]    
+    public virtual async Task ResendRegisterEmailAsync(ResendEmailInput input)
+    {
+        await _userAppService.ResendRegisterEmailAsync(input);
+    }
+    
+    [HttpGet("register/enable")]
+    public virtual async Task<bool> RegisterEnableAsync()
+    {
+        return await _userAppService.IsRegisterEnableAsyncAsync();
+    }
 }

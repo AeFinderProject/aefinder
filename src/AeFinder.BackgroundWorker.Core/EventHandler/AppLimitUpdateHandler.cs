@@ -4,6 +4,8 @@ using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.User;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Distributed;
 
@@ -15,7 +17,8 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
     private readonly IEntityMappingRepository<AppLimitInfoIndex, string> _appLimitInfoEntityMappingRepository;
     private readonly IOrganizationAppService _organizationAppService;
 
-    public AppLimitUpdateHandler(IOrganizationAppService organizationAppService,IClusterClient clusterClient,
+    public AppLimitUpdateHandler(
+        IOrganizationAppService organizationAppService,IClusterClient clusterClient,
         IEntityMappingRepository<AppLimitInfoIndex, string> appLimitInfoEntityMappingRepository)
     {
         _clusterClient = clusterClient;
@@ -44,6 +47,7 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
         appLimitInfoIndex.AppName = appDto.AppName;
         appLimitInfoIndex.OrganizationId = organizationId;
         appLimitInfoIndex.OrganizationName = organizationUnitDto.DisplayName;
+        
         appLimitInfoIndex.ResourceLimit = new ResourceLimitInfo();
         appLimitInfoIndex.ResourceLimit.AppFullPodRequestCpuCore = eventData.AppFullPodRequestCpuCore;
         appLimitInfoIndex.ResourceLimit.AppFullPodRequestMemory = eventData.AppFullPodRequestMemory;
@@ -51,6 +55,9 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
         appLimitInfoIndex.ResourceLimit.AppQueryPodRequestMemory = eventData.AppQueryPodRequestMemory;
         appLimitInfoIndex.ResourceLimit.AppPodReplicas = eventData.AppPodReplicas;
         appLimitInfoIndex.ResourceLimit.EnableMultipleInstances = eventData.EnableMultipleInstances;
+        appLimitInfoIndex.ResourceLimit.AppFullPodLimitCpuCore = eventData.AppFullPodLimitCpuCore;
+        appLimitInfoIndex.ResourceLimit.AppFullPodLimitMemory = eventData.AppFullPodLimitMemory;
+        
         appLimitInfoIndex.OperationLimit = new OperationLimitInfo();
         appLimitInfoIndex.OperationLimit.MaxEntityCallCount = eventData.MaxEntityCallCount;
         appLimitInfoIndex.OperationLimit.MaxEntitySize = eventData.MaxEntitySize;
@@ -61,5 +68,6 @@ public class AppLimitUpdateHandler : AppHandlerBase, IDistributedEventHandler<Ap
         appLimitInfoIndex.DeployLimit.MaxAppCodeSize = eventData.MaxAppCodeSize;
         appLimitInfoIndex.DeployLimit.MaxAppAttachmentSize = eventData.MaxAppAttachmentSize;
         await _appLimitInfoEntityMappingRepository.AddOrUpdateAsync(appLimitInfoIndex);
+        Logger.LogInformation($"App {eventData.AppId} Limit Update: {JsonConvert.SerializeObject(appLimitInfoIndex)}");
     }
 }

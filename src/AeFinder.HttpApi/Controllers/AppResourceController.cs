@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AeFinder.AppResources;
+using AeFinder.AppResources.Dto;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,5 +27,14 @@ public class AppResourceController : AeFinderController
     public async Task<List<AppResourceDto>> GetAsync(string appId)
     {
         return await _appResourceService.GetAsync(appId);
+    }
+    
+    [HttpGet]
+    [Route("full-pod/usage")]
+    [Authorize]
+    public async Task<List<AppFullPodResourceUsageDto>> GetAppFullPodResourceUsageInfoListAsync(
+        GetAppFullPodResourceInfoInput input)
+    {
+        return await _appResourceService.GetAppFullPodResourceUsageInfoListAsync(input);
     }
 }
