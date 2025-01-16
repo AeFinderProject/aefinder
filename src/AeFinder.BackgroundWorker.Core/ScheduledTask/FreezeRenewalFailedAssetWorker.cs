@@ -98,7 +98,8 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
                 23, 59, 59);
             
             //TODO just for temp test, need remove later
-            if (organizationId == "75dd3f9c-adf6-8ac6-5606-3a177c283f93")
+            if (organizationId == "75dd3f9c-adf6-8ac6-5606-3a177c283f93" 
+                || organizationId == "254611af-27c3-ce41-45fc-3a177c96a417")
             {
                 advanceBillBeginTime = advanceBillBeginTime.AddMonths(1);
                 advanceBillEndTime = advanceBillEndTime.AddMonths(1);

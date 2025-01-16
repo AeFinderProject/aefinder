@@ -93,7 +93,8 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
                 23, 59, 59);
             
             //TODO just for temp test, need remove later
-            if (organizationId == "75dd3f9c-adf6-8ac6-5606-3a177c283f93")
+            if (organizationId == "75dd3f9c-adf6-8ac6-5606-3a177c283f93" 
+                || organizationId == "254611af-27c3-ce41-45fc-3a177c96a417")
             {
                 billBeginTime = billBeginTime.AddMonths(1);
                 billEndTime = billEndTime.AddMonths(1);
@@ -226,7 +227,8 @@ public class PollingSettlementBillPaymentResultWorker: AsyncPeriodicBackgroundWo
             var newAdvancePaymentBillTime = DateTime.UtcNow;
             
             //TODO just for temp test, need remove later
-            if (organizationId == "75dd3f9c-adf6-8ac6-5606-3a177c283f93")
+            if (organizationId == "75dd3f9c-adf6-8ac6-5606-3a177c283f93" 
+                || organizationId == "254611af-27c3-ce41-45fc-3a177c96a417")
             {
                 newAdvancePaymentBillTime = newAdvancePaymentBillTime.AddMonths(1);
             }
