@@ -45,7 +45,7 @@ public class OrderService : AeFinderAppService, IOrderService
             if (detail.OriginalAsset != null)
             {
                 var merchandise = await _merchandiseIndexRepository.GetAsync(detail.OriginalAsset.MerchandiseId);
-                originAssetMerchandise[detail.OriginalAsset.MerchandiseId] = merchandise;
+                originAssetMerchandise[detail.OriginalAsset.Id] = merchandise;
             }
         }
 
