@@ -132,7 +132,7 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
         var organizationUnitExtension = await _organizationExtensionRepository.FirstOrDefaultAsync(x => x.Id == organizationId);
         if (organizationUnitExtension != null)
         {
-            organizationUnitExtension.OrganizationStatus = OrganizationStatus.Frozen;
+            organizationUnitExtension.OrganizationStatus = OrganizationStatus.Normal;
             await _organizationExtensionRepository.UpdateAsync(organizationUnitExtension);
         }
     }

@@ -271,6 +271,12 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
                 if (appDto.Status == AppStatus.Frozen)
                 {
+                    if (appDto.DeployTime == null)
+                    {
+                        await appGrain.SetStatusAsync(AppStatus.UnDeployed);
+                        continue;
+                    }
+                    
                     await UnFreezeAppAsync(appId);
                 }
             }
