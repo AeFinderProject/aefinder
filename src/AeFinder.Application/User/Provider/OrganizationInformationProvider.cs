@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Commons;
+using AeFinder.Enums;
 using AeFinder.Options;
 using AeFinder.User.Dto;
 using Microsoft.Extensions.Logging;
@@ -76,7 +77,8 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
             organizationUnitExtension = new OrganizationUnitExtension(organizationExtensionDto.OrganizationId)
             {
                 OrganizationId = organizationExtensionDto.OrganizationId,
-                OrganizationWalletAddress = organizationExtensionDto.OrganizationWalletAddress
+                OrganizationWalletAddress = organizationExtensionDto.OrganizationWalletAddress,
+                OrganizationStatus = OrganizationStatus.Normal
             };
 
             await _organizationExtensionRepository.InsertAsync(organizationUnitExtension);
@@ -102,5 +104,36 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
         var organizationList =
             await _organizationExtensionRepository.GetListAsync(o => string.IsNullOrEmpty(o.OrganizationWalletAddress));
         return organizationList.Select(o=>o.OrganizationId).ToList();
+    }
+
+    public async Task FreezeOrganizationAsync(Guid organizationId)
+    {
+        var organizationUnitExtension = await _organizationExtensionRepository.FirstOrDefaultAsync(x => x.Id == organizationId);
+        if (organizationUnitExtension != null)
+        {
+            organizationUnitExtension.OrganizationStatus = OrganizationStatus.Frozen;
+            await _organizationExtensionRepository.UpdateAsync(organizationUnitExtension);
+        }
+    }
+
+    public async Task<OrganizationExtensionDto> GetOrganizationUnitExtensionInfoAsync(Guid organizationId)
+    {
+        var organizationUnitExtension = await _organizationExtensionRepository.FirstOrDefaultAsync(x => x.Id == organizationId);
+        if (organizationUnitExtension == null)
+        {
+            return new OrganizationExtensionDto();
+        }
+
+        return _objectMapper.Map<OrganizationUnitExtension, OrganizationExtensionDto>(organizationUnitExtension);
+    }
+
+    public async Task UnFreezeOrganizationAsync(Guid organizationId)
+    {
+        var organizationUnitExtension = await _organizationExtensionRepository.FirstOrDefaultAsync(x => x.Id == organizationId);
+        if (organizationUnitExtension != null)
+        {
+            organizationUnitExtension.OrganizationStatus = OrganizationStatus.Normal;
+            await _organizationExtensionRepository.UpdateAsync(organizationUnitExtension);
+        }
     }
 }

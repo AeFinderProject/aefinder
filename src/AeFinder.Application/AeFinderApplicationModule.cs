@@ -11,6 +11,7 @@ using AeFinder.DevelopmentTemplate;
 using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.ApiKeys;
+using AeFinder.Grains.Grain.Users;
 using AeFinder.Metrics;
 using AeFinder.Options;
 using AeFinder.User;
@@ -68,6 +69,7 @@ public class AeFinderApplicationModule : AbpModule
         context.Services.AddTransient<IResourceUsageProvider, ApiKeyUsageProvider>();
         context.Services.Configure<AssetInitializationOptions>(configuration.GetSection("AssetInitialization"));
         context.Services.Configure<EmailTemplateOptions>(configuration.GetSection("EmailTemplate"));
+        context.Services.Configure<UserRegisterOptions>(configuration.GetSection("UserRegister"));
         
         Configure<AbpClockOptions>(options =>
         {

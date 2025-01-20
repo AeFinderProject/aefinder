@@ -5,6 +5,7 @@ using AeFinder.User.Provider;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MongoDB.Driver.Linq;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Threading;
@@ -71,7 +72,11 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
             var billBeginTime = new DateTime(previousMonth.Year, previousMonth.Month, 1, 0, 0, 0);
             var billEndTime = new DateTime(lastDayOfLastMonth.Year, lastDayOfLastMonth.Month, lastDayOfLastMonth.Day,
                 23, 59, 59);
-            
+
+            if (organizationUnitDto.CreationTime >= firstDayOfThisMonth)
+            {
+                continue;
+            }
 
             var historySettlementBills = await _billingService.GetListAsync(organizationUnitDto.Id, new GetBillingInput()
             {

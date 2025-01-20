@@ -24,6 +24,7 @@ public class RegistrationEmailSender:IRegistrationEmailSender, ISingletonDepende
     
     private async Task SendEmailAsync(SendEmailInput input)
     {
-        await _emailSender.QueueAsync(input.From, input.To, input.Subject, input.Body, false);
+        // await _emailSender.QueueAsync(input.From, input.To, input.Subject, input.Body, false);
+        await _emailSender.SendAsync(input.From, input.To, input.Subject, input.Body, false);
     }
 }

@@ -106,6 +106,7 @@ public class AeFinderHttpApiHostModule : AbpModule
         context.Services.AddScoped<IGraphQLClient>(sp => sp.GetRequiredService<GraphQLHttpClient>());
         context.Services.Configure<GraphQLOptions>(configuration.GetSection("GraphQL"));
         Configure<ContractOptions>(configuration.GetSection("Contract"));
+        Configure<PodResourceOptions>(configuration.GetSection("PodResource"));
     }
 
     private void ConfigureCache(IConfiguration configuration)

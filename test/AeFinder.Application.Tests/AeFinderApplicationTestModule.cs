@@ -85,6 +85,7 @@ public class AeFinderApplicationTestModule : AbpModule
         context.Services.Configure<UserRegisterOptions>(o =>
         {
             o.EmailSendingInterval = 0;
+            o.Enable = true;
         });
 
         context.Services.AddSingleton<IEmailSender, NullEmailSender>();
@@ -97,7 +98,7 @@ public class AeFinderApplicationTestModule : AbpModule
                     Body = "Body",
                     IsBodyHtml = false,
                     Subject = "Subject",
-                    From = "From"
+                    From = "test@aefinder.com"
                 } }
             };
         });
