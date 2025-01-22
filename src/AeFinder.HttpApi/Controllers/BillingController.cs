@@ -32,7 +32,11 @@ public class BillingController : AeFinderController
     [Authorize]
     public async Task<PagedResultDto<BillingDto>> GetListAsync(GetBillingInput input)
     {
-        var orgId = await GetOrganizationIdAsync();
+        Guid? orgId = null;
+        if (!CurrentUser.IsInRole(AeFinderApplicationConsts.AdminRoleName))
+        {
+            orgId = await GetOrganizationIdAsync();
+        }
         return await _billingService.GetListAsync(orgId, input);
     }
     
@@ -41,7 +45,11 @@ public class BillingController : AeFinderController
     [Authorize]
     public async Task<BillingDto> GetAsync(Guid id)
     {
-        var orgId = await GetOrganizationIdAsync();
+        Guid? orgId = null;
+        if (!CurrentUser.IsInRole(AeFinderApplicationConsts.AdminRoleName))
+        {
+            orgId = await GetOrganizationIdAsync();
+        }
         return await _billingService.GetAsync(orgId, id);
     }
     
