@@ -25,16 +25,16 @@ public class DefaultAppDeployManager : IAppDeployManager
         return;
     }
 
-    public async Task UpdateAppFullPodResourceAsync(string appId, string version, string requestCpu,
+    public async Task<bool> UpdateAppFullPodResourceAsync(string appId, string version, string requestCpu,
         string requestMemory, List<string> chainIds, string limitCpu, string limitMemory)
     {
-        return;
+        return true;
     }
 
-    public async Task UpdateAppQueryPodResourceAsync(string appId, string version, string requestCpu,
+    public async Task<bool> UpdateAppQueryPodResourceAsync(string appId, string version, string requestCpu,
         string requestMemory, string limitCpu, string limitMemory, int replicasCount)
     {
-        return;
+        return true;
     }
 
     public async Task<AppPodsPageResultDto> GetPodListWithPagingAsync(string appId, int pageSize, string continueToken)

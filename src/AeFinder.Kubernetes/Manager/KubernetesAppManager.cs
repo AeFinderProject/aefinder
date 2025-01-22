@@ -787,32 +787,37 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
         };
     }
 
-    public async Task UpdateAppFullPodResourceAsync(string appId, string version, string requestCpu,
+    public async Task<bool> UpdateAppFullPodResourceAsync(string appId, string version, string requestCpu,
         string requestMemory, List<string> chainIds, string limitCpu, string limitMemory)
     {
         if (chainIds.Count == 0)
         {
-            await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
+            return await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
                 KubernetesConstants.AppClientTypeFull, null, limitCpu, limitMemory, 0);
         }
         else
         {
             foreach (var chainId in chainIds)
             {
-                await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
-                    KubernetesConstants.AppClientTypeFull, chainId, limitCpu, limitMemory, 0);
+                if(!await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
+                    KubernetesConstants.AppClientTypeFull, chainId, limitCpu, limitMemory, 0));
+                {
+                    return false;
+                }
             }
         }
+
+        return true;
     }
 
-    public async Task UpdateAppQueryPodResourceAsync(string appId, string version, string requestCpu,
+    public async Task<bool> UpdateAppQueryPodResourceAsync(string appId, string version, string requestCpu,
         string requestMemory, string limitCpu, string limitMemory, int replicasCount)
     {
-        await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
+        return await UpdateAppResourceAsync(appId, version, requestCpu, requestMemory,
             KubernetesConstants.AppClientTypeQuery, null, limitCpu, limitMemory, replicasCount);
     }
 
-    private async Task UpdateAppResourceAsync(string appId, string version, string requestCpu, string requestMemory,
+    private async Task<bool> UpdateAppResourceAsync(string appId, string version, string requestCpu, string requestMemory,
         string clientType, string chainId, string limitCpu, string limitMemory, int replicasCount)
     {
         var deployments = await _kubernetesClientAdapter.ListDeploymentAsync(KubernetesConstants.AppNameSpace);
@@ -851,13 +856,16 @@ public partial class KubernetesAppManager: IAppDeployManager, ISingletonDependen
             }
             else
             {
-                _logger.LogError($"Container {containerName} not found in deployment {deploymentName}");
+                throw new Exception($"Container {containerName} not found in deployment {deploymentName}");
             }
         }
         else
         {
-            _logger.LogError($"Deployment {deploymentName} does not exist!");
+            _logger.LogDebug($"Deployment {deploymentName} does not exist!");
+            return false;
         }
+        
+        return true;
     }
 
     public async Task<AppPodOperationSnapshotDto> GetPodResourceSnapshotAsync(string appId, string version)
