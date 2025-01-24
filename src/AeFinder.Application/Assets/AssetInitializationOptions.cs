@@ -10,7 +10,8 @@ public class AssetInitializationOptions
 
 public class AssetInitializationItem
 {
-    public MerchandiseType MerchandiseType { get; set; }
+    //public MerchandiseType MerchandiseType { get; set; }
+    public string  MerchandiseId { get; set; }
     public long Quantity { get; set; }
     public long Replicas { get; set; }
     public long FreeQuantity { get; set; }
