@@ -53,6 +53,12 @@ public class BillingController : AeFinderController
         await _billingService.UpdateIndexAsync(id);
     }
     
+    [HttpPost]
+    public async Task CreateAsync(Guid organizationId, BillingType type, DateTime dateTime)
+    {
+        await _billingService.CreateAsync(organizationId, type, dateTime);
+    }
+    
     private async Task<Guid> GetOrganizationIdAsync()
     {
         var organizationIds = await _organizationAppService.GetOrganizationUnitsByUserIdAsync(CurrentUser.Id.Value);
