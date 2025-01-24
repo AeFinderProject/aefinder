@@ -79,7 +79,7 @@ public class AssetService : AeFinderAppService, IAssetService
 
         if (input.IsFree.HasValue)
         {
-            queryable = queryable.Where(o => o.FreeQuantity > 0);
+            queryable = queryable.Where(o => o.FreeQuantity > 0 && o.AppId == null);
         }
 
         if (input.Type.HasValue)
@@ -184,6 +184,11 @@ public class AssetService : AeFinderAppService, IAssetService
         if (app == null || app.AppId.IsNullOrWhiteSpace())
         {
             throw new UserFriendlyException("Invalid App.");
+        }
+
+        if (app.OrganizationId != organizationId.ToString("N"))
+        {
+            throw new UserFriendlyException("No permission.");
         }
 
         var appAssetChangedEto = new AppAssetChangedEto

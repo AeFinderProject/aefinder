@@ -84,6 +84,8 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
     public async Task UpdateSubscriptionManifestAsync(string appId, string version, SubscriptionManifestDto manifest)
     {
         await CheckAppExistAsync(appId);
+        await _appDeployService.CheckAppStatusAsync(appId);
+        await _appDeployService.CheckAppAssetAsync(appId);
         
         var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
 
@@ -103,6 +105,8 @@ public partial class SubscriptionAppService : AeFinderAppService, ISubscriptionA
     {
         // await CheckAppExistAsync(appId);
         await CheckAppVersionExistAsync(appId, version);
+        await _appDeployService.CheckAppStatusAsync(appId);
+        await _appDeployService.CheckAppAssetAsync(appId);
 
         if ((code == null || code.Length == 0) && attachmentDeleteFileKeyList.IsNullOrEmpty() && attachmentList == null)
         {

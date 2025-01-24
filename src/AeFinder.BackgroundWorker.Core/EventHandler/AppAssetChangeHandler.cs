@@ -45,9 +45,9 @@ public class AppAssetChangeHandler: IDistributedEventHandler<AppAssetChangedEto>
     public async Task HandleEventAsync(AppAssetChangedEto eventData)
     {
         var appId = eventData.AppId;
+        var now = DateTime.UtcNow;
         foreach (var changedAsset in eventData.ChangedAssets)
         {
-            var now = DateTime.UtcNow;
             if (changedAsset.OriginalAsset != null)
             {
                 //Release old asset

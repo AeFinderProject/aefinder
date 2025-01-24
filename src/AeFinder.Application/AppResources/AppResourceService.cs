@@ -10,8 +10,10 @@ using AeFinder.Apps.Eto;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Grains.Grain.Subscriptions;
+using AeFinder.Options;
 using AeFinder.User;
 using AElf.EntityMapping.Repositories;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -30,19 +32,22 @@ public class AppResourceService : AeFinderAppService, IAppResourceService
     private readonly IEntityMappingRepository<AppSubscriptionPodIndex, string> _appSubscriptionPodIndexRepository;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IEntityMappingRepository<AppPodInfoIndex, string> _appPodInfoEntityMappingRepository;
+    private readonly AppDeployOptions _appDeployOptions;
 
     public AppResourceService(IClusterClient clusterClient,
         IAppResourceLimitProvider appResourceLimitProvider,
         IAppDeployManager appDeployManager,IDistributedEventBus distributedEventBus,
         IOrganizationAppService organizationAppService,
         IEntityMappingRepository<AppPodInfoIndex, string> appPodInfoEntityMappingRepository,
-        IEntityMappingRepository<AppSubscriptionPodIndex, string> appSubscriptionPodIndexRepository)
+        IEntityMappingRepository<AppSubscriptionPodIndex, string> appSubscriptionPodIndexRepository, 
+        IOptionsSnapshot<AppDeployOptions> appDeployOptions)
     {
         _clusterClient = clusterClient;
         _appDeployManager = appDeployManager;
         _distributedEventBus = distributedEventBus;
         _appResourceLimitProvider = appResourceLimitProvider;
         _appSubscriptionPodIndexRepository = appSubscriptionPodIndexRepository;
+        _appDeployOptions = appDeployOptions.Value;
         _organizationAppService = organizationAppService;
         _appPodInfoEntityMappingRepository = appPodInfoEntityMappingRepository;
     }
@@ -120,8 +125,24 @@ public class AppResourceService : AeFinderAppService, IAppResourceService
                     appLimit.AppQueryPodRequestCpuCore, appLimit.AppQueryPodRequestMemory,null, null, 0);
             }
         }
-        
+
+        if (!string.IsNullOrEmpty(currentVersion))
+        {
+            await DeployNewAppAsync(appId, currentVersion);
+        }
+
+        if (!string.IsNullOrEmpty(pendingVersion))
+        {
+            await DeployNewAppAsync(appId, pendingVersion);
+        }
+
         return await appResourceLimitGrain.GetAsync();
+    }
+
+    private async Task DeployNewAppAsync(string appId, string version)
+    {
+        var chainIds = await GetDeployChainIdAsync(appId, version);
+        await _appDeployManager.CreateNewAppAsync(appId, version, _appDeployOptions.AppImageName, chainIds);
     }
     
     private async Task<List<string>> GetDeployChainIdAsync(string appId, string version)
