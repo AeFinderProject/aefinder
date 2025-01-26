@@ -43,17 +43,24 @@ public class BillingService : AeFinderAppService, IBillingService
         await AddOrUpdateIndexAsync(eto);
     }
 
-    public async Task<BillingDto> GetAsync(Guid organizationId, Guid id)
+    public async Task<BillingDto> GetAsync(Guid? organizationId, Guid id)
     {
-        var queryable = await _billingIndexRepository.GetQueryableAsync();
-        var order = queryable.FirstOrDefault(o => o.Id == id && o.OrganizationId == organizationId);
-        return ObjectMapper.Map<BillingIndex, BillingDto>(order);
+        var billing = await _billingIndexRepository.GetAsync(id);
+        if (organizationId.HasValue && billing.OrganizationId != organizationId.Value)
+        {
+            throw new UserFriendlyException("No permission.");
+        }
+
+        return ObjectMapper.Map<BillingIndex, BillingDto>(billing);
     }
 
-    public async Task<PagedResultDto<BillingDto>> GetListAsync(Guid organizationId, GetBillingInput input)
+    public async Task<PagedResultDto<BillingDto>> GetListAsync(Guid? organizationId, GetBillingInput input)
     {
         var queryable = await _billingIndexRepository.GetQueryableAsync();
-        queryable = queryable.Where(o => o.OrganizationId == organizationId);
+        if (organizationId.HasValue)
+        {
+            queryable = queryable.Where(o => o.OrganizationId == organizationId.Value);
+        }
         if (input.BeginTime.HasValue)
         {
             queryable = queryable.Where(o => o.BeginTime >= input.BeginTime.Value);
