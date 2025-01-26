@@ -91,15 +91,24 @@ public class AssetServiceTests : AeFinderApplicationTestBase
             MerchandiseId = merchandises.Items.First().Id,
             Quantity = 100,
             Replicas = 1,
+            FreeQuantity = 100,
+            FreeReplicas = 1,
             CreateTime = DateTime.UtcNow
         });
+        
+        await _assetService.AddOrUpdateIndexAsync(_objectMapper.Map<AssetState, AssetChangedEto>(asset));
+        var list = await _assetService.GetListAsync(AeFinderApplicationTestConsts.OrganizationId, new GetAssetInput
+        {
+            IsFree = true
+        });
+        list.Items.Count.ShouldBe(2);
 
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId("appid"));
         await appGrain.CreateAsync(new CreateAppDto
         {
             AppId = "appid",
             AppName = "App",
-            OrganizationId = AeFinderApplicationConsts.DefaultAssetExpiration.ToString("N")
+            OrganizationId = AeFinderApplicationTestConsts.OrganizationId.ToString("N")
         });
         
         await _assetService.RelateAppAsync(AeFinderApplicationTestConsts.OrganizationId, new RelateAppInput
@@ -111,7 +120,7 @@ public class AssetServiceTests : AeFinderApplicationTestBase
 
         await _assetService.AddOrUpdateIndexAsync(_objectMapper.Map<AssetState, AssetChangedEto>(asset));
 
-        var list = await _assetService.GetListAsync(AeFinderApplicationTestConsts.OrganizationId, new GetAssetInput());
+        list = await _assetService.GetListAsync(AeFinderApplicationTestConsts.OrganizationId, new GetAssetInput());
         list.Items.Count.ShouldBe(2);
         
         list = await _assetService.GetListAsync(AeFinderApplicationTestConsts.OrganizationId, new GetAssetInput
