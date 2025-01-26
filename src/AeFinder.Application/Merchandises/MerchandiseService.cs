@@ -70,6 +70,11 @@ public class MerchandiseService : AeFinderAppService, IMerchandiseService
             queryable = queryable.Where(o => o.Type == (int)input.Type.Value);
         }
         
+        if (input.Category.HasValue)
+        {
+            queryable = queryable.Where(o => o.Category == (int)input.Category.Value);
+        }
+        
         var indices = queryable.OrderBy(o => o.SortWeight).ToList();
 
         return new ListResultDto<MerchandiseDto>
