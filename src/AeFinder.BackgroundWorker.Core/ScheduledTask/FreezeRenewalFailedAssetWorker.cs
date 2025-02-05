@@ -70,8 +70,8 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
         _logger.LogInformation($"[FreezeRenewalFailedAssetWorker] Test.");
-        var orgId = Guid.Parse("fb78853d-b5a4-b440-c23d-3a17e72f1144");
-        var billingId = Guid.Parse("e35da3c1-5724-516d-0975-3a17e743422a");
+        var orgId = Guid.Parse("04f1eb4e-29ad-cc8f-dd32-3a17e7809fb8");
+        var billingId = Guid.Parse("9d14af3b-7ded-e758-76ca-3a17e786a4d3");
 
         var billing = await _billingService.GetAsync(orgId, billingId);
         if (billing.Status == BillingStatus.Unpaid)
