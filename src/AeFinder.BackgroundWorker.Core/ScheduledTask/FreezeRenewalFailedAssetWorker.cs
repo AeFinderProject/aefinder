@@ -68,6 +68,13 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
+        var orgId = Guid.Parse("fb78853d-b5a4-b440-c23d-3a17e72f1144");
+        var billingId = Guid.Parse("e35da3c1-5724-516d-0975-3a17e743422a");
+
+        var billing = await _billingService.GetAsync(orgId, billingId);
+        await HandleUnpaidAdvanceBillAsync(orgId, billing);
+        _logger.LogInformation($"[FreezeRenewalFailedAssetWorker] Test {orgId} {billingId}.");
+        
         var now = DateTime.UtcNow;
         //Check if it is within the expiration buffer period
         var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
