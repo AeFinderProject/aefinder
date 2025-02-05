@@ -62,7 +62,7 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
         _billingService = billingService;
         _apiKeyService = apiKeyService;
         // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
-        Timer.Period = _scheduledTaskOptions.FreezeRenewalFailedAssetTaskPeriodMilliSeconds;
+        //Timer.Period = _scheduledTaskOptions.FreezeRenewalFailedAssetTaskPeriodMilliSeconds;
         Timer.Period = 60000;
     }
     
