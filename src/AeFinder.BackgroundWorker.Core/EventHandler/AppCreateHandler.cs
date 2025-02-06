@@ -31,30 +31,18 @@ public class AppCreateHandler : AppHandlerBase, IDistributedEventHandler<AppCrea
 
     public async Task HandleEventAsync(AppCreateEto eventData)
     {
-        //Update organization app ids
-        var organizationIndex = new OrganizationIndex();
-        
-        Guid organizationUnitGuid;
-        if (!Guid.TryParse(eventData.OrganizationId, out organizationUnitGuid))
+        if (!Guid.TryParse(eventData.OrganizationId, out var organizationUnitGuid))
         {
             throw new Exception($"Invalid OrganizationUnitId string: {eventData.OrganizationId}");
         }
-
-        var organizationUnitDto = await _organizationAppService.GetOrganizationUnitAsync(organizationUnitGuid);
-        organizationIndex.OrganizationId = organizationUnitGuid.ToString();
-        organizationIndex.OrganizationName = organizationUnitDto.DisplayName;
+        
+        var organizationIndex = await _organizationEntityMappingRepository.GetAsync(organizationUnitGuid.ToString());
         
         var organizationAppGrain =
-            _clusterClient.GetGrain<IOrganizationAppGrain>(GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitDto.Id));
-        var maxAppCount = await organizationAppGrain.GetMaxAppCountAsync();
-        organizationIndex.MaxAppCount = maxAppCount;
+            _clusterClient.GetGrain<IOrganizationAppGrain>(GrainIdHelper.GenerateOrganizationAppGrainId(organizationUnitGuid));
         var appIds = await organizationAppGrain.GetAppsAsync();
-        if (organizationIndex.AppIds == null)
-        {
-            organizationIndex.AppIds = new List<string>();
-        }
         organizationIndex.AppIds = appIds.ToList();
-        await _organizationEntityMappingRepository.AddOrUpdateAsync(organizationIndex);
+        await _organizationEntityMappingRepository.UpdateAsync(organizationIndex);
 
         //Add app info index
         var appInfoIndex = ObjectMapper.Map<AppCreateEto, AppInfoIndex>(eventData);

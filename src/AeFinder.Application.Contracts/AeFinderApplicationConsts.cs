@@ -15,6 +15,7 @@ public class AeFinderApplicationConsts
     public const string RelateAppExtraDataKey = "RelateAppId";
     public const int DefaultAssetExpiration = 100; // 100 years
     public const string RegisterEmailTemplate = "Register";
+    public const string AdminRoleName = "admin";
     
     public static readonly HashSet<string> AppInterestedExtraPropertiesKey = new HashSet<string>
         { "RefBlockNumber", "RefBlockPrefix", "ReturnValue", "Error", "TransactionFee", "ResourceFee" };

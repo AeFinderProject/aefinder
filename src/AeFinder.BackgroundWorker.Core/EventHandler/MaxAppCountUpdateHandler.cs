@@ -21,18 +21,13 @@ public class MaxAppCountUpdateHandler: IDistributedEventHandler<MaxAppCountUpdat
 
     public async Task HandleEventAsync(MaxAppCountUpdateEto eventData)
     {
-        Guid organizationUnitGuid;
-        if (!Guid.TryParse(eventData.OrganizationId, out organizationUnitGuid))
+        if (!Guid.TryParse(eventData.OrganizationId, out var organizationUnitGuid))
         {
             throw new Exception($"Invalid OrganizationUnitId string: {eventData.OrganizationId}");
         }
-
-        var organizationUnitDto = await _organizationAppService.GetOrganizationUnitAsync(organizationUnitGuid);
-
-        var organizationIndex = new OrganizationIndex();
-        organizationIndex.OrganizationId = organizationUnitGuid.ToString();
-        organizationIndex.OrganizationName = organizationUnitDto.DisplayName;
+        
+        var organizationIndex = await _entityMappingRepository.GetAsync(organizationUnitGuid.ToString());
         organizationIndex.MaxAppCount = eventData.MaxAppCount;
-        await _entityMappingRepository.AddOrUpdateAsync(organizationIndex);
+        await _entityMappingRepository.UpdateAsync(organizationIndex);
     }
 }
