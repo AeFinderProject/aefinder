@@ -17,4 +17,5 @@ public class OrganizationIndex : AeFinderEntity<string>, IEntityMappingEntity
     [Keyword] public string OrganizationName { get; set; }
     public int MaxAppCount { get; set; }
     public List<string> AppIds { get; set; }
+    public int Status { get; set; }
 }

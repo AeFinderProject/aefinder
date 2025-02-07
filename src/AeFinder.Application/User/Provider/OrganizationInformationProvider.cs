@@ -5,12 +5,14 @@ using System.Threading.Tasks;
 using AeFinder.Commons;
 using AeFinder.Enums;
 using AeFinder.Options;
+using AeFinder.Organizations;
 using AeFinder.User.Dto;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.User.Provider;
@@ -22,14 +24,16 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
     private readonly IObjectMapper _objectMapper;
     private readonly IAeFinderIndexerProvider _indexerProvider;
     private readonly ContractOptions _contractOptions;
+    private readonly IDistributedEventBus _distributedEventBus;
 
     public OrganizationInformationProvider(IRepository<OrganizationUnitExtension, Guid> organizationExtensionRepository,
         IAeFinderIndexerProvider indexerProvider, IOptionsSnapshot<ContractOptions> contractOptions,
-        IObjectMapper objectMapper, ILogger<OrganizationInformationProvider> logger)
+        IObjectMapper objectMapper, ILogger<OrganizationInformationProvider> logger, IDistributedEventBus distributedEventBus)
     {
         _organizationExtensionRepository = organizationExtensionRepository;
         _objectMapper = objectMapper;
         _logger = logger;
+        _distributedEventBus = distributedEventBus;
         _indexerProvider = indexerProvider;
         _contractOptions = contractOptions.Value;
     }
@@ -113,6 +117,11 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
         {
             organizationUnitExtension.OrganizationStatus = OrganizationStatus.Frozen;
             await _organizationExtensionRepository.UpdateAsync(organizationUnitExtension);
+            await _distributedEventBus.PublishAsync(new OrganizationUnitExtensionUpdateEto
+            {
+                OrganizationId = organizationId,
+                OrganizationStatus = OrganizationStatus.Frozen
+            });
         }
     }
 
@@ -134,6 +143,11 @@ public class OrganizationInformationProvider: IOrganizationInformationProvider, 
         {
             organizationUnitExtension.OrganizationStatus = OrganizationStatus.Normal;
             await _organizationExtensionRepository.UpdateAsync(organizationUnitExtension);
+            await _distributedEventBus.PublishAsync(new OrganizationUnitExtensionUpdateEto
+            {
+                OrganizationId = organizationId,
+                OrganizationStatus = OrganizationStatus.Normal
+            });
         }
     }
 }
