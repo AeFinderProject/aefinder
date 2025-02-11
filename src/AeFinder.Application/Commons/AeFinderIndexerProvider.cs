@@ -12,6 +12,7 @@ namespace AeFinder.Commons;
 public interface IAeFinderIndexerProvider
 {
     Task<long> GetCurrentVersionSyncBlockHeightAsync();
+    Task<long> GetCurrentVersionSyncLastIrreversibleBlockHeightsync();
     Task<IndexerUserFundRecordDto> GetUserFundRecordAsync(string chainId, string address, string billingId,
         int skipCount, int maxResultCount);
     Task<IndexerUserBalanceDto> GetUserBalanceAsync(string address, string chainId, int skipCount,
@@ -44,6 +45,18 @@ public class AeFinderIndexerProvider: IAeFinderIndexerProvider, ISingletonDepend
             return 0;
         }
         return resultDto.CurrentVersion.Items[0].LongestChainHeight;
+    }
+    
+    public async Task<long> GetCurrentVersionSyncLastIrreversibleBlockHeightsync()
+    {
+        string result = await QueryIndexerSyncStateAsync(_graphQlOptions.BillingIndexerSyncStateUrl);
+        var resultDto = JsonConvert.DeserializeObject<IndexerSyncStateDto>(result);
+        if (resultDto == null || resultDto.CurrentVersion == null || resultDto.CurrentVersion.Items == null ||
+            resultDto.CurrentVersion.Items.Count == 0)
+        {
+            return 0;
+        }
+        return resultDto.CurrentVersion.Items[0].LastIrreversibleBlockHeight;
     }
     
     private async Task<string> QueryIndexerSyncStateAsync(string indexerSyncStateUrl)
