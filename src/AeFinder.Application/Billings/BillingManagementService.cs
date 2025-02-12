@@ -2,10 +2,12 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.Commons;
+using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Billings;
 using AeFinder.Grains.State.Billings;
 using AeFinder.Options;
+using AeFinder.User;
 using AeFinder.User.Provider;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -29,12 +31,15 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
     private readonly BillingOptions _billingOptions;
     private readonly IAeFinderIndexerProvider _indexerProvider;
     private readonly ContractOptions _contractOptions;
+    private readonly IUserAppService _userAppService;
+    private readonly IBillingEmailSender _billingEmailSender;
 
     public BillingManagementService(IClusterClient clusterClient, IBillingService billingService,
         IOrganizationInformationProvider organizationInformationProvider,
         IBillingContractProvider billingContractProvider, ILogger<BillingManagementService> logger, IClock clock,
-        IOptionsSnapshot<BillingOptions> billingOptions, IAeFinderIndexerProvider indexerProvider, 
-        IOptionsSnapshot<ContractOptions> contractOptions)
+        IOptionsSnapshot<BillingOptions> billingOptions, IAeFinderIndexerProvider indexerProvider,
+        IOptionsSnapshot<ContractOptions> contractOptions, IUserAppService userAppService,
+        IBillingEmailSender billingEmailSender)
     {
         _clusterClient = clusterClient;
         _billingService = billingService;
@@ -43,6 +48,8 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
         _logger = logger;
         _clock = clock;
         _indexerProvider = indexerProvider;
+        _userAppService = userAppService;
+        _billingEmailSender = billingEmailSender;
         _contractOptions = contractOptions.Value;
         _billingOptions = billingOptions.Value;
     }
@@ -62,7 +69,7 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
                 settlementBilling = await _billingService.CreateAsync(organizationId, BillingType.Settlement, month);
             }
 
-            await monthBillingGrain.CreateMonthlyBillingAsync(organizationId,month,settlementBilling.Id);
+            await monthBillingGrain.CreateMonthlyBillingAsync(organizationId, month, settlementBilling.Id);
             return;
         }
 
@@ -72,13 +79,15 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
         {
             if (monthBilling.AdvancePaymentBillingId == Guid.Empty)
             {
-                var advancePaymentBilling = await GetBillingAsync(organizationId, BillingType.Settlement, month.AddMonths(1),
+                var advancePaymentBilling = await GetBillingAsync(organizationId, BillingType.Settlement,
+                    month.AddMonths(1),
                     month.AddMonths(2).AddSeconds(-1));
                 if (advancePaymentBilling == null)
                 {
-                    advancePaymentBilling = await _billingService.CreateAsync(organizationId, BillingType.AdvancePayment, month);
+                    advancePaymentBilling =
+                        await _billingService.CreateAsync(organizationId, BillingType.AdvancePayment, month);
                 }
-                
+
                 await monthBillingGrain.SetAdvancePaymentBillingAsync(advancePaymentBilling.Id);
             }
         }
@@ -88,7 +97,7 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
     {
         var billingGrain = _clusterClient.GetGrain<IBillingGrain>(billingId);
         var billing = await billingGrain.GetAsync();
-        
+
         switch (billing.Status)
         {
             case BillingStatus.Unpaid:
@@ -113,14 +122,15 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
             _clusterClient.GetGrain<IMonthlyBillingGrain>(GrainIdHelper.GenerateGrainId(organizationId, month));
         var monthBilling = await monthBillingGrain.GetAsync();
 
-        if (monthBilling.SettlementBillingId != Guid.Empty)
-        {
-            if (await IsPaymentFailedAsync(monthBilling.SettlementBillingId))
-            {
-                return true;
-            }
-        }
-        
+        // Billing failures are not checked because billing failures are not usually due to the user side.
+        // if (monthBilling.SettlementBillingId != Guid.Empty)
+        // {
+        //     if (await IsPaymentFailedAsync(monthBilling.SettlementBillingId))
+        //     {
+        //         return true;
+        //     }
+        // }
+
         if (monthBilling.AdvancePaymentBillingId != Guid.Empty)
         {
             if (await IsPaymentFailedAsync(monthBilling.AdvancePaymentBillingId))
@@ -132,7 +142,8 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
         return false;
     }
 
-    private async Task<BillingDto> GetBillingAsync(Guid organizationId, BillingType billingType, DateTime beginTime, DateTime endTime)
+    private async Task<BillingDto> GetBillingAsync(Guid organizationId, BillingType billingType, DateTime beginTime,
+        DateTime endTime)
     {
         var bills = await _billingService.GetListAsync(organizationId, new GetBillingInput()
         {
@@ -154,7 +165,7 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
         {
             return true;
         }
-        
+
         return false;
     }
 
@@ -162,6 +173,9 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
     {
         if (billing.PaidAmount == 0 && billing.RefundAmount == 0)
         {
+            _logger.LogInformation(
+                "Billing is confirmed(No need to pay). Id: {BillingId}, Type: {BillingType}, OrganizationId: {OrganizationId}",
+                billing.Id, billing.Type, billing.OrganizationId);
             await _billingService.ConfirmPaymentAsync(billing.Id);
             return;
         }
@@ -178,13 +192,19 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
         string txId;
         if (billing.Type == BillingType.Settlement)
         {
-            txId = (await _billingContractProvider.BillingChargeAsync(organizationWalletAddress, billing.PaidAmount, billing.RefundAmount,
+            txId = (await _billingContractProvider.BillingChargeAsync(organizationWalletAddress, billing.PaidAmount,
+                billing.RefundAmount,
                 billing.Id.ToString())).TransactionId;
         }
         else
         {
-            txId = (await _billingContractProvider.BillingLockFromAsync(organizationWalletAddress, billing.PaidAmount, billing.Id.ToString())).TransactionId;
+            txId = (await _billingContractProvider.BillingLockFromAsync(organizationWalletAddress, billing.PaidAmount,
+                billing.Id.ToString())).TransactionId;
         }
+
+        _logger.LogInformation(
+            "Billing transaction sent. Id: {BillingId}, Type: {BillingType}, OrganizationId: {OrganizationId}, TxId: {TransactionId}",
+            billing.Id, billing.Type, billing.OrganizationId, txId);
         await _billingService.PayAsync(billing.Id, txId, _clock.Now);
     }
 
@@ -206,29 +226,46 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
             var libHeight = await _indexerProvider.GetCurrentVersionSyncLastIrreversibleBlockHeightsync();
             if (userFundRecord.Metadata.Block.BlockHeight < libHeight)
             {
+                _logger.LogInformation(
+                    "Billing is confirmed. Id: {BillingId}, Type: {BillingType}, OrganizationId: {OrganizationId}",
+                    billing.Id, billing.Type, billing.OrganizationId);
                 await _billingService.ConfirmPaymentAsync(billing.Id);
-                // TODO: Send email
+
+                // TODO: The email content is not friendly and needs to be optimized.
+                var userInfo =
+                    await _userAppService.GetDefaultUserInOrganizationUnitAsync(billing.OrganizationId);
                 if (billing.Type == BillingType.Settlement)
                 {
-                
+
+                    await _billingEmailSender.SendChargeBalanceSuccessfulNotificationAsync(userInfo.Email,
+                        userFundRecord.Address, userFundRecord.Amount, userFundRecord.TransactionId
+                    );
                 }
                 else
                 {
-                    
+                    await _billingEmailSender.SendLockBalanceSuccessfulNotificationAsync(userInfo.Email,
+                        userFundRecord.Address, userFundRecord.Amount, userFundRecord.TransactionId
+                    );
                 }
             }
         }
         else
         {
-            if (_clock.Now > billing.CreateTime.AddDays(_billingOptions.BillingOverdueDays) && 
+            if (_clock.Now > billing.CreateTime.AddMinutes(_billingOptions.BillingOverdueMinutes) &&
                 _clock.Now > billing.PaymentTime.AddMilliseconds(_billingOptions.PaymentWaitingMinutes))
             {
+                _logger.LogInformation(
+                    "Billing pay failed. Id: {BillingId}, Type: {BillingType}, OrganizationId: {OrganizationId}, TxId: {TransactionId}",
+                    billing.Id, billing.Type, billing.OrganizationId, billing.TransactionId);
                 await _billingService.PaymentFailedAsync(billing.Id);
                 return;
             }
-            
+
             if (_clock.Now > billing.PaymentTime.AddMilliseconds(_billingOptions.TransactionTimeoutMinutes))
             {
+                _logger.LogInformation(
+                    "Billing transaction timeout. Id: {BillingId}, Type: {BillingType}, OrganizationId: {OrganizationId}, TxId: {TransactionId}",
+                    billing.Id, billing.Type, billing.OrganizationId, billing.TransactionId);
                 await PayBillingAsync(billing);
             }
         }
