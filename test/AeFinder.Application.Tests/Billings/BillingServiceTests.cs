@@ -114,4 +114,37 @@ public class BillingServiceTests : AeFinderApplicationTestBase
         var billing = await _billingService.GetAsync(AeFinderApplicationTestConsts.OrganizationId, billingState.Id);
         billing.Type.ShouldBe(BillingType.AdvancePayment);
     }
+
+    [Fact]
+    public async Task GetList_Test()
+    {
+        var billingUnpaid = await _billingService.CreateAsync(AeFinderApplicationTestConsts.OrganizationId,
+            BillingType.Settlement, DateTime.UtcNow);
+        var billingConfirming = await _billingService.CreateAsync(AeFinderApplicationTestConsts.OrganizationId,
+            BillingType.Settlement, DateTime.UtcNow);
+        var billingPaid = await _billingService.CreateAsync(AeFinderApplicationTestConsts.OrganizationId,
+            BillingType.Settlement, DateTime.UtcNow);
+        var billingFailed = await _billingService.CreateAsync(AeFinderApplicationTestConsts.OrganizationId,
+            BillingType.Settlement, DateTime.UtcNow);
+
+        await _billingService.PayAsync(billingConfirming.Id, "txid", DateTime.UtcNow);
+        await _billingService.ConfirmPaymentAsync(billingPaid.Id);
+        await _billingService.PaymentFailedAsync(billingFailed.Id);
+
+        await _billingService.UpdateIndexAsync(billingUnpaid.Id);
+        await _billingService.UpdateIndexAsync(billingConfirming.Id);
+        await _billingService.UpdateIndexAsync(billingPaid.Id);
+        await _billingService.UpdateIndexAsync(billingFailed.Id);
+
+        var list = await _billingService.GetListAsync(AeFinderApplicationTestConsts.OrganizationId, new GetBillingInput
+        {
+            IsOutstanding = true,
+            SkipCount = 0,
+            MaxResultCount = 10
+        });
+
+        list.Items.Count.ShouldBe(2);
+        list.Items.ShouldContain(o => o.Id == billingUnpaid.Id);
+        list.Items.ShouldContain(o => o.Id == billingConfirming.Id);
+    }
 }

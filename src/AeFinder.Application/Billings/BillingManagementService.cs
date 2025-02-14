@@ -58,7 +58,8 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
     {
         month = month.ToMonthDate();
         var monthBillingGrain =
-            _clusterClient.GetGrain<IMonthlyBillingGrain>(GrainIdHelper.GenerateGrainId(organizationId, month));
+            _clusterClient.GetGrain<IMonthlyBillingGrain>(
+                GrainIdHelper.GenerateMonthlyBillingGrainId(organizationId, month));
         var monthBilling = await monthBillingGrain.GetAsync();
         if (monthBilling.SettlementBillingId == Guid.Empty)
         {
@@ -79,13 +80,14 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
         {
             if (monthBilling.AdvancePaymentBillingId == Guid.Empty)
             {
-                var advancePaymentBilling = await GetBillingAsync(organizationId, BillingType.Settlement,
+                var advancePaymentBilling = await GetBillingAsync(organizationId, BillingType.AdvancePayment,
                     month.AddMonths(1),
                     month.AddMonths(2).AddSeconds(-1));
                 if (advancePaymentBilling == null)
                 {
                     advancePaymentBilling =
-                        await _billingService.CreateAsync(organizationId, BillingType.AdvancePayment, month);
+                        await _billingService.CreateAsync(organizationId, BillingType.AdvancePayment,
+                            month.AddMonths(1));
                 }
 
                 await monthBillingGrain.SetAdvancePaymentBillingAsync(advancePaymentBilling.Id);
@@ -118,8 +120,10 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
 
     public async Task<bool> IsPaymentFailedAsync(Guid organizationId, DateTime month)
     {
+        month = month.ToMonthDate();
         var monthBillingGrain =
-            _clusterClient.GetGrain<IMonthlyBillingGrain>(GrainIdHelper.GenerateGrainId(organizationId, month));
+            _clusterClient.GetGrain<IMonthlyBillingGrain>(
+                GrainIdHelper.GenerateMonthlyBillingGrainId(organizationId, month));
         var monthBilling = await monthBillingGrain.GetAsync();
 
         // Billing failures are not checked because billing failures are not usually due to the user side.
@@ -206,6 +210,14 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
             "Billing transaction sent. Id: {BillingId}, Type: {BillingType}, OrganizationId: {OrganizationId}, TxId: {TransactionId}",
             billing.Id, billing.Type, billing.OrganizationId, txId);
         await _billingService.PayAsync(billing.Id, txId, _clock.Now);
+        
+        var transactionResult = await _billingContractProvider.GetTransactionResultAsync(txId);
+        if(transactionResult.Status != TransactionState.Mined || 
+           transactionResult.Status != TransactionState.Pending)
+        {
+            _logger.LogError("Billing transaction failed. {TxId}, {Status}, {Error}", txId, transactionResult.Status,
+                transactionResult.Error);
+        }
     }
 
     private async Task HandleConfirmingBillingAsync(BillingState billing)

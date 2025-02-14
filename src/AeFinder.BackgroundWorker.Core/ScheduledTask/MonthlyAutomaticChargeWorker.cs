@@ -39,7 +39,7 @@ public class MonthlyAutomaticChargeWorker: AsyncPeriodicBackgroundWorkerBase, IS
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
-        if (_clock.Now.Day >= _scheduledTaskOptions.MonthlyAutomaticChargeDay)
+        if (_clock.Now.Day < _scheduledTaskOptions.MonthlyAutomaticChargeDay)
         {
             return;
         }
