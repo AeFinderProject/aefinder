@@ -264,7 +264,7 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
         else
         {
             if (_clock.Now > billing.CreateTime.AddMinutes(_billingOptions.BillingOverdueMinutes) &&
-                _clock.Now > billing.PaymentTime.AddMilliseconds(_billingOptions.PaymentWaitingMinutes))
+                _clock.Now > billing.PaymentTime.AddMinutes(_billingOptions.PaymentWaitingMinutes))
             {
                 _logger.LogInformation(
                     "Billing pay failed. Id: {BillingId}, Type: {BillingType}, OrganizationId: {OrganizationId}, TxId: {TransactionId}",
@@ -273,7 +273,7 @@ public class BillingManagementService : AeFinderAppService, IBillingManagementSe
                 return;
             }
 
-            if (_clock.Now > billing.PaymentTime.AddMilliseconds(_billingOptions.TransactionTimeoutMinutes))
+            if (_clock.Now > billing.PaymentTime.AddMinutes(_billingOptions.TransactionTimeoutMinutes))
             {
                 _logger.LogInformation(
                     "Billing transaction timeout. Id: {BillingId}, Type: {BillingType}, OrganizationId: {OrganizationId}, TxId: {TransactionId}",
