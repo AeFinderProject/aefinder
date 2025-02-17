@@ -115,6 +115,7 @@ public class AeFinderBackGroundModule : AbpModule
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<BalanceWarningWorker>());
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<CleanExpiredAssetWorker>());
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<FreezeRenewalFailedAssetWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppResourceUsageWorker>());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)

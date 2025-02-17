@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using AeFinder.ApiKeys;
 using AeFinder.App.Deploy;
+using AeFinder.AppResources;
+using AeFinder.AppResources.Dto;
 using AeFinder.Apps.Dto;
 using AeFinder.Assets;
 using AeFinder.BlockScan;
@@ -40,6 +42,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IAppEmailSender _appEmailSender;
     private readonly IApiKeyService _apiKeyService;
     private readonly PodResourceOptions _podResourceOptions;
+    private readonly IAppResourceUsageService _appResourceUsageService;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
@@ -50,12 +53,13 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         IAssetService assetService,
         IApiKeyService apiKeyService,
         IUserAppService userAppService, IAppEmailSender appEmailSender,
-        IAppResourceLimitProvider appResourceLimitProvider)
+        IAppResourceLimitProvider appResourceLimitProvider, IAppResourceUsageService appResourceUsageService)
     {
         _clusterClient = clusterClient;
         _blockScanAppService = blockScanAppService;
         _appDeployManager = appDeployManager;
         _appResourceLimitProvider = appResourceLimitProvider;
+        _appResourceUsageService = appResourceUsageService;
         _organizationAppService = organizationAppService;
         _appDeployOptions = appDeployOptions.Value;
         _customOrganizationOptions = customOrganizationOptions.Value;
@@ -386,6 +390,22 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             if (!_customOrganizationOptions.CustomApps.Contains(appId))
             {
                 throw new UserFriendlyException("Please purchase storage capacity before proceeding with deployment.");
+            }
+        }
+        else
+        {
+            var appResourceUsage = await _appResourceUsageService.GetListAsync(null, new GetAppResourceUsageInput
+            {
+                AppId = appId
+            });
+
+            if (appResourceUsage.Items.Any())
+            {
+                var storageUsage = appResourceUsage.Items.First().ResourceUsages.Sum(o => o.Value.StoreSize);
+                if (storageUsage > storageAsset.Replicas)
+                {
+                    throw new UserFriendlyException("Storage is insufficient. Please purchase more storage.");
+                }
             }
         }
     }

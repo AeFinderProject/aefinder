@@ -1,3 +1,5 @@
+using AeFinder.AppResources;
+using AeFinder.AppResources.Dto;
 using AeFinder.Apps;
 using AeFinder.Assets;
 using AeFinder.BackgroundWorker.Options;
@@ -31,6 +33,7 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
     private readonly IUserAppService _userAppService;
     private readonly CustomOrganizationOptions _customOrganizationOptions;
     private readonly IBillingService _billingService;
+    private readonly IAppResourceUsageService _appResourceUsageService;
     
     public CleanExpiredAssetWorker(AbpAsyncTimer timer,
         ILogger<CleanExpiredAssetWorker> logger,
@@ -44,7 +47,7 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
         IUserAppService userAppService,
         IOptionsSnapshot<CustomOrganizationOptions> customOrganizationOptions,
         IBillingService billingService,
-        IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
+        IServiceScopeFactory serviceScopeFactory, IAppResourceUsageService appResourceUsageService) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
@@ -57,6 +60,7 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
         _userAppService = userAppService;
         _customOrganizationOptions = customOrganizationOptions.Value;
         _billingService = billingService;
+        _appResourceUsageService = appResourceUsageService;
         // Timer.Period = 1 * 60 * 60 * 1000; // 3600000 milliseconds = 1 hours
         Timer.Period = _scheduledTaskOptions.CleanExpiredAssetTaskPeriodMilliSeconds;
     }
@@ -130,6 +134,8 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
                     await _appDeployService.DestroyAppAllSubscriptionAsync(appId);
                     continue;
                 }
+
+                await CheckAppStorageAsync(appId, appAssets);
             }
 
         }
@@ -216,4 +222,25 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
         return resultList;
     }
 
+    private async Task CheckAppStorageAsync(string appId, List<AssetDto> appAssets)
+    {
+        var appResourceUsage = await _appResourceUsageService.GetListAsync(null, new GetAppResourceUsageInput
+        {
+            AppId = appId
+        });
+
+        if (appResourceUsage.Items.Any())
+        {
+            var storageAsset =
+                appAssets.First(o => o.Status == AssetStatus.Using && o.Merchandise.Type == MerchandiseType.Storage);
+            var storageUsage = appResourceUsage.Items.First().ResourceUsages.Sum(o => o.Value.StoreSize);
+            if (storageUsage > storageAsset.Replicas)
+            {
+                _logger.LogInformation(
+                    "App {App}: storage uasge ({StorageUsage} GB) exceeds the purchased amount ({StorageAsset} GB).",
+                    appId, storageUsage, storageAsset.Replicas);
+                await _appDeployService.DestroyAppAllSubscriptionAsync(appId);
+            }
+        }
+    }
 }

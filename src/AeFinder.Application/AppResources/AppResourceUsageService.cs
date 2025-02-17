@@ -28,6 +28,11 @@ public class AppResourceUsageService : AeFinderAppService, IAppResourceUsageServ
         await _entityMappingRepository.AddOrUpdateAsync(index);
     }
 
+    public async Task DeleteAsync(string appId)
+    {
+        await _entityMappingRepository.DeleteAsync(appId);
+    }
+
     public async Task<PagedResultDto<AppResourceUsageDto>> GetListAsync(Guid? organizationId,
         GetAppResourceUsageInput input)
     {

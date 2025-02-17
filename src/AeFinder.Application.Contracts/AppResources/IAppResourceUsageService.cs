@@ -8,5 +8,6 @@ namespace AeFinder.AppResources;
 public interface IAppResourceUsageService
 {
     Task AddOrUpdateAsync(AppResourceUsageDto input);
+    Task DeleteAsync(string appId);
     Task<PagedResultDto<AppResourceUsageDto>> GetListAsync(Guid? organizationId, GetAppResourceUsageInput input);
 }
