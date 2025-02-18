@@ -6,7 +6,7 @@ using Nest;
 
 namespace AeFinder.App.Es;
 
-public class AppResourceUsageIndex : AeFinderEntity<string>, IEntityMappingEntity
+public class AppResourceUsageIndex : AeFinderDomainEntity<string>, IEntityMappingEntity
 {
     [Keyword]
     public override string Id => AppInfo.AppId;

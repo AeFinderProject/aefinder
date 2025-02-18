@@ -39,7 +39,7 @@ public class AppResourceUsageService : AeFinderAppService, IAppResourceUsageServ
         var queryable = await _entityMappingRepository.GetQueryableAsync();
         if (organizationId.HasValue)
         {
-            queryable = queryable.Where(o => o.OrganizationId == organizationId);
+            queryable = queryable.Where(o => o.OrganizationId == organizationId.Value);
         }
 
         if (!input.AppId.IsNullOrWhiteSpace())
