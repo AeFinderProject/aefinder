@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -36,13 +37,32 @@ public class AppResourceUsageServiceTests : AeFinderApplicationAppTestBase
                 AppName = "app1"
             },
             OrganizationId = AeFinderApplicationTestConsts.OrganizationId,
-            ResourceUsages = new Dictionary<string, ResourceUsageDto>
+            ResourceUsages = new Dictionary<string, List<ResourceUsageDto>>
             {
-                { "version1", new ResourceUsageDto { StoreSize = 100 } },
-                { "version2", new ResourceUsageDto { StoreSize = 200 } }
+                {
+                    "version1", new List<ResourceUsageDto>
+                    {
+                        new ResourceUsageDto
+                        {
+                            Name = AeFinderApplicationConsts.AppStorageResourceName,
+                            Limit = "200",
+                            Usage = "100"
+                        }
+                    }
+                },
+                {
+                    "version2", new List<ResourceUsageDto>
+                    {
+                        new ResourceUsageDto
+                        {
+                            Name = AeFinderApplicationConsts.AppStorageResourceName,
+                            Limit = "400",
+                            Usage = "200"
+                        }
+                    }
+                }
             }
         };
-        await _appResourceUsageService.AddOrUpdateAsync(appUsage1);
         
         var appUsage2 = new AppResourceUsageDto
         {
@@ -52,13 +72,37 @@ public class AppResourceUsageServiceTests : AeFinderApplicationAppTestBase
                 AppName = "app2"
             },
             OrganizationId = AeFinderApplicationTestConsts.OrganizationId,
-            ResourceUsages = new Dictionary<string, ResourceUsageDto>
+            ResourceUsages = new Dictionary<string, List<ResourceUsageDto>>
             {
-                { "version1", new ResourceUsageDto { StoreSize = 110 } },
-                { "version2", new ResourceUsageDto { StoreSize = 210 } }
+                {
+                    "version1", new List<ResourceUsageDto>
+                    {
+                        new ResourceUsageDto
+                        {
+                            Name = AeFinderApplicationConsts.AppStorageResourceName,
+                            Limit = "2200",
+                            Usage = "2100"
+                        }
+                    }
+                },
+                {
+                    "version2", new List<ResourceUsageDto>
+                    {
+                        new ResourceUsageDto
+                        {
+                            Name = AeFinderApplicationConsts.AppStorageResourceName,
+                            Limit = "600",
+                            Usage = "300"
+                        }
+                    }
+                }
             }
         };
-        await _appResourceUsageService.AddOrUpdateAsync(appUsage2);
+        await _appResourceUsageService.AddOrUpdateAsync(new List<AppResourceUsageDto>
+        {
+            appUsage1,
+            appUsage2
+        });
 
         var list = await _appResourceUsageService.GetListAsync(AeFinderApplicationTestConsts.OrganizationId,
             new GetAppResourceUsageInput());
@@ -79,7 +123,14 @@ public class AppResourceUsageServiceTests : AeFinderApplicationAppTestBase
             });
         list.Items.Count.ShouldBe(1);
         list.Items[0].AppInfo.AppId.ShouldBe("app1");
-        list.Items[0].ResourceUsages.Sum(o => o.Value.StoreSize).ShouldBe(300);
+        list.Items[0].ResourceUsages["version1"].Count().ShouldBe(1);
+        list.Items[0].ResourceUsages["version1"][0].Name.ShouldBe(AeFinderApplicationConsts.AppStorageResourceName);
+        list.Items[0].ResourceUsages["version1"][0].Limit.ShouldBe("200");
+        list.Items[0].ResourceUsages["version1"][0].Usage.ShouldBe("100");
+        list.Items[0].ResourceUsages["version2"].Count().ShouldBe(1);
+        list.Items[0].ResourceUsages["version2"][0].Name.ShouldBe(AeFinderApplicationConsts.AppStorageResourceName);
+        list.Items[0].ResourceUsages["version2"][0].Limit.ShouldBe("400");
+        list.Items[0].ResourceUsages["version2"][0].Usage.ShouldBe("200");
 
         await _appResourceUsageService.DeleteAsync("app1");
         

@@ -22,10 +22,10 @@ public class AppResourceUsageService : AeFinderAppService, IAppResourceUsageServ
         _entityMappingRepository = entityMappingRepository;
     }
 
-    public async Task AddOrUpdateAsync(AppResourceUsageDto input)
+    public async Task AddOrUpdateAsync(List<AppResourceUsageDto> input)
     {
-        var index = ObjectMapper.Map<AppResourceUsageDto, AppResourceUsageIndex>(input);
-        await _entityMappingRepository.AddOrUpdateAsync(index);
+        var index = ObjectMapper.Map<List<AppResourceUsageDto>, List<AppResourceUsageIndex>>(input);
+        await _entityMappingRepository.AddOrUpdateManyAsync(index);
     }
 
     public async Task DeleteAsync(string appId)

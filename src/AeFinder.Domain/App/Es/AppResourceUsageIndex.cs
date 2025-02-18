@@ -16,10 +16,13 @@ public class AppResourceUsageIndex : AeFinderDomainEntity<string>, IEntityMappin
     [Keyword] 
     public Guid OrganizationId { get; set; }
 
-    public Dictionary<string, ResourceUsageIndex> ResourceUsages { get; set; }
+    // Version -> ResourceUsage
+    public Dictionary<string, List<ResourceUsageIndex>> ResourceUsages { get; set; }
 }
 
 public class ResourceUsageIndex
 {
-    public decimal StoreSize { get; set; }
+    public string Name { get; set; }
+    public string Limit { get; set; }
+    public string Usage { get; set; }
 }

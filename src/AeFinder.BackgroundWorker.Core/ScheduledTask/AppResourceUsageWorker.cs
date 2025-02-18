@@ -2,7 +2,9 @@ using AeFinder.App.Es;
 using AeFinder.AppResources;
 using AeFinder.AppResources.Dto;
 using AeFinder.Apps;
+using AeFinder.Assets;
 using AeFinder.BackgroundWorker.Options;
+using AeFinder.Merchandises;
 using AElf.EntityMapping.Elasticsearch;
 using Elasticsearch.Net;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +23,7 @@ public class AppResourceUsageWorker : AsyncPeriodicBackgroundWorkerBase, ISingle
     private readonly IAppService _appService;
     private readonly AppResourceOptions _appResourceOptions;
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
+    private readonly IAssetService _assetService;
 
     public AppResourceUsageWorker(AbpAsyncTimer timer, IServiceScopeFactory serviceScopeFactory,
         IAppResourceUsageService appResourceUsageService, IElasticsearchClientProvider elasticsearchClientProvider,
@@ -33,11 +36,95 @@ public class AppResourceUsageWorker : AsyncPeriodicBackgroundWorkerBase, ISingle
         _appService = appService;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
         _appResourceOptions = appResourceOptions.Value;
-        
+
         Timer.Period = _scheduledTaskOptions.AppResourceUsageTaskPeriodMilliSeconds;
     }
 
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
+    {
+        var indices = await GetIndicesRecordsAsync();
+        
+        var skipCount = 0;
+        var maxResultCount = 100;
+        var apps = await _appService.GetIndexListAsync(new GetAppInput
+        {
+            SkipCount = skipCount,
+            MaxResultCount = maxResultCount
+        });
+
+        while (apps.Items.Count > 0)
+        {
+            var toAddAppResourceUsage = new List<AppResourceUsageDto>();
+            foreach (var app in apps.Items)
+            {
+                if (!indices.TryGetValue(app.AppId, out var records))
+                {
+                    await _appResourceUsageService.DeleteAsync(app.AppId);
+                }
+                else
+                {
+                    var appResourceUsage = new AppResourceUsageDto
+                    {
+                        AppInfo = new AppInfoImmutable
+                        {
+                            AppId = app.AppId,
+                            AppName = app.AppName
+                        },
+                        OrganizationId = Guid.Parse(app.OrganizationId),
+                        ResourceUsages = new Dictionary<string, List<ResourceUsageDto>>()
+                    };
+
+                    var storeSizes = new Dictionary<string, decimal>();
+                    foreach (var record in records)
+                    {
+                        var version = record.Index.Split('.')[0].Split('-')[1];
+                        if (!storeSizes.TryGetValue(version, out var usage))
+                        {
+                            usage = 0;
+                        }
+
+                        usage += Convert.ToDecimal(record.PrimaryStoreSize) * _appResourceOptions.StoreReplicates /
+                                 1024;
+                        storeSizes[version] = usage;
+                    }
+                    
+                    var storageLimit = await GetStorageLimitAsync(Guid.Parse(app.OrganizationId), app.AppId);
+
+                    foreach (var storeSize in storeSizes)
+                    {
+                        if (!appResourceUsage.ResourceUsages.TryGetValue(storeSize.Key, out var resourceUsage))
+                        {
+                            resourceUsage = new List<ResourceUsageDto>();
+                        }
+
+                        resourceUsage.Add(new ResourceUsageDto
+                        {
+                            Name = AeFinderApplicationConsts.AppStorageResourceName,
+                            Limit = storageLimit.ToString(),
+                            Usage = storeSize.Value.ToString("F2")
+                        });
+                        appResourceUsage.ResourceUsages[storeSize.Key] = resourceUsage;
+                    }
+                    
+                    toAddAppResourceUsage.Add(appResourceUsage);
+                }
+
+                if (toAddAppResourceUsage.Count > 0)
+                {
+                    await _appResourceUsageService.AddOrUpdateAsync(toAddAppResourceUsage);
+                }
+            }
+
+            skipCount += maxResultCount;
+            apps = await _appService.GetIndexListAsync(new GetAppInput
+            {
+                SkipCount = skipCount,
+                MaxResultCount = maxResultCount
+            });
+        }
+    }
+
+    private async Task<Dictionary<string, List<CatIndicesRecord>>> GetIndicesRecordsAsync()
     {
         var client = _elasticsearchClientProvider.GetClient();
         var catResponse = await client.Cat.IndicesAsync(r => r.Bytes(Bytes.Mb));
@@ -55,57 +142,18 @@ public class AppResourceUsageWorker : AsyncPeriodicBackgroundWorkerBase, ISingle
             indices[appId] = records;
         }
 
-        var skipCount = 0;
-        var maxResultCount = 100;
-        var apps = await _appService.GetIndexListAsync(new GetAppInput
+        return indices;
+    }
+
+    private async Task<decimal> GetStorageLimitAsync(Guid organizationId, string appId)
+    {
+        var storageAssets = await _assetService.GetListAsync(organizationId, new GetAssetInput()
         {
-            SkipCount = skipCount,
-            MaxResultCount = maxResultCount
+            Type = MerchandiseType.Storage,
+            AppId = appId,
+            IsDeploy = true
         });
-
-        while (apps.Items.Count > 0)
-        {
-            foreach (var app in apps.Items)
-            {
-                if (!indices.TryGetValue(app.AppId, out var records))
-                {
-                    await _appResourceUsageService.DeleteAsync(app.AppId);
-                }
-                else
-                {
-                    var appResourceUsage = new AppResourceUsageDto
-                    {
-                        AppInfo = new AppInfoImmutable
-                        {
-                            AppId = app.AppId,
-                            AppName = app.AppName
-                        },
-                        OrganizationId = Guid.Parse(app.OrganizationId),
-                        ResourceUsages = new Dictionary<string, ResourceUsageDto>()
-                    };
-
-                    foreach (var record in records)
-                    {
-                        var version = record.Index.Split('.')[0].Split('-')[1];
-                        if (!appResourceUsage.ResourceUsages.TryGetValue(version, out var resourceUsage))
-                        {
-                            resourceUsage = new ResourceUsageDto();
-                        }
-
-                        resourceUsage.StoreSize += Convert.ToDecimal(record.PrimaryStoreSize) *
-                            _appResourceOptions.StoreReplicates / 1024;
-                    }
-
-                    await _appResourceUsageService.AddOrUpdateAsync(appResourceUsage);
-                }
-            }
-
-            skipCount += maxResultCount;
-            apps = await _appService.GetIndexListAsync(new GetAppInput
-            {
-                SkipCount = skipCount,
-                MaxResultCount = maxResultCount
-            });
-        }
+        var storageAsset = storageAssets.Items.FirstOrDefault();
+        return storageAsset?.Replicas ?? 0;
     }
 }

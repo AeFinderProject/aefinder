@@ -233,7 +233,12 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
         {
             var storageAsset =
                 appAssets.First(o => o.Status == AssetStatus.Using && o.Merchandise.Type == MerchandiseType.Storage);
-            var storageUsage = appResourceUsage.Items.First().ResourceUsages.Sum(o => o.Value.StoreSize);
+            
+            var storageUsage = appResourceUsage.Items.First().ResourceUsages.Sum(resourceUsages =>
+                resourceUsages.Value
+                    .Where(resourceUsage => resourceUsage.Name == AeFinderApplicationConsts.AppStorageResourceName)
+                    .Sum(resourceUsage => Convert.ToDecimal(resourceUsage.Usage)));
+            
             if (storageUsage > storageAsset.Replicas)
             {
                 _logger.LogInformation(

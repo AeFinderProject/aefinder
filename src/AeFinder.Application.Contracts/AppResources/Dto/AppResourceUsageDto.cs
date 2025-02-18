@@ -8,10 +8,12 @@ public class AppResourceUsageDto
 {
     public AppInfoImmutable AppInfo { get; set; }
     public Guid OrganizationId { get; set; }
-    public Dictionary<string, ResourceUsageDto> ResourceUsages { get; set; }
+    public Dictionary<string, List<ResourceUsageDto>> ResourceUsages { get; set; }
 }
 
 public class ResourceUsageDto
 {
-    public decimal StoreSize { get; set; }
+    public string Name { get; set; }
+    public string Limit { get; set; }
+    public string Usage { get; set; }
 }

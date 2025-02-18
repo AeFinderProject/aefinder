@@ -401,7 +401,11 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
             if (appResourceUsage.Items.Any())
             {
-                var storageUsage = appResourceUsage.Items.First().ResourceUsages.Sum(o => o.Value.StoreSize);
+                var storageUsage = appResourceUsage.Items.First().ResourceUsages.Sum(resourceUsages =>
+                    resourceUsages.Value
+                        .Where(resourceUsage => resourceUsage.Name == AeFinderApplicationConsts.AppStorageResourceName)
+                        .Sum(resourceUsage => Convert.ToDecimal(resourceUsage.Usage)));
+                
                 if (storageUsage > storageAsset.Replicas)
                 {
                     throw new UserFriendlyException("Storage is insufficient. Please purchase more storage.");
