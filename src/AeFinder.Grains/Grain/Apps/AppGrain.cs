@@ -119,6 +119,12 @@ public class AppGrain : AeFinderGrain<AppState>, IAppGrain
     public async Task DeleteAppAsync()
     {
         await ReadStateAsync();
+        
+        var organizationAppGain =
+            GrainFactory.GetGrain<IOrganizationAppGrain>(
+                GrainIdHelper.GenerateOrganizationAppGrainId(State.OrganizationId));
+        await organizationAppGain.DeleteAppAsync(State.AppId);
+        
         State.Status = AppStatus.Deleted;
         State.DeleteTime = DateTime.UtcNow;
         await WriteStateAsync();
