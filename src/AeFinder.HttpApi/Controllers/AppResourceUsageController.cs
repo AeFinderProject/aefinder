@@ -6,6 +6,7 @@ using AeFinder.AppResources;
 using AeFinder.AppResources.Dto;
 using AeFinder.User;
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -28,6 +29,7 @@ public class AppResourceUsageController : AeFinderController
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<PagedResultDto<AppResourceUsageDto>> GetListAsync(GetAppResourceUsageInput input)
     {
         Guid? orgId = null;
