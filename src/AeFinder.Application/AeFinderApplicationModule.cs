@@ -70,6 +70,7 @@ public class AeFinderApplicationModule : AbpModule
         context.Services.Configure<AssetInitializationOptions>(configuration.GetSection("AssetInitialization"));
         context.Services.Configure<EmailTemplateOptions>(configuration.GetSection("EmailTemplate"));
         context.Services.Configure<UserRegisterOptions>(configuration.GetSection("UserRegister"));
+        context.Services.Configure<BillingOptions>(configuration.GetSection("Billing"));
         
         Configure<AbpClockOptions>(options =>
         {
