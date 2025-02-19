@@ -4,6 +4,7 @@ using AeFinder.Assets;
 using AeFinder.BackgroundWorker.Options;
 using AeFinder.Billings;
 using AeFinder.Email;
+using AeFinder.Enums;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
 using AeFinder.Merchandises;
@@ -15,14 +16,14 @@ using Microsoft.Extensions.Options;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Threading;
+using Volo.Abp.Timing;
 using Volo.Abp.Uow;
 
 namespace AeFinder.BackgroundWorker.ScheduledTask;
 
-public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
+public class CheckPayFailedBillingWorker: AsyncPeriodicBackgroundWorkerBase, ISingletonDependency
 {
-    private readonly ILogger<FreezeRenewalFailedAssetWorker> _logger;
-    private readonly ScheduledTaskOptions _scheduledTaskOptions;
+    private readonly ILogger<CheckPayFailedBillingWorker> _logger;
     private readonly IClusterClient _clusterClient;
     private readonly IOrganizationAppService _organizationAppService;
     private readonly IAssetService _assetService;
@@ -31,11 +32,13 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
     private readonly IAppEmailSender _appEmailSender;
     private readonly IUserAppService _userAppService;
     private readonly CustomOrganizationOptions _customOrganizationOptions;
-    private readonly IBillingService _billingService;
     private readonly IApiKeyService _apiKeyService;
-    
-    public FreezeRenewalFailedAssetWorker(AbpAsyncTimer timer,
-        ILogger<FreezeRenewalFailedAssetWorker> logger,
+    private readonly IBillingManagementService _billingManagementService;
+    private readonly IClock _clock;
+    private readonly BillingOptions _billingOptions;
+
+    public CheckPayFailedBillingWorker(AbpAsyncTimer timer,
+        ILogger<CheckPayFailedBillingWorker> logger,
         IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions,
         IClusterClient clusterClient,
         IOrganizationAppService organizationAppService,
@@ -45,12 +48,11 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
         IAppEmailSender appEmailSender,
         IUserAppService userAppService,
         IOptionsSnapshot<CustomOrganizationOptions> customOrganizationOptions,
-        IBillingService billingService,
         IApiKeyService apiKeyService,
-        IServiceScopeFactory serviceScopeFactory) : base(timer, serviceScopeFactory)
+        IServiceScopeFactory serviceScopeFactory, IBillingManagementService billingManagementService,
+        IClock clock, IOptionsSnapshot<BillingOptions> billingOptions) : base(timer, serviceScopeFactory)
     {
         _logger = logger;
-        _scheduledTaskOptions = scheduledTaskOptions.Value;
         _clusterClient = clusterClient;
         _organizationAppService = organizationAppService;
         _assetService = assetService;
@@ -59,57 +61,29 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
         _appEmailSender = appEmailSender;
         _userAppService = userAppService;
         _customOrganizationOptions = customOrganizationOptions.Value;
-        _billingService = billingService;
         _apiKeyService = apiKeyService;
-        // Timer.Period = 24 * 60 * 60 * 1000; // 86400000 milliseconds = 24 hours
-        Timer.Period = _scheduledTaskOptions.FreezeRenewalFailedAssetTaskPeriodMilliSeconds;
+        _billingManagementService = billingManagementService;
+        _clock = clock;
+        _billingOptions = billingOptions.Value;
+        Timer.Period = scheduledTaskOptions.Value.CheckPayFailedBillingTaskPeriodMilliSeconds;
     }
-    
+
     [UnitOfWork]
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
-        var now = DateTime.UtcNow;
-        //Check if it is within the expiration buffer period
-        var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
-        if (firstDayOfThisMonth.AddDays(_scheduledTaskOptions.UnpaidBillTimeOutDays) > now)
-        {
-            return;
-        }
-        await ProcessRenewalFailedAssetAsync();
-    }
-
-    private async Task ProcessRenewalFailedAssetAsync()
-    {
-        _logger.LogInformation("[FreezeRenewalFailedAssetWorker] Process renewal failed asset async.");
         var organizationUnitList = await _organizationAppService.GetAllOrganizationUnitsAsync();
-        foreach (var organizationUnitDto in organizationUnitList)
+        foreach (var organization in organizationUnitList)
         {
-            var organizationId = organizationUnitDto.Id.ToString();
-            var organizationName = organizationUnitDto.DisplayName;
-            var now = DateTime.UtcNow;
-            
-            //Get advance payment bills
-            var firstDayOfThisMonth = new DateTime(now.Year, now.Month, 1);
-            var nextMonth = now.AddMonths(1);
-            var firstDayOfNextMonth = new DateTime(nextMonth.Year, nextMonth.Month, 1);
-            var lastDayOfThisMonth = firstDayOfNextMonth.AddDays(-1);
-            var advanceBillBeginTime = new DateTime(now.Year, now.Month, 1, 0, 0, 0);
-            var advanceBillEndTime = new DateTime(lastDayOfThisMonth.Year, lastDayOfThisMonth.Month, lastDayOfThisMonth.Day,
-                23, 59, 59);
-
-            var advancePaymentBills =
-                await GetPaymentBillingListAsync(organizationUnitDto.Id, BillingType.AdvancePayment,
-                    BillingStatus.Unpaid, advanceBillBeginTime, advanceBillEndTime);
-            
-            foreach (var advancePaymentBill in advancePaymentBills)
+            if (organization.OrganizationStatus == OrganizationStatus.Normal &&
+                await _billingManagementService.IsPaymentFailedAsync(organization.Id,
+                    _clock.Now.AddMonths(_billingOptions.PayFailedBillingCheckMonth)))
             {
-                _logger.LogInformation($"[FreezeRenewalFailedAssetWorker] Process unpaid advance bill {advancePaymentBill.Id} of organization {organizationName}.");
-                await HandleUnpaidAdvanceBillAsync(organizationUnitDto.Id, advancePaymentBill);
+                await FrozenOrganizationAsync(organization.Id);
             }
         }
     }
-    
-    private async Task HandleUnpaidAdvanceBillAsync(Guid organizationGuid, BillingDto advancePaymentBill)
+
+    private async Task FrozenOrganizationAsync(Guid organizationGuid)
     {
         var organizationAppGrain =
             _clusterClient.GetGrain<IOrganizationAppGrain>(
@@ -146,7 +120,7 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
         {
             Type = MerchandiseType.ApiQuery,
             SkipCount = 0,
-            MaxResultCount = 10
+            MaxResultCount = 1
         });
         if (apiQueryAsset != null && apiQueryAsset.Items.Count > 0)
         {
@@ -157,45 +131,6 @@ public class FreezeRenewalFailedAssetWorker: AsyncPeriodicBackgroundWorkerBase, 
         
         //Freeze organization
         await _organizationAppService.FreezeOrganizationAsync(organizationGuid);
-        
-        //Set bill to payment failed
-        await _billingService.PaymentFailedAsync(advancePaymentBill.Id);
-        _logger.LogInformation($"[FreezeRenewalFailedAssetWorker] The organization {organizationGuid.ToString()} advance bill {advancePaymentBill.Id.ToString()} payment has been failed.");
-    }
-    
-    private async Task<List<BillingDto>> GetPaymentBillingListAsync(Guid organizationGuid, BillingType type,
-        BillingStatus billingStatus,DateTime billBeginTime, DateTime billEndTime)
-    {
-        var resultList = new List<BillingDto>();
-        int skipCount = 0;
-        int maxResultCount = 10;
-
-        while (true)
-        {
-            var bills = await _billingService.GetListAsync(organizationGuid, new GetBillingInput()
-            {
-                BeginTime = billBeginTime,
-                EndTime = billEndTime,
-                Type = type,
-                Status = billingStatus,
-                SkipCount = skipCount,
-                MaxResultCount = maxResultCount
-            });
-            if (bills?.Items == null || bills.Items.Count == 0)
-            {
-                break;
-            }
-
-            resultList.AddRange(bills.Items);
-
-            if (bills.Items.Count < maxResultCount)
-            {
-                break;
-            }
-
-            skipCount += maxResultCount;
-        }
-
-        return resultList;
+        _logger.LogInformation("The organization {OrganizationGuid} has been frozen.", organizationGuid);
     }
 }

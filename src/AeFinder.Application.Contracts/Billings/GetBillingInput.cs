@@ -9,6 +9,7 @@ public class GetBillingInput: PagedResultRequestDto
     public DateTime? EndTime { get; set; }
     public BillingType? Type { get; set; }
     public BillingStatus? Status { get; set; }
+    public bool? IsOutstanding { get; set; }
     public BillingSortType Sort { get; set; } = BillingSortType.BillingTimeDesc;
 }
 

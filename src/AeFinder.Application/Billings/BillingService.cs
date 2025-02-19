@@ -81,6 +81,12 @@ public class BillingService : AeFinderAppService, IBillingService
             queryable = queryable.Where(o => o.Type == (int)input.Type);
         }
 
+        if (input.IsOutstanding.HasValue)
+        {
+            queryable = queryable.Where(o =>
+                o.Status == (int)BillingStatus.Unpaid || o.Status == (int)BillingStatus.Confirming);
+        }
+
         var totalCount = queryable.Count();
         if (input.Sort == BillingSortType.BillingTimeAsc)
         {

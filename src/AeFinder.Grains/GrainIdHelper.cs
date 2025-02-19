@@ -209,4 +209,9 @@ public static class GrainIdHelper
     {
         return GenerateGrainId(email.ToLower());
     }
+    
+    public static string GenerateMonthlyBillingGrainId(Guid organizationId, DateTime dateTime)
+    {
+        return GenerateGrainId(organizationId.ToString("N"), dateTime.ToString("yyyyMM"));
+    }
 }
