@@ -40,7 +40,7 @@ public class GraphqlController : AeFinderController
         string version = null)
     {
         var response =
-            await _graphQLAppService.RequestForwardAsync(appId, version, _kubernetesOption.OriginName, input);
+            await _graphQLAppService.RequestForwardAsync(appId, version, _kubernetesOption.OriginName, _kubernetesOption.AppNameSpace, input);
 
         if (response.IsSuccessStatusCode)
         {
