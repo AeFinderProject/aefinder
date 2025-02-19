@@ -36,12 +36,11 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
     }
 
     public async Task<HttpResponseMessage> RequestForwardAsync(string appId, string version,
-        string kubernetesOriginName, GraphQLQueryInput input)
+        string kubernetesOriginName,string appNameSpace, GraphQLQueryInput input)
     {
         var serverUrl = "";
-        string originName = kubernetesOriginName.TrimEnd('/');
-
-        string currentVersion = await EnsureCurrentVersion(appId, version);
+        
+        var currentVersion = await EnsureCurrentVersion(appId, version);
         if (currentVersion == null)
         {
             var exceptionResponse = new HttpResponseMessage(HttpStatusCode.NotFound)
@@ -52,6 +51,9 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
             return exceptionResponse;
         }
 
+        var originName = !string.IsNullOrWhiteSpace(kubernetesOriginName)
+            ? kubernetesOriginName.TrimEnd('/')
+            : GetAppServiceHost(appId, currentVersion, appNameSpace);
         serverUrl = $"{originName}/{appId}/{currentVersion}/graphql";
 
         _logger.LogDebug("RequestForward:" + serverUrl);
@@ -62,6 +64,17 @@ public class GraphQLAppService : AeFinderAppService, IGraphQLAppService, ISingle
         var response = await httpClient.PostAsync(serverUrl, content);
 
         return response;
+    }
+    
+    private string GetAppServiceName(string appId, string version)
+    {
+        appId = appId.Replace("_", "-");
+        return $"service-{appId}-{version}".ToLower();
+    }
+    
+    private string GetAppServiceHost(string appId, string version, string appNameSpace)
+    {
+        return $"http://{GetAppServiceName(appId, version)}.{appNameSpace}.svc";
     }
 
     private async Task<string> EnsureCurrentVersion(string appId, string version)
