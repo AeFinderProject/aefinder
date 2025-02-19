@@ -233,18 +233,21 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
         {
             var storageAsset =
                 appAssets.First(o => o.Status == AssetStatus.Using && o.Merchandise.Type == MerchandiseType.Storage);
-            
-            var storageUsage = appResourceUsage.Items.First().ResourceUsages.Sum(resourceUsages =>
-                resourceUsages.Value
-                    .Where(resourceUsage => resourceUsage.Name == AeFinderApplicationConsts.AppStorageResourceName)
-                    .Sum(resourceUsage => Convert.ToDecimal(resourceUsage.Usage)));
-            
-            if (storageUsage > storageAsset.Replicas)
+
+            foreach (var resourceUsage in appResourceUsage.Items.First().ResourceUsages.Values
+                         .SelectMany(resourceUsages => resourceUsages.Where(resourceUsage =>
+                             resourceUsage.Name == AeFinderApplicationConsts.AppStorageResourceName)))
             {
+                if (Convert.ToDecimal(resourceUsage.Usage) <= storageAsset.Replicas)
+                {
+                    continue;
+                }
+
                 _logger.LogInformation(
-                    "App {App}: storage uasge ({StorageUsage} GB) exceeds the purchased amount ({StorageAsset} GB).",
-                    appId, storageUsage, storageAsset.Replicas);
+                    "App {App}: storage usage ({StorageUsage} GB) exceeds the purchased amount ({StorageAsset} GB).",
+                    appId, resourceUsage.Usage, storageAsset.Replicas);
                 await _appDeployService.DestroyAppAllSubscriptionAsync(appId);
+                return;
             }
         }
     }

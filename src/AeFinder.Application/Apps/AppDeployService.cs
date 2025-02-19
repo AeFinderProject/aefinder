@@ -401,14 +401,14 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
             if (appResourceUsage.Items.Any())
             {
-                var storageUsage = appResourceUsage.Items.First().ResourceUsages.Sum(resourceUsages =>
-                    resourceUsages.Value
-                        .Where(resourceUsage => resourceUsage.Name == AeFinderApplicationConsts.AppStorageResourceName)
-                        .Sum(resourceUsage => Convert.ToDecimal(resourceUsage.Usage)));
-                
-                if (storageUsage > storageAsset.Replicas)
+                foreach (var resourceUsage in appResourceUsage.Items.First().ResourceUsages.Values
+                             .SelectMany(resourceUsages => resourceUsages.Where(resourceUsage =>
+                                 resourceUsage.Name == AeFinderApplicationConsts.AppStorageResourceName)))
                 {
-                    throw new UserFriendlyException("Storage is insufficient. Please purchase more storage.");
+                    if (Convert.ToDecimal(resourceUsage.Usage) > storageAsset.Replicas)
+                    {
+                        throw new UserFriendlyException("Storage is insufficient. Please purchase more storage.");
+                    }
                 }
             }
         }

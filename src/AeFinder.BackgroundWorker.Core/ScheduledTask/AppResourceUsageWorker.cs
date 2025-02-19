@@ -21,21 +21,20 @@ public class AppResourceUsageWorker : AsyncPeriodicBackgroundWorkerBase, ISingle
     private readonly IAppResourceUsageService _appResourceUsageService;
     private readonly IElasticsearchClientProvider _elasticsearchClientProvider;
     private readonly IAppService _appService;
-    private readonly AppResourceOptions _appResourceOptions;
     private readonly ScheduledTaskOptions _scheduledTaskOptions;
     private readonly IAssetService _assetService;
 
     public AppResourceUsageWorker(AbpAsyncTimer timer, IServiceScopeFactory serviceScopeFactory,
         IAppResourceUsageService appResourceUsageService, IElasticsearchClientProvider elasticsearchClientProvider,
-        IAppService appService, IOptionsSnapshot<AppResourceOptions> appResourceOptions,
-        IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions)
+        IAppService appService,
+        IOptionsSnapshot<ScheduledTaskOptions> scheduledTaskOptions, IAssetService assetService)
         : base(timer, serviceScopeFactory)
     {
         _appResourceUsageService = appResourceUsageService;
         _elasticsearchClientProvider = elasticsearchClientProvider;
         _appService = appService;
+        _assetService = assetService;
         _scheduledTaskOptions = scheduledTaskOptions.Value;
-        _appResourceOptions = appResourceOptions.Value;
 
         Timer.Period = _scheduledTaskOptions.AppResourceUsageTaskPeriodMilliSeconds;
     }
@@ -83,8 +82,7 @@ public class AppResourceUsageWorker : AsyncPeriodicBackgroundWorkerBase, ISingle
                             usage = 0;
                         }
 
-                        usage += Convert.ToDecimal(record.PrimaryStoreSize) * _appResourceOptions.StoreReplicates /
-                                 1024;
+                        usage += Convert.ToDecimal(record.PrimaryStoreSize) / 1024;
                         storeSizes[version] = usage;
                     }
                     
