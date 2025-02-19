@@ -11,6 +11,7 @@ using Elasticsearch.Net;
 using Elasticsearch.Net.Specification.CatApi;
 using Nest;
 using Shouldly;
+using Volo.Abp;
 using Xunit;
 
 namespace AeFinder.AppResources;
@@ -140,5 +141,14 @@ public class AppResourceUsageServiceTests : AeFinderApplicationAppTestBase
             });
         list.Items.Count.ShouldBe(1);
         list.Items[0].AppInfo.AppId.ShouldBe("app2");
+
+        var usage = await _appResourceUsageService.GetAsync(AeFinderApplicationTestConsts.OrganizationId, "app1");
+        usage.ShouldBeNull();
+        
+        usage = await _appResourceUsageService.GetAsync(AeFinderApplicationTestConsts.OrganizationId, "app2");
+        usage.AppInfo.AppId.ShouldBe("app2");
+
+        await Assert.ThrowsAsync<UserFriendlyException>(async () =>
+            await _appResourceUsageService.GetAsync(Guid.NewGuid(), "app2"));
     }
 }

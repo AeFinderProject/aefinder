@@ -394,14 +394,11 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         }
         else
         {
-            var appResourceUsage = await _appResourceUsageService.GetListAsync(null, new GetAppResourceUsageInput
+            var appResourceUsage = await _appResourceUsageService.GetAsync(null, appId);
+            
+            if (appResourceUsage != null)
             {
-                AppId = appId
-            });
-
-            if (appResourceUsage.Items.Any())
-            {
-                foreach (var resourceUsage in appResourceUsage.Items.First().ResourceUsages.Values
+                foreach (var resourceUsage in appResourceUsage.ResourceUsages.Values
                              .SelectMany(resourceUsages => resourceUsages.Where(resourceUsage =>
                                  resourceUsage.Name == AeFinderApplicationConsts.AppStorageResourceName)))
                 {

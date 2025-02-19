@@ -224,17 +224,14 @@ public class CleanExpiredAssetWorker: AsyncPeriodicBackgroundWorkerBase, ISingle
 
     private async Task CheckAppStorageAsync(string appId, List<AssetDto> appAssets)
     {
-        var appResourceUsage = await _appResourceUsageService.GetListAsync(null, new GetAppResourceUsageInput
-        {
-            AppId = appId
-        });
-
-        if (appResourceUsage.Items.Any())
+        var appResourceUsage = await _appResourceUsageService.GetAsync(null, appId);
+        
+        if (appResourceUsage!= null)
         {
             var storageAsset =
                 appAssets.First(o => o.Status == AssetStatus.Using && o.Merchandise.Type == MerchandiseType.Storage);
 
-            foreach (var resourceUsage in appResourceUsage.Items.First().ResourceUsages.Values
+            foreach (var resourceUsage in appResourceUsage.ResourceUsages.Values
                          .SelectMany(resourceUsages => resourceUsages.Where(resourceUsage =>
                              resourceUsage.Name == AeFinderApplicationConsts.AppStorageResourceName)))
             {

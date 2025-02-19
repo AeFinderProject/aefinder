@@ -29,6 +29,20 @@ public class AppResourceUsageController : AeFinderController
     }
 
     [HttpGet]
+    [Route("{appId}")]
+    [Authorize]
+    public async Task<AppResourceUsageDto> GetAsync(string appId)
+    {
+        Guid? orgId = null;
+        if (!CurrentUser.IsInRole(AeFinderApplicationConsts.AdminRoleName))
+        {
+            orgId = await GetOrganizationIdAsync();
+        }
+
+        return await _appResourceUsageService.GetAsync(orgId, appId);
+    }
+    
+    [HttpGet]
     [Authorize]
     public async Task<PagedResultDto<AppResourceUsageDto>> GetListAsync(GetAppResourceUsageInput input)
     {

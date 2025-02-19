@@ -8,7 +8,7 @@ public class AppResourceUsageDto
 {
     public AppInfoImmutable AppInfo { get; set; }
     public Guid OrganizationId { get; set; }
-    public Dictionary<string, List<ResourceUsageDto>> ResourceUsages { get; set; }
+    public Dictionary<string, List<ResourceUsageDto>> ResourceUsages { get; set; } = new();
 }
 
 public class ResourceUsageDto

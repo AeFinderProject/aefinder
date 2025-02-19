@@ -56,4 +56,15 @@ public class AppResourceUsageService : AeFinderAppService, IAppResourceUsageServ
             Items = ObjectMapper.Map<List<AppResourceUsageIndex>, List<AppResourceUsageDto>>(list)
         };
     }
+    
+    public async Task<AppResourceUsageDto> GetAsync(Guid? organizationId, string appId)
+    {
+        var index = await _entityMappingRepository.GetAsync(appId);
+        if (index != null && organizationId.HasValue && index.OrganizationId != organizationId.Value)
+        {
+            throw new UserFriendlyException("No permission.");
+        }
+
+        return ObjectMapper.Map<AppResourceUsageIndex, AppResourceUsageDto>(index);
+    }
 }
