@@ -92,14 +92,15 @@ public partial class AppAttachmentService : AeFinderAppService, IAppAttachmentSe
             if (isZipFile)
             {
                 fileNameWithExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension);
-                var compressedData = ZipHelper.ConvertIFormFileToByteArray(attachment);
-                string jsonData = ZipHelper.DecompressDeflateData(compressedData);
-                if (!await IsValidJsonAsync(jsonData))
+                using var zipStream = new MemoryStream();
+                await attachment.CopyToAsync(zipStream);
+                using var jsonStream = new MemoryStream();
+                ZipHelper.UnZip(zipStream,jsonStream);
+                if (!await IsValidJsonAsync(jsonStream))
                 {
                     throw new UserFriendlyException($"Attachment {fileNameWithExtension} json is not valid.");
                 }
-                var fileStream = ZipHelper.ConvertStringToStream(jsonData);
-                fileSize = fileStream.Length;
+                fileSize = jsonStream.Length;
                 totalFileSize = totalFileSize + fileSize;
                 Logger.LogInformation("Decompress file name: {0} extension: {1} size: {2} ,totalSize: {3} limitSize: {4}",
                     fileNameWithExtension, extension,
@@ -108,7 +109,7 @@ public partial class AppAttachmentService : AeFinderAppService, IAppAttachmentSe
                 {
                     throw new UserFriendlyException($"Attachment's total size is too Large. limit size {resourceLimitInfo.MaxAppAttachmentSize} bytes");
                 }
-                await UploadAppAttachmentAsync(fileStream, appId, version, fileKey, fileNameWithExtension,
+                await UploadAppAttachmentAsync(jsonStream, appId, version, fileKey, fileNameWithExtension,
                     fileSize);
                 continue;
             }
@@ -156,9 +157,12 @@ public partial class AppAttachmentService : AeFinderAppService, IAppAttachmentSe
 
     [ExceptionHandler([typeof(JsonException)], TargetType = typeof(AppAttachmentService),
         MethodName = nameof(HandleJsonExceptionAsync))]
-    protected virtual Task<bool> IsValidJsonAsync(string jsonString)
+    protected virtual Task<bool> IsValidJsonAsync(Stream jsonStream)
     {
-        JsonDocument.Parse(jsonString);
+        jsonStream.Seek(0, SeekOrigin.Begin);
+        using var reader = new StreamReader(jsonStream);
+        var json = reader.ReadToEnd();
+        JsonDocument.Parse(json);
         return Task.FromResult(true);
     }
 
@@ -166,6 +170,7 @@ public partial class AppAttachmentService : AeFinderAppService, IAppAttachmentSe
         string fileNameWithExtension, long fileSize)
     {
         var s3FileName = GenerateAppAwsS3FileName(version, fileNameWithExtension);
+        fileStream.Seek(0, SeekOrigin.Begin);
         await _awsS3ClientService.UpLoadJsonFileAsync(fileStream, appId, s3FileName);
 
         var appAttachmentGrain =

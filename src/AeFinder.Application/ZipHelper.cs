@@ -1,8 +1,9 @@
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
-using Ionic.Zlib;
 using Microsoft.AspNetCore.Http;
 
 namespace AeFinder;
@@ -14,42 +15,25 @@ public class ZipHelper
         var zip = new FastZip();
         zip.CreateZip(zipFileName, sourceDirectory,true, string.Empty);
     }
-    
-    public static string DecompressDeflateData(byte[] compressedData)
-    {
-        using (var compressedStream = new MemoryStream(compressedData))
-        using (var deflateStream = new ZlibStream(compressedStream, Ionic.Zlib.CompressionMode.Decompress))
-        using (var reader = new StreamReader(deflateStream))
-        {
-            return reader.ReadToEnd();
-        }
-    }
-    
-    public static byte[] ConvertIFormFileToByteArray(IFormFile file)
-    {
-        if (file == null || file.Length == 0)
-        {
-            return null;
-        }
 
-        using (var memoryStream = new MemoryStream())
-        {
-            file.CopyTo(memoryStream);
-            return memoryStream.ToArray();
-        }
-    }
-    
-    public static Stream ConvertStringToStream(string jsonData)
+    public static void UnZip(Stream source, Stream destination, string entryName = null)
     {
-        var memoryStream = new MemoryStream();
-
-        using (var streamWriter = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true))
+        using (var s = new ZipInputStream(source))
         {
-            streamWriter.Write(jsonData);
-            streamWriter.Flush(); 
-        }
-        memoryStream.Position = 0;
+            ZipEntry theEntry;
+            while ((theEntry = s.GetNextEntry()) != null)
+            {
+                if (!entryName.IsNullOrWhiteSpace() &&
+                    !string.Equals(theEntry.Name, entryName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
 
-        return memoryStream;
+                var buffer = new byte[4096];
+                StreamUtils.Copy(s, destination, buffer);
+                destination.Seek(0, SeekOrigin.Begin);
+                break;
+            }
+        }
     }
 }
