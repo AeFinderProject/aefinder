@@ -18,6 +18,7 @@ public class ZipHelper
 
     public static void UnZip(Stream source, Stream destination, string entryName = null)
     {
+        source.Seek(0, SeekOrigin.Begin);
         using (var s = new ZipInputStream(source))
         {
             ZipEntry theEntry;
