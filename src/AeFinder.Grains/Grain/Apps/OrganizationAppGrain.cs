@@ -48,6 +48,13 @@ public class OrganizationAppGrain : AeFinderGrain<OrganizationAppState>, IOrgani
         await WriteStateAsync();
     }
 
+    public async Task DeleteAppAsync(string appId)
+    {
+        await ReadStateAsync();
+        State.AppIds.Remove(appId);
+        await WriteStateAsync();
+    }
+
     public async Task<HashSet<string>> GetAppsAsync()
     {
         await ReadStateAsync();

@@ -20,4 +20,5 @@ public class ScheduledTaskOptions
     public int PayFailedOrderTimeoutHours { get; set; } = 48;
     public int ConfirmingOrderTimeoutMinutes { get; set; } = 60;
     public int BillingPaymentTaskPeriodMilliSeconds { get; set; } = 300000;
+    public int AppResourceUsageTaskPeriodMilliSeconds { get; set; } = 600000;
 }
