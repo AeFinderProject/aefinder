@@ -250,5 +250,11 @@ public class AeFinderApplicationAutoMapperProfile : Profile
         CreateMap<BillingDetailIndex, BillingDetailDto>();
         
         CreateMap<UserRegisterState, UserRegisterInfo>();
+        
+        // AppResourceUsage
+        CreateMap<AppResourceUsageIndex, AppResourceUsageDto>();
+        CreateMap<ResourceUsageIndex, ResourceUsageDto>();
+        CreateMap<AppResourceUsageDto, AppResourceUsageIndex>();
+        CreateMap<ResourceUsageDto, ResourceUsageIndex>();
     }
 }

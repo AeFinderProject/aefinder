@@ -6,6 +6,7 @@ public interface IOrganizationAppGrain : IGrainWithStringKey
 {
     Task AddOrganizationAsync(string organizationName);
     Task AddAppAsync(string appId);
+    Task DeleteAppAsync(string appId);
     Task<HashSet<string>> GetAppsAsync();
     Task<int> GetMaxAppCountAsync();
     Task SetMaxAppCountAsync(int maxAppCount);

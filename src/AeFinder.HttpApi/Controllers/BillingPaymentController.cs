@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using AeFinder.Billings;
 using AeFinder.Billings.Dto;
@@ -15,10 +16,12 @@ namespace AeFinder.Controllers;
 public class BillingPaymentController : AeFinderController
 {
     private readonly IBillingPaymentService _billingPaymentService;
+    private readonly IBillingManagementService _billingManagementService;
 
-    public BillingPaymentController(IBillingPaymentService billingPaymentService)
+    public BillingPaymentController(IBillingPaymentService billingPaymentService, IBillingManagementService billingManagementService)
     {
         _billingPaymentService = billingPaymentService;
+        _billingManagementService = billingManagementService;
     }
     
     [HttpPost]
@@ -26,7 +29,7 @@ public class BillingPaymentController : AeFinderController
     [Authorize(Policy = "OnlyAdminAccess")]
     public async Task RepayFailedBillingAsync(RepayFailedBillingInput input)
     {
-        await _billingPaymentService.RepayFailedBillingAsync(input.OrganizationId, input.BillingId);
+        await _billingManagementService.RePayAsync(Guid.Parse(input.BillingId));
     }
     
     [HttpGet]

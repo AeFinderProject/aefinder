@@ -109,12 +109,12 @@ public class AeFinderBackGroundModule : AbpModule
         }
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<OrganizationWalletSyncWorker>());
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<PollingOrderPaymentResultWorker>());
-        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<PollingAdvanceBillPaymentResultWorker>());
-        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<PollingSettlementBillPaymentResultWorker>());
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<MonthlyAutomaticChargeWorker>());
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<BalanceWarningWorker>());
         AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<CleanExpiredAssetWorker>());
-        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<FreezeRenewalFailedAssetWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<CheckPayFailedBillingWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<BillingPaymentWorker>());
+        AsyncHelper.RunSync(() => context.AddBackgroundWorkerAsync<AppResourceUsageWorker>());
     }
 
     public override void OnApplicationShutdown(ApplicationShutdownContext context)

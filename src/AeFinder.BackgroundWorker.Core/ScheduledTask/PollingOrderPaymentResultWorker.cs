@@ -111,7 +111,7 @@ public class PollingOrderPaymentResultWorker: AsyncPeriodicBackgroundWorkerBase,
 
         if (paymentOrder.Status == OrderStatus.PayFailed)
         {
-            if (paymentOrder.OrderTime.AddMinutes(_scheduledTaskOptions.PayFailedOrderTimeoutHours) <
+            if (paymentOrder.OrderTime.AddHours(_scheduledTaskOptions.PayFailedOrderTimeoutHours) <
                 DateTime.UtcNow)
             {
                 //Set order status to canceled

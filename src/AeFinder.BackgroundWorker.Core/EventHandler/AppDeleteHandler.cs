@@ -24,20 +24,23 @@ public class AppDeleteHandler : IDistributedEventHandler<AppDeleteEto>, ITransie
     private readonly IBlockScanAppService _blockScanAppService;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
     private readonly IAssetService _assetService;
+    private readonly IEntityMappingRepository<OrganizationIndex, string> _organizationEntityMappingRepository;
 
     public AppDeleteHandler(ILogger<AppDeleteHandler> logger,
         IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService,
         IAssetService assetService,
-        IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository)
+        IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
+        IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository)
     {
         _logger = logger;
         _clusterClient = clusterClient;
         _blockScanAppService = blockScanAppService;
         _assetService = assetService;
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
+        _organizationEntityMappingRepository = organizationEntityMappingRepository;
     }
-    
+
     public async Task HandleEventAsync(AppDeleteEto eventData)
     {
         var appId = eventData.AppId;
@@ -82,6 +85,11 @@ public class AppDeleteHandler : IDistributedEventHandler<AppDeleteEto>, ITransie
         appInfoIndex.Status = eventData.Status;
         appInfoIndex.DeleteTime = eventData.DeleteTime;
         await _appInfoEntityMappingRepository.AddOrUpdateAsync(appInfoIndex);
+        
+        var organizationIndex = await _organizationEntityMappingRepository.GetAsync(organizationGuid.ToString());
+        organizationIndex.AppIds.Remove(eventData.AppId);
+        await _organizationEntityMappingRepository.UpdateAsync(organizationIndex);
+        
         _logger.LogInformation($"[AppDeleteHandler] App {eventData.AppId} is deleted.");
     }
 
