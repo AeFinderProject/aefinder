@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AeFinder.Application\AeFinder.Application.csproj" />
+    <ProjectReference Include="..\..\src\AeFinder.HttpApi\AeFinder.HttpApi.csproj" />
     <ProjectReference Include="..\AeFinder.Domain.Tests\AeFinder.Domain.Tests.csproj" />
     <ProjectReference Include="..\AeFinder.Orleans.TestBase\AeFinder.Orleans.TestBase.csproj" />
   </ItemGroup>
@@ -19,6 +20,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.0" />
   </ItemGroup>
   
 </Project>
