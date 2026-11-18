@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AeFinder.Application\AeFinder.Application.csproj" />
+    <ProjectReference Include="..\..\src\AeFinder.HttpApi\AeFinder.HttpApi.csproj" />
     <ProjectReference Include="..\AeFinder.Domain.Tests\AeFinder.Domain.Tests.csproj" />
     <ProjectReference Include="..\AeFinder.Orleans.TestBase\AeFinder.Orleans.TestBase.csproj" />
   </ItemGroup>
