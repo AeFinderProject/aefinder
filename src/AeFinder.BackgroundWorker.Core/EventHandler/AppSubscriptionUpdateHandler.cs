@@ -29,12 +29,24 @@ public class AppSubscriptionUpdateHandler: AppHandlerBase, IDistributedEventHand
 
         var appSubscriptionGrain =
             _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppGrainId(eventData.AppId));
-        var subscriptionManifest = await appSubscriptionGrain.GetSubscriptionAsync(eventData.Version);
-        var subscriptionStatus = await appSubscriptionGrain.GetSubscriptionStatusAsync(eventData.Version);
+        var subscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        var subscription = subscriptions.CurrentVersion?.Version == eventData.Version
+            ? subscriptions.CurrentVersion
+            : subscriptions.PendingVersion?.Version == eventData.Version
+                ? subscriptions.PendingVersion
+                : null;
+        if (subscription == null)
+        {
+            Logger.LogInformation(
+                "[AppSubscriptionUpdateHandler] Ignore expired subscription event. AppId: {AppId}, Version: {Version}",
+                eventData.AppId, eventData.Version);
+            return;
+        }
+
         var subscriptionManifestInfo =
-            ObjectMapper.Map<SubscriptionManifest, SubscriptionManifestInfo>(subscriptionManifest);
+            ObjectMapper.Map<SubscriptionManifest, SubscriptionManifestInfo>(subscription.SubscriptionManifest);
         appSubscriptionIndex.SubscriptionManifest = subscriptionManifestInfo;
-        appSubscriptionIndex.SubscriptionStatus = subscriptionStatus;
+        appSubscriptionIndex.SubscriptionStatus = subscription.Status;
         await _appSubscriptionEntityMappingRepository.AddOrUpdateAsync(appSubscriptionIndex);
     }
 }
