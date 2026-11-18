@@ -8,6 +8,8 @@ namespace AeFinder.User;
 
 public interface IUserAppService
 {
+    Task<BatchDeleteUsersResultDto> BatchDeleteAsync(BatchDeleteUsersInput input);
+
     Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input);
 
     Task RegisterAppAuthentication(string appId, string deployKey);

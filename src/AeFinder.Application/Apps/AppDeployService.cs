@@ -12,6 +12,7 @@ using AeFinder.BlockScan;
 using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Merchandises;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Merchandises;
@@ -20,6 +21,7 @@ using AeFinder.Options;
 using AeFinder.User;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenIddict.Abstractions;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Auditing;
@@ -43,6 +45,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
     private readonly IApiKeyService _apiKeyService;
     private readonly PodResourceOptions _podResourceOptions;
     private readonly IAppResourceUsageService _appResourceUsageService;
+    private readonly IOpenIddictApplicationManager _applicationManager;
 
     public AppDeployService(IClusterClient clusterClient,
         IBlockScanAppService blockScanAppService, IAppDeployManager appDeployManager,
@@ -53,7 +56,8 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         IAssetService assetService,
         IApiKeyService apiKeyService,
         IUserAppService userAppService, IAppEmailSender appEmailSender,
-        IAppResourceLimitProvider appResourceLimitProvider, IAppResourceUsageService appResourceUsageService)
+        IAppResourceLimitProvider appResourceLimitProvider, IAppResourceUsageService appResourceUsageService,
+        IOpenIddictApplicationManager applicationManager)
     {
         _clusterClient = clusterClient;
         _blockScanAppService = blockScanAppService;
@@ -68,6 +72,7 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
         _appEmailSender = appEmailSender;
         _assetService = assetService;
         _apiKeyService = apiKeyService;
+        _applicationManager = applicationManager;
     }
 
     public async Task<string> DeployNewAppAsync(string appId, string version, string imageName)
@@ -83,7 +88,26 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
     public async Task DestroyAppAsync(string appId, string version)
     {
-        var chainIds = await GetSubscriptionChainIdAsync(appId, version);
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var subscription = await appSubscriptionGrain.GetSubscriptionAsync(version);
+        if (subscription == null)
+        {
+            var blockPusherManager = _clusterClient.GetGrain<IBlockPusherManagerGrain>(0);
+            var blockPusherIds = await blockPusherManager.GetAllBlockPusherIdsAsync();
+            subscription = new SubscriptionManifest
+            {
+                SubscriptionItems = blockPusherIds
+                    .Where(o => o.Value.Contains(GrainIdHelper.GenerateBlockPusherGrainId(appId, version, o.Key)))
+                    .Select(o => new Subscription { ChainId = o.Key }).ToList()
+            };
+
+            // Persist cleanup chains before PauseAsync removes the manager records, so destroy can be retried.
+            await appSubscriptionGrain.UpdateSubscriptionAsync(version, subscription);
+            Logger.LogWarning("Saved cleanup-only subscription manifest for app {appId}, version {version}, chains: {chainIds}",
+                appId, version, string.Join(",", subscription.SubscriptionItems.Select(o => o.ChainId)));
+        }
+
+        var chainIds = subscription.SubscriptionItems.Select(o => o.ChainId).ToList();
         await _blockScanAppService.PauseAsync(appId, version);
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
     }
@@ -217,6 +241,12 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
             throw new UserFriendlyException("This app does not belong to the user's organization. Please verify.");
         }
         
+        var application = await _applicationManager.FindByClientIdAsync(appId);
+        if (application != null)
+        {
+            await _applicationManager.DeleteAsync(application);
+        }
+
         //Delete app
         var appGrain = _clusterClient.GetGrain<IAppGrain>(GrainIdHelper.GenerateAppGrainId(appId));
         await appGrain.DeleteAppAsync();

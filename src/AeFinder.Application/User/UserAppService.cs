@@ -21,6 +21,7 @@ using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Emailing;
 using Volo.Abp.Identity;
 using Volo.Abp.Timing;
+using Volo.Abp.Uow;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace AeFinder.User;
@@ -66,6 +67,37 @@ public partial class UserAppService : IdentityUserAppService, IUserAppService
         _emailSender = emailSender;
         _userRegisterOptions = userRegisterOptions.Value;
         _emailTemplateOptions = emailTemplateOptions.Value;
+    }
+
+    [UnitOfWork(false)]
+    public virtual async Task<BatchDeleteUsersResultDto> BatchDeleteAsync(BatchDeleteUsersInput input)
+    {
+        var result = new BatchDeleteUsersResultDto();
+        foreach (var userId in input.UserIds.Distinct())
+        {
+            try
+            {
+                // MongoDB transactions are disabled; complete each user independently.
+                using var uow = UnitOfWorkManager.Begin(requiresNew: true, isTransactional: false);
+                var user = await UserManager.FindByIdAsync(userId.ToString());
+                if (user == null || user.IsDeleted)
+                {
+                    result.SkippedUserIds.Add(userId);
+                    continue;
+                }
+
+                (await UserManager.DeleteAsync(user)).CheckErrors();
+                await uow.CompleteAsync();
+                result.DeletedUserIds.Add(userId);
+            }
+            catch (Exception exception)
+            {
+                Logger.LogError(exception, "Failed to soft delete user {UserId}.", userId);
+                result.FailedUserIds.Add(userId);
+            }
+        }
+
+        return result;
     }
 
     public async Task<IdentityUserDto> RegisterUserWithOrganization(RegisterUserWithOrganizationInput input)

@@ -19,6 +19,13 @@ public class UserController : AeFinderController
     {
         _userAppService = userAppService;
     }
+
+    [HttpPost("batch-delete")]
+    [Authorize(Policy = "OnlyAdminAccess")]
+    public virtual async Task<BatchDeleteUsersResultDto> BatchDeleteAsync([FromBody] BatchDeleteUsersInput input)
+    {
+        return await _userAppService.BatchDeleteAsync(input);
+    }
     
     [HttpPost]
     [Authorize(Policy = "OnlyAdminAccess")]

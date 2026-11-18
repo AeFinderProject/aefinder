@@ -22,6 +22,7 @@ public class AppDeleteHandler : IDistributedEventHandler<AppDeleteEto>, ITransie
     private readonly ILogger<AppDeleteHandler> _logger;
     private readonly IClusterClient _clusterClient;
     private readonly IBlockScanAppService _blockScanAppService;
+    private readonly IAppDeployService _appDeployService;
     private readonly IEntityMappingRepository<AppInfoIndex, string> _appInfoEntityMappingRepository;
     private readonly IAssetService _assetService;
     private readonly IEntityMappingRepository<OrganizationIndex, string> _organizationEntityMappingRepository;
@@ -31,7 +32,8 @@ public class AppDeleteHandler : IDistributedEventHandler<AppDeleteEto>, ITransie
         IBlockScanAppService blockScanAppService,
         IAssetService assetService,
         IEntityMappingRepository<AppInfoIndex, string> appInfoEntityMappingRepository,
-        IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository)
+        IEntityMappingRepository<OrganizationIndex, string> organizationEntityMappingRepository,
+        IAppDeployService appDeployService)
     {
         _logger = logger;
         _clusterClient = clusterClient;
@@ -39,6 +41,7 @@ public class AppDeleteHandler : IDistributedEventHandler<AppDeleteEto>, ITransie
         _assetService = assetService;
         _appInfoEntityMappingRepository = appInfoEntityMappingRepository;
         _organizationEntityMappingRepository = organizationEntityMappingRepository;
+        _appDeployService = appDeployService;
     }
 
     public async Task HandleEventAsync(AppDeleteEto eventData)
@@ -69,6 +72,7 @@ public class AppDeleteHandler : IDistributedEventHandler<AppDeleteEto>, ITransie
         if (allSubscriptions.CurrentVersion != null && !allSubscriptions.CurrentVersion.Version.IsNullOrEmpty())
         {
             var currentVersion = allSubscriptions.CurrentVersion.Version;
+            await _appDeployService.DestroyAppAsync(appId, currentVersion);
             await _blockScanAppService.StopAsync(appId, currentVersion);
             _logger.LogInformation($"[AppDeleteHandler] the CurrentVersion {currentVersion} of App {appId} is stopped.");
         }
@@ -76,6 +80,7 @@ public class AppDeleteHandler : IDistributedEventHandler<AppDeleteEto>, ITransie
         if (allSubscriptions.PendingVersion != null && !allSubscriptions.PendingVersion.Version.IsNullOrEmpty())
         {
             var pendingVersion = allSubscriptions.PendingVersion.Version;
+            await _appDeployService.DestroyAppAsync(appId, pendingVersion);
             await _blockScanAppService.StopAsync(appId, pendingVersion);
             _logger.LogInformation($"[AppDeleteHandler] the PendingVersion {pendingVersion} of App {appId} is stopped.");
         }

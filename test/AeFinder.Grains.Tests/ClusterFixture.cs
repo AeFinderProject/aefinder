@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Orleans.Hosting;
+using Orleans.Serialization;
 using Orleans.TestingHost;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.DependencyInjection;
@@ -40,6 +41,8 @@ public class ClusterFixture:IDisposable,ISingletonDependency
     {
         public void Configure(Orleans.Hosting.ISiloBuilder hostBuilder) {
             hostBuilder.ConfigureServices(services => {
+                    services.Configure<ExceptionSerializationOptions>(options =>
+                        options.SupportedNamespacePrefixes.Add("Volo.Abp"));
                     services.AddSingleton<IBlockAppService, MockBlockAppService>();
                     services.AddSingleton<IBlockDataProvider, BlockDataProvider>();
                     services.AddTransient<IBlockFilterAppService, BlockFilterAppService>();
