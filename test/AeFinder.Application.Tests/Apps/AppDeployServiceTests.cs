@@ -16,6 +16,7 @@ using AeFinder.User;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
+using OpenIddict.Abstractions;
 using Orleans;
 using Shouldly;
 using Volo.Abp.DependencyInjection;
@@ -50,7 +51,8 @@ public class AppDeployServiceTests
             _deployManager.Object, Mock.Of<IOrganizationAppService>(), Options<AppDeployOptions>(),
             Options<CustomOrganizationOptions>(), Options<PodResourceOptions>(), Mock.Of<IAssetService>(),
             Mock.Of<IApiKeyService>(), Mock.Of<IUserAppService>(), Mock.Of<IAppEmailSender>(),
-            Mock.Of<IAppResourceLimitProvider>(), Mock.Of<IAppResourceUsageService>())
+            Mock.Of<IAppResourceLimitProvider>(), Mock.Of<IAppResourceUsageService>(),
+            Mock.Of<IOpenIddictApplicationManager>())
         {
             LazyServiceProvider = new AbpLazyServiceProvider(new ServiceCollection().AddLogging().BuildServiceProvider())
         };
