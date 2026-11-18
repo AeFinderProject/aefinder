@@ -71,14 +71,23 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
                     continue;
                 }
                 
-                if (!appInfo.Versions.CurrentVersion.IsNullOrEmpty())
+                try
                 {
-                    await RescanSubscriptionAsync(appId, appInfo.Versions.CurrentVersion);
-                }
+                    if (!appInfo.Versions.CurrentVersion.IsNullOrEmpty())
+                    {
+                        await RescanSubscriptionAsync(appId, appInfo.Versions.CurrentVersion);
+                    }
 
-                if (!appInfo.Versions.PendingVersion.IsNullOrEmpty())
+                    if (!appInfo.Versions.PendingVersion.IsNullOrEmpty())
+                    {
+                        await RescanSubscriptionAsync(appId, appInfo.Versions.PendingVersion);
+                    }
+                }
+                catch (Exception ex)
                 {
-                    await RescanSubscriptionAsync(appId, appInfo.Versions.PendingVersion);
+                    _logger.LogError(ex,
+                        "[AppRescanCheckWorker] Rescan check failed. AppId: {AppId}, CurrentVersion: {CurrentVersion}, PendingVersion: {PendingVersion}",
+                        appId, appInfo.Versions.CurrentVersion, appInfo.Versions.PendingVersion);
                 }
             }
             
@@ -90,7 +99,21 @@ public class AppRescanCheckWorker: AsyncPeriodicBackgroundWorkerBase, ISingleton
     {
         var appSubscriptionGrain =
             _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
-        var subscriptionStatus = await appSubscriptionGrain.GetSubscriptionStatusAsync(version);
+        var subscriptions = await appSubscriptionGrain.GetAllSubscriptionAsync();
+        var subscription = subscriptions.CurrentVersion?.Version == version
+            ? subscriptions.CurrentVersion
+            : subscriptions.PendingVersion?.Version == version
+                ? subscriptions.PendingVersion
+                : null;
+        if (subscription == null)
+        {
+            _subscriptionRescanTimes.Remove(version);
+            _logger.LogInformation(
+                "[AppRescanCheckWorker] Skip expired version. AppId: {AppId}, Version: {Version}", appId, version);
+            return;
+        }
+
+        var subscriptionStatus = subscription.Status;
         if (subscriptionStatus == SubscriptionStatus.Paused)
         {
             return;
