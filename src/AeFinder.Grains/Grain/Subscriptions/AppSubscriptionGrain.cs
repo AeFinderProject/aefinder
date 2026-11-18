@@ -253,19 +253,26 @@ public class AppSubscriptionGrain : AeFinderGrain<AppSubscriptionState>, IAppSub
     public async Task StopAsync(string version)
     {
         await ReadStateAsync();
+        if (string.IsNullOrEmpty(version) || (version != State.CurrentVersion && version != State.PendingVersion))
+        {
+            return;
+        }
+
+        if (!State.SubscriptionInfos.TryGetValue(version, out var subscriptionInfo) ||
+            subscriptionInfo?.SubscriptionManifest?.SubscriptionItems == null)
+        {
+            throw new UserFriendlyException("Subscription manifest is missing. Run destroy before stop.");
+        }
+
         await BeginChangingStateAsync();
         
         if (version == State.CurrentVersion)
         {
             State.CurrentVersion = null;
         }
-        else if (version == State.PendingVersion)
-        {
-            State.PendingVersion = null;
-        }
         else
         {
-            return;
+            State.PendingVersion = null;
         }
 
         await StopBlockPushAsync(version);

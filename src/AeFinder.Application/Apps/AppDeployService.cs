@@ -12,6 +12,7 @@ using AeFinder.BlockScan;
 using AeFinder.Email;
 using AeFinder.Grains;
 using AeFinder.Grains.Grain.Apps;
+using AeFinder.Grains.Grain.BlockPush;
 using AeFinder.Grains.Grain.Merchandises;
 using AeFinder.Grains.Grain.Subscriptions;
 using AeFinder.Merchandises;
@@ -83,7 +84,26 @@ public class AppDeployService : AeFinderAppService, IAppDeployService
 
     public async Task DestroyAppAsync(string appId, string version)
     {
-        var chainIds = await GetSubscriptionChainIdAsync(appId, version);
+        var appSubscriptionGrain = _clusterClient.GetGrain<IAppSubscriptionGrain>(GrainIdHelper.GenerateAppSubscriptionGrainId(appId));
+        var subscription = await appSubscriptionGrain.GetSubscriptionAsync(version);
+        if (subscription == null)
+        {
+            var blockPusherManager = _clusterClient.GetGrain<IBlockPusherManagerGrain>(0);
+            var blockPusherIds = await blockPusherManager.GetAllBlockPusherIdsAsync();
+            subscription = new SubscriptionManifest
+            {
+                SubscriptionItems = blockPusherIds
+                    .Where(o => o.Value.Contains(GrainIdHelper.GenerateBlockPusherGrainId(appId, version, o.Key)))
+                    .Select(o => new Subscription { ChainId = o.Key }).ToList()
+            };
+
+            // Persist cleanup chains before PauseAsync removes the manager records, so destroy can be retried.
+            await appSubscriptionGrain.UpdateSubscriptionAsync(version, subscription);
+            Logger.LogWarning("Saved cleanup-only subscription manifest for app {appId}, version {version}, chains: {chainIds}",
+                appId, version, string.Join(",", subscription.SubscriptionItems.Select(o => o.ChainId)));
+        }
+
+        var chainIds = subscription.SubscriptionItems.Select(o => o.ChainId).ToList();
         await _blockScanAppService.PauseAsync(appId, version);
         await _appDeployManager.DestroyAppAsync(appId, version, chainIds);
     }
